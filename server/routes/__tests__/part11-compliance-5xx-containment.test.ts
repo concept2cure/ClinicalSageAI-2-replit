@@ -23,6 +23,19 @@ const { verifyAuditIntegrity, logError } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../services/audit/audit-integrity-service', () => ({ verifyAuditIntegrity }));
+// Platform standing for the seal check is an active platform_role_grants row
+// (holdsPlatformRole, server/middleware/requirePlatformAdmin.ts), never a role on
+// the request, which behind server/auth.ts is the tenant membership role. Added
+// 2026-10-05 (D6, docs/evidence/D6/2026-10-05-cross-tenant-staff/): user 21 holds
+// a platform_admin grant; nobody else holds one.
+const { PLATFORM_GRANT_HOLDER } = vi.hoisted(() => ({ PLATFORM_GRANT_HOLDER: 21 }));
+vi.mock('../../db', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../db')>()),
+  query: vi.fn(async (sql: string, params: unknown[] = []) => ({
+    rows: /FROM platform_role_grants/.test(sql) && params[0] === PLATFORM_GRANT_HOLDER
+      && Array.isArray(params[1]) && (params[1] as string[]).includes('platform_admin') ? [{ '?column?': 1 }] : [],
+  })),
+}));
 vi.mock('../../utils/logger', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../utils/logger')>();
   return {
@@ -73,7 +86,8 @@ describe('Part 11 500s: envelope out, detail to the log', () => {
     verifyAuditIntegrity.mockRejectedValue(new Error(SENTINEL));
     const query = vi.fn(async () => ({ rows: [] }));
     expectContained(
-      await request(app(query, { organizationId: 7, roles: ['platform_admin'] })).get('/audit-trail/seal-integrity'),
+      // The platform admin is the grant holder (was `roles: ['platform_admin']`, a request role; D6, 2026-10-05).
+      await request(app(query, { id: PLATFORM_GRANT_HOLDER, organizationId: 7, role: 'member', roles: ['member'] })).get('/audit-trail/seal-integrity'),
     );
   });
 

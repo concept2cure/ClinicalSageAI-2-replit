@@ -87,6 +87,12 @@ export interface AssessPathwayInput {
    * required only for some devices cannot be judged without them (W1-5).
    */
   deviceFlags?: DeviceFlags;
+  /**
+   * PMDA Shōnin only: whether the device needs clinical trial results
+   * (臨床試験の試験成績). Unanswered, an absent clinical slot is undetermined
+   * and counted as a gap.
+   */
+  clinicalDataRequired?: boolean;
 }
 
 /** Run the right pathway engine and return a normalized readiness verdict. */
@@ -132,8 +138,14 @@ export function assessPathwayReadiness(input: AssessPathwayInput): PathwayReadin
       };
     }
     case 'pmda_shonin': {
-      const r = assessPmdaShonin({ leaves: leaves as PmdaInputLeaf[] });
-      return { pathway: 'pmda_shonin', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+      const r = assessPmdaShonin({ leaves: leaves as PmdaInputLeaf[], clinicalDataRequired: input.clinicalDataRequired });
+      // Undetermined slots are gaps, as in the eSTAR and CTIS branches.
+      return {
+        pathway: 'pmda_shonin',
+        ready: r.summary.ready,
+        missingRequired: [...r.summary.missingRequired, ...r.summary.undetermined],
+        detail: r,
+      };
     }
     case 'pma': {
       const r = mapToPma({ leaves: leaves as PmaInputLeaf[], submissionType: input.pmaSubmissionType });

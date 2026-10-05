@@ -53,4 +53,19 @@ describe('assessGrounding', () => {
     expect(r.groundingScore).toBe(0.5);
     expect(r.ok).toBe(false);
   });
+
+  // One reference detector (in-text-references.ts) decides cross-references on
+  // every path, so a listing grounds like a table and an impossible CTD code grounds
+  // nothing (g-in-text-reference-resolution).
+  it('without options, a Listing reference grounds like a Table one', () => {
+    const r = assessGrounding('Systolic blood pressure fell by 5% (Listing 16.2.6).');
+    expect(r.totalClaims).toBe(1);
+    expect(r.ok).toBe(true);
+  });
+
+  it('without options, a CTD code that cannot exist grounds nothing', () => {
+    const r = assessGrounding('Efficacy persisted for 12 weeks (Module 6.1).');
+    expect(r.totalClaims).toBe(1);
+    expect(r.ok).toBe(false);
+  });
 });

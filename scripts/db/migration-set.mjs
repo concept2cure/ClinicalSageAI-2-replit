@@ -277,7 +277,8 @@ export const C2C_MIGRATION_FILES = [
   // The CMC workflow store. `server/api/cmc/routes.ts` and
   // `server/api/cmc/workflowRoutes.ts` query `project_workflows`; this file is
   // its ONLY creator, and it was on no applier — so the table existed on no
-  // real database and both routes 500'd.
+  // real database and both routes 500'd. (2026-10-05: workflowRoutes.ts was
+  // retired with no caller; routes.ts still writes the table, so this stays.)
   //
   // It was invisible to ci:migration-reachability because that guard treated
   // any `pgTable(...)` under shared/ as the drizzle push surface, and
@@ -516,7 +517,8 @@ export const C2C_MIGRATION_FILES = [
   //     path, so root file 0011 could never ALTER ai_threads on fresh DBs.
   //   cmc_projects reconstruction — code-derived (C-11 pattern) creator for a
   //     table with NO DDL anywhere, yet INSERTed by the CMC blueprint route
-  //     and FK-referenced by migrations/0006_regulatory_atoms.sql.
+  //     (retired 2026-10-05) and FK-referenced by
+  //     migrations/0006_regulatory_atoms.sql, which keeps it needed.
   //   fk_delete_policies port — guarded port of root 0008, whose first pair
   //     targets retired user_sessions and aborted the file's 16 live FK
   //     delete-policies on every fresh install.
@@ -2420,7 +2422,14 @@ export const C2C_MIGRATION_FILES = [
   // the author. Additive and IF NOT EXISTS, so it replays as a no-op; above the
   // final pair because ci:migration-set-order pins those two last.
   'migrations/20260918_rbm_author_attribution.sql',
-  // ── CMC playbook: the five tables /api/cmc/blueprint/playbook/* queries ──
+  // ── CMC playbook: the five tables /api/cmc/blueprint/playbook/* queried ──
+  // RETIRED SURFACE, 2026-10-05: /api/cmc/blueprint (blueprintRoutes.ts) and
+  // the playbook router under it (playbookRoutes.ts) were deleted with no
+  // caller (server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts), so
+  // nothing reads or writes these tables now. The file STAYS on the set: every
+  // entry re-runs on every deploy, and removing schema is not a DROP (CLAUDE.md
+  // RULE 1); the tables stay swept, and tenant offboarding still purges them.
+  // What follows is the note as written when the surface was live.
   // The surface is live and unconditionally mounted (register-core-routes.ts:68
   // → blueprintRoutes.ts:748), and none of its tables existed on any
   // provisioned database, so every one of its endpoints returned 500. A correct
@@ -2998,6 +3007,20 @@ export const C2C_MIGRATION_FILES = [
   // INTEGER NOT NULL, so the sweep below gives it row security. CREATE IF NOT
   // EXISTS, no DROP. Evidence docs/evidence/CMC-M3-GA/2026-10-05/08-cmc-evidence-from-the-vault/.
   'migrations/20261005b_cmc_source_evidence.sql',
+
+  // ── Module 1 filed where FDA and PMDA file it (2026-10-05, D2) ─────────────
+  // nda:fda and bla:fda ich-m4-v2.2, anda:fda fda-anda-21cfr314-94-v1.1 and
+  // jnda:pmda ich-m4-v2.2 as NEW versions superseding v2.1 / v1.0: the gates
+  // required '1.19 Environmental analysis' of an NDA (FDA 1.19 is Pre-EUA and
+  // EUA; environmental analysis is 1.12.14), 1.14.4/1.14.5 for carton labels and
+  // SPL (investigational / foreign labeling), and of an ANDA patent
+  // certification under 1.15 (Promotional material); the J-NDA outline had no
+  // 1.11 draft RMP. Modules 2–5 unchanged. ON CONFLICT DO NOTHING, the
+  // 20260810c provenance UPDATE (so after 20260810c), guarded supersede, a
+  // row-count RAISE; no DROP, no edit of 20260804/20260806b. Documents bound to
+  // the old versions keep their outline. maa:ema not minted (decision 3).
+  // Evidence docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-fda-jnda-rule-pack-m1-v2-2-*.
+  'migrations/20261005_fda_jnda_m1_outline_v2_2.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

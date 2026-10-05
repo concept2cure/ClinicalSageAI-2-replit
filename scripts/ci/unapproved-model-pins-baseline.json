@@ -37,18 +37,6 @@
       "count": 1,
       "reason": "Unreachable: no importer is reachable from server/index.ts since its route was deleted in 3cc8547d2. Listed for deletion by an owner; if revived it must route as document_drafting / regulatory_review."
     },
-    "server/api/cmc/audit-risk-monitor.js": {
-      "count": 10,
-      "reason": "Every POST handler throws after its first model call (it reads .choices from a response that has none), so no output is stored or returned (classified 2026-09-23). The first calls still send user documents to the pinned model: listed for retirement by an owner; if kept, drop the pins and route as regulatory_review."
-    },
-    "server/api/cmc/cmc-copilot.js": {
-      "count": 5,
-      "reason": "Chat answers appended to a local conversation log file; nothing is written to a governed record or presented as a draft or verdict (classified 2026-09-23)."
-    },
-    "server/api/cmc/manufacturing-tuner.js": {
-      "count": 5,
-      "reason": "Process-optimisation suggestions written to a local output file and returned; no governed record is written and nothing reaches a submission (classified 2026-09-23)."
-    },
     "server/services/keywordExtractionService.ts": {
       "count": 1,
       "reason": "Keyword and term extraction for search and linking; regex matches override the model's terms and the result is not a governed record (classified 2026-09-23)."

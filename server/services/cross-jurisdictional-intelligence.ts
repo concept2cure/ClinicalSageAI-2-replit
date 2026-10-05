@@ -5,11 +5,20 @@
  * identifies reliance pathways, filing sequence optimization, and
  * harmonization frameworks (ICH, Access Consortium, Project Orbis).
  *
+ * PMDA positions carry their basis (`basis`, rendered into `guidanceRef`); the
+ * paediatric position and consultation names come from ind/ctd/jp-programs.ts.
+ * Until 2026-10-05 they claimed, unsourced, bridging "mandatory per ICH E5", a
+ * required Japanese comparator and QT study, zone IVa and "no mandatory"
+ * paediatric plan. Every Japan basis is `recall` (DECISIONS.md #26; facts in
+ * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-jp-data-claims-truth-facts.md).
+ *
  * @module server/services/cross-jurisdictional-intelligence
  */
 
 import { createScopedLogger } from '../utils/logger';
 import { getSubmissionTypeContext } from '../../shared/regulatory/submission-type-bridge.js';
+import { basisLabel, type RegulatoryBasis } from '../../shared/regulatory/regulatory-basis.js';
+import { getJpProgram } from './ind/ctd/jp-programs.js';
 
 const log = createScopedLogger('cross-jurisdictional');
 
@@ -35,7 +44,10 @@ export interface DivergenceItem {
 export interface AgencyPosition {
   agency: string;
   position: string;
+  /** The position's bases as a reader sees them (each says whether it was checked against the regulator's text). */
   guidanceRef?: string;
+  /** Where the position comes from. Set for every PMDA position. */
+  basis?: readonly RegulatoryBasis[];
 }
 
 export interface ReliancePathway {
@@ -79,6 +91,30 @@ export interface CrossJurisdictionalResult {
     availablePathways: number;
     recommendedSequence: string;
   };
+}
+
+// ─── Japan: bases and record-derived positions ──────────────────────────────
+
+const SEARCH_EXTRACT = 'Search extract of the regulator-hosted copy on 2026-10-05; the document was not read (egress blocked). Re-read owed.';
+
+/** ICH E5 and the 2023 MHLW notice on a Japanese Phase 1 before an MRCT. */
+const JP_DATA_BASIS: readonly RegulatoryBasis[] = [
+  { ref: 'ICH E5(R1) Ethnic factors in the acceptability of foreign clinical data', confidence: 'recall', note: "Bridging need is judged from the drug's sensitivity to ethnic factors; not a standing requirement." },
+  { ref: 'MHLW notice 医薬薬審発1225第2号 (2023-12-25): Japanese Phase 1 study before an MRCT, for drugs developed first overseas', confidence: 'recall', url: 'https://www.mhlw.go.jp/content/10601000/001270513.pdf', note: `${SEARCH_EXTRACT} PMDA copy: https://www.pmda.go.jp/files/000266148.pdf.` },
+];
+const JP_Q1A_BASIS: RegulatoryBasis = { ref: 'ICH Q1A(R2) Stability testing of new drug substances and products', confidence: 'recall', url: 'https://database.ich.org/sites/default/files/Q1A(R2)%20Guideline.pdf', note: SEARCH_EXTRACT };
+
+/** What AnA says about Japanese data wherever a position needs it. */
+const JP_PHASE1_BEFORE_MRCT = 'a Japanese Phase 1 study before joining an MRCT is in principle not required where safety and tolerability at the MRCT dose can be judged from existing data (MHLW 2023-12-25, 医薬薬審発1225第2号)';
+const JP_TRIAL_CONSULTATION = getJpProgram('pmda-consultation-clinical-trial');
+const JP_PEDIATRIC_PLAN = getJpProgram('jp-pediatric-development-plan');
+/** The PMDA paediatric position, read from the jp-programs record. */
+const JP_PEDIATRIC_POSITION = `${JP_PEDIATRIC_PLAN.name} (${JP_PEDIATRIC_PLAN.nameJa}), in force from ${JP_PEDIATRIC_PLAN.effectiveFrom}. ${JP_PEDIATRIC_PLAN.timing ?? ''}`.trim();
+const consultInJapan = `PMDA ${JP_TRIAL_CONSULTATION.name.toLowerCase()} (${JP_TRIAL_CONSULTATION.nameJa})`;
+
+/** A position's basis and its rendering for the reader; nothing when the position has none recorded. */
+function withBasis(basis: readonly RegulatoryBasis[] | undefined): Pick<AgencyPosition, 'basis' | 'guidanceRef'> {
+  return basis ? { basis, guidanceRef: basis.map(basisLabel).join('; ') } : {};
 }
 
 // ─── Engine ──────────────────────────────────────────────────────────────────
@@ -130,6 +166,8 @@ export class CrossJurisdictionalEngine {
     const clinicalDivergences: Array<{
       topic: string;
       positions: Record<string, string>;
+      /** The basis of each agency's position, by agency. */
+      bases?: Record<string, readonly RegulatoryBasis[]>;
       level: DivergenceItem['divergenceLevel'];
       harmonization: string;
       ich?: string;
@@ -139,9 +177,10 @@ export class CrossJurisdictionalEngine {
         positions: {
           FDA: 'Requires hard clinical endpoints or validated surrogates per FDA guidance',
           EMA: 'Accepts patient-reported outcomes (PROs) more readily; CHMP scientific advice recommended',
-          PMDA: 'Requires bridging study data for Japanese population; ethnicity sensitivity assessment',
+          PMDA: `Need for Japanese-population data is judged case by case under ICH E5; ${JP_PHASE1_BEFORE_MRCT}. Agree endpoint acceptability in a ${consultInJapan}.`,
           NMPA: 'Requires China-specific clinical data or multi-regional clinical trial (MRCT) with Chinese sites',
         },
+        bases: { PMDA: [...JP_DATA_BASIS, ...JP_TRIAL_CONSULTATION.basis] },
         level: 'significant',
         harmonization: 'Use ICH E17 MRCT framework to design a single global trial acceptable to all agencies',
         ich: 'ICH E17',
@@ -151,9 +190,10 @@ export class CrossJurisdictionalEngine {
         positions: {
           FDA: 'Placebo-controlled preferred; active comparator acceptable for ethical reasons',
           EMA: 'Active comparator preferred — must reflect EU standard of care',
-          PMDA: 'Japanese standard of care comparator required; dose-finding in Japanese subjects',
+          PMDA: `No Japan-specific comparator requirement is recorded; ICH E10 applies. Agree the comparator in a ${consultInJapan}.`,
           NMPA: 'China-approved comparator required; may differ from US/EU standard',
         },
+        bases: { PMDA: [{ ref: 'ICH E10 Choice of control group in clinical trials', confidence: 'recall' }, ...JP_TRIAL_CONSULTATION.basis] },
         level: 'significant',
         harmonization: 'Pre-submission scientific advice with each agency; consider adaptive design with multiple comparator arms',
         ich: 'ICH E10',
@@ -163,9 +203,10 @@ export class CrossJurisdictionalEngine {
         positions: {
           FDA: 'PREA/BPCA mandate; Pediatric Study Plan required unless waiver/deferral granted',
           EMA: 'Paediatric Investigation Plan (PIP) required at time of MAA; PDCO agreement needed',
-          PMDA: 'Pediatric guidance follows ICH E11; no mandatory pediatric plan but encouraged',
+          PMDA: JP_PEDIATRIC_POSITION,
           NMPA: 'Pediatric data not always required; case-by-case assessment',
         },
+        bases: { PMDA: JP_PEDIATRIC_PLAN.basis },
         level: 'significant',
         harmonization: 'Submit PIP to EMA early (before Phase 2); align FDA PSP timing; use ICH E11(R1) as common framework',
         ich: 'ICH E11(R1)',
@@ -175,9 +216,10 @@ export class CrossJurisdictionalEngine {
         positions: {
           FDA: 'Generally accepts global data without bridging for most indications',
           EMA: 'Accepts global data; no routine bridging requirement',
-          PMDA: 'Bridging study or Japanese sub-population data mandatory per ICH E5',
+          PMDA: `Need for Japanese data (a bridging study, Japanese subjects in an MRCT, or neither) is judged case by case under ICH E5 from the drug's sensitivity to ethnic factors; ${JP_PHASE1_BEFORE_MRCT}.`,
           NMPA: 'Chinese patient data required; MRCT with adequate Chinese enrollment or local study',
         },
+        bases: { PMDA: JP_DATA_BASIS },
         level: 'significant',
         harmonization: 'Design MRCT per ICH E17 with adequate enrollment in Japan and China; pre-agree sample sizes with PMDA/NMPA',
         ich: 'ICH E5/E17',
@@ -191,9 +233,10 @@ export class CrossJurisdictionalEngine {
         positions: {
           FDA: 'ICH Q1A conditions; 25°C/60% RH long-term; 12 months minimum at filing',
           EMA: 'ICH Q1A/Q1B; Zone II conditions; photostability per Q1B required',
-          PMDA: 'Zone IVa (hot/humid) conditions required for Japanese market stability',
+          PMDA: 'ICH Q1A(R2) applies: its long-term conditions (25 °C/60% RH, or 30 °C/65% RH) were set for climatic zones I and II, the three regions EU, Japan and US; data generated in one of the three regions is acceptable in the others',
           NMPA: 'Zone IVb (hot/very humid) conditions; 40°C/75% RH accelerated; 6-month minimum',
         },
+        bases: { PMDA: [JP_Q1A_BASIS] },
         level: 'minor',
         harmonization: 'Design stability program covering all ICH climatic zones (I-IVb) from initial registration batches',
         ich: 'ICH Q1A-Q1E',
@@ -206,6 +249,7 @@ export class CrossJurisdictionalEngine {
           PMDA: 'Follows ICH Q8-Q10; GMP inspection prior to approval',
           NMPA: 'Process validation at Chinese manufacturing site if local production; GMP certificate required',
         },
+        bases: { PMDA: [{ ref: 'ICH Q8–Q10; PMD Act GMP conformity inspection (GMP適合性調査)', confidence: 'recall' }] },
         level: 'minor',
         harmonization: 'Implement ICH Q8-Q12 Quality by Design framework globally; schedule GMP inspections with all target agencies',
         ich: 'ICH Q8-Q12',
@@ -222,6 +266,7 @@ export class CrossJurisdictionalEngine {
           PMDA: 'Risk Management Plan required; Japanese-specific AE reporting timelines',
           NMPA: 'Periodic Safety Update Reports; China-specific pharmacovigilance database',
         },
+        bases: { PMDA: [{ ref: 'MHLW Risk Management Plan guidance (医薬品リスク管理計画指針); PMD Act adverse reaction reporting', confidence: 'recall' }] },
         level: 'minor',
         harmonization: 'Develop single global RMP framework; tailor risk minimization measures per jurisdiction; align PBRER/PSUR timelines',
         ich: 'ICH E2E',
@@ -231,11 +276,12 @@ export class CrossJurisdictionalEngine {
         positions: {
           FDA: 'ICH E14 thorough QT study required; CV outcome trial for diabetes drugs',
           EMA: 'E14 QT study; concentration-QTc analysis accepted; CV safety meta-analysis for certain classes',
-          PMDA: 'QT study in Japanese subjects or bridging QT data; ethnic sensitivity assessment for CV safety',
+          PMDA: 'ICH E14 and the ICH E14/S7B Q&As apply; no Japan-specific QT study requirement is recorded',
           NMPA: 'QT study data required; may request China-specific CV safety data',
         },
+        bases: { PMDA: [{ ref: 'ICH E14 Clinical evaluation of QT/QTc interval prolongation; ICH E14/S7B Q&As', confidence: 'recall' }] },
         level: 'minor',
-        harmonization: 'Conduct concentration-QTc analysis per ICH E14 Q&A; include Japanese subjects in thorough QT study',
+        harmonization: 'Conduct concentration-QTc analysis per ICH E14 Q&A; settle any region-specific QT data needs with each agency',
         ich: 'ICH E14/S7B',
       },
     ];
@@ -250,10 +296,7 @@ export class CrossJurisdictionalEngine {
     for (const d of allDivergences) {
       const agencyPositions: AgencyPosition[] = agencies
         .filter(a => d.positions[a])
-        .map(a => ({
-          agency: a,
-          position: d.positions[a],
-        }));
+        .map(a => ({ agency: a, position: d.positions[a], ...withBasis(d.bases?.[a]) }));
 
       if (agencyPositions.length >= 2) {
         divergences.push({
@@ -386,7 +429,7 @@ export class CrossJurisdictionalEngine {
             'PMDA/NMPA can leverage approved labeling as starting point',
           ],
           disadvantages: [
-            'Requires Japanese bridging data before PMDA filing',
+            'Japanese-data needs (ICH E5, judged case by case) must be settled with PMDA before the PMDA filing',
             'NMPA requires China-specific clinical data',
             'Sequential approach is slower overall',
           ],
@@ -419,7 +462,7 @@ export class CrossJurisdictionalEngine {
           ],
           disadvantages: [
             'FDA may require additional data beyond EMA package',
-            'PMDA/NMPA still require local data independently',
+            'PMDA and NMPA assess local-data needs independently',
             'Slower US market access',
           ],
         },

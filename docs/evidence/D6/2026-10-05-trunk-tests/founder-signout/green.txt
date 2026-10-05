@@ -1,0 +1,62 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/founder-critical-path-proof.test.ts > Login endpoint exists > server/routes/auth.ts contains router.post /login 2ms
+ ✓ tests/founder-critical-path-proof.test.ts > Logout endpoint uses token revocation > auth.ts has a logout route that calls revokeToken 1ms
+ ✓ tests/founder-critical-path-proof.test.ts > Project CRUD endpoints exist > concept2cure.ts contains governance and project routes 1ms
+ ✓ tests/founder-critical-path-proof.test.ts > Artifact identity is canonical > getCanonicalDocumentIdentity returns concept2cureArtifacts 29ms
+stdout | tests/founder-critical-path-proof.test.ts > Token revocation is durable > revoked token survives across isTokenRevoked calls
+{
+  "timestamp": "2026-10-05T05:05:22.333Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:05:22.335Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/founder-critical-path-proof.test.ts > Token revocation is durable > revoked token survives across isTokenRevoked calls
+{
+  "timestamp": "2026-10-05T05:05:22.335Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/founder-critical-path-proof.test.ts > Token revocation is durable > revoked token survives across isTokenRevoked calls
+[database] Database connection test failed { error: 'role "test" does not exist' }
+
+stdout | tests/founder-critical-path-proof.test.ts > Token revocation is durable > revoked token survives across isTokenRevoked calls
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/founder-critical-path-proof.test.ts > Token revocation is durable > revoked token survives across isTokenRevoked calls
+[database] Initial connection test failed: role "test" does not exist
+
+stderr | tests/founder-critical-path-proof.test.ts > Token revocation is durable > revoked token survives across isTokenRevoked calls
+{
+  "timestamp": "2026-10-05T05:05:22.454Z",
+  "level": "warn",
+  "message": "[token-revocation] DB revoke failed",
+  "context": {
+    "error": "role \"test\" does not exist"
+  }
+}
+
+ ✓ tests/founder-critical-path-proof.test.ts > Token revocation is durable > revoked token survives across isTokenRevoked calls 2073ms
+ ✓ tests/founder-critical-path-proof.test.ts > SSO hidden in production > ZenLogin.tsx contains import.meta.env.DEV guard 1ms
+ ✓ tests/founder-critical-path-proof.test.ts > Sign-out is wired > the shell renders a sign-out control that calls the auth service 1ms
+ ✓ tests/founder-critical-path-proof.test.ts > Sign-out is wired > the auth service logout reaches the server and can end every session 1ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  05:05:19
+   Duration  2.65s (transform 1.21s, setup 110ms, import 47ms, tests 2.11s, environment 0ms)
+

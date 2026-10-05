@@ -62,6 +62,14 @@ const DDL = [
     'task_dependencies',
     'cross_module_task_links',
     'stability_studies',
+    // Not read here: 20261005_cmc_core_registers_project.sql (below) indexes
+    // these five alongside stability_studies, so it runs as it is only when
+    // they exist.
+    'drug_substances',
+    'drug_products',
+    'analytical_methods',
+    'process_validation',
+    'cmc_change_control',
   ]),
   ...fs
     .readFileSync(path.join(REPO_ROOT, BASELINE), 'utf8')
@@ -76,6 +84,9 @@ const DDL = [
     'db/migrations/20260727_unified_tasks_mdx_metadata.sql',
     'db/migrations/20260807_task_graph_org_columns.sql',
     'db/migrations/20260807_unified_tasks_soft_delete.sql',
+    // stability_studies.project_id — the Drizzle model the CMC sync selects
+    // through names it (90b34d33c), so the sync fails without it.
+    'migrations/20261005_cmc_core_registers_project.sql',
   ].map(f => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8')),
   // stability_studies.project_id (D2, 90b34d33c), which the Drizzle model reads:
   // that migration's own stability_studies statements, as written. Its other

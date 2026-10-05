@@ -20,6 +20,7 @@ import type {
 import { CTD_AUTHORING_GUIDANCE } from './authoring-guidance.js';
 import { LIFECYCLE_DOCUMENT_TYPES } from './lifecycle-document-types.js';
 import { compareSectionCode } from '../../../../shared/regulatory/section-code';
+import { resolveSectionBriefSource } from './section-brief.js';
 
 export type {
   CtdSection,
@@ -196,15 +197,31 @@ export function resolveCtdSectionsForDocType(dt: LifecycleDocumentType): CtdSect
 
 /**
  * Build a rich, industry-grade drafting prompt for a CTD section from its
- * guidance entry, interpolating project context. Returns null when no guidance
- * is registered for the code (caller can then fall back to a generic prompt).
+ * guidance entry, interpolating project context.
+ *
+ * Resolves through resolveSectionBriefSource (section-brief.ts), the same
+ * resolution the section playbook uses, and NOT through
+ * getCtdAuthoringGuidance, whose parent branch returns the first descendant:
+ * that briefed 8 of the 19 IND sections (2.6, 2.7, 3.2.S, 3.2.P, 4.2.1,
+ * 4.2.2, 4.2.3, 5.3) as their first child, so a 4.2.3 Toxicology draft was
+ * written as "4.2.3.1 Single-Dose Toxicity".
+ *   - exact    → the entry's brief, titled with the entry;
+ *   - ancestor → the entry's brief, titled with the requested (open) code and
+ *                saying whose requirements follow;
+ *   - parent   → the requested container, listing the sections it contains
+ *                (parentHeadingLines: true depth, an unregistered intermediate
+ *                level such as 5.3.5 by code only, titles without the
+ *                overlay's picker qualifiers); no one child's requirements;
+ *                "Not applicable" only where the material says so;
+ *   - null     → null (the caller falls back or says nothing).
+ * getCtdAuthoringGuidance stays for its other callers (GET /guidance/:code).
  */
 export function buildSectionGenerationPrompt(
   code: string,
   ctx: { productName?: string; indication?: string; sponsor?: string; phase?: string } = {},
 ): string | null {
-  const g = getCtdAuthoringGuidance(code);
-  if (!g) return null;
+  const src = resolveSectionBriefSource(code);
+  if (!src) return null;
 
   const fill = (s: string) =>
     s
@@ -213,10 +230,37 @@ export function buildSectionGenerationPrompt(
       .replace(/\{\{SPONSOR\}\}/g, ctx.sponsor || '[Sponsor]')
       .replace(/\{\{PHASE\}\}/g, ctx.phase || '[Phase]');
 
+  const noFabrication =
+    `Do not fabricate study results, numbers, or product-specific facts you were not given; ` +
+    `where a value is unknown, insert a clearly-marked placeholder.`;
+
+  if (src.kind === 'parent') {
+    return [
+      `You are a senior regulatory affairs writer authoring CTD section ${src.requested} as a whole ` +
+        `for an FDA submission. Write in formal regulatory language suitable for filing; follow the ICH M4 CTD structure.`,
+      fill('Product: {{PRODUCT_NAME}}. Indication: {{INDICATION}}. Sponsor: {{SPONSOR}}. Development phase: {{PHASE}}.'),
+      `Section ${src.requested} contains these sections. Organise the draft under them, in this order, ` +
+        `with each heading numbered and titled as listed. A code listed without a title is a containing ` +
+        `heading: keep it, numbered as listed, with the sections under it nested beneath it:\n` +
+        parentHeadingLines(src.requested, src.children!).join('\n'),
+      `Each listed section has its own requirements. Under each heading, write only what the material ` +
+        `provided supports for that section. Where the material provided states that a section does not ` +
+        `apply to this product or phase, write "Not applicable" under the heading with the reason the ` +
+        `material gives; do not decide that yourself. Where the material supports nothing, keep the heading ` +
+        `and insert a placeholder.`,
+      noFabrication,
+    ].join('\n\n');
+  }
+
+  const g = src.entry!;
   const parts: string[] = [];
   parts.push(
-    `You are a senior regulatory affairs writer authoring CTD section ${g.code} "${g.title}" ` +
-      `for an FDA submission. Write in formal regulatory language suitable for filing; follow the ICH M4 CTD structure.`,
+    src.kind === 'ancestor'
+      ? `You are a senior regulatory affairs writer authoring CTD section ${src.requested}, within ${g.code} "${g.title}", ` +
+          `for an FDA submission. The requirements below are ${g.code}'s; write the part of them that belongs in ${src.requested}. ` +
+          `Write in formal regulatory language suitable for filing; follow the ICH M4 CTD structure.`
+      : `You are a senior regulatory affairs writer authoring CTD section ${g.code} "${g.title}" ` +
+          `for an FDA submission. Write in formal regulatory language suitable for filing; follow the ICH M4 CTD structure.`,
   );
   if (g.authoringGuidance) parts.push(`Section intent: ${fill(g.authoringGuidance)}`);
   if (g.keyContentElements.length) {
@@ -229,9 +273,46 @@ export function buildSectionGenerationPrompt(
     parts.push(`Avoid these common deficiencies:\n${g.commonPitfalls.map((e) => `- ${fill(e)}`).join('\n')}`);
   }
   if (g.generationPrompt) parts.push(fill(g.generationPrompt));
-  parts.push(
-    `Do not fabricate study results, numbers, or product-specific facts you were not given; ` +
-      `where a value is unknown, insert a clearly-marked placeholder. Governing reference: ${g.guidance || 'ICH M4'}.`,
-  );
+  parts.push(`${noFabrication} Governing reference: ${g.guidance || 'ICH M4'}.`);
   return parts.join('\n\n');
+}
+
+/**
+ * The overlay's title for a section as a filed heading: without the
+ * platform's disambiguating qualifiers — a " — Overview" suffix and a trailing
+ * bracketed note ("Stability (Drug Substance)", "Introduction (Nonclinical
+ * Written and Tabulated Summaries)"), which tell sections apart in a picker
+ * but are not part of the ICH M4 heading. A bracket inside the title
+ * ("Manufacturer(s)", "Human Pharmacokinetic (PK) Studies") is kept.
+ */
+function headingTitle(title: string): string {
+  return title
+    .replace(/\s+—\s+Overview$/, '')
+    .replace(/\s+\([^()]*\)$/, '')
+    .trim();
+}
+
+/**
+ * The heading lines of a parent prompt: every registered section under
+ * `requested`, in order, indented by its true depth below `requested`. An
+ * intermediate level with no overlay entry (5.3.5 under 5.3) is listed by
+ * code only — no title is invented — right before its first descendant, so
+ * 5.3.5.1–5.3.5.4 are never read as children of 5.3.4.
+ */
+function parentHeadingLines(requested: string, children: CtdSection[]): string[] {
+  const base = requested.split('.').length;
+  const listed = new Set(children.map((c) => c.code));
+  const indent = (segments: number) => '  '.repeat(Math.max(0, segments - base - 1));
+  const lines: string[] = [];
+  for (const c of children) {
+    const segs = c.code.split('.');
+    for (let n = base + 1; n < segs.length; n++) {
+      const level = segs.slice(0, n).join('.');
+      if (listed.has(level)) continue;
+      listed.add(level);
+      lines.push(`${indent(n)}- ${level}`);
+    }
+    lines.push(`${indent(segs.length)}- ${c.code} ${headingTitle(c.title)}`);
+  }
+  return lines;
 }

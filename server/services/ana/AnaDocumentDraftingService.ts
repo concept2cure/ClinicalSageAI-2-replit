@@ -39,6 +39,10 @@ import {
   getSubmissionTypeContext,
 } from '../../../shared/regulatory/submission-type-bridge.js';
 import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap.js';
+import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy.js';
+import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
+import { resolveRequirements } from '../ind/ctd/requirements-resolver.js';
+import { CTD_AUTHORING_GUIDANCE } from '../ind/ctd/authoring-guidance.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Regulatory System Prompts (cached for cost efficiency)
@@ -184,33 +188,129 @@ QUALITY REQUIREMENTS:
 }
 
 /**
- * Resolve any submission type string to the best system prompt.
- * Checks hardcoded frameworks first, then builds a dynamic prompt from registry data.
+ * What a drafted section must contain, and which record said so.
+ *
+ * `requirementsSource` goes into gateway metadata so a draft can be traced to
+ * the record that briefed it:
+ *   - `record:<source>:<code>:<match>` — the canonical record
+ *     (server/services/ind/ctd/requirements-resolver.ts resolveRequirements);
+ *   - `blueprint+record:…` — the blueprint row plus the record's brief;
+ *   - `record:not-indexed`, `record:module1-not-indexed:<region>`,
+ *     `record:candidates`, `record:outside-outline` — the record was asked and
+ *     said so;
+ *   - `…+title-mismatch` — a code was given with a title the record and the
+ *     blueprint do not give it; the brief names both;
+ *   - `blueprint` — a non-CTD blueprint row (devices, an IB's own numbering);
+ *   - `none` — nothing resolved.
  */
+export interface DraftingRequirements {
+  requirements: string | null;
+  requirementsSource: string;
+}
+
 /**
- * Ground a draft in the section blueprint. Resolves (submissionType, sectionType)
- * to the exact SectionDefinition and returns a REQUIREMENTS block carrying the
- * governing standard (ICH/MDR/ISO reference), the content type, and whether the
- * section is required — so the model drafts to the real regulatory structure
- * rather than re-deriving it. Returns null when the pair can't be resolved (the
- * draft then proceeds on the framework prompt alone, as before).
+ * Dossier standards organised as the ICH CTD. EU_CTA ('regional': a CTR Part I
+ * / Part II submission), SG ACTD and device standards are not.
  */
-export function resolveSectionRequirements(
-  submissionType: string | undefined,
-  sectionType: string,
-): string | null {
-  if (!submissionType) return null;
-  const entry = resolveToRegistryEntry(submissionType);
-  if (!entry) return null;
+const CTD_DOSSIER_STANDARDS: ReadonlySet<string> = new Set(['eCTD', 'CTD', 'NeeS']);
 
-  const blueprint = getSectionBlueprintForEntry(entry);
-  const norm = (s: string) => s.trim().toLowerCase();
-  const target = norm(sectionType);
-  const section = blueprint.sections.find(
-    (s) => norm(s.code) === target || norm(s.title) === target || norm(`${s.code} ${s.title}`) === target,
+/**
+ * Whether an entry's sections are CTD headings: a CTD dossier standard, and a
+ * blueprint whose every heading is numbered inside its own CTD module (1.2,
+ * 3.2.S, 2.3.S). Gated on the entry's framework, never on the shape of the
+ * code asked for: a 510(k)'s section 3 (Device Description) or an IB's section
+ * 3 is a plain number in its own outline, and normalizeCtdCode('3') would read
+ * it as CTD Module 3.
+ */
+function isCtdFramework(entry: RegulatoryApplicationType, blueprint: SectionBlueprint): boolean {
+  return (
+    CTD_DOSSIER_STANDARDS.has(entry.dossierStandard) &&
+    blueprint.sections.length > 0 &&
+    blueprint.sections.every((s) => s.code.startsWith(`${s.module}.`))
   );
-  if (!section) return null;
+}
 
+const normTitle = (s: string) => s.trim().toLowerCase().replace(/[_\s]+/g, ' ');
+const moduleOf = (code: string) => code.split('.')[0];
+
+/** The canonical record's codes by normalised title; a title held by several codes lists them all. */
+let canonicalTitleIndex: Map<string, string[]> | null = null;
+function canonicalCodesForTitle(title: string): string[] {
+  if (!canonicalTitleIndex) {
+    canonicalTitleIndex = new Map();
+    for (const [code, g] of Object.entries(CTD_AUTHORING_GUIDANCE)) {
+      const key = normTitle(g.title);
+      canonicalTitleIndex.set(key, [...(canonicalTitleIndex.get(key) ?? []), code]);
+    }
+  }
+  return canonicalTitleIndex.get(normTitle(title)) ?? [];
+}
+
+/** A section number: a CTD code ("2.7.4", "m3.2.P.5"), or a number outside Modules 1–5 ("9.9.9"). */
+const SECTION_NUMBER = /^\s*m?\d+(?:\.[0-9A-Za-z]+)*\s*$/i;
+
+/**
+ * The section number a request opens with, for a CTD-framework entry: the whole
+ * request ("2.7.4"; a number outside Modules 1–5 is passed on as asked, so the
+ * record can say it has no entry), or a leading number followed by any title
+ * ("2.7.4 Clinical Safety", the CTD_SECTIONS blueprint's own "1.1 Cover
+ * Letter"). A bare leading integer ("3 Month Stability") counts only when the
+ * rest is that module's canonical title, so a title that starts with a number is
+ * not read as a module. Null: the request is a title.
+ */
+function leadingSectionCode(sectionType: string): { code: string; title: string | null } | null {
+  const direct = normalizeCtdCode(sectionType);
+  if (direct) return { code: direct, title: null };
+  if (SECTION_NUMBER.test(sectionType)) return { code: sectionType.trim(), title: null };
+  const lead = /^(\S+)\s+(.+)$/.exec(sectionType.trim());
+  if (!lead || !SECTION_NUMBER.test(lead[1])) return null;
+  const code = normalizeCtdCode(lead[1]) ?? lead[1];
+  const dotted = /[.]/.test(lead[1]) || /^m/i.test(lead[1]);
+  const canonical = CTD_AUTHORING_GUIDANCE[code]?.title;
+  if (!dotted && !(canonical && normTitle(canonical) === normTitle(lead[2]))) return null;
+  return { code, title: lead[2] };
+}
+
+/** a is b, or an ancestor or descendant of it, in the CTD tree. */
+const sameBranch = (a: string, b: string) => a === b || a.startsWith(`${b}.`) || b.startsWith(`${a}.`);
+
+/**
+ * The record's answer for one CTD code. Modules 2–5 are ICH-harmonised and are
+ * answered for every region; the record's Module 1 is FDA's, so it answers a US
+ * entry only, and any other region is told the record has no entry for it.
+ */
+function recordRequirements(
+  entry: RegulatoryApplicationType,
+  code: string,
+  namedByCode: boolean,
+): DraftingRequirements {
+  if (moduleOf(code) === '1' && entry.region !== 'US') {
+    return {
+      requirements:
+        `SECTION REQUIREMENTS: Module 1 is regional; the platform's guidance has no ${entry.region} (${entry.agency}) ` +
+        `Module 1 entry${namedByCode ? ` for ${code}` : ''} — do not supply its requirements from memory. ` +
+        `Draft only what the material provided supports, and say which ${entry.region} Module 1 requirements were not available.`,
+      requirementsSource: `record:module1-not-indexed:${entry.region}`,
+    };
+  }
+  const answer = resolveRequirements({ document: code });
+  if (answer.kind === 'answer') {
+    const src = answer.source;
+    const id = src.kind === 'ctd-section' ? src.code : src.kind === 'lifecycle' ? src.id : src.outlineId;
+    return {
+      requirements:
+        `SECTION REQUIREMENTS (from the platform's canonical regulatory record — draft to these; do not add requirements from memory):\n` +
+        answer.requirements,
+      requirementsSource: `record:${src.kind}:${id}:${answer.match}`,
+    };
+  }
+  return {
+    requirements: `SECTION REQUIREMENTS: ${answer.kind === 'not_indexed' ? answer.reason : `The platform's guidance has no entry for "${code}"; do not supply requirements from memory.`}`,
+    requirementsSource: 'record:not-indexed',
+  };
+}
+
+function blueprintLines(entry: RegulatoryApplicationType, section: SectionBlueprint['sections'][number]): string {
   const lines = [
     `SECTION REQUIREMENTS (from the ${entry.displayName} authoring blueprint):`,
     `- Section: ${section.code} — ${section.title}`,
@@ -221,6 +321,172 @@ export function resolveSectionRequirements(
   return lines.join('\n');
 }
 
+type BlueprintRow = SectionBlueprint['sections'][number];
+
+/** A CTD-framework entry, its blueprint rows outside Module 1 (`outline`), and the request. */
+interface CtdDraftContext {
+  entry: RegulatoryApplicationType;
+  blueprint: SectionBlueprint;
+  outline: BlueprintRow[];
+  sectionType: string;
+}
+
+const sameCode = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/** The record's brief, with the outline's row for the same code above it (never a Module 1 row). */
+function withBlueprintRow(ctx: CtdDraftContext, code: string, rec: DraftingRequirements): DraftingRequirements {
+  const row = moduleOf(code) === '1' ? undefined : ctx.outline.find((s) => sameCode(s.code, code));
+  if (!row) return rec;
+  return {
+    requirements: `${blueprintLines(ctx.entry, row)}\n\n${rec.requirements}`,
+    requirementsSource: `blueprint+${rec.requirementsSource}`,
+  };
+}
+
+/**
+ * One code → its brief (recordRequirements gates another region's Module 1);
+ * several → the listing, picking none. No record title is held both in Module 1
+ * and elsewhere (2026-10-05), so a listing never names FDA's Module 1 to another
+ * region; g-drafting-paths-scope scopes Module 1 by region.
+ */
+function candidateRequirements(ctx: CtdDraftContext, codes: string[]): DraftingRequirements {
+  const { entry, outline, sectionType } = ctx;
+  if (codes.length === 1) return withBlueprintRow(ctx, codes[0], recordRequirements(entry, codes[0], false));
+  const titleOf = (c: string) => CTD_AUTHORING_GUIDANCE[c]?.title ?? outline.find((s) => s.code === c)?.title ?? '';
+  const listed = codes.map((c) => `${c} ${titleOf(c)}`.trim()).join('; ');
+  return {
+    requirements:
+      `SECTION REQUIREMENTS: "${sectionType.trim()}" names more than one section in the platform's CTD record: ${listed}. ` +
+      `Ask which section code is meant, or draft to the code given; do not merge their requirements or pick one from memory.`,
+    requirementsSource: 'record:candidates',
+  };
+}
+
+/**
+ * A section number, alone or followed by any title: the number decides. A title
+ * that neither the record nor the outline gives that number is named in a NOTE,
+ * with the record's own code(s) for it, never silently dropped.
+ */
+function codeRequirements(ctx: CtdDraftContext, lead: { code: string; title: string | null }): DraftingRequirements {
+  const rec = withBlueprintRow(ctx, lead.code, recordRequirements(ctx.entry, lead.code, true));
+  const title = lead.title?.trim();
+  if (!title || rec.requirementsSource.startsWith('record:module1-not-indexed')) return rec;
+  const canonical = CTD_AUTHORING_GUIDANCE[lead.code]?.title;
+  const rowTitle = ctx.outline.find((s) => sameCode(s.code, lead.code))?.title;
+  if ([canonical, rowTitle].some((t) => t && normTitle(t) === normTitle(title))) return rec;
+  const elsewhere = canonicalCodesForTitle(title).filter((c) => c !== lead.code);
+  const note =
+    `NOTE: the request titles ${lead.code} "${title}"` +
+    (canonical ? `; the record titles ${lead.code} "${canonical}"` : '') +
+    (elsewhere.length ? `; the record holds "${title}" at ${elsewhere.join(', ')}` : '') +
+    `. Drafted to ${lead.code} as numbered — confirm the section with the author; do not merge the two.`;
+  return { requirements: `${rec.requirements}\n${note}`, requirementsSource: `${rec.requirementsSource}+title-mismatch` };
+}
+
+/**
+ * A title. The entry's own outline answers first: its row's code, never a
+ * same-titled section elsewhere in the record (a DMF's "Stability" is 3.2.S.7,
+ * not 3.2.P.8; a QOS's "Introduction" is 2.3.I, not 2.2) — unless the record
+ * holds the title more than once and several of those sections lie inside the
+ * outline (an IND's "Literature References": 2.7.5 and 5.4), when the codes are
+ * listed and none is picked. A title only the record holds is its code (or
+ * codes) among the CTD modules the blueprint covers; outside them it is
+ * `record:outside-outline` (a QOS asked for "Stability" never gets 3.2.P.8).
+ * Null when nothing holds the title.
+ */
+function titleRequirements(ctx: CtdDraftContext, matchRow: (s: BlueprintRow) => boolean): DraftingRequirements | null {
+  const { entry, blueprint, outline, sectionType } = ctx;
+  const canon = canonicalCodesForTitle(sectionType);
+  const rows = outline.filter(matchRow);
+  if (rows.length > 1) return candidateRequirements(ctx, rows.map((r) => r.code));
+  if (rows.length === 1) {
+    const inOutline = canon.filter((c) => outline.some((s) => sameBranch(s.code, c)));
+    if (canon.length > 1 && inOutline.length > 1) return candidateRequirements(ctx, canon);
+    return withBlueprintRow(ctx, rows[0].code, recordRequirements(entry, rows[0].code, true));
+  }
+  if (canon.length === 0) return null;
+  const modules = new Set(blueprint.sections.map((s) => moduleOf(s.code)));
+  const inModules = canon.filter((c) => modules.has(moduleOf(c)));
+  if (inModules.length > 0) return candidateRequirements(ctx, inModules);
+  return {
+    requirements:
+      `SECTION REQUIREMENTS: the platform's CTD record holds "${sectionType.trim()}" only at ${canon.join(', ')}, ` +
+      `outside the ${entry.displayName} outline (Module ${[...modules].sort().join(', ')}). ` +
+      `Ask which section of this submission is meant; do not supply its requirements from memory.`,
+    requirementsSource: 'record:outside-outline',
+  };
+}
+
+/**
+ * Ground a draft in what the section must contain.
+ *
+ * For a CTD-framework entry (isCtdFramework) the requirements come from the
+ * canonical record, never from the 17-row CTD_SECTIONS blueprint, whose Module 1
+ * rows swap FDA's 1.1 Forms and 1.2 Cover letters and which has no row for
+ * 2.7.4, 5.3.5.3, 1.14.4.1 or 3.2.P.5 (D2 findings 28 and 74, 2026-10-05):
+ *   - a code, alone or followed by any title → recordRequirements (Modules 2–5
+ *     any region; Module 1 for a US entry; otherwise, or when the record has
+ *     nothing, an explicit "do not supply from memory" line — never null). The
+ *     blueprint row for the same code is kept above the brief, outside Module 1
+ *     only. A title that disagrees with the code is named in a NOTE
+ *     (`+title-mismatch`), never silently dropped;
+ *   - a title the entry's own outline (its blueprint rows outside Module 1)
+ *     holds → that row's code with the record's brief for it (US IND "Drug
+ *     Substance" → 3.2.S; DMF "Stability" → 3.2.S.7, never the record's
+ *     same-titled 3.2.P.8), unless the record holds the title more than once
+ *     and several of those sections lie inside the outline — then the codes are
+ *     listed (US IND "Literature References" → 2.7.5; 4.3; 5.4);
+ *   - any other title → the record's code when it holds the title once, every
+ *     code when more than once, among the modules the entry's blueprint covers
+ *     (a QOS's "Stability" is outside-outline, never 3.2.P.8); unmatched → null.
+ * Any other blueprint (510(k), De Novo, MDR/IVDR, an IB's own numbering) is
+ * answered from its blueprint row as before. Pure and deterministic.
+ */
+export function resolveDraftingRequirements(
+  submissionType: string | undefined,
+  sectionType: string,
+): DraftingRequirements {
+  const none: DraftingRequirements = { requirements: null, requirementsSource: 'none' };
+  if (!submissionType) return none;
+  const entry = resolveToRegistryEntry(submissionType);
+  if (!entry) return none;
+
+  const blueprint = getSectionBlueprintForEntry(entry);
+  const norm = (s: string) => s.trim().toLowerCase();
+  const target = norm(sectionType);
+  const matchRow = (s: BlueprintRow) =>
+    norm(s.code) === target || norm(s.title) === target || norm(`${s.code} ${s.title}`) === target;
+
+  if (!isCtdFramework(entry, blueprint)) {
+    const section = blueprint.sections.find(matchRow);
+    return section ? { requirements: blueprintLines(entry, section), requirementsSource: 'blueprint' } : none;
+  }
+
+  // The blueprint's Module 1 rows are not a brief for a CTD entry: CTD_SECTIONS
+  // swaps FDA's 1.1 Forms and 1.2 Cover letters (finding 28), and any other
+  // region's Module 1 is not in the record (recordRequirements says so).
+  const ctx: CtdDraftContext = {
+    entry,
+    blueprint,
+    outline: blueprint.sections.filter((s) => moduleOf(s.code) !== '1'),
+    sectionType,
+  };
+  const lead = leadingSectionCode(sectionType);
+  return lead ? codeRequirements(ctx, lead) : titleRequirements(ctx, matchRow) ?? none;
+}
+
+/** The requirements block alone; resolveDraftingRequirements also names its source. */
+export function resolveSectionRequirements(
+  submissionType: string | undefined,
+  sectionType: string,
+): string | null {
+  return resolveDraftingRequirements(submissionType, sectionType).requirements;
+}
+
+/**
+ * Resolve any submission type string to the best system prompt.
+ * Checks hardcoded frameworks first, then builds a dynamic prompt from registry data.
+ */
 export function resolveSystemPrompt(submissionType: string): string {
   // Direct framework key (e.g. 'fda_510k', 'ich_clinical') — backward compatible.
   if (REGULATORY_SYSTEM_PROMPTS[submissionType]) {
@@ -395,7 +661,7 @@ export class AnaDocumentDraftingService {
     // Ground the draft in the section blueprint (guidance reference, content
     // type, required flag) so every one of the 158 types drafts to its real
     // regulatory structure rather than the model re-deriving it.
-    const requirements = resolveSectionRequirements(req.submissionType, req.sectionType);
+    const { requirements, requirementsSource } = resolveDraftingRequirements(req.submissionType, req.sectionType);
     if (requirements) userPrompt += `${requirements}\n\n`;
 
     userPrompt += `INSTRUCTIONS:\n${req.instructions}`;
@@ -424,6 +690,7 @@ export class AnaDocumentDraftingService {
         framework: req.framework,
         submissionType: req.submissionType,
         sectionType: req.sectionType,
+        requirementsSource,
       },
     };
 

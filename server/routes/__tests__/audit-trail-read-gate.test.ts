@@ -23,7 +23,7 @@
  * alone. It is a hand-recorded audit event like its siblings and is pinned to
  * the same recorder gate below.
  */
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import request from 'supertest';
 
@@ -33,8 +33,25 @@ vi.mock('../../services/tenant/governed-tenant-context.js', () => ({ setTenantCo
 vi.mock('../../services/audit/tenant-chain-verdict.js', () => ({ verifyTenantChainOnAdminScope: vi.fn(async () => ({ ok: true })) }));
 const monitor = vi.hoisted(() => ({ runOnDemandCheck: vi.fn(async () => ({ lastRun: 'now', broken: 0 })), getChainMonitorStatus: vi.fn(() => ({ running: true })), getSharedChainMonitorStatus: vi.fn(async () => ({ running: true })) }));
 vi.mock('../../services/audit/chainIntegrityMonitor.js', () => monitor);
-// The chain monitor is estate-wide: only a platform administrator may read or run it. The harness marks one with user.platformAdmin.
-vi.mock('../../middleware/requirePlatformAdmin.js', () => ({ isPlatformAdmin: (req: any) => req.user?.platformAdmin === true }));
+// The chain monitor is estate-wide: only a platform administrator may read or run it.
+// Changed 2026-10-05 (D6, docs/evidence/D6/2026-10-05-cross-tenant-staff/): this
+// suite mocked requirePlatformAdmin.js with a sync isPlatformAdmin reading a harness
+// flag. The routes now await resolvePlatformAdmin, so the real module decides, as in
+// production: the owner's own sign-in on PLATFORM_ADMIN_EMAILS, or an active
+// platform_role_grants row, whose lookup the db double below answers. `grants` maps a
+// user id to the platform role its grant row names; nobody holds one by default.
+const grants = vi.hoisted(() => new Map<number, string>());
+vi.mock('../../db', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../db')>()),
+  query: vi.fn(async (sql: string, params: unknown[] = []) => {
+    const granted = grants.get(Number(params[0]));
+    const asked = Array.isArray(params[1]) ? (params[1] as string[]) : [];
+    return { rows: /FROM platform_role_grants/.test(sql) && granted && asked.includes(granted) ? [{ '?column?': 1 }] : [] };
+  }),
+}));
+const OWNER_EMAIL = 'owner@platform.test';
+/** The platform owner's own (password) sign-in, on the PLATFORM_ADMIN_EMAILS allowlist. */
+const ALLOWLISTED_OWNER = { email: OWNER_EMAIL, provider: 'local-jwt' };
 
 import { createAuditTrailRoutes } from '../audit-trail-routes';
 
@@ -59,7 +76,9 @@ function app(role: string, extra: Record<string, unknown> = {}) {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as any).user = { id: 2, email: 'b@acme.test', organizationId: 7, role, roles: [role], ...extra };
-    (req as any).userId = 2;
+    // server/auth.ts sets req.userId and req.userRole (the tenant membership role).
+    (req as any).userId = (req as any).user.id;
+    (req as any).userRole = role;
     (req as any).tenantContext = { organizationId: 7 };
     next();
   });
@@ -218,7 +237,18 @@ describe('recording a signature marker (DP-38, P1-36)', () => {
 });
 
 describe('the chain-integrity monitor is a platform administrator\'s surface (P1-36 follow-up, 2026-09-26)', () => {
-  beforeEach(() => monitor.runOnDemandCheck.mockClear());
+  const savedAllowlist = process.env.PLATFORM_ADMIN_EMAILS;
+  beforeEach(() => {
+    monitor.runOnDemandCheck.mockClear();
+    monitor.getSharedChainMonitorStatus.mockClear();
+    process.env.PLATFORM_ADMIN_EMAILS = OWNER_EMAIL;
+    grants.clear();
+  });
+  afterEach(() => {
+    if (savedAllowlist === undefined) delete process.env.PLATFORM_ADMIN_EMAILS;
+    else process.env.PLATFORM_ADMIN_EMAILS = savedAllowlist;
+    grants.clear();
+  });
 
   it.each(['owner', 'admin', 'manager', 'user', 'viewer'])('%s of an organisation cannot start the estate-wide check (403) or read its status', async role => {
     const run = await request(app(role)).post('/api/audit/chain-monitor/check');
@@ -230,17 +260,52 @@ describe('the chain-integrity monitor is a platform administrator\'s surface (P1
   });
 
   it('a platform administrator runs the check and reads the status', async () => {
-    const run = await request(app('owner', { platformAdmin: true })).post('/api/audit/chain-monitor/check');
+    const run = await request(app('owner', ALLOWLISTED_OWNER)).post('/api/audit/chain-monitor/check');
     expect(run.status).toBe(200);
     expect(monitor.runOnDemandCheck).toHaveBeenCalledTimes(1);
-    const status = await request(app('owner', { platformAdmin: true })).get('/api/audit/chain-monitor/status');
+    const status = await request(app('owner', ALLOWLISTED_OWNER)).get('/api/audit/chain-monitor/status');
     expect(status.status).toBe(200);
     expect(status.body).toMatchObject({ success: true, data: { running: true } });
   });
 
+  // D6, 2026-10-05 (docs/evidence/D6/2026-10-05-cross-tenant-staff/): the request
+  // role is the tenant membership role (organization_users.role, no CHECK). A row
+  // naming a platform role, with no platform_role_grants row behind it, is not
+  // standing.
+  it.each(['super_admin', 'platform_admin', 'support'])('a tenant membership role of %s with no platform grant is refused (403) on the check and the status', async role => {
+    const run = await request(app(role, { id: 41 })).post('/api/audit/chain-monitor/check');
+    expect(run.status).toBe(403);
+    expect(run.body).toMatchObject({ error: 'PLATFORM_ADMIN_REQUIRED' });
+    expect(monitor.runOnDemandCheck).not.toHaveBeenCalled();
+    const status = await request(app(role, { id: 41 })).get('/api/audit/chain-monitor/status');
+    expect(status.status).toBe(403);
+    expect(status.body).toMatchObject({ error: 'PLATFORM_ADMIN_REQUIRED' });
+    expect(monitor.getSharedChainMonitorStatus).not.toHaveBeenCalled();
+  });
+
+  // D6, 2026-10-05: designated platform staff hold a platform_role_grants row, not
+  // an allowlisted e-mail. The synchronous isPlatformAdmin these routes called never
+  // consulted the grants, so a grant holder was refused the estate's monitor.
+  it.each(['platform_admin', 'support', 'super_admin'])('a %s platform grant holder (not on the allowlist, membership role member) runs the check and reads the status', async granted => {
+    grants.set(42, granted);
+    const run = await request(app('member', { id: 42 })).post('/api/audit/chain-monitor/check');
+    expect(run.status).toBe(200);
+    expect(monitor.runOnDemandCheck).toHaveBeenCalledTimes(1);
+    const status = await request(app('member', { id: 42 })).get('/api/audit/chain-monitor/status');
+    expect(status.status).toBe(200);
+    expect(status.body).toMatchObject({ success: true, data: { running: true } });
+  });
+
+  it('another user\'s grant does not admit this one (403)', async () => {
+    grants.set(42, 'platform_admin');
+    const run = await request(app('member', { id: 43 })).post('/api/audit/chain-monitor/check');
+    expect(run.status).toBe(403);
+    expect(monitor.runOnDemandCheck).not.toHaveBeenCalled();
+  });
+
   it('a failed check answers 500 without the caught error\'s text', async () => {
     monitor.runOnDemandCheck.mockRejectedValueOnce(new Error('relation "audit_logs" does not exist'));
-    const run = await request(app('owner', { platformAdmin: true })).post('/api/audit/chain-monitor/check');
+    const run = await request(app('owner', ALLOWLISTED_OWNER)).post('/api/audit/chain-monitor/check');
     expect(run.status).toBe(500);
     expect(JSON.stringify(run.body)).not.toMatch(/relation|audit_logs/);
   });

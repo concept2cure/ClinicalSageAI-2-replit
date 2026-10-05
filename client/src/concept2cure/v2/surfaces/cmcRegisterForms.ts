@@ -34,6 +34,7 @@
  */
 
 import type { C2CFormConfig } from '../C2CForm';
+import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 /* The scope vocabulary is the composer's, not the form's: shared/cmc/material-scope.ts. */
 import { CMC_MATERIAL_SCOPES } from '@shared/cmc/material-scope';
 /* The dissolution purposes are the composer's, not the form's: one definition,
@@ -1314,6 +1315,55 @@ export function qualifyBody(v: Record<string, string>): QualifyBody {
     meaning: req(v.meaning) || 'approval',
     reauth: { password: v.password || undefined, totp: v.totp || undefined },
   };
+}
+
+/* ═══════════ A signed record: closed to edits, retired with a reason ═════════
+   The signatures bind the ledger hash, not the content, so the API refuses an
+   ordinary edit of a qualified or validated record and retires one only with a
+   reason (server/services/cmc/signed-record.ts). The register says so before
+   the person tries. */
+
+export type SignedWord = 'qualified' | 'validated';
+
+export function isSignedRecord(status: unknown, signed: SignedWord): boolean {
+  return String(status ?? '').trim().toLowerCase() === signed;
+}
+
+/** Why Update is closed on a signed record, or null when it is open. */
+export function signedUpdateBlocked(status: unknown, signed: SignedWord, noun: string): string | null {
+  return isSignedRecord(status, signed)
+    ? `${signed === 'qualified' ? 'Qualified' : 'Validated'} under a recorded signature, so its content is closed to edits. ` +
+      `Retire it, then record and sign a new ${noun}.`
+    : null;
+}
+
+export function retireSignedForm(subject: string, name: string, signed: SignedWord): C2CFormConfig {
+  return {
+    eyebrow: 'Retire a signed record',
+    title: `Retire ${subject}`,
+    sub: name,
+    submitLabel: 'Retire',
+    governed:
+      `This ${subject} is ${signed} under a recorded signature. Retiring it keeps the record and its signature, ` +
+      'ends its use in Module 3, and records your reason with your name and the time.',
+    fields: [
+      {
+        key: 'reason',
+        label: 'Reason',
+        type: 'textarea',
+        required: true,
+        desc: `At least ${GOVERNED_REASON_MIN} characters.`,
+        placeholder: 'Why it is retired: the lot exhausted, the system replaced, the study superseded…',
+      },
+    ],
+  };
+}
+
+export function retireSignedBody(
+  v: Record<string, string>,
+  field: 'status' | 'validationStatus' = 'status',
+): Record<string, string> {
+  return { [field]: 'retired', reason: (v.reason ?? '').trim() };
 }
 
 /* ═══════════ Impurity profiles — POST/PUT /api/cmc/impurity-profiles ═════════

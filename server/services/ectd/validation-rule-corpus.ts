@@ -72,6 +72,12 @@ export interface ValidationRule {
   enforcement: RuleEnforcement;
   /** Finding code emitted when `enforcement === 'dispatch-readiness'`. */
   findingCode?: string;
+  /**
+   * For a date-effective rule: the id of the dated fact in
+   * server/services/regulatory-currency/currency-registry.ts whose effective
+   * date the check reads. The date lives there only — never copied here.
+   */
+  currencyFactId?: string;
 }
 
 const ICH_SPEC = 'ICH eCTD Specification (v3.2.2 / v4.0)';
@@ -395,6 +401,31 @@ export const RULE_CORPUS: ValidationRule[] = [
     rationale: 'Clinical and nonclinical study reports must be accompanied by an STF so the agency can index the study; missing STFs are flagged.',
     source: ICH_SPEC,
     enforcement: 'ectd-validator',
+  },
+
+  // ── Regional format acceptance — Japan/PMDA (jp) ────────────────────────────
+  {
+    // 2026-10-05 (g-jp-ectd-v4-dispatch-blocker).
+    id: 'JP_ECTD_V4_REQUIRED',
+    title: 'A new Japanese application is not built in eCTD v3.2.2 once PMDA accepts only v4.0',
+    category: 'format',
+    regions: ['jp'],
+    severity: 'high',
+    rationale:
+      'PMDA accepts only eCTD v4.0 for new approval applications from the effective date of currency fact ' +
+      '"pmda-ectd-v4-mandatory" (the check reads that date from the registry; it is not restated here). ' +
+      'An application first filed in v3.2.2 before then may continue its lifecycle in v3.2.2. This platform builds ' +
+      'Japan packages in v3.2.2 only and has no JP v4.0 packager, so an original sequence for a Japanese application ' +
+      'on or after that date is blocked at dispatch; a continuing sequence is not. With no usable as-of date, or ' +
+      'with the fact missing from the registry, the check blocks rather than passes.',
+    source:
+      `${JP_SPEC}: MHLW 薬生薬審発0218第4号 (2022-02-18, https://www.mhlw.go.jp/web/t_doc?dataId=00tc6467&dataType=1&pageNo=1) ` +
+      'set the eCTD v3.2.2 transition to end 2026-03-31; MHLW 医薬薬審発0310第3号 (2025-03-10, ' +
+      'https://www.mhlw.go.jp/hourei//doc/tsuchi/T250310I0040.pdf) is the current amendment. ' +
+      'Dated through currency fact pmda-ectd-v4-mandatory.',
+    enforcement: 'dispatch-readiness',
+    findingCode: 'JP_ECTD_V4_REQUIRED',
+    currencyFactId: 'pmda-ectd-v4-mandatory',
   },
 
   // ── Regional Module 1 — Health Canada (ca) ──────────────────────────────────

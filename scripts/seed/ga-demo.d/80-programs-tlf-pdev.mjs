@@ -36,7 +36,12 @@
  *      Tenant isolation is via the program join, so builds hang off the seeded
  *      biopharma programs (which carry organization_id + are not soft-deleted).
  *
- *   4. GET /api/cmc/overview (server/api/cmc/portfolio.ts:68)
+ *   4. GET /api/cmc/module3-board (server/routes/cmc-module3-board.routes.ts),
+ *      the portfolio read. This part was written against GET
+ *      /api/cmc/blueprint/portfolio/overview (server/api/cmc/portfolio.ts),
+ *      retired 2026-10-05 with no caller, and the counts below are that
+ *      overview's; the board reads the same reg_submissions rows and
+ *      reg_questions, and its RPI engine reads reg_m3_sections.
  *      → reg_submissions (sub_id, product_id, region, sub_type, tenant_id) is the
  *        one-row-per-submission list; per row it counts open reg_questions,
  *        reg_obligations and reg_m3_sections keyed by sub_id. Org col on the

@@ -1,0 +1,161 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts
+{
+  "timestamp": "2026-10-05T05:18:01.109Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a viewer is refused before anything is read or written: post /api/stability/studies/s1/conditions
+{
+  "timestamp": "2026-10-05T05:18:03.871Z",
+  "level": "error",
+  "message": "[stability-router] saving conditions failed",
+  "context": {
+    "err": "Tenant context required",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a viewer is refused before anything is read or written: delete /api/stability/conditions/c1
+{
+  "timestamp": "2026-10-05T05:18:03.877Z",
+  "level": "error",
+  "message": "[stability-router] deleting conditions failed",
+  "context": {
+    "err": "Tenant context required",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a member reaches the handler: post /api/stability/studies/s1/conditions
+{
+  "timestamp": "2026-10-05T05:18:03.892Z",
+  "level": "error",
+  "message": "[stability-router] saving conditions failed",
+  "context": {
+    "err": "Tenant context required",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a member reaches the handler: delete /api/stability/conditions/c1
+{
+  "timestamp": "2026-10-05T05:18:03.895Z",
+  "level": "error",
+  "message": "[stability-router] deleting conditions failed",
+  "context": {
+    "err": "Tenant context required",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ × server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a viewer is refused before anything is read or written: post /api/cmc-changes 32ms
+   → {"error":{"code":"VALIDATION","message":"title is required."}}: expected 400 to be 403 // Object.is equality
+ × server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a viewer is refused before anything is read or written: post /api/stability/studies 6ms
+   → {"error":"Invalid storageConditions","allowed":["LT","INT","ACC"]}: expected 400 to be 403 // Object.is equality
+ × server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a viewer is refused before anything is read or written: post /api/stability/studies/s1/conditions 7ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while saving conditions. The problem has been logged."}: expected 500 to be 403 // Object.is equality
+ × server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a viewer is refused before anything is read or written: delete /api/stability/conditions/c1 6ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while deleting conditions. The problem has been logged."}: expected 500 to be 403 // Object.is equality
+ ✓ server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a member reaches the handler: post /api/cmc-changes 5ms
+ ✓ server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a member reaches the handler: post /api/stability/studies 4ms
+ ✓ server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a member reaches the handler: post /api/stability/studies/s1/conditions 4ms
+ ✓ server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a member reaches the handler: delete /api/stability/conditions/c1 3ms
+ ✓ server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a viewer still reads 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a viewer is refused before anything is read or written: post /api/cmc-changes
+AssertionError: {"error":{"code":"VALIDATION","message":"title is required."}}: expected 400 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 400
+
+ ❯ server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts:54:50
+     52|     touched.n = 0;
+     53|     const res = await (request(app('viewer')) as any)[method](path).se…
+     54|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                  ^
+     55|     expect(touched.n).toBe(0);
+     56|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a viewer is refused before anything is read or written: post /api/stability/studies
+AssertionError: {"error":"Invalid storageConditions","allowed":["LT","INT","ACC"]}: expected 400 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 400
+
+ ❯ server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts:54:50
+     52|     touched.n = 0;
+     53|     const res = await (request(app('viewer')) as any)[method](path).se…
+     54|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                  ^
+     55|     expect(touched.n).toBe(0);
+     56|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a viewer is refused before anything is read or written: post /api/stability/studies/s1/conditions
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while saving conditions. The problem has been logged."}: expected 500 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 500
+
+ ❯ server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts:54:50
+     52|     touched.n = 0;
+     53|     const res = await (request(app('viewer')) as any)[method](path).se…
+     54|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                  ^
+     55|     expect(touched.n).toBe(0);
+     56|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts > CMC writes outside /api/cmc > a viewer is refused before anything is read or written: delete /api/stability/conditions/c1
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while deleting conditions. The problem has been logged."}: expected 500 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 500
+
+ ❯ server/api/cmc/__tests__/cmc-outside-writes-gated.test.ts:54:50
+     52|     touched.n = 0;
+     53|     const res = await (request(app('viewer')) as any)[method](path).se…
+     54|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                  ^
+     55|     expect(touched.n).toBe(0);
+     56|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 5 passed (9)
+   Start at  05:17:59
+   Duration  4.69s (transform 1.60s, setup 85ms, import 4.24s, tests 78ms, environment 0ms)
+

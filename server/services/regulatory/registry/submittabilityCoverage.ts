@@ -13,9 +13,10 @@
  * `production_ready` by the authoring definition and have no path off the
  * platform at all.
  *
- * Today the back half happens to be complete — every registry region except
- * GLOBAL resolves through `region-identity` to a registered gateway pair. That
- * is the point. It holds by diligence, and nothing asserts it keeps holding: add
+ * Every registry region except GLOBAL resolves through `region-identity` to a
+ * registered gateway pair — but a registered gateway for the REGION is not a
+ * channel for every filing in it (see `submissionChannelFor`). Coverage holds
+ * by diligence, and nothing else asserts it keeps holding: add
  * a region to `GLOBAL_REGISTRY` and its filing types become selectable at project
  * initiation immediately, with no gateway, and no test notices. The customer
  * discovers it at the end of a submission.
@@ -42,7 +43,12 @@ import {
   REGION_IDENTITY,
   type CanonicalRegion,
 } from '../../../../shared/regulatory/region-identity.js';
-import { listGateways } from '../../submission-gateways/index.js';
+import {
+  listGateways,
+  type GatewayName,
+  type Region as GatewayRegion,
+} from '../../submission-gateways/index.js';
+import { SUBMISSION_FORMATS } from '../../global-ri/electronic-submission-format.js';
 import type {
   RegulatoryApplicationType,
   Region,
@@ -57,7 +63,12 @@ import type {
  *  `not_a_filing`   — a document component, not something filed on its own.
  *  `no_identity`    — the region has no `region-identity` entry, so nothing can
  *                     map it to a gateway, a rules region, or an M1 backbone.
- *  `no_gateway`     — identity exists but names a gateway that is not registered.
+ *  `no_gateway`     — identity exists but names a gateway that is not registered,
+ *                     or the filing's channel is one the platform has no
+ *                     connector for (`submissionChannelFor` → `unconnected`,
+ *                     e.g. a centralised MAA and the EMA eSubmission Gateway,
+ *                     an orphan designation and EMA IRIS, or an EMA filing
+ *                     whose channel is not modelled at all).
  */
 export type SubmittabilityTier =
   | 'submittable'
@@ -92,17 +103,156 @@ const PORTAL_ONLY_FORMATS: ReadonlyMap<string, string> = new Map([
   ['CTIS', 'CTIS — the EU Clinical Trials Information System portal (Regulation (EU) 536/2014)'],
 ]);
 
+/**
+ * Where one filing actually goes. The ONE channel function: the submittability
+ * report, the submission resolver (planner and AnA) and every other caller read
+ * this, so no two of them can name different channels for the same filing.
+ *
+ *  `gateway`     — a gateway pair in the submission-gateways registry carries it.
+ *  `portal`      — a human web portal; no gateway will ever carry it.
+ *  `unconnected` — a machine channel exists at the agency, but the platform has
+ *                  no connector for it. Build-only here; the applicant transmits.
+ *  `none`        — the region has no identity, so nothing names a channel.
+ */
+export type SubmissionChannel =
+  | { kind: 'gateway'; region: GatewayRegion; name: GatewayName }
+  | { kind: 'portal'; channel: string }
+  | {
+      kind: 'unconnected';
+      channel: string;
+      reason: string;
+      /** What the platform does and what the applicant does, for this channel. */
+      applicantStep: string;
+    }
+  | { kind: 'none' };
+
+/**
+ * The centralised-procedure channel, worded once in
+ * global-ri/electronic-submission-format.ts (SUBMISSION_FORMATS.EMA.gateway).
+ *
+ * EMA made the eSubmission Gateway / Web Client mandatory for every
+ * centralised-procedure eCTD submission from 2014-03-01 — new MAAs, variations,
+ * renewals, PSURs, ASMFs — and tells applicants not to send those submissions to
+ * NCAs via CESP as well (regulator text, ema.europa.eu; basis in
+ * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
+ * g-submission-channel-function-facts.md rows 1-2). REGION_IDENTITY.EU.defaultGateway
+ * stays `cesp`: that IS the channel for national, MRP and DCP filings, which the
+ * registry marks agency 'National_Competent_Authority'.
+ *
+ * No eSubmission Gateway connector exists (Rule 2; founder decision, DECISIONS.md
+ * row 10), so this is `unconnected` — never a GatewayName, and never CESP.
+ */
+/* SUBMISSION_FORMATS.EMA.gateway also names CESP in a trailing parenthetical
+   ("CESP for national procedures"); that is the national channel, not this one,
+   so only the centralised channel is named here. */
+const EMA_CENTRALISED_CHANNEL = `EMA ${SUBMISSION_FORMATS.EMA.gateway.replace(/\s*\([^)]*\)\s*$/, '')}`;
+const EMA_CENTRALISED_REASON =
+  'Centralised procedure — the eSubmission Gateway/Web Client is mandatory (EMA, since 2014-03-01); ' +
+  'CESP is not an accepted channel, and the platform has no eSubmission Gateway connector';
+const EMA_CENTRALISED_STEP =
+  'The platform builds and validates the eCTD sequence; the applicant transmits it through that channel.';
+
+/**
+ * The application families fact row 1 covers: the centralised-procedure eCTD
+ * submissions EMA names (MAAs, variations, renewals, PSURs, ASMFs). Nothing
+ * else is sent to the eSubmission Gateway by this module. Fix round 2
+ * (2026-10-05): the round-1 rule was "EU + EMA + eCTD", which also caught
+ * EU_ORPHAN, EU_SCIENTIFIC_ADVICE, EU_PIP and EU_PRIME — they carry
+ * submissionFormat 'eCTD' in the registry — and told an orphan-designation
+ * applicant the centralised procedure applied.
+ */
+const EMA_CENTRALISED_FAMILIES = new Set([
+  'marketing_authorization',
+  'variation',
+  'renewal',
+  'safety_report',
+  'master_file',
+]);
+
+/**
+ * EMA filings received through IRIS, keyed by registry id rather than family:
+ * `pre_submission` and `designation` also hold EU_REF_LAB and EU_ACCEL_ASSESS,
+ * which nothing on record routes to IRIS. Each row is regulator text
+ * (ema.europa.eu search results, facts rows 4-5). The platform has no IRIS
+ * connector (Rule 2), so these are `unconnected`, not `portal`: this module does
+ * not assert that no machine channel exists.
+ */
+const EMA_IRIS_CHANNEL = 'EMA IRIS (Regulatory & Scientific Information Management Platform)';
+const EMA_IRIS_FILINGS: ReadonlyMap<string, string> = new Map([
+  ['EU_ORPHAN', 'Orphan designation applications are submitted to EMA through IRIS (EMA, since 2018)'],
+  ['EU_SCIENTIFIC_ADVICE', 'Scientific advice requests are submitted to EMA through IRIS (EMA, since 2020-10-19)'],
+  ['EU_PIP', 'Paediatric investigation plan applications are submitted to EMA through IRIS (EMA)'],
+  ['EU_PRIME', 'PRIME eligibility requests are submitted to EMA through IRIS (EMA)'],
+]);
+const EMA_IRIS_STEP =
+  'The platform prepares the application content; the applicant submits it through IRIS, for which the platform has no connector.';
+
+/**
+ * Any other EMA-agency entry: no channel is modelled, and none is invented.
+ * Falling through to the region default reported EU_EUDRAVIGILANCE_ICSR, EU_PSMF
+ * and the IVDR consultations submittable through CESP — a channel nothing on
+ * record says accepts them. Fail closed, and make no regulator claim.
+ */
+const EMA_UNMODELLED_CHANNEL = 'EMA — channel not modelled';
+const EMA_UNMODELLED_REASON =
+  "This filing's EMA submission channel is not modelled on the platform; confirm it with EMA. " +
+  'The EU region default (CESP) is not assumed';
+const EMA_UNMODELLED_STEP =
+  'The platform prepares the content; the applicant submits it through the channel EMA specifies.';
+
+const DEVICE_FAMILIES = new Set(['device_approval', 'device_clearance']);
+
+export function submissionChannelFor(entry: RegulatoryApplicationType): SubmissionChannel {
+  // The entry's own declared format first: a registered gateway for the region
+  // is not a channel for a filing whose entry says it goes to a portal.
+  const portal = PORTAL_ONLY_FORMATS.get(String(entry.submissionFormat ?? ''));
+  if (portal) return { kind: 'portal', channel: portal };
+
+  if (entry.region === 'EU' && entry.agency === 'EMA') {
+    if (DEVICE_FAMILIES.has(String(entry.applicationFamily))) {
+      return { kind: 'gateway', region: 'ema', name: 'eudamed' };
+    }
+    const iris = EMA_IRIS_FILINGS.get(entry.id);
+    if (iris) {
+      return { kind: 'unconnected', channel: EMA_IRIS_CHANNEL, reason: iris, applicantStep: EMA_IRIS_STEP };
+    }
+    if (entry.submissionFormat === 'eCTD' && EMA_CENTRALISED_FAMILIES.has(String(entry.applicationFamily))) {
+      return {
+        kind: 'unconnected',
+        channel: EMA_CENTRALISED_CHANNEL,
+        reason: EMA_CENTRALISED_REASON,
+        applicantStep: EMA_CENTRALISED_STEP,
+      };
+    }
+    return {
+      kind: 'unconnected',
+      channel: EMA_UNMODELLED_CHANNEL,
+      reason: EMA_UNMODELLED_REASON,
+      applicantStep: EMA_UNMODELLED_STEP,
+    };
+  }
+
+  const identity = (REGION_IDENTITY as Record<string, any>)[entry.region as CanonicalRegion];
+  if (!identity) return { kind: 'none' };
+  return { kind: 'gateway', region: identity.gatewaySlug, name: identity.defaultGateway };
+}
+
 export interface SubmittabilityCoverage {
   id: string;
   displayName: string;
   region: Region;
   agency: Agency;
   segment?: Segment;
-  /** Gateway registry slug the region maps to, e.g. 'fda'. */
+  /**
+   * REGION-level: the gateway registry slug the entry's region maps to, e.g.
+   * 'fda'. Not this filing's channel — read `tier` (and `channel` /
+   * `portalChannel`) for that; an EU centralised MAA carries slug 'ema' and
+   * default 'cesp' here while its tier is `no_gateway`.
+   */
   gatewaySlug?: string;
-  /** Gateway the region defaults to, e.g. 'esg'. */
+  /** REGION-level: the gateway the region defaults to, e.g. 'esg'. See `gatewaySlug`. */
   defaultGateway?: string;
-  /** The (slug, gateway) pair is present in the gateway registry. */
+  /** REGION-level: the region's (slug, default gateway) pair is in the gateway registry. */
   gatewayRegistered: boolean;
   /** A regional M1 backbone is declared for the region. */
   hasM1Backbone: boolean;
@@ -113,6 +263,12 @@ export interface SubmittabilityCoverage {
    * missing that was never going to exist.
    */
   portalChannel?: string;
+  /**
+   * When the channel is `unconnected` (tier `no_gateway`), the channel the
+   * filing must use, and why the region's default gateway is not it.
+   */
+  channel?: string;
+  channelReason?: string;
 }
 
 /**
@@ -177,13 +333,17 @@ export function getSubmittability(
   // correct, not a gap; reporting it as one trains people to ignore the number.
   if (isNonFiling(entry)) return { ...base, tier: 'not_a_filing' };
   if (!identity) return { ...base, tier: 'no_identity' };
-  /* Before the gateway check, deliberately: the EU region HAS a registered
-     gateway, and that is exactly how an EU CTA came to be reported submittable
-     through CESP when its own entry says CTIS. A registered gateway for the
-     region is not a channel for this filing. */
-  const portalChannel = PORTAL_ONLY_FORMATS.get(String(entry.submissionFormat ?? ''));
-  if (portalChannel) return { ...base, tier: 'portal_only', portalChannel };
-  if (!gatewayRegistered) return { ...base, tier: 'no_gateway' };
+  /* The filing's channel, not the region's: the EU region HAS a registered
+     gateway, and that is exactly how an EU CTA (CTIS) and every centralised MAA
+     (eSubmission Gateway) came to be reported submittable through CESP. */
+  const channel = submissionChannelFor(entry);
+  if (channel.kind === 'portal') return { ...base, tier: 'portal_only', portalChannel: channel.channel };
+  if (channel.kind === 'unconnected') {
+    return { ...base, tier: 'no_gateway', channel: channel.channel, channelReason: channel.reason };
+  }
+  if (channel.kind !== 'gateway' || !pairs.has(`${channel.region}:${channel.name}`)) {
+    return { ...base, tier: 'no_gateway' };
+  }
   return { ...base, tier: 'submittable' };
 }
 
@@ -256,10 +416,14 @@ export function buildSubmittabilityReport(): SubmittabilityReport {
  * The gate. Returns the filing types that a customer could select at project
  * initiation and then be unable to submit.
  *
- * Empty is the required state. A non-empty result means someone added filing
- * types for a region without wiring its identity or its gateway, and the failure
- * would otherwise surface to the customer at the end of a submission rather than
- * to us at the start of a pull request.
+ * A non-empty result means either someone added filing types for a region
+ * without wiring its identity or its gateway — a failure that would otherwise
+ * surface to the customer at the end of a submission rather than to us at the
+ * start of a pull request — or a filing's channel has no connector here. The
+ * centralised EMA filings (eSubmission Gateway / Web Client, `channel` names it)
+ * are in that second group by founder decision (Rule 2; DECISIONS.md row 10):
+ * build-only until a connector is approved, and listed here rather than hidden
+ * as submittable through CESP, which EMA does not accept for them.
  */
 export function getUnsubmittableFilings(): SubmittabilityCoverage[] {
   return computeSubmittability().filter(

@@ -23,17 +23,24 @@ import request from 'supertest';
 const GOOD = 'correct horse battery staple';
 
 const h = vi.hoisted(() => {
-  const state = { log: [] as string[], sigFail: null as unknown };
-  const ROW = { id: 9, status: 'draft', approval_status: 'draft', project_id: null, tenant_id: '7', organization_id: 7 };
+  /* The batch's RECORDED QC results, which a release is evaluated over
+     (services/cmc/batch-release-evidence). `qcAfter`, when set, is what the
+     signing transaction's re-read finds: results that changed mid-signature. */
+  const state = { log: [] as string[], sigFail: null as unknown, qc: [] as unknown[], qcAfter: null as unknown[] | null, qcReads: 0, batchDeviations: null as unknown };
+  const ROW = { id: 9, status: 'draft', approval_status: 'draft', project_id: null, tenant_id: '7', organization_id: 7, batch_number: 'B-9', release_status: null };
   const client = {
     query: async (sql: string) => {
+      if (/FROM qc_testing/.test(sql)) {
+        state.qcReads += 1;
+        return { rows: state.qcReads > 1 && state.qcAfter ? state.qcAfter : state.qc, rowCount: state.qc.length };
+      }
       const word = sql.trim().split(/\s+/)[0].toUpperCase();
       if (word === 'BEGIN' || word === 'COMMIT' || word === 'ROLLBACK') state.log.push(word);
       if (word === 'UPDATE') {
         state.log.push('DOMAIN');
         return { rows: [ROW], rowCount: 1 };
       }
-      if (word === 'SELECT') return { rows: [ROW], rowCount: 1 };
+      if (word === 'SELECT') return { rows: [{ ...ROW, deviations: state.batchDeviations }], rowCount: 1 };
       return { rows: [], rowCount: 0 };
     },
     release: () => undefined,
@@ -135,9 +142,19 @@ const CASES = [
   },
 ];
 
+/** One recorded release result for batch B-9. */
+const qcRow = (over: Record<string, unknown> = {}) => ({
+  id: 1, sample_id: 'S-B9-1', test_method: 'AM-001', test_results: { value: '99.2' },
+  specifications: { acceptanceCriteria: '98.0-102.0%' }, pass_fail_status: 'pass', reviewed_by: 5, ...over,
+});
+
 beforeEach(() => {
   h.log = [];
   h.sigFail = null;
+  h.qc = [qcRow()];
+  h.qcAfter = null;
+  h.qcReads = 0;
+  h.batchDeviations = null;
   signerRole.value = 'admin';
   ledgerClients.length = 0;
   signatureClients.length = 0;
@@ -237,20 +254,61 @@ describe('CMC batch release: the signature means what the disposition is', () =>
     expect(persistGovernedActionSignature.mock.calls[0][1].payload.meaning).toBe(meaning);
   });
 
-  it("an 'approved' disposition whose release tests fail is held at pending-review, so it is not signed 'release'", async () => {
-    const res = await release({ decision: 'approved', releaseTesting: { assay: 'fail' } });
-    expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(res.body.data.releaseEvaluation.releaseStatus).toBe('pending-review');
-    expect(recordGovernedAction.mock.calls[0][1].payload).toMatchObject({ meaning: 'responsibility', releaseStatus: 'pending-review' });
+  it("an 'approved' disposition over a recorded result that fails is refused before re-authentication, and writes nothing", async () => {
+    h.qc = [qcRow(), qcRow({ id: 2, sample_id: 'S-B9-2', pass_fail_status: 'fail' })];
+    const res = await release({ decision: 'approved' });
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.code).toBe('RELEASE_EVIDENCE');
+    expect(res.body.error).toMatch(/S-B9-2/);
+    expect(verifyReauth).not.toHaveBeenCalled();
+    expect(nothingWritten()).toEqual([]);
+  });
+
+  it('a release with no result recorded against the batch is refused — zero tests is not "all passed"', async () => {
+    h.qc = [];
+    const res = await release({ decision: 'approved', releaseTesting: { assay: 'pass' } });
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.error).toMatch(/No QC result is recorded against batch B-9/);
+    expect(nothingWritten()).toEqual([]);
+  });
+
+  it('a full release needs every result reviewed; a conditional release over an unreviewed one is signed responsibility', async () => {
+    h.qc = [qcRow({ reviewed_by: null })];
+    const full = await release({ decision: 'approved' });
+    expect(full.status, JSON.stringify(full.body)).toBe(409);
+    expect(full.body.error).toMatch(/not yet reviewed/);
+    h.qcReads = 0;
+    const conditional = await release({ decision: 'conditional' });
+    expect(conditional.status, JSON.stringify(conditional.body)).toBe(200);
     expect(persistGovernedActionSignature.mock.calls[0][1].payload.meaning).toBe('responsibility');
   });
 
-  it("refuses a declared 'release' on a batch the tests hold at pending-review, and writes nothing", async () => {
-    const res = await release({ decision: 'approved', releaseTesting: { assay: 'fail' }, meaning: 'release' });
-    expect(res.status, JSON.stringify(res.body)).toBe(400);
-    expect(res.body.error).toBe('SIGNATURE_MEANING_CONFLICT');
-    expect(verifyReauth).not.toHaveBeenCalled();
-    expect(nothingWritten()).toEqual([]);
+  it('an open deviation blocks a full release (21 CFR 211.192) but not a conditional one', async () => {
+    h.batchDeviations = { open: 1 };
+    const full = await release({ decision: 'approved' });
+    expect(full.status, JSON.stringify(full.body)).toBe(409);
+    expect(full.body.error).toMatch(/1 open deviation/);
+    h.qcReads = 0;
+    const conditional = await release({ decision: 'conditional' });
+    expect(conditional.status, JSON.stringify(conditional.body)).toBe(200);
+  });
+
+  it('the release record carries the RECORDED results, never the ones the request supplies', async () => {
+    const res = await release({ decision: 'approved', releaseTesting: { assay: 'made up' } });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const tests = res.body.data.releaseEvaluation.testResults;
+    expect(tests).toHaveLength(1);
+    expect(tests[0]).toMatchObject({ qcId: 1, sampleId: 'S-B9-1', passed: true, reviewed: true });
+    expect(JSON.stringify(res.body.data.releaseEvaluation)).not.toContain('made up');
+  });
+
+  it('results that change while the signer re-authenticates refuse the signature, and nothing is signed', async () => {
+    h.qcAfter = [qcRow({ pass_fail_status: 'fail' })];
+    const res = await release({ decision: 'approved' });
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.code).toBe('EVIDENCE_CHANGED');
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(persistGovernedActionSignature).not.toHaveBeenCalled();
   });
 
   it("refuses a declared 'release' on a rejected batch before re-authentication, and writes nothing", async () => {

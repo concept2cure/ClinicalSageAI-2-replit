@@ -1,0 +1,63 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > is ready when every required 510(k) section is present and the device profile is known 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > is NOT ready on the same submission when the device profile is unknown 14ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > a sterile device needs its sterilization section, and says so 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > a non-sterile device does not, and that is a different answer from "unknown" 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > carries the authority for every section, so a reader can check it 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > models the statutory sections that were absent entirely before W1-5 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > does not require the CDRH cover sheet FDA retired for eSTAR 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > recognises the truthful-statement section titled Truthful and accuracy statement (21 CFR 807.87(k)) 5ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > recognises the truthful-statement section titled Truthful and accuracy statement 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > recognises the truthful-statement section titled Truthful and Accurate Statement 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > IVD 510(k) variant > asks an IVD for analytical performance, where the non-IVD registry cannot 7ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > IVD 510(k) variant > is satisfied by real analytical performance content 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > IVD 510(k) variant > reports the rest of FDA's IVD performance questions without blocking on them 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > IVD 510(k) variant > leaves the non-IVD pathway exactly as it was 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > does not block readiness on what it genuinely cannot decide, but does report it 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > handles empty input honestly (nothing invented) 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > honesty fix (confirmed HIGH defect): a required section whose only matching leaf is a draft/placeholder stub is NOT marked present, and does NOT flip the 510(k) to ready — this must fail against the pre-fix code, which set present:true off a title-substring match alone, with no check of content, length, or authoring status 5ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > a section still in draft/in-review status (substantive:false) is a gap even when every other title matches 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > De Novo requires a classification request + special controls (not predicate SE) 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts > mapToEstar > matches by documentType as well as title, and only when substantive 9ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > 510(k) (useEStar=true) names neither Form FDA 3514 nor eCopy 9ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > 510(k) (useEStar=false) names neither Form FDA 3514 nor eCopy 0ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > 510(k) (useEStar=undefined) names neither Form FDA 3514 nor eCopy 0ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > De Novo (useEStar=true) names neither Form FDA 3514 nor eCopy 0ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > De Novo (useEStar=false) names neither Form FDA 3514 nor eCopy 0ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > De Novo (useEStar=undefined) names neither Form FDA 3514 nor eCopy 0ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > the 510(k) plan carries every always-required eSTAR slot, by id and label 5ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > the De Novo plan carries every always-required eSTAR slot, by id and label 1ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > an IVD 510(k) is planned against the IVD eSTAR, which asks for analytical performance 1ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > the plan names exactly the eSTAR sections — no parallel hand-written list beside them 1ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > a conditional section follows the device answer, and an unanswered one says it is undetermined 1ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > HDE keeps the CDRH cover sheet (Form FDA 3514) and the eCopy 0ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > HDE is not told to pay a MDUFA user fee (HDE applications are fee-exempt) 0ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > a device-led BLA names Form FDA 356h, not the CDRH cover sheet 0ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > an undetermined pathway does not pick a form for the client 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > is ready when every required Shōnin section is present 2ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > flags missing Japanese labelling and required clinical trial results as gaps 1ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > does not require optional sections (stability, foreign-approval status) 1ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > matches Japanese-language titles (添付文書, 規格, 基本要件) 1ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > drug CTD leaves 4.2.3.2 and 5.3.5.1 fill no Shōnin slot 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > a bench-test leaf numbered '5' (the Shōnin project template's Performance Testing) does not fill the clinical slot 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > has an Essential Principles conformity slot, no 'sted' slot, and no ICH E5 label 1ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > a STED or "ICH E5 bridging" leaf fills no slot 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > without the Essential Principles checklist the file is not ready 1ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > clinicalDataRequired false: ready without a clinical leaf; the slot is not applicable 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > clinicalDataRequired undefined: the absent clinical slot is undetermined and blocks ready 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > clinicalDataRequired undefined but clinical trial results present: ready 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > assessPathwayReadiness threads clinicalDataRequired and counts undetermined as a gap 1ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — only clinical trial results fill the clinical-data slot > '非臨床試験成績' (nonclinical study results) does not fill clinical-data when trial results are required 1ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — only clinical trial results fill the clinical-data slot > '非臨床試験成績' does not clear the undetermined clinical-data gap 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — only clinical trial results fill the clinical-data slot > a clinical evaluation report (English or 臨床評価報告書, docType clinical_evaluation) is not clinical trial results 3ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — only clinical trial results fill the clinical-data slot > Japanese and English clinical trial titles still fill the slot 1ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — only clinical trial results fill the clinical-data slot > the clinical-data basis does not claim the 0804001 title was verified on a regulator site 0ms
+
+ Test Files  3 passed (3)
+      Tests  53 passed (53)
+   Start at  03:41:23
+   Duration  1.12s (transform 1.12s, setup 533ms, import 842ms, tests 96ms, environment 0ms)
+

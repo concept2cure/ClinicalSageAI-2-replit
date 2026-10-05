@@ -1,0 +1,97 @@
+Round 8's suites, green, on the round-8 tree (merged with trunk 6676dd69c): round 8's three suites, every working-memory suite, the consolidation job's database suite, every post-processing suite, and the client's answer-check suites (the reader they import now lives in shared/ana).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run server/services/ana/__tests__/memory-fact-check.test.ts server/services/__tests__/working-memory-fact-check.test.ts server/routes/ana-ri/__tests__/post-processing-memory-check.test.ts server/services/__tests__/working-memory.test.ts server/services/__tests__/working-memory-project-attribution.test.ts server/services/__tests__/memory-consolidation.pglite.integration.test.ts server/routes/ana-ri/__tests__/post-processing-*.test.ts client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id 28ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression 17ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > never guesses: a thread row with NO project attribution stays unpromoted 12ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > skips (does not invent) a promotion when the project has no intelligence profile 12ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > writes the embedding, so semantic recall (embedding IS NOT NULL) can see the memory 18ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > REJECTS a duplicate of what the project already remembers 11ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it 19ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id) 21ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered 4034ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > as stopped when the person pressed Stop 9ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it 4041ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals 4ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a reply of nothing but a provisional block, beside a navigation chip: the draft, marked not saved 5ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why 4ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > an empty reply with only a navigation chip: nothing was changed 1ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > withholds the figure the stored check did not find, in every field the reader renders 148ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > reads the current answer's check, which may not be stored yet 7ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > fails closed when the thread cannot be read: only what claims nothing stands, and the row is still written 7ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > writes the row when the summarizer returns a malformed shape, never one letter per fact 8ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > below the refresh threshold, neither summarises nor reads the thread 7ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels 1079ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > post_done, the stored message and the sealed record carry the same check 13ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > with no tool run, a turn still says what was checked: claims unchecked, not grounded 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > a short answer the labels do not assess is still checked 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says how many specific claims were not found in this turn's sources, and quotes them by kind 56ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > names what it checked against 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says every claim was found, and still earns no check mark: found is not verified (HS-2) 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says a figure is AnA's own input to a tool, not a result (HS-5) 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says a claim found only in the person's message is theirs, never found (HS-3) 7ms
+ ✓ server/services/__tests__/working-memory-project-attribution.test.ts > storeWorkingMemoryForThread — project attribution > records project_id on the row when the column exists 113ms
+ ✓ server/services/__tests__/working-memory-project-attribution.test.ts > storeWorkingMemoryForThread — project attribution > degrades to the pre-migration INSERT — with one warning — when the column is missing 5ms
+ ✓ server/services/__tests__/working-memory-project-attribution.test.ts > storeWorkingMemoryForThread — project attribution > never records a non-positive or non-finite project id 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > with no source consulted, the claims are not checked — never found, never a pass 18ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > with no source consulted, a claim only in the person's message is said to be theirs (F1) 13ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > nothing to check is not a pass 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > names a verdict the answer states, and says where verdicts come from 12ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > names a source the check could not read, and leaves what it may hold unchecked (HS-4) 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > names an unread source on its own when nothing was left unchecked 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > says nothing about what it checked against when there was nothing to check (HS-9) 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > lists three claims and counts the rest 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > reports labels as labelled, never as grounded, and never as sources 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > names the flags by kind and quotes the first 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > a label check that ran and failed shows what failed — it is not "not assessed" 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > a failed label check with no counts still shows what failed, beside the engine's check 18ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > clean labels carry no check mark: a label is not verification 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > with no check either, says the answer was not assessed and shows no count 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > with a check, the unassessed labels add nothing to it 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > renders nothing when the turn carries no verdict at all 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > never states a verdict in colour alone 13ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > reads it with the strip's own reader 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > a malformed check is no check, and the prompt still opens 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > a frame with no check opens the prompt with none 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > an end-of-turn proposal carries the check too > reads the check from a HUMAN_CONFIRMATION_REQUIRED envelope in post_done, and drops a malformed one 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > quotes what was not found in this turn's sources, and names the verdict 83ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > shows no check when the proposal carried none 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > shows a list by its items' titles, not as "N items" 10ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a program UUID beginning with digits: every step gets its anchor row, never the integer its digits spell 28ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a program with no anchor row: no step acts on any project 10ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a legacy integer project is itself, without the anchor 3ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a malformed project is no project 3ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the stored check, as the server reads it > is this engine's check, from the stored metadata 3ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the stored check, as the server reads it > is nothing when it is another engine's, malformed or absent 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds the figure the check did not find, wherever the summarizer put it 2ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > keeps what the check found, and words that claim nothing 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds a stated verdict 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds what is not a sentence 0ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > never recombines two answers' findings into a claim neither made 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > a value one answer found never vouches for the same value another answer could not find 2ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > credits a figure's own number, never another number written beside it 2ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > a check that does not describe its text vouches for nothing 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds a value only the person stated (the person's, not a finding) 3ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the summary, settled field by field > keeps every field the reader renders only as far as it was found, and records what it withheld 5ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the summary, settled field by field > with no checked answer to stand on, keeps only what claims nothing 1ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-memory-check.test.ts > the write-back is handed the turn's answer check > the same check the message is stored with: what it found and what it did not 27ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readGroundingStrip > carries attempted, the label counts and the engine's check 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readGroundingStrip > an event with no labels reads as not assessed, never as passed 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readAnswerCheck > a check with a field of the wrong type is no check 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readStoredVerification > reads a stored message the way the live event was read 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readStoredVerification > a message stored before checks were kept shows none 0ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > post_done names what the proposed draft states that this turn's sources do not hold 46ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > a result that is not put to a person carries no check 6ms
+ ✓ server/services/__tests__/working-memory.test.ts > shouldEmbedWorkingMemory — safe-to-flip gate > embeds only when the feature is on AND the column exists 2ms
+ ✓ server/services/__tests__/working-memory.test.ts > shouldEmbedWorkingMemory — safe-to-flip gate > never embeds when the embedding column is absent — even with the flag on 0ms
+ ✓ server/services/__tests__/working-memory.test.ts > shouldEmbedWorkingMemory — safe-to-flip gate > never embeds when the feature is off 0ms
+ ✓ server/services/__tests__/working-memory.test.ts > isSemanticWorkingMemoryEnabled — flag reader > is off by default and only true for the exact string "true" 0ms
+ ✓ server/services/__tests__/working-memory.test.ts > buildWorkingMemoryPrompt > embeds the conversation and asks for the exact JSON shape 1ms
+ ✓ server/services/__tests__/working-memory.test.ts > buildWorkingMemoryPrompt > folds a previous summary in for incremental update 0ms
+ ✓ server/services/__tests__/working-memory.test.ts > formatWorkingMemoryForPrompt > always renders the objective and only the non-empty sections 0ms
+ ✓ server/services/__tests__/working-memory.test.ts > working-memory embeddings migration — guard > is idempotent and additive (pgvector + nullable embedding column) 0ms
+ Test Files  14 passed (14)
+      Tests  92 passed (92)

@@ -29,30 +29,17 @@
  */
 
 import type { E3Basis } from './types.js';
-import { CFR_314_50_F, FDA_E3, FDA_SDTCG, FDA_STUDY_DATA_TRC } from './csr-e3-basis.js';
-
-const CHECKED = '2026-10-04';
-
-const FDA_ISS_ISE_PLACEMENT: E3Basis = {
-  ref: 'FDA, Placement of Integrated Summaries of Safety and Effectiveness (ISS/ISE) in the eCTD',
-  confidence: 'regulator-text',
-  url: 'https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/placement-integrated-summaries-safety-and-effectiveness-issise-applications-submitted-ectd-format',
-  checked: CHECKED,
-};
-const FDA_ISE_GUIDANCE: E3Basis = {
-  ref: 'FDA, Integrated Summary of Effectiveness (2015)',
-  confidence: 'regulator-text',
-  url: 'https://www.fda.gov/media/72335/download',
-  checked: CHECKED,
-};
-const M4E_R2: E3Basis = {
-  ref: 'ICH M4E(R2), as published by FDA',
-  confidence: 'regulator-text',
-  url: 'https://www.fda.gov/media/93569/download',
-  checked: CHECKED,
-};
-const RECALL = (ref: string): E3Basis => ({ ref, confidence: 'recall' });
-const PRACTICE = (ref: string): E3Basis => ({ ref, confidence: 'platform-convention' });
+import {
+  CFR_314_50_F,
+  FDA_E3,
+  FDA_ISE_GUIDANCE,
+  FDA_ISS_ISE_PLACEMENT,
+  FDA_SDTCG,
+  FDA_STUDY_DATA_TRC,
+  M4E_R2,
+  practice,
+  recall,
+} from './regulatory-basis.js';
 
 export type ChainStage = 'close-out' | 'study-data' | 'study-report' | 'integration' | 'summary' | 'labeling' | 'assembly';
 
@@ -92,7 +79,7 @@ export const SUBMISSION_CHAIN: readonly ChainNode[] = Object.freeze<ChainNode[]>
     produces: 'The final SAP, signed and dated before the database is locked and the study unblinded.',
     dependsOn: [], files: ['5.3.5.1'],
     gate: ['Signed and dated before unblinding; any later change reported in the CSR (E3 §9.7.1, §9.8)'],
-    basis: [RECALL('ICH E3 §9.7.1, §9.8'), RECALL('ICH E9 / E9(R1)')],
+    basis: [recall('ICH E3 §9.7.1, §9.8'), recall('ICH E9 / E9(R1)')],
     evidence: { kind: 'vault', sections: ['5.3'], titlePattern: /statistical analysis plan|\bSAP\b/i },
   },
   {
@@ -100,7 +87,7 @@ export const SUBMISSION_CHAIN: readonly ChainNode[] = Object.freeze<ChainNode[]>
     produces: 'A locked clinical database: queries resolved, medical coding complete with the MedDRA and WHODrug versions recorded, serious adverse events reconciled with the safety database, then locked and, for a blinded study, unblinded.',
     dependsOn: ['sap_final'],
     gate: ['Lock date, dictionary versions and the SAE reconciliation recorded', 'Unblinding only after the SAP is final'],
-    basis: [PRACTICE('Clinical data management practice'), RECALL('ICH E6 data handling')],
+    basis: [practice('Clinical data management practice'), recall('ICH E6 data handling')],
     evidence: { kind: 'not-visible', why: NOT_DOCUMENTS },
   },
   {
@@ -126,7 +113,7 @@ export const SUBMISSION_CHAIN: readonly ChainNode[] = Object.freeze<ChainNode[]>
     produces: 'The SAP’s section 14 tables and figures and section 16.2 listings, programmed from ADaM, each traceable to its program and dataset.',
     dependsOn: ['adam'],
     gate: ['Independently quality-checked (for example by double programming) before any number is written into a report'],
-    basis: [FDA_SDTCG, PRACTICE('Statistical programming QC practice')],
+    basis: [FDA_SDTCG, practice('Statistical programming QC practice')],
     evidence: { kind: 'not-visible', why: 'TLF outputs are not a document type the Vault distinguishes; the CSR carries them in sections 14 and 16.2.' },
   },
   {
@@ -144,7 +131,7 @@ export const SUBMISSION_CHAIN: readonly ChainNode[] = Object.freeze<ChainNode[]>
     produces: 'Pooled ADaM datasets for the integrated analyses, every study re-coded to one MedDRA version, with an integration analysis plan and define.xml.',
     dependsOn: ['adam'],
     gate: ['One MedDRA version across every pooled study', 'Pooling decided and documented before the integrated results are seen'],
-    basis: [PRACTICE('Integrated-analysis practice'), FDA_SDTCG],
+    basis: [practice('Integrated-analysis practice'), FDA_SDTCG],
     evidence: { kind: 'not-visible', why: NO_DATASETS },
   },
   {
@@ -153,7 +140,7 @@ export const SUBMISSION_CHAIN: readonly ChainNode[] = Object.freeze<ChainNode[]>
     dependsOn: ['integrated_data', 'csr'], files: ['5.3.5.3'],
     gate: ['Its numbers reconcile with each CSR and with the integrated datasets'],
     reviewerChecks: ['Its absence is a refuse-to-file ground (21 CFR 314.101(d)(3), against 314.50)'],
-    basis: [FDA_ISS_ISE_PLACEMENT, RECALL('21 CFR 314.50(d)(5)(vi)')],
+    basis: [FDA_ISS_ISE_PLACEMENT, recall('21 CFR 314.50(d)(5)(vi)')],
     evidence: { kind: 'vault', sections: ['5.3.5.3'], titlePattern: /integrated summary of safety|\bISS\b/i },
   },
   {
@@ -194,7 +181,7 @@ export const SUBMISSION_CHAIN: readonly ChainNode[] = Object.freeze<ChainNode[]>
     produces: 'The synopsis of every study, taken from each CSR’s E3 §2 synopsis.',
     dependsOn: ['csr'], files: ['2.7.6'],
     gate: ['Each synopsis identical to its CSR’s'],
-    basis: [M4E_R2, RECALL('ICH E3 §2')],
+    basis: [M4E_R2, recall('ICH E3 §2')],
     evidence: { kind: 'vault', sections: ['2.7.6'] },
   },
   {
@@ -210,7 +197,7 @@ export const SUBMISSION_CHAIN: readonly ChainNode[] = Object.freeze<ChainNode[]>
     produces: 'Draft prescribing information whose adverse reactions come from the ISS and whose clinical studies come from the ISE and the CSRs.',
     dependsOn: ['m2_5', 'iss', 'ise'], files: ['1.14.1'],
     gate: ['Every claim traceable to the clinical data'],
-    basis: [RECALL('21 CFR 201.56–201.57 (PLR format)')],
+    basis: [recall('21 CFR 201.56–201.57 (PLR format)')],
     evidence: { kind: 'vault', sections: ['1.14.1'] },
   },
   {
@@ -218,7 +205,7 @@ export const SUBMISSION_CHAIN: readonly ChainNode[] = Object.freeze<ChainNode[]>
     produces: 'The sequence: every leaf at its CTD heading with ICH M4 granularity, a study tagging file per study, relative hyperlinks, bookmarks, and conforming file names and paths.',
     dependsOn: ['csr', 'iss', 'ise', 'm2_7_3', 'm2_7_4', 'm2_7_6', 'm2_5', 'labeling', 'sdtm', 'adam'],
     gate: ['Every leaf is a conforming PDF (list_fda_technical_rules)', 'Every cross-reference resolves'],
-    basis: [RECALL('ICH M2 eCTD specification; FDA eCTD Technical Conformance Guide')],
+    basis: [recall('ICH M2 eCTD specification; FDA eCTD Technical Conformance Guide')],
     evidence: { kind: 'not-visible', why: SUBMISSION_CENTER },
   },
   {
@@ -226,7 +213,7 @@ export const SUBMISSION_CHAIN: readonly ChainNode[] = Object.freeze<ChainNode[]>
     produces: 'FDA’s eCTD validation criteria, the study-data technical rejection criteria and the PDF specifications checked; completeness reviewed against 21 CFR 314.50 and the refuse-to-file grounds of 314.101(d).',
     dependsOn: ['ectd_assembly'],
     gate: ['No high-severity validation finding; no technical rejection criterion failed'],
-    basis: [FDA_STUDY_DATA_TRC, RECALL('21 CFR 314.101(d)')],
+    basis: [FDA_STUDY_DATA_TRC, recall('21 CFR 314.101(d)')],
     evidence: { kind: 'not-visible', why: SUBMISSION_CENTER },
   },
   {
@@ -234,7 +221,7 @@ export const SUBMISSION_CHAIN: readonly ChainNode[] = Object.freeze<ChainNode[]>
     produces: 'The sequence transmitted and acknowledged.',
     dependsOn: ['technical_validation'],
     gate: ['Acknowledgements received and filed'],
-    basis: [RECALL('FDA Electronic Submissions Gateway')],
+    basis: [recall('FDA Electronic Submissions Gateway')],
     evidence: { kind: 'not-visible', why: SUBMISSION_CENTER },
   },
 ]);

@@ -1,0 +1,25 @@
+# Pin test after the change
+# npx vitest run server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts server/api/cmc/__tests__/cmcConvergenceMap.test.ts server/api/cmc/__tests__/cmc-route-uniqueness.contract.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/api/cmc/__tests__/cmc-route-uniqueness.contract.test.ts > the CMC routers declare each endpoint once > has no method+path declared by two routers mounted on /api/cmc 3ms
+ ✓ server/api/cmc/__tests__/cmc-route-uniqueness.contract.test.ts > the CMC routers declare each endpoint once > declares each endpoint once WITHIN a router too 3ms
+ ✓ server/api/cmc/__tests__/cmc-route-uniqueness.contract.test.ts > the CMC routers declare each endpoint once > reads the routers it claims to read 2ms
+ ✓ server/api/cmc/__tests__/cmcConvergenceMap.test.ts > CMC convergence map (code authority) > contains a canonical cmc-os schema owner entry 1ms
+ ✓ server/api/cmc/__tests__/cmcConvergenceMap.test.ts > CMC convergence map (code authority) > tracks transitional shared/cmc-schema ownership 0ms
+ ✓ server/api/cmc/__tests__/cmcConvergenceMap.test.ts > CMC convergence map (code authority) > lists only files that exist 1ms
+ ✓ server/api/cmc/__tests__/cmcConvergenceMap.test.ts > CMC convergence map (code authority) > lists each file once 0ms
+ ✓ server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts > the retired CMC routers stay retired > none of the retired files exists, under either extension 7ms
+ ✓ server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts > the retired CMC routers stay retired > register-core-routes.ts imports none of them 2ms
+ ✓ server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts > the retired CMC routers stay retired > register-core-routes.ts mounts nothing on a prefix only they answered 1ms
+ ✓ server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts > the retired CMC routers stay retired > every /api/cmc sub-mount is still behind the authentication projectRoutes.ts performed 1ms
+ ✓ server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts > the retired CMC routers stay retired > no client code calls a retired path 91ms
+ ✓ server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts > the retired CMC routers stay retired > reads the mounts it claims to read 2ms
+
+ Test Files  3 passed (3)
+      Tests  13 passed (13)
+   Start at  04:56:50
+   Duration  912ms (transform 508ms, setup 420ms, import 178ms, tests 132ms, environment 0ms)
+
+exit=0

@@ -44,7 +44,8 @@ const router = Router();
 
 /**
  * Every /project/:projectId route acts on one project, so prove it is the
- * caller's before any of them runs, as server/api/cmc/projectRoutes.ts does.
+ * caller's before any of them runs, as guardModule3Project
+ * (server/api/cmc/module3-project-guard.ts) does for the Module 3 routers.
  * These read and wrote by project id alone: GET /profile returned any project's
  * intelligence profile, and POST /profile — under RLS — filed a profile in the
  * caller's org pointing at another tenant's project (a foreign key, which RLS

@@ -29,6 +29,7 @@ import {
 import type { E3Basis, E3Confidence } from '../../server/services/ind/ctd/types';
 import type { Citation } from '../../shared/ivd/types';
 import * as csrE3Basis from '../../server/services/ind/ctd/csr-e3-basis';
+import * as sharedBases from '../../server/services/ind/ctd/regulatory-basis';
 
 const ROOT = path.resolve(__dirname, '../..');
 const src = (p: string) => readFileSync(path.join(ROOT, p), 'utf8');
@@ -176,8 +177,10 @@ describe('E3Basis is an alias, not a second declaration', () => {
     expectTypeOf<E3Confidence>().toEqualTypeOf<RegulatoryConfidence>();
   });
 
+  // The regulator sources moved to one home (server/services/ind/ctd/regulatory-basis.ts,
+  // g-basis-constants-one-home); csr-e3-basis keeps only the CDISC convention and e3SectionBasis.
   it('every basis constant the CSR record ships is well formed under the shared rules', () => {
-    const bases = Object.values(csrE3Basis).filter(
+    const bases = [...Object.values(sharedBases), ...Object.values(csrE3Basis)].filter(
       (v): v is RegulatoryBasis => typeof v === 'object' && v !== null && 'ref' in v && 'confidence' in v,
     );
     expect(bases.length).toBeGreaterThan(5);

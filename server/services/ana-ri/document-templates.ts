@@ -24,8 +24,10 @@ import {
 import {
   FDA_FORMAL_MEETING_TIMELINES,
   FDA_FORMAL_MEETINGS_GUIDANCE,
+  FDA_MEETING_PACKAGE_CORE,
   ICH_E2F_DSUR_SECTIONS,
   meetingPackageDeadline,
+  meetingTypeName,
   type E2fSection,
   type FdaMeetingType,
 } from '../ind/ctd/lifecycle-document-types.js';
@@ -101,8 +103,8 @@ function e2fTemplateSection(s: E2fSection): TemplateSection {
   return { heading: s.number ? `${s.number}. ${s.title}` : s.title, required: s.required, guidance: s.guidance };
 }
 
-/** One lifecycle-record component as a template section: its title, what it carries, whether it is required. */
-function lifecycleTemplateSection(c: LifecycleComponent): TemplateSection {
+/** One lifecycle-record component (or meeting-package core component) as a template section: its title, what it carries, whether it is required. */
+function lifecycleTemplateSection(c: Pick<LifecycleComponent, 'title' | 'required' | 'guidance'>): TemplateSection {
   return { heading: c.title, required: c.required, guidance: c.guidance };
 }
 
@@ -118,7 +120,14 @@ function meetingEntry(id: string) {
 function meetingDeadlineSentence(type: FdaMeetingType): string {
   const row = FDA_FORMAL_MEETING_TIMELINES[type];
   const separate = row.packageDue === 'with-request' ? 'The meeting package goes' : 'The meeting package is a separate submission from the request, due';
-  return `FDA schedules a Type ${type} meeting within ${row.scheduleDays} days of receiving the meeting request. ${separate} ${meetingPackageDeadline(type)}.`;
+  return `FDA schedules a ${meetingTypeName(type)} meeting within ${row.scheduleDays} days of receiving the meeting request. ${separate} ${meetingPackageDeadline(type)}.`;
+}
+
+/** Every meeting type's schedule and package deadline, one line each, from FDA_FORMAL_MEETING_TIMELINES. */
+function meetingDeadlineTable(): string {
+  return Object.values(FDA_FORMAL_MEETING_TIMELINES)
+    .map((row) => `${meetingTypeName(row.type)}: scheduled within ${row.scheduleDays} days of receiving the request; meeting package ${meetingPackageDeadline(row.type)}.`)
+    .join(' ');
 }
 
 const MEETING_QUESTION_RULE = "Questions must be specific and answerable, each with the sponsor's position and the data behind it — do NOT ask open-ended questions.";
@@ -139,14 +148,6 @@ function lifecycleMeetingTemplate(
     regulatoryReferences: entry.regulatoryBasis,
     sections: entry.components.map(lifecycleTemplateSection),
   };
-}
-
-/** The components every lifecycle meeting entry shares, computed, in the first entry's order and wording. */
-function commonMeetingSections(): TemplateSection[] {
-  const [first, ...rest] = MEETING_ENTRIES;
-  return first.components
-    .filter((c) => rest.every((m) => m.components.some((o) => o.code === c.code)))
-    .map(lifecycleTemplateSection);
 }
 
 export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
@@ -617,9 +618,13 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
       /\beop1\s+meeting\b/i,
     ],
     minConfidence: 0.70,
-    draftingInstructions: `Draft an FDA formal-meeting package per ${FDA_FORMAL_MEETINGS_GUIDANCE}. Name the meeting type first, because the deadline follows from it. ${meetingDeadlineSentence('B')} For an end-of-phase meeting (Type B(EOP)) the package is due ${meetingPackageDeadline('B(EOP)')}. An End-of-Phase 1 meeting is Type B(EOP) only for a product under 21 CFR 312 subpart E or 21 CFR 314 subpart H; otherwise it is Type B. Type A, D and INTERACT packages go with the meeting request. The sections below are the ones every pre-IND, EOP, pre-NDA and pre-BLA package carries; add the discipline summaries the meeting's questions need. ${MEETING_QUESTION_RULE}`,
+    draftingInstructions: `Draft an FDA formal-meeting package per ${FDA_FORMAL_MEETINGS_GUIDANCE}. Name the meeting type first, because the deadline follows from it. ${meetingDeadlineTable()} An End-of-Phase 1 meeting is Type B(EOP) only for a product under 21 CFR 312 subpart E or 21 CFR 314 subpart H; otherwise it is Type B. The sections below are the ones every FDA formal-meeting package carries; add the discipline summaries (CMC, nonclinical, clinical) the meeting's questions need. ${MEETING_QUESTION_RULE}`,
     regulatoryReferences: [FDA_FORMAL_MEETINGS_GUIDANCE, '21 CFR 312.47 (meetings)', 'PDUFA VII commitment letter (meeting management goals)'],
-    sections: commonMeetingSections(),
+    // The meeting-type-neutral core (lifecycle-document-types.ts
+    // FDA_MEETING_PACKAGE_CORE). Until 2026-10-05 these were the pre-IND
+    // entry's components, which called every request a "Formal Type B
+    // meeting request" (follow-up F17).
+    sections: FDA_MEETING_PACKAGE_CORE.map(lifecycleTemplateSection),
   },
 
   // ── Post-Market Safety ────────────────────────────────────────────────────
@@ -702,7 +707,7 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     displayName: 'FDA Information Request Response',
     chipLabel: 'IR Response',
     authority: 'FDA',
-    submissionFamily: 'NDA/BLA/510(k)',
+    submissionFamily: 'NDA/BLA',
     detectionPatterns: [
       /\bfda\s+(?:ir|information\s+request)\s+response\b/i,
       /\binformation\s+request\s+(?:response|reply|letter)\b/i,
@@ -710,10 +715,17 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
       /\bdraft\s+(?:an?\s+)?(?:fda\s+)?ir\s+(?:response|letter)\b/i,
     ],
     minConfidence: 0.70,
-    draftingInstructions: 'Draft a formal FDA Information Request (IR) response. This is a regulatory submission — every statement is on the record. Lead with clear, direct answers to each IR question. Provide evidence, cite the relevant sections of the submission, and summarize what action has been taken. Do not hedge. If a question cannot be answered, state so explicitly and propose an alternative path.',
-    regulatoryReferences: ['21 CFR 314.100–314.110 (review timelines)', 'FDA MAPP for review staff', 'FDA Complete Response Letter Guidance'],
+    draftingInstructions: 'Draft a formal FDA Information Request (IR) response. This is a regulatory submission — every statement is on the record. Lead with clear, direct answers to each IR question. Provide evidence, cite the relevant sections of the submission, and summarize what action has been taken. Do not hedge. If a question cannot be answered, state so explicitly and propose an alternative path. The response is an amendment to the pending application (21 CFR 314.60 for an NDA). A 510(k) Additional Information request is a different procedure and is not covered by this template.',
+    // Until 2026-10-05 this cited 21 CFR 314.100–314.110 (review timelines) and
+    // FDA's complete-response-letter guidance, neither of which governs a reply
+    // to an IR, and claimed 510(k) on the same basis
+    // (docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-post-filing-citation-facts-facts.md).
+    regulatoryReferences: [
+      '21 CFR 314.60 — amendment to an unapproved NDA: a major amendment filed within 3 months of the end of the review cycle extends that cycle by 3 months, or FDA may instead defer review of the amendment to the next cycle; a cycle is extended only once for a major amendment',
+      'BLA: the reply is an amendment to the pending BLA; no 21 CFR Part 601 provision for it is encoded here (recall, not checked against regulator text)',
+    ],
     sections: [
-      { heading: 'Cover Letter', required: true, targetWords: [150, 300], guidance: 'Reference the FDA IR letter (date, reference number), the submission (NDA/BLA/510(k) number), and briefly state the purpose of this response.' },
+      { heading: 'Cover Letter', required: true, targetWords: [150, 300], guidance: 'Reference the FDA IR letter (date, reference number), the application (NDA or BLA number), and briefly state the purpose of this response.' },
       { heading: 'Response to Question [1]', required: true, targetWords: [300, 600], guidance: 'Quote the FDA question verbatim. Then provide a direct answer in the first sentence. Support with data, analysis, or citation to submission sections. If new data is provided, include it as a labeled appendix.' },
       { heading: 'Response to Question [2]', required: false, targetWords: [300, 600], guidance: 'Repeat structure for each additional question. Each question should stand alone — do not cross-reference previous answers without explanation.' },
       { heading: 'Summary of Actions Taken', required: true, targetWords: [150, 300], guidance: 'List all amendments to the submission triggered by this IR. Reference the section/module and the nature of the change (new data added, label revised, module updated).' },

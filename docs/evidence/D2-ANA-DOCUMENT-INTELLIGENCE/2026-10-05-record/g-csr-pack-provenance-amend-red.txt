@@ -1,0 +1,179 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+{
+  "timestamp": "2026-10-05T03:54:55.730Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:54:55.732Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+{
+  "timestamp": "2026-10-05T03:54:55.732Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+{
+  "timestamp": "2026-10-05T03:54:56.013Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > no pack is empty
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > every full CTD dossier pack carries all five modules, with content beneath them
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > every parent_key resolves inside its own pack
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > cta:ema carries the CTR 536/2014 Part I + Part II structure
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > anda:fda is a four-module CTD carrying the generic-specific sections
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > ide:fda carries the 21 CFR 812.20 lettered set, not a device-CTD shape
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > pma:fda carries the 21 CFR 814.20 tree, not the six-node stub
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > mdr:ema carries MDR Annex II + III, not a CTD
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > ivdr:ema carries the analytical and clinical performance evidence an IVD turns on
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > covers all three biotech marketing pathways
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a CTA > writes the real CTR 536/2014 outline, both assessment parts
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a CTA > binds the document to the CTR pack version, not a CTD one
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an ANDA and an IDE > an ANDA scaffolds the four-module outline, through the real service
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an ANDA and an IDE > an IDE scaffolds the lettered set, through the real service
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an ANDA and an IDE > the ANDA binds to its own pack version, and to a doc_type the CHECK admits
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an ANDA and an IDE > the IDE binds to its own pack version, and to a doc_type the CHECK admits
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an EU MDR and an EU IVDR > an EU MDR technical file scaffolds Annex II + III, not a CTD
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an EU MDR and an EU IVDR > an EU IVDR technical file scaffolds its performance evidence
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an EU MDR and an EU IVDR > both bind to their own pack and to a doc_type the widened CHECK admits
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a BLA > writes the full nested outline, not five empty modules
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a BLA > carries the sections a biologics reviewer looks for
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a BLA > binds the document to the version it was actually built from
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the guard is falsifiable > without the outlines migration the same BLA scaffold declines
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the guard is falsifiable > with every outline EXCEPT 20260806b, an ANDA still declines
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > the live pack is ich-m4-v2.2 with five modules and the 21 CFR 312.23 Module 1 content
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > an FDA IND project scaffolds against the new pack, not the superseded 24-node one
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > an initial IND is not asked for post-initial contact changes (1.3.1) or a prior-study listing (5.2)
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > FALSIFIABLE: without 20260902 the live pack is v2.1 and still demands 1.3.1 and 5.2 of an initial IND
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > FALSIFIABLE: without 20260901 the live ind:fda pack has no 1.20 and still uses the 24-node outline
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > k510:fda and denovo:fda are eSTAR-era outlines > 510(k): no retired Form 3514 cover sheet; the Part 807 mandatory items and cybersecurity exist
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > k510:fda and denovo:fda are eSTAR-era outlines > De Novo: no Form 3514, no table-of-contents slot, special controls and benefit-risk present
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > k510:fda and denovo:fda are eSTAR-era outlines > a 510(k) project scaffolds against the eSTAR-era pack
+ ↓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > k510:fda and denovo:fda are eSTAR-era outlines > FALSIFIABLE: without 20260901b the live 510(k) pack still demands Form 3514
+ × tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > none of the three is attested ICH M4, harmonised_standard or high 2572ms
+   → csr:ich governing_rule: expected 'ICH M4 — Organisation of the Common T…' not to match /ICH M4/
+ × tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > the csr pack names E3 and states its coverage against the E3 tree, from the data 1728ms
+   → expected 'ICH M4 — Organisation of the Common T…' to match /ICH E3/
+ × tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > the ib and protocol packs name their real basis as partial 1677ms
+   → expected 'ICH M4 — Organisation of the Common T…' to match /ICH E6\(R3\) Appendix A.*partial/
+ × tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > a database an earlier deploy already stamped ICH M4 is corrected on the next run 1842ms
+   → csr:ich after replay: expected 'ICH M4 — Organisation of the Common T…' not to match /ICH M4/
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > re-running the file is a no-op on the corrected rows 1962ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > the real CTD packs keep their ICH M4 attestation (the narrowing is not a blanket removal) 1925ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > none of the three is attested ICH M4, harmonised_standard or high
+AssertionError: csr:ich governing_rule: expected 'ICH M4 — Organisation of the Common T…' not to match /ICH M4/
+
+- Expected:
+/ICH M4/
+
++ Received:
+"ICH M4 — Organisation of the Common Technical Document for the Registration of Pharmaceuticals for Human Use"
+
+ ❯ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts:898:70
+    896|     for (const dt of NOT_M4) {
+    897|       const p = await provenanceOf(dt);
+    898|       expect(p.governing_rule ?? '', `${dt}:ich governing_rule`).not.t…
+       |                                                                      ^
+    899|       expect(p.source_basis, `${dt}:ich source_basis`).not.toBe('harmo…
+    900|       expect(p.confidence, `${dt}:ich confidence`).toBe('low');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > the csr pack names E3 and states its coverage against the E3 tree, from the data
+AssertionError: expected 'ICH M4 — Organisation of the Common T…' to match /ICH E3/
+
+- Expected:
+/ICH E3/
+
++ Received:
+"ICH M4 — Organisation of the Common Technical Document for the Registration of Pharmaceuticals for Human Use"
+
+ ❯ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts:914:30
+    912|     expect(roots.every((k) => e3.includes(k))).toBe(true);
+    913|     expect(roots.length).toBeLessThan(e3.length);
+    914|     expect(p.governing_rule).toMatch(/ICH E3/);
+       |                              ^
+    915|     // The coverage figure in the attestation is the one the rows and …
+    916|     expect(p.governing_rule).toContain(`${roots.length} of ${e3.length…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > the ib and protocol packs name their real basis as partial
+AssertionError: expected 'ICH M4 — Organisation of the Common T…' to match /ICH E6\(R3\) Appendix A.*partial/
+
+- Expected:
+/ICH E6\(R3\) Appendix A.*partial/
+
++ Received:
+"ICH M4 — Organisation of the Common Technical Document for the Registration of Pharmaceuticals for Human Use"
+
+ ❯ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts:921:55
+    919|
+    920|   it('the ib and protocol packs name their real basis as partial', asy…
+    921|     expect((await provenanceOf('ib')).governing_rule).toMatch(/ICH E6\…
+       |                                                       ^
+    922|     expect((await provenanceOf('protocol')).governing_rule).toMatch(/I…
+    923|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > a database an earlier deploy already stamped ICH M4 is corrected on the next run
+AssertionError: csr:ich after replay: expected 'ICH M4 — Organisation of the Common T…' not to match /ICH M4/
+
+- Expected:
+/ICH M4/
+
++ Received:
+"ICH M4 — Organisation of the Common Technical Document for the Registration of Pharmaceuticals for Human Use"
+
+ ❯ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts:938:68
+    936|     for (const dt of NOT_M4) {
+    937|       const p = await provenanceOf(dt);
+    938|       expect(p.governing_rule ?? '', `${dt}:ich after replay`).not.toM…
+       |                                                                    ^
+    939|       expect(p.confidence, `${dt}:ich after replay`).toBe('low');
+    940|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed | 33 skipped (39)
+   Start at  03:54:53
+   Duration  14.60s (transform 1.62s, setup 87ms, import 2.52s, tests 11.71s, environment 0ms)
+

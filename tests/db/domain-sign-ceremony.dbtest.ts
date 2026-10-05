@@ -169,10 +169,17 @@ async function makeFixtureRows(): Promise<void> {
     fixtureRows.set(`bla:${c}`, String(bla.rows[0].id));
     const batch = await owner.query(
       `INSERT INTO cmc_batch_records (organization_id, tenant_id, project_id, batch_number, product_name, status)
-       VALUES ($1, $2, gen_random_uuid(), $3, 'Dbdsc 5 mg', 'in-progress') RETURNING id`,
+       VALUES ($1, $2, gen_random_uuid(), $3, 'Dbdsc 5 mg', 'in-progress') RETURNING id, project_id`,
       [ORG, String(ORG), `${TAG}-${BASE}-${c}`],
     );
     fixtureRows.set(`batch:${c}`, String(batch.rows[0].id));
+    /* A release is signed over the batch's RECORDED, reviewed QC results
+       (services/cmc/batch-release-evidence): one passing result, reviewed. */
+    await owner.query(
+      `INSERT INTO qc_testing (organization_id, sample_id, sample_type, batch_number, project_id, test_method, test_date, pass_fail_status, reviewed_by)
+       VALUES ($1, $2, 'drug substance', $3, $4, 'AM-001', NOW(), 'pass', $5)`,
+      [ORG, `${TAG}-${c}-S1`, `${TAG}-${BASE}-${c}`, String(batch.rows[0].project_id), signer.id],
+    );
     const spec = await owner.query(
       `INSERT INTO quality_specifications (tenant_id, material_type, material_name) VALUES ($1, 'drug_substance', $2) RETURNING id`,
       [ORG, `${TAG} ${c}`],
@@ -215,6 +222,7 @@ async function cleanup(): Promise<void> {
   await owner.query('DELETE FROM c2c_bla_assessments WHERE org_id = $1', [ORG]);
   await owner.query('DELETE FROM specification_audit_log WHERE specification_id IN (SELECT id FROM quality_specifications WHERE tenant_id = $1)', [ORG]);
   await owner.query('DELETE FROM quality_specifications WHERE tenant_id = $1', [ORG]);
+  await owner.query('DELETE FROM qc_testing WHERE organization_id = $1', [ORG]);
   await owner.query('DELETE FROM cmc_batch_records WHERE organization_id = $1', [ORG]);
   await owner.query('DELETE FROM cmc_container_closures WHERE organization_id = $1', [ORG]);
   for (const table of ['irb_submissions', 'iacuc_protocols', 'ibc_registrations']) {

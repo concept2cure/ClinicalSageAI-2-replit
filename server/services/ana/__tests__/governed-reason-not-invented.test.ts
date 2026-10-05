@@ -333,6 +333,11 @@ describe('a governed AnA write without the person\'s reason is refused before an
 // call — recordGovernedAction, recordAuditRow, or the service that records it
 // (applyFactChange, createChange, commitCanonicalRevision, …) — on the path of
 // a registered handler, including module-local functions the handler calls.
+//
+// A module is found by its exported registering function, plural or singular:
+// 881945fe5 moved draft_quality_overall_summary_m2_3 out of the executor into
+// cmc-quality-summary-tool.ts as registerCmcQualitySummaryHandler(register), and
+// a plural-only match never read it (the completeness check below caught it).
 
 const ANA_DIR = path.resolve(__dirname, '..');
 const readAna = (f: string) => fs.readFileSync(path.join(ANA_DIR, f), 'utf8');
@@ -340,7 +345,7 @@ const HANDLER_MODULES = [
   'AnaToolExecutor.ts',
   ...fs
     .readdirSync(ANA_DIR)
-    .filter((f) => f.endsWith('.ts') && f !== 'AnaToolExecutor.ts' && /export function register\w*Handlers\(\s*register\b/.test(readAna(f))),
+    .filter((f) => f.endsWith('.ts') && f !== 'AnaToolExecutor.ts' && /export function register\w*Handlers?\(\s*register\b/.test(readAna(f))),
 ].sort();
 
 const REASON_KEYS = new Set(['reason', 'reasonForChange', 'reason_for_change', 'changeReason']);
@@ -530,6 +535,7 @@ describe('every module that registers a handler — no ledger write can carry an
   it('reads every handler the registry holds (a scan that matches nothing proves nothing)', () => {
     expect(HANDLER_MODULES).toEqual(expect.arrayContaining([
       'AnaToolExecutor.ts', 'document-spine.ts', 'document-catalog-tools.ts', 'document-placement-tools.ts', 'agentic-workflow-tools.ts',
+      'cmc-quality-summary-tool.ts',
     ]));
     expect(REGISTRATIONS.filter((r) => !r.handler).map((r) => where(r.module, r.at)), 'a registration whose handler the scan cannot see').toEqual([]);
     const scanned = new Set(REGISTRATIONS.map((r) => r.tool).filter((t): t is string => !!t));

@@ -33,10 +33,20 @@
  * additionally composes governance.detectUnsupportedClaims, so a predicted
  * approval or "the study was successful" is a high regulatory_outcome finding.
  *
+ * Cross-references: the grounding dimension resolves every cross-reference on a
+ * quantitative claim (in-text-references.ts) against the document class and the
+ * captions and headings the caller passes. An unresolved one grounds nothing and is one
+ * critical finding naming the reference and the figures it was meant to carry;
+ * one that cannot be resolved from the input is a notice in `references`, never
+ * a finding. Until 2026-10-05 an invented "Table 14.9.99" grounded an invented
+ * 45% in a CSR (g-in-text-reference-resolution). The gate stays pure: a tool
+ * handler that holds an outline passes its headings as `knownHeadings`.
+ *
  * @module server/services/ana/writing-precision-gate
  */
 
 import { assessGrounding } from './grounding-core';
+import type { ClassifiedReference, ReferenceContext, ReferenceStatus } from './in-text-references';
 import { assessReadability, buildAbbreviationList, type ReadabilityAudience } from './medical-writing-qc';
 import { reviewMedicalWriting } from './medical-writing-review';
 import { listMedicalWritingCatalog } from './medical-writing';
@@ -80,6 +90,25 @@ export interface StructureCheck {
   reason: string;
 }
 
+/** One distinct cross-reference on a quantitative claim, with what decided it. */
+export interface ReferenceOutcome {
+  label: string;
+  status: ReferenceStatus;
+  reason: string;
+  /** The claim sentences that cite it. */
+  sentences: string[];
+}
+
+/**
+ * The cross-references on quantitative claims, by outcome. `notResolvable` is
+ * the honest notice — nothing this gate was given decides them.
+ */
+export interface ReferenceCheck {
+  resolved: ReferenceOutcome[];
+  unresolved: ReferenceOutcome[];
+  notResolvable: ReferenceOutcome[];
+}
+
 export interface PrecisionReport {
   /** 0–100; 100 = every deterministic check passed. */
   score: number;
@@ -92,9 +121,13 @@ export interface PrecisionReport {
   claimExemptions: ExemptedTerm[];
   /** Whether section coverage was checked, and why not when it was not. */
   structure: StructureCheck;
+  /** Cross-references on quantitative claims and whether each resolved. */
+  references: ReferenceCheck;
   metrics: {
     groundingScore: number;
     ungroundedClaims: number;
+    /** Distinct cross-references on claims that do not resolve (one critical finding each). */
+    unresolvedReferences: number;
     fleschKincaidGrade: number;
     targetMaxGrade: number;
     meetsReadabilityTarget: boolean;
@@ -127,19 +160,77 @@ export interface CritiqueInput {
   documentType?: string;
   /** Claims register; defaults to 'submission' (regulatory prose). */
   register?: ClaimRegister;
+  /**
+   * The document class in-text references resolve against when the text is one
+   * part of a document and `documentType` (which also asks for the whole-
+   * document structure check) is not given. `documentType` wins when both are.
+   */
+  referenceDocumentType?: string;
+  /**
+   * The document's captions as a complete list ("Table 7: AEs by SOC"): a
+   * table/figure/listing/appendix reference of a kind present here that matches
+   * none is unresolved.
+   */
+  knownCaptions?: string[];
+  /**
+   * Headings or section titles ("9.12 Additional analyses"): a matching
+   * reference resolves; absence decides nothing.
+   */
+  knownHeadings?: string[];
 }
 
-function groundingDimension(text: string, findings: PrecisionFinding[]) {
-  const grounding = assessGrounding(text);
-  if (grounding.ungroundedClaims.length > 0) {
+function tallyReferences(claims: { sentence: string; references: ClassifiedReference[] }[]): ReferenceCheck {
+  const byLabel = new Map<string, ReferenceOutcome>();
+  for (const c of claims) {
+    for (const r of c.references) {
+      const key = `${r.status}:${r.label}`;
+      const seen = byLabel.get(key);
+      if (seen) {
+        if (!seen.sentences.includes(c.sentence)) seen.sentences.push(c.sentence);
+      } else {
+        byLabel.set(key, { label: r.label, status: r.status, reason: r.reason, sentences: [c.sentence] });
+      }
+    }
+  }
+  const all = [...byLabel.values()];
+  return {
+    resolved: all.filter(o => o.status === 'resolved'),
+    unresolved: all.filter(o => o.status === 'unresolved'),
+    notResolvable: all.filter(o => o.status === 'not-resolvable-from-input'),
+  };
+}
+
+function groundingDimension(text: string, ctx: ReferenceContext, findings: PrecisionFinding[]) {
+  const grounding = assessGrounding(text, { references: ctx });
+  const claims = grounding.referencedClaims;
+  const references = tallyReferences(claims);
+
+  // An unsupported number is the cardinal reviewer finding: critical. A claim
+  // whose only citation is an unresolved reference is reported under that
+  // reference, not counted again in the generic finding.
+  const plainUngrounded = grounding.ungroundedClaims.filter(
+    c => !c.references.some(r => r.status === 'unresolved'),
+  );
+  if (plainUngrounded.length > 0) {
     findings.push({
       category: 'grounding',
-      severity: 'critical', // an unsupported number is the cardinal reviewer finding
-      message: `Cite a source for ${grounding.ungroundedClaims.length} quantitative claim(s) that currently have no nearby citation.`,
-      evidence: grounding.ungroundedClaims.slice(0, 5).map(c => c.sentence),
+      severity: 'critical',
+      message: `Cite a source for ${plainUngrounded.length} quantitative claim(s) that currently have no nearby citation.`,
+      evidence: plainUngrounded.slice(0, 5).map(c => c.sentence),
     });
   }
-  return grounding;
+  for (const ref of references.unresolved) {
+    const numbers = [
+      ...new Set(claims.filter(c => ref.sentences.includes(c.sentence)).flatMap(c => c.numbers)),
+    ];
+    findings.push({
+      category: 'grounding',
+      severity: 'critical',
+      message: `${ref.label} does not resolve — ${ref.reason} It cannot ground ${numbers.join(', ')}. Cite the table, listing or section that holds these figures, or correct the reference.`,
+      evidence: ref.sentences.slice(0, 5),
+    });
+  }
+  return { grounding, references };
 }
 
 function consistencyDimension(text: string, findings: PrecisionFinding[]) {
@@ -343,7 +434,15 @@ export function critiqueDraft(input: CritiqueInput): PrecisionReport {
   const register: ClaimRegister = input.register ?? 'submission';
   const findings: PrecisionFinding[] = [];
 
-  const grounding = groundingDimension(text, findings);
+  const { grounding, references } = groundingDimension(
+    text,
+    {
+      documentType: input.documentType ?? input.referenceDocumentType,
+      knownCaptions: input.knownCaptions,
+      knownHeadings: input.knownHeadings,
+    },
+    findings,
+  );
   const consistency = consistencyDimension(text, findings);
   const readability = readabilityDimension(text, audience, findings);
   const abbr = abbreviationDimension(text, findings);
@@ -363,9 +462,11 @@ export function critiqueDraft(input: CritiqueInput): PrecisionReport {
     register,
     claimExemptions: claims.exempted,
     structure: structure.check,
+    references,
     metrics: {
       groundingScore: grounding.groundingScore,
       ungroundedClaims: grounding.ungroundedClaims.length,
+      unresolvedReferences: references.unresolved.length,
       fleschKincaidGrade: Math.round(readability.fleschKincaidGrade * 10) / 10,
       targetMaxGrade: readability.targetMaxGrade,
       meetsReadabilityTarget: readability.meetsTarget,
@@ -466,10 +567,29 @@ export interface DocumentCritique {
  */
 export function critiqueDocument(
   sections: DocumentSectionInput[],
-  opts: { audience?: ReadabilityAudience; documentType?: string; register?: ClaimRegister } = {}
+  opts: {
+    audience?: ReadabilityAudience;
+    documentType?: string;
+    register?: ClaimRegister;
+    /** The document's complete caption list, when the caller holds one. */
+    knownCaptions?: string[];
+  } = {}
 ): DocumentCritique {
+  // Each section's references resolve against the document class and every
+  // heading the document has, not just its own (a section cites its siblings).
+  // Titles only resolve what they match: one titled "Table 1 Demographics" is
+  // not a list of the document's tables, so it never makes "Table 7" unresolved.
+  const knownHeadings = sections.map(s => s.title);
+  const knownCaptions = opts.knownCaptions;
   const sectionCritiques: SectionCritique[] = sections.map(s => {
-    const report = critiqueDraft({ text: s.text, audience: opts.audience, register: opts.register });
+    const report = critiqueDraft({
+      text: s.text,
+      audience: opts.audience,
+      register: opts.register,
+      referenceDocumentType: opts.documentType,
+      knownCaptions,
+      knownHeadings,
+    });
     return {
       title: s.title,
       score: report.score,
@@ -495,6 +615,8 @@ export function critiqueDocument(
     audience: opts.audience,
     documentType: opts.documentType,
     register: opts.register,
+    knownCaptions,
+    knownHeadings,
   });
   const crossSectionFindings = whole.findings.filter(
     f =>

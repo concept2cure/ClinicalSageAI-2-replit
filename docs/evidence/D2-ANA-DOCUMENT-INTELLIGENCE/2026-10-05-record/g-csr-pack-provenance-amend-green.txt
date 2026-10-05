@@ -1,0 +1,203 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > a pre-migration row (all null) is undeclared, unknown, unreviewed 2ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > null normalises to the undeclared default 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > undefined normalises to the undeclared default 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > a string normalises to the undeclared default 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > a number normalises to the undeclared default 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > an array normalises to the undeclared default 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > an empty object normalises to the undeclared default 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > refuses the unrecognised source_basis 'reviewed_by_fda' rather than forwarding it 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > refuses the unrecognised source_basis 'verified' rather than forwarding it 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > refuses the unrecognised source_basis 'STATUTORY_TRANSCRIPTION' rather than forwarding it 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > refuses the unrecognised source_basis '' rather than forwarding it 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > refuses the unrecognised source_basis ' ' rather than forwarding it 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > refuses an unrecognised review_status rather than forwarding it 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > refuses an unrecognised confidence rather than forwarding it 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > treats whitespace-only prose as absent — it is not a statement 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > trims prose that is a statement 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > accepts the snake_case shape Postgres returns 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > downgrades a "reviewed" pack that names no reviewer 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > accepts a reviewed pack that does name one 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > takes the database's drift verdict over the raw status 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > strips a withdrawn reviewer rather than leaving the name attached 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > accepts the camelCase shape the API emits, so re-normalising is idempotent 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > round-trips the review attribution, which is nested on the way out 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > the exported default cannot be mutated by a caller 1ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > an unreviewed statutory transcription is NOT green 1ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > an unreviewed harmonised standard is NOT green either 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > only a reviewed, still-current pack is green — and it names the reviewer 1ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > a sign-off whose tree has changed is NOT green, and says the review does not cover this 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > drift and never-reviewed are distinguishable on screen 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > a reasoned construction warns, and says to check it against the regulation 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > undeclared is the strongest signal, and distinct from constructed 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > guidance is not described as law 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > surfaces the governing rule and the recorded uncertainties 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > every basis produces a non-empty headline and detail 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > rulePackProvenanceSelectSql > reads through to_jsonb so an absent column yields NULL instead of 42703 1ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > rulePackProvenanceSelectSql > refuses an alias that is not a plain identifier 1ms
+ ✓ tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > the migration is on the deploy path, above the tenant sweep 1ms
+stdout | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+{
+  "timestamp": "2026-10-05T03:57:38.340Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:57:38.349Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+{
+  "timestamp": "2026-10-05T03:57:38.349Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts
+{
+  "timestamp": "2026-10-05T03:57:38.476Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+{
+  "timestamp": "2026-10-05T03:57:38.569Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts
+{
+  "timestamp": "2026-10-05T03:57:38.658Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:57:38.659Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts
+{
+  "timestamp": "2026-10-05T03:57:38.659Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/rule-packs — provenance reaches the caller > emits a normalised provenance object and no raw columns 29ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/rule-packs — provenance reaches the caller > a pre-migration database reports undeclared rather than nothing 4ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/rule-packs — provenance reaches the caller > reads the columns through to_jsonb, so a missing column cannot 500 the route 4ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/rule-packs — provenance reaches the caller > carries ?docType and ?agency across the mount rewrite 3ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/rule-packs — provenance reaches the caller > is unfiltered only when the caller asked for no filter 3ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/documents/:id/outline — provenance travels with the tree > carries the outline basis on the document the editor renders 4ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/documents/:id/outline — provenance travels with the tree > a pre-migration database still yields a stated basis, the undeclared one 9ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/documents/:id/outline — provenance travels with the tree > reads the columns through to_jsonb here too 2ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/documents/:id/outline — provenance travels with the tree > 403 without org context, before any query runs 7ms
+ ✓ tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > after a deploy the live jnda:pmda outline has 1.11, in order, and the gates require it 2901ms
+ ✓ tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > every new row is live, every old row is superseded by it, and each records its basis 2103ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > no pack is empty 3276ms
+ ✓ tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > re-runs on every deploy without changing anything (Rule 1) 2195ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > every full CTD dossier pack carries all five modules, with content beneath them 2554ms
+ ✓ tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > refuses a truncated row already holding a new key — ON CONFLICT DO NOTHING would otherwise keep it 2763ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > every parent_key resolves inside its own pack 2975ms
+ ✓ tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > a later version superseding a 2026-10-05 row does not break the replay 2640ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > cta:ema carries the CTR 536/2014 Part I + Part II structure 2227ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > anda:fda is a four-module CTD carrying the generic-specific sections 1950ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > ide:fda carries the 21 CFR 812.20 lettered set, not a device-CTD shape 1600ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > pma:fda carries the 21 CFR 814.20 tree, not the six-node stub 1673ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > mdr:ema carries MDR Annex II + III, not a CTD 1595ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > ivdr:ema carries the analytical and clinical performance evidence an IVD turns on 1470ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > covers all three biotech marketing pathways 1576ms
+stderr | tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a CTA > writes the real CTR 536/2014 outline, both assessment parts
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a CTA > writes the real CTR 536/2014 outline, both assessment parts 1596ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a CTA > binds the document to the CTR pack version, not a CTD one 1756ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an ANDA and an IDE > an ANDA scaffolds the four-module outline, through the real service 1878ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an ANDA and an IDE > an IDE scaffolds the lettered set, through the real service 2581ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an ANDA and an IDE > the ANDA binds to its own pack version, and to a doc_type the CHECK admits 2784ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an ANDA and an IDE > the IDE binds to its own pack version, and to a doc_type the CHECK admits 2506ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an EU MDR and an EU IVDR > an EU MDR technical file scaffolds Annex II + III, not a CTD 2313ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an EU MDR and an EU IVDR > an EU IVDR technical file scaffolds its performance evidence 2071ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an EU MDR and an EU IVDR > both bind to their own pack and to a doc_type the widened CHECK admits 5907ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a BLA > writes the full nested outline, not five empty modules 1787ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a BLA > carries the sections a biologics reviewer looks for 1738ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a BLA > binds the document to the version it was actually built from 1628ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the guard is falsifiable > without the outlines migration the same BLA scaffold declines 1561ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the guard is falsifiable > with every outline EXCEPT 20260806b, an ANDA still declines 1698ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > the live pack is ich-m4-v2.2 with five modules and the 21 CFR 312.23 Module 1 content 1542ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > an FDA IND project scaffolds against the new pack, not the superseded 24-node one 1571ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > an initial IND is not asked for post-initial contact changes (1.3.1) or a prior-study listing (5.2) 1620ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > FALSIFIABLE: without 20260902 the live pack is v2.1 and still demands 1.3.1 and 5.2 of an initial IND 3175ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > FALSIFIABLE: without 20260901 the live ind:fda pack has no 1.20 and still uses the 24-node outline 3496ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > k510:fda and denovo:fda are eSTAR-era outlines > 510(k): no retired Form 3514 cover sheet; the Part 807 mandatory items and cybersecurity exist 1553ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > k510:fda and denovo:fda are eSTAR-era outlines > De Novo: no Form 3514, no table-of-contents slot, special controls and benefit-risk present 1485ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > k510:fda and denovo:fda are eSTAR-era outlines > a 510(k) project scaffolds against the eSTAR-era pack 1525ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > k510:fda and denovo:fda are eSTAR-era outlines > FALSIFIABLE: without 20260901b the live 510(k) pack still demands Form 3514 3131ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > none of the three is attested ICH M4, harmonised_standard or high 1537ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > the csr pack names E3 and states its coverage against the E3 tree, from the data 1568ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > the ib and protocol packs name their real basis as partial 1684ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > a database an earlier deploy already stamped ICH M4 is corrected on the next run 1676ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > re-running the file is a no-op on the corrected rows 1632ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the csr, ib and protocol packs do not claim ICH M4 provenance > the real CTD packs keep their ICH M4 attestation (the narrowing is not a blanket removal) 1651ms
+
+ Test Files  4 passed (4)
+      Tests  90 passed (90)
+   Start at  03:57:36
+   Duration  84.92s (transform 3.84s, setup 266ms, import 6.76s, tests 94.25s, environment 0ms)
+
+== ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 359 migrations, 36 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit 0
+== ci:migration-drop-safety:selftest
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+exit 0
+== ci:migration-set-order
+[ci:migration-set-order] OK — 359 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit 0
+== ci:check-rule-pack-provenance
+
+
+✅ undeclared packs: 5/5 (ceiling is downward-only).
+✅ no pack is marked reviewed without a named reviewer, a date and a tree digest.
+exit 0

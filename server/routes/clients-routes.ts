@@ -20,6 +20,7 @@ import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { ProjectDeletionRefused, projectDeleteBlockedRefusal, projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
 import { governedActorId, requireEditorAccess } from '../middleware/orgMembership';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
+import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 import { mapWithConcurrency } from '../services/ana/agentic-loop';
 const log = createScopedLogger('clients-routes');
 
@@ -53,10 +54,6 @@ function getAuthedOrgId(req: any): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function getAuthedRole(req: any): string | undefined {
-  return req.user?.role ?? req.userRole;
-}
-
 /**
  * Tenant guard for `/:id`-scoped routes. Fetches the workspace row and
  * confirms it belongs to the caller's org. Returns:
@@ -67,8 +64,11 @@ function getAuthedRole(req: any): string | undefined {
  * Returns 404 (not 403) on tenant mismatch so a foreign workspace looks
  * identical to "not found" — no existence enumeration.
  *
- * super_admin (platform staff) bypasses the org filter and gets the row
- * verbatim. Every other role is org-scoped.
+ * Platform staff (platform standing for super_admin, holdsPlatformRole) bypass
+ * the org filter and get the row verbatim. Everyone else is org-scoped. This
+ * read the request role until 2026-10-05, which behind server/auth.ts is the
+ * tenant membership role, so a membership row naming super_admin reached any
+ * organization's workspaces (D6, docs/evidence/D6/2026-10-05-cross-tenant-staff/).
  */
 async function loadWorkspaceForCaller(
   workspaceIdRaw: string | undefined,
@@ -83,7 +83,7 @@ async function loadWorkspaceForCaller(
   }
 
   const callerOrgId = getAuthedOrgId(req);
-  const isSuperAdmin = getAuthedRole(req) === 'super_admin';
+  const isSuperAdmin = await holdsPlatformRole(req, ['super_admin']);
 
   if (!isSuperAdmin && callerOrgId == null) {
     return { ok: false, status: 403, error: 'Tenant context required' };

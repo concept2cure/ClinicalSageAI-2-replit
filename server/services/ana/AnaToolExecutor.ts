@@ -82,7 +82,6 @@ import {
   advisePmaReadiness,
   adviseEuTechnicalFileReadiness,
   lookupIvdKnowledge,
-  type DeviceReadinessAdviceInput,
   type GlobalMarketAdviceInput,
   type SubmissionPlanAdviceInput,
   type PmaReadinessAdviceInput,
@@ -2316,14 +2315,9 @@ registerToolHandler('advise_data_integrity', async (input) => {
   return JSON.stringify({ source: 'AnA Data-Integrity Advisor', ...adviseDataIntegrity({ requirement, description }) });
 });
 
-// Device/IVD eSTAR submission-readiness advisor (grounded, non-LLM). Never
-// claims a submittable artifact the platform cannot produce, nor transmission.
-registerToolHandler('advise_device_readiness', async (input) => {
-  return JSON.stringify({
-    source: 'AnA Device-Readiness Advisor',
-    ...adviseDeviceReadiness(input as unknown as DeviceReadinessAdviceInput),
-  });
-});
+// Device/IVD eSTAR submission-readiness advisor: registered beside
+// assemble_device_submission (search 'advise_device_readiness'), which shares
+// its project-scoped loader.
 
 // Global market-entry strategy advisor (ranked, honest; never claims transmission).
 registerToolHandler('advise_global_market_strategy', async (input) => {
@@ -6995,43 +6989,6 @@ registerToolHandler('build_from_template', async (input: Record<string, unknown>
     buildDurationMs: result.buildDurationMs,
     message: `Template built: ${result.replacementsApplied} replacements, ${result.xmlInjectionsApplied} XML injections.`,
   });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// IND Submission Tools
-// ─────────────────────────────────────────────────────────────────────────────
-
-registerToolHandler('ind_generate_section', async (input: Record<string, unknown>) => {
-  const sectionCode = input.section_code as string;
-  const projectId = input.project_id as string;
-  const productName = input.product_name as string;
-  const indication = input.indication as string;
-  const sponsor = input.sponsor as string;
-  const phase = input.phase as string;
-
-  try {
-    const res = await fetch(`http://localhost:${process.env.PORT || 5000}/api/ind-generation/generate-section`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId, sectionCode, productName, indication, sponsor, phase }),
-    });
-    const data = await res.json();
-    return JSON.stringify(data);
-  } catch (error: any) {
-    return JSON.stringify({ success: false, error: error.message || 'IND section generation failed' });
-  }
-});
-
-registerToolHandler('ind_get_status', async (input: Record<string, unknown>) => {
-  const projectId = input.project_id as string;
-
-  try {
-    const res = await fetch(`http://localhost:${process.env.PORT || 5000}/api/ind-generation/status/${projectId}`);
-    const data = await res.json();
-    return JSON.stringify(data);
-  } catch (error: any) {
-    return JSON.stringify({ success: false, error: error.message || 'Failed to get IND status' });
-  }
 });
 
 registerToolHandler('rasterize_page', async (input, ctx) => {
@@ -15976,10 +15933,13 @@ export async function executeAgenticLoop(
   // Failure-adaptation guidance from the latest round (cleared after use).
   let pendingAdaptationNote = '';
 
+  // The lost-input marker travels with the call, so dispatch can refuse to run
+  // a handler on the `{}` that stands in for arguments that never arrived.
   const toToolCall = (c: AnaToolUse): ToolCall => ({
     id: c.id,
     name: c.name,
     input: (c.input ?? {}) as Record<string, unknown>,
+    ...(c.inputParseError ? { inputParseError: c.inputParseError } : {}),
   });
 
   // First model turn. Streaming (when the request carries onStream) and tool
@@ -16554,60 +16514,260 @@ registerToolHandler('assess_submission_package', async (input: Record<string, un
   }
 });
 
-// Device/IVD eSTAR assembly state (510(k) / De Novo / PMA) — wires the
-// deterministic device-assembly engine that previously had no AnA tool surface.
-// No render/transmit; computes the producible artifact kind + every blocker,
-// honestly. A PMA is scored against the 21 CFR 814 modules (pma-mapper).
-registerToolHandler('assemble_device_submission', async (input: Record<string, unknown>) => {
+// Device/IVD eSTAR assembly state (510(k) / De Novo / PMA) for the OPEN
+// PROJECT. No render/transmit; computes the producible artifact kind and every
+// blocker. A PMA is scored against the 21 CFR 814 modules (pma-mapper).
+//
+// The verdict is about the client's governed content, never about what the
+// model typed. This tool — and advise_device_readiness, a parallel copy of the
+// same defect — used to build it from three model-supplied inputs: leaves with
+// `substantive: true`, deviceFlags, and presentTemplates trusted by file name
+// (advise also took environment and requireTemplate), so a model could make a
+// program of drafts read 'official-estar'. With a project open both now read
+// through loadProgramDeviceAssemblyInput, the loader POST
+// /api/510k/estar/assemble runs (via assembleProgramDeviceSubmission): the
+// program's governed sections (substantive derived from their status), its
+// intake device answers, and the checksum-verified vendored templates.
+// Model-supplied leaves survive only as a hypothetical outline, where they can
+// never be scored as finished content.
+const DEVICE_ASSEMBLY_HYPOTHETICAL_BASIS =
+  "hypothetical — not this project's content; cannot report a producible official eSTAR. " +
+  'Every supplied leaf is scored as unfinished and no official template is counted as present.';
+const DEVICE_ASSEMBLY_PROJECT_ONLY_INPUTS = [
+  'leaves', 'deviceFlags', 'presentTemplates', 'availableArtifacts', 'environment', 'requireTemplate',
+] as const;
+
+type DeviceAssemblyEngineInput = import('../pathway-engines/device-assembly/assemble-device-submission.js').AssembleDeviceSubmissionInput;
+
+type DeviceAssemblyParams = {
+  pathway: '510k' | 'de_novo' | 'pma';
+  variant: 'device' | 'ivd';
+  pmaSubmissionType?: import('../pathway-engines/pma/pma-mapper.js').PmaSubmissionType;
+  market?: import('../global-markets/types.js').MarketId;
+  mode: 'project' | 'hypothetical';
+};
+
+const deviceNeedsProject = (outlineHint: string) => ({
+  status: 'needs_project',
+  message: `No project is open, so there is no device content to assess. Open the device project, or ${outlineHint} (it cannot report readiness).`,
+});
+
+const DEVICE_CONTENT_READ_FAILED = {
+  status: 'read_failed',
+  standing_error:
+    "The project's device content could not be read just now. Say so; do not report any section as missing and do not state an assembly verdict.",
+};
+
+/** The question the model asks — pathway, variant, PMA type, market, mode — validated. A string is the refusal to return. */
+async function parseDeviceAssemblyParams(input: Record<string, unknown>): Promise<DeviceAssemblyParams | string> {
+  const { pathway, variant } = input;
+  if (pathway !== '510k' && pathway !== 'de_novo' && pathway !== 'pma') {
+    return JSON.stringify({ status: 'needs_parameters', message: "pathway must be '510k', 'de_novo' or 'pma'." });
+  }
+  // The ONE PMA submission-type taxonomy (21 CFR 814.20 / 814.39) lives in pma-mapper.
+  const { PMA_SUBMISSION_TYPES } = await import('../pathway-engines/pma/pma-mapper.js');
+  const pmaTypeValues: unknown[] = PMA_SUBMISSION_TYPES.map((t) => t.value);
+  const pmaSubmissionType = input.pmaSubmissionType;
+  if (pmaSubmissionType !== undefined && !pmaTypeValues.includes(pmaSubmissionType)) {
+    return JSON.stringify({ status: 'needs_parameters', message: `pmaSubmissionType must be one of ${pmaTypeValues.join(', ')}.` });
+  }
+  if (variant !== 'device' && variant !== 'ivd') {
+    return JSON.stringify({ status: 'needs_parameters', message: "variant must be 'device' or 'ivd'." });
+  }
+  const mode = input.mode ?? 'project';
+  if (mode !== 'project' && mode !== 'hypothetical') {
+    return JSON.stringify({ status: 'needs_parameters', message: "mode must be 'project' (default) or 'hypothetical'." });
+  }
+  return {
+    pathway,
+    variant,
+    pmaSubmissionType: pmaSubmissionType as DeviceAssemblyParams['pmaSubmissionType'],
+    market: typeof input.market === 'string' ? (input.market as DeviceAssemblyParams['market']) : undefined,
+    mode,
+  };
+}
+
+/**
+ * A model-supplied outline → engine input that fails closed: a leaf the model
+ * describes is never finished content — a title match is not a reviewed
+ * section — a template file name it lists is not a verified template, and it
+ * cannot set the build environment or the template requirement. null when no
+ * leaves[] were given.
+ */
+function hypotheticalDeviceAssemblyInput(input: Record<string, unknown>, p: DeviceAssemblyParams): DeviceAssemblyEngineInput | null {
+  if (!Array.isArray(input.leaves)) return null;
+  const leaves = (input.leaves as Array<Record<string, unknown>>).map((l) => ({
+    sectionCode: String(l.sectionCode ?? ''),
+    title: String(l.title ?? ''),
+    documentType: typeof l.documentType === 'string' ? l.documentType : undefined,
+    substantive: false,
+  }));
+  return {
+    pathway: p.pathway,
+    pmaSubmissionType: p.pmaSubmissionType,
+    variant: p.variant,
+    leaves,
+    presentTemplates: [],
+    deviceFlags: input.deviceFlags && typeof input.deviceFlags === 'object' ? (input.deviceFlags as Record<string, boolean>) : undefined,
+    market: p.market,
+    availableArtifacts: Array.isArray(input.availableArtifacts) ? (input.availableArtifacts as unknown[]).map(String) : undefined,
+  };
+}
+
+type OpenProjectDeviceInput =
+  | { kind: 'needs_project' }
+  | { kind: 'read_failed' }
+  | {
+      kind: 'loaded';
+      programId: string;
+      assemblyInput: DeviceAssemblyEngineInput;
+      deviceContentSource: import('../pathway-engines/estar/estar-content-leaves.js').DeviceContentSource;
+    };
+
+/**
+ * The open project's engine input, through loadProgramDeviceAssemblyInput — the
+ * loader POST /api/510k/estar/assemble runs. Only the READS are caught: a failed
+ * project lookup or content read is read_failed, never missing sections; an
+ * engine defect is not relabelled as a read failure.
+ */
+async function loadOpenProjectDeviceInput(p: DeviceAssemblyParams, ctx: ToolContext | undefined, tool: string): Promise<OpenProjectDeviceInput> {
+  if (!ctx?.organizationId) return { kind: 'needs_project' };
   try {
-    const pathway = input.pathway;
-    const variant = input.variant;
-    if (pathway !== '510k' && pathway !== 'de_novo' && pathway !== 'pma') {
-      return JSON.stringify({ status: 'needs_parameters', message: "pathway must be '510k', 'de_novo' or 'pma'." });
-    }
-    // The ONE PMA submission-type taxonomy (21 CFR 814.20 / 814.39) lives in pma-mapper.
-    const { PMA_SUBMISSION_TYPES } = await import('../pathway-engines/pma/pma-mapper.js');
-    const pmaTypeValues = PMA_SUBMISSION_TYPES.map((t) => t.value);
-    const pmaSubmissionType = input.pmaSubmissionType;
-    if (pmaSubmissionType !== undefined && !(pmaTypeValues as unknown[]).includes(pmaSubmissionType)) {
-      return JSON.stringify({ status: 'needs_parameters', message: `pmaSubmissionType must be one of ${pmaTypeValues.join(', ')}.` });
-    }
-    if (variant !== 'device' && variant !== 'ivd') {
-      return JSON.stringify({ status: 'needs_parameters', message: "variant must be 'device' or 'ivd'." });
-    }
-    if (!Array.isArray(input.leaves)) {
-      return JSON.stringify({ status: 'needs_parameters', message: 'leaves[] is required (each: { sectionCode, title, documentType?, substantive? }).' });
-    }
-    // Fails closed: a leaf is treated as a draft/placeholder (not substantive)
-    // unless the caller explicitly asserts it carries real, finalized content —
-    // a title match alone must never count as "present".
-    const leaves = (input.leaves as Array<Record<string, unknown>>).map(l => ({
-      sectionCode: String(l.sectionCode ?? ''),
-      title: String(l.title ?? ''),
-      documentType: typeof l.documentType === 'string' ? l.documentType : undefined,
-      substantive: l.substantive === true,
-    }));
-    const { assembleDeviceSubmission } = await import('../pathway-engines/device-assembly/assemble-device-submission.js');
-    const result = assembleDeviceSubmission({
-      pathway,
-      pmaSubmissionType: pmaSubmissionType as (typeof pmaTypeValues)[number] | undefined,
-      variant,
-      leaves,
-      presentTemplates: Array.isArray(input.presentTemplates) ? (input.presentTemplates as unknown[]).map(String) : undefined,
-      deviceFlags: input.deviceFlags && typeof input.deviceFlags === 'object' ? (input.deviceFlags as Record<string, boolean>) : undefined,
-      market: typeof input.market === 'string' ? (input.market as any) : undefined,
-      availableArtifacts: Array.isArray(input.availableArtifacts) ? (input.availableArtifacts as unknown[]).map(String) : undefined,
-      environment: input.environment === 'production' ? 'production' : input.environment === 'staging' ? 'staging' : undefined,
+    const { getPool } = await import('../../db.js');
+    const pool = getPool();
+    const { resolveOpenProgram } = await import('../c2c/program-access.js');
+    const programId = await resolveOpenProgram(pool, {
+      organizationId: ctx.organizationId, projectId: ctx.projectId ?? null, projectRef: ctx.projectRef ?? null,
     });
+    if (!programId) return { kind: 'needs_project' };
+    const { loadProgramDeviceAssemblyInput } = await import('../pathway-engines/device-assembly/assemble-device-submission.js');
+    const { assemblyInput, deviceContentSource } = await loadProgramDeviceAssemblyInput(Number(ctx.organizationId), {
+      programId,
+      pathway: p.pathway,
+      pmaSubmissionType: p.pmaSubmissionType,
+      variant: p.variant,
+      market: p.market,
+      client: pool,
+    });
+    return { kind: 'loaded', programId, assemblyInput, deviceContentSource };
+  } catch (err) {
+    // The driver's message names tables; it goes to the log. The model is told
+    // the read failed — never that the project's sections are missing.
+    const { createScopedLogger } = await import('../../utils/logger.js');
+    createScopedLogger(tool).error('device content read failed', {
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return { kind: 'read_failed' };
+  }
+}
+
+/** What both device tools echo about a project-scoped answer: which program, which store, and what model input was ignored. */
+function projectScopeEcho(input: Record<string, unknown>, loaded: Extract<OpenProjectDeviceInput, { kind: 'loaded' }>) {
+  const ignored = DEVICE_ASSEMBLY_PROJECT_ONLY_INPUTS.filter((k) => input[k] !== undefined);
+  return {
+    mode: 'project' as const,
+    programId: loaded.programId,
+    deviceContentSource: loaded.deviceContentSource,
+    ...(loaded.deviceContentSource === 'legacy_org_wide'
+      ? {
+          source_note:
+            "This program's governed document holds no authored sections, so the content read is the organization's sections in the legacy 510(k) editor — not specific to this program. Say so.",
+        }
+      : {}),
+    ...(ignored.length
+      ? {
+          ignored_input: ignored,
+          ignored_note: "These inputs were ignored: the verdict is computed from the project's own governed content, intake answers and verified templates.",
+        }
+      : {}),
+  };
+}
+
+registerToolHandler('assemble_device_submission', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  try {
+    const p = await parseDeviceAssemblyParams(input);
+    if (typeof p === 'string') return p;
+    const { assembleDeviceSubmission } = await import('../pathway-engines/device-assembly/assemble-device-submission.js');
+    if (p.mode === 'hypothetical') {
+      const hypothetical = hypotheticalDeviceAssemblyInput(input, p);
+      if (!hypothetical) {
+        return JSON.stringify({ status: 'needs_parameters', message: "mode 'hypothetical' requires leaves[] (each: { sectionCode, title, documentType? })." });
+      }
+      return JSON.stringify({
+        status: 'computed',
+        engine: 'deterministic',
+        mode: 'hypothetical',
+        basis: DEVICE_ASSEMBLY_HYPOTHETICAL_BASIS,
+        result: assembleDeviceSubmission(hypothetical),
+        instruction:
+          "Say first that this is a hypothetical outline, not the project's content. Use it only to show which eSTAR sections the titles would map to; never present it as a readiness verdict for any project.",
+      });
+    }
+    const loaded = await loadOpenProjectDeviceInput(p, ctx, 'assemble_device_submission');
+    if (loaded.kind === 'needs_project') return JSON.stringify(deviceNeedsProject("call again with mode 'hypothetical' to map an outline"));
+    if (loaded.kind === 'read_failed') return JSON.stringify(DEVICE_CONTENT_READ_FAILED);
     return JSON.stringify({
       status: 'computed',
       engine: 'deterministic',
-      result,
+      ...projectScopeEcho(input, loaded),
+      result: assembleDeviceSubmission(loaded.assemblyInput),
       instruction:
         'Lead with artifactKind and canProduceOfficialEstar, then list every blocker verbatim. Do NOT claim a submittable eSTAR unless canProduceOfficialEstar is true.',
     });
-  } catch (err: any) {
-    return JSON.stringify({ error: `assemble_device_submission failed: ${err?.message || 'unknown error'}` });
+  } catch (err) {
+    return JSON.stringify({ error: `assemble_device_submission failed: ${err instanceof Error ? err.message : 'unknown error'}` });
+  }
+});
+
+// Device/IVD eSTAR submission-readiness advisor (grounded, non-LLM). Never
+// claims a submittable artifact the platform cannot produce, nor transmission.
+// Same scope rule as assemble_device_submission above: with a project open the
+// advice is shaped from the project's own content (loadProgramDeviceAssemblyInput);
+// with none, a model outline gets the hypothetical treatment.
+registerToolHandler('advise_device_readiness', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const source = 'AnA Device-Readiness Advisor';
+  try {
+    const p = await parseDeviceAssemblyParams(input);
+    if (typeof p === 'string') return p;
+    if (p.pathway === 'pma') {
+      return JSON.stringify({
+        status: 'needs_parameters',
+        message: "advise_device_readiness covers the 510(k) and De Novo eSTAR; use assemble_device_submission for a PMA.",
+      });
+    }
+    const pathway = p.pathway;
+    const advise = (a: DeviceAssemblyEngineInput) =>
+      adviseDeviceReadiness({
+        pathway,
+        variant: a.variant,
+        leaves: a.leaves,
+        deviceFlags: a.deviceFlags,
+        presentTemplates: a.presentTemplates,
+        market: a.market,
+        availableArtifacts: a.availableArtifacts,
+        environment: a.environment,
+        requireTemplate: a.requireTemplate,
+      });
+    if (p.mode === 'project') {
+      const loaded = await loadOpenProjectDeviceInput(p, ctx, 'advise_device_readiness');
+      if (loaded.kind === 'read_failed') return JSON.stringify({ source, ...DEVICE_CONTENT_READ_FAILED });
+      if (loaded.kind === 'loaded') {
+        return JSON.stringify({ source, ...projectScopeEcho(input, loaded), ...advise(loaded.assemblyInput) });
+      }
+      // No project open: an outline the model supplied is mapped hypothetically below.
+    }
+    const hypothetical = hypotheticalDeviceAssemblyInput(input, p);
+    if (!hypothetical) return JSON.stringify({ source, ...deviceNeedsProject('pass leaves[] to map an outline') });
+    return JSON.stringify({
+      source,
+      mode: 'hypothetical',
+      basis: DEVICE_ASSEMBLY_HYPOTHETICAL_BASIS,
+      ...advise(hypothetical),
+      instruction:
+        "Say first that this is a hypothetical outline, not the project's content; never present it as readiness advice for any project.",
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `advise_device_readiness failed: ${err instanceof Error ? err.message : 'unknown error'}` });
   }
 });
 

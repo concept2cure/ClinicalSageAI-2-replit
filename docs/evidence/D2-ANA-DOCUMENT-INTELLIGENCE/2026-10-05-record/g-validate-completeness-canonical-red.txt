@@ -1,0 +1,1493 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+stdout | server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > an empty IVDR file is not_assessed — never conditional_go or go
+{
+  "timestamp": "2026-10-05T03:41:09.357Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IVDR, 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > points at the MDR/IVDR tech-doc engine, the one IVDR annex record
+{
+  "timestamp": "2026-10-05T03:41:09.367Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IVDR, 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > does not borrow the pharma CTD checklist
+{
+  "timestamp": "2026-10-05T03:41:09.368Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IVDR, 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-ivd.test.ts > device types in the completeness engine > 510(k) is not_assessed and points at eSTAR filing readiness, not invented CTD modules
+{
+  "timestamp": "2026-10-05T03:41:09.377Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: 510(k), 0 sections",
+  "context": {}
+}
+ × server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > an empty IVDR file is not_assessed — never conditional_go or go 11ms
+   → expected 'conditional_go' to be 'not_assessed' // Object.is equality
+ × server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > points at the MDR/IVDR tech-doc engine, the one IVDR annex record 1ms
+   → Cannot read properties of undefined (reading 'status')
+ × server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > does not borrow the pharma CTD checklist 8ms
+   → expected [ { module: 'A', …(7) }, …(12) ] to deeply equal []
+ × server/services/__tests__/validate-completeness-ivd.test.ts > device types in the completeness engine > 510(k) is not_assessed and points at eSTAR filing readiness, not invented CTD modules 2ms
+   → expected 'no_go' to be 'not_assessed' // Object.is equality
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > an NDA carrying only Modules 1-3 is no_go, with 5.2 and 5.3.5 among the blockers
+{
+  "timestamp": "2026-10-05T03:41:09.531Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 18 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > an NDA carrying every profiled section is go, 100% complete
+{
+  "timestamp": "2026-10-05T03:41:09.540Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 23 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > the NDA checklist is exactly the canonical profile — no hand table
+{
+  "timestamp": "2026-10-05T03:41:09.542Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > '3.2.S.1.1' satisfies 3.2.S and does NOT satisfy 1.1
+{
+  "timestamp": "2026-10-05T03:41:09.545Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 1 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > '1.10' does NOT satisfy 1.1
+{
+  "timestamp": "2026-10-05T03:41:09.546Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 1 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > an 'm'-prefixed leaf ('m5.3.5.1') satisfies 5.3.5
+{
+  "timestamp": "2026-10-05T03:41:09.547Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 1 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an EU MAA has no FDA 356h item and requires the EU risk-management system (1.8.2)
+{
+  "timestamp": "2026-10-05T03:41:09.548Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: MAA, 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an IND is judged against the IND profile, not the NDA table
+{
+  "timestamp": "2026-10-05T03:41:09.549Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IND, 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an NDA filed with a non-FDA agency is not assessed (no borrowed region)
+{
+  "timestamp": "2026-10-05T03:41:09.550Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > 510(k) points at the eSTAR filing-readiness engine
+{
+  "timestamp": "2026-10-05T03:41:09.552Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: 510(k), 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > De Novo points at the eSTAR filing-readiness engine
+{
+  "timestamp": "2026-10-05T03:41:09.553Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: De Novo, 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > PMA points at the eSTAR filing-readiness engine
+{
+  "timestamp": "2026-10-05T03:41:09.553Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: PMA, 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > an empty IVDR technical file is not_assessed and points at the MDR/IVDR tech-doc engine
+{
+  "timestamp": "2026-10-05T03:41:09.554Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IVDR, 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > ANDA has no profile: not_assessed, no checklist, no NaN
+{
+  "timestamp": "2026-10-05T03:41:09.555Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: ANDA, 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > 505(b)(2) has no profile: not_assessed, no checklist, no NaN
+{
+  "timestamp": "2026-10-05T03:41:09.555Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: 505(b)(2), 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > CTA has no profile: not_assessed, no checklist, no NaN
+{
+  "timestamp": "2026-10-05T03:41:09.556Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: CTA, 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > NOT-A-TYPE has no profile: not_assessed, no checklist, no NaN
+{
+  "timestamp": "2026-10-05T03:41:09.556Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NOT-A-TYPE, 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > scoreSubmissionDraft refuses to score a not-assessed type > PMA: rejects with COMPLETENESS_NOT_ASSESSED (422) and never reaches the risk model or the prediction store
+{
+  "timestamp": "2026-10-05T03:41:09.557Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: PMA, 0 sections",
+  "context": {}
+}
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > scoreSubmissionDraft refuses to score a not-assessed type > NDA with no Module 5: the missing efficacy reports reach the model as missing-critical
+{
+  "timestamp": "2026-10-05T03:41:09.564Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 21 sections",
+  "context": {}
+}
+ × server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > an NDA carrying only Modules 1-3 is no_go, with 5.2 and 5.3.5 among the blockers 10ms
+   → expected 'conditional_go' to be 'no_go' // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > an NDA carrying every profiled section is go, 100% complete 2ms
+   → expected 90 to be 100 // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > the NDA checklist is exactly the canonical profile — no hand table 3ms
+   → expected [ '1.1', '1.12', '1.14', '1.2', …(17) ] to deeply equal [ '1.1', '1.12.14', '1.14', …(20) ]
+ × server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > '3.2.S.1.1' satisfies 3.2.S and does NOT satisfy 1.1 1ms
+   → expected true to be false // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > '1.10' does NOT satisfy 1.1 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > an 'm'-prefixed leaf ('m5.3.5.1') satisfies 5.3.5 1ms
+ × server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an EU MAA has no FDA 356h item and requires the EU risk-management system (1.8.2) 1ms
+   → expected '[{"module":"1","section":"1.1","descr…' not to match /356h/i
+ × server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an IND is judged against the IND profile, not the NDA table 1ms
+   → expected '[{"module":"1","section":"1.1","descr…' not to match /356h/i
+ × server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an NDA filed with a non-FDA agency is not assessed (no borrowed region) 2ms
+   → expected 'no_go' to be 'not_assessed' // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > 510(k) points at the eSTAR filing-readiness engine 1ms
+   → expected 'no_go' to be 'not_assessed' // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > De Novo points at the eSTAR filing-readiness engine 1ms
+   → expected 'no_go' to be 'not_assessed' // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > PMA points at the eSTAR filing-readiness engine 1ms
+   → expected 'no_go' to be 'not_assessed' // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > an empty IVDR technical file is not_assessed and points at the MDR/IVDR tech-doc engine 1ms
+   → expected 'conditional_go' to be 'not_assessed' // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > ANDA has no profile: not_assessed, no checklist, no NaN 1ms
+   → expected 'no_go' to be 'not_assessed' // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > 505(b)(2) has no profile: not_assessed, no checklist, no NaN 0ms
+   → expected 'no_go' to be 'not_assessed' // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > CTA has no profile: not_assessed, no checklist, no NaN 0ms
+   → expected 'no_go' to be 'not_assessed' // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > NOT-A-TYPE has no profile: not_assessed, no checklist, no NaN 1ms
+   → expected 'no_go' to be 'not_assessed' // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > scoreSubmissionDraft refuses to score a not-assessed type > PMA: rejects with COMPLETENESS_NOT_ASSESSED (422) and never reaches the risk model or the prediction store 6ms
+   → promise resolved "{ engineVersion: '1.0.0', …(6) }" instead of rejecting
+ × server/services/__tests__/validate-completeness-canonical.test.ts > scoreSubmissionDraft refuses to score a not-assessed type > NDA with no Module 5: the missing efficacy reports reach the model as missing-critical 1ms
+   → expected 'conditional_go' to be 'no_go' // Object.is equality
+⎯⎯⎯⎯⎯⎯ Failed Tests 22 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > an NDA carrying only Modules 1-3 is no_go, with 5.2 and 5.3.5 among the blockers
+AssertionError: expected 'conditional_go' to be 'no_go' // Object.is equality
+Expected: "no_go"
+Received: "conditional_go"
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:55:33
+     53|     const m1to3 = profile('NDA').filter((c) => /^[123]\./.test(c));
+     54|     const res = await engine.validate({ submissionType: 'NDA', present…
+     55|     expect(res.goNoGo.decision).toBe('no_go');
+       |                                 ^
+     56|     const blockerCodes = res.goNoGo.blockers.map((b) => b.split(':')[0…
+     57|     expect(blockerCodes).toContain('5.3.5');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > an NDA carrying every profiled section is go, 100% complete
+AssertionError: expected 90 to be 100 // Object.is equality
+- Expected
++ Received
+- 100
++ 90
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:66:46
+     64|     expect(res.goNoGo.decision).toBe('go');
+     65|     expect(res.goNoGo.blockers).toEqual([]);
+     66|     expect(res.summary?.readinessPercentage).toBe(100);
+       |                                              ^
+     67|   });
+     68|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > the NDA checklist is exactly the canonical profile — no hand table
+AssertionError: expected [ '1.1', '1.12', '1.14', '1.2', …(17) ] to deeply equal [ '1.1', '1.12.14', '1.14', …(20) ]
+- Expected
++ Received
+  [
+    "1.1",
+-   "1.12.14",
++   "1.12",
+    "1.14",
+-   "1.14.1",
+    "1.2",
+    "1.3",
+-   "1.3.3",
+-   "1.3.4",
+    "2.2",
+    "2.3",
+    "2.4",
+    "2.5",
+    "2.6",
+    "2.7",
+    "3.2.A",
+    "3.2.P",
+    "3.2.R",
+    "3.2.S",
+-   "4.2.1",
+-   "4.2.2",
+-   "4.2.3",
++   "4.2",
++   "4.3",
+    "5.2",
++   "5.3",
+    "5.3.5",
++   "5.4",
+  ]
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:71:56
+     69|   it('the NDA checklist is exactly the canonical profile — no hand tab…
+     70|     const res = await engine.validate({ submissionType: 'NDA', present…
+     71|     expect(res.checklist.map((c) => c.section).sort()).toEqual(profile…
+       |                                                        ^
+     72|   });
+     73| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > '3.2.S.1.1' satisfies 3.2.S and does NOT satisfy 1.1
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:78:38
+     76|   it("'3.2.S.1.1' satisfies 3.2.S and does NOT satisfy 1.1", async () …
+     77|     const res = await engine.validate({ submissionType: 'NDA', present…
+     78|     expect(item(res, '1.1').present).toBe(false);
+       |                                      ^
+     79|     expect(item(res, '3.2.S').present).toBe(true);
+     80|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > '1.10' does NOT satisfy 1.1
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:84:38
+     82|   it("'1.10' does NOT satisfy 1.1", async () => {
+     83|     const res = await engine.validate({ submissionType: 'NDA', present…
+     84|     expect(item(res, '1.1').present).toBe(false);
+       |                                      ^
+     85|   });
+     86|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an EU MAA has no FDA 356h item and requires the EU risk-management system (1.8.2)
+AssertionError: expected '[{"module":"1","section":"1.1","descr…' not to match /356h/i
+- Expected:
+/356h/i
++ Received:
+"[{\"module\":\"1\",\"section\":\"1.1\",\"description\":\"Forms (FDA 356h / EMA Application Form)\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Forms (FDA 356h / EMA Application Form) is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"1\",\"section\":\"1.2\",\"description\":\"Cover Letter\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Cover Letter is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"1\",\"section\":\"1.3\",\"description\":\"Administrative Information\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Administrative Information is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"1\",\"section\":\"1.12\",\"description\":\"Patent Information / Certifications\",\"required\":false,\"present\":false,\"qualityScore\":null,\"status\":\"missing_optional\"},{\"module\":\"1\",\"section\":\"1.14\",\"description\":\"Environmental Assessment\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Environmental Assessment is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"2\",\"section\":\"2.2\",\"description\":\"Introduction\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Introduction is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"2\",\"section\":\"2.3\",\"description\":\"Quality Overall Summary (QOS)\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Quality Overall Summary (QOS) is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"2\",\"section\":\"2.4\",\"description\":\"Nonclinical Overview\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Nonclinical Overview is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"2\",\"section\":\"2.5\",\"description\":\"Clinical Overview\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Clinical Overview is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"2\",\"section\":\"2.6\",\"description\":\"Nonclinical Written and Tabulated Summaries\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Nonclinical Written and Tabulated Summaries is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"2\",\"section\":\"2.7\",\"description\":\"Clinical Summary\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Clinical Summary is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"3\",\"section\":\"3.2.S\",\"description\":\"Drug Substance\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Drug Substance is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"3\",\"section\":\"3.2.P\",\"description\":\"Drug Product\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Drug Product is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"3\",\"section\":\"3.2.A\",\"description\":\"Appendices (Facilities, Adventitious Agents)\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Appendices (Facilities, Adventitious Agents) is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"3\",\"section\":\"3.2.R\",\"description\":\"Regional Information\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Regional Information is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"4\",\"section\":\"4.2\",\"description\":\"Study Reports (Pharmacology, PK, Toxicology)\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Study Reports (Pharmacology, PK, Toxicology) is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"4\",\"section\":\"4.3\",\"description\":\"Literature References\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Literature References is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"5\",\"section\":\"5.2\",\"description\":\"Tabular Listing of All Clinical Studies\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Tabular Listing of All Clinical Studies is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"5\",\"section\":\"5.3\",\"description\":\"Clinical Study Reports\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Clinical Study Reports is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"5\",\"section\":\"5.3.5\",\"description\":\"Reports of Efficacy and Safety Studies\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Reports of Efficacy and Safety Studies is required for MAA submission. Prepare and include before filing.\"},{\"module\":\"5\",\"section\":\"5.4\",\"description\":\"Literature References\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Literature References is required for MAA submission. Prepare and include before filing.\"}]"
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:96:47
+     94|   it('an EU MAA has no FDA 356h item and requires the EU risk-manageme…
+     95|     const res = await engine.validate({ submissionType: 'MAA', present…
+     96|     expect(JSON.stringify(res.checklist)).not.toMatch(/356h/i);
+       |                                               ^
+     97|     expect(res.checklist.map((c) => c.section)).toContain('1.8.2');
+     98|     expect(res.checklist.map((c) => c.section).sort()).toEqual(profile…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an IND is judged against the IND profile, not the NDA table
+AssertionError: expected '[{"module":"1","section":"1.1","descr…' not to match /356h/i
+- Expected:
+/356h/i
++ Received:
+"[{\"module\":\"1\",\"section\":\"1.1\",\"description\":\"Forms (FDA 356h / EMA Application Form)\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Forms (FDA 356h / EMA Application Form) is required for IND submission. Prepare and include before filing.\"},{\"module\":\"1\",\"section\":\"1.2\",\"description\":\"Cover Letter\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Cover Letter is required for IND submission. Prepare and include before filing.\"},{\"module\":\"1\",\"section\":\"1.3\",\"description\":\"Administrative Information\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Administrative Information is required for IND submission. Prepare and include before filing.\"},{\"module\":\"1\",\"section\":\"1.12\",\"description\":\"Patent Information / Certifications\",\"required\":false,\"present\":false,\"qualityScore\":null,\"status\":\"missing_optional\"},{\"module\":\"1\",\"section\":\"1.14\",\"description\":\"Environmental Assessment\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Environmental Assessment is required for IND submission. Prepare and include before filing.\"},{\"module\":\"2\",\"section\":\"2.2\",\"description\":\"Introduction\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Introduction is required for IND submission. Prepare and include before filing.\"},{\"module\":\"2\",\"section\":\"2.3\",\"description\":\"Quality Overall Summary (QOS)\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Quality Overall Summary (QOS) is required for IND submission. Prepare and include before filing.\"},{\"module\":\"2\",\"section\":\"2.4\",\"description\":\"Nonclinical Overview\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Nonclinical Overview is required for IND submission. Prepare and include before filing.\"},{\"module\":\"2\",\"section\":\"2.5\",\"description\":\"Clinical Overview\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Clinical Overview is required for IND submission. Prepare and include before filing.\"},{\"module\":\"2\",\"section\":\"2.6\",\"description\":\"Nonclinical Written and Tabulated Summaries\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Nonclinical Written and Tabulated Summaries is required for IND submission. Prepare and include before filing.\"},{\"module\":\"2\",\"section\":\"2.7\",\"description\":\"Clinical Summary\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Clinical Summary is required for IND submission. Prepare and include before filing.\"},{\"module\":\"3\",\"section\":\"3.2.S\",\"description\":\"Drug Substance\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Drug Substance is required for IND submission. Prepare and include before filing.\"},{\"module\":\"3\",\"section\":\"3.2.P\",\"description\":\"Drug Product\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Drug Product is required for IND submission. Prepare and include before filing.\"},{\"module\":\"3\",\"section\":\"3.2.A\",\"description\":\"Appendices (Facilities, Adventitious Agents)\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Appendices (Facilities, Adventitious Agents) is required for IND submission. Prepare and include before filing.\"},{\"module\":\"3\",\"section\":\"3.2.R\",\"description\":\"Regional Information\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Regional Information is required for IND submission. Prepare and include before filing.\"},{\"module\":\"4\",\"section\":\"4.2\",\"description\":\"Study Reports (Pharmacology, PK, Toxicology)\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Study Reports (Pharmacology, PK, Toxicology) is required for IND submission. Prepare and include before filing.\"},{\"module\":\"4\",\"section\":\"4.3\",\"description\":\"Literature References\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Literature References is required for IND submission. Prepare and include before filing.\"},{\"module\":\"5\",\"section\":\"5.2\",\"description\":\"Tabular Listing of All Clinical Studies\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Tabular Listing of All Clinical Studies is required for IND submission. Prepare and include before filing.\"},{\"module\":\"5\",\"section\":\"5.3\",\"description\":\"Clinical Study Reports\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Clinical Study Reports is required for IND submission. Prepare and include before filing.\"},{\"module\":\"5\",\"section\":\"5.3.5\",\"description\":\"Reports of Efficacy and Safety Studies\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Reports of Efficacy and Safety Studies is required for IND submission. Prepare and include before filing.\"},{\"module\":\"5\",\"section\":\"5.4\",\"description\":\"Literature References\",\"required\":true,\"present\":false,\"qualityScore\":null,\"status\":\"missing_required\",\"remediation\":\"BLOCKER: Literature References is required for IND submission. Prepare and include before filing.\"}]"
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:104:47
+    102|   it('an IND is judged against the IND profile, not the NDA table', as…
+    103|     const res = await engine.validate({ submissionType: 'IND', present…
+    104|     expect(JSON.stringify(res.checklist)).not.toMatch(/356h/i);
+       |                                               ^
+    105|     expect(res.checklist.map((c) => c.section).sort()).toEqual(profile…
+    106|     expect(res.checklist.map((c) => c.section)).not.toContain('5.3');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an NDA filed with a non-FDA agency is not assessed (no borrowed region)
+AssertionError: expected 'no_go' to be 'not_assessed' // Object.is equality
+Expected: "not_assessed"
+Received: "no_go"
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:111:33
+    109|   it('an NDA filed with a non-FDA agency is not assessed (no borrowed …
+    110|     const res = await engine.validate({ submissionType: 'NDA', present…
+    111|     expect(res.goNoGo.decision).toBe('not_assessed');
+       |                                 ^
+    112|   });
+    113| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > 510(k) points at the eSTAR filing-readiness engine
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > De Novo points at the eSTAR filing-readiness engine
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > PMA points at the eSTAR filing-readiness engine
+AssertionError: expected 'no_go' to be 'not_assessed' // Object.is equality
+Expected: "not_assessed"
+Received: "no_go"
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:118:33
+    116|   it.each(['510(k)', 'De Novo', 'PMA'])('%s points at the eSTAR filing…
+    117|     const res = await engine.validate({ submissionType: t, presentSect…
+    118|     expect(res.goNoGo.decision).toBe('not_assessed');
+       |                                 ^
+    119|     expect(res.assessment.status).toBe('not_assessed');
+    120|     if (res.assessment.status !== 'not_assessed') throw new Error('unr…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > an empty IVDR technical file is not_assessed and points at the MDR/IVDR tech-doc engine
+AssertionError: expected 'conditional_go' to be 'not_assessed' // Object.is equality
+Expected: "not_assessed"
+Received: "conditional_go"
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:129:33
+    127|   it('an empty IVDR technical file is not_assessed and points at the M…
+    128|     const res = await engine.validate({ submissionType: 'IVDR', presen…
+    129|     expect(res.goNoGo.decision).toBe('not_assessed');
+       |                                 ^
+    130|     if (res.assessment.status !== 'not_assessed') throw new Error('IVD…
+    131|     expect(res.assessment.assessWith?.engine).toBe('assembleTechDoc');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > ANDA has no profile: not_assessed, no checklist, no NaN
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > 505(b)(2) has no profile: not_assessed, no checklist, no NaN
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > CTA has no profile: not_assessed, no checklist, no NaN
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > NOT-A-TYPE has no profile: not_assessed, no checklist, no NaN
+AssertionError: expected 'no_go' to be 'not_assessed' // Object.is equality
+Expected: "not_assessed"
+Received: "no_go"
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:137:33
+    135|   it.each(['ANDA', '505(b)(2)', 'CTA', 'NOT-A-TYPE'])('%s has no profi…
+    136|     const res = await engine.validate({ submissionType: t, presentSect…
+    137|     expect(res.goNoGo.decision).toBe('not_assessed');
+       |                                 ^
+    138|     expect(res.goNoGo.readinessScore).toBeNull();
+    139|     expect(res.checklist).toEqual([]);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > scoreSubmissionDraft refuses to score a not-assessed type > PMA: rejects with COMPLETENESS_NOT_ASSESSED (422) and never reaches the risk model or the prediction store
+AssertionError: promise resolved "{ engineVersion: '1.0.0', …(6) }" instead of rejecting
+- Expected
++ Received
+- Error {
+-   "message": "rejected promise",
++ {
++   "blendedReadiness": 0,
++   "completeness": {
++     "checklist": [
++       {
++         "description": "Device Application Form (FDA 3601 or equivalent)",
++         "module": "1",
++         "present": false,
++         "qualityScore": null,
++         "remediation": "BLOCKER: Device Application Form (FDA 3601 or equivalent) is required for PMA submission. Prepare and include before filing.",
++         "required": true,
++         "section": "1.1",
++         "status": "missing_required",
++       },
++       {
++         "description": "Cover Letter and Table of Contents",
++         "module": "1",
++         "present": false,
++         "qualityScore": null,
++         "remediation": "BLOCKER: Cover Letter and Table of Contents is required for PMA submission. Prepare and include before filing.",
++         "required": true,
++         "section": "1.2",
++         "status": "missing_required",
++       },
++       {
++         "description": "Device Description and Intended Use",
++         "module": "2",
++         "present": false,
++         "qualityScore": null,
++         "remediation": "BLOCKER: Device Description and Intended Use is required for PMA submission. Prepare and include before filing.",
++         "required": true,
++         "section": "2.1",
++         "status": "missing_required",
++       },
++       {
++         "description": "Substantial Equivalence Comparison (510k) / Classification (De Novo)",
++         "module": "2",
++         "present": false,
++         "qualityScore": null,
++         "remediation": undefined,
++         "required": false,
++         "section": "2.2",
++         "status": "missing_optional",
++       },
++       {
++         "description": "Non-Clinical Testing (Bench, Biocompatibility)",
++         "module": "3",
++         "present": false,
++         "qualityScore": null,
++         "remediation": "BLOCKER: Non-Clinical Testing (Bench, Biocompatibility) is required for PMA submission. Prepare and include before filing.",
++         "required": true,
++         "section": "3.1",
++         "status": "missing_required",
++       },
++       {
++         "description": "Software Documentation (if SaMD)",
++         "module": "3",
++         "present": false,
++         "qualityScore": null,
++         "remediation": undefined,
++         "required": false,
++         "section": "3.2",
++         "status": "missing_optional",
++       },
++       {
++         "description": "Clinical Study Reports / Literature",
++         "module": "4",
++         "present": false,
++         "qualityScore": null,
++         "remediation": "BLOCKER: Clinical Study Reports / Literature is required for PMA submission. Prepare and include before filing.",
++         "required": true,
++         "section": "4.1",
++         "status": "missing_required",
++       },
++       {
++         "description": "Labeling (IFU, Package Insert)",
++         "module": "5",
++         "present": false,
++         "qualityScore": null,
++         "remediation": "BLOCKER: Labeling (IFU, Package Insert) is required for PMA submission. Prepare and include before filing.",
++         "required": true,
++         "section": "5.1",
++         "status": "missing_required",
++       },
++       {
++         "description": "Sterilization Validation (if applicable)",
++         "module": "5",
++         "present": false,
++         "qualityScore": null,
++         "remediation": undefined,
++         "required": false,
++         "section": "5.2",
++         "status": "missing_optional",
++       },
++       {
++         "description": "Shelf Life / Packaging Validation",
++         "module": "5",
++         "present": false,
++         "qualityScore": null,
++         "remediation": "BLOCKER: Shelf Life / Packaging Validation is required for PMA submission. Prepare and include before filing.",
++         "required": true,
++         "section": "5.3",
++         "status": "missing_required",
++       },
++       {
++         "description": "Manufacturing Information",
++         "module": "6",
++         "present": false,
++         "qualityScore": null,
++         "remediation": "BLOCKER: Manufacturing Information is required for PMA submission. Prepare and include before filing.",
++         "required": true,
++         "section": "6.1",
++         "status": "missing_required",
++       },
++     ],
++     "goNoGo": {
++       "blockers": [
++         "1.1: Device Application Form (FDA 3601 or equivalent)",
++         "1.2: Cover Letter and Table of Contents",
++         "2.1: Device Description and Intended Use",
++         "3.1: Non-Clinical Testing (Bench, Biocompatibility)",
++       ],
++       "conditions": [],
++       "decision": "no_go",
++       "rationale": "4 blocking issue(s) prevent submission. Critical sections are missing or unresolved escalations exist.",
++       "readinessScore": 0,
++       "risks": [
++         "Missing: 4.1: Clinical Study Reports / Literature",
++         "Missing: 5.1: Labeling (IFU, Package Insert)",
++         "Missing: 5.3: Shelf Life / Packaging Validation",
++         "Missing: 6.1: Manufacturing Information",
++       ],
++     },
++     "rtfRisk": {
++       "missingCritical": [
++         "1.1: Device Application Form (FDA 3601 or equivalent)",
++         "1.2: Cover Letter and Table of Contents",
++         "2.1: Device Description and Intended Use",
++         "3.1: Non-Clinical Testing (Bench, Biocompatibility)",
++       ],
++       "missingImportant": [
++         "4.1: Clinical Study Reports / Literature",
++         "5.1: Labeling (IFU, Package Insert)",
++         "5.3: Shelf Life / Packaging Validation",
++         "6.1: Manufacturing Information",
++       ],
++       "overallRTFRisk": "critical",
++       "rtfScore": 0,
++       "weakSections": [],
++     },
++     "submissionType": "PMA",
++     "summary": {
++       "completeSections": 0,
++       "missingSections": 8,
++       "readinessPercentage": 0,
++       "totalSections": 11,
++     },
++     "targetAgency": "FDA",
++   },
++   "crl": {
++     "band": "high",
++     "localWeight": 0,
++     "modelVersionId": null,
++     "priorProbability": null,
++     "priorWeight": 0,
++     "probability": 0.5,
++     "sampleSize": 0,
++     "score": 50,
++     "source": "cold_start",
++     "target": "crl",
++   },
++   "engineVersion": "1.0.0",
++   "firstCycleApproval": {
++     "band": "high",
++     "localWeight": 0,
++     "modelVersionId": null,
++     "priorProbability": null,
++     "priorWeight": 0,
++     "probability": 0.5,
++     "sampleSize": 0,
++     "score": 50,
++     "source": "cold_start",
++     "target": "first_cycle_approval",
++   },
++   "recommendations": [
++     "High RTF risk: resolve all missing critical sections and request internal regulatory review before filing.",
++     "Critical gap: 1.1: Device Application Form (FDA 3601 or equivalent)",
++     "Critical gap: 1.2: Cover Letter and Table of Contents",
++     "Critical gap: 2.1: Device Description and Intended Use",
++     "Predictive risk is operating from rule-based signals only — no comparable outcomes in network yet.",
++   ],
++   "rtf": {
++     "band": "high",
++     "localWeight": 0,
++     "modelVersionId": null,
++     "priorProbability": null,
++     "priorWeight": 0,
++     "probability": 0.5,
++     "sampleSize": 0,
++     "score": 50,
++     "source": "cold_start",
++     "target": "rtf",
++   },
+  }
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:155:5
+    153|     await expect(
+    154|       scoreSubmissionDraft({ organizationId: 7, submissionType: 'PMA',…
+    155|     ).rejects.toMatchObject({ code: 'COMPLETENESS_NOT_ASSESSED', statu…
+       |     ^
+    156|     const sql = mockPool.query.mock.calls.map((c: unknown[]) => String…
+    157|     expect(sql.filter((q: string) => /network_risk_priors|risk_model_v…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > scoreSubmissionDraft refuses to score a not-assessed type > NDA with no Module 5: the missing efficacy reports reach the model as missing-critical
+AssertionError: expected 'conditional_go' to be 'no_go' // Object.is equality
+Expected: "no_go"
+Received: "conditional_go"
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:163:49
+    161|     const m1to4 = profile('NDA').filter((c) => !c.startsWith('5.'));
+    162|     const result = await scoreSubmissionDraft({ organizationId: 7, sub…
+    163|     expect(result.completeness.goNoGo.decision).toBe('no_go');
+       |                                                 ^
+    164|     expect(result.completeness.rtfRisk.missingCritical.map((b) => b.sp…
+    165|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > an empty IVDR file is not_assessed — never conditional_go or go
+AssertionError: expected 'conditional_go' to be 'not_assessed' // Object.is equality
+Expected: "not_assessed"
+Received: "conditional_go"
+ ❯ server/services/__tests__/validate-completeness-ivd.test.ts:28:33
+     26|   it('an empty IVDR file is not_assessed — never conditional_go or go'…
+     27|     const res = await engine.validate({ submissionType: 'IVDR', presen…
+     28|     expect(res.goNoGo.decision).toBe('not_assessed');
+       |                                 ^
+     29|     expect(res.goNoGo.decision).not.toBe('conditional_go');
+     30|     expect(res.goNoGo.readinessScore).toBeNull();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > points at the MDR/IVDR tech-doc engine, the one IVDR annex record
+TypeError: Cannot read properties of undefined (reading 'status')
+ ❯ server/services/__tests__/validate-completeness-ivd.test.ts:35:24
+     33|   it('points at the MDR/IVDR tech-doc engine, the one IVDR annex recor…
+     34|     const res = await engine.validate({ submissionType: 'IVDR', presen…
+     35|     if (res.assessment.status !== 'not_assessed') throw new Error('IVD…
+       |                        ^
+     36|     expect(res.assessment.assessWith).toMatchObject({
+     37|       engine: 'assembleTechDoc',
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > does not borrow the pharma CTD checklist
+AssertionError: expected [ { module: 'A', …(7) }, …(12) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   {
++     "description": "General Safety and Performance Requirements (GSPR) checklist",
++     "module": "A",
++     "present": false,
++     "qualityScore": null,
++     "remediation": "BLOCKER: General Safety and Performance Requirements (GSPR) checklist is required for IVDR submission. Prepare and include before filing.",
++     "required": true,
++     "section": "Annex I",
++     "status": "missing_required",
++   },
++   {
++     "description": "Device Description and Specification (intended purpose, analytes)",
++     "module": "A",
++     "present": false,
++     "qualityScore": null,
++     "remediation": "BLOCKER: Device Description and Specification (intended purpose, analytes) is required for IVDR submission. Prepare and include before filing.",
++     "required": true,
++     "section": "Annex II.1",
++     "status": "missing_required",
++   },
++   {
++     "description": "Information supplied by the manufacturer (labelling, IFU)",
++     "module": "A",
++     "present": false,
++     "qualityScore": null,
++     "remediation": "BLOCKER: Information supplied by the manufacturer (labelling, IFU) is required for IVDR submission. Prepare and include before filing.",
++     "required": true,
++     "section": "Annex II.2",
++     "status": "missing_required",
++   },
++   {
++     "description": "Design and Manufacturing Information",
++     "module": "A",
++     "present": false,
++     "qualityScore": null,
++     "remediation": "BLOCKER: Design and Manufacturing Information is required for IVDR submission. Prepare and include before filing.",
++     "required": true,
++     "section": "Annex II.3",
++     "status": "missing_required",
++   },
++   {
++     "description": "GSPR mapping to standards / common specifications",
++     "module": "A",
++     "present": false,
++     "qualityScore": null,
++     "remediation": "BLOCKER: GSPR mapping to standards / common specifications is required for IVDR submission. Prepare and include before filing.",
++     "required": true,
++     "section": "Annex II.4",
++     "status": "missing_required",
++   },
++   {
++     "description": "Benefit–Risk Analysis and Risk Management (ISO 14971)",
++     "module": "A",
++     "present": false,
++     "qualityScore": null,
++     "remediation": "BLOCKER: Benefit–Risk Analysis and Risk Management (ISO 14971) is required for IVDR submission. Prepare and include before filing.",
++     "required": true,
++     "section": "Annex II.5",
++     "status": "missing_required",
++   },
++   {
++     "description": "Analytical Performance (sensitivity, specificity, LoD/LoQ)",
++     "module": "A",
++     "present": false,
++     "qualityScore": null,
++     "remediation": "BLOCKER: Analytical Performance (sensitivity, specificity, LoD/LoQ) is required for IVDR submission. Prepare and include before filing.",
++     "required": true,
++     "section": "Annex II.6.1",
++     "status": "missing_required",
++   },
++   {
++     "description": "Clinical Performance (diagnostic sensitivity/specificity, PPV/NPV)",
++     "module": "A",
++     "present": false,
++     "qualityScore": null,
++     "remediation": "BLOCKER: Clinical Performance (diagnostic sensitivity/specificity, PPV/NPV) is required for IVDR submission. Prepare and include before filing.",
++     "required": true,
++     "section": "Annex II.6.2",
++     "status": "missing_required",
++   },
++   {
++     "description": "Performance Evaluation Report (PER) — scientific validity + analytical + clinical",
++     "module": "A",
++     "present": false,
++     "qualityScore": null,
++     "remediation": "BLOCKER: Performance Evaluation Report (PER) — scientific validity + analytical + clinical is required for IVDR submission. Prepare and include before filing.",
++     "required": true,
++     "section": "Annex XIII",
++     "status": "missing_required",
++   },
++   {
++     "description": "Software / cybersecurity documentation (if applicable)",
++     "module": "A",
++     "present": false,
++     "qualityScore": null,
++     "remediation": undefined,
++     "required": false,
++     "section": "Annex I.9",
++     "status": "missing_optional",
++   },
++   {
++     "description": "Post-Market Performance Follow-up (PMPF) plan",
++     "module": "A",
++     "present": false,
++     "qualityScore": null,
++     "remediation": "BLOCKER: Post-Market Performance Follow-up (PMPF) plan is required for IVDR submission. Prepare and include before filing.",
++     "required": true,
++     "section": "Annex XIV",
++     "status": "missing_required",
++   },
++   {
++     "description": "Post-Market Surveillance (PMS) plan / PSUR",
++     "module": "A",
++     "present": false,
++     "qualityScore": null,
++     "remediation": "BLOCKER: Post-Market Surveillance (PMS) plan / PSUR is required for IVDR submission. Prepare and include before filing.",
++     "required": true,
++     "section": "Annex III",
++     "status": "missing_required",
++   },
++   {
++     "description": "Stability (shelf-life, in-use, transport)",
++     "module": "A",
++     "present": false,
++     "qualityScore": null,
++     "remediation": "BLOCKER: Stability (shelf-life, in-use, transport) is required for IVDR submission. Prepare and include before filing.",
++     "required": true,
++     "section": "Stability",
++     "status": "missing_required",
++   },
++ ]
+ ❯ server/services/__tests__/validate-completeness-ivd.test.ts:45:27
+     43|   it('does not borrow the pharma CTD checklist', async () => {
+     44|     const res = await engine.validate({ submissionType: 'IVDR', presen…
+     45|     expect(res.checklist).toEqual([]);
+       |                           ^
+     46|     expect(JSON.stringify(res)).not.toMatch(/Drug Substance/i);
+     47|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/22]⎯
+ FAIL  server/services/__tests__/validate-completeness-ivd.test.ts > device types in the completeness engine > 510(k) is not_assessed and points at eSTAR filing readiness, not invented CTD modules
+AssertionError: expected 'no_go' to be 'not_assessed' // Object.is equality
+Expected: "not_assessed"
+Received: "no_go"
+ ❯ server/services/__tests__/validate-completeness-ivd.test.ts:53:33
+     51|   it('510(k) is not_assessed and points at eSTAR filing readiness, not…
+     52|     const res = await engine.validate({ submissionType: '510(k)', pres…
+     53|     expect(res.goNoGo.decision).toBe('not_assessed');
+       |                                 ^
+     54|     if (res.assessment.status !== 'not_assessed') throw new Error('510…
+     55|     expect(res.assessment.assessWith).toMatchObject({
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/22]⎯
+ Test Files  2 failed (2)
+      Tests  22 failed | 1 passed (23)
+   Start at  03:41:08
+   Duration  753ms (transform 586ms, setup 192ms, import 519ms, tests 64ms, environment 0ms)
+
+
+===== Review fix round 1 (2026-10-05): explicit assessor allow-list + normalized targetAgency =====
+New cases in validate-completeness-canonical.test.ts and the tightened IVDR route assertion in validate-completeness-ivd.test.ts, run against the round-0 engine (category/segment heuristic, verbatim targetAgency).
+Expected: 23 failed | 27 passed (50).
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > an empty IVDR file is not_assessed — never conditional_go or go
+{
+  "timestamp": "2026-10-05T04:10:31.061Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IVDR, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > points at the MDR/IVDR tech-doc engine, the one IVDR annex record
+{
+  "timestamp": "2026-10-05T04:10:31.064Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IVDR, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > does not borrow the pharma CTD checklist
+{
+  "timestamp": "2026-10-05T04:10:31.069Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IVDR, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-ivd.test.ts > device types in the completeness engine > 510(k) is not_assessed and points at eSTAR filing readiness, not invented CTD modules
+{
+  "timestamp": "2026-10-05T04:10:31.072Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: 510(k), 0 sections",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > an empty IVDR file is not_assessed — never conditional_go or go 4ms
+ × server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > points at the MDR/IVDR tech-doc engine, the one IVDR annex record 5ms
+   → expected 'GET /api/submissions/sequences/:seqId…' to match /technical-file\?regulation=ivdr$/
+ ✓ server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > does not borrow the pharma CTD checklist 1ms
+ ✓ server/services/__tests__/validate-completeness-ivd.test.ts > device types in the completeness engine > 510(k) is not_assessed and points at eSTAR filing readiness, not invented CTD modules 2ms
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > an NDA carrying only Modules 1-3 is no_go, with 5.2 and 5.3.5 among the blockers
+{
+  "timestamp": "2026-10-05T04:10:31.135Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 18 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > an NDA carrying every profiled section is go, 100% complete
+{
+  "timestamp": "2026-10-05T04:10:31.139Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 23 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > the NDA checklist is exactly the canonical profile — no hand table
+{
+  "timestamp": "2026-10-05T04:10:31.140Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > '3.2.S.1.1' satisfies 3.2.S and does NOT satisfy 1.1
+{
+  "timestamp": "2026-10-05T04:10:31.141Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 1 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > '1.10' does NOT satisfy 1.1
+{
+  "timestamp": "2026-10-05T04:10:31.142Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 1 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > an 'm'-prefixed leaf ('m5.3.5.1') satisfies 5.3.5
+{
+  "timestamp": "2026-10-05T04:10:31.143Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 1 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an EU MAA has no FDA 356h item and requires the EU risk-management system (1.8.2)
+{
+  "timestamp": "2026-10-05T04:10:31.143Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: MAA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an IND is judged against the IND profile, not the NDA table
+{
+  "timestamp": "2026-10-05T04:10:31.144Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IND, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an NDA filed with a non-FDA agency is not assessed (no borrowed region)
+{
+  "timestamp": "2026-10-05T04:10:31.145Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency " " is assessed and reported as 'FDA'
+{
+  "timestamp": "2026-10-05T04:10:31.146Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency "" is assessed and reported as 'FDA'
+{
+  "timestamp": "2026-10-05T04:10:31.152Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency "fda" is assessed and reported as 'FDA'
+{
+  "timestamp": "2026-10-05T04:10:31.152Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency " FDA " is assessed and reported as 'FDA'
+{
+  "timestamp": "2026-10-05T04:10:31.153Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > 510(k) points at the eSTAR filing-readiness engine
+{
+  "timestamp": "2026-10-05T04:10:31.154Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: 510(k), 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > De Novo points at the eSTAR filing-readiness engine
+{
+  "timestamp": "2026-10-05T04:10:31.154Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: De Novo, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > PMA points at the eSTAR filing-readiness engine
+{
+  "timestamp": "2026-10-05T04:10:31.155Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: PMA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > an empty IVDR technical file is not_assessed and points at the MDR/IVDR tech-doc engine
+{
+  "timestamp": "2026-10-05T04:10:31.155Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IVDR, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_510K points at eSTAR, which assesses it
+{
+  "timestamp": "2026-10-05T04:10:31.155Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: US_510K, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_DE_NOVO points at eSTAR, which assesses it
+{
+  "timestamp": "2026-10-05T04:10:31.156Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: US_DE_NOVO, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_PMA points at eSTAR, which assesses it
+{
+  "timestamp": "2026-10-05T04:10:31.156Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: US_PMA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_IDE points at eSTAR, which assesses it
+{
+  "timestamp": "2026-10-05T04:10:31.156Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: US_IDE, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_PMA_SUPP points at eSTAR, which assesses it
+{
+  "timestamp": "2026-10-05T04:10:31.156Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: US_PMA_SUPP, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_TECHDOC points at the tech-doc engine with regulation=mdr
+{
+  "timestamp": "2026-10-05T04:10:31.158Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_MDR_TECHDOC, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > mdr_td points at the tech-doc engine with regulation=mdr
+{
+  "timestamp": "2026-10-05T04:10:31.159Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: mdr_td, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_CLASS_I points at the tech-doc engine with regulation=mdr
+{
+  "timestamp": "2026-10-05T04:10:31.160Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_MDR_CLASS_I, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_CLASS_III points at the tech-doc engine with regulation=mdr
+{
+  "timestamp": "2026-10-05T04:10:31.160Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_MDR_CLASS_III, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > IVDR_TD points at the tech-doc engine with regulation=ivdr
+{
+  "timestamp": "2026-10-05T04:10:31.161Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: IVDR_TD, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVDR_CLASS_A points at the tech-doc engine with regulation=ivdr
+{
+  "timestamp": "2026-10-05T04:10:31.162Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_IVDR_CLASS_A, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVDR_CLASS_CD points at the tech-doc engine with regulation=ivdr
+{
+  "timestamp": "2026-10-05T04:10:31.162Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_IVDR_CLASS_CD, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_EUA is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-10-05T04:10:31.163Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: US_EUA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_HDE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-10-05T04:10:31.165Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: US_HDE, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MIR is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-10-05T04:10:31.166Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_MIR, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_FSCA is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-10-05T04:10:31.166Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_FSCA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_CLIN_INVESTIGATION is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-10-05T04:10:31.167Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_CLIN_INVESTIGATION, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_PSUR_DEVICE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-10-05T04:10:31.168Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_PSUR_DEVICE, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVD_VIGILANCE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-10-05T04:10:31.168Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_IVD_VIGILANCE, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_NB_CONSULT is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-10-05T04:10:31.169Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_NB_CONSULT, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_CER is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-10-05T04:10:31.169Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_CER, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_DOC is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-10-05T04:10:31.170Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_DOC, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_SIG_CHANGE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+{
+  "timestamp": "2026-10-05T04:10:31.171Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: EU_SIG_CHANGE, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > ANDA has no profile: not_assessed, no checklist, no NaN
+{
+  "timestamp": "2026-10-05T04:10:31.171Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: ANDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > 505(b)(2) has no profile: not_assessed, no checklist, no NaN
+{
+  "timestamp": "2026-10-05T04:10:31.172Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: 505(b)(2), 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > CTA has no profile: not_assessed, no checklist, no NaN
+{
+  "timestamp": "2026-10-05T04:10:31.172Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: CTA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > NOT-A-TYPE has no profile: not_assessed, no checklist, no NaN
+{
+  "timestamp": "2026-10-05T04:10:31.172Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NOT-A-TYPE, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > scoreSubmissionDraft refuses to score a not-assessed type > PMA: rejects with COMPLETENESS_NOT_ASSESSED (422) and never reaches the risk model or the prediction store
+{
+  "timestamp": "2026-10-05T04:10:31.173Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: PMA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/__tests__/validate-completeness-canonical.test.ts > scoreSubmissionDraft refuses to score a not-assessed type > NDA with no Module 5: the missing efficacy reports reach the model as missing-critical
+{
+  "timestamp": "2026-10-05T04:10:31.175Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 21 sections",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > an NDA carrying only Modules 1-3 is no_go, with 5.2 and 5.3.5 among the blockers 5ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > an NDA carrying every profiled section is go, 100% complete 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > NDA: every missing required section is a blocker > the NDA checklist is exactly the canonical profile — no hand table 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > '3.2.S.1.1' satisfies 3.2.S and does NOT satisfy 1.1 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > '1.10' does NOT satisfy 1.1 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > presence is exact-or-descendant, never a substring > an 'm'-prefixed leaf ('m5.3.5.1') satisfies 5.3.5 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an EU MAA has no FDA 356h item and requires the EU risk-management system (1.8.2) 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an IND is judged against the IND profile, not the NDA table 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > each type is judged against its own region, never the FDA NDA table > an NDA filed with a non-FDA agency is not assessed (no borrowed region) 1ms
+ × server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency " " is assessed and reported as 'FDA' 6ms
+   → expected ' ' to be 'FDA' // Object.is equality
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency "" is assessed and reported as 'FDA' 1ms
+ × server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency "fda" is assessed and reported as 'FDA' 1ms
+   → expected 'fda' to be 'FDA' // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency " FDA " is assessed and reported as 'FDA' 1ms
+   → expected ' FDA ' to be 'FDA' // Object.is equality
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > 510(k) points at the eSTAR filing-readiness engine 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > De Novo points at the eSTAR filing-readiness engine 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > PMA points at the eSTAR filing-readiness engine 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > an empty IVDR technical file is not_assessed and points at the MDR/IVDR tech-doc engine 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_510K points at eSTAR, which assesses it 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_DE_NOVO points at eSTAR, which assesses it 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_PMA points at eSTAR, which assesses it 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_IDE points at eSTAR, which assesses it 0ms
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_PMA_SUPP points at eSTAR, which assesses it 1ms
+   → expected undefined to be 'assessEstarFilingReadiness' // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_TECHDOC points at the tech-doc engine with regulation=mdr 1ms
+   → expected 'GET /api/submissions/sequences/:seqId…' to match /technical-file\?regulation=mdr$/
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > mdr_td points at the tech-doc engine with regulation=mdr 1ms
+   → expected 'GET /api/submissions/sequences/:seqId…' to match /technical-file\?regulation=mdr$/
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_CLASS_I points at the tech-doc engine with regulation=mdr 1ms
+   → expected 'GET /api/submissions/sequences/:seqId…' to match /technical-file\?regulation=mdr$/
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_CLASS_III points at the tech-doc engine with regulation=mdr 1ms
+   → expected 'GET /api/submissions/sequences/:seqId…' to match /technical-file\?regulation=mdr$/
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > IVDR_TD points at the tech-doc engine with regulation=ivdr 1ms
+   → expected undefined to be 'assembleTechDoc' // Object.is equality
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVDR_CLASS_A points at the tech-doc engine with regulation=ivdr 1ms
+   → expected 'GET /api/submissions/sequences/:seqId…' to match /technical-file\?regulation=ivdr$/
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVDR_CLASS_CD points at the tech-doc engine with regulation=ivdr 1ms
+   → expected 'GET /api/submissions/sequences/:seqId…' to match /technical-file\?regulation=ivdr$/
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_EUA is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 2ms
+   → expected { …(3) } to be null
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_HDE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 1ms
+   → expected { …(3) } to be null
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MIR is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 1ms
+   → expected { engine: 'assembleTechDoc', …(2) } to be null
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_FSCA is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 1ms
+   → expected { engine: 'assembleTechDoc', …(2) } to be null
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_CLIN_INVESTIGATION is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 1ms
+   → expected { engine: 'assembleTechDoc', …(2) } to be null
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_PSUR_DEVICE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 1ms
+   → expected { engine: 'assembleTechDoc', …(2) } to be null
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVD_VIGILANCE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 1ms
+   → expected { engine: 'assembleTechDoc', …(2) } to be null
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_NB_CONSULT is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 1ms
+   → expected { engine: 'assembleTechDoc', …(2) } to be null
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_CER is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 1ms
+   → expected { engine: 'assembleTechDoc', …(2) } to be null
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_DOC is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 1ms
+   → expected { engine: 'assembleTechDoc', …(2) } to be null
+ × server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_SIG_CHANGE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim 1ms
+   → expected { engine: 'assembleTechDoc', …(2) } to be null
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > ANDA has no profile: not_assessed, no checklist, no NaN 1ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > 505(b)(2) has no profile: not_assessed, no checklist, no NaN 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > CTA has no profile: not_assessed, no checklist, no NaN 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > NOT-A-TYPE has no profile: not_assessed, no checklist, no NaN 0ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > scoreSubmissionDraft refuses to score a not-assessed type > PMA: rejects with COMPLETENESS_NOT_ASSESSED (422) and never reaches the risk model or the prediction store 2ms
+ ✓ server/services/__tests__/validate-completeness-canonical.test.ts > scoreSubmissionDraft refuses to score a not-assessed type > NDA with no Module 5: the missing efficacy reports reach the model as missing-critical 3ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 23 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency " " is assessed and reported as 'FDA'
+AssertionError: expected ' ' to be 'FDA' // Object.is equality
+
+Expected: "FDA"
+Received: " "
+
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:119:30
+    117|     const res = await engine.validate({ submissionType: 'NDA', present…
+    118|     expect(res.assessment.status).toBe('assessed');
+    119|     expect(res.targetAgency).toBe('FDA');
+       |                              ^
+    120|   });
+    121| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/23]⎯
+
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency "fda" is assessed and reported as 'FDA'
+AssertionError: expected 'fda' to be 'FDA' // Object.is equality
+
+Expected: "FDA"
+Received: "fda"
+
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:119:30
+    117|     const res = await engine.validate({ submissionType: 'NDA', present…
+    118|     expect(res.assessment.status).toBe('assessed');
+    119|     expect(res.targetAgency).toBe('FDA');
+       |                              ^
+    120|   });
+    121| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/23]⎯
+
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > targetAgency is reported normalized > NDA with targetAgency " FDA " is assessed and reported as 'FDA'
+AssertionError: expected ' FDA ' to be 'FDA' // Object.is equality
+
+Expected: "FDA"
+Received: " FDA "
+
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:119:30
+    117|     const res = await engine.validate({ submissionType: 'NDA', present…
+    118|     expect(res.assessment.status).toBe('assessed');
+    119|     expect(res.targetAgency).toBe('FDA');
+       |                              ^
+    120|   });
+    121| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/23]⎯
+
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_PMA_SUPP points at eSTAR, which assesses it
+AssertionError: expected undefined to be 'assessEstarFilingReadiness' // Object.is equality
+
+- Expected:
+"assessEstarFilingReadiness"
+
++ Received:
+undefined
+
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:152:49
+    150|       const res = await engine.validate({ submissionType: t, presentSe…
+    151|       if (res.assessment.status !== 'not_assessed') throw new Error(`$…
+    152|       expect(res.assessment.assessWith?.engine).toBe('assessEstarFilin…
+       |                                                 ^
+    153|     },
+    154|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/23]⎯
+
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_TECHDOC points at the tech-doc engine with regulation=mdr
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > mdr_td points at the tech-doc engine with regulation=mdr
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_CLASS_I points at the tech-doc engine with regulation=mdr
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MDR_CLASS_III points at the tech-doc engine with regulation=mdr
+AssertionError: expected 'GET /api/submissions/sequences/:seqId…' to match /technical-file\?regulation=mdr$/
+
+- Expected:
+/technical-file\?regulation=mdr$/
+
++ Received:
+"GET /api/submissions/sequences/:seqId/technical-file?regulation=mdr|ivdr"
+
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:168:46
+    166|     if (res.assessment.status !== 'not_assessed') throw new Error(`${t…
+    167|     expect(res.assessment.assessWith?.engine).toBe('assembleTechDoc');
+    168|     expect(res.assessment.assessWith?.route).toMatch(new RegExp(`techn…
+       |                                              ^
+    169|   });
+    170|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/23]⎯
+
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > IVDR_TD points at the tech-doc engine with regulation=ivdr
+AssertionError: expected undefined to be 'assembleTechDoc' // Object.is equality
+
+- Expected:
+"assembleTechDoc"
+
++ Received:
+undefined
+
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:167:47
+    165|     const res = await engine.validate({ submissionType: t, presentSect…
+    166|     if (res.assessment.status !== 'not_assessed') throw new Error(`${t…
+    167|     expect(res.assessment.assessWith?.engine).toBe('assembleTechDoc');
+       |                                               ^
+    168|     expect(res.assessment.assessWith?.route).toMatch(new RegExp(`techn…
+    169|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/23]⎯
+
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVDR_CLASS_A points at the tech-doc engine with regulation=ivdr
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVDR_CLASS_CD points at the tech-doc engine with regulation=ivdr
+AssertionError: expected 'GET /api/submissions/sequences/:seqId…' to match /technical-file\?regulation=ivdr$/
+
+- Expected:
+/technical-file\?regulation=ivdr$/
+
++ Received:
+"GET /api/submissions/sequences/:seqId/technical-file?regulation=mdr|ivdr"
+
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:168:46
+    166|     if (res.assessment.status !== 'not_assessed') throw new Error(`${t…
+    167|     expect(res.assessment.assessWith?.engine).toBe('assembleTechDoc');
+    168|     expect(res.assessment.assessWith?.route).toMatch(new RegExp(`techn…
+       |                                              ^
+    169|   });
+    170|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/23]⎯
+
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_EUA is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > US_HDE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+AssertionError: expected { …(3) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "engine": "assessEstarFilingReadiness",
+  "module": "server/services/pathway-engines/estar/estar-filing-readiness.ts",
+  "route": "POST /api/510k/estar/filing-readiness",
+}
+
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:178:39
+    176|     expect(res.goNoGo.decision).toBe('not_assessed');
+    177|     if (res.assessment.status !== 'not_assessed') throw new Error(`${t…
+    178|     expect(res.assessment.assessWith).toBeNull();
+       |                                       ^
+    179|     expect(res.assessment.reason).toMatch(/No canonical required-secti…
+    180|     expect(res.assessment.reason).not.toMatch(/assessEstarFilingReadin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/23]⎯
+
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_MIR is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_FSCA is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_CLIN_INVESTIGATION is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_PSUR_DEVICE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_IVD_VIGILANCE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_NB_CONSULT is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_CER is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_DOC is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+ FAIL  server/services/__tests__/validate-completeness-canonical.test.ts > a type with no profile is not_assessed, never conditional_go > EU_SIG_CHANGE is assessed by neither eSTAR nor the tech-doc engine: assessWith null, no device-pathway claim
+AssertionError: expected { engine: 'assembleTechDoc', …(2) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "engine": "assembleTechDoc",
+  "module": "server/services/pathway-engines/mdr-ivdr/tech-doc-assembler.ts",
+  "route": "GET /api/submissions/sequences/:seqId/technical-file?regulation=mdr|ivdr",
+}
+
+ ❯ server/services/__tests__/validate-completeness-canonical.test.ts:178:39
+    176|     expect(res.goNoGo.decision).toBe('not_assessed');
+    177|     if (res.assessment.status !== 'not_assessed') throw new Error(`${t…
+    178|     expect(res.assessment.assessWith).toBeNull();
+       |                                       ^
+    179|     expect(res.assessment.reason).toMatch(/No canonical required-secti…
+    180|     expect(res.assessment.reason).not.toMatch(/assessEstarFilingReadin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/23]⎯
+
+ FAIL  server/services/__tests__/validate-completeness-ivd.test.ts > IVDR in the completeness engine > points at the MDR/IVDR tech-doc engine, the one IVDR annex record
+AssertionError: expected 'GET /api/submissions/sequences/:seqId…' to match /technical-file\?regulation=ivdr$/
+
+- Expected:
+/technical-file\?regulation=ivdr$/
+
++ Received:
+"GET /api/submissions/sequences/:seqId/technical-file?regulation=mdr|ivdr"
+
+ ❯ server/services/__tests__/validate-completeness-ivd.test.ts:40:46
+     38|       module: 'server/services/pathway-engines/mdr-ivdr/tech-doc-assem…
+     39|     });
+     40|     expect(res.assessment.assessWith?.route).toMatch(/technical-file\?…
+       |                                              ^
+     41|   });
+     42|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/23]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  23 failed | 27 passed (50)
+   Start at  04:10:30
+   Duration  965ms (transform 995ms, setup 195ms, import 968ms, tests 62ms, environment 0ms)
+

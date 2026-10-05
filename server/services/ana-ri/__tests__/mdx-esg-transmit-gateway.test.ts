@@ -234,13 +234,25 @@ beforeEach(() => {
     '\r\nOriginal-Message-ID: {{MESSAGE_ID}}\r\n' +
     'Disposition: automatic-action/MDN-sent-automatically; processed\r\n';
 
-  savedEnv = { NODE_ENV: process.env.NODE_ENV, SUBMISSION_BUNDLE_DIR: process.env.SUBMISSION_BUNDLE_DIR };
+  savedEnv = {
+    NODE_ENV: process.env.NODE_ENV,
+    SUBMISSION_BUNDLE_DIR: process.env.SUBMISSION_BUNDLE_DIR,
+    CONNECTOR_ENCRYPTION_KEY: process.env.CONNECTOR_ENCRYPTION_KEY,
+  };
   for (const k of ESG_ENV_KEYS) savedEnv[k] = process.env[k];
 
   // The enforced state: descriptor trust, namespace confinement and the
   // structural-validation-evidence requirement are all live.
   process.env.NODE_ENV = 'production';
   process.env.SUBMISSION_BUNDLE_DIR = bundleRoot;
+  // Production refuses to load without a dedicated credential key
+  // (security/credential-cipher.ts). Since b7bf25037 (2026-10-01) the transmit
+  // guard resolves the organisation's gateway account before the wire, so the
+  // governed transmit's import chain (index.ts -> gateway-accounts.ts) loads
+  // that cipher. A production deployment supplies the key; so does this one.
+  // The DB stub holds no organization_gateway_accounts row, so the account
+  // resolves to the platform's and nothing is decrypted.
+  process.env.CONNECTOR_ENCRYPTION_KEY = 'test-only-connector-encryption-key';
 
   // The server-generated descriptor the assemble route persists.
   storedBundle.value = {
