@@ -1,0 +1,25 @@
+Mutant F01-everything-stands: every sentence the summarizer wrote stands, as before FV-missed
+
+--- server/services/ana/memory-fact-check.ts
+- export function settleItem(item: unknown, basis: FoundBasis): boolean {
++ export function settleItem(item: unknown, basis: FoundBasis): boolean {
+  if (typeof item === 'string') return true;
+
+Tests run: server/services/ana/__tests__/memory-fact-check.test.ts server/services/__tests__/working-memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds the figure the check did not find, wherever the summarizer put it 7ms
+ × server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds a stated verdict 1ms
+ × server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds what is not a sentence 1ms
+ × server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > never recombines two answers' findings into a claim neither made 2ms
+ × server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > a value one answer found never vouches for the same value another answer could not find 2ms
+ × server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > credits a figure's own number, never another number written beside it 2ms
+ × server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > a check that does not describe its text vouches for nothing 1ms
+ × server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds a value only the person stated (the person's, not a finding) 3ms
+ × server/services/ana/__tests__/memory-fact-check.test.ts > the summary, settled field by field > keeps every field the reader renders only as far as it was found, and records what it withheld 4ms
+ × server/services/ana/__tests__/memory-fact-check.test.ts > the summary, settled field by field > with no checked answer to stand on, keeps only what claims nothing 1ms
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > withholds the figure the stored check did not find, in every field the reader renders 204ms
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > reads the current answer's check, which may not be stored yet 5ms
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > fails closed when the thread cannot be read: only what claims nothing stands, and the row is still written 4ms
+      Tests  13 failed | 5 passed (18)
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯

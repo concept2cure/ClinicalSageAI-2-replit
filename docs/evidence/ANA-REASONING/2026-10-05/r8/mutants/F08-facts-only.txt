@@ -1,0 +1,14 @@
+Mutant F08-facts-only: only Key Facts are settled: a decision or next action carries the invented figure past the check
+
+--- server/services/ana/memory-fact-check.ts
+- structured[field] = items.filter((v) => settleItem(v, basis)) as string[];
++ structured[field] = (field === 'lockedFacts' ? items.filter((v) => settleItem(v, basis)) : items) as string[];
+
+Tests run: server/services/ana/__tests__/memory-fact-check.test.ts server/services/__tests__/working-memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/memory-fact-check.test.ts > the summary, settled field by field > keeps every field the reader renders only as far as it was found, and records what it withheld 15ms
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > withholds the figure the stored check did not find, in every field the reader renders 201ms
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > writes the row when the summarizer returns a malformed shape, never one letter per fact 6ms
+      Tests  3 failed | 15 passed (18)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

@@ -68,6 +68,9 @@ async function turnProjectId(
   return integerProjectForRef(async () => (await import('../../db.js')).db, { ref: streamProjectId, orgId: org, context });
 }
 
+/** A turn's answer check, or null when no answer was checked. */
+const checkOf = (verification: { check: unknown } | null): unknown => (verification ? verification.check : null);
+
 export interface StreamPostProcessingContext {
   res: Response;
   /** Raw model output for the turn (pre-cleaning). */
@@ -545,6 +548,8 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
         // memory into project_memory_entries; null when the stream had no
         // project scope.
         projectId,
+        // This answer's check: the summary keeps only what a checked answer found (FV-missed).
+        answerCheck: checkOf(verification),
       });
     }
 
