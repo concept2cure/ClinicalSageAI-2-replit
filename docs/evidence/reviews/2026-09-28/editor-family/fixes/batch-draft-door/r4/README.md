@@ -2,7 +2,10 @@
 
 Periodic review 2026-09-28, editor family, the batch-draft accept. An
 independent refute-review of round 3 (at 283fe08c4) found eleven defects. Its
-report, probes and outputs are in `review-probes/`, with paths redacted. Each
+report, which quotes each probe's output, is `review-probes/REPORT.md`, with
+paths redacted. The probe scripts are not kept: they import the exported tree
+the reviewer ran them against, which the repository does not hold, so they
+cannot run here (the pre-push untracked-imports gate refuses them). Each
 finding is answered below, red first.
 
 The rule, as decided: AnA is credited with a clause only when every reader of
@@ -51,7 +54,7 @@ generated). It is red against HEAD's code (`red-aidraft-door.txt`).
 - `lint.txt`: the same 10 warnings as HEAD, none new; the new files have none.
 - `tsc.txt`: no type errors in any touched file (a narrow program, described
   in the file).
-- `review-probes/`: the reviewer's report, probes and outputs.
+- `review-probes/REPORT.md`: the reviewer's report, with each probe's output.
 
 This round supersedes the lane README's "Not done here" premise that attribute
 text is hidden from every reader that parses HTML (refuted by D4).
