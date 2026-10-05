@@ -41,8 +41,10 @@
  * (AsyncLocalStorage.exit, or AsyncResource.bind at creation).
  *
  * ── What it does not cover ───────────────────────────────────────────────────
- * `route()` only, which every generation entry point (complete, chat,
- * structuredOutput) goes through. Embeddings are not generation and stay
+ * `route()`, which every generation entry point (complete, chat,
+ * structuredOutput) goes through, and since S5c the three egresses beside it
+ * that {@link refuseModelCallHere} guards (the LiteLLM router branch, the
+ * cross-encoder reranker, the RAG response cache). Embeddings are not generation and stay
  * allowed: retrieval needs them. Model egress that does not go through
  * `route()` — the files listed in scripts/ci/gateway-bypass-baseline.json,
  * among them rag-reranker.ts's cross-encoder calls, ai/LiteLLMAdapter.ts (the
@@ -78,4 +80,19 @@ export function runRefusingModelCalls<T>(scope: ModelCallRefusalScope, fn: () =>
 /** The refusal scope in force here, or null where a model may be called. */
 export function modelCallRefusal(): ModelCallRefusalScope | null {
   return refusals.getStore() ?? null;
+}
+
+/**
+ * Throw the gateway's own refusal (SubAgentToolModelCallError) when a model
+ * may not be called here; return when it may. For the model egresses that do
+ * not go through route() (row 74, S5c): the legacy router's LiteLLM branch,
+ * the cross-encoder reranker, and the RAG pipeline's response cache, whose hit
+ * is model output too. The class is loaded only when refusing, because the
+ * gateway imports this module.
+ */
+export async function refuseModelCallHere(where: string): Promise<void> {
+  const refusal = modelCallRefusal();
+  if (!refusal) return;
+  const { SubAgentToolModelCallError } = await import('./gateway.js');
+  throw new SubAgentToolModelCallError({ ...refusal, tool: `${refusal.tool} (${where})` });
 }
