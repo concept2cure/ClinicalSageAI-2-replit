@@ -1,0 +1,32 @@
+# g-fda-software-documentation-level — regulatory facts relied on
+
+Step: `server/services/market-specs/software-lifecycle.ts` now determines FDA's
+software Documentation Level (`fdaDocumentationLevel`), holds the documentation
+set by level (`FDA_SOFTWARE_DOCUMENTATION_SET`), and handles cybersecurity
+documentation separately, keyed on cyber-device status
+(`fdaCybersecurityDocumentation`). The device 510(k) auditor, the PMA auditor,
+the FDA software reviewer persona and the device shadow-reviewer checklist read
+these functions. Checked 2026-10-05.
+
+WebFetch to fda.gov is blocked in this environment. **Regulator text** below
+means the wording was matched against WebSearch results (restricted to
+`fda.gov`) that quote FDA's own copy at the URL shown. It does not mean the PDF
+was opened. That is the same convention used by `g-basis-constants-one-home`.
+**Recall** means the fact was not checked against the regulator's text in this
+session.
+
+| # | Fact | Basis | Where used |
+|---|---|---|---|
+| 1 | FDA's final guidance "Content of Premarket Submissions for Device Software Functions" was issued on 14 June 2023 and replaced the 2005 Level of Concern with two Documentation Levels, Basic and Enhanced. | **Regulator text** (search extract). https://www.fda.gov/media/153781/download, plus the FDA notice https://www.fda.gov/media/170714/download ("Final Guidance: Content of Premarket Submissions for Device Software Functions"). The search summary gives the 14 June 2023 issue date. Checked 2026-10-05. | `FDA_DEVICE_SOFTWARE_GUIDANCE` (title, `issued`, url). |
+| 2 | Enhanced Documentation applies to any premarket submission that includes device software functions where a failure or flaw of any device software function could present a hazardous situation with a probable risk of death or serious injury, to a patient, a user of the device or others in the environment of use. These risks are assessed before risk control measures are implemented. Basic Documentation applies wherever Enhanced does not. | **Regulator text** (search extract of fda.gov/media/153781). Two searches on 2026-10-05 returned the Enhanced sentence, "these risks should be assessed prior to implementing risk control measures", and "Basic Documentation should be provided for any premarket submission that includes device software function(s) where Enhanced Documentation does not apply". | `DOCUMENTATION_LEVEL_DEFINITION_BASIS` (confidence `regulator-text`, `checked` 2026-10-05, with a note that a verbatim re-read is owed). `fdaDocumentationLevel`: true gives `enhanced`, false gives `basic`, absent gives `undetermined`. |
+| 3 | The IEC 62304 software safety class is assigned after risk-control measures external to the software (IEC 62304 §4.3). | **Recall.** This was already the caveat in `software-lifecycle.ts`. | Why `fdaDocumentationLevel` never reads the IEC class. The test pins a case that is Class B after controls but Enhanced before them. |
+| 4 | The documentation-set rows are: Documentation Level evaluation; software description; system and software risk management file; SRS; architecture design chart; development, configuration management and maintenance practices (at Basic, a declaration of conformity to IEC 62304 or a life-cycle summary); a testing summary covering unit, integration and system levels; the system-level test protocol and report; version history; unresolved anomalies. Enhanced adds the SDS, unit and integration test protocols and reports, and the complete configuration management and maintenance plan. | **Recall.** It is corroborated, not confirmed, by a 2026-10-05 search extract of fda.gov/media/153781, which contains: "For Basic Documentation Level: FDA is not recommending the SDS as part of the premarket submission"; "For Basic Documentation Level, a summary description of the testing activities at the unit, integration, and system levels should be provided"; "For Enhanced Documentation Level, unit and integration level test protocols and reports should be provided". The same extract has a garbled sentence about the Basic protocols, so the rows stay recall until the guidance table is read. The verifier's secondary source (innolitics) agrees. | `FDA_SOFTWARE_DOCUMENTATION_SET`, where every row is `SET_BASIS` with confidence `recall`. `describeFdaSoftwareDocumentation` builds the PMA recommendation and the persona's recommended fix from it. |
+| 5 | Cybersecurity documentation (SBOM, threat model, cybersecurity risk assessment and testing, and a plan for postmarket vulnerabilities) is required for a "cyber device" under FD&C Act §524B. It does not depend on the software Documentation Level. | **Recall.** Neither the statutory text nor the 2023 cybersecurity guidance was read this session. | `fdaCybersecurityDocumentation({ cyberDevice })`: true gives `required`, false gives `not_required`, absent gives `undetermined`. `FDA_CYBER_DEVICE_QUESTION` is now its own shadow-reviewer question. |
+| 6 | The 2005 Level of Concern scale was Minor / Moderate / Major. The persona's "basic / moderate / major" matched neither scheme. | **Recall.** | Only the deletion depends on this. The persona now asks `FDA_DOCUMENTATION_LEVEL_QUESTION`. |
+| 7 | The eSTAR nIVD template's software attachment slots are described by FDA as "Software/Firmware \| Software Description", "Device Hazard Analysis", "SRS", "Architecture Design Chart", "SDS", "Development Environment / Life Cycle Process", "V&V", "Version / Revision Level History" and "Unresolved Anomalies". They file to `/CHAPTER 3/CH3.05/CH3.05.05/CH3.05.05.01/` … `.10/`. The cybersecurity slots ("Cybersecurity \| SBOM", "Threat Model", "Risk Assessment", "Testing", "Management Plan") file to `CH3.05.05.11`. | **Regulator text, vendored**: `assets/estar-templates/eSTAR-510k-non-ivd.pdf`, read by `listEstarAttachmentSlots` on 2026-10-05. The IVD template files the same descriptions under `CH3.06.02.x`. | `estarSlot` on each item holds FDA's description, not a transcribed chapter. The test reads the template and requires every named slot to exist and to file into CH3.05.05.x. Mapping the risk management file to "Device Hazard Analysis" is this lane's choice, not FDA text. |
+
+**Owed read.** Open https://www.fda.gov/media/153781/download and check the
+documentation table, then promote each `FDA_SOFTWARE_DOCUMENTATION_SET` row to
+`regulator-text`. Read FD&C Act §524B and
+https://www.fda.gov/media/119933/download for the cyber branch. Both reads fall
+under DECISIONS.md #7.

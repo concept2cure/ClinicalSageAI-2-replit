@@ -9,6 +9,14 @@
  */
 
 import type { WarGameAuditor, AuditRule } from '../types.js';
+import {
+  FDA_DOCUMENTATION_LEVEL_FACT,
+  FDA_DOCUMENTATION_LEVEL_QUESTION,
+  describeFdaSoftwareDocumentation,
+  fdaDocumentationLevelFromAnswers,
+  readYesNoAnswer,
+} from '../../../../market-specs/software-lifecycle.js';
+import { basisLabel } from '../../../../../../shared/regulatory/regulatory-basis.js';
 
 const rid = (suffix: string) => 'device510k_' + suffix;
 
@@ -484,34 +492,36 @@ const rules: AuditRule[] = [
     },
   },
 
-  /* ── 16. Software level of concern ──────────────────────────────── */
+  /* ── 16. FDA software Documentation Level ───────────────────────── */
+  /* FDA's 2023 device software guidance replaced the Level of Concern with a
+     Basic/Enhanced Documentation Level, determined from the hazard a software
+     failure could present BEFORE risk controls — not from the IEC 62304 class,
+     which is assigned after them. The determination, its basis and the set it
+     selects all come from market-specs/software-lifecycle.ts. */
   {
-    id: rid('software_loc_missing'),
+    id: rid('software_documentation_level_undetermined'),
     dimension: 'regulatory_alignment',
-    title: 'Software Level of Concern Not Specified',
-    question:
-      'For software-containing devices, FDA guidance on Content of Premarket Submissions for Device Software Functions requires documentation proportional to the software safety classification per IEC 62304. Has the level of concern been identified?',
+    title: 'FDA Software Documentation Level Not Determined',
+    question: FDA_DOCUMENTATION_LEVEL_QUESTION,
     check: (a) => {
-      if (isBlank(a.software_level_of_concern)) {
-        return {
-          id: rid('software_loc_missing'),
-          dimension: 'regulatory_alignment',
-          severity: 'warning',
-          title: 'Software Level of Concern Not Specified',
-          question:
-            'For software-containing devices, FDA guidance on Content of Premarket Submissions for Device Software Functions requires documentation proportional to the software safety classification per IEC 62304. Has the level of concern been identified?',
-          observation:
-            'No software level of concern was specified. If the device contains software, the safety classification (Class A, B, or C per IEC 62304) must be determined.',
-          requirement:
-            'Software-containing devices must document the software safety classification and provide documentation commensurate with that level, including software requirements, architecture, and verification/validation testing results.',
-          reference:
-            'FDA Guidance: Content of Premarket Submissions for Device Software Functions (2023); IEC 62304:2006+A1:2015 — Medical Device Software Life Cycle Processes',
-          recommendation:
-            'Determine whether the device contains software. If so, classify the software safety class per IEC 62304 (Class A, B, or C) and provide the corresponding documentation package including software description, risk analysis, and verification/validation evidence.',
-          relatedFields: ['software_level_of_concern', 'cybersecurity_applicable'],
-        };
-      }
-      return null;
+      if (readYesNoAnswer(a.contains_software) === false) return null;
+      const determination = fdaDocumentationLevelFromAnswers(a);
+      if (determination.level !== 'undetermined') return null;
+      return {
+        id: rid('software_documentation_level_undetermined'),
+        dimension: 'regulatory_alignment',
+        severity: 'warning',
+        title: 'FDA Software Documentation Level Not Determined',
+        question: FDA_DOCUMENTATION_LEVEL_QUESTION,
+        observation: determination.rationale,
+        requirement:
+          'A premarket submission that includes device software functions provides the documentation for its FDA Documentation Level, Basic or Enhanced.',
+        reference: determination.basis.map(basisLabel).join('; '),
+        recommendation:
+          'Record whether a failure or flaw of any device software function could present a hazardous situation with a probable risk of death or serious injury before risk controls. ' +
+          describeFdaSoftwareDocumentation('undetermined'),
+        relatedFields: [FDA_DOCUMENTATION_LEVEL_FACT, 'contains_software'],
+      };
     },
   },
 
@@ -539,7 +549,7 @@ const rules: AuditRule[] = [
             'FD&C Act Section 524B; FDA Guidance: Cybersecurity in Medical Devices — Quality System Considerations and Content of Premarket Submissions (2023)',
           recommendation:
             'Determine whether the device meets the definition of a "cyber device." If so, provide: (1) cybersecurity risk assessment; (2) SBOM; (3) vulnerability management plan; (4) patch/update mechanisms; (5) evidence of secure design principles.',
-          relatedFields: ['cybersecurity_applicable', 'software_level_of_concern', 'emr_compatibility'],
+          relatedFields: ['cybersecurity_applicable', FDA_DOCUMENTATION_LEVEL_FACT, 'emr_compatibility'],
         };
       }
       return null;
