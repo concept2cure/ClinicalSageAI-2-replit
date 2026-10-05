@@ -1,0 +1,12 @@
+Mutant R03-routing-unset: the turn's routing is never handed to its record
+
+--- server/routes/ana-ri/stream.ts
+- turnRecorder?.setRouting(routingPlan);
++ 
+
+Tests run: server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > and how the turn was routed, and why 16ms
+      Tests  1 failed | 2 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
