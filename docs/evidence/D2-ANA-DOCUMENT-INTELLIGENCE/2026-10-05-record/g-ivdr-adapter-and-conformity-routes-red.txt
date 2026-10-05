@@ -1,0 +1,95 @@
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > device-classification framework catalog > models all three regions 8ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > device-classification framework catalog > FDA has classes I/II/III 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > device-classification framework catalog > EU_MDR has classes I/IIa/IIb/III 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > device-classification framework catalog > EU_IVDR has classes A/B/C/D 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — FDA > Class II → 510(k) 1ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — FDA > Class III → PMA 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — FDA > Class II notes mention De Novo and 513(g) 19ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — FDA > Class I is 510(k)-exempt and mentions De Novo 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — EU MDR > Class III → Notified Body required 2ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — EU MDR > Class I → Notified Body not required 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — EU MDR > Class IIa / IIb → Notified Body required 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — EU IVDR > Class D → Notified Body required 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — EU IVDR > Class A → Notified Body not required 0ms
+ × server/services/global-ri/__tests__/device-classification.test.ts > EU conformity routes — read from the one Article 48 table > IVDR typicalPathway and citation read IVDR_CONFORMITY_ROUTES 8ms
+ × server/services/global-ri/__tests__/device-classification.test.ts > EU conformity routes — read from the one Article 48 table > IVDR Class B is not offered Annex X or Annex XI 5ms
+   → expected 'Notified Body conformity assessment (…' not to match /Annex XI?\b/
+ × server/services/global-ri/__tests__/device-classification.test.ts > EU conformity routes — read from the one Article 48 table > IVDR Class D offers Annex X coupled with Annex XI 6ms
+   → expected 'Notified Body conformity assessment (…' to contain 'Annex X coupled with Annex XI'
+ × server/services/global-ri/__tests__/device-classification.test.ts > EU conformity routes — read from the one Article 48 table > MDR Class III is Annex IX, or Annex X coupled with Annex XI 4ms
+   → expected 'Notified Body conformity assessment (…' to contain 'Annex IX, or Annex X coupled with Ann…'
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — errors + determinism > throws for an unmodeled region 1ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — errors + determinism > throws for an invalid class in a valid region 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — errors + determinism > is deterministic 0ms
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > blood-screening transmissible-agent test is Class D (Rule 1, first indent) 9ms
+   → expected [ 'Annex VIII, Rule 1 (Class D)' ] to include 'Annex VIII, Rule 1, first indent (Cla…'
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > companion diagnostic is Class C under Rule 3(f), not "Rule 3a" 3ms
+   → expected [ 'Annex VIII, Rule 3a (Class C)' ] to include 'Annex VIII, Rule 3(f) (Class C)'
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > cancer detection is Class C under Rule 3(h); genetic testing under Rule 3(i) 1ms
+   → expected [ 'Annex VIII, Rule 3b (Class C)' ] to include 'Annex VIII, Rule 3(h) (Class C)'
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a self-test is Class C when its analyte is not an enumerated Rule 4(a) exception 0ms
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > riskToPatient no longer decides the Rule 4(a) exception, and the result says so 3ms
+   → expected 'B' to be 'C' // Object.is equality
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a urine-glucose self-test is Class B (Rule 4(a) exception), whatever the risk given 1ms
+   → glucose (urine): expected 'C' to be 'B' // Object.is equality
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a self-test with any analyte outside the exceptions is Class C, and an unread analyte is named 2ms
+   → expected 'Self-test placed in Class C under Rul…' to contain 'urine protein'
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > near-patient testing sets no class of its own (Rule 4(b)) — Rule 6 gives B 4ms
+   → expected 'Class B by the Annex VIII Rule 6 catc…' to contain 'Rule 4(b)'
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a device matching no rule is Class B by Rule 6, and needs a notified body 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > never awards Class A, and explains that Rule 5 is the manufacturer's to assert 5ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > highest applicable class wins (CDx + cancer + near-patient → C) 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > blood grouping of a listed marker is Class D (Rule 2) 0ms
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > blood grouping of a marker that is not listed is Class C (Rule 2), not D 1ms
+   → expected 'D' to be 'C' // Object.is equality
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > blood grouping that names no marker is not classified (fails closed, no class stated) 1ms
+   → expected function to throw an error, but it didn't
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a transmissible-agent test that is not blood screening is not classified from these inputs 0ms
+   → expected function to throw an error, but it didn't
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > the trace enumerates every row of the canonical table, each with its basis 3ms
+   → expected [ undefined, undefined, …(9) ] to deeply equal [ 'ivdr-1-first-indent', …(23) ]
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > every knowledge ref resolves to a real corpus entry 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > replaces CONFORMITY_ROUTE_BY_CLASS 0ms
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class B has Annex IX Chapters I and III with a representative device per category — no Annex X or XI 1ms
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class C offers Annex IX (generic device group) or Annex X coupled with Annex XI 0ms
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class D offers Annex IX Chapters I, II (except section 5) and III, or Annex X coupled with Annex XI, plus the EU reference laboratory 0ms
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class A self-declares; sterile Class A involves a notified body for the sterility aspects via Annex IX or XI 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > a companion diagnostic result adds the medicines-authority consultation 0ms
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > every route carries a recall basis pointing at the IVDR on EUR-Lex 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/global-ri/__tests__/device-classification.test.ts > EU conformity routes — read from the one Article 48 table > IVDR typicalPathway and citation read IVDR_CONFORMITY_ROUTES
+ FAIL  server/services/global-ri/__tests__/device-classification.test.ts > EU conformity routes — read from the one Article 48 table > IVDR Class B is not offered Annex X or Annex XI
+AssertionError: expected 'Notified Body conformity assessment (…' not to match /Annex XI?\b/
+ FAIL  server/services/global-ri/__tests__/device-classification.test.ts > EU conformity routes — read from the one Article 48 table > IVDR Class D offers Annex X coupled with Annex XI
+AssertionError: expected 'Notified Body conformity assessment (…' to contain 'Annex X coupled with Annex XI'
+ FAIL  server/services/global-ri/__tests__/device-classification.test.ts > EU conformity routes — read from the one Article 48 table > MDR Class III is Annex IX, or Annex X coupled with Annex XI
+AssertionError: expected 'Notified Body conformity assessment (…' to contain 'Annex IX, or Annex X coupled with Ann…'
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > blood-screening transmissible-agent test is Class D (Rule 1, first indent)
+AssertionError: expected [ 'Annex VIII, Rule 1 (Class D)' ] to include 'Annex VIII, Rule 1, first indent (Cla…'
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > companion diagnostic is Class C under Rule 3(f), not "Rule 3a"
+AssertionError: expected [ 'Annex VIII, Rule 3a (Class C)' ] to include 'Annex VIII, Rule 3(f) (Class C)'
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > cancer detection is Class C under Rule 3(h); genetic testing under Rule 3(i)
+AssertionError: expected [ 'Annex VIII, Rule 3b (Class C)' ] to include 'Annex VIII, Rule 3(h) (Class C)'
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > riskToPatient no longer decides the Rule 4(a) exception, and the result says so
+AssertionError: expected 'B' to be 'C' // Object.is equality
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a urine-glucose self-test is Class B (Rule 4(a) exception), whatever the risk given
+AssertionError: glucose (urine): expected 'C' to be 'B' // Object.is equality
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a self-test with any analyte outside the exceptions is Class C, and an unread analyte is named
+AssertionError: expected 'Self-test placed in Class C under Rul…' to contain 'urine protein'
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > near-patient testing sets no class of its own (Rule 4(b)) — Rule 6 gives B
+AssertionError: expected 'Class B by the Annex VIII Rule 6 catc…' to contain 'Rule 4(b)'
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > blood grouping of a marker that is not listed is Class C (Rule 2), not D
+AssertionError: expected 'D' to be 'C' // Object.is equality
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > blood grouping that names no marker is not classified (fails closed, no class stated)
+AssertionError: expected function to throw an error, but it didn't
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a transmissible-agent test that is not blood screening is not classified from these inputs
+AssertionError: expected function to throw an error, but it didn't
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > the trace enumerates every row of the canonical table, each with its basis
+AssertionError: expected [ undefined, undefined, …(9) ] to deeply equal [ 'ivdr-1-first-indent', …(23) ]
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class B has Annex IX Chapters I and III with a representative device per category — no Annex X or XI
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class C offers Annex IX (generic device group) or Annex X coupled with Annex XI
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class D offers Annex IX Chapters I, II (except section 5) and III, or Annex X coupled with Annex XI, plus the EU reference laboratory
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class A self-declares; sterile Class A involves a notified body for the sterility aspects via Annex IX or XI
+ FAIL  server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > every route carries a recall basis pointing at the IVDR on EUR-Lex
+ Test Files  2 failed (2)
+      Tests  20 failed | 24 passed (44)
