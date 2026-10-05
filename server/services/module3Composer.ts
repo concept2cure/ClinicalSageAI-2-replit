@@ -82,7 +82,8 @@ export interface CanonicalSource {
    * should assert that all sources share the same `organizationId` /
    * `projectId` as the request context to prevent cross-tenant leakage.
    * Left optional so the deterministic composer remains usable by existing
-   * tenant-agnostic callers (autoDraftModule3, e2e tests).
+   * tenant-agnostic callers (e2e tests; autoDraftModule3 was one until it was
+   * retired with POST /api/cmc/module3/auto-draft on 2026-10-05).
    */
   organizationId?: number | string;
   projectId?: number | string;

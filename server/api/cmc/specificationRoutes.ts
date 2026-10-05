@@ -12,6 +12,11 @@ import { BINDING_BASIS, persistGovernedActionSignature } from '../../services/pa
 import { clientIpOf } from '../../utils/client-ip';
 import { refusedWithoutSigningAuthority, verifiedReauthFactors } from './cmc-signer';
 import { governedSignatureSchema, resolveActorUserId } from './governance';
+import type { PoolClient } from 'pg';
+import { writeChainedAuditRow } from '../../services/auditService.js';
+import { requireGovernedReason } from '../../routes/governed-reason';
+import { inRefusableTransaction, isRefusal, refuse } from '../../services/vault/vault-refusal.js';
+import { isApprovedSpecification } from '../../services/cmc/signed-record';
 
 const router = express.Router();
 
@@ -51,7 +56,8 @@ const updateSpecSchema = z.object({
   justification: z.string().optional(),
   regulatoryBasis: z.any().optional(),
   approvalStatus: z.string().optional(),
-  changedBy: z.string().optional(),
+  /** Required when the specification is approved: the edit withdraws that approval. */
+  reason: z.string().optional(),
 });
 
 // Governed approval: high-risk e-signature. Approval can ONLY happen here, not
@@ -223,69 +229,91 @@ router.put('/:id', async (req, res) => {
     }
 
     const data = validationResult.data;
-    const pool = getPool();
     const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
-
-
-    // Get current spec for audit trail (strict tenant scope — see the GET above)
-    const currentResult = await pool.query(
-      `SELECT * FROM quality_specifications WHERE id = $1 AND tenant_id = $2`,
-      [id, tenantId]
-    );
-
-    if (currentResult.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Specification not found',
-      });
+    /* The audit row names the person from the SESSION. It used to take
+       `changedBy` from the request body and fall back to 'system', so every
+       edit from the board (which never sent it) was attributed to 'system',
+       and any caller could name someone else. */
+    const actorId = resolveActorUserId(req);
+    if (!actorId) {
+      return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
     }
-
-    const currentSpec = currentResult.rows[0];
 
     // Build dynamic update
     const { updates, values } = buildSpecUpdate(data);
-    let paramIndex = values.length + 1;
-
     if (updates.length === 0) {
       return res.status(400).json({ success: false, error: 'No updates provided' });
     }
 
-    /* The write carries its OWN tenant predicate rather than inheriting whatever
-       the read above admitted. A scoped read followed by an unscoped write is a
-       write primitive: change the read and the write silently keeps the old
-       reach. */
-    values.push(id);
-    const idParam = paramIndex;
-    paramIndex++;
-    values.push(tenantId);
-    const updateQuery = `
-      UPDATE quality_specifications
-      SET ${updates.join(', ')}, updated_at = NOW()
-      WHERE id = $${idParam} AND tenant_id = $${paramIndex}
-      RETURNING *
-    `;
+    const out = await inRefusableTransaction(async (client: PoolClient) => {
+      // Strict tenant scope (see the GET above), locked for the edit.
+      const currentResult = await client.query(
+        `SELECT * FROM quality_specifications WHERE id = $1 AND tenant_id = $2 FOR UPDATE`,
+        [id, tenantId]
+      );
+      const currentSpec = currentResult.rows[0];
+      if (!currentSpec) return refuse(404, 'NOT_FOUND', 'Specification not found');
 
-    const updateResult = await pool.query(updateQuery, values);
-    const updatedSpec = updateResult.rows[0];
-    if (!updatedSpec) {
-      // No row matched the write's own scope. Fail closed: an empty result is
-      // never rendered as a success with `data: undefined` and an audit row
-      // whose new_values are null.
-      return res.status(404).json({
-        success: false,
-        error: 'Specification not found',
+      /* Editing an APPROVED specification withdraws its approval
+         (services/cmc/signed-record). The signature binds the ledger hash, not
+         the criteria, so an edit that kept 'approved' left the signature on
+         limits nobody signed. The edit needs a governed reason; the record
+         returns to draft and is approved again through POST /:id/approve. */
+      const withdrawing = isApprovedSpecification(currentSpec);
+      let reason: string | null = null;
+      if (withdrawing) {
+        const verdict = requireGovernedReason(data.reason);
+        if (!verdict.ok) {
+          return refuse(422, 'REASON_REQUIRED',
+            `This specification is approved. Changing it withdraws the approval, so a reason is required: ${verdict.error}`);
+        }
+        reason = verdict.reason;
+      }
+
+      /* The write carries its OWN tenant predicate rather than inheriting
+         whatever the read above admitted. */
+      const sets = withdrawing ? [...updates, `approval_status = 'draft'`] : updates;
+      const idParam = values.length + 1;
+      const updateResult = await client.query(
+        `UPDATE quality_specifications
+            SET ${sets.join(', ')}, updated_at = NOW()
+          WHERE id = $${idParam} AND tenant_id = $${idParam + 1}
+          RETURNING *`,
+        [...values, id, tenantId]
+      );
+      const updatedSpec = updateResult.rows[0];
+      // Fail closed: an empty result is never rendered as a success.
+      if (!updatedSpec) return refuse(404, 'NOT_FOUND', 'Specification not found');
+
+      await client.query(
+        `INSERT INTO specification_audit_log (specification_id, action, changed_by, previous_values, new_values)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [id, withdrawing ? 'approval_withdrawn' : 'updated', String(actorId), JSON.stringify(currentSpec), JSON.stringify(updatedSpec)]
+      );
+      if (withdrawing) {
+        await writeChainedAuditRow(client, {
+          tenantId: Number(tenantId),
+          userId: actorId,
+          action: 'cmc.specification.approval_withdrawn',
+          resourceType: 'quality_specification',
+          resourceId: String(id),
+          ipAddress: clientIpOf(req) ?? undefined,
+          userAgent: req.headers['user-agent'],
+          details: { projectId: currentSpec.project_id ?? null, from: 'approved', to: 'draft', reason },
+        });
+      }
+      return { updatedSpec, withdrawing };
+    });
+    if (isRefusal(out)) {
+      return res.status(out.status).json({
+        success: false, error: out.code, message: out.message,
+        ...(out.code === 'REASON_REQUIRED' ? { field: 'reason' } : {}),
       });
     }
-
-    // Log audit trail
-    await pool.query(
-      `INSERT INTO specification_audit_log (specification_id, action, changed_by, previous_values, new_values)
-       VALUES ($1, 'updated', $2, $3, $4)`,
-      [id, data.changedBy || 'system', JSON.stringify(currentSpec), JSON.stringify(updatedSpec)]
-    );
+    const { updatedSpec, withdrawing } = out;
 
     console.log(`[CMC Specs] Updated specification ${id}`);
     const linkage = await linkToModule3('write_through_specification', Number(tenantId), updatedSpec, writeThroughSpecification);
@@ -293,7 +321,10 @@ router.put('/:id', async (req, res) => {
     res.json({
       success: true,
       data: updatedSpec,
-      message: 'Specification updated successfully',
+      message: withdrawing
+        ? 'Specification updated. Its approval was withdrawn: approve it again before it is filed.'
+        : 'Specification updated successfully',
+      approvalWithdrawn: withdrawing,
       timestamp: new Date().toISOString(),
       ...linkage,
     });
@@ -310,6 +341,25 @@ router.put('/:id', async (req, res) => {
 /** No content basis is registered for a specification, and none is claimed (signature-persistence BINDING_BASIS). */
 const LEDGER_BINDING_NOTE =
   'No content digest is registered for a quality specification, so none is claimed: bound_payload_digest is the governed action audit sha256 chain hash (target, payload hash, actor, time), not a content hash.';
+
+/**
+ * Why a specification cannot be approved now, or null. Missing is 404. One
+ * approval per revision: a second signature over a specification already
+ * approved attested nothing new and stacked a second signature on the record;
+ * a revision is an edit, which withdraws the approval first.
+ */
+function approvalTargetRefusal(spec: Record<string, unknown> | undefined): { status: number; body: Record<string, unknown> } | null {
+  if (!spec) return { status: 404, body: { success: false, error: 'Specification not found' } };
+  if (!isApprovedSpecification(spec)) return null;
+  return {
+    status: 409,
+    body: {
+      success: false,
+      error: 'ALREADY_APPROVED',
+      message: 'This specification is already approved. To revise it, edit it with a reason; that withdraws the approval, and the revision is approved again.',
+    },
+  };
+}
 
 // POST /api/cmc/specifications/:id/approve - Governed e-signature approval
 // (high-risk sign). The ONLY path to approval; routed through the
@@ -351,14 +401,15 @@ router.post('/:id/approve', async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // Verify the spec exists for this tenant.
+    // Verify the spec exists for this tenant, locked for the signature.
     const current = await client.query(
-      `SELECT * FROM quality_specifications WHERE id = $1 AND tenant_id = $2`,
+      `SELECT * FROM quality_specifications WHERE id = $1 AND tenant_id = $2 FOR UPDATE`,
       [id, orgId],
     );
-    if (current.rows.length === 0) {
+    const notApprovable = approvalTargetRefusal(current.rows[0]);
+    if (notApprovable) {
       await client.query('ROLLBACK');
-      return res.status(404).json({ success: false, error: 'Specification not found' });
+      return res.status(notApprovable.status).json(notApprovable.body);
     }
 
     const updateResult = await client.query(

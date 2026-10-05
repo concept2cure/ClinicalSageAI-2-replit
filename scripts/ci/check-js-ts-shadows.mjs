@@ -72,12 +72,12 @@ const ALLOWED_SHADOWS = new Set([
  */
 const ALLOWED_ANCESTOR_SHADOWS = new Set([
   // why: `index` is the most collided basename in the tree (70 .ts files carry
-  //      it). These two are API sub-barrels; nothing in server/api/cmc/ or
-  //      server/api/validation/ writes './index', and a bare './index' from
-  //      those directories would be self-referential rather than an attempt to
-  //      reach server/index.ts, which is the process entrypoint. Latent by
-  //      construction rather than by luck.
-  'server/api/cmc/index.js',
+  //      it). This one is an API sub-barrel; nothing in server/api/validation/
+  //      writes './index', and a bare './index' from that directory would be
+  //      self-referential rather than an attempt to reach server/index.ts, which
+  //      is the process entrypoint. Latent by construction rather than by luck.
+  //      (Its sibling server/api/cmc/index.js, the /api/cmc aggregator, was
+  //      retired on 2026-10-05 with no caller, and its entry with it.)
   'server/api/validation/index.js',
   // (server/lib/db.js, the ancestor shadow of the governed server/db.ts pool,
   //  was resolved as this note asked — deleted 2026-09-22 with its only two

@@ -7,17 +7,24 @@ export interface CmcConvergenceEntry {
   notes: string;
 }
 
+/**
+ * Where each CMC file stands on the way to one governed Module 3 path.
+ *
+ * Lists only files that exist (pinned by its test). An entry marked
+ * 'duplicate' or 'remove' is resolved by deleting the file and its entry in the
+ * same change — not by leaving a row that describes a file nobody can open.
+ * Resolved that way on 2026-10-05: projectRoutes.ts and blueprintRoutes.ts
+ * ('duplicate'), workflowRoutes.ts and documentRoutes.ts ('transitional'),
+ * retired with no caller (server/api/cmc/__tests__/
+ * cmc-retired-routers.contract.test.ts); server/routes/cmc-dashboard.ts was
+ * already gone.
+ */
 export const CMC_CONVERGENCE_MAP: CmcConvergenceEntry[] = [
   { path: 'shared/schema/cmc-os.ts', state: 'canonical', owner: 'cmc-os', notes: 'Primary governed CMC OS schema.' },
   { path: 'server/services/module3Composer.ts', state: 'canonical', owner: 'cmc-os', notes: 'Deterministic Module 3 composition authority.' },
   { path: 'server/api/cmc/module3OperatingSystemRoutes.ts', state: 'canonical', owner: 'cmc-os', notes: 'Operational API surface for compile/governance.' },
   { path: 'shared/cmc-schema.ts', state: 'transitional', owner: 'legacy-cmc', notes: 'Still used by legacy routes; migration-in-progress.' },
-  { path: 'server/api/cmc/workflowRoutes.ts', state: 'transitional', owner: 'legacy-cmc', notes: 'Workflow layer; migrating to evidence-based orchestration.' },
-  { path: 'server/api/cmc/projectRoutes.ts', state: 'duplicate', owner: 'legacy-cmc', notes: 'Overlaps with module3-os project state responsibilities.' },
-  { path: 'server/api/cmc/blueprintRoutes.ts', state: 'duplicate', owner: 'legacy-cmc', notes: 'Narrative generation overlaps deterministic composer outputs.' },
-  { path: 'server/api/cmc/documentRoutes.ts', state: 'transitional', owner: 'legacy-cmc', notes: 'Document lifecycle partially overlaps governed section versions.' },
   { path: 'server/api/cmc/specificationRoutes.ts', state: 'transitional', owner: 'legacy-cmc', notes: 'Canonical data source for specs but not yet unified service façade.' },
   { path: 'server/api/cmc/batchRecordRoutes.ts', state: 'transitional', owner: 'legacy-cmc', notes: 'Canonical data source for batch.' },
   { path: 'server/api/cmc/routes.ts', state: 'transitional', owner: 'legacy-cmc', notes: 'Aggregator with mixed responsibilities.' },
-  { path: 'server/routes/cmc-dashboard.ts', state: 'transitional', owner: 'legacy-cmc', notes: 'Dashboard projection to move onto module3-os readiness APIs.' },
 ];

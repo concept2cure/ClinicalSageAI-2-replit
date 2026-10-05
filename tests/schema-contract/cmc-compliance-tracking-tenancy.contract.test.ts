@@ -25,6 +25,12 @@
  * Fixing only the read would break the feature; fixing only the write would
  * leave the legacy rows exposed. Both land together, plus a backfill.
  *
+ * (2026-10-05: projectRoutes.ts, the writer this was found on, was retired with
+ * no caller — server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts.
+ * The model, the backfill and the strict read below are unchanged by that, and
+ * stay pinned: a writer bound to the model must still be able to stamp the
+ * tenant.)
+ *
  * ── Why a backfill is correct here, and not merely convenient ─────────────────
  * The pattern this repo has settled on for a legacy NULL tenant (see
  * migrations/20260907_quality_specifications_tenant_required.sql) is to leave
@@ -117,7 +123,7 @@ describe('the applied schema and the product write are the cause', () => {
     const decl = block.slice(0, block.indexOf('});') + 3);
     expect(
       decl.includes("organization_id"),
-      "shared/cmc-schema.ts complianceTracking must map organization_id, or projectRoutes cannot stamp it",
+      "shared/cmc-schema.ts complianceTracking must map organization_id, or a writer bound to it cannot stamp it",
     ).toBe(true);
   });
 });

@@ -23,6 +23,7 @@ import {
   manufacturingProcessForm, manufacturingProcessBody, manufacturingProcessPatch,
   characterizationStudyForm, characterizationStudyBody, characterizationStudyPatch,
   qualifyForm, qualifyBody,
+  signedUpdateBlocked, retireSignedForm, retireSignedBody,
   asUserId,
 } from './cmcRegisterForms';
 import type {
@@ -1105,6 +1106,28 @@ function elSummary(r: ContainerClosureApiRow): React.ReactNode {
 }
 
 /**
+ * Retire a signed record with a reason (server/services/cmc/signed-record.ts):
+ * offered only while the record is in its signed state, where Update is closed.
+ */
+function retireSignedAction<T extends { id?: unknown }>(
+  noun: string,
+  signed: 'qualified' | 'validated',
+  field: 'status' | 'validationStatus',
+  name: (r: T) => string,
+  path: (r: T) => string,
+): RegisterRowAction<T> {
+  return {
+    label: 'Retire',
+    icon: I.lock,
+    subject: noun,
+    when: (r) => Boolean(signedUpdateBlocked((r as Record<string, unknown>)[field], signed, noun)),
+    form: (r) => retireSignedForm(noun, name(r), signed),
+    path,
+    toBody: (v) => retireSignedBody(v, field),
+  };
+}
+
+/**
  * The container closure register — the capture path §3.2.S.6 and §3.2.P.7 never
  * had. `Evidence for` is the column that decides which of the two a system
  * files into, so it is shown in the table rather than buried in the record.
@@ -1151,6 +1174,7 @@ export function CmContainerClosures() {
              whole column. The patch body then sends every editable field, so a
              value the staffer clears is actually cleared. */
           form: (r) => containerClosureForm(r as ContainerClosureRow),
+          disabledReason: (r) => signedUpdateBlocked(r.status, 'qualified', 'container closure system'),
           path: (r) => `/api/cmc/container-closures/${r.id}`,
           toBody: (v) => containerClosurePatch(v),
         },
@@ -1167,6 +1191,7 @@ export function CmContainerClosures() {
           method: 'POST',
           toBody: (v) => qualifyBody(v),
         },
+        retireSignedAction('container closure system', 'qualified', 'status', (r) => r.systemName, (r) => `/api/cmc/container-closures/${r.id}`),
       ]}
       columns={[
         { header: 'System', render: (r) => r.systemName, mono: true, bold: true },
@@ -1253,6 +1278,7 @@ export function CmReferenceStandards() {
           icon: I.penLine,
           subject: 'reference standard',
           form: (r) => referenceStandardForm(r as Partial<ReferenceStandardBody>),
+          disabledReason: (r) => signedUpdateBlocked(r.status, 'qualified', 'reference standard'),
           path: (r) => `/api/cmc/reference-standards/${r.id}`,
           toBody: (v) => referenceStandardPatch(v),
         },
@@ -1266,6 +1292,7 @@ export function CmReferenceStandards() {
           method: 'POST',
           toBody: (v) => qualifyBody(v),
         },
+        retireSignedAction('reference standard', 'qualified', 'status', (r) => `${r.standardCode} — ${r.standardName}`, (r) => `/api/cmc/reference-standards/${r.id}`),
       ]}
       columns={[
         { header: 'Code', render: (r) => r.standardCode, mono: true, bold: true },
@@ -1372,6 +1399,7 @@ export function CmImpurityProfiles() {
           icon: I.penLine,
           subject: 'impurity',
           form: (r) => impurityProfileForm(r as Partial<ImpurityProfileBody>),
+          disabledReason: (r) => signedUpdateBlocked(r.status, 'qualified', 'impurity'),
           path: (r) => `/api/cmc/impurity-profiles/${r.id}`,
           toBody: (v) => impurityProfilePatch(v),
         },
@@ -1391,6 +1419,7 @@ export function CmImpurityProfiles() {
           method: 'POST',
           toBody: (v) => qualifyBody(v),
         },
+        retireSignedAction('impurity', 'qualified', 'status', (r) => `${r.impurityName} in ${r.materialName}`, (r) => `/api/cmc/impurity-profiles/${r.id}`),
       ]}
       columns={[
         { header: 'Impurity', render: (r) => r.impurityName, mono: true, bold: true },
@@ -1799,6 +1828,7 @@ export function CmManufacturingProcesses() {
           icon: I.penLine,
           subject: 'manufacturing process',
           form: (r) => manufacturingProcessForm(r as Partial<ManufacturingProcessBody>),
+          disabledReason: (r) => signedUpdateBlocked(r.validationStatus, 'validated', 'manufacturing process'),
           path: (r) => `/api/cmc/manufacturing-processes/${r.id}`,
           /* The stored row travels with the form values: a step's in-process
              controls have no column in the drawer and must survive the edit. */
@@ -1821,6 +1851,7 @@ export function CmManufacturingProcesses() {
           method: 'POST',
           toBody: (v) => qualifyBody(v),
         },
+        retireSignedAction('manufacturing process', 'validated', 'validationStatus', (r) => r.processName, (r) => `/api/cmc/manufacturing-processes/${r.id}`),
       ]}
       columns={[
         { header: 'Process', render: (r) => r.processName, bold: true },
@@ -1937,6 +1968,7 @@ export function CmCharacterizationStudies() {
           icon: I.penLine,
           subject: 'characterisation study',
           form: (r) => characterizationStudyForm(r as Partial<CharacterizationStudyBody>),
+          disabledReason: (r) => signedUpdateBlocked(r.status, 'qualified', 'characterisation study'),
           path: (r) => `/api/cmc/characterization-studies/${r.id}`,
           toBody: (v) => characterizationStudyPatch(v),
         },
@@ -1954,6 +1986,7 @@ export function CmCharacterizationStudies() {
           method: 'POST',
           toBody: (v) => qualifyBody(v),
         },
+        retireSignedAction('characterisation study', 'qualified', 'status', (r) => r.studyTitle, (r) => `/api/cmc/characterization-studies/${r.id}`),
       ]}
       columns={[
         { header: 'Study', render: (r) => r.studyTitle, bold: true },

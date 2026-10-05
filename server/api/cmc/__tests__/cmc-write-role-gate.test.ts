@@ -36,7 +36,10 @@ const WRITES: Array<[string, string]> = [
   ['post', '/api/cmc/module3-os/build-section/p1/3.2.S.1'],
   ['patch', '/api/cmc/agency-questions/3'],
   ['post', '/api/cmc/stability-studies'],
-  ['delete', '/api/cmc/documents/1'],
+  // No DELETE route remains under /api/cmc — the last ones went with
+  // documentRoutes.ts and projectRoutes.ts on 2026-10-05 — so this is the
+  // method on a live prefix: the gate refuses it before any router is asked.
+  ['delete', '/api/cmc/specifications/1'],
 ];
 
 const COMPUTATIONS = [
@@ -83,13 +86,17 @@ describe('/api/cmc write-role gate', () => {
     }
   });
 
-  it('is mounted ahead of every /api/cmc router', () => {
+  it('is mounted ahead of every /api/cmc router, after the authenticator', () => {
     const src = readFileSync(resolve(__dirname, '../../../bootstrap/register-core-routes.ts'), 'utf8');
     const mounts = [...src.matchAll(/app\.use\('(\/api\/cmc[^']*)',\s*([A-Za-z0-9_]+)/g)].map((m) => ({ at: m.index ?? 0, path: m[1], fn: m[2] }));
     const gate = mounts.find((m) => m.fn === 'cmcWriteRoleGate');
     expect(gate?.path).toBe('/api/cmc');
-    const routers = mounts.filter((m) => m.fn !== 'cmcWriteRoleGate');
+    // The authenticator runs first so the gate can read the role; every
+    // router comes after the gate.
+    const routers = mounts.filter((m) => m.fn !== 'cmcWriteRoleGate' && !(m.path === '/api/cmc' && m.fn === 'authenticateToken'));
     expect(routers.length).toBeGreaterThan(5);
     for (const m of routers) expect(m.at, m.path).toBeGreaterThan(gate!.at);
+    const auth = mounts.find((m) => m.path === '/api/cmc' && m.fn === 'authenticateToken');
+    expect(auth?.at, 'the bare /api/cmc authenticator').toBeLessThan(gate!.at);
   });
 });

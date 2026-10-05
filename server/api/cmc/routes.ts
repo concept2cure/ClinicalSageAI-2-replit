@@ -61,6 +61,14 @@ import { BINDING_BASIS, persistGovernedActionSignature } from '../../services/pa
 import { clientIpOf } from '../../utils/client-ip';
 import { refusedWithoutSigningAuthority, verifiedReauthFactors } from './cmc-signer';
 import { governedSignatureSchema, resolveActorUserId } from './governance';
+import { governedActorId } from '../../middleware/orgMembership';
+import {
+  SIGNED_REGISTERS,
+  type SignedRegister,
+  isSigned,
+  retireSignedRecord,
+  signedRegisterEditRefusal,
+} from '../../services/cmc/signed-record';
 import { createScopedLogger } from '../../utils/logger';
 import * as metricsModule from '../../metrics.js';
 import { serverError } from '../../lib/api-response';
@@ -801,6 +809,55 @@ function refusesUngovernedQualification(
 }
 
 /**
+ * An edit of a SIGNED register record (services/cmc/signed-record): its
+ * content is closed to ordinary edits, and retiring it needs a governed
+ * reason, written with a chained audit row in one transaction. Returns true
+ * when it answered the request; false for a record that is not signed.
+ */
+async function answeredSignedRecordEdit(
+  req: express.Request,
+  res: express.Response,
+  register: SignedRegister,
+  storedStatus: unknown,
+  patch: Record<string, unknown>,
+  orgId: number,
+  reselect: () => Promise<Record<string, unknown> | null | undefined>,
+  link: (row: LinkableRow) => Promise<object>,
+): Promise<boolean> {
+  if (!isSigned(register, storedStatus)) return false;
+  const refusal = signedRegisterEditRefusal(register, storedStatus, patch);
+  if (refusal) {
+    res.status(409).json({ success: false, error: refusal, code: 'SIGNED_RECORD' });
+    return true;
+  }
+  const userId = governedActorId(req);
+  if (!userId) {
+    res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+    return true;
+  }
+  const out = await retireSignedRecord({
+    register,
+    id: String(req.params.id),
+    organizationId: orgId,
+    userId,
+    reason: (req.body ?? {}).reason,
+    ipAddress: clientIpOf(req) ?? undefined,
+    userAgent: req.headers['user-agent'],
+  });
+  if (!out.ok) {
+    res.status(out.status).json({ success: false, error: out.code, message: out.message, field: 'reason' });
+    return true;
+  }
+  const row = await reselect();
+  if (!row) {
+    res.status(404).json({ success: false, error: `${register.noun} not found` });
+    return true;
+  }
+  res.json({ success: true, data: row, ...(await link(row as unknown as LinkableRow)) });
+  return true;
+}
+
+/**
  * The governed qualification of a register record, on the same primitives as
  * the specification approval and the batch release: the signer's authority
  * (refusedWithoutSigningAuthority) and re-authentication first, the state
@@ -1022,6 +1079,11 @@ router.put('/container-closures/:id', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = containerClosureBody.partial().parse(req.body);
     const stored = await reselectContainerClosure(String(id), orgId);
+    if (await answeredSignedRecordEdit(
+      req, res, SIGNED_REGISTERS.containerClosures, stored?.status, validatedData as Record<string, unknown>, orgId,
+      () => reselectContainerClosure(String(id), orgId),
+      (row) => linkToModule3('write_through_container_closure', orgId, row, writeThroughContainerClosure, req),
+    )) return;
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'container-closures', stored?.status)) return;
     const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
       validatedData as Record<string, unknown>,
@@ -1102,6 +1164,11 @@ router.put('/reference-standards/:id', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = referenceStandardBody.partial().parse(req.body);
     const stored = await reselectReferenceStandard(String(id), orgId);
+    if (await answeredSignedRecordEdit(
+      req, res, SIGNED_REGISTERS.referenceStandards, stored?.status, validatedData as Record<string, unknown>, orgId,
+      () => reselectReferenceStandard(String(id), orgId),
+      (row) => linkToModule3('write_through_reference_standard', orgId, row, writeThroughReferenceStandard, req),
+    )) return;
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'reference-standards', stored?.status)) return;
     const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
       validatedData as Record<string, unknown>,
@@ -1189,6 +1256,11 @@ router.put('/impurity-profiles/:id', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = impurityProfileBody.partial().parse(req.body);
     const stored = await reselectImpurityProfile(String(id), orgId);
+    if (await answeredSignedRecordEdit(
+      req, res, SIGNED_REGISTERS.impurityProfiles, stored?.status, validatedData as Record<string, unknown>, orgId,
+      () => reselectImpurityProfile(String(id), orgId),
+      (row) => linkToModule3('write_through_impurity_profile', orgId, row, writeThroughImpurityProfile, req),
+    )) return;
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'impurity-profiles', stored?.status)) return;
     const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
       validatedData as Record<string, unknown>,
@@ -1488,39 +1560,19 @@ router.put('/manufacturing-processes/:id', async (req, res) => {
     const validatedData = manufacturingProcessBody.partial().parse(req.body);
     const stored = await reselectManufacturingProcess(id, orgId);
     if (!stored) return res.status(404).json({ success: false, error: 'Manufacturing process not found' });
+    if (await answeredSignedRecordEdit(
+      req, res, SIGNED_REGISTERS.manufacturingProcesses, stored.validationStatus, validatedData as Record<string, unknown>, orgId,
+      () => reselectManufacturingProcess(id, orgId),
+      (row) => linkToModule3('write_through_manufacturing_process', orgId, row, writeThroughManufacturingProcess, req),
+    )) return;
     const sentStatus = Object.prototype.hasOwnProperty.call(req.body ?? {}, 'validationStatus');
     const clearedStatus = sentStatus && !String(validatedData.validationStatus ?? '').trim();
-    /* An EXPLICIT clear is a de-signing. refusesUngovernedQualification's
-       out-of-signed-state branch is guarded on a truthy incoming value, so a
-       null or empty string slipped past both branches and wrote SQL NULL over
-       validation_status — stranding validated_by and validation_date on a
-       record that no longer claimed to be validated, and re-opening the
-       governed route for a second person to sign over the first. */
-    if (clearedStatus) {
-      if (String(stored.validationStatus ?? '').toLowerCase() === PROCESS_SIGNING.signedValue) {
-        return res.status(409).json({
-          success: false,
-          error:
-            'This process is validated under a recorded signature and its validation status cannot be cleared by an ordinary edit. ' +
-            'Retire it, or record a new assessment.',
-        });
-      }
-    } else if (refusesUngovernedQualification(res, validatedData.validationStatus, 'manufacturing-processes', stored.validationStatus, PROCESS_VOCAB)) {
+    /* A validated process was answered above (answeredSignedRecordEdit): its
+       content is closed, so clearing its status or its steps under the
+       signature is refused there. What remains is the transition INTO the
+       signed state, which only /validate makes. */
+    if (!clearedStatus && refusesUngovernedQualification(res, validatedData.validationStatus, 'manufacturing-processes', stored.validationStatus, PROCESS_VOCAB)) {
       return;
-    }
-    /* The state a validation signature was refused over must not be reachable
-       one PUT after signing. The /validate precondition refuses to sign a
-       process that records no steps; clearing the steps afterwards would leave
-       the signature attached to a process the register does not describe. */
-    if (String(stored.validationStatus ?? '').toLowerCase() === PROCESS_SIGNING.signedValue
-        && Object.prototype.hasOwnProperty.call(req.body ?? {}, 'processSteps')
-        && (validatedData.processSteps ?? []).length === 0) {
-      return res.status(409).json({
-        success: false,
-        error:
-          'This process is validated under a recorded signature. Removing its steps would leave that signature ' +
-          'attached to a process the register does not describe — retire it, or record a new process.',
-      });
     }
     /* The signature columns are written by the governed route only, and the
        project a process belongs to is fixed at creation. */
@@ -1615,26 +1667,12 @@ router.put('/characterization-studies/:id', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = characterizationStudyBody.partial().parse(req.body);
     const stored = await reselectCharacterizationStudy(String(id), orgId);
+    if (await answeredSignedRecordEdit(
+      req, res, SIGNED_REGISTERS.characterizationStudies, stored?.status, validatedData as Record<string, unknown>, orgId,
+      () => reselectCharacterizationStudy(String(id), orgId),
+      (row) => linkToModule3('write_through_characterization_study', orgId, row, writeThroughCharacterizationStudy, req),
+    )) return;
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'characterization-studies', stored?.status)) return;
-    /* The /qualify precondition refuses to sign a study that establishes
-       nothing; clearing the result afterwards would leave the signature
-       attached to exactly that. What the incoming edit leaves behind is what
-       matters, so the check runs over the merged state, not the patch. */
-    if (stored && String(stored.status ?? '').toLowerCase() === 'qualified') {
-      const body = req.body as Record<string, unknown>;
-      const merged = (key: 'result' | 'conclusion') =>
-        Object.prototype.hasOwnProperty.call(body ?? {}, key)
-          ? String((validatedData as Record<string, unknown>)[key] ?? '').trim()
-          : String(stored[key] ?? '').trim();
-      if (!merged('result') && !merged('conclusion')) {
-        return res.status(409).json({
-          success: false,
-          error:
-            'This study is qualified under a recorded signature. Clearing what it established would leave that ' +
-            'signature attesting to nothing — retire it, or record a new study.',
-        });
-      }
-    }
     const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
       validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
