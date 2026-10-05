@@ -10,8 +10,13 @@
  *
  * The AI gateway is the double that fails; the route and the helper are real.
  * The 400 for an unknown section code is pinned beside it unchanged.
+ *
+ * Since g-ind-generation-route-fails-closed (2026-10-05) a failed artifact save
+ * or artifact read is answered as a refusal, not swallowed
+ * (ind-generation-fail-closed.test.ts). The thrown text of that failure is held
+ * to the same rule: it goes to the log, never into the body.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import request from 'supertest';
 
@@ -37,6 +42,7 @@ function app() {
 const BODY = { projectId: 'proj-1', sectionCode: '2.6', productName: 'BX-099', indication: 'NSCLC', sponsor: 'Acme', phase: 'Phase 1' };
 
 beforeEach(() => route.mockReset());
+afterEach(() => vi.unstubAllGlobals());
 
 describe('POST /api/ind-generation/generate-section: the 500 body is contained', () => {
   it('answers a gateway failure with INTERNAL_ERROR and the request id, never the thrown text', async () => {
@@ -54,5 +60,26 @@ describe('POST /api/ind-generation/generate-section: the 500 body is contained',
     expect(r.status).toBe(400);
     expect(r.body).toEqual({ success: false, error: 'Unknown section code: 9.9.9' });
     expect(route).not.toHaveBeenCalled();
+  });
+});
+
+describe('a failed artifact save or read is contained the same way', () => {
+  const FETCH_SENTINEL = 'SENTINEL-LOOPBACK-DETAIL: connect ECONNREFUSED 127.0.0.1:5000';
+
+  it('generate-section: the save failure text never reaches the body', async () => {
+    route.mockResolvedValueOnce({ content: 'INTRODUCTION' });
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error(FETCH_SENTINEL); }));
+    const r = await request(app()).post('/api/ind-generation/generate-section').set('Authorization', 'Bearer t').send({ ...BODY, projectId: '3' });
+    expect(r.body.success).toBe(false);
+    expect(JSON.stringify(r.body)).not.toContain('SENTINEL-LOOPBACK-DETAIL');
+    expect(JSON.stringify(r.body)).not.toContain('ECONNREFUSED');
+  });
+
+  it('status: the read failure text never reaches the body', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error(FETCH_SENTINEL); }));
+    const r = await request(app()).get('/api/ind-generation/status/3').set('Authorization', 'Bearer t');
+    expect(r.body.success).toBe(false);
+    expect(JSON.stringify(r.body)).not.toContain('SENTINEL-LOOPBACK-DETAIL');
+    expect(JSON.stringify(r.body)).not.toContain('ECONNREFUSED');
   });
 });
