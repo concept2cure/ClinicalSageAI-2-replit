@@ -3,13 +3,14 @@
  *
  * Deep, citable entries on the legal landscape that shapes IVD strategy:
  * the laboratory-developed test (LDT) regulatory-authority fight and the 2024
- * FDA rule + its 2025 vacatur, diagnostic patent-subject-matter eligibility
- * (Mayo/Myriad/Athena), data-privacy law for diagnostic/genomic data (HIPAA,
+ * FDA rule, now void (vacated 2025-03-31, reverted by FDA rule 2025-09-19),
+ * diagnostic patent-subject-matter eligibility (Mayo/Myriad/Athena), data-privacy law for diagnostic/genomic data (HIPAA,
  * GINA, GDPR), U.S. reimbursement law (PAMA/CLFS, CPT/PLA/MAAA, NCD/LCD,
  * MolDX), and the legal lens on design changes.
  *
  * NOTE: This is regulatory/legal intelligence, not legal advice; verify current
- * status before relying on it (the LDT entry in particular is fast-moving).
+ * status before relying on it. The LDT entry's dated status agrees with the
+ * currency-registry fact us-ldt-final-rule-void.
  */
 
 import type { KnowledgeEntry } from '../types';
@@ -19,32 +20,43 @@ export const LEGAL_IVD_KNOWLEDGE: KnowledgeEntry[] = [
     id: 'legal.ivd.ldt-rule',
     domain: 'legal',
     topic: 'ldt',
-    title: 'Laboratory-developed tests (LDTs): the 2024 FDA rule and its 2025 vacatur',
+    title: 'Laboratory-developed tests (LDTs): the 2024 FDA rule is void',
     jurisdictions: ['US'],
     appliesTo: ['ldt', 'ivd'],
+    /* Status, dates and source agree with the currency-registry fact
+       us-ldt-final-rule-void (server/services/regulatory-currency/currency-registry.ts),
+       the platform's one record of dated facts. Pinned by
+       tests/regulatory/dated-facts-agree-with-currency-registry.test.ts. */
     summary:
-      'LDTs are tests designed, manufactured, and used within a single CLIA lab. FDA historically exercised enforcement discretion. In May 2024 FDA finalized a rule to phase out that discretion and regulate LDTs as devices; in March 2025 a federal court vacated the rule, holding FDA lacks that authority — leaving LDTs governed by CLIA pending appeal/legislation.',
+      'LDTs are tests designed, manufactured, and used within a single CLIA-certified lab. FDA\'s May 2024 rule to regulate LDTs as devices is void: the E.D. Tex. vacated it on 2025-03-31 and FDA reverted 21 CFR 809.3(a) to its pre-2024 text by final rule on 2025-09-19. LDTs are governed by CLIA; no FDA premarket submission is required for an LDT.',
     detail:
-      'An LDT is an in-vitro diagnostic designed, manufactured, and used within a single laboratory certified under CLIA for high-complexity testing. For decades FDA asserted that LDTs are "devices" subject to its authority but exercised "enforcement discretion," so labs validated LDTs under CLIA (CMS) rather than obtaining FDA clearance/approval.\n\nOn 6 May 2024 FDA published a final rule amending its regulations to make explicit that IVDs are devices "including when the manufacturer is a laboratory," and announced a phaseout of general enforcement discretion over roughly four years in five stages: Stage 1 (~May 2025) MDR, correction/removal, and complaint-handling; Stage 2 (~May 2026) registration, listing, labeling, and investigational-use requirements; Stage 3 (~May 2027) quality system (QS/QMSR) requirements; Stage 4 (~Nov 2027) premarket review for high-risk tests; Stage 5 (~May 2028) premarket review for moderate/low-risk tests — with several carve-outs (e.g., certain currently-marketed LDTs, 1976-type LDTs, HLA, forensic, and some others).\n\nThe American Clinical Laboratory Association and the Association for Molecular Pathology sued in the U.S. District Court for the Eastern District of Texas. On 31 March 2025 the court granted summary judgment for the plaintiffs and vacated the LDT rule, holding that the FD&C Act does not give FDA authority over LDTs, which are professional testing services regulated under CLIA, not manufactured "devices." As of the knowledge cutoff the rule is vacated and not in effect; LDTs continue under the CLIA framework, while the prospect of an FDA appeal and/or federal legislation (the long-pending VALID Act, which would create a distinct in-vitro clinical test category) remains unresolved. Strategy implication: monitor closely — a successful appeal or VALID-style legislation would reintroduce FDA-style obligations for labs.',
+      'An LDT is an in-vitro diagnostic designed, manufactured, and used within a single laboratory certified under CLIA for high-complexity testing. For decades FDA asserted that LDTs are "devices" subject to its authority but exercised "enforcement discretion," so labs validated LDTs under CLIA (CMS) rather than obtaining FDA clearance/approval.\n\nOn 6 May 2024 FDA published a final rule amending 21 CFR 809.3(a) to make explicit that IVDs are devices "including when the manufacturer of these products is a laboratory," with a staged phaseout of enforcement discretion running to 2028 (MDR and complaint handling, then registration/listing/labeling, then quality system requirements, then premarket review). That schedule is HISTORICAL: it never took full effect and imposes no obligation today.\n\nThe American Clinical Laboratory Association and the Association for Molecular Pathology sued in the U.S. District Court for the Eastern District of Texas. On 2025-03-31 the court entered final judgment in American Clinical Laboratory Association v. FDA, vacating and setting aside the rule. On 2025-09-19 FDA published a final rule (FR 2025-18239) that removes the added words from 21 CFR 809.3(a) and reverts the regulation to its pre-2024 text, implementing the court\'s judgment. The rule is therefore void, and FDA has implemented the judgment in its own regulations: LDTs continue under the CLIA framework (42 USC 263a; 42 CFR 493), and a lab does not file a 510(k), De Novo or PMA for an LDT. A test that is marketed as an IVD kit outside the single-lab model is a device and follows the IVD pathways. The VALID Act exists only as proposed legislation that would create an in-vitro clinical test category; it is not law.',
     keyPoints: [
       'LDT = test designed/made/used within one CLIA high-complexity lab.',
-      '2024 FDA final rule: phase out enforcement discretion in 5 stages (2025–2028).',
-      'March 2025: E.D. Texas vacated the rule (FDA lacks LDT authority; LDTs are services).',
-      'As of cutoff: rule not in effect; LDTs under CLIA; appeal/VALID Act unresolved.',
+      'The 2024 FDA LDT rule is void: vacated 2025-03-31 (E.D. Tex.), reverted by FDA final rule 2025-09-19.',
+      'LDTs are governed by CLIA; no FDA premarket submission is required for an LDT.',
+      'The 2024 phaseout stages and dates are historical and impose no obligation.',
+      'VALID Act: proposed legislation only, not law.',
     ],
     pitfalls: [
-      'Treating the 2024 rule\'s phaseout dates as currently operative — it was vacated.',
-      'Ignoring that a successful appeal or VALID Act would reverse this.',
+      'Treating the 2024 rule\'s phaseout dates as operative — the rule is void.',
+      'Describing the 2024 LDT rule as pending or reinstatable — FDA reverted 21 CFR 809.3(a) to its pre-2024 text by final rule on 2025-09-19.',
+      'Presenting the VALID Act as enacted or imminent — it is proposed legislation.',
     ],
     citations: [
-      { label: 'FDA Final Rule, 89 Fed. Reg. 37286 (May 6, 2024)', source: 'FDA' },
-      { label: 'ACLA v. FDA / AMP v. FDA (E.D. Tex., vacated Mar 31, 2025)', source: 'US District Court (E.D. Tex.)' },
+      {
+        label: 'FDA final rule, Medical Devices; Laboratory Developed Tests; Implementation of Vacatur (FR 2025-18239, 2025-09-19)',
+        source: 'FDA',
+        url: 'https://www.federalregister.gov/documents/2025/09/19/2025-18239/regulation-identification-number-0910-aj05-medical-devices-laboratory-developed-tests-implementation',
+      },
+      { label: 'FDA Final Rule, 89 Fed. Reg. 37286 (May 6, 2024) — void', source: 'FDA' },
+      { label: 'American Clinical Laboratory Association v. FDA (E.D. Tex., final judgment 2025-03-31)', source: 'US District Court (E.D. Tex.)' },
       { label: 'VALID Act (proposed legislation)', source: 'US Congress' },
       { label: 'CLIA (42 USC 263a; 42 CFR 493)', source: 'CMS' },
     ],
     related: ['fda.ivd.clia-categorization', 'fda.ivd.definition-and-ruo-iuo', 'legal.ivd.reimbursement'],
-    tags: ['ldt', 'enforcement-discretion', 'valid-act', 'clia', 'vacatur', 'fast-moving'],
-    lastReviewed: '2026-06-09',
+    tags: ['ldt', 'enforcement-discretion', 'valid-act', 'clia', 'vacatur', 'void-rule'],
+    lastReviewed: '2026-10-05',
   },
   {
     id: 'legal.ivd.patent-eligibility',

@@ -238,6 +238,36 @@ export const REGULATORY_FACTS: RegulatoryFact[] = [
     aliases: ['AI Act', 'Artificial Intelligence Act', 'Regulation (EU) 2024/1689'],
     keywords: ['AI Act', 'high-risk', 'EU', '2024/1689', 'AI', 'SaMD', 'annex III', 'digital omnibus'],
   },
+  /* Appended, never inserted: callers take findFacts(...)[0] for 'LDT' and
+     'EUDAMED' (currency-registry-asof.test.ts), so a fact placed ahead of
+     theirs would answer in their place. */
+  {
+    id: 'us-qmsr',
+    topic: 'US QMSR — Quality Management System Regulation (21 CFR 820, ISO 13485:2016 by reference)',
+    jurisdiction: 'US',
+    status: 'in_force',
+    effectiveDate: '2026-02-02',
+    lastVerified: '2026-10-05',
+    sourceUrl:
+      'https://www.federalregister.gov/documents/2024/02/02/2024-01709/medical-devices-quality-system-regulation-amendments',
+    appliesTo: ['mdx'],
+    /* The removed sections, named one by one. Never a bare "21 CFR 820": the
+       freshness check matches whole words, and "21 CFR 820" is a whole-word
+       match inside "21 CFR 820.10" — every current QMSR citation would then
+       read as superseded. */
+    supersedes:
+      '21 CFR 820.20 / 21 CFR 820.30 / 820.30 / 820.40 / 820.50 / 820.100 / 820.198 / Quality System Regulation',
+    note:
+      'Since 2026-02-02 the Quality Management System Regulation (QMSR) is the device CGMP in 21 CFR 820. It incorporates ISO 13485:2016 by reference: 21 CFR 820.10 requires a quality management system that complies with ISO 13485:2016. The 1996 Quality System Regulation sections 820.20 to 820.250 are removed. 21 CFR 820.30 (design controls) no longer exists: design and development is ISO 13485:2016 §7.3 via 21 CFR 820.10(c). The QMSR does not use the terms Design History File, Device Master Record or Device History Record; ISO 13485:2016 clause 4.2 and clause 7 require their content to be documented. Cite the QMSR and ISO 13485:2016 clauses for current requirements; cite a removed 820 section only as "formerly".',
+    /* "Quality System Regulation Amendments" is the final rule's own Federal
+       Register title (FR 2024-01709, the sourceUrl). Without it as an alias,
+       "Quality System Regulation" in supersedes matched that title and the
+       freshness check called the QMSR rule superseded by itself. */
+    aliases: ['QMSR', 'Quality Management System Regulation', 'Quality System Regulation Amendments'],
+    /* No "CGMP" keyword: topic matching is by substring, and a drug CGMP
+       question (21 CFR 210/211) must not be answered with the device QMSR. */
+    keywords: ['QMSR', 'QSR', '21 CFR 820', 'ISO 13485', 'design controls', '820.30', 'quality management system'],
+  },
 ];
 
 /** Severity used by the change-radar, in increasing order of urgency. */
