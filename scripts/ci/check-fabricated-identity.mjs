@@ -35,6 +35,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const ROOT = path.resolve(new URL('../..', import.meta.url).pathname);
 const BASELINE = path.join(ROOT, 'scripts/ci/fabricated-identity-baseline.json');
@@ -114,18 +115,15 @@ function sourceFiles() {
     .filter((f) => !/__tests__|\.test\.ts$|\.spec\.ts$/.test(f));
 }
 
-/** Prose about the defect is not the defect. Blank comments before scanning. */
-function stripComments(text) {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
-    .split('\n')
-    .map((l) => l.replace(/\/\/.*$/, ''))
-    .join('\n');
-}
-
 function findings() {
   const hits = [];
   for (const file of sourceFiles()) {
+    // Prose about the defect is not the defect: comments are blanked before
+    // scanning, every line kept where it was, by the shared string-aware
+    // stripper. The regex pair this gate used to carry read a literal such as
+    // '/api/signatures/*' as a comment opener and blanked the code down to the
+    // next real `*` `/`, and cut every line at the `//` of an 'https://' URL —
+    // so a signer name minted below the one or after the other was never read.
     const code = stripComments(readFileSync(path.join(ROOT, file), 'utf8'));
     code.split('\n').forEach((line, i) => {
       for (const { re, what } of PATTERNS) {

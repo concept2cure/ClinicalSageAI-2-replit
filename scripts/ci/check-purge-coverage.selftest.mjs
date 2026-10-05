@@ -27,7 +27,8 @@
  * The gate is run as a patched copy whose two edits are path-only: `repoRoot`
  * points at a fixture tree (a fixture tenant-offboarding.ts and baseline), and
  * the bare `pg` import is resolved to this repository's copy so the gate can run
- * from a temp directory. Its SQL, parsing and baseline logic are the real ones.
+ * from a temp directory. Its SQL, parsing and baseline logic are the real ones,
+ * and so is its comment stripper: scripts/ci/lib/ is copied beside the copy.
  *
  * The failing shapes are the ones the gate's header and history name:
  *   - a new org-keyed table nothing reaches (how the residue grew to 615; the
@@ -48,7 +49,9 @@
  *
  * Near-misses a sloppy gate would get wrong: a list annotated with apostrophes
  * and backticks in its comments, referenced before its declaration; a
- * commented-out entry (must NOT count as listed); schema-qualified vault entries
+ * commented-out entry (must NOT count as listed); entries after a `/*` inside a
+ * // note (must still count — a block-comment regex swallowed them up to the
+ * next real block comment); schema-qualified vault entries
  * (reported out of scope, never silently dropped); a two-hop cascade; a VIEW
  * that carries organization_id; a table with no organization_id.
  *
@@ -117,6 +120,9 @@ const gateCopy = path.join(base, 'check-purge-coverage.mjs');
     process.exit(1);
   }
   fs.writeFileSync(gateCopy, patched);
+  // The gate imports the shared comment stripper relatively
+  // (./lib/strip-comments.mjs); the copy gets the real lib beside it, unpatched.
+  fs.cpSync(path.join(repoRoot, 'scripts', 'ci', 'lib'), path.join(base, 'lib'), { recursive: true });
 }
 
 // ── A real PostgreSQL behind a Unix socket ────────────────────────────────────
@@ -410,6 +416,37 @@ const cases = [
       'vault.document_chunks, vault.documents',
     ],
     mustNotSay: ['NEW org-keyed', 'cannot interpret'],
+  },
+  {
+    // The comment stripper must know a `/*` inside a // note is not a comment
+    // opener. A block-comment regex (/\/\*[\s\S]*?\*\//) opened there and ran to
+    // the close of the next real block comment, dropping both listed entries in
+    // between, so the gate reported tables the purge DOES reach as NEW residue.
+    name: 'quiet — entries after a `/*` inside a // note are still read as listed',
+    ddl: `${BASE_DDL}
+      CREATE TABLE adverse_events (id serial PRIMARY KEY, organization_id integer NOT NULL);`,
+    entries: [
+      "  // Advisory rows are served under /api/advisory/* and are the tenant's own.",
+      "  'adverse_events',",
+      ...BASE_ENTRIES,
+    ],
+    expect: 0,
+    mustSay: [okLine(1, 1)],
+    mustNotSay: ['NEW org-keyed'],
+  },
+  {
+    // Control for the case above: same note, but the entry sits only inside a
+    // real block comment, so it is NOT listed and the table is residue.
+    name: 'FAILS when the entry after that note is only inside a real block comment',
+    ddl: `${BASE_DDL}
+      CREATE TABLE adverse_events (id serial PRIMARY KEY, organization_id integer NOT NULL);`,
+    entries: [
+      "  // Advisory rows are served under /api/advisory/* and are the tenant's own.",
+      "  /* 'adverse_events', held back until its FK order is reviewed. */",
+      ...BASE_ENTRIES,
+    ],
+    expect: 1,
+    newTables: ['adverse_events'],
   },
   {
     name: 'quiet — a residue table already in the baseline stays suppressed',

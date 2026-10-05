@@ -58,6 +58,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const ROOT = path.resolve(new URL('../..', import.meta.url).pathname);
 const BASELINE = path.join(ROOT, 'scripts/ci/action-overclaim-baseline.json');
@@ -118,15 +119,6 @@ function sourceFiles() {
     .filter((f) => !/__tests__|\.test\.tsx$|\/fixtures\//.test(f));
 }
 
-/** Blank comments so prose ABOUT a defect is not read as the defect. */
-function stripComments(text) {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
-    .split('\n')
-    .map((l) => l.replace(/\/\/.*$/, ''))
-    .join('\n');
-}
-
 /**
  * Handlers in this file whose only effect is to ask.
  *
@@ -166,6 +158,10 @@ function findings() {
 }
 
 function scan(file, raw) {
+  // Comments are blanked so prose ABOUT a defect is not read as the defect.
+  // The shared stripper is string-aware: a literal holding `/*` or `//` (a
+  // route glob, a URL) cannot open a phantom comment that hides the code after
+  // it, and lines and columns stay where they were, so reported lines are true.
   const code = stripComments(raw);
   const askOnly = askOnlyHandlers(code);
   const inlineAsk = (expr) => ASKS.test(expr) && !REAL_WORK.test(expr);
