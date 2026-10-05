@@ -923,6 +923,7 @@
    "review_trial_schema",
    "review_who_ictrp_record",
    "revise_qms_document",
+   "run_agent",
    "run_cdisc_pipeline",
    "run_compliance_checklist",
    "run_in_container",

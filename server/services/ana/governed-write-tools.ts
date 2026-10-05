@@ -96,6 +96,8 @@ export const FREE_TEXT_NON_GOVERNED_TOOLS: Readonly<Record<string, string>> = {
     'The SPL XML built from spec text is returned inline to the conversation only; nothing is stored as a labeling artifact (re-check this if the result key ever becomes \'content\').',
   pdf_overlay:
     'Applies nothing: no PDF overlay engine is connected, so it answers unavailable and writes no file. It was gated as a governed write while it was a false-success stub; gating it now only made an unapproved model ask for a retry that also answers unavailable. When an overlay engine lands (bind_pdf_package, plan WS13) it is a governed write again.',
+  run_agent:
+    'Runs bounded read-only sub-agents over the supplied brief and text and returns their report to the conversation; nothing is stored as governed content, and the agents cannot write.',
   reconcile_dossier_numbers:
     'Runs a deterministic cross-document number reconciliation and returns the discrepancies; the input text is not stored.',
   review_informed_consent:

@@ -84,6 +84,14 @@ describe('childToolsFrom', () => {
   });
 });
 
+describe('run_agent itself', () => {
+  it('is registered under RUN_AGENT_TOOL, the name the run policy and the toolset read', async () => {
+    const { RUN_AGENT_TOOL } = await import('@shared/ana/run-control-limits');
+    expect(getToolHandler(RUN_AGENT_TOOL)).toBeTypeOf('function');
+    expect(toolAuthorizationOf(RUN_AGENT_TOOL, {}).class).toBe('self');
+  });
+});
+
 describe('source pins', () => {
   const src = (f: string) => readFileSync(join(__dirname, '..', f), 'utf8');
   it('the child never reads the tenant policy, the full tool list or a model override', () => {

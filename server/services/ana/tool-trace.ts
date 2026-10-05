@@ -19,13 +19,19 @@ import { isTruncated } from '../ai-gateway/finish-reason.js';
 import { parseRunPolicy, type AnaRunPolicy, type HumanControlEvent, type PolicyHold, type TurnStoppedReason } from './run-status.js';
 import { AUTO_TIME_WORDS, PAUSE_WORDS, isPolicyHoldOutcome, stepLabels } from '@shared/ana/run-policy';
 import type { TurnPlanStep } from './turn-plan.js';
+import { agentResultSummary, agentTraceStatus } from './sub-agent-result.js';
+import { RUN_AGENT_TOOL } from '@shared/ana/run-control-limits';
 
 export interface ToolTraceEntry {
   tool: string;
   /** Human-readable step label (from describeToolPlan). */
   label: string;
-  /** 'cancelled' — the person stopped the run before this step finished. */
-  status: 'success' | 'error' | 'not_found' | 'cancelled';
+  /**
+   * 'cancelled' — the person stopped the run before this step finished.
+   * 'incomplete' — a sub-agent (run_agent only) stopped at its budget: what it
+   * found is usable, and it is not a failure to retry (row 74, S5).
+   */
+  status: 'success' | 'error' | 'not_found' | 'cancelled' | 'incomplete';
   /** One-line summary of the tool's result. */
   resultSummary: string;
 }
@@ -101,6 +107,12 @@ export function buildTraceEntry(
   status: ToolTraceEntry['status'],
   resultContent: string,
 ): ToolTraceEntry {
+  if (tool === RUN_AGENT_TOOL) {
+    // The agent's own outcome refines a mechanical success (agentTraceStatus);
+    // a status already refined is kept.
+    const refined = status === 'incomplete' ? status : agentTraceStatus(status, resultContent);
+    return { tool, label, status: refined, resultSummary: agentResultSummary(resultContent) };
+  }
   return { tool, label, status, resultSummary: summarizeToolResult(resultContent) };
 }
 
@@ -162,7 +174,8 @@ export function carriedToolsFrom(entries: ToolTraceEntry[]): string[] {
 export function formatTraceForContext(entries: ToolTraceEntry[]): string {
   if (entries.length === 0) return '';
   const succeeded = entries.filter(e => e.status === 'success');
-  const failed = entries.filter(e => e.status !== 'success');
+  const stopped = entries.filter(e => e.status === 'incomplete');
+  const failed = entries.filter(e => e.status !== 'success' && e.status !== 'incomplete');
   const sections: string[] = [];
 
   if (succeeded.length > 0) {
@@ -170,6 +183,16 @@ export function formatTraceForContext(entries: ToolTraceEntry[]): string {
       'Tools you have already run earlier in this conversation (reuse these ' +
         'findings; do not repeat them needlessly):\n' +
         succeeded.map(e => `- ${e.label}: ${e.resultSummary}`).join('\n')
+    );
+  }
+
+  if (stopped.length > 0) {
+    // Not with the failures: "retry with a changed approach" would invite a
+    // second agent on the same brief (row 74, S5).
+    sections.push(
+      'Agents that stopped at a budget (partial results: use what they found, ' +
+        'do not re-run the same brief):\n' +
+        stopped.map(e => `- ${e.label}: ${e.resultSummary}`).join('\n')
     );
   }
 

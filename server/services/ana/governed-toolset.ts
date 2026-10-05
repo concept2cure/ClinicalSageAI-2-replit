@@ -51,7 +51,9 @@
  */
 
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
-import { loadAnaToolPolicy, filterToolsByPolicy } from '../ana-ri/mdx-tool-policy.js';
+import { loadAnaToolPolicy, loadAnaToolPolicyStrict, filterToolsByPolicy, type AnaToolPolicy } from '../ana-ri/mdx-tool-policy.js';
+import { RUN_AGENT_TOOL } from '@shared/ana/run-control-limits';
+import { subAgentsEnabled } from './sub-agent-limits.js';
 import { CATALOG_GATED_TOOLS } from './document-tools-shared.js';
 import { getOrgPlacementResolver } from '../ai-gateway/providers/org-placement.js';
 import { isServerTool, serverToolWithheldReason } from '../ai-gateway/server-tool-policy.js';
@@ -61,30 +63,70 @@ import { launchScopeEnforced } from '../entitlements/launch-scope.js';
 
 type PolicyPool = { query: (sql: string, params: unknown[]) => Promise<{ rows: any[] }> };
 
+export interface GovernedToolsetOptions {
+  /**
+   * The caller can host sub-agents: the SSE stream, on a turn with a run row
+   * whose organization agrees with the request's (row 74, S5). Only then is
+   * `run_agent` offered, and only while ANA_ENABLE_SUB_AGENTS allows it.
+   * Every other door — send-message, realtime, deep investigation — has no
+   * host, so the tool would only ever refuse there.
+   */
+  hostsSubAgents?: boolean;
+}
+
 /**
  * Every enabled AnA tool this organization permits.
  *
  * `organizationId` may be absent — an unauthenticated or org-less turn has no
  * tenant policy to apply, and gets the unfiltered set, which is what every
  * caller already did.
+ *
+ * Hosting sub-agents reads the tenant policy STRICTLY (brief D25). The parent
+ * turn is attended; its children are not, and their tools are drawn from this
+ * set. On a settings read error the soft read answers "allow everything", so
+ * the turn goes on exactly as before but `run_agent` is withheld: no child
+ * runs on a policy nobody could read.
  */
 export async function governedToolsetFor(
   pool: PolicyPool,
   organizationId: number | null | undefined,
+  options: GovernedToolsetOptions = {},
 ): Promise<ReturnType<typeof getAllEnabledTools>> {
   const all = launchScopeEnforced() ? withoutHiddenAppTools(getAllEnabledTools()) : getAllEnabledTools();
+  const hosting = options.hostsSubAgents === true && subAgentsEnabled();
   if (organizationId == null || !Number.isFinite(Number(organizationId))) {
     // The catalog tools refuse an org-less call outright, so they are not
     // offered; nor are Anthropic-hosted tools, which need a tenant's opt-in.
-    return withPermittedServerTools(withoutCatalogTools(all), {
+    // Nor run_agent: a child needs a tenant (sub-agent.ts tenantMismatch).
+    return withPermittedServerTools(withoutCatalogTools(all.filter(t => t.name !== RUN_AGENT_TOOL)), {
       resolution: 'unknown',
       unknownReason: 'no_tenant_binding',
     });
   }
   const orgId = Number(organizationId);
-  const [policy, tenant] = await Promise.all([loadAnaToolPolicy(pool, orgId), tenantPlacementFor(orgId)]);
-  const permitted = withPermittedServerTools(filterToolsByPolicy(all, policy), tenant);
+  const [read, tenant] = await Promise.all([policyFor(pool, orgId, hosting), tenantPlacementFor(orgId)]);
+  // One rule: run_agent only on a hosting turn whose policy was read strictly.
+  const offered = read.strict ? all : all.filter(t => t.name !== RUN_AGENT_TOOL);
+  const permitted = withPermittedServerTools(filterToolsByPolicy(offered, read.policy), tenant);
   return (await catalogEnabledFor(orgId)) ? permitted : withoutCatalogTools(permitted);
+}
+
+/**
+ * The tenant's tool policy. Hosting reads it strictly; `strict` is false when
+ * the turn does not host, or when that read failed and the soft answer (allow
+ * everything) stands in for it.
+ */
+async function policyFor(
+  pool: PolicyPool,
+  orgId: number,
+  hosting: boolean,
+): Promise<{ policy: AnaToolPolicy; strict: boolean }> {
+  if (!hosting) return { policy: await loadAnaToolPolicy(pool, orgId), strict: false };
+  try {
+    return { policy: await loadAnaToolPolicyStrict(pool, orgId), strict: true };
+  } catch {
+    return { policy: {}, strict: false };
+  }
 }
 
 type TenantSnapshot = GatewayRequest['sensitiveTenantPolicy'];
