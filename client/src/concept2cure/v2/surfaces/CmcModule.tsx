@@ -1,4 +1,5 @@
 import { serverMessage } from '@/lib/queryClient';
+import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
@@ -969,6 +970,12 @@ function CmCorrNotice({ prefixes, noun }: { prefixes: string[]; noun: string }) 
   );
 }
 
+/** The save toast; an edit of an approved specification withdrew its approval. */
+function specSavedToast(json: unknown, attr: string): string {
+  const withdrawn = (json as { approvalWithdrawn?: boolean } | null)?.approvalWithdrawn === true;
+  return 'Specification saved · ' + attr + (withdrawn ? ' · approval withdrawn: approve it again before it is filed.' : '');
+}
+
 function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   /* REAL slice: the specifications workbench is bound to the governed
      quality_specifications table (server/api/cmc/specificationRoutes.ts,
@@ -1014,7 +1021,15 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
       { key: 'ich', label: 'ICH reference', type: 'text', default: row ? row.ich : 'ICH Q6B', half: true },
       { key: 'st', label: 'Status', type: 'seg', options: ['draft', 'review'], default: row && row.st !== 'approved' ? row.st : 'draft', half: true },
       { key: 'justification', label: 'Justification', type: 'textarea', placeholder: 'Rationale for the limits and method' },
+      /* An approved specification is revised in place: the server withdraws
+         the approval and records why (services/cmc/signed-record.ts). */
+      ...(row?.st === 'approved'
+        ? [{ key: 'reason', label: 'Reason for change', type: 'textarea' as const, required: true, desc: `At least ${GOVERNED_REASON_MIN} characters.`, placeholder: 'What changed and why — the trend reviewed, the method revised, the agency comment answered…' }]
+        : []),
     ],
+    ...(row?.st === 'approved'
+      ? { governed: 'This specification is approved. Saving a change withdraws the approval: it returns to draft and must be approved again before it is filed. Your name, the time and the reason are recorded.' }
+      : {}),
   });
   // save — REAL, awaited write. POST creates / PUT updates against the governed
   // specifications file and adopts the SERVER's row (real id + persisted values).
@@ -1033,7 +1048,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
         if (!res.ok) { fireToast('Couldn’t save the specification — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error'); return; }
         const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
         setRows((rs) => rs.map((x) => x.id === id ? { ...(adopted ?? x), _new: true } : x));
-        fireToast('Specification saved · ' + (adopted?.attr ?? v.attr));
+        fireToast(specSavedToast(json, adopted?.attr ?? v.attr));
       } else {
         const res = await apiRequest('POST', '/api/cmc/specifications', specCreateBody(v, projectId));
         const json = await res.json().catch(() => null);

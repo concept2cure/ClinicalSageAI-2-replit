@@ -13,6 +13,8 @@ import { signMeaningRefusal, type GovernedSignMeaning } from '../../services/par
 import { refusedWithoutSigningAuthority, verifiedReauthFactors } from './cmc-signer';
 import { clientIpOf } from '../../utils/client-ip';
 import { resolveActorUserId } from './governance';
+import { batchReleaseRefusal, batchWriteRefusal } from '../../services/cmc/signed-record';
+import { filedProjectOnCreate, RegisterWriteRefusal } from '../../services/cmc/register-writes';
 /* The CANONICAL org resolver. This module defined its own, reading two of the
    four places the canonical one reads, in its own order — and a second answer
    to "which organization is this" is a tenant-isolation decision, not a helper
@@ -72,12 +74,13 @@ const updateBatchSchema = z.object({
   inProcessControls: z.any().optional(),
   yieldData: z.any().optional(),
   deviations: z.any().optional(),
-  releaseTesting: z.any().optional(),
 });
 
 const releaseSchema = z.object({
   releaseTesting: z.any(),
-  releasedBy: z.string().min(1, 'Released by is required'),
+  /* Accepted for older clients and IGNORED: who released the batch is the
+     session's signer, never a name the request types. */
+  releasedBy: z.string().optional(),
   decision: z.enum(['approved', 'rejected', 'conditional']),
   comments: z.string().optional(),
   reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
@@ -195,6 +198,26 @@ router.get('/:projectId', async (req, res) => {
   }
 });
 
+/**
+ * What a new batch is filed under, or why it is refused (409): a disposition
+ * is only ever the signed release (services/cmc/signed-record), and the
+ * program named must be this organisation's.
+ */
+async function batchFiling(
+  orgId: number,
+  body: Record<string, unknown>,
+  sentProjectId: unknown,
+): Promise<{ projectId: string | null } | { refusal: Record<string, unknown> }> {
+  const signed = batchWriteRefusal(body);
+  if (signed) return { refusal: { success: false, error: signed, code: 'SIGNED_RECORD' } };
+  try {
+    return { projectId: await filedProjectOnCreate(orgId, sentProjectId) };
+  } catch (e) {
+    if (e instanceof RegisterWriteRefusal) return { refusal: { success: false, error: e.message } };
+    throw e;
+  }
+}
+
 // POST /api/cmc/batch-records - Create batch record
 router.post('/', async (req, res) => {
   try {
@@ -214,7 +237,9 @@ router.post('/', async (req, res) => {
     if (orgId === null) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
-
+    const filing = await batchFiling(orgId, req.body ?? {}, data.projectId);
+    if ('refusal' in filing) return res.status(409).json(filing.refusal);
+    const { projectId } = filing;
 
     const result = await pool.query(
       `INSERT INTO cmc_batch_records (
@@ -225,7 +250,7 @@ router.post('/', async (req, res) => {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *`,
       [
-        data.projectId || null,
+        projectId,
         // organization_id is NOT NULL on the provisioned table (migrations/0006)
         // and IS the tenant — the same value, written to both columns so reads
         // scoped by either agree. tenantParams supplies it in each column's own
@@ -295,6 +320,11 @@ router.put('/:id', async (req, res) => {
     if (existing.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Batch record not found' });
     }
+    /* Release testing and dispositions are the signed release's alone, and a
+       batch that carries a signed disposition is closed to ordinary edits
+       (services/cmc/signed-record). */
+    const refusal = batchWriteRefusal(req.body ?? {}, existing.rows[0]);
+    if (refusal) return res.status(409).json({ success: false, error: refusal, code: 'SIGNED_RECORD' });
 
     // Build dynamic update
     const updates: string[] = [];
@@ -313,7 +343,6 @@ router.put('/:id', async (req, res) => {
       inProcessControls: 'in_process_controls',
       yieldData: 'yield_data',
       deviations: 'deviations',
-      releaseTesting: 'release_testing',
     };
 
     for (const [key, col] of Object.entries(fieldMap)) {
@@ -431,12 +460,21 @@ router.post('/:id/release', async (req, res) => {
     }
 
     const batch = existing.rows[0];
+    const finalRefusal = batchReleaseRefusal(batch);
+    if (finalRefusal) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ success: false, error: finalRefusal, code: 'ALREADY_DISPOSITIONED' });
+    }
+    /* Who released the batch is the signer of this session. It used to be
+       `releasedBy` from the request body, a name the client typed. */
+    const signer = await client.query(`SELECT name, email FROM users WHERE id = $1`, [userId]);
+    const releasedBy = String(signer.rows[0]?.name || signer.rows[0]?.email || `user ${userId}`);
 
     // The release evaluation (evaluateRelease) ran before the signer was asked
     // for anything, so the signature's meaning could follow its status.
     const releaseRecord = {
       decision: data.decision,
-      releasedBy: data.releasedBy,
+      releasedBy,
       comments: data.comments || null,
       testResults,
       allTestsPassed: allPassed,
@@ -458,7 +496,7 @@ router.post('/:id/release', async (req, res) => {
       [
         JSON.stringify(releaseRecord),
         releaseStatus,
-        data.releasedBy,
+        releasedBy,
         releaseStatus === 'released' ? 'completed' : batch.status,
         id,
         ...tenantParams(orgId),
