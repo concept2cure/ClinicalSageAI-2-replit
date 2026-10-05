@@ -128,7 +128,7 @@ const NOT_A_CSR = /statistical analysis plan|(?<![a-z0-9])SAP(?![a-z0-9])|integr
  * The Vault's classifiers propose a CSR at the heading 5.3.5
  * (ctd-ingestion-service.ts, vault-filing.service.ts TEXT_RULES) and a declared
  * CSR upload goes to Module 5 with no section. The platform's rule is that 5.3.5
- * does not cover 5.3.5.1 (vault-coverage.ts), and ICH M4E files a CSR under
+ * does not cover 5.3.5.1 (the Vault coverage read model), and ICH M4E files a CSR under
  * 5.3.5.1, 5.3.5.2 or 5.3.5.4 by study type.
  */
 const CSR_UNSPECIFIC_WHY =
