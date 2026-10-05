@@ -74,7 +74,7 @@ are in `<step>-red.txt` and `<step>-green.txt`.
 | `30c576db` | The ISS, CSR §12.2 and 2.7.4 tell the writer how FDA now reads safety data: the OND Standard Safety Tables and Figures Integrated Guide (a reviewer tool, not a sponsor requirement) and the OND Custom Medical Queries. | `b3-safety-presentation-*` |
 | `fb8ebaa1` | The writing-precision gate no longer forces "revise" on wording regulators require in submission documents: disposition census, superiority hypotheses, PK elimination, and adverse-event outcomes such as "resolved completely without sequelae". Each exemption is constrained so that the efficacy claims it resembles stay flagged, over four adversarial review rounds. The term-of-art check reads a 300 KB CSR in 22 ms, down from 5.9 s, with identical results. | `b3-writing-gate-register-*` |
 
-## Decided not to ship: the cross-document clinical figure lexicon
+## The cross-document clinical figure lexicon: withdrawn, then rebuilt at the product owner's direction
 
 Finding 15 proposed one lexicon and comparator for the clinical figures a
 reviewer cross-checks between the CSR, 2.7.3, 2.7.4, 2.5, the ISS/ISE and the
@@ -95,8 +95,18 @@ Extracting clinical figures from free prose cannot be made reliably
 deterministic. A checker that raises false conflicts on correct text, or
 claims a consistency it never checked, fails the fail-closed rule.
 
-**Decision (product owner's delegation, 2026-10-05):**
-- The work is reverted. The diff is kept in the session scratchpad.
+**First decision (this lane, 2026-10-05):** the work was reverted and the diff
+kept in the session scratchpad.
+
+**Overridden by the product owner the same day:** *"I disagree with this
+decision … figure out how to and do it."* The rebuild is designed to
+converge:
+- claim frames, with an explicit `not_compared` and its reason;
+- an adversarial corpus seeded with all 21 failures above;
+- breaker rounds until two in a row find nothing.
+
+It is recorded in [`../2026-10-05-record/`](../2026-10-05-record/). The
+original plan also stands:
 - Cross-document figure reconciliation will read structured outputs (TLFs and
   datasets) once the Vault can hold them; see the study-data steps of the
   record plan.
