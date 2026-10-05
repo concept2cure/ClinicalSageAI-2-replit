@@ -1,24 +1,26 @@
 /**
- * Typeset eCTD leaf renderer: headings, paragraphs, lists and RULED TABLES.
+ * Typeset eCTD leaf renderer: headings, paragraphs and RULED TABLES.
  *
  * ── Why this exists beside leaf-pdf-renderer ─────────────────────────────────
  * renderLeafPdf is a faithful TEXT rendering: it reduces content to lines of
  * Helvetica, so a table becomes "cell | cell" text. For a CMC Module 3 section
  * that is the wrong document. A §3.2.S.4.1 specification, a §3.2.S.4.4 batch
  * analysis and a §3.2.P.8.3 stability data set ARE tables, and the Module 3
- * placement stores its composition as markdown (module3Composer
+ * placement stores its composition in the composer's format (module3Composer
  * .renderComposedSectionMarkdown — the same bytes as the governed artifact). So
- * the filed leaf printed the markdown itself: "## 3.2.S.4.1 Specification",
- * then "| Test | Acceptance criterion |" and "| --- | --- |" rows, in the PDF an
+ * the filed leaf printed that format itself: "## 3.2.S.4.1 Specification", then
+ * "| Test | Acceptance criterion |" and "| --- | --- |" rows, in the PDF an
  * agency reviewer opens (hand-off item 17, docs/work-orders/README.md).
  *
- * This renderer reads that markdown as markdown (marked's lexer — already a
- * production dependency) and lays it out: bold headings that become bookmarks,
- * wrapped paragraphs, numbered and bulleted lists, and tables drawn as ruled
- * grids whose header row repeats on every page the table continues onto. The
- * stored content does not change, so the "filed leaf and governed artifact are
- * the same bytes" contract the placement pins still holds; only how the leaf
- * PDF is drawn from those bytes does.
+ * This renderer lays the composition out — bold headings that become
+ * bookmarks, wrapped paragraphs, and tables drawn as ruled grids whose header
+ * row repeats on every page the table continues onto — from blocks read by
+ * typeset-blocks.ts, which reads the composer's one format exactly and keeps
+ * every recorded character (it is not a markdown parser; see its header for
+ * the "1*10^3 CFU/g" that a markdown parser filed as "110^3 CFU/g"). The stored
+ * content does not change, so the "filed leaf and governed artifact are the
+ * same bytes" contract the placement pins still holds; only how the leaf PDF
+ * is drawn from those bytes does.
  *
  * Determinism is the same contract renderLeafPdf keeps: fixed metadata, epoch
  * dates, no object streams, no wall clock — identical input yields
@@ -32,9 +34,9 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import { toWinAnsiSafe, type LeafPdfOptions } from './leaf-pdf-renderer';
 import { addBookmarks, type OutlineNode } from './pdf-bookmark-generator';
-import { markdownToTypesetBlocks, type TypesetBlock } from './typeset-blocks';
+import { composedSectionToBlocks, type TypesetBlock } from './typeset-blocks';
 
-export { markdownToTypesetBlocks, type TypesetBlock } from './typeset-blocks';
+export { composedSectionToBlocks, literalParagraphs, type TypesetBlock } from './typeset-blocks';
 
 const PAGE_WIDTH = 612; // US Letter, points — the same page as renderLeafPdf
 const PAGE_HEIGHT = 792;
@@ -312,7 +314,6 @@ interface Typesetter {
   cur: Cursor;
   font: PDFFont;
   bold: PDFFont;
-  mono: PDFFont;
   headings: Array<{ level: number; node: OutlineNode }>;
 }
 
@@ -358,44 +359,8 @@ function drawHeading(t: Typesetter, block: { level: number; text: string }): voi
   cur.y -= BODY_LEADING / 3;
 }
 
-function drawList(
-  t: Typesetter,
-  block: { ordered: boolean; start: number; items: string[] }
-): void {
-  const { cur, font } = t;
-  const indent = 18;
-  block.items.forEach((item, i) => {
-    const marker = block.ordered ? `${block.start + i}.` : '\u2022';
-    const [first, ...rest] = toWinAnsiSafe(item).split('\n');
-    if (cur.y - BODY_LEADING < MARGIN) newPage(cur);
-    cur.page.drawText(marker, {
-      x: MARGIN,
-      y: cur.y - BODY_LEADING + 2,
-      size: BODY_SIZE,
-      font,
-      color: INK,
-    });
-    drawLines(t, wrap(first ?? '', font, BODY_SIZE, textWidth(cur) - indent), {
-      font,
-      size: BODY_SIZE,
-      leading: BODY_LEADING,
-      indent,
-    });
-    for (const nested of rest) {
-      const step = indent + ((nested.match(/^ */)?.[0].length ?? 0) / 2) * 14;
-      drawLines(t, wrap(nested.trim(), font, BODY_SIZE, textWidth(cur) - step), {
-        font,
-        size: BODY_SIZE,
-        leading: BODY_LEADING,
-        indent: step,
-      });
-    }
-  });
-  cur.y -= BODY_LEADING / 2;
-}
-
 function drawBlock(t: Typesetter, block: TypesetBlock): void {
-  const { cur, font, bold, mono } = t;
+  const { cur, font, bold } = t;
   switch (block.kind) {
     case 'heading':
       drawHeading(t, block);
@@ -408,21 +373,9 @@ function drawBlock(t: Typesetter, block: TypesetBlock): void {
       });
       cur.y -= BODY_LEADING / 2;
       break;
-    case 'list':
-      drawList(t, block);
-      break;
     case 'table':
       drawTable(cur, block, font, bold);
       break;
-    case 'preformatted': {
-      const size = TABLE_SIZES[0];
-      const lines = toWinAnsiSafe(block.text)
-        .split('\n')
-        .flatMap(l => wrap(l, mono, size, textWidth(cur)));
-      drawLines(t, lines, { font: mono, size, leading: size + 3 });
-      cur.y -= BODY_LEADING / 2;
-      break;
-    }
   }
 }
 
@@ -475,7 +428,6 @@ export async function renderTypesetLeafPdf(
     },
     font: await doc.embedFont(StandardFonts.Helvetica),
     bold: await doc.embedFont(StandardFonts.HelveticaBold),
-    mono: await doc.embedFont(StandardFonts.Courier),
     headings: [],
   };
 
@@ -512,10 +464,10 @@ export async function renderTypesetLeafPdf(
   return Buffer.from(outline.length > 0 ? await addBookmarks(saved, outline) : saved);
 }
 
-/** A markdown-stored leaf, typeset. The signature renderLeafPdf has. */
-export async function renderMarkdownLeafPdf(
-  markdown: string,
+/** A composed Module 3 section, as stored, typeset. The signature renderLeafPdf has. */
+export async function renderComposedSectionLeafPdf(
+  content: string,
   options: LeafPdfOptions = {}
 ): Promise<Buffer> {
-  return renderTypesetLeafPdf(markdownToTypesetBlocks(markdown), options);
+  return renderTypesetLeafPdf(composedSectionToBlocks(content), options);
 }
