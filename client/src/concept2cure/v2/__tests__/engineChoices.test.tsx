@@ -77,6 +77,19 @@ describe("Home's engine pill", () => {
   });
 });
 
+describe("Home's engine menu is not clipped by the composer (end-to-end finding F3)", () => {
+  // .landing-composer rounds its corners with overflow:hidden. The menu sat
+  // inside it, positioned absolutely, and was cut off at the composer's edge:
+  // Standard, its first item, could not be clicked. Placed fixed from the
+  // pill, as LiveDriveSwitch's menu already is, it escapes the clip.
+  it('opens fixed, placed from the pill', () => {
+    render(<Home onNav={vi.fn()} onAsk={vi.fn()} segment="biotech" mode={DEEP.id} setMode={vi.fn()} />);
+    fireEvent.click(trigger());
+    const dialog = screen.getByRole('dialog', { name: /engine/i });
+    expect(dialog.style.position).toBe('fixed');
+  });
+});
+
 describe('EngineChoices (the one implementation both pickers render)', () => {
   it('is a named radio group, the current mode checked, and reports a choice', () => {
     const onChoose = vi.fn();
