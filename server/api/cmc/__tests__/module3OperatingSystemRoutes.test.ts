@@ -103,18 +103,9 @@ describe('module3OperatingSystemRoutes', () => {
     expect(res.body.data).toHaveLength(2);
   });
 
-  it('resolves contradiction and returns resolved status', async () => {
-    mockQuery
-      .mockResolvedValueOnce({ rows: [{ id: 'c-1', projectId: 'proj-1' }] })
-      .mockResolvedValueOnce({ rows: [] });
-
-    const res = await request(app)
-      .patch('/api/cmc/module3-os/contradictions/c-1/resolve')
-      .send({ resolutionNote: 'closed after CAPA' });
-
-    expect(res.status).toBe(200);
-    expect(res.body.data.status).toBe('resolved');
-  });
+  /* Resolving a contradiction is a governed act now (writing role, stated
+     reason, audit row): module3GovernedActs.test.ts proves who reaches
+     it, contradiction-lifecycle.pglite.test.ts what it records. */
 
   it('section approve fails closed with 401 when re-authentication fails — before any DB write', async () => {
     mockVerifyReauth.mockResolvedValueOnce({ ok: false, error: 'REAUTH_REQUIRED' });
