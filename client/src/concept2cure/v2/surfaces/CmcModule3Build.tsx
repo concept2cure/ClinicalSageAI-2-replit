@@ -39,6 +39,7 @@ import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
 import { SectionEvidence } from './CmcSectionEvidence';
 import { PlaceIntoSubmission } from './CmcPlaceIntoSubmission';
+import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 
 /* ── The read models ─────────────────────────────────────────────────────── */
 
@@ -615,7 +616,7 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
             eyebrow: 'Module 3 — contradiction',
             title: 'Resolve ' + resolving.contradictionType,
             sub: resolving.details,
-            governed: 'The resolution note is written to the Module 3 provenance chain against your account.',
+            governed: 'The resolution note is written to the Module 3 provenance chain and the audit trail against your account.',
             submitLabel: 'Record resolution',
             fields: [
               {
@@ -624,6 +625,7 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                 type: 'textarea',
                 required: true,
                 rows: 4,
+                desc: `At least ${GOVERNED_REASON_MIN} characters. A later sweep keeps this resolution while the data stays the same; a change to the data reopens the finding.`,
                 placeholder: 'What was changed, or why the two records are not in fact in conflict…',
               },
             ],

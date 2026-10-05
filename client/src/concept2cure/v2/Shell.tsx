@@ -31,6 +31,7 @@ import { AppMentionMenu, useAppMentions } from './appMentions';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
+import { AnaMessageWarnings } from './AnaMessageWarnings';
 import { CONTINUE_PROMPT, continueTurnIndex } from './anaWorkModel';
 import { AnaProgressChip, AnaWorkPanel } from './AnaWorkPanel';
 import { RunControlStrip } from './AnaWorkSections';
@@ -1081,16 +1082,7 @@ export function AnaRail({
                   ))}
                 </div>
               )}
-              {m.role === 'ana' && Array.isArray(m.warnings) && m.warnings.length > 0 && (
-                <div className="ana-msg-warnings" role="note">
-                  {m.warnings.map((w, wi) => (
-                    <div key={wi} className="ana-msg-warning">
-                      <span className="ana-msg-warning-ic" aria-hidden="true">{I.alertTriangle}</span>
-                      <span>{w}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {m.role === 'ana' && <AnaMessageWarnings warnings={m.warnings} />}
               {/* Her output beneath the answer. It opens the full
                   conversation on this same thread, where the draft is the
                   document canvas (docs/design/ANA_DOCUMENT_CANVAS.md). */}

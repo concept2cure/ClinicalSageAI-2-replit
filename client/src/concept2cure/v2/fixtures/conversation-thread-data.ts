@@ -53,6 +53,8 @@ export interface CtTurn {
    * nothing performed (2026-10-04). What was checked is `evidence`.
    */
   contextUsed?: string[];
+  /** What went wrong around the answer (a failed save, a timeout), shown under it. */
+  warnings?: string[];
   /** What was checked about the answer (AnaGrounding): the engine's check and AnA's labels. */
   evidence?: AnaGroundingEvidence;
   doc?: any;
