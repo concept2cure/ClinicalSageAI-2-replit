@@ -212,7 +212,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
         'Re-run the lens after addressing findings',
       ],
     };
-  }, [live.loading, live.error, lens, lensId, lensRan, rowByLens, findings, criticals, majors, rtf, crl, scored]);
+  }, [live.loading, live.error, lens, lensId, lensRan, rowByLens, findings, criticals, majors, rtf, crl, scored, modelReported]);
   usePublishSurfaceContext('shadow-review', anaContext);
 
   /* AnA's answer-first verdict -- reviewer voice, honest, one clear next step.

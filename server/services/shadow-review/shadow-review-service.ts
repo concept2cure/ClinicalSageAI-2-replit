@@ -282,15 +282,8 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
   });
 
   logger.info('Shadow review complete', { runId: run.id, sequenceId, organizationId, findings: findings.length });
-  return {
-    runId: run.id,
-    rtfRiskScore,
-    crlRiskScore,
-    summary: output.summary ?? '',
-    findingCount: findings.length,
-    scoreBasis: 'severity_aggregate',
-    auditTrail,
-  };
+  const summary = output.summary ?? '';
+  return { runId: run.id, rtfRiskScore, crlRiskScore, summary, findingCount: findings.length, scoreBasis: 'severity_aggregate', auditTrail };
 }
 
 export default { runShadowReview, aggregateRisk, parseShadowReviewOutput, ShadowReviewError };
