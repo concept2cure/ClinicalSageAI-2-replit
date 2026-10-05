@@ -1,0 +1,9 @@
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > scans against the newest candidate that is in this commit's history, not one outside it 19ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > fails without scanning when no candidate is in this commit's history 9ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > takes the newest green run by its own date, whatever order the API lists 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > scans against the newest candidate that is in this commit's history, not one outside it
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > fails without scanning when no candidate is in this commit's history
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > takes the newest green run by its own date, whatever order the API lists
+ Test Files  1 failed (1)
+      Tests  3 failed | 46 passed (49)

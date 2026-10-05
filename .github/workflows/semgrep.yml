@@ -79,31 +79,49 @@ jobs:
               return core.setOutput('sha', base);
             }
             const { owner, repo } = context.repo;
+            // Completed runs, newest first by their own date. Listed with
+            // status=success, GitHub returned a 2026-09-19 run ahead of that
+            // day's green one (2026-10-05), so the order is not the API's.
             let runs;
             try {
-              const res = await github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: 'semgrep.yml', branch: TRUNK, status: 'success', per_page: 50 });
+              const res = await github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: 'semgrep.yml', branch: TRUNK, status: 'completed', per_page: 100 });
               runs = res.data.workflow_runs || [];
             } catch (err) {
               return core.setFailed(`Could not read Semgrep's run history (${err.status || err.message}). A scan with no baseline is not a pass.`);
             }
             const own = `${owner}/${repo}`;
-            const green = runs.find((r) => r.conclusion === 'success' && r.event !== 'pull_request' && r.head_branch === TRUNK
-              && r.head_repository && r.head_repository.full_name === own && /^[0-9a-f]{40}$/.test(r.head_sha));
-            if (!green) return core.setFailed(`No passing Semgrep run on ${TRUNK} to compare against. A scan with no baseline is not a pass.`);
-            core.info(`Baseline: ${green.head_sha}, the newest ${TRUNK} commit whose Semgrep run passed (run ${green.id}).`);
-            core.setOutput('sha', green.head_sha);
+            const green = runs
+              .filter((r) => r.conclusion === 'success' && r.event !== 'pull_request' && r.head_branch === TRUNK
+                && r.head_repository && r.head_repository.full_name === own && /^[0-9a-f]{40}$/.test(r.head_sha))
+              .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')) || (b.id - a.id));
+            if (!green.length) return core.setFailed(`No passing Semgrep run on ${TRUNK} to compare against. A scan with no baseline is not a pass.`);
+            core.info(`Baseline: ${green[0].head_sha}, the newest ${TRUNK} commit whose Semgrep run passed (run ${green[0].id}).`);
+            core.setOutput('sha', green[0].head_sha);
+            // Every green commit, newest first: the scan takes the first one in its own history.
+            core.setOutput('candidates', [...new Set(green.map((r) => r.head_sha))].slice(0, 20).join('\n'));
 
       - name: Blocking scan — nothing the baseline commit did not already have
         env:
           BASELINE: ${{ steps.baseline.outputs.sha }}
+          CANDIDATES: ${{ steps.baseline.outputs.candidates }}
         run: |
+          # The checkout belongs to the runner user and this container runs as
+          # root; without this, git (and so --baseline-commit) refuses the tree.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          # The newest green commit that is in this commit's history. One that
+          # is not (an old run on a rewritten trunk) compares against unrelated
+          # code: on 2026-10-05 that put 10,698 files in the diff.
+          if [ -n "$CANDIDATES" ]; then
+            BASELINE=""
+            for c in $CANDIDATES; do
+              if git merge-base --is-ancestor "$c" HEAD; then BASELINE="$c"; break; fi
+              echo "Skipped $c: a green commit that is not in this commit's history."
+            done
+          fi
           if [ -z "$BASELINE" ]; then
             echo "::error::No baseline commit was resolved. A scan with nothing to compare against is not a pass."
             exit 1
           fi
-          # The checkout belongs to the runner user and this container runs as
-          # root; without this, git (and so --baseline-commit) refuses the tree.
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           echo "Findings this commit adds over $BASELINE:"
           status=0
           # SEMGREP_CONFIGS is a list of --config flags and is split on purpose.
