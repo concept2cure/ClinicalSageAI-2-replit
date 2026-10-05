@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const repoRoot = process.cwd();
 const routesDir = path.join(repoRoot, 'server', 'routes');
@@ -61,57 +62,21 @@ const suspiciousPatterns = [
  * route path containing "mock" is not mock DATA, and an audit trail of false
  * positives is how a baseline grows until nobody reads it.
  *
- * Written as a scanner rather than a regex on purpose. The obvious
- * `/\/\*[\s\S]*?\*\//g` + `/\/\/.*$/gm` pair corrupts ordinary source: the `//`
- * inside `'https://example.com'` truncates the rest of that line, which can
- * silently delete a real finding sitting after a URL. Tracking string state is
- * the only way to tell a comment from two slashes inside quotes.
+ * Comments are blanked by the shared, string-aware stripper
+ * (scripts/ci/lib/strip-comments.mjs), not by a regex: the obvious
+ * `/\/\*[\s\S]*?\*\//g` + `/\/\/.*$/gm` pair corrupts ordinary source — the
+ * `//` inside `'https://example.com'` truncates the rest of that line, which can
+ * silently delete a real finding sitting after a URL. String literals are then
+ * blanked by stringLiteralsOf below, which reads the stripper's output and so
+ * agrees with it on where every literal is. Every line keeps its place.
  */
 function stripCommentsAndStrings(source) {
-  let out = '';
-  let i = 0;
-  const n = source.length;
-
-  while (i < n) {
-    const c = source[i];
-    const next = source[i + 1];
-
-    // Line comment — keep the newline so line numbers survive.
-    if (c === '/' && next === '/') {
-      while (i < n && source[i] !== '\n') i += 1;
-      continue;
-    }
-
-    // Block comment — preserve interior newlines for the same reason.
-    if (c === '/' && next === '*') {
-      i += 2;
-      while (i < n && !(source[i] === '*' && source[i + 1] === '/')) {
-        if (source[i] === '\n') out += '\n';
-        i += 1;
-      }
-      i += 2;
-      continue;
-    }
-
-    // String or template literal: consume it, honouring backslash escapes.
-    if (c === '"' || c === "'" || c === '`') {
-      const quote = c;
-      i += 1;
-      while (i < n && source[i] !== quote) {
-        if (source[i] === '\\') i += 1;
-        else if (source[i] === '\n') out += '\n';
-        i += 1;
-      }
-      i += 1;
-      out += quote + quote;
-      continue;
-    }
-
-    out += c;
-    i += 1;
+  const code = stripComments(source);
+  const out = code.split('');
+  for (const { start, end } of literalsIn(code)) {
+    for (let k = start; k < end; k += 1) if (out[k] !== '\n') out[k] = ' ';
   }
-
-  return out;
+  return out.join('');
 }
 
 const prodGatePattern = /(NODE_ENV\s*===\s*['"]production['"])|(process\.env\.ENABLE_MOCK_)/;
@@ -162,48 +127,57 @@ const DOI_LITERAL = /\b10\.\d{4,9}\/[^\s"'`,;)\]]+/;
  * documentation.
  */
 function stringLiteralsOf(source) {
+  return literalsIn(stripComments(source));
+}
+
+/**
+ * The string literals of comment-free source (stripComments output, so a quote
+ * inside a comment opens nothing and a `/*` or `//` inside a string closes
+ * nothing), as { start, end, line, value }: `start`/`end` bound the literal
+ * with its quotes, `line` is the 1-based source line it opens on, and `value`
+ * is its text with each escape reduced to the escaped character.
+ *
+ * Boundaries follow the shared stripper's own rules, so the two agree on where
+ * every literal is: a single- or double-quoted literal ends at its line, a
+ * template at its unnested backtick, and a backslash outside a literal skips
+ * the next character.
+ */
+function literalsIn(code) {
   const out = [];
-  let i = 0;
+  const n = code.length;
   let line = 1;
-  const n = source.length;
+  let counted = 0;
+  const lineAt = (pos) => {
+    for (; counted < pos; counted += 1) if (code[counted] === '\n') line += 1;
+    return line;
+  };
 
+  let i = 0;
   while (i < n) {
-    const c = source[i];
-    const next = source[i + 1];
+    const quote = code[i];
+    if (quote === '\\') { i += 2; continue; }
+    if (quote !== '"' && quote !== "'" && quote !== '`') { i += 1; continue; }
 
-    if (c === '\n') { line += 1; i += 1; continue; }
-
-    if (c === '/' && next === '/') {
-      while (i < n && source[i] !== '\n') i += 1;
-      continue;
-    }
-    if (c === '/' && next === '*') {
-      i += 2;
-      while (i < n && !(source[i] === '*' && source[i + 1] === '/')) {
-        if (source[i] === '\n') line += 1;
-        i += 1;
-      }
-      i += 2;
-      continue;
-    }
-
-    if (c === '"' || c === "'" || c === '`') {
-      const quote = c;
-      const startLine = line;
-      let value = '';
-      i += 1;
-      while (i < n && source[i] !== quote) {
-        if (source[i] === '\\') { value += source[i + 1] ?? ''; i += 2; continue; }
-        if (source[i] === '\n') line += 1;
-        value += source[i];
-        i += 1;
-      }
-      i += 1;
-      out.push({ line: startLine, value });
-      continue;
-    }
-
+    const start = i;
+    let value = '';
+    let depth = 0; // `${ … }` nesting inside a template literal
     i += 1;
+    while (i < n) {
+      const ch = code[i];
+      if (ch === '\\') { value += code[i + 1] ?? ''; i += 2; continue; }
+      if (quote === '`') {
+        if (depth === 0 && ch === '`') break;
+        if (ch === '$' && code[i + 1] === '{') { depth += 1; value += '${'; i += 2; continue; }
+        if (depth > 0 && ch === '}') depth -= 1;
+      } else if (ch === quote || ch === '\n') {
+        break;
+      }
+      value += ch;
+      i += 1;
+    }
+    const end = i < n && code[i] === quote ? i + 1 : i;
+    out.push({ start, end, line: lineAt(start), value });
+    i = end;
   }
 
   return out;

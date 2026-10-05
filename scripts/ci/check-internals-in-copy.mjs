@@ -43,6 +43,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const ROOT = path.resolve(new URL('../..', import.meta.url).pathname);
 const BASELINE = path.join(ROOT, 'scripts/ci/internals-in-copy-baseline.json');
@@ -367,19 +368,14 @@ function sourceFiles() {
     .filter((f) => !/__tests__|\.test\.tsx?$|\.spec\.tsx?$|\/fixtures\//.test(f));
 }
 
-/** Blank out comments so prose ABOUT a route is not reported as the route. */
-function stripComments(text) {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
-    .split('\n')
-    .map((l) => l.replace(/\/\/.*$/, ''))
-    .join('\n');
-}
-
 function findings() {
   const hits = sharedCopyFindings();
   for (const file of sourceFiles()) {
     const raw = readFileSync(path.join(ROOT, file), 'utf8');
+    // Comments are blanked so prose ABOUT a route is not reported as the route.
+    // The shared stripper is string-aware: a literal holding `/*` or `//` (a
+    // route glob, a URL in copy) cannot open a phantom comment that hides the
+    // copy after it, and lines stay put, so reported lines are true lines.
     const code = stripComments(raw);
     const lineOf = (idx) => code.slice(0, idx).split('\n').length;
 

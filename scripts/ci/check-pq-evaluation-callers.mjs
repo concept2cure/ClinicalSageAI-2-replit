@@ -11,8 +11,13 @@
  * regulated content — the exact thing `approvedForTask` in gateway.ts exists to
  * stop. So the door is kept narrow by this gate rather than by a comment.
  *
- * Allowed callers: `server/eval/pq/` and test files. Comments are stripped
- * before matching, so documentation that names the method is not a caller.
+ * Allowed callers: `server/eval/pq/` and test files. Comments are blanked
+ * before matching, so documentation that names the method is not a caller —
+ * by the shared, string-aware stripper (scripts/ci/lib/strip-comments.mjs).
+ * The regex pair this gate used to carry read a route glob such as
+ * '/api/eval/*' as the start of a comment that ran to the next real `*` `/`,
+ * and cut a line at the `//` of a protocol-relative URL, so a call below the
+ * one or after the other was never read. The self-test holds both cases.
  *
  * Usage:
  *   node scripts/ci/check-pq-evaluation-callers.mjs
@@ -23,6 +28,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SCAN_DIRS = ['server', 'client', 'shared', 'scripts'];
@@ -40,13 +46,6 @@ function isAllowed(rel) {
     p === 'server/services/ai-gateway/gateway.ts' ||
     p === 'scripts/ci/check-pq-evaluation-callers.mjs'
   );
-}
-
-/** Remove block and line comments so a doc comment naming the method is not a call. */
-function codeOnly(src) {
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
-    .replace(/(^|[^:\\])\/\/[^\n]*/g, (m, lead) => lead + ' '.repeat(m.length - lead.length));
 }
 
 export function findCallers(root) {
@@ -67,7 +66,7 @@ export function findCallers(root) {
       if (!/\.[cm]?[jt]sx?$/.test(e.name)) continue;
       const rel = path.relative(root, full);
       if (isAllowed(rel)) continue;
-      const lines = codeOnly(fs.readFileSync(full, 'utf8')).split('\n');
+      const lines = stripComments(fs.readFileSync(full, 'utf8')).split('\n');
       lines.forEach((line, i) => {
         if (CALL.test(line)) out.push(`${rel}:${i + 1}`);
       });
@@ -104,16 +103,30 @@ function selfTest() {
     ['control — a doc comment names it', () => put('server/services/ana/doc.ts', '/** see gateway.evaluateModel(...) */\n// never call .evaluateModel( here\nconst a = 1;\n'), 0],
     ['a route handler calls it', () => put('server/routes/authoring.ts', 'const r = await getGateway().evaluateModel("gpt-4o", req);\n'), 1],
     ['a service calls it across a line break', () => put('server/services/drafting.ts', 'const r = await gw\n  .evaluateModel ("gpt-4o", req);\n'), 1],
+    // A string holding `/*` is not a comment opener. The old regex blanked from
+    // the route glob to the JSDoc closer below, the call between them included.
+    ['a call below a route glob holding /*, above a JSDoc', () => put('server/routes/eval.ts', "router.use('/api/eval/*', requireAuth);\nconst r = await gw.evaluateModel('gpt-4o', req);\n/** next handler */\n"), ['server/routes/eval.ts:2']],
+    // Nor is a `//` inside a string a line comment: a protocol-relative URL cut
+    // the rest of its line, the call included. ('https://' was spared only by
+    // the old regex's `:` exception; it is held here too.)
+    ['a call after a //cdn URL on the same line', () => put('server/services/cdn.ts', "const u = '//cdn.example.test/m.js'; const r = await gw.evaluateModel('m', req);\n"), ['server/services/cdn.ts:1']],
+    ['a call after an https:// URL on the same line', () => put('server/services/fetch.ts', "const u = 'https://api.example.test/v1'; const r = await gw.evaluateModel('m', req);\n"), ['server/services/fetch.ts:1']],
+    ['control — a block comment after a route glob holding /*', () => put('server/routes/eval.ts', "router.use('/api/eval/*', requireAuth);\n/* gw.evaluateModel('m', req) */\nconst a = 1;\n"), 0],
+    ['control — a line comment after an https:// URL', () => put('server/services/fetch.ts', "const u = 'https://api.example.test/v1'; // gw.evaluateModel('m', req)\n"), 0],
   ];
+  // `expect` is 0 (clean), 1 (caught) or the exact `file:line` list the gate
+  // must report, which pins the line to the source line of the call.
   let failures = 0;
   for (const [name, setup, expect] of cases) {
     fs.rmSync(root, { recursive: true, force: true });
     fs.mkdirSync(root, { recursive: true });
     setup();
-    const found = findCallers(root).length > 0 ? 1 : 0;
-    const ok = found === expect;
+    const callers = findCallers(root);
+    const found = callers.length > 0 ? 1 : 0;
+    const ok = Array.isArray(expect) ? callers.join('\n') === expect.join('\n') : found === expect;
     if (!ok) failures += 1;
-    console.log(`  ${ok ? '✓' : '✗'} ${name}${ok ? '' : expect ? '  — NOT CAUGHT' : '  — false positive'}`);
+    const why = !found && expect ? '  — NOT CAUGHT' : found && !expect ? '  — false positive' : `  — reported [${callers.join(', ')}]`;
+    console.log(`  ${ok ? '✓' : '✗'} ${name}${ok ? '' : why}`);
   }
   fs.rmSync(root, { recursive: true, force: true });
   if (failures) {

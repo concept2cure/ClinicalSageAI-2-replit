@@ -32,6 +32,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import pg from 'pg';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const repoRoot = process.cwd();
 const OFFBOARDING = path.join(repoRoot, 'server', 'services', 'tenant', 'tenant-offboarding.ts');
@@ -59,8 +60,14 @@ function purgeChildTables() {
   /* Comments FIRST. The entries are heavily annotated and those comments
      contain apostrophes ("the member's free-text justification"), so a quoted-
      literal scan over the raw body pairs an apostrophe in one comment with an
-     apostrophe in the next and reads the prose between them as a table name. */
-  const body = m[1].replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
+     apostrophe in the next and reads the prose between them as a table name.
+
+     With the shared, quote-aware stripper (scripts/ci/lib/strip-comments.mjs),
+     not a block-comment regex: /\/\*[\s\S]*?\*\// would also open at a `/*`
+     inside a // note (say, "see /api/advisory/*") and run to the close of the
+     next real block comment, silently dropping every entry in between — which
+     this gate would then report as residue the purge does not reach. */
+  const body = stripComments(m[1]);
   const literals = [...body.matchAll(/'([^']+)'/g)].map((x) => x[1]);
   if (literals.length === 0) {
     console.error('❌ purge-coverage: PURGE_CHILD_TABLES parsed to zero entries — broken scan.');

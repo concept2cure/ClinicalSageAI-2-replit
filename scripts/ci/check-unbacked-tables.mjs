@@ -54,6 +54,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
@@ -91,8 +92,12 @@ function collect(dir, exts, acc = []) {
   return acc;
 }
 
-/** Prose that mentions DDL is not DDL (see the duplicate-table guard's C-12 note). */
-const stripComments = (sql) => sql.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
+/**
+ * Prose that mentions DDL is not DDL (see the duplicate-table guard's C-12 note).
+ * SQL comments only: for .sql files and for the SQL inside a string literal.
+ * TypeScript comments are stripped by the shared, quote-aware stripComments.
+ */
+const stripSqlComments = (sql) => sql.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
 
 /**
  * QUOTED IDENTIFIERS COUNT (fixed 2026-09-10, WO-1). The previous pattern
@@ -122,7 +127,7 @@ const created = new Set();
 const addCreated = (name) => created.add(name.toLowerCase());
 
 for (const f of collect(repoRoot, ['.sql']).filter((p) => !isArchived(p))) {
-  const sql = stripComments(fs.readFileSync(path.join(repoRoot, f), 'utf8'));
+  const sql = stripSqlComments(fs.readFileSync(path.join(repoRoot, f), 'utf8'));
   for (const m of sql.matchAll(CREATE_RE)) addCreated(qualified(m));
 }
 
@@ -131,8 +136,15 @@ for (const f of collect(path.join(repoRoot, 'shared'), ['.ts'])) {
   for (const m of src.matchAll(/pg(?:Table|View|MaterializedView)\(\s*['"`]([\w.]+)['"`]/g)) addCreated(m[1]);
 }
 
+/*
+ * TypeScript comments first, with the quote-aware stripper. The SQL stripper on
+ * its own blanked from a `/*` inside a string ('/api/advisory/*') to the next
+ * comment close, and read every `//` comment as code, so a CREATE TABLE named
+ * in a // note counted as creating that table. Then SQL comments, so DDL inside
+ * an embedded SQL string's own comment does not count either.
+ */
 for (const f of collect(path.join(repoRoot, 'server'), ['.ts'])) {
-  const src = stripComments(fs.readFileSync(path.join(repoRoot, f), 'utf8'));
+  const src = stripSqlComments(stripComments(fs.readFileSync(path.join(repoRoot, f), 'utf8')));
   for (const m of src.matchAll(CREATE_RE)) addCreated(qualified(m));
 }
 
@@ -243,7 +255,7 @@ for (const f of SCANNED.flatMap((d) => collect(path.join(repoRoot, d), ['.ts']))
     ...(src.match(/"(?:[^"\\\n]|\\.)*"/g) ?? []),
   ];
   for (const lit of literals) {
-    const body = stripComments(lit.slice(1, -1));
+    const body = stripSqlComments(lit.slice(1, -1));
     if (!SQL_SMELL.test(body)) continue;
     // CTE names are defined by the query itself.
     const ctes = new Set(
