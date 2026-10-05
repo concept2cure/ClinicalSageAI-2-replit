@@ -1,0 +1,345 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > 4.2.3 is titled 4.2.3, not "4.2.3.1 Single-Dose Toxicity" 6ms
+   → expected '4.2.3.1' to be '4.2.3' // Object.is equality
+ × tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > 4.2.3 lists every registered section it contains, 4.2.3.1 through 4.2.3.7, with canonical titles 16ms
+   → expected 'You are a senior regulatory affairs w…' to contain '4.2.3.2 Repeat-Dose Toxicity'
+ × tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > a parent prompt carries no single child's must-contain list 5ms
+   → expected 'You are a senior regulatory affairs w…' not to match /The section MUST cover:/
+ × tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > every one of the 19 IND sections is titled with its own code 9ms
+   → expected [ '2.6 → 2.6.1', '2.7 → 2.7.1', …(6) ] to deeply equal []
+ × tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > the auto-draft and route path (getGenerationPrompt) is titled with the requested code too 1ms
+   → expected '4.2.3.1' to be '4.2.3' // Object.is equality
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > exact, ancestor and unknown codes > an exact entry is briefed from that entry, with its title and must-contain list 8ms
+ × tests/regulatory/ind-generation-prompt.test.ts > exact, ancestor and unknown codes > a code deeper than any entry names the open section and says whose requirements follow 1ms
+   → expected '2.7.3' to be '2.7.3.1' // Object.is equality
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > exact, ancestor and unknown codes > a code nothing registers gets no prompt 0ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > exact, ancestor and unknown codes > project context is still interpolated 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > 4.2.3 is titled 4.2.3, not "4.2.3.1 Single-Dose Toxicity"
+AssertionError: expected '4.2.3.1' to be '4.2.3' // Object.is equality
+
+Expected: "4.2.3"
+Received: "4.2.3.1"
+
+ ❯ tests/regulatory/ind-generation-prompt.test.ts:35:28
+     33|     const p = buildSectionGenerationPrompt('4.2.3');
+     34|     expect(p).toBeTruthy();
+     35|     expect(titledCode(p!)).toBe('4.2.3');
+       |                            ^
+     36|     expect(p!.split('\n\n')[0]).not.toContain('Single-Dose Toxicity');
+     37|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > 4.2.3 lists every registered section it contains, 4.2.3.1 through 4.2.3.7, with canonical titles
+AssertionError: expected 'You are a senior regulatory affairs w…' to contain '4.2.3.2 Repeat-Dose Toxicity'
+
+- Expected
++ Received
+
+- 4.2.3.2 Repeat-Dose Toxicity
++ You are a senior regulatory affairs writer authoring CTD section 4.2.3.1 "Single-Dose Toxicity" for an FDA submission. Write in formal regulatory language suitable for filing; follow the ICH M4 CTD structure.
++
++ Section intent: Present acute/single-dose toxicity information — which per ICH M3(R2) may be derived from dose-ranging or the initial phase of repeat-dose studies rather than dedicated lethality studies — including doses tested, route (intended clinical route and often a parenteral route), clinical observations, mortality if any, body weight, gross necropsy, and toxicokinetics where available. Identify the maximum tolerated dose or maximum feasible dose and any acute target organs. Emphasize non-lethal endpoints per current guidance. Cross-reference 2.6.6/2.6.7 and repeat-dose toxicity (4.2.3.2). State GLP status (pivotal acute toxicity data supporting first-in-human should be GLP-compliant).
++
++ The section MUST cover:
++ - Species, strain, sex, route(s), and dose levels tested
++ - Clinical signs of toxicity and onset/reversibility
++ - Mortality data where observed and approximate maximum tolerated/tolerated dose
++ - Body weight and food consumption effects
++ - Gross necropsy/pathology findings
++ - Acute target organs of toxicity
++ - Toxicokinetic/exposure data where collected
++ - Statement that acute data derive from dose-ranging/repeat-dose studies per ICH M3(R2) where applicable
++ - GLP compliance statement for pivotal studies
++
++ Expected tables / datasets:
++ - Dose-level design and mortality/clinical-signs summary table
++ - Body weight and food consumption tables
++ - Gross pathology findings table
++ - Toxicokinetic exposure summary where available
++
++ Avoid these common deficiencies:
++ - Conducting classical lethality (LD50) studies no longer expected under ICH M3(R2)
++ - Not identifying a maximum tolerated or maximum feasible dose to frame the toxicity range
++ - Failing to test the intended clinical route
++ - Omitting exposure data, so acute findings cannot be related to systemic exposure
++ - Not reconciling acute findings with target organs seen in repeat-dose studies
++
++ Draft the CTD Section 4.2.3.1 Single-Dose Toxicity authoring framework for [Product Name] ([Sponsor], [Indication], [Phase]). Describe how to present acute/single-dose toxicity information consistent with ICH M3(R2) — where such data may be derived from dose-ranging or the initial phase of repeat-dose studies rather than dedicated lethality studies — covering species, route, dose levels, clinical signs, maximum tolerated/feasible dose, acute target organs, gross pathology, and exposure. Emphasize non-lethal endpoints. Do not fabricate results; specify where data belong and what a complete, FDA-acceptable section contains.
++
++ Do not fabricate study results, numbers, or product-specific facts you were not given; where a value is unknown, insert a clearly-marked placeholder. Governing reference: Section 4.2.3.1 contains single-dose (acute) toxicity study reports characterizing the toxicity of a single administration, including the dose-toxicity relationship and, where determined, approximate lethal/maximum tolerated dose. Under ICH M3(R2), classical lethality-based acute toxicity studies are no longer required; acute toxicity information is now commonly obtained from appropriately designed dose-ranging or the early phase of repeat-dose studies, and non-lethal endpoints are emphasized. An FDA reviewer reads this section to understand the immediate toxicity profile, target organs of acute toxicity, and the margin between pharmacologic and acutely toxic doses. Acceptable content presents dose levels, clinical signs, mortality (where observed), gross pathology, and the exposure basis, in at least the toxicologically relevant species..
+
+ ❯ tests/regulatory/ind-generation-prompt.test.ts:44:17
+     42|       const g = CTD_AUTHORING_GUIDANCE[code];
+     43|       expect(g, `${code} is registered`).toBeDefined();
+     44|       expect(p).toContain(`${code} ${g.title}`);
+       |                 ^
+     45|     }
+     46|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > a parent prompt carries no single child's must-contain list
+AssertionError: expected 'You are a senior regulatory affairs w…' not to match /The section MUST cover:/
+
+- Expected:
+/The section MUST cover:/
+
++ Received:
+"You are a senior regulatory affairs writer authoring CTD section 2.6.1 \"Introduction (Nonclinical Written and Tabulated Summaries)\" for an FDA submission. Write in formal regulatory language suitable for filing; follow the ICH M4 CTD structure.
+
+Section intent: Keep 2.6.1 concise (about one page per ICH M4S). State the drug substance, pharmacologic class, mechanism of action, proposed clinical indication and route, and the general scope and organization of the nonclinical program (species tested, GLP status, types of studies). Do not present results or conclusions — those belong in the written and tabulated summaries and in 2.4. Ensure terminology and scope statements match 2.4, 2.6.2, 2.6.4, and 2.6.6 exactly.
+
+The section MUST cover:
+- Drug substance name and pharmacologic/therapeutic class
+- Mechanism of action (brief)
+- Proposed clinical indication and route of administration
+- Scope and organization of the nonclinical program (pharmacology, PK, toxicology)
+- Species used and general GLP compliance statement
+- Orientation to how the written (2.6.2/2.6.4/2.6.6) and tabulated (2.6.3/2.6.5/2.6.7) summaries are organized
+
+Avoid these common deficiencies:
+- Exceeding the brief scope and presenting results/conclusions that belong in later summaries
+- Class/MOA/indication wording inconsistent with 2.4 or the clinical modules
+- Misstating the scope of studies or species covered relative to the tabulated summaries
+- Omitting GLP status framing for the program
+
+Draft CTD Module 2.6.1 Introduction to the nonclinical summaries for [Product Name] ([Sponsor]). In about one page, state the drug substance, pharmacologic class, mechanism of action, proposed indication for [Indication] and route, and the scope and organization of the nonclinical program (pharmacology, pharmacokinetics, toxicology; species tested; GLP status). Do not present results. Ensure consistency with the 2.4 Nonclinical Overview and the written/tabulated summaries that follow.
+
+Do not fabricate study results, numbers, or product-specific facts you were not given; where a value is unknown, insert a clearly-marked placeholder. Governing reference: Section 2.6.1 is a brief introduction to the nonclinical written and tabulated summaries, orienting the reviewer to the product, its pharmacologic class and MOA, and the scope of the nonclinical program summarized in 2.6.2 through 2.6.7. It sets expectations for the pharmacology, pharmacokinetics, and toxicology summaries that follow. Acceptability depends on it being short, accurate, and consistent with the Nonclinical Overview (2.4) and the detailed summaries.."
+
+ ❯ tests/regulatory/ind-generation-prompt.test.ts:53:21
+     51|       expect(src?.kind, code).toBe('parent');
+     52|       const p = buildSectionGenerationPrompt(code)!;
+     53|       expect(p).not.toMatch(/The section MUST cover:/);
+       |                     ^
+     54|       const first = src!.children![0];
+     55|       for (const el of first.keyContentElements) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > every one of the 19 IND sections is titled with its own code
+AssertionError: expected [ '2.6 → 2.6.1', '2.7 → 2.7.1', …(6) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "2.6 → 2.6.1",
++   "2.7 → 2.7.1",
++   "3.2.S → 3.2.S.1",
++   "3.2.P → 3.2.P.1",
++   "4.2.1 → 4.2.1.1",
++   "4.2.2 → 4.2.2.1",
++   "4.2.3 → 4.2.3.1",
++   "5.3 → 5.3.1",
++ ]
+
+ ❯ tests/regulatory/ind-generation-prompt.test.ts:70:19
+     68|       if (t !== s.code) wrong.push(`${s.code} → ${t}`);
+     69|     }
+     70|     expect(wrong).toEqual([]);
+       |                   ^
+     71|   });
+     72|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > the auto-draft and route path (getGenerationPrompt) is titled with the requested code too
+AssertionError: expected '4.2.3.1' to be '4.2.3' // Object.is equality
+
+Expected: "4.2.3"
+Received: "4.2.3.1"
+
+ ❯ tests/regulatory/ind-generation-prompt.test.ts:75:27
+     73|   it('the auto-draft and route path (getGenerationPrompt) is titled wi…
+     74|     const p = getGenerationPrompt('4.2.3', { productName: 'BX-099' });
+     75|     expect(titledCode(p)).toBe('4.2.3');
+       |                           ^
+     76|     expect(p).toContain('BX-099');
+     77|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/regulatory/ind-generation-prompt.test.ts > exact, ancestor and unknown codes > a code deeper than any entry names the open section and says whose requirements follow
+AssertionError: expected '2.7.3' to be '2.7.3.1' // Object.is equality
+
+Expected: "2.7.3.1"
+Received: "2.7.3"
+
+ ❯ tests/regulatory/ind-generation-prompt.test.ts:93:27
+     91|     expect(resolveSectionBriefSource('2.7.3.1')?.kind).toBe('ancestor'…
+     92|     const p = buildSectionGenerationPrompt('2.7.3.1')!;
+     93|     expect(titledCode(p)).toBe('2.7.3.1');
+       |                           ^
+     94|     expect(p).toContain(`within 2.7.3 "${CTD_AUTHORING_GUIDANCE['2.7.3…
+     95|     expect(p).toContain('The section MUST cover:');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 3 passed (9)
+   Start at  03:06:07
+   Duration  1.30s (transform 793ms, setup 116ms, import 761ms, tests 52ms, environment 0ms)
+
+
+==================================================================
+FIX ROUND 1 (review 2026-10-05): red run of the four new cases against the round-0 working copy
+(server/services/ind/ctd/index.ts as first submitted; before the fix). Command:
+  npx vitest run tests/regulatory/ind-generation-prompt.test.ts
+==================================================================
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > 4.2.3 is titled 4.2.3, not "4.2.3.1 Single-Dose Toxicity" 2ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > 4.2.3 lists every registered section it contains, 4.2.3.1 through 4.2.3.7, with canonical titles 1ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > a parent prompt carries no single child's must-contain list 3ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > every one of the 19 IND sections is titled with its own code 3ms
+ × tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > every listed heading sits under the requested code or another listed heading (no orphaned children) 8ms
+   → expected [ Array(4) ] to deeply equal []
+ × tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > 5.3 lists 5.3.5 (by code only, no invented title) before 5.3.5.1, and nests 5.3.5.x under it, not under 5.3.4 1ms
+   → expected -1 to be greater than 3
+ × tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > headings carry no platform qualifier (' — Overview', a trailing bracketed disambiguation) 3ms
+   → expected 'You are a senior regulatory affairs w…' not to contain '— Overview'
+ × tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > a section the material says does not apply may be stated not applicable with its reason; a placeholder is for unknown data 1ms
+   → expected 'You are a senior regulatory affairs w…' to match /not applicable/i
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > the auto-draft and route path (getGenerationPrompt) is titled with the requested code too 1ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > exact, ancestor and unknown codes > an exact entry is briefed from that entry, with its title and must-contain list 0ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > exact, ancestor and unknown codes > a code deeper than any entry names the open section and says whose requirements follow 0ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > exact, ancestor and unknown codes > a code nothing registers gets no prompt 0ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > exact, ancestor and unknown codes > project context is still interpolated 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > every listed heading sits under the requested code or another listed heading (no orphaned children)
+AssertionError: expected [ Array(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "5.3: 5.3.5.1",
++   "5.3: 5.3.5.2",
++   "5.3: 5.3.5.3",
++   "5.3: 5.3.5.4",
++ ]
+
+ ❯ tests/regulatory/ind-generation-prompt.test.ts:94:22
+     92|       }
+     93|     }
+     94|     expect(orphaned).toEqual([]);
+       |                      ^
+     95|   });
+     96|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > 5.3 lists 5.3.5 (by code only, no invented title) before 5.3.5.1, and nests 5.3.5.x under it, not under 5.3.4
+AssertionError: expected -1 to be greater than 3
+ ❯ tests/regulatory/ind-generation-prompt.test.ts:102:18
+    100|     const codes = lines.map((l) => l.code);
+    101|     const i535 = codes.indexOf('5.3.5');
+    102|     expect(i535).toBeGreaterThan(codes.indexOf('5.3.4'));
+       |                  ^
+    103|     expect(i535).toBeLessThan(codes.indexOf('5.3.5.1'));
+    104|     expect(lines[i535].title).toBe('');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > headings carry no platform qualifier (' — Overview', a trailing bracketed disambiguation)
+AssertionError: expected 'You are a senior regulatory affairs w…' not to contain '— Overview'
+
+- Expected
++ Received
+
+- — Overview
++ You are a senior regulatory affairs writer authoring CTD section 3.2.S as a whole for an FDA submission. Write in formal regulatory language suitable for filing; follow the ICH M4 CTD structure.
++
++ Product: [Product Name]. Indication: [Indication]. Sponsor: [Sponsor]. Development phase: [Phase].
++
++ Section 3.2.S contains these sections. Organise the draft under them, in this order, with each heading numbered and titled as listed:
++ - 3.2.S.1 General Information (Drug Substance)
++ - 3.2.S.2 Manufacture (Drug Substance) — Overview
++   - 3.2.S.2.1 Manufacturer(s)
++   - 3.2.S.2.2 Description of Manufacturing Process and Process Controls
++   - 3.2.S.2.3 Control of Materials
++   - 3.2.S.2.4 Controls of Critical Steps and Intermediates
++   - 3.2.S.2.5 Process Validation and/or Evaluation
++   - 3.2.S.2.6 Manufacturing Process Development
++ - 3.2.S.3 Characterisation (Drug Substance) — Overview
++   - 3.2.S.3.1 Elucidation of Structure and Other Characteristics
++   - 3.2.S.3.2 Impurities
++ - 3.2.S.4 Control of Drug Substance — Overview
++   - 3.2.S.4.1 Specification
++   - 3.2.S.4.2 Analytical Procedures
++   - 3.2.S.4.3 Validation of Analytical Procedures
++   - 3.2.S.4.4 Batch Analyses
++   - 3.2.S.4.5 Justification of Specification
++ - 3.2.S.5 Reference Standards or Materials
++ - 3.2.S.6 Container Closure System
++ - 3.2.S.7 Stability (Drug Substance)
++
++ Each listed section has its own requirements. Under each heading, write only what the material provided supports for that section; where it supports nothing, keep the heading and insert a placeholder.
++
++ Do not fabricate study results, numbers, or product-specific facts you were not given; where a value is unknown, insert a clearly-marked placeholder.
+
+ ❯ tests/regulatory/ind-generation-prompt.test.ts:110:22
+    108|   it("headings carry no platform qualifier (' — Overview', a trailing …
+    109|     const p32s = buildSectionGenerationPrompt('3.2.S')!;
+    110|     expect(p32s).not.toContain('— Overview');
+       |                      ^
+    111|     expect(p32s).toMatch(/^\s*- 3\.2\.S\.2 Manufacture$/m);
+    112|     expect(p32s).toMatch(/^\s*- 3\.2\.S\.4 Control of Drug Substance$/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > a section the material says does not apply may be stated not applicable with its reason; a placeholder is for unknown data
+AssertionError: expected 'You are a senior regulatory affairs w…' to match /not applicable/i
+
+- Expected:
+/not applicable/i
+
++ Received:
+"You are a senior regulatory affairs writer authoring CTD section 4.2.3 as a whole for an FDA submission. Write in formal regulatory language suitable for filing; follow the ICH M4 CTD structure.
+
+Product: [Product Name]. Indication: [Indication]. Sponsor: [Sponsor]. Development phase: [Phase].
+
+Section 4.2.3 contains these sections. Organise the draft under them, in this order, with each heading numbered and titled as listed:
+- 4.2.3.1 Single-Dose Toxicity
+- 4.2.3.2 Repeat-Dose Toxicity
+- 4.2.3.3 Genotoxicity
+- 4.2.3.4 Carcinogenicity
+- 4.2.3.5 Reproductive and Developmental Toxicity
+- 4.2.3.6 Local Tolerance
+- 4.2.3.7 Other Toxicity Studies
+
+Each listed section has its own requirements. Under each heading, write only what the material provided supports for that section; where it supports nothing, keep the heading and insert a placeholder.
+
+Do not fabricate study results, numbers, or product-specific facts you were not given; where a value is unknown, insert a clearly-marked placeholder."
+
+ ❯ tests/regulatory/ind-generation-prompt.test.ts:121:15
+    119|   it('a section the material says does not apply may be stated not app…
+    120|     const p = buildSectionGenerationPrompt('4.2.3')!;
+    121|     expect(p).toMatch(/not applicable/i);
+       |               ^
+    122|     expect(p).toMatch(/placeholder/);
+    123|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 9 passed (13)
+   Start at  03:25:58
+   Duration  894ms (transform 541ms, setup 88ms, import 519ms, tests 28ms, environment 0ms)
+
