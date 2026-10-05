@@ -304,7 +304,8 @@ export const SUBMISSION_REQUIREMENTS: SubmissionRequirement[] = [
     requiredModules: ['Annex II', 'Annex III'],
     requiredDocuments: [
       { name: 'Device description and specification', required: true },
-      { templateId: 'gspr_checklist', name: 'GSPR (Annex I) checklist', required: true },
+      // 2026-10-05 (g-ivdr-gspr-checklist): the IVDR's own Annex I checklist, not the MDR one.
+      { templateId: 'ivdr_gspr_checklist', name: 'GSPR (Annex I) checklist', required: true },
       { name: 'Risk management file (ISO 14971)', required: true },
       { templateId: 'performance_evaluation_report', name: 'Performance Evaluation Report (PER)', required: true },
       { name: 'EU Declaration of Conformity', required: true },

@@ -107,6 +107,12 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     qmsExpectation: 'iso-13485',
     requiredDossierElements: [
       'device_classification',
+      // A dossier element, not a template id: the regulation's own Annex I
+      // checklist — document-template-library 'gspr_checklist' (MDR) or
+      // 'ivdr_gspr_checklist' (IVDR). One element, because this list is ANDed
+      // and the market serves both regulations: listing both ids would mark an
+      // MDR device incomplete for want of an IVDR checklist (2026-10-05,
+      // g-ivdr-gspr-checklist), as 'clinical_or_performance_evaluation' below.
       'gspr_checklist',
       'technical_documentation',
       'clinical_or_performance_evaluation',
