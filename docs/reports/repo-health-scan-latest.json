@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-05T11:31:27.600Z",
+  "generatedAt": "2026-10-05T12:25:24.722Z",
   "git": {
-    "sha": "65b92951b1735d9652cd5ae5b1c676ffec01e244",
+    "sha": "2879ee384ee6ec2b00d5c82a3392278860b17b4b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2042,7 +2042,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1124629
+        "bytes": 1124944
       },
       {
         "file": "shared/schema.ts",
@@ -2058,7 +2058,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 327561
+        "bytes": 327996
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2134,7 +2134,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 133880
+        "bytes": 133906
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2248,7 +2248,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21707
+        "lines": 21714
       },
       {
         "file": "shared/schema.ts",
@@ -2256,7 +2256,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7419
+        "lines": 7430
       },
       {
         "file": "server/statistics-service.ts",
@@ -2348,7 +2348,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2870
+        "lines": 2872
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2584,7 +2584,7 @@
       },
       {
         "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 1796
+        "lines": 1801
       },
       {
         "file": "ui_kits/home/Projects.jsx",

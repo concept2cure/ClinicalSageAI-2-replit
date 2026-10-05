@@ -61,7 +61,8 @@
  */
 
 import { isUuid } from '../../middleware/uuidParam';
-import { sha256Hex, type Queryable, type TurnRecordBody } from '../ana/turn-record';
+import { sha256Hex, type Queryable, type TurnOutcome, type TurnRecordBody } from '../ana/turn-record';
+import { servedModelsOf, type ServedModel } from '../ana/turn-record-models';
 import { loadTurnRecord, verifyStoredTurnRecord, type StoredTurnRecord } from '../ana/turn-record-verify';
 import { comparableText, occurrencesIn } from '../clinical-regulatory-evidence/machine-attribution';
 import { ANA_MACHINE_AUTHOR_ID } from './revision-ledger';
@@ -85,18 +86,30 @@ export interface MachineTextClaim {
 }
 
 export interface VerifiedMachineClaim {
+  /** The claim's position in the claims checked. */
+  index: number;
   /** The record's author: ANA_MACHINE_AUTHOR_ID, whatever the claim said. */
   authorId: string;
   text: string;
   turnRecordId: string;
-  /** The model the record names for the turn; null when it names none. */
+  /**
+   * The one model that served the turn; null when the record names none, or
+   * several (servedBy names them). It was the first call's model, whichever
+   * served the rest (AnA reasoning round 10).
+   */
   model: string | null;
+  /** Every model that served the turn (turn-record-models.ts servedModelsOf). */
+  servedBy: ServedModel[];
+  /** How the turn ended, as its record says. */
+  outcome: TurnOutcome;
   /** The person who asked AnA, from the record. Not necessarily the saver. */
   turnActorUserId: number | null;
   recordSha256: string;
 }
 
 export interface UnverifiedMachineClaim {
+  /** The claim's position in the claims checked. */
+  index: number;
   authorId: string;
   text: string;
   /** The id as claimed, bounded; null when none was sent. */
@@ -131,11 +144,11 @@ interface ReadRecord {
   /** What AnA produced in the turn, in comparableText's form: each text as
    *  written and read as markdown. */
   outputs: string[];
-  model: string | null;
+  servedBy: ServedModel[];
 }
 
 /** AnA's own words in a verified record: the answer, streamed and stored, and each draft. */
-function outputsOf(stored: StoredTurnRecord): { outputs: string[]; model: string | null } {
+function outputsOf(stored: StoredTurnRecord): { outputs: string[]; servedBy: ServedModel[] } {
   const body = JSON.parse(stored.recordText) as TurnRecordBody;
   const refs = [body.answer?.streamed, body.answer?.stored, ...(body.outputs?.drafts ?? []).map((d) => d.content)];
   const outputs: string[] = [];
@@ -143,14 +156,13 @@ function outputsOf(stored: StoredTurnRecord): { outputs: string[]; model: string
     const text = ref ? stored.texts.get(ref.sha256) : undefined;
     if (typeof text === 'string') outputs.push(comparableText(text), comparableText(text, { markdown: true }));
   }
-  const model = typeof body.model?.model === 'string' && body.model.model ? body.model.model : null;
-  return { outputs, model };
+  return { outputs, servedBy: servedModelsOf(body.model) };
 }
 
 async function readRecord(q: Queryable, orgId: number, id: string): Promise<ReadRecord> {
   const stored = await loadTurnRecord(q, orgId, id);
-  if (!stored) return { stored: null, intact: false, outputs: [], model: null };
-  if (!verifyStoredTurnRecord(stored).ok) return { stored, intact: false, outputs: [], model: null };
+  if (!stored) return { stored: null, intact: false, outputs: [], servedBy: [] };
+  if (!verifyStoredTurnRecord(stored).ok) return { stored, intact: false, outputs: [], servedBy: [] };
   return { stored, intact: true, ...outputsOf(stored) };
 }
 
@@ -167,10 +179,11 @@ export async function verifyMachineText(
   const records = new Map<string, Promise<ReadRecord>>();
   const vouching = new Set<ReadRecord>();
 
-  for (const claim of claims) {
+  for (const [index, claim] of claims.entries()) {
     const raw = typeof claim.turnRecordId === 'string' ? claim.turnRecordId.trim() : '';
     const refuse = (reason: MachineClaimReason) =>
       verdict.unverified.push({
+        index,
         authorId: claim.authorId,
         text: claim.text,
         turnRecordId: raw ? raw.slice(0, 64) : null,
@@ -216,10 +229,13 @@ export async function verifyMachineText(
     }
     vouching.add(rec);
     verdict.verified.push({
+      index,
       authorId: ANA_MACHINE_AUTHOR_ID,
       text: claim.text,
       turnRecordId: rec.stored.id,
-      model: rec.model,
+      model: rec.servedBy.length === 1 ? rec.servedBy[0].model : null,
+      servedBy: rec.servedBy,
+      outcome: rec.stored.outcome,
       turnActorUserId: rec.stored.actorUserId,
       recordSha256: rec.stored.recordSha256,
     });

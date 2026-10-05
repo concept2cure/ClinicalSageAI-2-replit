@@ -1,0 +1,12 @@
+Mutant B09-duplicates: a model that served two calls is named twice
+
+--- server/services/ana/turn-record-models.ts
+- if (seen.has(key)) continue;
++ 
+
+Tests run: server/services/ana/__tests__/turn-record-served-models.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: every model that served the turn > is each distinct model in the order it first served, not the first call alone 10ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

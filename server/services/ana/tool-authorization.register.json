@@ -3352,6 +3352,11 @@
    "writes": "opens a controlled revision (reason of 8+ characters required; caller must hold an editor role in organization_users, 2026-09-28 Q-0928-2): document back to draft, approval cleared; the effective version is withdrawn in place (hand-on) + governed-action row",
    "site": "AnaToolExecutor.ts:13678"
   },
+  "run_agent": {
+   "class": "self",
+   "writes": "none to a tenant record; starts bounded read-only sub-agents inside this turn, whose model calls are ledgered under their own run id with this run as parent",
+   "site": "agentic-workflow-tools.ts registerAgenticWorkflowHandlers -> sub-agent.ts runSubAgent"
+  },
   "run_cdisc_pipeline": {
    "class": "read",
    "writes": "none",

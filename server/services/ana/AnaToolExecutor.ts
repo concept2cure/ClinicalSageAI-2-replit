@@ -217,6 +217,7 @@ import { GOVERNED_REASON_MIN, ReasonNotStatedError, gatedReason, reasonFieldOf, 
 // Re-exported: the set's home is the pure module, so the tool gate and the
 // confirmation route read it without loading this executor.
 export { REASON_REQUIRED_TOOLS };
+import type { SubAgentHost } from './sub-agent.js';
 import {
   anaScratchDir,
   assertWithinDocumentWorkspace,
@@ -259,6 +260,12 @@ export interface ToolContext {
    * read from tool input, which is the model's channel. Nothing sets it yet.
    */
   agentDepth?: number;
+  /**
+   * What the parent turn lends a sub-agent (row 74, S5). Set by the stream on
+   * a `run_agent` call only, and only on a turn that may host agents; never
+   * spread into a child's context (sub-agent.ts childContext).
+   */
+  subAgentHost?: SubAgentHost;
   /**
    * 'refuse': this call runs where a model may not be called (a sub-agent's
    * tool; see ai-gateway/model-call-scope.ts, which enforces it at the

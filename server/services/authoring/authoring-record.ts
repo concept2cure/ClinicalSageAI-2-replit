@@ -11,14 +11,25 @@
  * client typed. The id arrives from the client, so it is looked up in this
  * tenant's ana_turn_records and recorded as verified only when it is there.
  *
+ * 2026-10-05 (AnA reasoning round 10): "there" was not enough. A decision on
+ * words the named turn never wrote ("From our turn." against a turn that
+ * answered "Draft paragraph for 2.5.4.") was filed as verified, and AnA as its
+ * verified proposer. The source is now verified by the canonical claim
+ * verifier (machine-claim-verify.ts): the record verifies whole and holds the
+ * words decided. A verified source names every model that served the turn,
+ * with whether RULE 2 lets its text stand as governed content.
+ *
  * @compliance 21 CFR Part 11 §11.10(e); EU Annex 11 §9.
  * @module server/services/authoring/authoring-record
  */
 
 import crypto from 'crypto';
 
+import { qualifyServedModels, type QualifiedServedModel } from '../ai-governance/approved-models';
 import { hashPayload } from '../audit/chain.js';
 import { verifyAuthoringTrailRow, type StoredTrailRow, type TrailRowVerdict } from './authoring-evidence';
+import { MAX_TURN_RECORDS_PER_CHECK, verifyMachineText, type MachineClaimReason } from './machine-claim-verify';
+import { ANA_MACHINE_AUTHOR_ID } from './revision-ledger';
 
 type Queryable = { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -27,32 +38,75 @@ export const textSha256 = (text: string): string => crypto.createHash('sha256').
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type TurnRecordSource =
-  | { verified: true; turnRecordId: string; turnRecordSha256: string; outcome: string }
+  | {
+      verified: true;
+      turnRecordId: string;
+      turnRecordSha256: string;
+      outcome: string;
+      /** Every model that served the turn, and whether RULE 2 lets its text stand. */
+      servedBy: QualifiedServedModel[];
+    }
   | { verified: false; claimed: string; why: string };
 
+/** Why a named turn does not vouch for the words decided, in the record's words. */
+const NOT_VOUCHED: Record<MachineClaimReason, string> = {
+  no_turn_record_id: 'not a record id',
+  malformed_turn_record_id: 'not a record id',
+  turn_record_not_found: 'no such turn record in this organization',
+  record_not_intact: 'the turn record does not verify',
+  text_not_in_record: 'the turn record does not hold this text',
+  too_many_turns: `more AnA turns than one decision verifies (at most ${MAX_TURN_RECORDS_PER_CHECK})`,
+};
+
 /**
- * The AnA turn record a suggestion names, looked up in the tenant. Null when
- * the suggestion names none. Never throws inside the caller's transaction: the
- * table's presence is checked first, because a failed statement would abort
- * the transaction the decision is being written in.
+ * The AnA turn record each decided change names, verified against the words
+ * decided: one result per change, in order, null where a change names none.
+ *
+ * One call per decision, so each record is read once and one request reads at
+ * most MAX_TURN_RECORDS_PER_CHECK of them (loadTurnRecord reads every text a
+ * record references). Never throws inside the caller's transaction for want of
+ * the store: its presence is checked first, because a failed statement would
+ * abort the transaction the decision is being written in.
  */
-export async function resolveTurnRecordSource(
+export async function resolveTurnRecordSources(
   executor: Queryable,
   tenantId: number,
-  claimed: unknown,
-): Promise<TurnRecordSource | null> {
-  if (typeof claimed !== 'string' || !claimed) return null;
-  const id = claimed.slice(0, 64);
-  if (!UUID.test(id)) return { verified: false, claimed: id, why: 'not a record id' };
+  changes: ReadonlyArray<{ claimed: unknown; text: string | null }>,
+): Promise<Array<TurnRecordSource | null>> {
+  const out: Array<TurnRecordSource | null> = changes.map(() => null);
+  const named: Array<{ at: number; id: string; text: string }> = [];
+  changes.forEach((c, at) => {
+    if (typeof c.claimed !== 'string' || !c.claimed) return;
+    const id = c.claimed.slice(0, 64);
+    if (!UUID.test(id)) out[at] = { verified: false, claimed: id, why: 'not a record id' };
+    else if (!c.text) out[at] = { verified: false, claimed: id, why: 'no text was decided' };
+    else named.push({ at, id, text: c.text });
+  });
+  if (named.length === 0) return out;
   const present = await executor.query(`SELECT to_regclass('public.ana_turn_records') IS NOT NULL AS present`);
-  if (!present.rows[0]?.present) return { verified: false, claimed: id, why: 'the turn record store is not provisioned' };
-  const found = await executor.query(
-    'SELECT id, record_sha256, outcome FROM ana_turn_records WHERE organization_id = $1 AND id = $2',
-    [tenantId, id],
+  if (!present.rows[0]?.present) {
+    for (const n of named) out[n.at] = { verified: false, claimed: n.id, why: 'the turn record store is not provisioned' };
+    return out;
+  }
+  const verdict = await verifyMachineText(
+    executor,
+    tenantId,
+    named.map((n) => ({ authorId: ANA_MACHINE_AUTHOR_ID, text: n.text, turnRecordId: n.id })),
   );
-  const row = found.rows[0];
-  if (!row) return { verified: false, claimed: id, why: 'no such turn record in this organization' };
-  return { verified: true, turnRecordId: row.id, turnRecordSha256: row.record_sha256, outcome: row.outcome };
+  for (const v of verdict.verified) {
+    out[named[v.index].at] = {
+      verified: true,
+      turnRecordId: v.turnRecordId,
+      turnRecordSha256: v.recordSha256,
+      outcome: v.outcome,
+      servedBy: qualifyServedModels(v.servedBy),
+    };
+  }
+  for (const u of verdict.unverified) {
+    const n = named[u.index];
+    out[n.at] = { verified: false, claimed: n.id, why: NOT_VOUCHED[u.reason] };
+  }
+  return out;
 }
 
 // ── Reading a document's authoring record back, verified ─────────────────────

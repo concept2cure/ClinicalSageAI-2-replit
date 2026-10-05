@@ -1,0 +1,19 @@
+Mutant B13-text-not-passed: the route does not hand the decided words to the verifier
+
+--- server/routes/authoring.router.ts
+- act.changes.map(({ context }) => ({ claimed: context.sourceRecord, text: decidedText(context.text) })),
++ act.changes.map(({ context }) => ({ claimed: context.sourceRecord, text: null })),
+
+Tests run: server/routes/__tests__/authoring-decision-source.pglite.test.ts server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: a turn record of this organization → verified, with that record’s SHA-256 26ms
+ × server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: another organization’s turn record → unverified, "no such turn record in this organization" 26ms
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > single: words the turn never wrote → unverified, and AnA is not the verified proposer 173ms
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > bulk: each change is held to its own words — the turn’s are verified, others are not 48ms
+ × server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > bulk: each change is resolved on its own — own, foreign, non-id and none 36ms
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > single: a record that does not verify vouches for nothing, even for its own words 23ms
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > a verified source names every model that wrote the words, as RULE 2 reads it > single: two models served the turn → both, each qualified or not, with its PQ status 56ms
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > one decision reads a bounded number of turn records > bulk: at most MAX_TURN_RECORDS_PER_CHECK distinct turns; a change from one more is said, not verified 77ms
+      Tests  8 failed | 12 passed (20)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
