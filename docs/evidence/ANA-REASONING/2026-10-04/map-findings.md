@@ -90,8 +90,8 @@ Found by round 2's own mutants, and fixed:
 |---|---|---|
 | GRD-2, FV-FIG-3 | high | A governed draft (`draft_authoring_document` and the vault writes) is approved with no check of its figures. The approval dialog cuts strings to 80 characters and shows arrays as "N items". **Fixed in round 3** (`../2026-10-05/`): the draft's prose is checked against the turn's sources when it is held and at the end of a turn. The dialog shows the check in the strip's rows, and lists by their items' names. The sign-off audit row names what the approver was shown. |
 | MC-RL-3 | high | The risk tier comes from the lens alone, with no turn state (section, artifact status, contradictions). It should come from deterministic signals. |
-| MC-RL-6, RT-missed | medium-high | Follow-up model calls send no `thinking`. The reasoning shown and recorded is the first call's, not the call that read the evidence and wrote the answer. |
-| MC-RL-5 | medium | The high-risk thinking floor never reaches an adaptive model. |
+| MC-RL-6, RT-missed | medium-high | Follow-up model calls send no `thinking`. The reasoning shown and recorded is the first call's, not the call that read the evidence and wrote the answer. **Fixed in round 4** (`../2026-10-05/r4/`): every follow-up round carries the turn's thinking config, except in a demonstration, whose follow-up rounds carry its talking points. |
+| MC-RL-5 | medium | The high-risk thinking floor never reaches an adaptive model. **Fixed in round 4** (`../2026-10-05/r4/`): a high-stakes turn runs at least at `'high'` API effort, with or without a kernel pin (Fast exempt). |
 | FV-missed | medium | Working memory writes each answer back as "Key Facts", unchecked. Proposal: pass the check to the write-back and exclude what was not found. |
 | TP-RL-4 | medium | A zero-hit, an outage or `needs_parameters` is reported to the loop as a success, so no adaptation note is written. |
 | TP-RL-8 | medium | Tool results are staged for the model without the input that produced them. |

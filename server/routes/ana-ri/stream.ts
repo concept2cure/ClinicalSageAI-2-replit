@@ -26,7 +26,7 @@ import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import {
   resolveEffortLevel,
   resolveEffortStrategy,
-  resolveApiEffort,
+  resolveTurnApiEffort,
   resolveStrategyWithPrecedence,
   resolveModelOverride,
 } from '../../services/ai-gateway/effort.js';
@@ -1434,9 +1434,15 @@ export function mountStreamRoute(router: Router): void {
       // composer. When a policy hint is present the user's effort is not in
       // force, and sending its API effort would smuggle the override back in
       // through the other half of the control.
-      const apiEffort = policyHint?.preferredStrategy
-        ? undefined
-        : resolveApiEffort(effortUsed);
+      //
+      // A high-stakes turn runs at 'high' or above on every model, pinned or
+      // not (resolveTurnApiEffort, MC-RL-5): its thinking-budget floor never
+      // reached an adaptive model, which self-budgets.
+      const apiEffort = resolveTurnApiEffort({
+        effort: effortUsed,
+        riskTier: routingPlan.riskTier,
+        policyPinned: Boolean(policyHint?.preferredStrategy),
+      });
 
       // Optional explicit model override, pinned only when it is governed:
       // enabled in THIS tenant's model set, the registry row an approved-models
@@ -1643,6 +1649,14 @@ export function mountStreamRoute(router: Router): void {
       const streamThinkingConfig = streamThinkingResolved.enabled
         ? streamThinkingResolved
         : undefined;
+      /**
+       * A follow-up round's thinking config (MC-RL-6): the turn's, as the first
+       * call's, except in a demonstration. A demo's talking points come back
+       * from those rounds as progress notes (progress-updates.ts), and a
+       * reasoning display would move them out of her words into the panel. Read
+       * per round: a turn becomes a demonstration when its script arrives.
+       */
+      const followUpThinking = () => (driveState.enabled && driveState.mode === 'demo' ? undefined : streamThinkingConfig);
       // Full tool suite on the streaming path: custom JSON-schema tools
       // (PubMed search, FDA guidance lookup, predicate device analysis, etc.)
       // plus any env-enabled Anthropic server tools (web_search, web_fetch,
@@ -2687,6 +2701,12 @@ export function mountStreamRoute(router: Router): void {
             // invalidates the messages cache, and the follow-up rounds are the
             // same piece of work as the first.
             apiEffort,
+            // The turn's thinking config, as the first call's (MC-RL-6). These
+            // are the calls that read the tool results and write the answer:
+            // without it they did not reason on the legacy surface, and on the
+            // adaptive one their reasoning was never shown or kept. Tool turns
+            // travel as prose, so no thinking block needs replaying.
+            thinking: followUpThinking(),
             // The tools array stays on the request for EVERY round, including
             // the terminal one. Withdrawing it is what the terminal round used
             // to do, and it cost the whole prompt cache once per turn:

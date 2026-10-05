@@ -1,0 +1,15 @@
+Mutant E05-max-mapped: an effort mapped above 'high' would be lowered by the floor
+
+--- server/services/ai-gateway/effort.ts
+- thorough: 'high',
+} as const satisfies
++ thorough: 'max',
+} as const satisfies
+
+Tests run: server/services/ai-gateway/__tests__/turn-api-effort.test.ts
+Result: KILLED
+
+ × server/services/ai-gateway/__tests__/turn-api-effort.test.ts > the API effort a turn runs at > is the effort the person chose, as before 7ms
+ × server/services/ai-gateway/__tests__/turn-api-effort.test.ts > the API effort a turn runs at > the floor only ever raises: no effort maps above high (revisit the floor before adding one) 2ms
+      Tests  2 failed | 3 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
