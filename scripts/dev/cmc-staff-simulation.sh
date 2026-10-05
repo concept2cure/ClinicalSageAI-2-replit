@@ -583,6 +583,16 @@ S3MISS=$(echo "$S3" | jq -r '[.missingInputs[]? | select(. == "biologicalActivit
   && ok "§3.2.S.3 renders every study and counts the biological one once it reads out" \
   || bad "§3.2.S.3: studyRows=$S3STUDY detailRows=$S3DETAIL bioClause=$S3BIO ic50Rows=$S3IC50 emptyClause=$S3EMPTY missing=$S3MISS"
 
+step "11h. §3.2.R.1.US is written for the IND this program files — 21 CFR 312.23(a)(7), not an NDA's 314.50"
+CODE=$(req readr GET "/api/cmc/module3-os/sections/$PROGRAM/3.2.R.1.US")
+RNARR=$(jq -r '.data.narrativeText // .data.narrativeDraft // .data.narrative // ""' "$OUT/readr.json" 2>/dev/null)
+RCELLS=$(jq -r '[.data.tables[]?.rows[]?[]?] | join(" ")' "$OUT/readr.json" 2>/dev/null)
+if [ "$CODE" = 200 ] && echo "$RNARR" | grep -q "Investigational New Drug application" && ! echo "$RCELLS" | grep -qE "314\.50|356h"; then
+  ok "§3.2.R.1.US cites 21 CFR 312.23(a)(7) and files none of a marketing application's obligations"
+else
+  bad "§3.2.R.1.US ($CODE) is not the IND's: $(echo "$RNARR" | head -c160) | cells mention NDA items: $(echo "$RCELLS" | grep -oE "314\.50[^ ]*|356h" | head -2 | tr '\n' ' ')"
+fi
+
 step "12. Contradiction sweep"
 CODE=$(req sweep POST "/api/cmc/module3-os/contradictions/$PROGRAM" '{}')
 FOUND=$(cat "$OUT/sweep.json" | JQ '.contradictions | length')
@@ -596,6 +606,15 @@ for CID in $(cat "$OUT/open.json" | jq -r '(.data // []) | map(select(.status !=
   [ "$CODE" = 200 ] && RESOLVED=$((RESOLVED+1)) || echo "     resolve $CID -> $CODE"
 done
 ok "resolved $RESOLVED finding(s) with notes in the provenance chain"
+
+step "12c. Re-running the sweep keeps QA's resolutions — the same finding over the same data stays resolved"
+CODE=$(req sweep2 POST "/api/cmc/module3-os/contradictions/$PROGRAM" '{}')
+CODE2=$(req open2 GET "/api/cmc/module3-os/contradictions/$PROGRAM")
+REOPENED=$(cat "$OUT/open2.json" | jq '[(.data // [])[] | select(.status != "resolved")] | length' 2>/dev/null)
+STILL=$(cat "$OUT/open2.json" | jq '[(.data // [])[] | select(.status == "resolved")] | length' 2>/dev/null)
+[ "$CODE" = 200 ] && [ "${REOPENED:-1}" = 0 ] && [ "${STILL:-0}" = "$RESOLVED" ] \
+  && ok "re-swept: $STILL finding(s) still resolved, none reopened" \
+  || bad "re-sweep erased QA's resolutions: $REOPENED open again, $STILL still resolved (of $RESOLVED)"
 
 step "13. Export gate MUST refuse now (nothing approved) — fail closed"
 CODE=$(req gate1 POST "/api/cmc/module3-os/guard/final-export/$PROGRAM" '{}')

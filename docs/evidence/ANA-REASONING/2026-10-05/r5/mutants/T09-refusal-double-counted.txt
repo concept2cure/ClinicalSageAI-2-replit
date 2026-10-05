@@ -1,0 +1,12 @@
+Mutant T09-refusal-double-counted: a refusal is named twice, as a failure and as a shortfall
+
+--- server/services/ana/tool-outcome.ts
+- if (typeof r.error === 'string' && r.error.trim()) return null;
++ if (false) return null;
+
+Tests run: tests/services/tool-outcome.test.ts
+Result: KILLED
+
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > a result that returned something is not a shortfall 7ms
+      Tests  1 failed | 10 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

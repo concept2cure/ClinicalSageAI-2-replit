@@ -34,6 +34,8 @@ import { createScopedLogger } from '../../utils/logger';
 import { refusedWithoutSigningAuthority } from './cmc-signer';
 import { describeDrift, findSectionDrift } from '../../services/cmc/section-drift';
 import { findEvidenceDrift } from '../../services/cmc/source-evidence';
+import { reconcileContradictions, resolveContradiction } from '../../services/cmc/contradiction-lifecycle';
+import { governedActorId, requireEditorAccess } from '../../middleware/orgMembership';
 import { clientIpOf } from '../../utils/client-ip';
 import { requireRole } from '../../middleware/auth';
 import { requireGovernedReason } from '../../routes/governed-reason';
@@ -56,10 +58,6 @@ const upsertSourceObjectSchema = z.object({
   sourceKey: z.string().min(1),
   sourcePayload: z.record(z.any()),
   version: z.number().int().positive().optional(),
-});
-
-const resolveContradictionSchema = z.object({
-  resolutionNote: z.string().min(3),
 });
 
 /**
@@ -281,29 +279,17 @@ router.post('/contradictions/:projectId', async (req, res) => {
 
     const contradictions = detectContradictions(registers);
 
-    // Wrap DELETE + INSERT in a transaction to prevent partial state
+    /* Reconciled, not replaced (services/cmc/contradiction-lifecycle.ts): the
+       sweep deleted every finding of the program and re-inserted what it
+       detected, all open, so a resolution QA had recorded was erased by the
+       next sweep and the critical finding blocked approval again. The same
+       conflict over the same data keeps its standing; changed data is a new
+       finding; an open finding the data no longer shows is cleared. */
     const client = await pool.connect();
+    let sweep;
     try {
       await client.query('BEGIN');
-      await client.query(`DELETE FROM cmc_contradictions WHERE organization_id = $1 AND project_id = $2`, [
-        orgId,
-        projectId,
-      ]);
-      for (const c of contradictions) {
-        await client.query(
-          `INSERT INTO cmc_contradictions (organization_id, project_id, severity, contradiction_type, details, impacted_sections, required_reviewers)
-           VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb)`,
-          [
-            orgId,
-            projectId,
-            c.severity,
-            c.contradictionType,
-            c.details,
-            JSON.stringify(c.impactedSections),
-            JSON.stringify(c.requiredReviewers),
-          ]
-        );
-      }
+      sweep = await reconcileContradictions(client, orgId, projectId, contradictions);
       await client.query('COMMIT');
     } catch (e) {
       await client.query('ROLLBACK');
@@ -332,6 +318,7 @@ router.post('/contradictions/:projectId', async (req, res) => {
     res.json({
       success: true,
       contradictions,
+      sweep,
       impactTasks: deriveImpactTasks(contradictions),
       tasks: taskSync,
     });
@@ -366,39 +353,27 @@ router.get('/contradictions/:projectId', async (req, res) => {
   }
 });
 
-router.patch('/contradictions/:id/resolve', async (req, res) => {
+/* Resolving a finding unblocks approval, so it is a governed act: a writing
+   role, a stated reason, the signed-in user as the actor, and the provenance
+   event and a chained audit row in the same transaction as the status change
+   (services/cmc/contradiction-lifecycle.ts). It needed none of these. */
+router.patch('/contradictions/:id/resolve', requireEditorAccess, async (req, res) => {
   try {
     const orgId = module3OrgId(req);
     const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
-    const parsed = resolveContradictionSchema.parse(req.body || {});
-    const pool = getPool();
-    const updated = await pool.query(
-      `UPDATE cmc_contradictions
-       SET status = 'resolved',
-           updated_at = NOW()
-       WHERE organization_id = $1 AND id = $2
-       RETURNING id, project_id as "projectId"`,
-      [orgId, id]
-    );
-    const row = updated.rows[0];
-    if (!row) return res.status(404).json({ success: false, error: 'Contradiction not found' });
-
-    await pool.query(
-      `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-       VALUES ($1,$2,'contradiction',$3,'resolved',$4::jsonb,$5)`,
-      [
-        orgId,
-        row.projectId,
-        id,
-        JSON.stringify({ resolutionNote: parsed.resolutionNote }),
-        (req as any).user?.id || 'system',
-      ]
-    );
+    const userId = governedActorId(req);
+    if (!userId) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+    const out = await resolveContradiction({
+      organizationId: orgId,
+      userId,
+      contradictionId: id,
+      reason: (req.body ?? {}).resolutionNote,
+      ipAddress: clientIpOf(req) ?? undefined,
+      userAgent: req.headers['user-agent'],
+    });
+    if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message, field: 'resolutionNote' });
     return res.json({ success: true, data: { id, status: 'resolved' } });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: 'Invalid resolution payload', details: error.errors });
-    }
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }

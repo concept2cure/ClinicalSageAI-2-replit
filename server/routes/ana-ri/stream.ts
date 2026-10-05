@@ -121,6 +121,7 @@ import {
 } from '../../services/ai-gateway/generation-capture.js';
 import { toolEvidence, type EvidenceEntry } from '../../services/ana/answer-grounding.js';
 import { checkProposal } from '../../services/ana/proposal-check.js';
+import { buildShortfallNote } from '../../services/ana/tool-outcome.js';
 import { runStreamPostProcessing } from './post-processing.js';
 import {
   canonicalJson,
@@ -2614,8 +2615,19 @@ export function mountStreamRoute(router: Router): void {
               : null;
             if (entry) toolEvidenceCorpus.push(entry);
           }
-          // Failure guidance for the next model turn (cleared after use).
-          pendingAdaptationNote = buildAdaptationNote(roundFailures, calls.length);
+          // Failure guidance for the next model turn (cleared after use): the
+          // steps that failed, then the steps that returned nothing usable — a
+          // search with no hits, a service that could not be reached, a tool
+          // that needs input it was not given (tool-outcome.ts, TP-RL-4).
+          pendingAdaptationNote = [
+            buildAdaptationNote(roundFailures, calls.length),
+            buildShortfallNote(
+              ran.map(r => ({ label: describeToolPlan([r.toolUse])[0].label, status: r.toolStatus, heldBack: r.heldBack, result: r.resultStr })),
+              calls.length,
+            ),
+          ]
+            .filter(Boolean)
+            .join('\n');
           /* The round is done and the loop is about to hand these results back to
            * the model. That is a genuinely different activity from running the
            * tools, and it is the moment AnA decides whether she has enough or
