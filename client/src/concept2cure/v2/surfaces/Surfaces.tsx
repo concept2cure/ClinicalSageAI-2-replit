@@ -8,6 +8,7 @@
  * Styles: styles/surfaces-v2.css (+ shell classes from app-v2.css).
  */
 import { EngineChoices } from '../EngineChoices';
+import { fixedMenuPlacement } from '../menuPlacement';
 import { LiveDriveSwitch } from '../LiveDriveSwitch';
 import { RunPolicySwitch } from '../RunPolicySwitch';
 import React from 'react';
@@ -177,6 +178,7 @@ export function Home({
   const engine = ANA_MODES.find((m) => m.id === mode) ?? ANA_MODES[0];
   const engineMenuId = React.useId();
   const engineBtnRef = React.useRef<HTMLButtonElement>(null);
+  const [enginePlace, setEnginePlace] = React.useState<React.CSSProperties>({});
 
   const send = () => {
     const t = draft.trim();
@@ -363,14 +365,18 @@ export function Home({
             <div className="landing-crow-r">
               <button type="button" className="landing-engine" aria-haspopup="dialog" aria-expanded={modeOpen}
                 aria-controls={modeOpen ? engineMenuId : undefined} ref={engineBtnRef}
-                onClick={() => setModeOpen((o) => !o)}>
+                onClick={() => {
+                  // Fixed, from the pill: the composer clips anything inside it (F3).
+                  if (!modeOpen) setEnginePlace(fixedMenuPlacement(engineBtnRef.current, { roomPx: 200, align: 'right' }));
+                  setModeOpen((o) => !o);
+                }}>
                 <span className="landing-eng-ana">AnA</span>
                 <span>{engine.effortLabel}</span>
                 <span className="landing-eng-mode">{engine.label}</span>
                 <span className="landing-eng-chev">{I.down}</span>
               </button>
               {modeOpen && (
-                <div className="landing-mode-menu" role="dialog" aria-label="Engine" id={engineMenuId}>
+                <div className="landing-mode-menu" role="dialog" aria-label="Engine" id={engineMenuId} style={enginePlace}>
                   <EngineChoices
                     mode={mode}
                     onChoose={(id) => {
