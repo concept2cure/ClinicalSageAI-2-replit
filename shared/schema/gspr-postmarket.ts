@@ -4,8 +4,8 @@
  * Models EU MDR 2017/745 Annex I and IVDR 2017/746 Annex I as a normalized,
  * versioned catalog with per-program applicability mappings. Adds a single
  * `post_market_documents` table with a type discriminator that holds PMS Plan,
- * PMS Report, PMCF Plan, PMCF Evaluation, device PSUR, and SSCP authoring
- * artifacts.
+ * PMS Report, PMCF Plan, PMCF Evaluation, device PSUR and SSCP (MDR), and SSP,
+ * PMPF Plan and PMPF Evaluation (IVDR) authoring artifacts.
  *
  * Why this is not a duplicate of cerEssentialRequirements:
  *   cerEssentialRequirements is a freetext (requirement, evidence, status)
@@ -151,7 +151,7 @@ export const postMarketDocuments = pgTable(
 
     // Discriminator — which post-market document type
     documentType: varchar('document_type', { length: 32 }).notNull(),
-    // pms_plan | pms_report | pmcf_plan | pmcf_evaluation | psur | sscp
+    // one of POST_MARKET_DOCUMENT_TYPES (below)
 
     code: varchar('code', { length: 64 }).notNull(),
     version: integer('version').notNull().default(1),
@@ -329,13 +329,32 @@ export const insertPmcfEnrollmentRecordSchema = createInsertSchema(pmcfEnrollmen
 export type PmcfEnrollmentRecord = InferSelectModel<typeof pmcfEnrollmentRecords>;
 export type InsertPmcfEnrollmentRecord = z.infer<typeof insertPmcfEnrollmentRecordSchema>;
 
-export type PostMarketDocumentType =
-  | 'pms_plan'
-  | 'pms_report'
-  | 'pmcf_plan'
-  | 'pmcf_evaluation'
-  | 'psur'
-  | 'sscp';
+/**
+ * Every post-market document type, in one list. The type union, the API's
+ * accepted values, the status report's rows and the authoring registry all
+ * derive from it. `document_type` is varchar(32) with no CHECK
+ * (migrations/20260429_gspr_postmarket.sql), so a new type needs no migration.
+ *
+ *   MDR instruments: pmcf_plan, pmcf_evaluation (Annex XIV Part B), sscp (Art 32)
+ *   IVDR instruments: pmpf_plan, pmpf_evaluation (Annex XIII Part B), ssp (Art 29)
+ *   Both: pms_plan, pms_report, psur
+ *
+ * Which of them a device owes is decided by EU_POSTMARKET_OBLIGATIONS in
+ * server/services/gspr-postmarket/post-market-readiness.ts.
+ */
+export const POST_MARKET_DOCUMENT_TYPES = [
+  'pms_plan',
+  'pms_report',
+  'pmcf_plan',
+  'pmcf_evaluation',
+  'psur',
+  'sscp',
+  'ssp',
+  'pmpf_plan',
+  'pmpf_evaluation',
+] as const;
+
+export type PostMarketDocumentType = (typeof POST_MARKET_DOCUMENT_TYPES)[number];
 
 export const gsprRequirementsRelations = relations(gsprRequirements, ({ many }) => ({
   programMappings: many(gsprProgramMappings),
