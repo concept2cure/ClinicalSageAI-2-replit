@@ -1,0 +1,7 @@
+── 21c. Placing Module 3 again into the SAME sequence updates its leaves — never a second copy
+   ✗ same-sequence re-placement: code=200 leaves before=21 after=42 {"success":true,"data":{"placed":true,"submissionId":26,"sequenceId":48,"placements":[{"sectionKey":"3.1","leafSectionCode":"m3.1","title":"Module 3 — Quality — Table of Contents (§3.1)","coautho
+
+── 21d. A CMC amendment: sequence 0002 receives Module 3 as replace of what 0001 filed
+   ✗ amendment placement: seq=49 code=500 ops= {"error":"INTERNAL_ERROR","message":"Something went wrong while placing the document. The problem has been logged. Quote the reference below if you contact support.","correlationId":"bc6ae490-d88b-441a-84b0-0b2466a5da60"}
+
+════ RESULT: 126 passed, 2 failed ════

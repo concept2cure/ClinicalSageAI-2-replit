@@ -157,6 +157,8 @@ export interface PlaceModule3Input {
   submissionId: number;
   /** Target sequence — must be unlocked; upsertLeaf refuses otherwise. */
   sequenceId: number;
+  /** Why the person placed it (governed reason): recorded on every leaf's audit row and the provenance event. */
+  reason?: string | null;
 }
 
 export interface PlacedSection {
@@ -167,6 +169,8 @@ export interface PlacedSection {
   leafId: number;
   /** How many composed tables were carried into the filed snapshot. */
   tableCount: number;
+  /** The section already had a leaf in this sequence, and that leaf was updated rather than duplicated. */
+  updatedInPlace?: boolean;
 }
 
 export interface SkippedSection {
@@ -259,6 +263,8 @@ async function recordPlacementProvenance(
     leafId: number;
     coauthorDocumentId: number;
     tableCount: number;
+    updatedInPlace: boolean;
+    reason: string | null;
   },
 ): Promise<void> {
   await pool.query(
@@ -287,8 +293,10 @@ async function fileSectionAsLeaf(params: {
   tables: GeneratedTable[];
   /** The same section's leaf in an earlier sequence, when it has one. */
   prior?: { id: number };
+  /** The same section's leaf already in THIS sequence, when it has one. */
+  existing?: { id: number };
 }): Promise<PlacedSection> {
-  const { pool, input, sectionKey, label, narrative, tables, prior } = params;
+  const { pool, input, sectionKey, label, narrative, tables, prior, existing } = params;
   const { orgId, userId, cmcProjectId, submissionId, sequenceId } = input;
   const leafSectionCode = toLeafSectionCode(sectionKey);
   const title = `Module 3 — ${label} (§${sectionKey})`;
@@ -318,16 +326,27 @@ async function fileSectionAsLeaf(params: {
     })
     .returning({ id: coauthorDocuments.id });
 
+  /* A section already placed in THIS sequence is updated in place: placing
+     twice filed a second leaf at the same section code, and a retry after a
+     failure partway through doubled every section the first attempt reached.
+
+     A section filed in an EARLIER sequence is a `replace`. Its parent is not
+     named here: upsertLeaf admits a parentLeafId only inside the same
+     sequence, and passing the earlier sequence's leaf refused every Module 3
+     placement into an amendment sequence. The packager derives modified-file
+     from what the agency holds (prior-sequence-loader.ts), by section code. */
   const leaf = await upsertLeaf(
     {
       sequenceId,
+      ...(existing ? { leafId: existing.id } : {}),
       sectionCode: leafSectionCode,
       title,
       lifecycleOp: prior ? 'replace' : 'new',
-      parentLeafId: prior?.id ?? null,
+      parentLeafId: null,
       documentTable: 'coauthor_documents',
       documentId: snapshot.id,
       documentType: 'cmc_module3_section',
+      reason: input.reason ?? null,
     },
     { organizationId: orgId, userId },
   );
@@ -339,6 +358,7 @@ async function fileSectionAsLeaf(params: {
     coauthorDocumentId: snapshot.id,
     leafId: (leaf as { id: number }).id,
     tableCount: tables.length,
+    updatedInPlace: Boolean(existing),
   };
 
   await recordPlacementProvenance(pool, orgId, cmcProjectId, String(userId), {
@@ -349,6 +369,8 @@ async function fileSectionAsLeaf(params: {
     leafId: placement.leafId,
     coauthorDocumentId: placement.coauthorDocumentId,
     tableCount: placement.tableCount,
+    updatedInPlace: Boolean(existing),
+    reason: input.reason ?? null,
   });
 
   return placement;
@@ -376,6 +398,16 @@ async function priorModule3Leaves(
     }
   }
   return prior;
+}
+
+/** The live Module 3 leaf per section code already in this sequence. */
+async function currentModule3Leaves(sequenceId: number, organizationId: number): Promise<Map<string, { id: number }>> {
+  const current = new Map<string, { id: number }>();
+  for (const leaf of await listLeaves(sequenceId, { organizationId })) {
+    if (leaf.documentType !== 'cmc_module3_section' || leaf.lifecycleOp === 'delete') continue;
+    if (!current.has(leaf.sectionCode)) current.set(leaf.sectionCode, { id: leaf.id });
+  }
+  return current;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -469,6 +501,7 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
   // an amendment's m3.2.S.7 was announced to the agency as brand-new content
   // with no lifecycle link to the leaf it replaces.
   const priorBySection = await priorModule3Leaves(submissionId, sequence, orgId);
+  const currentBySection = await currentModule3Leaves(sequenceId, orgId);
 
   // 3. Approved sections with their compiled narrative.
   const pool = getPool();
@@ -497,6 +530,7 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
         // A re-placement of a section already filed in an earlier sequence is a
         // `replace` of that leaf, not a second `new` one.
         prior: priorBySection.get(toLeafSectionCode(s.sectionKey)),
+        existing: currentBySection.get(toLeafSectionCode(s.sectionKey)),
       }),
     );
   }
