@@ -109,3 +109,23 @@ comment regex.
 | `stripper-vs-typescript.txt` | The old and new lib against the TypeScript parser over every tracked JS/TS file. |
 | `measure-stripper-vs-typescript.mjs` | How that was measured; run it on any stripper. |
 | `gates-green.txt` | The gates above passing on the tree, and `test:ci-scripts` 188 of 188. |
+
+## Follow-up: what CI said on the first run with these fixes (run 37252785865, `c10caf1bf`)
+
+- **Security Scan: green.** The `braces` decision and the Trivy fixture fix
+  hold.
+- **Lint.** Every step fixed above passes: repo health, canonicalizers,
+  unverified verdicts, PDF runtime. One new step failed: the generated text
+  ramp was missing a selector a stylesheet had gained. It was regenerated in
+  `4b6e21270`, a one-selector diff.
+- **Secret scan: 6 leaks down to 4.** The four JWT fingerprints in
+  `113342520` named `59a3c0e5`, which this session's clone had fetched with
+  `--depth=1`. In that clone the commit has no parent, so gitleaks treated
+  every file in it as new. On full history (unshallowed, 12,818 commits) the
+  tokens enter at `0adb1b3ec`, and the entries were re-pointed (`e150c4403`).
+  CI's exact command (`gitleaks git --config .gitleaks.toml
+  --log-opts="--full-history --diff-filter=tuxdb HEAD"`), run locally on that
+  full history, now reports **no leaks found**.
+
+  Lesson for the next session: take gitleaks fingerprints only from a full
+  clone. A shallow boundary attributes old lines to the wrong commit.
