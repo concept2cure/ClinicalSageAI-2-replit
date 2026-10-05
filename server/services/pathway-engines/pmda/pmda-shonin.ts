@@ -106,6 +106,7 @@ const any = (...m: Matcher[]): Matcher => (l) => m.some((f) => f(l));
 const all = (...m: Matcher[]): Matcher => (l) => m.every((f) => f(l));
 const not = (m: Matcher): Matcher => (l) => !m(l);
 /** Whole-word title match (ASCII), so 'plan' is not found inside 'implant'. */
+// nosemgrep: detect-non-literal-regexp -- each word is a literal at the call sites (titleWord('plans?', ...)), never input
 const titleWord = (...w: string[]): Matcher => (l) => w.some((x) => new RegExp(`\\b${x}\\b`, 'i').test(l.title));
 /**
  * A trial plan or protocol (CIP, 臨床試験計画書) is not the trial's results,

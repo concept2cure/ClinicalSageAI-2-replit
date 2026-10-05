@@ -55,6 +55,7 @@ const handClause = between(HAND_MARK);
 
 /** One entry of a ';'-separated clause naming `id`, or '' when it is not there. */
 function entryFor(clause: string, id: string): string {
+  // nosemgrep: detect-non-literal-regexp -- a test: id is a template id from the registry
   return clause.split(';').find((e) => new RegExp(`(^|[\\s:])${id}\\b`).test(e)) ?? '';
 }
 
