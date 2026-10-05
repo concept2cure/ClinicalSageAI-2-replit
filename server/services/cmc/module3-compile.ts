@@ -57,11 +57,17 @@ export async function loadCanonicalSources(client: Queryable, orgId: number, pro
  * Null is a real answer: no linked submission spine, or a market with no
  * generator. An honest gap beats a guessed region's regional form in a filing.
  */
-export async function resolveProjectRegionCode(
+/**
+ * The region the linked submission records, and what it files. The
+ * application type decides which regional section is written: an IND's US
+ * 3.2.R is 21 CFR 312.23(a)(7)'s, not a marketing application's
+ * (services/cmc/us-ind-regional.ts).
+ */
+export async function resolveProjectRegional(
   client: Queryable,
   orgId: number,
   projectId: string,
-): Promise<'US' | 'EU' | 'JP' | 'CA' | null> {
+): Promise<{ region: 'US' | 'EU' | 'JP' | 'CA' | null; applicationType: string | null }> {
   const prog = await client.query(
     `SELECT id, program_type AS "programType", product_name AS "productName", name, code
        FROM regulatory_programs
@@ -71,7 +77,7 @@ export async function resolveProjectRegionCode(
   const p = prog.rows[0] as
     | { id: string; programType: string | null; productName: string | null; name: string | null; code: string | null }
     | undefined;
-  if (!p) return null;
+  if (!p) return { region: null, applicationType: null };
   /* Run the spine reads on the CALLER'S connection. This function is reached
      from composeProjectModule3, which the compile route calls with an open
      transaction — taking a second pooled connection here is what stalled that
@@ -81,7 +87,7 @@ export async function resolveProjectRegionCode(
     orgId,
     client,
   );
-  return regionCodeForPrimaryRegion(spine?.primaryRegion);
+  return { region: regionCodeForPrimaryRegion(spine?.primaryRegion), applicationType: spine?.applicationType ?? null };
 }
 
 /**
@@ -126,8 +132,8 @@ export async function composeProjectModule3(
      section writes that follow. */
   await client.query('SAVEPOINT m3_regional');
   try {
-    const region = await resolveProjectRegionCode(client, orgId, projectId);
-    if (region) sections = sections.concat(composeRegional(sources, region));
+    const { region, applicationType } = await resolveProjectRegional(client, orgId, projectId);
+    if (region) sections = sections.concat(composeRegional(sources, region, { applicationType }));
     await client.query('RELEASE SAVEPOINT m3_regional');
   } catch (regionalErr) {
     await client.query('ROLLBACK TO SAVEPOINT m3_regional').catch(() => undefined);

@@ -30,7 +30,7 @@ import {
   REGIONAL_SECTION_LABELS,
   regionalRequiredFields,
 } from './module3-extensions';
-import { resolveProjectRegionCode } from './cmc/module3-compile';
+import { resolveProjectRegional } from './cmc/module3-compile';
 import { createScopedLogger } from '../utils/logger';
 import { enforceAuthorLineage } from './clinical-regulatory-evidence/lineage-gate';
 import { governedActor } from './part11/governed-actor';
@@ -292,9 +292,11 @@ export async function getModule3BuildStatus(
      A failure here is SAID and skipped, as the compile's own regional pass is:
      a board that cannot resolve a region still reports every other section. */
   let regionalComposed: ComposedSection[] = [];
+  let regionalApplication: string | null = null;
   try {
-    const region = await resolveProjectRegionCode(pool, orgId, projectId);
-    if (region) regionalComposed = composeRegional(canonicalSources, region);
+    const { region, applicationType } = await resolveProjectRegional(pool, orgId, projectId);
+    regionalApplication = applicationType;
+    if (region) regionalComposed = composeRegional(canonicalSources, region, { applicationType });
   } catch (regionalErr) {
     logger.warn('[module3-convergence] regional (3.2.R) enumeration skipped', {
       orgId,
@@ -319,7 +321,7 @@ export async function getModule3BuildStatus(
      rules answer from a static list. An empty list is honest: it means no
      recorded source supplies anything this regional section reads. */
   const regionalRules = regionalComposed.map((c) => {
-    const fields = regionalRequiredFields(c.sectionKey);
+    const fields = regionalRequiredFields(c.sectionKey, regionalApplication);
     const types = new Set<string>();
     for (const row of sourceRes.rows) {
       const payload = (row.sourcePayload ?? {}) as Record<string, unknown>;

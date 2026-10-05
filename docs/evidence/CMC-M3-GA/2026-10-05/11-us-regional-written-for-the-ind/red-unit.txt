@@ -1,0 +1,6 @@
+ × server/services/cmc/__tests__/us-ind-regional.test.ts > §3.2.R.1.US for an IND > says it is an IND and files none of a marketing application’s obligations 13ms
+   → expected 'Per ICH M4Q, Section 3.2.R.1 (Regiona…' to contain 'Investigational New Drug application'
+ × server/services/cmc/__tests__/us-ind-regional.test.ts > §3.2.R.1.US for an IND > lists what 21 CFR 312.23(a)(7) asks, Module 1 items stated and not attested 1ms
+   → Cannot read properties of undefined (reading 'rows')
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 2 passed (4)
