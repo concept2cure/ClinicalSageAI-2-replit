@@ -21,4 +21,5 @@ on the work-order board as the founder's explicit exception to RULE 2.
 | F1 | A person's decline was fed back to the model as a failure to work around ("try an alternative tool") and shown as AnA failing | `ab2693c56` | `F1-decline-not-a-failure/` | landed |
 | §6 / F6 | With a v2 project open, AnA could not search it ("No active project is in context") | `c17340bfc` | `P6-search-open-project/` | landed; PF-10's F1–F8 decided |
 | S5a | Sub-agent ceilings; the verification readers, where nothing compared is never clean; `labelsCompared` on the integrity check | (this commit) | `../2026-10-05/S5a-limits-and-readers/` | landed. Not yet reachable: `run_agent` is S5c |
+| S5b (1) | The non-stream loop ran a tool on `{}` when its arguments were lost in transport (four doors, and the child loop next) | (this commit) | `../2026-10-05/S5b-lost-input-guard/` | landed; declared behaviour change for send-message, ana-intelligence, ana-realtime, deep investigation |
 | S5b–S7 | Child loop, `run_agent`, stream hosting, agent-swarm retirement, client agent rows, live capture | — | — | in progress |
