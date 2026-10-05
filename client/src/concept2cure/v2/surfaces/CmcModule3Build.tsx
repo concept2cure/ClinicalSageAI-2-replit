@@ -37,6 +37,7 @@ import { C2CForm } from '../C2CForm';
 import { cmcProjectId, cmcWriteError } from './cmcShared';
 import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
+import { SectionEvidence } from './CmcSectionEvidence';
 
 /* ── The read models ─────────────────────────────────────────────────────── */
 
@@ -116,6 +117,8 @@ export interface Module3Readiness {
   /** False = the governed-decision fabric returned no verdict (not "it cleared"). */
   governedStateEvaluated?: boolean;
   exportReady: boolean;
+  /** The export gate's own sentence when it would refuse — readiness is the gate's verdict. */
+  blockedBecause?: string | null;
 }
 
 export interface Module3Contradiction {
@@ -199,6 +202,7 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
   const [busy, setBusy] = React.useState<string | null>(null);
   const [resolving, setResolving] = React.useState<Module3Contradiction | null>(null);
   const [provenanceFor, setProvenanceFor] = React.useState<Module3SectionState | null>(null);
+  const [evidenceFor, setEvidenceFor] = React.useState<Module3SectionState | null>(null);
   const [gate, setGate] = React.useState<{ ok: boolean; message: string } | null>(null);
 
   const sections = build.data?.sections ?? [];
@@ -432,6 +436,9 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                       ? ' · the governed-decision state could not be evaluated, so nothing here is cleared'
                       : ''}
                   </span>
+                  {!readiness.data.exportReady && readiness.data.blockedBecause && (
+                    <div className="cm-meta" data-testid="m3-readiness-blocked">{readiness.data.blockedBecause}</div>
+                  )}
                 </div>
               ) : (
                 <div className="cm-meta">No compiled sections yet — compile Module 3 to establish a readiness baseline.</div>
@@ -601,6 +608,14 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                             >
                               {I.history} History
                             </button>
+                            <button
+                              className="nda-open"
+                              style={{ marginLeft: 6 }}
+                              onClick={() => setEvidenceFor(s)}
+                              title="The Vault documents this section’s records were taken from"
+                            >
+                              {I.paperclip} Evidence
+                            </button>
                           </td>
                         </tr>
                       );
@@ -638,6 +653,15 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
       )}
       {provenanceFor && (
         <SectionProvenance projectId={projectId} section={provenanceFor} onClose={() => setProvenanceFor(null)} />
+      )}
+      {evidenceFor && (
+        <SectionEvidence
+          projectId={projectId}
+          sectionKey={evidenceFor.sectionKey}
+          sectionLabel={evidenceFor.sectionLabel}
+          onClose={() => setEvidenceFor(null)}
+          onChanged={bump}
+        />
       )}
       <C2CToast msg={toast} />
     </div>
