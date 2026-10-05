@@ -992,6 +992,17 @@ CODE=$(req rstdret1 PUT "/api/cmc/reference-standards/$RSTDID" '{"status":"retir
 ST=$(cat "$OUT/rstdret1.json" | JQ '.data.status // empty')
 [ "$CODE" = 200 ] && [ "$ST" = retired ] && ok "with a reason, the qualified standard is retired (status=retired)" || bad "retire with reason: $CODE $ST"
 
+# A release is signed over the batch's RECORDED, reviewed QC results — never
+# over results the request supplies, and never over none.
+CODE=$(req batchrel0 POST "/api/cmc/batch-records/$BATCHID/release" '{"releaseTesting":{"assay":"pass"},"decision":"approved","reason":"Attempting a release with nothing recorded against the batch.","reauth":{"password":"pass-word"}}')
+ST=$(cat "$OUT/batchrel0.json" | JQ '.code // empty')
+[ "$CODE" = 409 ] && [ "$ST" = RELEASE_EVIDENCE ] && ok "no QC result recorded against B-001: the release is refused (409), whatever the request claims" \
+  || bad "a batch was released over no recorded result ($CODE $ST)"
+CODE=$(req qcb001 POST /api/cmc/qc-testing "{\"sampleId\":\"S-B001-REL\",\"batchNumber\":\"B-001\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-20T00:00:00.000Z\",\"testResults\":{\"value\":\"99.2\",\"unit\":\"%\"},\"specifications\":{\"acceptanceCriteria\":\"98.0-102.0%\"},\"passFailStatus\":\"pass\",\"projectId\":\"$PROGRAM\"}")
+QCB=$(cat "$OUT/qcb001.json" | JQ '.data.id // empty')
+CODE2=$(req qcb001rev PUT "/api/cmc/qc-testing/$QCB" '{"reviewedBy":1,"passFailStatus":"pass"}')
+[ "$CODE" = 201 -o "$CODE" = 200 ] && [ "$CODE2" = 200 ] && ok "QC records B-001's release assay and a second person reviews it" \
+  || bad "B-001 QC record/review: $CODE/$CODE2 $(head -c200 "$OUT/qcb001rev.json")"
 CODE=$(req batchrel POST "/api/cmc/batch-records/$BATCHID/release" '{"releaseTesting":{"assay":"99.2%","identity":"conforms"},"releasedBy":"Someone Else","decision":"approved","reason":"All release tests within specification.","reauth":{"password":"pass-word"}}')
 RB=$(cat "$OUT/batchrel.json" | JQ '.data.batchRecord.released_by // .data.released_by // empty')
 [ "$CODE" = 200 ] && ok "QA releases batch B-001 under a signature" || bad "batch release: $CODE $(head -c200 "$OUT/batchrel.json")"

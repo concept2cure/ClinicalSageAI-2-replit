@@ -853,7 +853,7 @@ async function answeredSignedRecordEdit(
     res.status(404).json({ success: false, error: `${register.noun} not found` });
     return true;
   }
-  res.json({ success: true, data: row, ...(await link(row as LinkableRow)) });
+  res.json({ success: true, data: row, ...(await link(row as unknown as LinkableRow)) });
   return true;
 }
 

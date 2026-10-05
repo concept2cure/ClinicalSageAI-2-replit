@@ -14,6 +14,12 @@ import { refusedWithoutSigningAuthority, verifiedReauthFactors } from './cmc-sig
 import { clientIpOf } from '../../utils/client-ip';
 import { resolveActorUserId } from './governance';
 import { batchReleaseRefusal, batchWriteRefusal } from '../../services/cmc/signed-record';
+import {
+  type ReleaseStatus,
+  evaluateRecordedRelease,
+  evidenceFingerprint,
+  readRecordedReleaseTests,
+} from '../../services/cmc/batch-release-evidence';
 import { filedProjectOnCreate, RegisterWriteRefusal } from '../../services/cmc/register-writes';
 /* The CANONICAL org resolver. This module defined its own, reading two of the
    four places the canonical one reads, in its own order — and a second answer
@@ -77,7 +83,10 @@ const updateBatchSchema = z.object({
 });
 
 const releaseSchema = z.object({
-  releaseTesting: z.any(),
+  /* Accepted for older clients and IGNORED: a release is evaluated over the
+     batch's RECORDED QC results (services/cmc/batch-release-evidence), never
+     over results the request supplies. */
+  releaseTesting: z.any().optional(),
   /* Accepted for older clients and IGNORED: who released the batch is the
      session's signer, never a name the request types. */
   releasedBy: z.string().optional(),
@@ -95,40 +104,14 @@ const releaseSchema = z.object({
   idempotencyKey: z.string().optional(),
 });
 
-type ReleaseStatus = 'released' | 'conditional-release' | 'rejected' | 'pending-review';
-
-/**
- * The release evaluation: each submitted test's verdict and the status the
- * disposition lands in. Pure (it reads only the request), so it runs before
- * the signer is asked for anything and the signature's meaning can follow it.
- */
-function evaluateRelease(data: { releaseTesting?: unknown; decision: 'approved' | 'rejected' | 'conditional' }) {
-  const releaseTestingData = data.releaseTesting || {};
-  const testResults: Array<{ test: string; result: unknown; passed: boolean; evaluatedAt: string }> = [];
-  let allPassed = true;
-  if (typeof releaseTestingData === 'object') {
-    for (const [testName, testValue] of Object.entries(releaseTestingData)) {
-      const passed = testValue !== null && testValue !== undefined && testValue !== 'fail';
-      testResults.push({ test: testName, result: testValue, passed, evaluatedAt: new Date().toISOString() });
-      if (!passed) allPassed = false;
-    }
-  }
-  let releaseStatus: ReleaseStatus;
-  if (data.decision === 'rejected') releaseStatus = 'rejected';
-  else if (data.decision === 'conditional') releaseStatus = 'conditional-release';
-  else releaseStatus = allPassed ? 'released' : 'pending-review';
-  return { testResults, allPassed, releaseStatus };
-}
-
 /*
  * What a batch disposition signature means (21 CFR 11.50(a)(3)). The release
  * route stored 'release' for every disposition, so a rejected batch carried a
  * signature that said it was released (P0-10b fix round, DP-58). The meaning
  * now follows the status the disposition lands in: 'release' only for a batch
  * this act releases, and 'responsibility' (the quality unit's, for the
- * disposition, 21 CFR 211.22(a)) for a conditional release, a rejection, or an
- * approval the release tests hold at pending-review. The disposition and the
- * status are on the signature manifest's `act`. The release form offers the
+ * disposition, 21 CFR 211.22(a)) for a conditional release or a rejection.
+ * The disposition and the status are on the signature manifest's `act`. The release form offers the
  * disposition and no separate meaning, so the disposition is what the signer
  * declared. A signer who also declares a meaning must declare this one: one
  * that contradicts the disposition is refused, never substituted.
@@ -403,6 +386,59 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+/**
+ * The disposition the batch's recorded QC results support, read before the
+ * signature. 404 for a batch that is not this organisation's; 409 for one
+ * already final, or whose recorded results do not support the decision.
+ */
+async function evaluateBatchForRelease(
+  pool: ReturnType<typeof getPool>,
+  orgId: number,
+  id: string,
+  decision: 'approved' | 'rejected' | 'conditional',
+): Promise<
+  | { releaseStatus: ReleaseStatus; allPassed: boolean; tests: Awaited<ReturnType<typeof readRecordedReleaseTests>>; fingerprint: string }
+  | { status: number; refusal: Record<string, unknown> }
+> {
+  const found = await pool.query(
+    `SELECT * FROM cmc_batch_records WHERE id = $1 AND (tenant_id = $2 OR organization_id = $3)`,
+    [id, ...tenantParams(orgId)],
+  );
+  const batch = found.rows[0];
+  if (!batch) return { status: 404, refusal: { success: false, error: 'Batch record not found' } };
+  const final = batchReleaseRefusal(batch);
+  if (final) return { status: 409, refusal: { success: false, error: final, code: 'ALREADY_DISPOSITIONED' } };
+  const tests = await readRecordedReleaseTests(pool, orgId, batch);
+  const verdict = evaluateRecordedRelease(decision, tests, String(batch.batch_number ?? id));
+  if ('refusal' in verdict) {
+    return { status: 409, refusal: { success: false, error: verdict.refusal, code: 'RELEASE_EVIDENCE' } };
+  }
+  return { ...verdict, tests, fingerprint: evidenceFingerprint(tests) };
+}
+
+/** Under the signing lock: why the evaluation no longer holds, or null. */
+async function releaseNoLongerHolds(
+  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> },
+  orgId: number,
+  batch: Record<string, unknown> | undefined,
+  fingerprint: string,
+): Promise<{ status: number; body: Record<string, unknown> } | null> {
+  if (!batch) return { status: 404, body: { success: false, error: 'Batch record not found' } };
+  const final = batchReleaseRefusal(batch);
+  if (final) return { status: 409, body: { success: false, error: final, code: 'ALREADY_DISPOSITIONED' } };
+  if (evidenceFingerprint(await readRecordedReleaseTests(client, orgId, batch)) !== fingerprint) {
+    return {
+      status: 409,
+      body: {
+        success: false,
+        error: 'The batch\'s recorded QC results changed while the release was being signed. Review them and sign again.',
+        code: 'EVIDENCE_CHANGED',
+      },
+    };
+  }
+  return null;
+}
+
 // POST /api/cmc/batch-records/:id/release - Release testing and batch disposition.
 // High-risk governed sign: the disposition's meaning, the signer's authority and
 // re-authentication, then UPDATE + ledger write + the
@@ -423,10 +459,6 @@ router.post('/:id/release', async (req, res) => {
   }
 
   const data = validationResult.data;
-  const { testResults, allPassed, releaseStatus } = evaluateRelease(data);
-  const declared = dispositionMeaning(releaseStatus, data.meaning);
-  if ('refusal' in declared) return res.status(400).json(declared.refusal);
-  const { meaning } = declared;
   const pool = getPool();
   const orgId = resolveOrgId(req);
   if (orgId === null) {
@@ -436,6 +468,16 @@ router.post('/:id/release', async (req, res) => {
   if (!userId) {
     return res.status(401).json({ error: 'AUTH_REQUIRED' });
   }
+
+  /* The disposition is evaluated over what is RECORDED against the batch,
+     before the signer is asked for anything, so the signature's meaning
+     follows it (services/cmc/batch-release-evidence). */
+  const evaluated = await evaluateBatchForRelease(pool, orgId, id, data.decision);
+  if ('refusal' in evaluated) return res.status(evaluated.status).json(evaluated.refusal);
+  const { releaseStatus, allPassed, tests, fingerprint } = evaluated;
+  const declared = dispositionMeaning(releaseStatus, data.meaning);
+  if ('refusal' in declared) return res.status(400).json(declared.refusal);
+  const { meaning } = declared;
 
   // Signing authority (§11.10(g)), then the re-auth gate, before any write.
   if (await refusedWithoutSigningAuthority(res, { userId, orgId })) return;
@@ -451,32 +493,30 @@ router.post('/:id/release', async (req, res) => {
 
     // Verify record exists and belongs to tenant
     const existing = await client.query(
-      `SELECT * FROM cmc_batch_records WHERE id = $1 AND (tenant_id = $2 OR organization_id = $3)`,
+      `SELECT * FROM cmc_batch_records WHERE id = $1 AND (tenant_id = $2 OR organization_id = $3) FOR UPDATE`,
       [id, ...tenantParams(orgId)]
     );
-    if (existing.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ success: false, error: 'Batch record not found' });
-    }
-
     const batch = existing.rows[0];
-    const finalRefusal = batchReleaseRefusal(batch);
-    if (finalRefusal) {
+    /* Re-checked under the lock: the batch may have been dispositioned, or its
+       recorded results changed, while the signer re-authenticated. */
+    const stillHolds = await releaseNoLongerHolds(client, orgId, batch, fingerprint);
+    if (stillHolds) {
       await client.query('ROLLBACK');
-      return res.status(409).json({ success: false, error: finalRefusal, code: 'ALREADY_DISPOSITIONED' });
+      return res.status(stillHolds.status).json(stillHolds.body);
     }
     /* Who released the batch is the signer of this session. It used to be
        `releasedBy` from the request body, a name the client typed. */
     const signer = await client.query(`SELECT name, email FROM users WHERE id = $1`, [userId]);
     const releasedBy = String(signer.rows[0]?.name || signer.rows[0]?.email || `user ${userId}`);
 
-    // The release evaluation (evaluateRelease) ran before the signer was asked
-    // for anything, so the signature's meaning could follow its status.
+    // The release evaluation (evaluateBatchForRelease) ran over the recorded
+    // results before the signer was asked for anything, so the signature's
+    // meaning could follow its status.
     const releaseRecord = {
       decision: data.decision,
       releasedBy,
       comments: data.comments || null,
-      testResults,
+      testResults: tests,
       allTestsPassed: allPassed,
       releaseStatus,
       releasedAt: new Date().toISOString(),

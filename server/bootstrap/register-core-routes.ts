@@ -61,6 +61,11 @@ export function registerCoreRoutes({
   // and SCIM (scim.ts). Custom-role creation never worked and has no replacement.
 
   try {
+    /* Every /api/cmc request is authenticated first, in every boundary mode
+       (server/middleware/authBoundary.ts only warns outside production): the
+       role gate below reads the role this establishes. This authentication was
+       projectRoutes.ts's root router.use(authenticateToken), retired below. */
+    app.use('/api/cmc', authenticateToken);
     // A viewer reads CMC and writes none of it: one gate ahead of every
     // /api/cmc router, so a write route added later is gated by default.
     app.use('/api/cmc', cmcWriteRoleGate);
@@ -103,8 +108,7 @@ export function registerCoreRoutes({
        Its root router.use(authenticateToken) authenticated EVERY /api/cmc
        request that reached it — every mount below — which matters wherever
        the /api boundary only warns (server/middleware/authBoundary.ts). That
-       authentication stays, here, in its place: */
-    app.use('/api/cmc', authenticateToken);
+       authentication stays: it is the first /api/cmc mount above. */
     /* `/api/cmc/blueprint` is gone (server/api/cmc/blueprintRoutes.ts, with
        portfolio.ts and playbookRoutes.ts mounted under it). Blueprint and QbD →
        GET /api/cmc/quality/qbd/:projectId and POST /api/cmc/control-strategy

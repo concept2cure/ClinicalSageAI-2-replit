@@ -86,13 +86,17 @@ describe('/api/cmc write-role gate', () => {
     }
   });
 
-  it('is mounted ahead of every /api/cmc router', () => {
+  it('is mounted ahead of every /api/cmc router, after the authenticator', () => {
     const src = readFileSync(resolve(__dirname, '../../../bootstrap/register-core-routes.ts'), 'utf8');
     const mounts = [...src.matchAll(/app\.use\('(\/api\/cmc[^']*)',\s*([A-Za-z0-9_]+)/g)].map((m) => ({ at: m.index ?? 0, path: m[1], fn: m[2] }));
     const gate = mounts.find((m) => m.fn === 'cmcWriteRoleGate');
     expect(gate?.path).toBe('/api/cmc');
-    const routers = mounts.filter((m) => m.fn !== 'cmcWriteRoleGate');
+    // The authenticator runs first so the gate can read the role; every
+    // router comes after the gate.
+    const routers = mounts.filter((m) => m.fn !== 'cmcWriteRoleGate' && !(m.path === '/api/cmc' && m.fn === 'authenticateToken'));
     expect(routers.length).toBeGreaterThan(5);
     for (const m of routers) expect(m.at, m.path).toBeGreaterThan(gate!.at);
+    const auth = mounts.find((m) => m.path === '/api/cmc' && m.fn === 'authenticateToken');
+    expect(auth?.at, 'the bare /api/cmc authenticator').toBeLessThan(gate!.at);
   });
 });

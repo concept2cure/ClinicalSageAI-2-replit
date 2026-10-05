@@ -1927,7 +1927,12 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
   const [toast, fireToast] = useToast();
   const { user } = useAuth();
   const releasedByName = user?.displayName || user?.email || 'current user';
-  const eligible = (r: CmcBatch) => r.dev === 0 && r.yield >= 90;
+  /* Open deviations are closed before a release (21 CFR 211.192). Yield is
+     not a release criterion: the "yield >= 90%" rule this button used was
+     stated by no regulation. What a release IS signed over — the batch's
+     recorded, reviewed QC results — the server checks, and says what is
+     missing (services/cmc/batch-release-evidence.ts). */
+  const eligible = (r: CmcBatch) => r.dev === 0;
   const pending = rows.filter((r) => r.st === 'pending').length;
   const devs = rows.reduce((a, r) => a + r.dev, 0);
   const avgY = rows.length ? Math.round(rows.reduce((a, r) => a + r.yield, 0) / rows.length) : 0;
@@ -1982,7 +1987,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
         <Kpi l="Avg yield" v={avgY + '%'} />
       </div>
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Batch disposition</span><span className="s">release when deviations = 0 and yield {'>='}  90%</span></div>
+        <div className="pj-card-h"><span className="t">Batch disposition</span><span className="s">released over the batch’s recorded, reviewed QC results — open deviations closed first</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {rows.length === 0 ? (
             <div style={{ padding: 12 }}>
@@ -2001,11 +2006,11 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
             <tbody>{rows.map((r) => (
               <tr key={r.dbId ?? r.id} className={r._new ? 'de-row-new' : undefined}>
                 <td className="mono" style={{ fontWeight: 600 }}>{r.id}</td><td>{r.stage}</td>
-                <td className={r.yield < 90 ? 'sp-tone-warn' : ''}>{r.yield}%</td>
+                <td>{r.yield}%</td>
                 <td className={r.dev ? 'sp-tone-warn' : ''}>{r.dev}</td>
                 <td>{eligible(r) ? <span className="rd-chip tone-ok">yes</span> : <span className="rd-chip tone-warn">no</span>}</td>
                 <td><span className={'rd-chip tone-' + (r.st === 'released' ? 'ok' : r.st === 'rejected' ? 'err' : 'warn')}>{r.st}</span></td>
-                <td style={{ textAlign: 'right' }}>{r.st === 'pending' && <button className="nda-open" onClick={() => setReleasing(r)} disabled={!eligible(r)} title={!eligible(r) ? 'Resolve deviations / low yield first' : ''}>{I.check} Release</button>}</td>
+                <td style={{ textAlign: 'right' }}>{r.st === 'pending' && <button className="nda-open" onClick={() => setReleasing(r)} disabled={!eligible(r)} title={!eligible(r) ? 'Close the open deviations first' : ''}>{I.check} Release</button>}</td>
               </tr>))}</tbody></table>
           )}
         </div>
@@ -2019,7 +2024,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
         { key: 'yield', label: 'Yield (%)', type: 'number', min: 0, max: 100, required: true, half: true },
         { key: 'dev', label: 'Open deviations', type: 'number', min: 0, default: '0' },
       ] }} onCancel={() => setForm(false)} onSubmit={add} />}
-      {releasing && <C2CForm config={{ eyebrow: 'Batch disposition — §11 e-signature', title: 'Release batch ' + releasing.id, sub: 'Signed disposition recorded to the hash-chained audit trail. Released by ' + releasedByName + '.', submitLabel: 'Sign & release', fields: [
+      {releasing && <C2CForm config={{ eyebrow: 'Batch disposition — §11 e-signature', title: 'Release batch ' + releasing.id, sub: 'Signed over the QC results recorded against this batch: a release needs every one reviewed and passing; a conditional release states what is outstanding. Recorded to the hash-chained audit trail, signed by ' + releasedByName + '.', submitLabel: 'Sign & release', fields: [
         { key: 'decision', label: 'Disposition', type: 'seg', options: ['approved', 'conditional', 'rejected'], default: 'approved', half: true },
         { key: 'reason', label: 'Reason', type: 'textarea', placeholder: 'Disposition rationale (recorded with the signature)…', required: true },
         { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
