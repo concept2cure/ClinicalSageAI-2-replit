@@ -242,6 +242,10 @@ export interface RichSectionEditorProps {
      *  Rejections in particular change no text and are otherwise unrecorded
      *  anywhere. Fire-and-forget: it must not block or undo the edit. */
     onResolve?: (decision: SuggestionDecision) => void;
+    /** Whether a pasted AnA suggestion from this turn record keeps AnA's
+     *  name: true only for a turn the host's insert gate admitted. Absent,
+     *  none does (suggestions.ts, the paste door, round 11). */
+    admitsAnaSource?: (sourceRecord: string | null) => boolean;
   } | null;
   /** Range-anchored comments. Omit to hide the capability. */
   commentsApi?: {
@@ -609,6 +613,11 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     useEffect(() => {
       onResolveRef.current = track?.onResolve;
     });
+    /** `track.admitsAnaSource` as of the last render, for the same reason. */
+    const admitsAnaSourceRef = useRef(track?.admitsAnaSource);
+    useEffect(() => {
+      admitsAnaSourceRef.current = track?.admitsAnaSource;
+    });
 
     /* ── Cross-reference directory ──
        The extension set is built once per mount, but the document's sections
@@ -828,6 +837,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           author: track?.author ?? { id: 'unknown', name: 'Unknown author' },
           // Stable identity reading the latest handler — see onResolveRef.
           onResolve: (d: SuggestionDecision) => onResolveRef.current?.(d),
+          admitsAnaSource: (id: string | null) => admitsAnaSourceRef.current?.(id) ?? false,
         }),
         CommentAnchor.configure({
           onAnchorClick: commentsApi?.onOpen ?? null,

@@ -260,11 +260,14 @@ describe('ConversationThread — AnA\u2019s answers go into the open document (2
      conversation canvas. So while building a document beside the conversation,
      nothing AnA answered could reach it. Each settled answer now offers that
      insert into the open section, through the editor's one suggestion door. */
+  /* Written by a model that may write governed content (round 11): the insert
+     follows the governed-write rule, so an answer it does not admit is refused. */
+  const OPUS = { provider: 'anthropic', model: 'claude-opus-5-5', qualified: true, approvedForHighRisk: true, pq: 'pending' };
   const FOLLOWUP: AnaChatMessage = {
     id: 'm5',
     role: 'assistant',
     text: 'Exposure was dose-proportional from 10 to 300 mg.',
-    turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64) },
+    turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64), servedBy: [OPUS] },
   } as unknown as AnaChatMessage;
 
   it('offers no insert while no document is open', async () => {
@@ -321,6 +324,44 @@ describe('ConversationThread — AnA\u2019s answers go into the open document (2
       return el as HTMLElement;
     });
     expect(ins.getAttribute('data-source-record')).toBe('rec-7');
+  });
+
+  /* AnA reasoning round 11 (GRD-missed): the insert follows the governed-write
+     rule every other door that stores model-authored text already applies. A
+     refused offer is disabled, not hidden, and says why (GE-P-3). */
+  it('an answer a model not approved for regulatory drafting wrote: the offer is disabled, says why, and inserts nothing', async () => {
+    const SONNET = { provider: 'anthropic', model: 'claude-sonnet-5', qualified: false, approvedForHighRisk: false, pq: 'pending' };
+    const UNQUALIFIED = { ...FOLLOWUP, turnRecord: { status: 'recorded', id: 'rec-8', sha256: 'a'.repeat(64), servedBy: [SONNET] } } as unknown as AnaChatMessage;
+    chatMessages.current = [USER, DRAFTED, UNQUALIFIED];
+    render(<ConversationThread {...OWNED_PROPS} />);
+    const open = await screen.findByTestId('dc-open-editor');
+    await vi.waitFor(() => expect((open as HTMLButtonElement).disabled).toBe(false));
+    open.click();
+    await screen.findByTestId('dc-expanded');
+
+    const insert = (await screen.findByRole('button', { name: 'Insert into 2.5.1 as tracked suggestion' }, { timeout: 4000 })) as HTMLButtonElement;
+    expect(insert.disabled).toBe(true);
+    const reason = document.getElementById(insert.getAttribute('aria-describedby') ?? '');
+    expect(reason?.textContent).toBe(
+      'Written by claude-sonnet-5, which is not approved for regulatory drafting. Ask again with Thorough effort to have an approved model write it.',
+    );
+    insert.click();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(document.querySelector('.ct-canvas-pane ins[data-author-id="ana"]')).toBeNull();
+  });
+
+  it('an answer whose record does not name its models: the offer is disabled, failing closed', async () => {
+    const UNNAMED = { ...FOLLOWUP, turnRecord: { status: 'recorded', id: 'rec-9', sha256: 'a'.repeat(64) } } as unknown as AnaChatMessage;
+    chatMessages.current = [USER, DRAFTED, UNNAMED];
+    render(<ConversationThread {...OWNED_PROPS} />);
+    const open = await screen.findByTestId('dc-open-editor');
+    await vi.waitFor(() => expect((open as HTMLButtonElement).disabled).toBe(false));
+    open.click();
+    const insert = (await screen.findByRole('button', { name: 'Insert into 2.5.1 as tracked suggestion' }, { timeout: 4000 })) as HTMLButtonElement;
+    expect(insert.disabled).toBe(true);
+    expect(document.getElementById(insert.getAttribute('aria-describedby') ?? '')?.textContent).toMatch(
+      /^This answer’s record does not say which model wrote it\./,
+    );
   });
 });
 

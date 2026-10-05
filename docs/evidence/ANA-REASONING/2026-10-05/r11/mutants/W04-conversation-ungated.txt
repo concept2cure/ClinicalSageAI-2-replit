@@ -1,0 +1,13 @@
+Mutant W04-conversation-ungated: the conversation offers every answer
+
+--- client/src/concept2cure/v2/surfaces/ConversationThread.tsx
+- const refusal = anaInsertRefusal(turn.turnRecord);
++ const refusal = null as string | null;
+
+Tests run: client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > an answer a model not approved for regulatory drafting wrote: the offer is disabled, says why, and inserts nothing 771ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > an answer whose record does not name its models: the offer is disabled, failing closed 827ms
+      Tests  2 failed | 19 passed (21)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

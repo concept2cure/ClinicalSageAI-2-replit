@@ -57,6 +57,8 @@ import { createHash } from 'node:crypto';
 import { stableStringify } from '../../../shared/canonical-json.js';
 
 import { writeChainedAuditRow } from '../auditService.js';
+import { qualifyServedModels, type QualifiedServedModel } from '../ai-governance/approved-models.js';
+import { servedModelsOf } from './turn-record-models.js';
 import type { TurnPlanStep } from './turn-plan.js';
 import type { ContextUsedEvent } from './turn-context-used.js';
 import type { TurnVerification } from './turn-verification.js';
@@ -641,9 +643,14 @@ export async function writeTurnRecord(
   }
 }
 
-/** What the client is told about a turn's record: recorded, with its hash, or not, and why. */
+/**
+ * What the client is told about a turn's record: recorded, with its hash, or
+ * not, and why. A filed record also names every model that wrote the turn,
+ * with RULE 2's verdict, so the client can apply the governed-write rule to
+ * inserting the answer into a document (round 11).
+ */
 export type TurnRecordStatus =
-  | { status: 'recorded'; id: string; sha256: string }
+  | { status: 'recorded'; id: string; sha256: string; servedBy?: QualifiedServedModel[] }
   | { status: 'not_recorded'; reason: string };
 
 /**
@@ -687,8 +694,9 @@ export async function writeTurnRecordSafely(
 ): Promise<TurnRecordStatus> {
   if (!recorder) return { status: 'not_recorded', reason: 'This turn had no organization to file it under.' };
   try {
-    const { id, sha256 } = await writeTurnRecord(pool, recorder.seal(outcome), audit);
-    return { status: 'recorded', id, sha256 };
+    const sealed = recorder.seal(outcome);
+    const { id, sha256 } = await writeTurnRecord(pool, sealed, audit);
+    return { status: 'recorded', id, sha256, servedBy: qualifyServedModels(servedModelsOf(sealed.body.model)) };
   } catch (err) {
     console.error('[turn-record] could not write the turn record:', err instanceof Error ? err.message : err);
     return { status: 'not_recorded', reason: 'The record of this turn could not be written.' };

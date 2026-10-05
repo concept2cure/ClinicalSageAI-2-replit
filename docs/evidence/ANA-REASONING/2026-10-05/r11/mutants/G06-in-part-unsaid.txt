@@ -1,0 +1,12 @@
+Mutant G06-in-part-unsaid: an answer two models wrote is said to be one model’s
+
+--- client/src/concept2cure/v2/editor/anaInsertGate.ts
+- const by = `${inPart ? 'Written in part by' : 'Written by'} ${m.model}`;
++ const by = `Written by ${m.model}`;
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses when any one of the models that wrote it is not admitted, and says it wrote part 5ms
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

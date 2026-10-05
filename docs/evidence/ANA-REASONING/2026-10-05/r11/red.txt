@@ -1,0 +1,30 @@
+Red first: round 11's suites against trunk 7bfcf4dc8's code for turn-record.ts, anaProgress.ts, useAnaChat.types.ts, suggestions.ts, RichSectionEditor.tsx, DocumentWorkbench.tsx, ConversationThread.tsx and conversation-thread-data.ts, with the new anaInsertGate.ts set aside.
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run server/services/ana/__tests__/turn-record-served-by.pglite.test.ts client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx
+Eleven tests fail and the gate's unit suite cannot load its module. The 74 that pass there are the files' existing tests and this round's negative controls (a qualified answer inserts, a person's paste keeps its author, track changes on already re-attributes a paste, an unreadable list reads as no list), each shown red by its mutant.
+
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.insert — AnA’s answer goes in only under the governed-write rule (round 11) > refuses an AnA answer the rule does not admit, or whose models are not given, and changes nothing 656ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/turn-record-served-by.pglite.test.ts > the filed status names the models that wrote the turn > every model that served a call, each with RULE 2’s verdict and the facts it rests on 54ms
+   → expected undefined to deeply equal [ …(2) ]
+ × server/services/ana/__tests__/turn-record-served-by.pglite.test.ts > the filed status names the models that wrote the turn > a turn whose record names no model says so: an empty list, which no reader may take as approved 10ms
+   → expected undefined to deeply equal []
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > an answer a model not approved for regulatory drafting wrote: the offer is disabled, says why, and inserts nothing 1136ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > an answer whose record does not name its models: the offer is disabled, failing closed 976ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > keeps a well-formed list, in order, and the status as before 9ms
+   → expected { status: 'recorded', …(2) } to deeply equal { status: 'recorded', …(3) }
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > carries the list from post_done onto the turn 58ms
+   → expected { status: 'recorded', …(2) } to deeply equal { status: 'recorded', …(3) }
+ × client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes off: one the host does not admit becomes the pasting person’s, with no turn 199ms
+   → expected [ [ 'insertion', 'ana', …(3) ] ] to deeply equal [ [ 'insertion', 'user-7', …(3) ] ]
+ × client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer a model not approved for regulatory drafting wrote: disabled, and the reason is on screen 6204ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer whose models the record does not give: disabled, failing closed 5573ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > a paste of the suggestion it admitted keeps AnA’s name; one from a turn it did not admit is the person’s 551ms
+   → expected [ [ …(3) ], [ …(3) ], [ …(3) ] ] to deep equally contain [ 'From another turn.', …(2) ]
+ FAIL  client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts [ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts ]
+Error: Cannot find module '../anaInsertGate' imported from <repo>/client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts
+ Test Files  7 failed (7)
+      Tests  11 failed | 74 passed (85)

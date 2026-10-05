@@ -1,0 +1,13 @@
+Mutant G03-empty-admitted: a record that names no model admits the answer
+
+--- client/src/concept2cure/v2/editor/anaInsertGate.ts
+- if (served.length === 0) return `This answer’s record does not say which model wrote it. ${ASK_AGAIN}`;
++ 
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > fails closed on everything that does not say which models wrote it 5ms
+ × client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer whose models the record does not give: disabled, failing closed 5493ms
+      Tests  2 failed | 8 passed (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

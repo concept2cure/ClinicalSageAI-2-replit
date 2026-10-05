@@ -158,13 +158,31 @@ export interface AnaPlanChange {
  * never an empty list that reads as "nothing matched".
  */
 /**
+ * A model that wrote the turn, as its record names it, with what RULE 2 says of
+ * it (server: approved-models.ts qualifyServedModels). `qualified` decides
+ * whether its text may go into a document (anaInsertGate.ts); the other two
+ * say why not, which decides the remedy.
+ */
+export interface AnaServedModel {
+  provider: string | null;
+  model: string | null;
+  qualified: boolean;
+  /** Its registry entry's approval for high-risk work; null when the registry has no entry for it. */
+  approvedForHighRisk: boolean | null;
+  /** Its performance qualification; null when the registry has no entry for it. */
+  pq: 'pending' | 'passed' | 'failed' | null;
+}
+
+/**
  * Whether the server filed this turn's retained record (21 CFR Part 11): the
  * record's id and SHA-256 when it did, the reason when it did not. Absent when
  * the server said nothing — an older server, or a turn that never closed —
- * which is shown as nothing, never as recorded.
+ * which is shown as nothing, never as recorded. A filed record also names the
+ * models that wrote the turn (`servedBy`, round 11); absent when the server
+ * did not say, which no reader may take as approved.
  */
 export type AnaTurnRecordStatus =
-  | { status: 'recorded'; id: string; sha256: string }
+  | { status: 'recorded'; id: string; sha256: string; servedBy?: AnaServedModel[] }
   | { status: 'not_recorded'; reason: string }
   /**
    * Client-side only: the turn ended here — timed out, stopped, or the
