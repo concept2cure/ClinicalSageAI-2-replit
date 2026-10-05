@@ -182,20 +182,32 @@ export interface KnowledgeQueryable { query(sql: string, params?: unknown[]): Pr
 type PoolSource = () => KnowledgeQueryable | Promise<KnowledgeQueryable>;
 const appPool: PoolSource = async () => (await import('../../db.js')).getPool();
 
+/** A Vault document the plan reads, with the id a reader opens it by. */
+export interface VaultDocumentFact extends VaultSectionFact {
+  /** vault.documents.id: what loadDocumentForOrg takes to read the text. */
+  id: string;
+}
+
 /**
  * The open program's live Vault documents at the CTD sections the plan reads,
  * scoped by organization and program in the statement itself, with the folder
- * and evidence kind the filing classifiers wrote. A document the Vault holds in
- * Module 5 with no section (a declared CSR upload) is read too: before
- * 2026-10-05 the statement required a section, so such a CSR was invisible.
+ * and evidence kind the filing classifiers wrote and the document id. A
+ * document the Vault holds in Module 5 with no section (a declared CSR upload)
+ * is read too: before 2026-10-05 the statement required a section, so such a
+ * CSR was invisible.
+ *
+ * This is the one statement. readVaultFacts is this read without the id, so a
+ * tool that opens the documents (the dossier reconciler) reads exactly the
+ * documents the submission plan counts — never a second, drifting query.
+ * Throws when the read fails; a failed read is never an empty Vault.
  */
-export async function readVaultFacts(
+export async function readVaultDocuments(
   pool: KnowledgeQueryable,
   organizationId: number,
   programId: string,
-): Promise<{ facts: VaultSectionFact[]; truncated: boolean }> {
+): Promise<{ documents: VaultDocumentFact[]; truncated: boolean }> {
   const { rows } = await pool.query(
-    `SELECT d.ctd_section, d.folder_id, d.evidence_kind, d.placement_status, d.document_title
+    `SELECT d.id, d.ctd_section, d.folder_id, d.evidence_kind, d.placement_status, d.document_title
        FROM vault.documents d
        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
       WHERE d.program_id = $2
@@ -209,14 +221,28 @@ export async function readVaultFacts(
     [organizationId, programId, VAULT_FACTS_MAX + 1],
   );
   const text = (v: unknown): string | null => (v === null || v === undefined || v === '' ? null : String(v));
-  const facts = (rows as Array<Record<string, unknown>>).slice(0, VAULT_FACTS_MAX).map((r) => ({
+  const documents = (rows as Array<Record<string, unknown>>).slice(0, VAULT_FACTS_MAX).map((r) => ({
+    id: String(r.id ?? ''),
     ctdSection: text(r.ctd_section),
     folderId: text(r.folder_id),
     evidenceKind: text(r.evidence_kind),
     placementStatus: String(r.placement_status ?? ''),
     title: String(r.document_title ?? ''),
   }));
-  return { facts, truncated: rows.length > VAULT_FACTS_MAX };
+  return { documents, truncated: rows.length > VAULT_FACTS_MAX };
+}
+
+/** The plan's facts: readVaultDocuments without the id. */
+export async function readVaultFacts(
+  pool: KnowledgeQueryable,
+  organizationId: number,
+  programId: string,
+): Promise<{ facts: VaultSectionFact[]; truncated: boolean }> {
+  const { documents, truncated } = await readVaultDocuments(pool, organizationId, programId);
+  const facts = documents.map((d): VaultSectionFact => ({
+    ctdSection: d.ctdSection, folderId: d.folderId, evidenceKind: d.evidenceKind, placementStatus: d.placementStatus, title: d.title,
+  }));
+  return { facts, truncated };
 }
 
 /** What the platform reads as this step done, in words. */
