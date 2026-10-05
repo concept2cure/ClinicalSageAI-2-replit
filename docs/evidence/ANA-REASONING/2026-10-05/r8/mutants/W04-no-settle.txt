@@ -1,0 +1,15 @@
+Mutant W04-no-settle: the summary is stored as the summarizer wrote it
+
+--- server/services/working-memory.ts
+- structured = { ...settled.structured, withheld: settled.withheld, factCheck: ANSWER_CHECK_VERSION };
++ structured = { ...structured, withheld: settled.withheld, factCheck: ANSWER_CHECK_VERSION };
+
+Tests run: server/services/__tests__/working-memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > withholds the figure the stored check did not find, in every field the reader renders 209ms
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > reads the current answer's check, which may not be stored yet 5ms
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > fails closed when the thread cannot be read: only what claims nothing stands, and the row is still written 5ms
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > writes the row when the summarizer returns a malformed shape, never one letter per fact 4ms
+      Tests  4 failed | 1 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯

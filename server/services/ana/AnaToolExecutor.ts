@@ -15933,10 +15933,13 @@ export async function executeAgenticLoop(
   // Failure-adaptation guidance from the latest round (cleared after use).
   let pendingAdaptationNote = '';
 
+  // The lost-input marker travels with the call, so dispatch can refuse to run
+  // a handler on the `{}` that stands in for arguments that never arrived.
   const toToolCall = (c: AnaToolUse): ToolCall => ({
     id: c.id,
     name: c.name,
     input: (c.input ?? {}) as Record<string, unknown>,
+    ...(c.inputParseError ? { inputParseError: c.inputParseError } : {}),
   });
 
   // First model turn. Streaming (when the request carries onStream) and tool
