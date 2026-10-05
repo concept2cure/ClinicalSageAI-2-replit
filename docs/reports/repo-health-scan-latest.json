@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-05T02:13:37.502Z",
+  "generatedAt": "2026-10-05T02:25:28.749Z",
   "git": {
-    "sha": "9980d13187ebe0534bf6f45d60d7bf5ff20a9562",
+    "sha": "107f93ff70979b4749af3421f81c30eaccc813b3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2052,7 +2052,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1115683
+        "bytes": 1116952
       },
       {
         "file": "shared/schema.ts",
@@ -2076,7 +2076,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 222347
+        "bytes": 223786
       },
       {
         "file": "server/statistics-service.ts",
@@ -2254,7 +2254,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21522
+        "lines": 21545
       },
       {
         "file": "shared/schema.ts",
@@ -2274,7 +2274,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5586
+        "lines": 5613
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
