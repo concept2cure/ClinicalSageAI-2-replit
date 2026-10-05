@@ -428,6 +428,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     let assistantMessage: string;
     let model: string;
     let provider = '';
+    // The model call whose reply carries the turn's ana-action blocks: its
+    // proposals are sealed with it (D5, MC-RL-4; ana-ri/proposal-seal.ts).
+    let servingModel: { provider: string; model: string; requestId: string | null } | null = null;
     let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
     let latencyMs: number | null = null;
     // Hoisted so the response serializer (after the try/catch) can read it.
@@ -895,6 +898,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         'I apologize, but I was unable to generate a response. Please try again.';
       model = `${gwResponse.provider}/${gwResponse.model}`;
       provider = gwResponse.provider;
+      servingModel = { provider: gwResponse.provider, model: gwResponse.model, requestId: gwResponse.requestId ?? null };
       usage = {
         prompt_tokens: gwResponse.usage.inputTokens,
         completion_tokens: gwResponse.usage.outputTokens,
@@ -981,6 +985,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
             userId: numericUserId,
             userName: (req as any).user?.name || (req as any).user?.email || undefined,
             threadId,
+            servingModel,
           },
           loopProposals,
         );
