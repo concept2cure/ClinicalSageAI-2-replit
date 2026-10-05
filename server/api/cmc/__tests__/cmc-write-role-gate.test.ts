@@ -36,7 +36,10 @@ const WRITES: Array<[string, string]> = [
   ['post', '/api/cmc/module3-os/build-section/p1/3.2.S.1'],
   ['patch', '/api/cmc/agency-questions/3'],
   ['post', '/api/cmc/stability-studies'],
-  ['delete', '/api/cmc/documents/1'],
+  // No DELETE route remains under /api/cmc — the last ones went with
+  // documentRoutes.ts and projectRoutes.ts on 2026-10-05 — so this is the
+  // method on a live prefix: the gate refuses it before any router is asked.
+  ['delete', '/api/cmc/specifications/1'],
 ];
 
 const COMPUTATIONS = [
