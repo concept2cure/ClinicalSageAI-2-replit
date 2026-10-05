@@ -295,6 +295,21 @@ export function studyDesignToStatisticalInput(design: StudyDesign): DesignAdapte
   } else if (!isIvd) {
     mapped.push('effectSize');
   }
+  if (isIvd) {
+    // A diagnostic-accuracy study is sized from target sensitivity and
+    // specificity, the expected prevalence and the performance-goal margin.
+    // The design schema records none of them (study-design-types.ts
+    // powerAssumptions), and since 2026-10-05 the engine refuses rather than
+    // assume them; until then it filled them with its own defaults.
+    gaps.push({
+      field: 'sensitivity',
+      message:
+        'An IVD accuracy study is sized from target sensitivity and specificity, expected prevalence and the performance-goal margin. ' +
+        'The design does not record them, so it cannot be sized here.',
+      severity: 'blocking',
+      designPath: 'statisticalPlan.powerAssumptions',
+    });
+  }
 
   if (endpointType === 'continuous' && typeof pa.variance !== 'number') {
     gaps.push({

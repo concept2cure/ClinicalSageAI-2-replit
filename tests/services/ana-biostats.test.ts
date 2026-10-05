@@ -87,6 +87,9 @@ const diagnosticInput: StatisticalInput = {
   sensitivity: 0.90,
   specificity: 0.85,
   prevalence: 0.30,
+  // The margin from the expected Se/Sp down to the performance goal. Required
+  // since 2026-10-05 (it was a hard-coded 5% inside the engine).
+  nonInferiorityMargin: 0.05,
   attritionRate: 0.10,
   allocationRatio: 1,
   numberOfGroups: 1,
@@ -898,15 +901,15 @@ describe('Enhanced: Missing Data Impact', () => {
 // ═══════════════════════════════════════════════════════════════
 
 describe('Enhanced: Agreement/Kappa Computation', () => {
-  it('computes kappa sample size', () => {
-    const result = engine.computeAgreementKappa({
+  // Until 2026-10-05 this pinned a kappa N from a variance with a +0.01 fudge
+  // term and a hard-coded null κ₀ = 0.40. The engine now refuses (see
+  // tests/biostat/ana-sizing-reference.test.ts, defect 6).
+  it('refuses kappa sizing rather than producing a figure without a published method', () => {
+    expect(() => engine.computeAgreementKappa({
       ...diagnosticInput,
       studyType: 'agreement',
       agreementTarget: 0.80,
-    });
-
-    expect(result.kappaSampleSize).toBeGreaterThan(0);
-    expect(result.kappa).toBe(0.80);
+    })).toThrow(/not supported/i);
   });
 });
 
@@ -1573,15 +1576,17 @@ describe('Layer 2: achieved power is the power of the sized test (BS8)', () => {
 describe('Layer 2: a continuous effect with no variance is standardised (BS4)', () => {
   const noVariance: StatisticalInput = { ...pharmaInput, variance: undefined };
 
-  it('sizes d = 0.5 at 63 per group (80% power, two-sided 0.05), not 16', () => {
-    // 2·(1.96 + 0.8416)² / 0.5² = 62.8 → 63
-    expect(engine.compute({ ...noVariance, effectSize: 0.5 }).sampleSize.perGroup).toBe(63);
+  it('sizes d = 0.5 at 64 per group (80% power, two-sided 0.05), not 16', () => {
+    // Two-sample t-test (R power.t.test): 63.77 → 64. Until 2026-10-05 this
+    // pinned the normal approximation, 2·(1.96 + 0.8416)²/0.5² = 62.8 → 63,
+    // under the engine's "t-test" label.
+    expect(engine.compute({ ...noVariance, effectSize: 0.5 }).sampleSize.perGroup).toBe(64);
   });
 
   it('N depends on the effect size: d = 0.3 needs more subjects than d = 0.5', () => {
     const small = engine.compute({ ...noVariance, effectSize: 0.3 }).sampleSize.perGroup;
     const large = engine.compute({ ...noVariance, effectSize: 0.5 }).sampleSize.perGroup;
-    expect(small).toBe(175); // 2·(2.8016)²/0.09 = 174.4 → 175
+    expect(small).toBe(176); // t-test (power.t.test 175.4 → 176); the normal approximation gave 175
     expect(small).toBeGreaterThan(large);
   });
 
