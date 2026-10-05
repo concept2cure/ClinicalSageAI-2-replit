@@ -8,12 +8,23 @@
  *
  *   - the support role does NOT pass here (it can monitor, not see financials)
  *   - platform_admin does NOT pass here either
- *   - only business roles (owner / business_admin / super_admin) or emails on
- *     the BUSINESS_CENTER_EMAILS allowlist may enter
+ *   - only an active platform_role_grants row for a business role (owner /
+ *     business_admin / super_admin), or the owner's own address on the
+ *     BUSINESS_CENTER_EMAILS allowlist, may enter
  *
- * "Only I or other designated personnel" → the platform owner is super_admin
- * (and/or on the allowlist); finance staff are granted via the `business_admin`
- * role or by email.
+ * "Only I or other designated personnel" → the platform owner is on the
+ * allowlist and/or holds a super_admin grant; finance staff are granted
+ * `business_admin` in Access Management.
+ *
+ * Standing is PLATFORM standing, never a tenant role (D6, 2026-10-05,
+ * docs/evidence/D6/2026-10-05-business-center-standing/). This guard used to
+ * admit a req.userRole, req.user.role or req.user.roles of owner,
+ * business_admin or super_admin. On this router those are the TENANT membership
+ * role (server/auth.ts reads organization_users), and `owner` is a tenant
+ * administrative role across the codebase (tenant-users.ts, tenant-export.ts,
+ * ORG_ROLE_FUNCTIONAL_GRANTS). So any membership carrying it, such as one
+ * written by an older version, a future writer, or a hand edit, would have
+ * opened every client's cost, revenue and margin to that tenant.
  *
  * @compliance FDA 21 CFR Part 11 §11.10(d) — limiting access to authorized
  *             individuals; segregation of financial duties.
@@ -44,12 +55,11 @@ function allowlistedEmails(): Set<string> {
   return businessAllowlistedEmails();
 }
 
-/** True when the authenticated request may access Business Center data. */
+/** True when the request's own sign-in is on the Business Center allowlist.
+ *  The synchronous half of the guard; the other half is a platform grant
+ *  (hasActiveBusinessGrant). No request role is read: on this router that is
+ *  the tenant membership role (see the module comment). */
 export function isBusinessAdmin(req: Request): boolean {
-  const primaryRole = (req.userRole || req.user?.role || '').toString().toLowerCase();
-  const roles = (req.user?.roles || []).map(r => String(r).toLowerCase());
-  if (BUSINESS_ROLES.has(primaryRole)) return true;
-  if (roles.some(r => BUSINESS_ROLES.has(r))) return true;
 
   // The allowlist names the owner's OWN (password) sign-in. A federated
   // session's e-mail is whatever its identity provider asserted, so it gets
@@ -85,6 +95,18 @@ async function hasActiveBusinessGrant(userId: number): Promise<boolean> {
 }
 
 /**
+ * Business standing: the owner's own sign-in on the allowlist, or an active
+ * platform business grant. The one decision for the Business Center and for
+ * Access Management's "only a business administrator designates finance
+ * personnel" check, so the two cannot disagree.
+ */
+export async function hasBusinessStanding(req: Request): Promise<boolean> {
+  if (isBusinessAdmin(req)) return true;
+  const userId = Number(req.userId ?? NaN);
+  return Number.isFinite(userId) && (await hasActiveBusinessGrant(userId));
+}
+
+/**
  * Express middleware — gate a route to the Business Center tier. Must run AFTER
  * authMiddleware (relies on resolved req.user / req.userRole).
  *
@@ -96,10 +118,7 @@ export async function requireBusinessAdmin(req: Request, res: Response, next: Ne
   if (!req.user && req.userId == null) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  if (isBusinessAdmin(req)) {
-    return next();
-  }
-  if (req.userId != null && (await hasActiveBusinessGrant(Number(req.userId)))) {
+  if (await hasBusinessStanding(req)) {
     return next();
   }
   logger.warn('Business Center access denied', {

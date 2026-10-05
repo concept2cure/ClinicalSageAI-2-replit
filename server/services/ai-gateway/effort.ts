@@ -73,6 +73,31 @@ export function resolveApiEffort(effort: EffortLevel): 'low' | 'medium' | 'high'
 }
 
 /**
+ * The API effort a turn runs at: the person's effort, not sent under a
+ * kernel-pinned strategy (resolveStrategyWithPrecedence), and on a high-stakes
+ * turn at least 'high' (MC-RL-5, AnA reasoning round 4, 2026-10-05).
+ *
+ * The high-stakes floor was a thinking budget (reasoning.ts
+ * THINKING_BUDGETS.highStakesFloor), which only the legacy thinking surface
+ * reads; the flagship's thinking is adaptive and self-budgets, so the floor
+ * never reached it. The API effort is the lever an adaptive model answers to.
+ * Raising it is not the override a pin forbids (dropping a pinned tenant to
+ * 'low'), so the floor holds under a pin too. Fast is exempt, as it is from
+ * the thinking floor (resolveThinkingConfig): the person asked for it.
+ */
+export function resolveTurnApiEffort(input: {
+  effort: EffortLevel;
+  riskTier?: string;
+  policyPinned: boolean;
+}): 'low' | 'medium' | 'high' | 'max' | undefined {
+  const chosen = input.policyPinned ? undefined : resolveApiEffort(input.effort);
+  if (input.riskTier !== 'high' || input.effort === 'fast') return chosen;
+  // No effort maps above 'high' (EFFORT_TO_API_EFFORT; pinned by its test), so
+  // the floor only ever raises.
+  return 'high';
+}
+
+/**
  * Resolve the effective routing strategy with governance-safe precedence:
  *
  *   policyHintStrategy  →  effortStrategy  →  routingPlanStrategy
