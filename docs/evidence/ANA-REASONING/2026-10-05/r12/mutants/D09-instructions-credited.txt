@@ -1,0 +1,12 @@
+Mutant D09-instructions-credited: the block’s instructions to the model are read as evidence
+
+--- server/services/ana/turn-record-draft.ts
+- return (end >= 0 ? evidenceBlock.slice(0, end) : evidenceBlock).trim();
++ return evidenceBlock.trim();
+
+Tests run: server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > the evidence the model was shown is the block without its instructions to the model 8ms
+      Tests  1 failed | 8 passed (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

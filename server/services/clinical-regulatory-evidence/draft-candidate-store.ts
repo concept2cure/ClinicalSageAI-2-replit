@@ -60,6 +60,10 @@ export interface DraftGenerator {
   /** Set where a route genuinely has a versioned prompt file. */
   promptVersion?: string | null;
   generatedAt: string;
+  /** The gateway request that produced the draft: its ledger row (round 12, RT-6). */
+  requestId?: string | null;
+  /** The AnA turn record the draft was filed under (services/ana/turn-record-draft.ts). */
+  turnRecordId?: string | null;
 }
 
 export interface DraftCandidate {
@@ -124,6 +128,9 @@ export async function createDraftCandidate(
   return { id: rows[0].id, expiresAt: String(rows[0].expires_at) };
 }
 
+/** A generator field as stored: a string, or null for anything else. */
+const stringOrNull = (v: unknown): string | null => (typeof v === 'string' ? v : null);
+
 /**
  * Claim a parked candidate for acceptance — single-use, tenant- and section-
  * scoped, unexpired. Returns null when no such live candidate exists (wrong
@@ -177,11 +184,13 @@ export async function consumeDraftCandidate(
     typeof r.generator === 'string' ? safeParseObject(r.generator) : (r.generator as any);
   if (g && typeof g === 'object') {
     generator = {
-      model: typeof g.model === 'string' ? g.model : null,
-      provider: typeof g.provider === 'string' ? g.provider : null,
-      promptSha256: typeof g.promptSha256 === 'string' ? g.promptSha256 : null,
-      promptVersion: typeof g.promptVersion === 'string' ? g.promptVersion : null,
-      generatedAt: typeof g.generatedAt === 'string' ? g.generatedAt : '',
+      model: stringOrNull(g.model),
+      provider: stringOrNull(g.provider),
+      promptSha256: stringOrNull(g.promptSha256),
+      promptVersion: stringOrNull(g.promptVersion),
+      generatedAt: stringOrNull(g.generatedAt) ?? '',
+      requestId: stringOrNull(g.requestId),
+      turnRecordId: stringOrNull(g.turnRecordId),
     };
   }
 

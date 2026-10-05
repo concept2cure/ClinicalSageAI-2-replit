@@ -1,0 +1,34 @@
+Red first: round 12's suites against trunk e78869eec's code for authoring.router.ts, draft-candidate-store.ts and AuthoringAiDraft.tsx, with the new turn-record-draft.ts set aside.
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx
+Fourteen tests fail. The 28 that pass are the files' existing tests. The run had 42 tests; the green run has 47. The five added after this run test what the review's findings (review.md) asked for, and each is shown red by its own mutant: the evidenceShown unit test (D09), the header credited (D16), the two faults (D19, D20), and the helper's suite, filed once (D21) and a check that could not run (D22). The first test also gained two assertions after this run: the labels note (D17) and the raw answer (D18). Building the fault test found a third unfiled exit, a fault of ours inside the model call, which is fixed (D19).
+
+ × server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > does not half-populate a generator it cannot read 10ms
+   → expected { model: 'm', provider: null, …(3) } to deeply equal { model: 'm', provider: null, …(5) }
+ × server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store — the turn and the request a draft came from (round 12, RT-6) > carries the gateway request id and the turn record id from park to accept 4ms
+   → expected { model: 'claude-opus-5-5', …(4) } to match object { requestId: 'req-rt6-1', …(1) }
+ × client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > shows the engine’s check of the draft before the accept: what was not found, and the verdict 33ms
+   → Unable to find an element by: [data-testid="ai-draft-check"]
+ × client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > a draft the server did not check says so, and never reads as a pass 26ms
+   → Unable to find an element by: [data-testid="ai-draft-check"]
+ × client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > a draft whose record was not filed says so, with the server’s reason 23ms
+   → Unable to find an element by: [data-testid="ai-draft-record"]
+ × client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > once the author edits the draft, the check says the edits are not checked 18ms
+   → Unable to find an element by: [data-testid="ai-draft-check"]
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > files one record holding the prompt sent, the draft returned, the model and the gateway request 76ms
+   → expected [] to have a length of 1 but got +0
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > opens the record before the model is asked, so the turn starts when it did 22ms
+   → Cannot read properties of undefined (reading 'started_at')
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a gateway refusal is filed as a failed turn 16ms
+   → expected [] to have a length of 1 but got +0
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a provider that answers with no draft is filed as a failed turn holding the prompt it was sent 12ms
+   → Cannot read properties of undefined (reading 'outcome')
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > names the claims no source holds and the verdict it states; the person’s words are theirs, not a source 12ms
+   → Cannot read properties of undefined (reading 'engine')
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a figure past the 600-character cut is not found: the model was never shown it 11ms
+   → Cannot read properties of undefined (reading 'notFound')
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a failed retrieval consulted nothing: every claim unchecked, none not found, and the record says why in the fixed sentence 11ms
+   → Cannot read properties of undefined (reading 'basis')
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the record follows the draft to its accept > the accept’s trail row names the turn record and the gateway request the draft came from 72ms
+   → Cannot read properties of undefined (reading 'id')
+ Test Files  3 failed (3)
+      Tests  14 failed | 28 passed (42)
