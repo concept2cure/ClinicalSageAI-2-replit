@@ -1,0 +1,41 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts
+{
+  "timestamp": "2026-10-05T01:39:49.397Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T01:39:49.398Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts
+{
+  "timestamp": "2026-10-05T01:39:49.399Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > is not sent back to the model as a failure to work around 37ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > is shown to the person as their decision, not as AnA failing 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > nobody answering in time is not a failure to work around either 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > control: an approved action that then fails is still a failure > stays in the adaptation note, so a real error is not hidden 4ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  01:39:46
+   Duration  7.23s (transform 4.36s, setup 83ms, import 6.82s, tests 57ms, environment 0ms)
+

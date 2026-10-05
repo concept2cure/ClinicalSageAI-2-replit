@@ -21,7 +21,7 @@ import { PROMPTS_DIR } from '../../server/services/ai-gateway/prompts-dir';
 const REQUIRED_PROMPTS = [
   'consistency-check/v1.0.md', // truth-engine-service
   'section-generation/v1.1.md', // section-generation-service
-  'shadow-review/v1.0.md', // shadow-review-service
+  'shadow-review/v1.1.md', // shadow-review-service
   'fcoi-completeness-review/v1.0.md', // financial-disclosures route
   'document-extract/v1.0.md', // ingestion-service
   'submission-plan/v1.0.md', // submission-ai-service
