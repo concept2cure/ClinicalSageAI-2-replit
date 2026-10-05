@@ -1,0 +1,162 @@
+[
+ {
+  "request": 23,
+  "label": "round-1-no-hold",
+  "refusedByContract": null,
+  "model": "claude-opus-5-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": {
+   "type": "adaptive",
+   "display": "summarized"
+  },
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 1,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Check three readiness sources for BX-512, one at a time."
+   }
+  ]
+ },
+ {
+  "request": 24,
+  "label": "after-round-1",
+  "refusedByContract": null,
+  "model": "claude-opus-5-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": null,
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 3,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Check three readiness sources for BX-512, one at a time."
+   },
+   {
+    "index": 1,
+    "role": "assistant",
+    "content": "Readiness source 1."
+   },
+   {
+    "index": 2,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_23)]:\n{\"ok\":true,\"query\":\"readiness source 1 of 3\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   }
+  ]
+ },
+ {
+  "request": 25,
+  "label": "after-run-this-step",
+  "refusedByContract": null,
+  "model": "claude-opus-5-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": null,
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 5,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Check three readiness sources for BX-512, one at a time."
+   },
+   {
+    "index": 1,
+    "role": "assistant",
+    "content": "Readiness source 1."
+   },
+   {
+    "index": 2,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_23)]:\n{\"ok\":true,\"query\":\"readiness source 1 of 3\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 3,
+    "role": "assistant",
+    "content": "Readiness source 2."
+   },
+   {
+    "index": 4,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_24)]:\n{\"ok\":true,\"query\":\"readiness source 2 of 3\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   }
+  ]
+ },
+ {
+  "request": 26,
+  "label": "after-do-this-instead",
+  "refusedByContract": null,
+  "model": "claude-opus-5-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": null,
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 8,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Check three readiness sources for BX-512, one at a time."
+   },
+   {
+    "index": 1,
+    "role": "assistant",
+    "content": "Readiness source 1."
+   },
+   {
+    "index": 2,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_23)]:\n{\"ok\":true,\"query\":\"readiness source 1 of 3\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 3,
+    "role": "assistant",
+    "content": "Readiness source 2."
+   },
+   {
+    "index": 4,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_24)]:\n{\"ok\":true,\"query\":\"readiness source 2 of 3\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 5,
+    "role": "assistant",
+    "content": "Readiness source 3."
+   },
+   {
+    "index": 6,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_25)]:\n{\"redirected\":true,\"tool\":\"global_search\",\"note\":\"The person redirected AnA before this step ran, so it was not run and nothing it would have produced exists. Follow their instruction instead. Do not treat this as the tool having no answer.\"}"
+   },
+   {
+    "index": 7,
+    "role": "system",
+    "content": "The person you are working for has redirected you mid-task. This takes precedence over the plan you are currently following: change course to follow it for the remainder of this turn, and say in your answer what you changed. It directs your work only — it does not authorise any action a tenant policy or approval gate would otherwise refuse.\n\nTheir instruction: Skip that source; summarise what the first two found instead."
+   }
+  ]
+ }
+]

@@ -1,0 +1,15 @@
+2026-09-28T17:25:30Z
+https://ema.europa.eu/ -> curl: (56) CONNECT tunnel failed, response 403 000
+https://www.ema.europa.eu/ -> curl: (56) CONNECT tunnel failed, response 403 000
+https://database.ich.org/ -> curl: (56) CONNECT tunnel failed, response 403 000
+https://www.ich.org/ -> curl: (56) CONNECT tunnel failed, response 403 000
+https://www.govinfo.gov/ -> curl: (56) CONNECT tunnel failed, response 403 000
+https://www.ecfr.gov/ -> curl: (56) CONNECT tunnel failed, response 403 000
+https://www.fda.gov/ -> curl: (56) CONNECT tunnel failed, response 403 000
+https://eur-lex.europa.eu/ -> curl: (56) CONNECT tunnel failed, response 403 000
+https://uscode.house.gov/ -> curl: (56) CONNECT tunnel failed, response 403 000
+https://www.federalregister.gov/ -> curl: (56) CONNECT tunnel failed, response 403 000
+https://www.law.cornell.edu/ -> curl: (56) CONNECT tunnel failed, response 403 000
+https://web.archive.org/ -> curl: (56) CONNECT tunnel failed, response 403 000
+https://permanent.fdlp.gov/ -> curl: (56) CONNECT tunnel failed, response 403 000
+https://www.gmp-compliance.org/ -> curl: (56) CONNECT tunnel failed, response 403 000

@@ -50,6 +50,7 @@ import {
   GatewayPolicyEngine,
   type ContentPolicyAction,
   type PolicyFinding,
+  type RateLimitDenial,
 } from './policy';
 import { CLOUD_MODELS } from './providers/cloud-models';
 import {
@@ -90,11 +91,28 @@ import { getTenantScope } from '../../db/tenantStore.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { getContentClassifier } from '../ai-governance/classification/index.js';
 import { currentRunScope } from './run-scope';
-import { approvedEntryFor, isApprovedForHighRisk, isHighRiskRequest } from '../ai-governance/approved-models.js';
+import {
+  APPROVED_MODELS,
+  approvedEntryFor,
+  type ApprovedModel,
+} from '../ai-governance/approved-models.js';
 import {
   extractRequestText,
   getPiiEnforcement,
+  isProductionEnv,
 } from './pii-screen.js';
+import {
+  NO_PQ_QUALIFIED_MODEL,
+  governanceRefusal,
+  namesRegistryRow,
+  pqRefusalWhenNothingCapable,
+  selectionGovernance,
+  selectionRefusal,
+  type GovernanceRefusal,
+  type PqRefusalReason,
+  type SelectionGovernance,
+  type WithheldRow,
+} from './model-governance.js';
 // In-flight concurrency limiter — bounds simultaneous outbound provider calls.
 import { Semaphore, resolveMaxConcurrency } from './concurrency.js';
 import { apiEffortForModel } from './effort.js';
@@ -1255,6 +1273,13 @@ function isRequestShapeRefusal(error: unknown): boolean {
 export class AIGateway {
   private config: GatewayConfig;
   private models: ModelConfig[];
+  /**
+   * The approved-models list every selection point judges against
+   * (model-governance.ts). A field only so a test can judge against a
+   * synthetic list — a PQ recorded as passed; no configuration, environment
+   * variable or request field reaches it.
+   */
+  private readonly approvedModels: readonly ApprovedModel[] = APPROVED_MODELS;
   private providerHealth: Map<ProviderName, ProviderHealth>;
   private auditLogger: GatewayAuditLogger;
   private policyEngine: GatewayPolicyEngine;
@@ -1367,6 +1392,7 @@ export class AIGateway {
     // the request doesn't specify it. Explicit request values always win; if no
     // policy or the lookup fails, behavior is unchanged (explicit-only).
     request = await this.applyOrgPlacementDefaults(request);
+    await this.refuseUnboundInProduction(request, { strategy, requestId, startTime });
 
     // Capture classification before the redaction policy can replace sensitive
     // values. The last-mile placement gate consumes this immutable category.
@@ -1390,13 +1416,18 @@ export class AIGateway {
     // patterns, rate limits)
     const policyResult = this.policyEngine.evaluate(request);
     if (!policyResult.allowed) {
-      // Content-security refusals (injection blocks) are compliance events and
-      // leave an audit trace. Budget/rate denials carry no block findings and
-      // keep their existing unaudited behavior (no rate-limit audit spam).
+      // Every refusal here that is a compliance event leaves an audit trace:
+      // a content-security block (injection) through logContentPolicyBlock, a
+      // rate-limit refusal through logRateLimitRefusal (ADR-0015 §5 — until
+      // 2026-09-28 it was left unrecorded to avoid "audit spam"). A token-budget
+      // denial is the caller's own request shape and stays unrecorded.
       await this.logContentPolicyBlock(
         request, strategy, requestId, startTime, policyResult.reason, policyResult.findings
       );
-      throw new GatewayPolicyError(policyResult.reason || 'Request blocked by policy');
+      await this.logRateLimitRefusal(request, { strategy, requestId, startTime }, policyResult.rateLimit);
+      throw policyResult.rateLimit
+        ? new RateLimitError(policyResult.reason || 'Rate limit exceeded', policyResult.rateLimit)
+        : new GatewayPolicyError(policyResult.reason || 'Request blocked by policy');
     }
 
     // PII/PHI content pass (async — governed ai-governance classifier).
@@ -1429,36 +1460,27 @@ export class AIGateway {
           }
         : undefined;
 
-    // Deterministic mode
+    // Deterministic mode. In production it is not a way around governance:
+    // selection runs first, so every refusal it makes — the PQ refusal of
+    // high-risk drafting above all (ADR-0015 §3, "no bypass in production") —
+    // is raised and ledgered before any fixture text is returned. Until
+    // 2026-09-28 (track GW review [2]/[11]) AI_GATEWAY_DETERMINISTIC=true
+    // returned DETERMINISTIC_RESPONSES.document_drafting here in production.
+    // Outside production it is unchanged.
     if (this.config.deterministicMode) {
+      if (isProductionEnv()) await this.selectOrRefuse(request, { strategy, requestId, startTime });
       return this.buildDeterministicResponse(request, requestId, startTime);
     }
 
     // Select model — fall back to deterministic if no providers available
-    let selectedModel: ModelConfig | null;
-    try {
-      selectedModel = this.selectModel(request, strategy);
-    } catch (error) {
-      // A governance refusal is a compliance event: it leaves an audit trace
-      // naming the models withheld, exactly as a content-policy block does.
-      if (error instanceof ModelNotApprovedError) {
-        await this.logModelApprovalRefusal(request, strategy, requestId, startTime, error);
-      }
-      if (error instanceof TenantPlacementError) {
-        const capable = this.models
-          .filter(m => m.enabled && m.capabilities.includes(request.taskType))
-          .map(m => m.provider);
-        await this.logTenantPlacementRefusal(request, requestId, startTime, error, [...new Set(capable)]);
-      }
-      throw error;
-    }
+    const selectedModel = await this.selectOrRefuse(request, { strategy, requestId, startTime });
     if (!selectedModel) {
       // Fail closed in production: serving demo-mode ("[KNOWN]"/placeholder)
       // regulatory text from a keyless prod deploy would silently present
       // fabricated content as a real AI response. Demo fallback is for dev only;
       // an explicit deterministicMode (handled above) remains a deliberate opt-in.
       // See FORENSIC_CODE_AUDIT_2026-05-29.md (LOW: keyless-prod demo mode).
-      if (process.env.NODE_ENV === 'production') {
+      if (isProductionEnv()) {
         throw new Error(
           '[AI Gateway] No AI provider is configured in production; refusing to serve demo-mode content. ' +
             'Set ANTHROPIC_API_KEY / OPENAI_API_KEY, or enable deterministicMode explicitly.'
@@ -3185,26 +3207,21 @@ export class AIGateway {
   // Model Selection & Routing
   // ─────────────────────────────────────────────────────────────────────────
 
+  /** Select, or raise the selection's refusal after recording it in the ledger. */
+  private async selectOrRefuse(request: GatewayRequest, ctx: RefusalContext): Promise<ModelConfig | null> {
+    try {
+      return this.selectModel(request, ctx.strategy);
+    } catch (error) {
+      await this.auditSelectionRefusal(error, request, ctx);
+      throw error;
+    }
+  }
+
   private selectModel(request: GatewayRequest, strategy: RoutingStrategy): ModelConfig | null {
+    const gov = this.governance();
     // Explicit provider/model override
     if (request.provider || request.model) {
-      const matches = this.models.filter(
-        m =>
-          m.enabled &&
-          (!request.provider || m.provider === request.provider) &&
-          (!request.model || m.model === request.model || m.id === request.model) &&
-          this.meetsPlacementRequirements(m.provider, request)
-      );
-      // A caller naming a model for a high-risk task does not get a silent
-      // substitute and does not get the model it named: it gets a refusal that
-      // says why. Rerouting would hide the violation in the caller; honouring
-      // it would be the violation.
-      const explicit = matches.find(m => this.approvedForTask(m, request));
-      if (!explicit && matches.length > 0 && isHighRiskRequest(request.taskType, request.riskTier)) {
-        throw new ModelNotApprovedError(request.taskType, matches.map(m => m.id), 'explicit');
-      }
-      if (explicit && this.isProviderHealthy(explicit.provider)) return explicit;
-      // Even if unhealthy, honor explicit if it's the only option
+      const explicit = this.selectExplicit(request, gov);
       if (explicit) return explicit;
     }
 
@@ -3213,58 +3230,97 @@ export class AIGateway {
         m.enabled &&
         m.capabilities.includes(request.taskType) &&
         this.meetsPlacementRequirements(m.provider, request) &&
-        this.approvedForTask(m, request) &&
+        this.approvedForTask(m, request, gov) &&
         this.isProviderHealthy(m.provider)
     );
 
     if (eligible.length === 0) {
-      // Relax health check (but never relax placement or approval: residency,
-      // ZDR and high-risk approval are hard compliance constraints, not
-      // preferences).
+      // Relax health check (but never relax placement or governance:
+      // residency, ZDR, the approved entry and high-risk approval are hard
+      // compliance constraints, not preferences).
       const relaxed = this.models.filter(
         m =>
           m.enabled &&
           m.capabilities.includes(request.taskType) &&
           this.meetsPlacementRequirements(m.provider, request) &&
-          this.approvedForTask(m, request)
+          this.approvedForTask(m, request, gov)
       );
       if (relaxed.length > 0) return relaxed[0];
-      /* Nothing approved remains — but something capable may. That is not
-         "no provider configured", and it must not be returned as null: the
-         caller turns null into demo-mode content outside production and into
-         a misleading "no AI provider is configured" inside it. A governance
-         refusal is its own terminal outcome, and it says which models were
-         withheld. */
-      if (isHighRiskRequest(request.taskType, request.riskTier)) {
-        const withheld = this.models.filter(
-          m =>
-            m.enabled &&
-            m.capabilities.includes(request.taskType) &&
-            this.meetsPlacementRequirements(m.provider, request)
-        );
-        if (withheld.length > 0) {
-          throw new ModelNotApprovedError(request.taskType, withheld.map(m => m.id), 'no-approved-model');
-        }
-      }
-      /* Capable models exist, and the tenant's floor excluded every one of
-         them. That is a placement decision, not a missing configuration: an
-         on-prem tenant with no self-hosted lane used to be told "No AI
-         provider is configured". Refuse with the reason instead. */
-      const capable = this.models.filter(
-        m => m.enabled && m.capabilities.includes(request.taskType),
-      );
-      if (capable.length > 0) {
-        const denials = capable
-          .map(m => this.tenantPlacementVerdict(m.provider, request))
-          .filter((v): v is Extract<typeof v, { allowed: false }> => !v.allowed);
-        if (denials.length === capable.length) {
-          const details = [...new Set(denials.map(d => d.detail))];
-          throw new TenantPlacementError('DENY_TENANT_POLICY', details.join('; '), 'selection');
-        }
-      }
-      return null;
+      return this.refuseUnservable(request, gov);
     }
 
+    return this.pickByStrategy(eligible, strategy, request);
+  }
+
+  /**
+   * The explicit path. The named row when it may serve; null to fall through
+   * to strategy selection when every row it names is disabled or outside the
+   * tenant's placement (as it always has); a terminal refusal otherwise.
+   *
+   * A name that matches no registry row is refused, naming it (ADR-0015 §4).
+   * Until 2026-09-28 it matched nothing and fell through to strategy
+   * selection: the caller asked for one model and silently got another.
+   */
+  private selectExplicit(request: GatewayRequest, gov: SelectionGovernance): ModelConfig | null {
+    if (!namesRegistryRow(this.models, request)) {
+      throw new ModelNotGovernedError('unknown-model', [], explicitName(request));
+    }
+    const matches = this.models.filter(
+      m =>
+        m.enabled &&
+        (!request.provider || m.provider === request.provider) &&
+        (!request.model || m.model === request.model || m.id === request.model) &&
+        this.meetsPlacementRequirements(m.provider, request)
+    );
+    // A caller naming a model that may not serve this request does not get a
+    // silent substitute and does not get the model it named: it gets a refusal
+    // that says why. Rerouting would hide the violation in the caller;
+    // honouring it would be the violation. An unhealthy named row is still
+    // honoured when it may serve: it is what was asked for.
+    const explicit = matches.find(m => this.approvedForTask(m, request, gov));
+    if (explicit) return explicit;
+    const refusal = governanceRefusal(request, matches, gov, this.capableRows(request).length);
+    if (refusal) throw governanceError(request, refusal, 'explicit');
+    return null;
+  }
+
+  /** Enabled rows that can do this task, placement aside. */
+  private capableRows(request: GatewayRequest): ModelConfig[] {
+    return this.models.filter(m => m.enabled && m.capabilities.includes(request.taskType));
+  }
+
+  /**
+   * Nothing that may serve remains. That is not "no provider configured", and
+   * it must not be returned as null when something capable was withheld: the
+   * caller turns null into demo-mode content outside production and into a
+   * misleading "no AI provider is configured" inside it. A governance refusal
+   * is its own terminal outcome, and it says which models were withheld.
+   */
+  private refuseUnservable(request: GatewayRequest, gov: SelectionGovernance): null {
+    const capable = this.capableRows(request);
+    const withheld = capable.filter(m => this.meetsPlacementRequirements(m.provider, request));
+    const refusal =
+      governanceRefusal(request, withheld, gov, capable.length) ??
+      (capable.length === 0 ? pqRefusalWhenNothingCapable(request, gov) : null);
+    if (refusal) throw governanceError(request, refusal, 'strategy');
+    /* Capable models exist, and the tenant's floor excluded every one of
+       them. That is a placement decision, not a missing configuration: an
+       on-prem tenant with no self-hosted lane used to be told "No AI
+       provider is configured". Refuse with the reason instead. */
+    if (capable.length > 0) {
+      const denials = capable
+        .map(m => this.tenantPlacementVerdict(m.provider, request))
+        .filter((v): v is Extract<typeof v, { allowed: false }> => !v.allowed);
+      if (denials.length === capable.length) {
+        const details = [...new Set(denials.map(d => d.detail))];
+        throw new TenantPlacementError('DENY_TENANT_POLICY', details.join('; '), 'selection');
+      }
+    }
+    return null;
+  }
+
+  /** The strategy's pick among rows that may serve and are healthy. */
+  private pickByStrategy(eligible: ModelConfig[], strategy: RoutingStrategy, request: GatewayRequest): ModelConfig {
     switch (strategy) {
       case 'quality_optimized':
         return eligible.sort((a, b) => b.qualityScore - a.qualityScore)[0];
@@ -3324,6 +3380,7 @@ export class AIGateway {
     triedModels: string[],
     primaryProvider: ProviderName,
   ): ModelConfig[] {
+    const gov = this.governance();
     const eligible = this.models.filter(
       m =>
         m.enabled &&
@@ -3331,11 +3388,13 @@ export class AIGateway {
         !triedModels.includes(m.id) &&
         // Residency / ZDR are hard constraints — never fall back across them.
         this.meetsPlacementRequirements(m.provider, request) &&
-        // So is high-risk approval. This rung was where drafting used to walk
-        // from Opus down to Sonnet, and review on to GPT-4o, when the approved
+        // So is governance. This rung was where drafting used to walk from
+        // Opus down to Sonnet, and review on to GPT-4o, when the approved
         // models failed: a degraded answer from a model the registry says is
-        // not approved for the work, delivered as if nothing had happened.
-        this.approvedForTask(m, request),
+        // not approved for the work, delivered as if nothing had happened. It
+        // is also where production drafting would walk from a PQ-passed model
+        // to a PQ-pending one (ADR-0015 §3).
+        this.approvedForTask(m, request, gov),
     );
     const samePriority = eligible.filter(m => m.provider === primaryProvider);
     const otherProviders = eligible.filter(m => m.provider !== primaryProvider);
@@ -3346,15 +3405,30 @@ export class AIGateway {
   }
 
   /**
-   * True when this model may serve this request's task.
+   * True when this model may serve this request here: the single predicate
+   * behind every selection point — explicit, strategy (eligible and relaxed)
+   * and the fallback ladder — so they cannot disagree. model-governance.ts
+   * selectionRefusal (ADR-0015 §3, §4): the row is its own approved-models
+   * entry at every risk level; in production its entry pins a concrete
+   * artifact; on high-risk work its entry is `approvedForHighRisk`; and in
+   * production, high-risk drafting needs a passed PQ.
    *
-   * `docs/LAUNCH_DEFINITION_OF_DONE.md`: only approved models serve high-risk
-   * regulatory drafting. The approval is `approvedForHighRisk` in
-   * `server/services/ai-governance/approved-models.ts`; an id that registry does
-   * not know is not approved. Tasks that are not high-risk are unaffected.
+   * Until 2026-09-28 this checked high-risk work only, and by registry id
+   * alone (`isApprovedForHighRisk(model.id)`): every other request could be
+   * served by any enabled row, and a row drifted off its pinned version under
+   * an approved id passed.
    */
-  private approvedForTask(model: ModelConfig, request: GatewayRequest): boolean {
-    return !isHighRiskRequest(request.taskType, request.riskTier) || isApprovedForHighRisk(model.id);
+  private approvedForTask(
+    model: ModelConfig,
+    request: GatewayRequest,
+    gov: SelectionGovernance = this.governance(),
+  ): boolean {
+    return selectionRefusal(model, request, gov) === null;
+  }
+
+  /** The governance selection runs under: this environment, and the approved-models list. */
+  private governance(): SelectionGovernance {
+    return selectionGovernance(this.approvedModels);
   }
 
   /**
@@ -3411,7 +3485,7 @@ export class AIGateway {
    */
   private isPlacementEnforced(): boolean {
     return (
-      process.env.NODE_ENV === 'production' ||
+      isProductionEnv() ||
       process.env.AI_SENSITIVE_DATA_POLICY_MODE === 'enforce' ||
       getPiiEnforcement() === 'block'
     );
@@ -3425,9 +3499,11 @@ export class AIGateway {
    * the request middleware or job runner opened (the pattern the embedding
    * provider already used). About 40 of 65 gateway call sites never passed an
    * `organizationId` — AnA's own chat turns among them — so until 2026-09-25
-   * their tenant's policy was never applied. The ambient binding is used for
-   * placement and audit attribution only; it does not rewrite
-   * `organizationId`, which also keys the per-org rate limit.
+   * their tenant's policy was never applied. The ambient binding does not
+   * rewrite `organizationId`; it is recorded on `sensitiveTenantPolicy`, and
+   * placement, audit attribution, the per-org rate limit and usage metering
+   * all read the tenant from there (since 2026-09-28, ADR-0015 §5, the rate
+   * limit and metering too).
    *
    * A system or pre-auth scope (tenant '0') is platform work and carries no
    * tenant. A call with no scope at all and no organization is a lost binding:
@@ -3490,6 +3566,40 @@ export class AIGateway {
         },
       };
     }
+  }
+
+  /**
+   * A call with no tenant at all — no organizationId, no tenant scope, not
+   * even the platform's system scope — is refused in production before it is
+   * charged to anything (ADR-0015 §5). Until 2026-09-28 it was counted against
+   * the shared '__global__' rate bucket first, then refused at selection for a
+   * tenant payload and served for a public one.
+   *
+   * Platform work in an explicit system or pre-auth scope is not refused: it
+   * carries no tenant by design (bindTenant), and is audited by name. Outside
+   * production nothing changes. `isProductionEnv` is the only input.
+   */
+  private async refuseUnboundInProduction(request: GatewayRequest, ctx: RefusalContext): Promise<void> {
+    const tenant = request.sensitiveTenantPolicy;
+    if (tenant?.boundFrom !== 'none' || !isProductionEnv()) return;
+    const error = new TenantPlacementError('DENY_NO_TENANT_BINDING', 'the request is not bound to an organization', 'admission');
+    log.warn('[ai-gateway] refused a call with no tenant binding in production; nothing was sent', {
+      callerModule: request.callerModule,
+      taskType: request.taskType,
+      requestId: ctx.requestId,
+    });
+    // A platform fault, not a placement decision: recorded as tenant binding,
+    // with no PII/placement finding (track GW review [24]).
+    await this.logRefusalRow(request, ctx, error.reasonCode, {
+      tenantBinding: {
+        stage: error.stage,
+        boundFrom: tenant.boundFrom,
+        resolution: tenant.resolution,
+        unknownReason: tenant.unknownReason,
+        payloadProvenance: request.payloadProvenance ?? 'tenant_governed',
+      },
+    });
+    throw error;
   }
 
   /**
@@ -3875,30 +3985,84 @@ export class AIGateway {
   }
 
   /**
-   * Audit a content-policy refusal (prompt-injection or PII/PHI block).
-   * Refusals are compliance events: a request the gateway declined must be as
-   * traceable as one it served. Fires only when block findings exist —
-   * budget / rate-limit denials are not content events and keep their
-   * pre-existing unaudited behavior. Records the prompt hash, never raw
-   * content; provider/model are 'none' because nothing was dispatched.
+   * Audit a selection refusal. A governance refusal (ModelNotApprovedError,
+   * ModelNotGovernedError) names the models withheld; a tenant placement
+   * refusal names the providers the floor excluded. Anything else is not a
+   * refusal and is left to the caller.
    */
-  /** Audit a {@link ModelNotApprovedError}. Never throws; an audit failure is logged. */
+  private async auditSelectionRefusal(error: unknown, request: GatewayRequest, ctx: RefusalContext): Promise<void> {
+    if (
+      error instanceof ModelNotApprovedError ||
+      error instanceof ModelNotGovernedError ||
+      error instanceof ModelNotQualifiedError
+    ) {
+      await this.logModelApprovalRefusal(request, ctx, error);
+      return;
+    }
+    if (error instanceof TenantPlacementError) {
+      const capable = this.models
+        .filter(m => m.enabled && m.capabilities.includes(request.taskType))
+        .map(m => m.provider);
+      await this.logTenantPlacementRefusal(request, ctx.requestId, ctx.startTime, error, [...new Set(capable)]);
+    }
+  }
+
+  /** Audit a model-governance refusal. Never throws; an audit failure is logged. */
   private async logModelApprovalRefusal(
     request: GatewayRequest,
-    strategy: RoutingStrategy,
-    requestId: string,
-    startTime: number,
-    refusal: ModelNotApprovedError,
+    ctx: RefusalContext,
+    refusal: ModelNotApprovedError | ModelNotGovernedError | ModelNotQualifiedError,
+  ): Promise<void> {
+    await this.logRefusalRow(request, ctx, refusal.code, {
+      modelGovernance: {
+        code: refusal.code,
+        reason: refusal.reason,
+        withheldModelIds: refusal.withheldModelIds,
+        // Each withheld row with its own reason, pinned version and PQ status
+        // at the time — governed data that changes, so the row keeps it.
+        withheld: refusal.withheld,
+        capableConfigured: refusal.capableConfigured,
+        declaredRiskTier: request.riskTier ?? null,
+        ...(refusal instanceof ModelNotGovernedError ? { requestedModel: refusal.requestedModel } : {}),
+      },
+    });
+  }
+
+  /**
+   * Audit a rate-limit refusal like any other refused call (ADR-0015 §5):
+   * which limit, its window, and the count that crossed it. Does nothing when
+   * the denial was not a rate limit.
+   */
+  private async logRateLimitRefusal(
+    request: GatewayRequest,
+    ctx: RefusalContext,
+    rateLimit: RateLimitDenial | undefined,
+  ): Promise<void> {
+    if (!rateLimit) return;
+    await this.logRefusalRow(request, ctx, 'RATE_LIMIT_EXCEEDED', { rateLimit });
+  }
+
+  /**
+   * One ledger row for a request refused before anything was dispatched:
+   * provider and model 'none', no tokens, the refusal's code in `error` and
+   * its detail under `metadata`. Records the prompt hash, never raw content.
+   * Never throws; an audit failure is logged.
+   */
+  private async logRefusalRow(
+    request: GatewayRequest,
+    ctx: RefusalContext,
+    code: string,
+    detail: Record<string, unknown>,
   ): Promise<void> {
     if (!this.config.auditEnabled) return;
     try {
       await this.auditLogger.log({
-        requestId,
+        requestId: ctx.requestId,
         timestamp: new Date(),
         provider: 'none',
         model: 'none',
         taskType: request.taskType,
-        strategy,
+        strategy: ctx.strategy,
         organizationId: auditOrganizationId(request),
         userId: request.userId,
         projectId: request.projectId,
@@ -3907,28 +4071,28 @@ export class AIGateway {
         outputTokens: 0,
         totalTokens: 0,
         estimatedCostUsd: 0,
-        latencyMs: Date.now() - startTime,
+        latencyMs: Date.now() - ctx.startTime,
         success: false,
-        error: refusal.code,
+        error: code,
         cached: false,
         deterministic: false,
         promptHash: this.hashPrompt(request),
         ...ledgerProvenance(request),
-        metadata: {
-          ...(request.metadata ?? {}),
-          modelGovernance: {
-            code: refusal.code,
-            reason: refusal.reason,
-            withheldModelIds: refusal.withheldModelIds,
-            declaredRiskTier: request.riskTier ?? null,
-          },
-        },
+        metadata: { ...(request.metadata ?? {}), ...detail },
       });
     } catch (auditError: any) {
-      log.error(`[AI Gateway] Model-approval audit log failed: ${auditError.message}`);
+      log.error(`[AI Gateway] Refusal audit log failed (${code}): ${auditError.message}`);
     }
   }
 
+  /**
+   * Audit a content-policy refusal (prompt-injection or PII/PHI block).
+   * Refusals are compliance events: a request the gateway declined must be as
+   * traceable as one it served. Fires only when block findings exist — a
+   * rate-limit refusal is recorded by logRateLimitRefusal, and a token-budget
+   * denial is not recorded. Records the prompt hash, never raw content;
+   * provider/model are 'none' because nothing was dispatched.
+   */
   private async logContentPolicyBlock(
     request: GatewayRequest,
     strategy: RoutingStrategy,
@@ -3982,13 +4146,20 @@ export class AIGateway {
    * tenant metering must survive that toggle. Fire-and-forget — a metering
    * outage never fails the AI call. Calls without a tenant org id are not
    * metered (the recorder drops them rather than guessing attribution).
+   *
+   * The tenant is the one the call is bound to, explicit or ambient
+   * (auditOrganizationId). Until 2026-09-28 (track GW review [12]) it was the
+   * explicit organizationId alone, so the ~40 call sites bound through the
+   * ambient scope were never metered, and the per-organisation limits that
+   * read this table (ADR-0015: "the per-organisation cost caps remain the
+   * control") could not see them.
    */
   private recordTenantUsage(
     request: GatewayRequest,
     response: GatewayResponse,
     success: boolean
   ): void {
-    const orgRaw = request.organizationId;
+    const orgRaw = auditOrganizationId(request);
     const orgId = typeof orgRaw === 'string' ? Number.parseInt(orgRaw, 10) : orgRaw;
     if (orgId == null || !Number.isFinite(orgId) || orgId <= 0) return;
     const userRaw = request.userId;
@@ -4230,6 +4401,10 @@ export class ModelNotApprovedError extends GatewayPolicyError {
     readonly withheldModelIds: string[],
     /** `explicit`: the caller named them. `no-approved-model`: routing found only them. */
     readonly reason: 'explicit' | 'no-approved-model',
+    /** Each withheld row with its own reason, for the ledger. */
+    readonly withheld: WithheldRow[] = [],
+    /** Enabled rows capable of the task, placement aside. */
+    readonly capableConfigured: number | null = null,
   ) {
     super(
       `MODEL_NOT_APPROVED_FOR_HIGH_RISK: ${taskType} is high-risk regulatory work and no model approved ` +
@@ -4238,6 +4413,151 @@ export class ModelNotApprovedError extends GatewayPolicyError {
         'See approvedForHighRisk in server/services/ai-governance/approved-models.ts.',
     );
   }
+}
+
+/**
+ * In production, high-risk regulatory drafting and no model whose entry
+ * records a passed PQ may serve it (ADR-0015 §3; CLAUDE.md RULE 2). Its
+ * message is the plain statement {@link NO_PQ_QUALIFIED_MODEL}, and nothing
+ * else: the person is told that no performance-qualified model is available,
+ * never that a model is "not approved" (five are) or that it may pass "right
+ * now" (nothing changes until a PQ is executed).
+ *
+ * Its own code, MODEL_NOT_PQ_QUALIFIED, since 2026-09-28 (track GW review
+ * [21]). The first build reused ModelNotApprovedError's code, and its readers
+ * (multi-agent-council.ts, module3-narrative-builder.ts) then stated a false
+ * reason. `reason` is what the ledger distinguishes: `no-pq-qualified-model`
+ * (capable rows were withheld, each with its own reason in `withheld`) or
+ * `no-capable-model` (none is configured).
+ *
+ * A {@link GatewayPolicyError}: terminal by name — never retried, never walked
+ * down the fallback ladder. Thrown before anything is sent, and ledgered.
+ */
+export class ModelNotQualifiedError extends GatewayPolicyError {
+  readonly code = 'MODEL_NOT_PQ_QUALIFIED' as const;
+  readonly withheldModelIds: string[];
+  constructor(
+    readonly taskType: TaskType,
+    readonly reason: PqRefusalReason,
+    readonly withheld: WithheldRow[],
+    readonly capableConfigured: number,
+  ) {
+    super(NO_PQ_QUALIFIED_MODEL);
+    this.withheldModelIds = withheld.map(w => w.id);
+  }
+}
+
+/**
+ * A model that is not an approved-models entry was the only thing that could
+ * serve the request (ADR-0015 §4). CLAUDE.md RULE 2: a model is selectable
+ * only as an approved-models entry with a pinned version.
+ *
+ * - `unknown-model`: the caller named a model that is no registry row (of the
+ *   provider it named, when it named one), or a provider that has no row.
+ *   Until 2026-09-28 that fell through to strategy selection and was served by
+ *   a model the caller never asked for.
+ * - `no-entry`: the rows it could reach are not their own approved entry
+ *   (provider, registry id and pinned version).
+ * - `nominal-pin`: in production, the rows it could reach pin no concrete
+ *   artifact (`local-default`; approved-models.ts isNominalPin).
+ *
+ * A {@link GatewayPolicyError} whose name is not overridden, so it is terminal
+ * on every path (isTerminalGatewayError matches by name): never retried, never
+ * walked down the fallback ladder. Thrown before anything is sent, and
+ * ledgered like {@link ModelNotApprovedError}.
+ */
+export class ModelNotGovernedError extends GatewayPolicyError {
+  readonly code = 'MODEL_NOT_GOVERNED' as const;
+  constructor(
+    readonly reason: 'unknown-model' | 'no-entry' | 'nominal-pin',
+    /** Registry rows that could have served the request and were withheld. */
+    readonly withheldModelIds: string[],
+    /** What the caller named, when it named a model or a provider. */
+    readonly requestedModel: string | null,
+    /** Each withheld row with its own reason, for the ledger. */
+    readonly withheld: WithheldRow[] = [],
+    /** Enabled rows capable of the task, placement aside. */
+    readonly capableConfigured: number | null = null,
+  ) {
+    super(modelNotGovernedMessage(reason, withheldModelIds, requestedModel));
+  }
+}
+
+function modelNotGovernedMessage(
+  reason: ModelNotGovernedError['reason'],
+  withheld: string[],
+  requested: string | null,
+): string {
+  if (reason === 'unknown-model') {
+    return (
+      `MODEL_NOT_GOVERNED: "${requested}" names no model in the gateway registry, so nothing was sent. ` +
+      'A model is served only as an approved-models entry (server/services/ai-governance/approved-models.ts).'
+    );
+  }
+  const why =
+    reason === 'nominal-pin'
+      ? 'pins no concrete artifact (a weights digest), so it is not served in production'
+      : 'is not its own approved-models entry (provider, id and pinned version)';
+  return `MODEL_NOT_GOVERNED: ${withheld.join(', ') || 'no model'} ${why}; nothing was sent.`;
+}
+
+/**
+ * A rate limit refused the request (ADR-0015 §5). Carries its code and the
+ * limit that refused it, so the route answers 429 and the author reads that
+ * the organization is making too many requests — the same event the ledger
+ * row records — rather than "blocked by AI gateway policy" at 503 (track GW
+ * review [26]). A {@link GatewayPolicyError}: terminal, since a retry inside
+ * the same window, or on another model, draws from the same bucket.
+ */
+export class RateLimitError extends GatewayPolicyError {
+  readonly code = 'RATE_LIMIT_EXCEEDED' as const;
+  constructor(
+    message: string,
+    readonly rateLimit: RateLimitDenial,
+  ) {
+    super(message);
+  }
+}
+
+/** The terminal error for a governance refusal selection reached (model-governance.ts). */
+function governanceError(
+  request: GatewayRequest,
+  refusal: GovernanceRefusal,
+  via: 'explicit' | 'strategy',
+): GatewayPolicyError {
+  const ids = refusal.withheld.map(w => w.id);
+  if (refusal.kind === 'pq-not-qualified') {
+    return new ModelNotQualifiedError(request.taskType, refusal.reason, refusal.withheld, refusal.capableConfigured);
+  }
+  if (refusal.kind === 'not-approved-for-high-risk') {
+    return new ModelNotApprovedError(
+      request.taskType,
+      ids,
+      via === 'explicit' ? 'explicit' : 'no-approved-model',
+      refusal.withheld,
+      refusal.capableConfigured,
+    );
+  }
+  return new ModelNotGovernedError(
+    refusal.reason,
+    ids,
+    via === 'explicit' ? explicitName(request) : null,
+    refusal.withheld,
+    refusal.capableConfigured,
+  );
+}
+
+/** What an explicit request named: `provider/model`, or whichever of the two it named. */
+function explicitName(request: Pick<GatewayRequest, 'provider' | 'model'>): string | null {
+  if (request.provider && request.model) return `${request.provider}/${request.model}`;
+  return request.model ?? request.provider ?? null;
+}
+
+/** Where a pre-dispatch refusal is recorded from: the route's strategy, request id and start time. */
+interface RefusalContext {
+  strategy: RoutingStrategy;
+  requestId: string;
+  startTime: number;
 }
 
 /**
@@ -4373,7 +4693,7 @@ function bindTenant(
 ):
   | { organizationId: string | number; boundFrom: 'explicit' | 'ambient_scope' }
   | { unbound: TenantPolicySnapshot } {
-  const explicit = request.organizationId ?? undefined;
+  const explicit = isOrganizationId(request.organizationId) ? request.organizationId : undefined;
   const scope = getTenantScope();
   const ambient = scope?.tenantId && scope.tenantId !== '0' ? scope.tenantId : undefined;
   if (explicit !== undefined && ambient !== undefined && String(explicit) !== String(ambient)) {
@@ -4386,15 +4706,33 @@ function bindTenant(
   if (explicit !== undefined) return { organizationId: explicit, boundFrom: 'explicit' };
   if (ambient !== undefined) return { organizationId: ambient, boundFrom: 'ambient_scope' };
   if (scope) return { unbound: { resolution: 'absent', boundFrom: 'platform_scope' } };
-  if (process.env.NODE_ENV === 'production') {
+  if (isProductionEnv()) {
     return { unbound: { resolution: 'unknown', unknownReason: 'no_tenant_binding', boundFrom: 'none' } };
   }
   return { unbound: { resolution: 'absent', boundFrom: 'none' } };
 }
 
-/** The organization an audit row is attributed to: explicit, else the bound tenant. */
+/**
+ * An organization id: a positive integer, or its decimal string — the rule
+ * establishRequestTenantScope.ts resolveTenantId applies to the request's own
+ * tenant. Until 2026-09-28 (track GW review [13]) any non-nullish value bound
+ * the call: '' , 0, 'undefined' or NaN became an "explicit" tenant no
+ * placement policy could resolve, escaped the production refusal of unbound
+ * calls, and shared a rate bucket with every other malformed id.
+ */
+function isOrganizationId(value: unknown): value is string | number {
+  const text = typeof value === 'number' ? String(value) : value;
+  return typeof text === 'string' && /^[1-9]\d*$/.test(text) && Number.isSafeInteger(Number(text));
+}
+
+/**
+ * The organization a call belongs to: the tenant the gateway bound it to
+ * (bindTenant, recorded on `sensitiveTenantPolicy`), explicit or ambient.
+ * Before binding — a request that never reached it — the explicit id.
+ */
 function auditOrganizationId(request: GatewayRequest): string | number | undefined {
-  return request.organizationId ?? request.sensitiveTenantPolicy?.organizationId;
+  const bound = request.sensitiveTenantPolicy;
+  return bound ? bound.organizationId : request.organizationId;
 }
 
 /**
@@ -4529,15 +4867,29 @@ function contentBlocksDigest(blocks: GatewayMessage['contentBlocks']): string {
 
 export class TenantPlacementError extends GatewayPolicyError {
   constructor(
-    readonly reasonCode: PlacementReasonCode,
+    /**
+     * A placement decision's code, or `DENY_NO_TENANT_BINDING`: the call was
+     * made on behalf of no organization (stage `admission`), which is a
+     * platform fault, not a policy.
+     */
+    readonly reasonCode: PlacementReasonCode | 'DENY_NO_TENANT_BINDING',
     readonly detail: string,
-    /** `selection`: no candidate was permitted. `dispatch`: the last-mile re-check refused. `embedding`. */
-    readonly stage: 'selection' | 'dispatch' | 'embedding',
+    /**
+     * `admission`: the call carries no tenant at all, in production (ADR-0015
+     * §5). `selection`: no candidate was permitted. `dispatch`: the last-mile
+     * re-check refused. `embedding`.
+     */
+    readonly stage: 'admission' | 'selection' | 'dispatch' | 'embedding',
   ) {
     super(
-      `${reasonCode}: this request was not sent to any AI service, because your organization's ` +
-        `data-placement policy does not permit it (${detail}). ` +
-        'Ask an administrator to review the organization placement policy.',
+      stage === 'admission'
+        ? // Not the organization's policy, and nothing an administrator can
+          // change (track GW review [24]): the calling code lost its tenant.
+          `${reasonCode}: this request was not sent to any AI service: it was not made on behalf of any ` +
+            'organization. This is a platform fault, not your policy; it has been recorded.'
+        : `${reasonCode}: this request was not sent to any AI service, because your organization's ` +
+            `data-placement policy does not permit it (${detail}). ` +
+            'Ask an administrator to review the organization placement policy.',
     );
   }
 }

@@ -21,6 +21,7 @@
  */
 import { serializeAnALedgerXml } from '../export/docx-ledger-xml.js';
 import type { DocumentLineageDossier } from './lineage-dossier.js';
+import { wasHeld } from '@shared/ana/run-policy';
 
 export const DOSSIER_NAMESPACE =
   'http://concept2cure.com/schemas/DocumentLineageDossier/v1';
@@ -67,6 +68,34 @@ function embedLedger(dossier: DocumentLineageDossier): string {
     .filter((line) => !line.startsWith('<?xml'))
     .map((line) => (line.length > 0 ? `  ${line}` : line))
     .join('\n');
+}
+
+/**
+ * AnA's own holds under Manual (row 74) — the run policy's pauses, apart from
+ * the human controls: the resume that answered each is a control; the stop
+ * before it was hers. Nothing for a dossier assembled before the field.
+ * `unreadable` counts stored entries that could not be read, so a corrupt
+ * record never reads as none; `held="false"` marks a step a waiting steer
+ * replaced before it was shown — no hold was made for it.
+ */
+function policyHoldsXml(dossier: DocumentLineageDossier): string[] {
+  if (dossier.policyHolds === undefined) return [];
+  const out = [`  <PolicyHolds count="${dossier.policyHolds.length}"${attr('unreadable', dossier.policyHoldsUnreadable || undefined)}>\n`];
+  for (const h of dossier.policyHolds) {
+    out.push(`    <Hold`);
+    out.push(attr('reason', h.reason));
+    out.push(attr('round', h.round));
+    out.push(attr('turn', h.turn));
+    out.push(attr('outcome', h.outcome));
+    out.push(attr('held', wasHeld(h.outcome) ? undefined : 'false'));
+    out.push(attr('at', h.at));
+    out.push(attr('runPolicy', h.runPolicy));
+    out.push(`>\n`);
+    for (const label of h.next) out.push(leafEl('Next', label, '      '));
+    out.push(`    </Hold>\n`);
+  }
+  out.push(`  </PolicyHolds>\n`);
+  return out;
 }
 
 /** Serialize a DocumentLineageDossier to a complete dossier XML document. */
@@ -199,6 +228,10 @@ export function serializeDocumentLineageDossierXml(
     out.push(`    </Control>\n`);
   }
   out.push(`  </HumanControls>\n`);
+
+  // AnA's own holds under Manual (row 74), after the human controls: the
+  // resume that answered each is a control; the stop before it was hers.
+  out.push(...policyHoldsXml(dossier));
 
   // Retained turn records — the immutable, chained record of each AnA turn in
   // the conversation. `unavailable` when the store could not be read, which is

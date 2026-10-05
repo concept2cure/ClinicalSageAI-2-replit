@@ -11,6 +11,7 @@ import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AnaChatAction, AnaChatMessage, RunControlStatus } from '../../components/ana/useAnaChat';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { AnaActivity, type AnaActivityProps } from '../AnaActivity';
+import { RunPolicyDockNote } from '../RunPolicySwitch';
 import { AnaOutputCards, type AnaOutput } from '../AnaOutputs';
 import { useAgentActivity } from '../useAgentActivity';
 import { useProgressDock } from '../workDock';
@@ -423,6 +424,8 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onSt
         <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') ask(draft.trim()); }} aria-label="Ask AnA about this study" placeholder={`Ask AnA about ${study}...`} />
         <button className="rbm-ana-send" aria-label="Send message to AnA" disabled={!draft.trim()} onClick={() => ask(draft.trim())}>{I.zap}</button>
       </div>
+      {/* This chat sends no run policy: Manual does not reach it (row 74). */}
+      <RunPolicyDockNote />
     </aside>
   );
 }

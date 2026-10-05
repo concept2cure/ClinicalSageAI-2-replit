@@ -1,0 +1,8 @@
+# npx tsc -p tsconfig.mine.json (extends the repo tsconfig; includes pq-verdict.ts, run-pq.ts, pq-verdict-rag.test.ts, run-pq.test.ts, pq-verdict.test.ts)
+exit 0, 0 errors
+
+# canary: the same config plus a file assigning computeVerdict to a number — proves the scoped config type-checks
+<scratch>/tsc-canary.ts(2,7): error TS2322: Type '(protocol: PqProtocol, generation: PqGenerationResult[], extraction?: PqExtractionResult[], rag?: PqRagRecord | undefined) => PqVerdictResult' is not assignable to type 'number'.
+exit 2
+
+# Full-project tsc was not run: it is OOM-killed (exit 137) in this shared container (first pass, tsc-full).

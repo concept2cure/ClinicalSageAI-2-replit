@@ -4,6 +4,7 @@ import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { AnaActionChips } from '../AnaActionChips';
 import { LiveDriveSwitch } from '../LiveDriveSwitch';
+import { RunPolicySwitch } from '../RunPolicySwitch';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
 import { useChatUpload, readyAttachmentLabel, composeTurn, type SentAttachment } from '../../hooks/useChatUpload';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
@@ -12,6 +13,7 @@ import { apiCall, apiErrorText } from '../apiCall';
 import { downloadBlob, safeFileName } from '../download';
 import { readShellProject, shellProgramName } from '../shellProject';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
+import { RunControlStrip } from '../AnaWorkSections';
 import { useAgentActivity } from '../useAgentActivity';
 import { AnaActivity, activityPropsFor, hasReportableWork, type AnaActivityProps } from '../AnaActivity';
 import { CONTINUE_PROMPT, continueTurnIndex } from '../anaWorkModel';
@@ -1230,6 +1232,8 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
             ref={dock.chipRef}
             messages={anaChat.messages}
             streaming={anaChat.isStreaming}
+            runStatus={anaChat.runStatus}
+            runHold={anaChat.runHold}
             open={dock.open}
             onToggle={dock.toggle}
             controls={dock.panelId}
@@ -1298,6 +1302,20 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
             </div>
           </div>
 
+          {/* Mid-run control, where the person types: this screen has no rail,
+              so a Manual hold is answered here (Run this step / Do this
+              instead / Stop). Pause, resume and steer only once the run is
+              controllable, as the shell gates the rail's; Stop always. */}
+          <RunControlStrip
+            streaming={anaChat.isStreaming}
+            runStatus={anaChat.runStatus}
+            runHold={anaChat.runHold}
+            runPolicy={anaChat.turnRunPolicy}
+            onPause={anaChat.runStatus ? () => void anaChat.pause() : undefined}
+            onResume={anaChat.runStatus ? () => void anaChat.resume() : undefined}
+            onStop={() => void anaChat.stop()}
+            onSteer={anaChat.runStatus ? (m) => anaChat.interject(m) : undefined}
+          />
           <div className="ct-composer-wrap">
             <div className="ct-composer">
               <input
@@ -1364,7 +1382,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
               </div>
             )}
             <span className="sr-only" aria-live="polite">{statusMessage}</span>
-            <div className="ct-comp-foot"><LiveDriveSwitch /></div>
+            <div className="ct-comp-foot"><LiveDriveSwitch /><RunPolicySwitch variant="foot" /></div>
             <div className="ct-comp-foot">{I.lock} Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
           </div>
         </div>
@@ -1391,6 +1409,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                 messages={anaChat.messages}
                 streaming={anaChat.isStreaming}
                 runStatus={anaChat.runStatus}
+                runHold={anaChat.runHold}
                 pendingSteers={anaChat.pendingSteers}
                 queue={agentActivity}
                 onClose={dock.close}

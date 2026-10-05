@@ -14,7 +14,8 @@
  * @module server/services/ai-governance/approved-models
  */
 
-import type { ProviderName, TaskType } from '../ai-gateway/types';
+import type { ModelConfig, ProviderName, TaskType } from '../ai-gateway/types';
+import { isProductionEnv } from '../ai-gateway/pii-screen';
 
 export type ModelRole = 'primary' | 'fallback';
 
@@ -274,6 +275,22 @@ export const APPROVED_MODELS: ApprovedModel[] = [
   },
 ];
 
+/*
+ * Frozen at load, with every entry and its PQ record (ADR-0015 §3/§4; track GW
+ * review [15], 2026-09-28). The gateway reads `approvedForHighRisk` and
+ * `pq.status` live at every selection point, so a runtime write — flipping a
+ * PQ to 'passed', pushing an entry — would switch the production controls off
+ * without a code change or an environment variable. Changing an entry is a
+ * governance act made in this file, in review. A write now throws (ES modules
+ * are strict), and approved-models-invariant.test.ts refuses source that
+ * attempts one outside the tests.
+ */
+for (const entry of APPROVED_MODELS) {
+  Object.freeze(entry.pq);
+  Object.freeze(entry);
+}
+Object.freeze(APPROVED_MODELS);
+
 /**
  * Task types that are high-risk regulatory work. `server/services/ai-governance/
  * risk-tiers.ts` puts the drafting, compliance and submission capability
@@ -309,6 +326,65 @@ export function isHighRiskRequest(
   return false;
 }
 
+/**
+ * The task types that author governed regulatory content. `regulatory_review`
+ * reads and judges; it is high-risk work, but it is not drafting.
+ */
+export const DRAFTING_TASK_TYPES: ReadonlySet<TaskType> = new Set<TaskType>(['document_drafting']);
+
+/**
+ * Whether THIS request is high-risk regulatory DRAFTING: high-risk work
+ * ({@link isHighRiskRequest}) of a drafting task type. CLAUDE.md RULE 2 and
+ * ADR-0015 §3: in production only a model whose entry records a passed PQ
+ * serves it. Review is not drafting — ADR-0015 §3 lets read and review run on a
+ * PQ-pending approved model — so this is `document_drafting` at every declared
+ * tier and nothing else.
+ */
+export function isHighRiskDraftingRequest(
+  taskType: TaskType,
+  riskTier?: 'low' | 'medium' | 'high' | null,
+): boolean {
+  return DRAFTING_TASK_TYPES.has(taskType) && isHighRiskRequest(taskType, riskTier);
+}
+
+/** A weights digest: `sha256:` and 64 hex digits, alone or after `name@` (the OCI digest form). */
+const WEIGHTS_DIGEST = /(^|@)sha256:[0-9a-f]{64}$/;
+
+/**
+ * True when an entry's pinned version names no concrete artifact.
+ *
+ * A vendor's version id names what the vendor serves under it. A self-hosted
+ * entry's name is resolved by the operator's own server (the vLLM / LiteLLM
+ * model map), so only a weights digest pins it. `local-default` pins the
+ * placeholder 'local-default': its rationale says "The concrete weights are
+ * resolved by the self-hosted server / LiteLLM model map." ADR-0015 §4: such
+ * an entry is not selected in production until it pins a concrete artifact.
+ * Pinning one lifts the exclusion with no code change.
+ */
+export function isNominalPin(entry: Pick<ApprovedModel, 'provider' | 'pinnedVersion'>): boolean {
+  return entry.provider === 'local' && !WEIGHTS_DIGEST.test(entry.pinnedVersion);
+}
+
+/**
+ * Whether an approved entry may author governed high-risk regulatory content
+ * here, as CLAUDE.md RULE 2 defines it: `approvedForHighRisk`, and — in
+ * production — a passed PQ (ADR-0015 §3). Outside production a PQ-pending
+ * approved model qualifies, and the ledger records its PQ status.
+ *
+ * The one statement of that rule. The gateway applies it to a request labelled
+ * as drafting (ai-gateway/model-governance.ts selectionRefusal); the
+ * governed-write gate applies it to the model that produced a tool call that
+ * stores model-authored text ({@link isServedModelApprovedForHighRisk}),
+ * because AnA's governed drafting reaches the gateway as `regulatory_review`
+ * or `chat` at a high risk tier, never as `document_drafting`.
+ */
+export function isQualifiedForHighRiskDrafting(
+  entry: Pick<ApprovedModel, 'approvedForHighRisk' | 'pq'>,
+  production: boolean,
+): boolean {
+  return entry.approvedForHighRisk && (!production || entry.pq.status === 'passed');
+}
+
 const APPROVED_FOR_HIGH_RISK: ReadonlySet<string> = new Set(
   APPROVED_MODELS.filter((m) => m.approvedForHighRisk).map((m) => m.id),
 );
@@ -323,14 +399,26 @@ export function isApprovedForHighRisk(modelId: string): boolean {
 }
 
 /**
- * Whether the model that SERVED a request is approved for high-risk work,
- * identified the way a gateway response reports it: provider plus the wire
+ * Whether the model that SERVED a request may have its text stored as a
+ * governed record: {@link isQualifiedForHighRiskDrafting} for its entry,
+ * identified the way a gateway response reports it — provider plus the wire
  * model (the pinned version) or the registry id. Unknown → not approved.
+ *
+ * Its one caller is the governed-write gate (ana/AnaToolExecutor.ts
+ * preHandlerRefusal), which runs before any tool in GOVERNED_CONTENT_WRITE_TOOLS
+ * stores model-authored text. Until 2026-09-28 (track GW review [1]/[9]/[19])
+ * this read `approvedForHighRisk` alone, so in production a PQ-pending model
+ * wrote AnA's governed drafts — the vault, the editor, protocol sections —
+ * while the gateway refused `document_drafting`. The name is kept for that
+ * caller, which another lane owns; the rule is RULE 2's, and in production
+ * "approved for high-risk drafting" means PQ-passed.
  */
 export function isServedModelApprovedForHighRisk(
   served: { provider?: string | null; model?: string | null } | null | undefined,
+  env: NodeJS.ProcessEnv = process.env,
 ): boolean {
-  return approvedEntryFor(served)?.approvedForHighRisk === true;
+  const entry = approvedEntryFor(served);
+  return entry !== undefined && isQualifiedForHighRiskDrafting(entry, isProductionEnv(env));
 }
 
 /**
@@ -347,6 +435,106 @@ export function approvedEntryFor(
   return APPROVED_MODELS.find(
     (m) => m.provider === served.provider && (m.pinnedVersion === served.model || m.id === served.model),
   );
+}
+
+/**
+ * The approved-models entry a registry row IS, or undefined: the entry whose
+ * id, provider and pinned version are the row's id, provider and wire model.
+ * It is the one test of "this model may be selected" (CLAUDE.md Rule 2) for a
+ * caller's pin (effort.ts resolveModelOverride), the picker
+ * (projectModelsForPicker) and the cost-tier default (reasoning.ts
+ * resolveTierModel), the pin and the tier through {@link governedMatch} — and,
+ * since ADR-0015 §4 (2026-09-28), for every gateway selection point, through
+ * ai-gateway/model-governance.ts selectionRefusal.
+ *
+ * Identity, not the served-model lookup ({@link approvedEntryFor}). That lookup
+ * takes the first entry for the provider whose pinned version OR id is the wire
+ * model, which is looser than a pin, and it depends on the order of
+ * APPROVED_MODELS:
+ *
+ *   - it accepts a wire model EQUAL TO an entry's alias id (e.g. wire
+ *     'claude-opus-4'), which names no pinned version at all;
+ *   - it keys on the wire model, where the gateway's high-risk check keys on the
+ *     registry id (`isApprovedForHighRisk(model.id)`), so a row carrying an
+ *     approved version under another id would pass here and be refused there;
+ *   - its first hit decides. Until 2026-09-28 (H1, row 74) this function was
+ *     that lookup followed by an identity check on the hit, so a row that IS an
+ *     entry was refused whenever an earlier entry for its provider had an id or
+ *     pinned version equal to the row's wire model. No entry does that today;
+ *     nothing forbids it.
+ *
+ * The drift gate (detectModelDrift) holds the registry to the same id and
+ * pinned version, so every model in today's registry is its own entry and this
+ * refuses none of them. `entries` is the governed list, a parameter so the
+ * order-independence is testable (governing-entry.test.ts).
+ */
+export function governingEntry(
+  m: Pick<ModelConfig, 'id' | 'provider' | 'model'>,
+  entries: readonly ApprovedModel[] = APPROVED_MODELS,
+): ApprovedModel | undefined {
+  return entries.find((e) => e.provider === m.provider && e.id === m.id && e.pinnedVersion === m.model);
+}
+
+/**
+ * The enabled registry row a named model selects under Rule 2. The one rule for
+ * every resolver that turns a name into a model: a caller's pin (effort.ts
+ * resolveModelOverride) and the cost-tier default, ANA_TIER_*_MODEL remaps
+ * included (reasoning.ts resolveTierModel). Until H1 (2026-09-28) each had its
+ * own copy, and the copies disagreed: one value against one registry was
+ * refused as a pin and served as a tier.
+ *
+ * The value is matched on registry id or wire model. The first enabled match
+ * that is its own approved-models entry and may be selected in this
+ * environment ({@link selectableEntry}: in production, not a placeholder pin)
+ * is `served`. Each match before it is `withheld`: passed over, the way a
+ * disabled row is, and the way the gateway's explicit path passes over a row
+ * not approved for the task. When no match qualifies, `served` is absent and
+ * every match is withheld. Its only input besides its arguments is NODE_ENV
+ * (`env`); whether a withheld row is SAID is the caller's decision.
+ *
+ * What a caller hands the gateway is the served row's `{ provider, model }`,
+ * not the row. The gateway looks the row up again: the first enabled row with
+ * that provider whose wire model or id is that model (placement and health
+ * aside). Since ADR-0015 §4 it serves only a row that is its own entry, at
+ * every risk level, and the lockfile invariant
+ * (approved-models-invariant.test.ts) forbids two entries of one provider
+ * sharing a pinned version or one's id being another's pinned version — so
+ * the pair names at most one row the gateway may serve, and it is the row
+ * judged here.
+ */
+export function governedMatch<T extends Pick<ModelConfig, 'id' | 'provider' | 'model' | 'enabled'>>(
+  value: string,
+  rows: readonly T[],
+  env: NodeJS.ProcessEnv = process.env,
+): { served?: { row: T; entry: ApprovedModel }; withheld: T[] } {
+  const withheld: T[] = [];
+  for (const row of rows) {
+    if (!row.enabled || (row.id !== value && row.model !== value)) continue;
+    const entry = selectableEntry(row, APPROVED_MODELS, env);
+    if (entry) return { served: { row, entry }, withheld };
+    withheld.push(row);
+  }
+  return { withheld };
+}
+
+/**
+ * The approved entry a registry row IS ({@link governingEntry}), when it may be
+ * selected here: in production, not an entry that pins a placeholder
+ * ({@link isNominalPin}; ADR-0015 §4). The resolvers' form of the gateway's
+ * rule (ai-gateway/model-governance.ts selectionRefusal), so a tier, a pin or
+ * the picker never hands the gateway a model it refuses on every call. Until
+ * 2026-09-28 (track GW review [4]) they used `governingEntry` alone, and
+ * `ANA_TIER_ECONOMY_MODEL=local-default` — a remap .env.example advertises —
+ * failed every Economy-tier turn in production with a terminal
+ * MODEL_NOT_GOVERNED instead of passing it over.
+ */
+export function selectableEntry(
+  m: Pick<ModelConfig, 'id' | 'provider' | 'model'>,
+  entries: readonly ApprovedModel[] = APPROVED_MODELS,
+  env: NodeJS.ProcessEnv = process.env,
+): ApprovedModel | undefined {
+  const entry = governingEntry(m, entries);
+  return entry && !(isProductionEnv(env) && isNominalPin(entry)) ? entry : undefined;
 }
 
 /** Minimal fact about a model as it exists in the live gateway registry. */

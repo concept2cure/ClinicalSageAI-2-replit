@@ -137,7 +137,7 @@ export const SCAN_DOCUMENT_CITATIONS: AnaTool = {
 export const RECONCILE_DEVICE_DOCUMENTS: AnaTool = {
   name: 'reconcile_device_documents',
   description:
-    "Reconcile the numeric governed quantities ACROSS a device/IVD program's post-market documents in one pass — the cross-document inconsistency check for device programs. Finds where the same quantity (clinical sensitivity, specificity, LoD, precision CV, RPN, …) is restated with DIFFERENT values in different documents (e.g. a sensitivity in the PMS report ≠ the PSUR ≠ the SSCP), returning each conflict's distinct values, their source documents, a plurality consensus, and a severity. Deterministic. This is the device analogue of the pharma dossier reconciliation. " +
+    "Reconcile the numeric governed quantities ACROSS a device/IVD program's post-market documents in one pass — the cross-document inconsistency check for device programs. Finds where the same quantity (clinical sensitivity, specificity, LoD, precision CV, RPN, …) is restated with DIFFERENT values in different documents (e.g. a sensitivity in the PMS report ≠ the PSUR ≠ the SSCP), returning each conflict's distinct values, source documents, plurality consensus and severity. Deterministic; the device analogue of the pharma dossier reconciliation. Superseded or withdrawn versions are set aside. Returns verdict clean | minor_issues | needs_review | blocker | not_assessed. not_assessed means no quantity is stated in two current documents, so nothing was compared (notAssessedReason says why); it is not a clean result, so never call such documents consistent. " +
     GROUNDED_NOTE,
   input_schema: {
     type: 'object',

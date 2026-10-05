@@ -1,0 +1,13 @@
+$ OUT=<evidence folder> DATABASE_URL=postgresql://postgres@127.0.0.1:5432/ana_e2e_2 node harness/capture-sql.mjs s1-round-cap s4-manual s4-manual-unavailable s4-auto s4-approval s2-deep
+sql/s1-round-cap.txt: 2 run(s), 1 thread(s)
+sql/s4-manual.txt: 1 run(s), 1 thread(s)
+sql/s4-manual-unavailable.txt: 0 run(s), 1 thread(s)
+sql/s4-auto.txt: 1 run(s), 1 thread(s)
+sql/s4-approval.txt: 1 run(s), 1 thread(s)
+sql/s2-deep.txt: 1 run(s), 1 thread(s)
+exit=0
+
+$ node harness/capture-sql.mjs s4-approval s4-approval-control   # after the approval re-run
+sql/s4-approval.txt: 1 run(s), 1 thread(s)
+sql/s4-approval-control.txt: 1 run(s), 1 thread(s)
+exit=0

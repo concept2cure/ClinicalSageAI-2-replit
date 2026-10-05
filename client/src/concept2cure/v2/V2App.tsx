@@ -44,6 +44,9 @@ import {
 } from './surfaceActions';
 import { LiveDriveOverlay } from './LiveDriveOverlay';
 import { LiveDriveControlsContext } from './LiveDriveSwitch';
+import { RunPolicyContext } from './RunPolicySwitch';
+import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
+import { isAnaRunPolicy } from '@shared/ana/run-policy';
 import { resolveSurfaceIdForTarget, stashNavParamsForTarget } from './navParams';
 import { createDriveQueue, type DriveMove } from './driveQueue';
 import { publishShellProject } from './shellProject';
@@ -140,6 +143,12 @@ interface Prefs {
   railCollapsed: boolean;
   anaOpen: boolean;
   anaMode: string;
+  /**
+   * What AnA does between steps (row 74): Manual stops before each further
+   * step for the person; Auto keeps going within its ceilings. Sent as the
+   * shell chat's `run_policy`. Separate from Ask / Agent (`liveDrive`).
+   */
+  anaRunPolicy: AnaRunPolicy;
   segment: string;
   /** Set once the client dismisses (or outgrows) the first-run AnA welcome. */
   welcomeDismissed: boolean;
@@ -167,6 +176,7 @@ const DEFAULT_PREFS: Prefs = {
   railCollapsed: true,
   anaOpen: false,
   anaMode: 'standard',
+  anaRunPolicy: 'auto',
   segment: 'biopharma',
   welcomeDismissed: false,
   liveDrive: true,
@@ -191,6 +201,9 @@ function loadPrefs(): Prefs {
         stored.liveDrive = true;
         stored.liveDriveDefault = 2;
       }
+      /* A policy this build does not know (an older or hand-edited pref) is
+         not sent as-is; it reads as the default. */
+      if (!isAnaRunPolicy(stored.anaRunPolicy)) delete stored.anaRunPolicy;
       return { ...DEFAULT_PREFS, ...stored };
     }
   } catch {
@@ -721,6 +734,10 @@ export function V2App() {
        Quick ask cost twice what it promised. Only Standard was right, and only
        by coincidence. */
     effortLevel: effortForMode(prefs.anaMode),
+    /* Between steps (row 74): Manual or Auto, the person's preference, on
+       every rail / ⌘K / conversation-screen turn. The docks' own chats send
+       none, and say so under Manual (RunPolicyDockNote). */
+    runPolicy: prefs.anaRunPolicy,
     /* Live Drive: while the toggle is on every rail/⌘K turn opts in, and the
        turn's drive events feed the shell's apply/take-over machine above. */
     liveDrive: prefs.liveDrive,
@@ -869,6 +886,17 @@ export function V2App() {
       onStartTour: () => startTourRef.current(),
     }),
     [prefs.liveDrive, drive.lock, setLiveDriveOn]
+  );
+  /* The "Between steps" switch's controls (RunPolicySwitch), for the rail's
+     menu and each composer that sends through the shell chat. */
+  const runPolicyControls = React.useMemo(
+    () => ({
+      runPolicy: prefs.anaRunPolicy,
+      setRunPolicy: (policy: AnaRunPolicy) => set('anaRunPolicy', policy),
+      streaming: anaChat.isStreaming,
+    }),
+    // `set` is a fresh closure each render over the stable setPrefs.
+    [prefs.anaRunPolicy, anaChat.isStreaming]
   );
   const liveDriveBridge = React.useMemo(
     () => ({
@@ -1133,6 +1161,7 @@ export function V2App() {
        provider renders no DOM of its own, so the shell's grid is untouched. */
     <NavEntitlementsProvider>
     <LiveDriveControlsContext.Provider value={liveDriveControls}>
+    <RunPolicyContext.Provider value={runPolicyControls}>
     <AnaLockPublisher />
     <div
       className={`c2c-v2 shell${prefs.dark ? ' dark' : ''}`}
@@ -1228,6 +1257,8 @@ export function V2App() {
              to say so until she finished. */
           streaming={anaChat.isStreaming}
           runStatus={anaChat.runStatus}
+          runHold={anaChat.runHold}
+          turnRunPolicy={anaChat.turnRunPolicy}
           /* Pause, resume and steer are offered only once a controllable run
              exists — runStatus stays null until `run_started` arrives, and a
              turn that opened no run row (no resolvable tenant) never sends one.
@@ -1286,6 +1317,7 @@ export function V2App() {
         onSteer={(m) => (driveControlsRef.current ? driveControlsRef.current.interject(m) : anaChat.interject(m))}
       />
     </div>
+    </RunPolicyContext.Provider>
     </LiveDriveControlsContext.Provider>
     </NavEntitlementsProvider>
   );

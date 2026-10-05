@@ -20,10 +20,36 @@
  * Reuses {@link DivergenceSeverity} from the cross-artifact-consistency service
  * so severities speak the same language across the consistency toolset.
  *
+ * 2026-09-28 (row 74, track NC; ADR-0015 §7): nothing compared is no longer
+ * 'clean'. A figure set in which no quantity is stated in two different
+ * documents compared nothing across documents, yet reported 'clean' — for a
+ * single figure, or for every figure from one document. It now reports verdict
+ * 'not_assessed' with `notAssessedReason` ('no_shared_quantities'), and
+ * `quantitiesCompared` counts the quantities that were compared. A conflict is
+ * still reported wherever it is found, including inside one document. The
+ * verdict is reconciliationVerdictFor (consistency-verdict.ts), which also
+ * replaces this module's copy of the severity ladder; the verdicts are
+ * DOSSIER_CONSISTENCY_VERDICTS. `noFiguresReport` is the report for a document
+ * set that states no figure at all ('no_figures'), which the device reconciler
+ * used to hand-build as 'clean'.
+ *
+ * 2026-09-28 (row 74, track NC review [4], [6]): a place is a document, or a
+ * module of one document when the figures name their modules. A figure with no
+ * module is its document, not a place of its own: the same figure emitted for
+ * one document with its module and without it compared that document with
+ * itself. `noFiguresReport` takes the device reconciler's count of current
+ * documents, so a programme whose every document is superseded or withdrawn is
+ * 'no_current_documents', not 'no_figures'.
+ *
  * @module server/services/reconciliation/dossier-number-reconciler
  */
 
 import type { DivergenceSeverity } from '../intelligence/cross-artifact-consistency.js';
+import { reconciliationVerdictFor } from '../intelligence/consistency-verdict.js';
+import type {
+  DossierConsistencyVerdict,
+  ReconciliationNotAssessedReason,
+} from '../../../shared/ana/dossier-consistency.js';
 
 export type { DivergenceSeverity };
 
@@ -95,9 +121,18 @@ export interface ReconciliationConflict {
 export interface ReconciliationReport {
   readonly figuresReconciled: number;
   readonly quantityKeysExamined: number;
+  /**
+   * Quantity keys stated in two places (two documents, or two modules of one
+   * document), whose values were compared across them. 0 means no figure was
+   * compared with another place's.
+   */
+  readonly quantitiesCompared: number;
   readonly conflictCount: number;
   readonly conflicts: readonly ReconciliationConflict[];
-  readonly verdict: 'clean' | 'minor_issues' | 'needs_review' | 'blocker';
+  /** 'not_assessed' when nothing was compared across documents: see `notAssessedReason`. */
+  readonly verdict: DossierConsistencyVerdict;
+  /** Why nothing was compared. */
+  readonly notAssessedReason?: ReconciliationNotAssessedReason;
   readonly generatedAt: string;
 }
 
@@ -221,11 +256,34 @@ function describeConflict(
   return `"${quantityKey}" disagrees across the dossier: ${rendered}.${consensusNote}${unitNote}`;
 }
 
-function computeVerdict(conflicts: readonly ReconciliationConflict[]): ReconciliationReport['verdict'] {
-  if (conflicts.length === 0) return 'clean';
-  if (conflicts.some(c => c.severity === 'critical')) return 'blocker';
-  if (conflicts.some(c => c.severity === 'high')) return 'needs_review';
-  return 'minor_issues';
+/**
+ * Is this quantity stated in two places, so its values were compared across
+ * them? Two places are two documents, or two modules of one document. A figure
+ * with no module is its document and adds no place of its own, so one
+ * document's figure with and without its module is one place.
+ */
+function statedInTwoPlaces(group: readonly ExtractedFigure[]): boolean {
+  if (new Set(group.map(f => f.source.documentId)).size > 1) return true;
+  return new Set(group.map(f => f.source.module).filter((m): m is string => !!m)).size > 1;
+}
+
+/**
+ * The report for a document set that states no figure: nothing was
+ * reconciled, so the verdict is 'not_assessed', never 'clean' — 'no_figures',
+ * or 'no_current_documents' when no current document was read at all.
+ * reconcileDossierNumbers itself refuses an empty figure list as a parameter
+ * error, because a caller that passes none has asked for nothing.
+ */
+export function noFiguresReport(documentsRead: number): ReconciliationReport {
+  return {
+    figuresReconciled: 0,
+    quantityKeysExamined: 0,
+    quantitiesCompared: 0,
+    conflictCount: 0,
+    conflicts: [],
+    ...reconciliationVerdictFor({ conflicts: [], documentsRead, figures: 0, quantitiesCompared: 0 }),
+    generatedAt: new Date().toISOString(),
+  };
 }
 
 export interface ReconcileParams {
@@ -318,12 +376,14 @@ export function reconcileDossierNumbers(params: ReconcileParams): Reconciliation
       a.quantityKey.localeCompare(b.quantityKey),
   );
 
+  const quantitiesCompared = Array.from(groups.values()).filter(statedInTwoPlaces).length;
   return {
     figuresReconciled: figures.length,
     quantityKeysExamined: groups.size,
+    quantitiesCompared,
     conflictCount: conflicts.length,
     conflicts,
-    verdict: computeVerdict(conflicts),
+    ...reconciliationVerdictFor({ conflicts, figures: figures.length, quantitiesCompared }),
     generatedAt: new Date().toISOString(),
   };
 }

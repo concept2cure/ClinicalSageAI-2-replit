@@ -1,0 +1,19 @@
+# sha256 of the track NC files in the tree the red, green and mutation runs were recorded against
+# (HEAD eb62b566c + the track NC working tree, uncommitted when filed). Check with: sha256sum -c tree.sha256
+# source (changed)
+dd71e29537bc06a35dafa47cbd4c1c2b5f9fc6d4adf53a30bccf64b0f3f20b8c  shared/ana/dossier-consistency.ts
+66243f5bab416415a25c5ecd89b2109649d3a1f34ee2551dd83c37c6100f9a5a  shared/utils/plural.ts
+ac189f28785e8d72bad8a079fef17729febe2229a0c74e7172ad7ef542a357c4  server/services/intelligence/consistency-verdict.ts
+943900ff5b2e79b0903ef0ff7d8359afe8fb193655ab8e25b19dd272c36b2b8b  server/services/intelligence/cross-artifact-consistency.ts
+b0159cb1f6e0a8e9454c3afc2f59a0a7ab47a3b34dac7f5f4d59b9f35fee5441  server/services/reconciliation/dossier-number-reconciler.ts
+0af051e3b69e170b192a398c8ffcc0669c5c87b913edd0b8a91fb027a61ffe00  server/services/reconciliation/device-document-reconciler.ts
+67b51a49da35c2149b5a0094a09005474310be145f5bd764a27fb687161df761  server/services/ana/AnaToolExecutor.ts
+d09489fb1566cba064034494b220f187de2cc9856c55d492cf408cea2eac7721  server/services/ana/document-intake-tool-defs.ts
+760469b53c489075ee7dce78c44481b7445b7c033885f8629a3611e2a97bc99b  server/services/ana/changePropagationTools.ts
+4865cf3dd340613e7084efea9351f4c6864743c347743bec4779890e82b30e53  server/services/ana/reconciliationTools.ts
+bf5c03222908f4fb5a890508afdcd6e4585c5186dd02bed5ecce78c7e6d41220  server/services/lumen-context/base-system-prompt.ts
+# tests (new)
+796f0fa4ba6663f497470e0992db0daef610df5aa75b39c0341047371a4f4fdd  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts
+08606de16f035e8172ed4109ffa9235fe0683cef296f93295e6c6cd997c0ec64  server/services/intelligence/__tests__/figure-agreement.test.ts
+08a8013b0c0d04bc6e551d12a161f08aa369e7cff87c35fd3fb82d051adeb66e  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts
+dc69d66469c5f5aa7ded896ed01cff8a84e821ff871def14703da4e41c1c7d51  server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts
