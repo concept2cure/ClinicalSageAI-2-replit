@@ -19,6 +19,7 @@ import { Fragment, useEffect, useId, useRef, useState } from 'react';
 
 import { GOVERNED_SIGNATURE_ATTESTATION } from '@shared/constants/signature-attestation';
 
+import { AnswerCheckRows } from './AnswerCheckRows';
 import styles from './styles.module.css';
 import { tierOf, useGovernedAction, type DeclaredMeaning, type PendingSignoff } from './useGovernedAction';
 
@@ -57,6 +58,28 @@ function proposedReasonOf(params: Record<string, unknown>): string | null {
   return null;
 }
 
+/** The name an item of a proposed list goes by (a section's title), if it has one. */
+function itemName(item: unknown): string | null {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
+  const rec = item as Record<string, unknown>;
+  for (const k of ['title', 'heading', 'name', 'label'] as const) {
+    const v = rec[k];
+    if (typeof v === 'string' && v.trim()) return v.trim();
+  }
+  return null;
+}
+
+/**
+ * A proposed list as a person reads it: its items by name ("Efficacy ·
+ * Safety") when every item has one, else a count. Until 2026-10-05 a drafted
+ * document read "sections: 3 items" (GRD-2).
+ */
+function listSummary(list: unknown[]): string {
+  const names = list.map(itemName);
+  if (list.length > 0 && names.every((n): n is string => n !== null)) return names.join(' · ');
+  return `${list.length} item${list.length === 1 ? '' : 's'}`;
+}
+
 /** A compact, readable key: value list of what AnA proposed — never a raw JSON dump. */
 function summariseParams(params: Record<string, unknown>): Array<[string, string]> {
   const out: Array<[string, string]> = [];
@@ -65,7 +88,7 @@ function summariseParams(params: Record<string, unknown>): Array<[string, string
     if ((REASON_KEYS as readonly string[]).includes(k)) continue;
     if (v === undefined || v === null || v === '') continue;
     const text =
-      typeof v === 'string' ? v : typeof v === 'number' || typeof v === 'boolean' ? String(v) : Array.isArray(v) ? `${v.length} item${v.length === 1 ? '' : 's'}` : 'details';
+      typeof v === 'string' ? v : typeof v === 'number' || typeof v === 'boolean' ? String(v) : Array.isArray(v) ? listSummary(v) : 'details';
     out.push([k, text.length > 80 ? `${text.slice(0, 77)}…` : text]);
   }
   return out;
@@ -207,6 +230,15 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
             </Fragment>
           ))}
         </dl>
+      )}
+      {/* The server's check of what AnA wrote for the record, against what she
+          consulted before she wrote it (GRD-2): read before the person
+          approves, in the strip's own rows. It informs; it does not decide. */}
+      {signoff.check && (
+        <div className="ana-grounding" data-testid="signoff-proposal-check">
+          <p className={styles.signoffLabel}>What this draft states, checked against this turn's sources</p>
+          <AnswerCheckRows check={signoff.check} />
+        </div>
       )}
       {!confirmOnly && (
         <label className={styles.signoffLabel} htmlFor={reasonId}>

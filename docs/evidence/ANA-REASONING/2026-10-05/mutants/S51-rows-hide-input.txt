@@ -1,0 +1,12 @@
+Mutant S51-rows-hide-input: the rows do not say which figures are AnA's own input
+
+--- client/src/concept2cure/components/ana/AnswerCheckRows.tsx
+- {fromInput.length > 0 && (
++ {false && (
+
+Tests run: client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says a figure is AnA's own input to a tool, not a result (HS-5) 12ms
+      Tests  1 failed | 28 passed (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
