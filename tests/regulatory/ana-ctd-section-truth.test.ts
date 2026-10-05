@@ -20,18 +20,21 @@
  *
  * The canonical overlay (CTD_AUTHORING_GUIDANCE) is already held by the
  * authoring-depth and citation-accuracy suites, so every assertion here is
- * against it rather than against a second list of titles.
+ * against it rather than against a second list of titles. Since 2026-10-05
+ * (g-ctd-contract-and-consistency) a template's codes are read through the
+ * shared contract (tests/regulatory/ctd-contract.ts), which reads both halves
+ * of the ICH M2–M5 record — the overlay and ich-m4-headings.ts — so a template
+ * coded with a structural heading (2.7.3.1) or with no heading at all is held
+ * too, where it used to be skipped.
  */
 import { describe, it, expect } from 'vitest';
 import { CTD_AUTHORING_GUIDANCE } from '../../server/services/ind/ctd/index';
 import { getSectionGuidance } from '../../server/services/ana-ri/orchestrator';
 import { buildSectionSpecificPrompt } from '../../server/services/lumen-context/sections';
 import { detectDocumentTemplate, DOCUMENT_TEMPLATES } from '../../server/services/ana-ri/document-templates';
+import { carriesCanonicalTitle, m2to5Code } from './ctd-contract';
 
 const CANONICAL = Object.values(CTD_AUTHORING_GUIDANCE);
-
-/** "Quality Overall Summary (QOS)" → "Quality Overall Summary". */
-const coreTitle = (title: string) => title.replace(/\s*\(.*?\)\s*/g, ' ').split(' — ')[0].trim();
 
 describe("the orchestrator's section line names the section ICH M4 / FDA Module 1 names", () => {
   it.each([
@@ -128,11 +131,12 @@ describe('the template injected for a named document is the document the overlay
     expect(hit!.template.primaryCode).toBe(code);
   });
 
-  it('every template with a CTD primary code is named for that code', () => {
-    for (const t of Object.values(DOCUMENT_TEMPLATES)) {
-      const g = t.primaryCode ? CTD_AUTHORING_GUIDANCE[t.primaryCode] : undefined;
-      if (!g) continue;
-      expect(t.displayName, t.id).toContain(coreTitle(g.title));
+  it('every template with a CTD Module 2–5 primary code is named for that heading', () => {
+    const coded = Object.values(DOCUMENT_TEMPLATES).filter((t) => m2to5Code(t.primaryCode) !== null);
+    expect(coded.length).toBeGreaterThan(5);
+    for (const t of coded) {
+      // null: the record has no such heading.
+      expect(carriesCanonicalTitle(t.primaryCode, t.displayName), `${t.id} ${t.primaryCode} "${t.displayName}"`).toBe(true);
       expect(t.draftingInstructions, t.id).toContain(t.primaryCode!);
     }
   });
@@ -140,9 +144,8 @@ describe('the template injected for a named document is the document the overlay
   it('every coded 2.5.x / 2.7.x sub-heading carries its ICH M4E title', () => {
     for (const t of Object.values(DOCUMENT_TEMPLATES)) {
       for (const s of t.sections) {
-        const g = s.code && /^2\.(5|7)\./.test(s.code) ? CTD_AUTHORING_GUIDANCE[s.code] : undefined;
-        if (!g) continue;
-        expect(s.heading, `${t.id} ${s.code}`).toContain(g.title);
+        if (!s.code || !/^2\.(5|7)\./.test(s.code)) continue;
+        expect(carriesCanonicalTitle(s.code, s.heading), `${t.id} ${s.code} "${s.heading}"`).toBe(true);
       }
     }
   });
