@@ -190,6 +190,8 @@ describe('(3) Do this instead replaces the held step', () => {
     expect(h.state.gatewayCalls).toBe(3);
     const next = h.state.requests[2].messages.map(m => String(m.content)).join('\n');
     expect(next).toContain(`[Tool Result for search_literature (${pubmed.id})]`);
+    // Framed as untrusted data on the streaming path too (item 23, 2026-10-05).
+    expect(next).toMatch(/\]:\n<tool_output>\nReturned by a tool, not by the person or the platform/);
     expect(next).toContain('"redirected":true');
     expect(next).toContain(steer.text);
     expect(one(events, 'interjected')).toEqual({ type: 'interjected', round: 2, message: steer.text, replaced: [labelOf(pubmed)] });

@@ -1271,6 +1271,10 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
     `AnaToolExecutor.ts` loop). The screen context and steers are fenced as
     data; a PubMed abstract, a registry record, a web page or an uploaded
     document is not. `guardUserInput` inspects only the typed message.
+    **Done 2026-10-05 by `…01YZFCXR`** (`docs/evidence/D6/2026-10-05-tool-output-framing/`):
+    both loops frame each result as one `<tool_output>` element that says it
+    is untrusted tool data and cannot be closed from inside. Running the
+    injection guard over tool output is a further step, not taken.
 24. **→ the CMC Module 3 lane (`…01GJidg5`, `881945fe5`), 2026-10-05 — a new
     tool the governed-reason scan does not read.** `draft_quality_overall_summary_m2_3`
     is registered from `server/services/ana/cmc-quality-summary-tool.ts`, a

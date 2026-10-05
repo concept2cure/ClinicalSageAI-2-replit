@@ -28,6 +28,7 @@
  * is asserted, and each piece would otherwise need a database.
  */
 import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest';
+import { unframeToolOutput } from '../../../services/ana/tool-output-frame.js';
 import express from 'express';
 import request from 'supertest';
 
@@ -290,7 +291,8 @@ function resultSeenByModel(toolUseId: string): Record<string, unknown> {
   const block = String(turnWithResults?.content ?? '')
     .split('\n\n[Tool Result for ')
     .find(b => b.includes(`(${toolUseId})]:`));
-  return JSON.parse(String(block).slice(String(block).indexOf(']:\n') + 3));
+  // The result is framed as untrusted data before the model reads it (item 23).
+  return JSON.parse(unframeToolOutput(String(block).slice(String(block).indexOf(']:\n') + 3)));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
