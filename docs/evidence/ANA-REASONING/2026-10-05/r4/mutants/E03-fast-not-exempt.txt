@@ -1,0 +1,12 @@
+Mutant E03-fast-not-exempt: a Fast turn the person chose is raised to high
+
+--- server/services/ai-gateway/effort.ts
+- if (input.riskTier !== 'high' || input.effort === 'fast') return chosen;
++ if (input.riskTier !== 'high') return chosen;
+
+Tests run: server/services/ai-gateway/__tests__/turn-api-effort.test.ts
+Result: KILLED
+
+ × server/services/ai-gateway/__tests__/turn-api-effort.test.ts > the API effort a turn runs at > Fast stays Fast, as the thinking floor does (resolveThinkingConfig) 5ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

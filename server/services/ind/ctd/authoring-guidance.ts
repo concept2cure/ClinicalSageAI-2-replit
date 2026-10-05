@@ -1836,7 +1836,8 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "Deaths and serious adverse event listings/summaries",
       "Laboratory shift tables and Hy's Law/eDISH plot data",
       "Adverse events of special interest summary tables",
-      "Immunogenicity summary (biologics)"
+      "Immunogenicity summary (biologics)",
+      "AE groupings by OCMQ/SMQ with risk differences, anticipating FDA's Standard Safety Tables and Figures review"
     ],
     "commonPitfalls": [
       "Pooling strategy undefined or inappropriate (combining incompatible studies), a top FDA IR trigger",
@@ -1845,7 +1846,8 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "Adverse events of special interest and important risks not analyzed with dedicated pooled analyses",
       "MedDRA coding inconsistencies or rates that do not reconcile with Module 5",
       "Special-situation safety (pregnancy, overdose, withdrawal, abuse potential, immunogenicity for biologics) omitted",
-      "Minimizing signals or deferring interpretation without presenting the underlying integrated data"
+      "Minimizing signals or deferring interpretation without presenting the underlying integrated data",
+      "Grouped-term (OCMQ) imbalances not analysed by the sponsor, leaving FDA's ST&F re-analysis to surface them first"
     ],
     "wordCountRange": [
       5000,

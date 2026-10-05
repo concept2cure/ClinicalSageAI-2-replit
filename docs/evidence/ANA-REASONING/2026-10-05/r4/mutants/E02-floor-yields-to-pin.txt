@@ -1,0 +1,12 @@
+Mutant E02-floor-yields-to-pin: a pinned strategy switches the high-stakes floor off
+
+--- server/services/ai-gateway/effort.ts
+- if (input.riskTier !== 'high' || input.effort === 'fast') return chosen;
++ if (input.riskTier !== 'high' || input.effort === 'fast' || input.policyPinned) return chosen;
+
+Tests run: server/services/ai-gateway/__tests__/turn-api-effort.test.ts
+Result: KILLED
+
+ × server/services/ai-gateway/__tests__/turn-api-effort.test.ts > the API effort a turn runs at > a high-stakes turn runs at high or above, pinned strategy or not: the floor reaches an adaptive model 5ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

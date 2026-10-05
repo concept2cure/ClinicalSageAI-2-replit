@@ -1,0 +1,12 @@
+Mutant E04-pin-sends-effort: the person's effort is sent under a kernel-pinned strategy, smuggling the override back in
+
+--- server/services/ai-gateway/effort.ts
+- const chosen = input.policyPinned ? undefined : resolveApiEffort(input.effort);
++ const chosen = resolveApiEffort(input.effort);
+
+Tests run: server/services/ai-gateway/__tests__/turn-api-effort.test.ts
+Result: KILLED
+
+ × server/services/ai-gateway/__tests__/turn-api-effort.test.ts > the API effort a turn runs at > is not sent when a kernel-pinned strategy is in force, as before 4ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

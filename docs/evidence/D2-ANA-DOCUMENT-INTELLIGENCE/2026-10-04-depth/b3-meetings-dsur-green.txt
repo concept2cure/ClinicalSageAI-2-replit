@@ -1,0 +1,69 @@
+# b3-meetings-dsur green — 2026-10-05 (refreshed after review fix: all E2F sections required, E2F order; EOP1 routed to the formal-meeting template)
+# npx vitest run <new test + every test file importing the changed files> --reporter=verbose
+
+## per-file passed/failed
+     72 ✓ server/services/ana-ri/__tests__/document-templates.test.ts
+      7 ✓ server/services/ana/__tests__/medical-writing-qc.test.ts
+      4 ✓ server/services/ana/__tests__/medical-writing-review.test.ts
+      7 ✓ server/services/ana/__tests__/medical-writing.test.ts
+     18 ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts
+    121 ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts
+     28 ✓ tests/regulatory/ana-ctd-section-truth.test.ts
+     17 ✓ tests/regulatory/ana-submission-sequence-truth.test.ts
+      9 ✓ tests/regulatory/citation-accuracy.test.ts
+     20 ✓ tests/regulatory/csr-e3-overlay.test.ts
+     11 ✓ tests/regulatory/ctd-authoring-depth.test.ts
+     14 ✓ tests/regulatory/ctd-guidance-correctness.test.ts
+     12 ✓ tests/regulatory/ctd-guidance-presentation.test.ts
+     28 ✓ tests/regulatory/meetings-and-dsur-truth.test.ts
+     20 ✓ tests/regulatory/submission-chain.test.ts
+      7 ✓ tests/regulatory/template-library-truth.test.ts
+      2 ✓ tests/schema-contract/one-normalize-ctd-code.contract.test.ts
+
+## new test, per case
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > holds the six PDUFA meeting types with their schedule and package deadlines 3ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > labels every figure not read in FDA text as recall 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > timing is 70 days to the meeting and the package 50 calendar days before it 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > no EOP2 component tells the sponsor the package is due 30 days ahead 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_ind_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_nda_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_bla_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_ind_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > end_of_phase_2_meeting carries no 2017 citation 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_nda_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_bla_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > a pre-IND meeting package carries the CMC summary and no "accompanies the request" claim 5ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > an EOP2 briefing document gets the EOP2 components and the 50-day package deadline 3ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "end of phase 1 meeting" is not served the EOP2 (Type B(EOP)) template 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "EOP1 meeting package" is not served the EOP2 (Type B(EOP)) template 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "draft the pre-NDA meeting package" gets the pre_nda_meeting components 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "prepare our pre-BLA meeting briefing document" gets the pre_bla_meeting components 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > no meeting template is a hand-kept heading list 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > some component asks for E2F Section 19 (Summary of Important Risks) 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > no component calls Section 19 the conclusions 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > the conclusions are E2F Section 20 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > interval line listings are of serious adverse reactions (E2F 7.2), tabulations of SAEs (7.3) 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > exports the E2F outline once, every heading cited 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > the injected block carries §16, §19 and §20 under their E2F numbers 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > every E2F section is required: E2F says complete all of them, stating when there is nothing to report 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > the injected block lists the E2F headings in E2F order, none of them optional 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > no detection pattern carries a form feed 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > an IND annual report request is not served the DSUR template 0ms
+
+## document-templates.test.ts meeting detection cases
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Type B Meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP2 meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP2 abbreviation 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Pre-Phase 3 meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP1 meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP1 abbreviation 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Pre-IND meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Pre-NDA meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Pre-BLA meeting 0ms
+
+ Test Files  17 passed (17)
+      Tests  397 passed (397)
+
+## wider: npx vitest related --run lifecycle-document-types.ts document-templates.ts medical-writing.ts meetings-and-dsur-truth.test.ts
+ Test Files  287 passed | 1 skipped (288)
+      Tests  4568 passed | 2 skipped (4570)

@@ -113,7 +113,7 @@ import {
 } from './medical-writing-qc.js';
 import { lookupIcd10 } from '../integrations/icd10-client.js';
 import { composeSafetyNarrative } from './safety-narrative.js';
-import { screenPromotionalLanguage } from './promotional-screening.js';
+import { screenPromotionalLanguage, type ClaimRegister } from './promotional-screening.js';
 import {
   critiqueDraft,
   critiqueDocument,
@@ -3831,6 +3831,10 @@ function precisionAudience(v: unknown): ReadabilityAudience | undefined {
     : undefined;
 }
 
+function precisionRegister(v: unknown): ClaimRegister | undefined {
+  return v === 'submission' || v === 'promotional' ? v : undefined;
+}
+
 registerToolHandler('critique_draft', async (input) => {
   const text = typeof input.text === 'string' ? input.text : '';
   if (!text.trim()) {
@@ -3840,14 +3844,17 @@ registerToolHandler('critique_draft', async (input) => {
     text,
     audience: precisionAudience(input.audience),
     documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
+    register: precisionRegister(input.register),
   });
   return JSON.stringify({
     status: 'computed',
     engine: 'deterministic',
     score: report.score,
     verdict: report.verdict,
+    register: report.register,
     metrics: report.metrics,
     findings: report.findings,
+    claimExemptions: report.claimExemptions,
     revisionBrief: buildRevisionBrief(report),
     instruction:
       report.verdict === 'pass'
@@ -3864,13 +3871,15 @@ registerToolHandler('verify_revision', async (input) => {
   }
   const audience = precisionAudience(input.audience);
   const documentType = typeof input.documentType === 'string' ? input.documentType : undefined;
+  const register = precisionRegister(input.register);
   const result = verifyRevision(
-    { text: originalText, audience, documentType },
-    { text: revisedText, audience, documentType },
+    { text: originalText, audience, documentType, register },
+    { text: revisedText, audience, documentType, register },
   );
   return JSON.stringify({
     status: 'computed',
     engine: 'deterministic',
+    register: result.register,
     result,
     instruction: result.passesNow
       ? 'The revision passes the precision gate. Confirm the improvement and proceed.'
@@ -3892,12 +3901,14 @@ registerToolHandler('critique_document', async (input) => {
   const result = critiqueDocument(clean, {
     audience: precisionAudience(input.audience),
     documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
+    register: precisionRegister(input.register),
   });
   return JSON.stringify({
     status: 'computed',
     engine: 'deterministic',
     documentScore: result.documentScore,
     verdict: result.verdict,
+    register: result.register,
     crossSectionFindings: result.crossSectionFindings,
     sections: result.sections.map((s) => ({ title: s.title, score: s.score, verdict: s.verdict, findings: s.report.findings })),
     instruction:
