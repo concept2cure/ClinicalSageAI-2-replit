@@ -1,0 +1,316 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > states none of the unsourced Japan claims anywhere in its result
+{
+  "timestamp": "2026-10-05T04:54:12.338Z",
+  "level": "info",
+  "message": "[cross-jurisdictional] Cross-jurisdictional analysis: NDA, agencies: FDA, EMA, PMDA, NMPA",
+  "context": {}
+}
+
+stdout | server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > says Japanese-data needs are case by case under ICH E5, citing the 2023 MHLW notice
+{
+  "timestamp": "2026-10-05T04:54:12.348Z",
+  "level": "info",
+  "message": "[cross-jurisdictional] Cross-jurisdictional analysis: NDA, agencies: FDA, EMA, PMDA, NMPA",
+  "context": {}
+}
+
+stdout | server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > reads the paediatric position from the jp-programs record
+{
+  "timestamp": "2026-10-05T04:54:12.349Z",
+  "level": "info",
+  "message": "[cross-jurisdictional] Cross-jurisdictional analysis: NDA, agencies: FDA, EMA, PMDA, NMPA",
+  "context": {}
+}
+
+stdout | server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > places Japan in the ICH Q1A(R2) long-term conditions, not zone IVa
+{
+  "timestamp": "2026-10-05T04:54:12.353Z",
+  "level": "info",
+  "message": "[cross-jurisdictional] Cross-jurisdictional analysis: NDA, agencies: FDA, EMA, PMDA, NMPA",
+  "context": {}
+}
+
+stdout | server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > gives every PMDA position a well-formed basis, all labelled recall (no regulator text was read)
+{
+  "timestamp": "2026-10-05T04:54:12.354Z",
+  "level": "info",
+  "message": "[cross-jurisdictional] Cross-jurisdictional analysis: NDA, agencies: FDA, EMA, PMDA, NMPA",
+  "context": {}
+}
+
+ × server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > states none of the unsourced Japan claims anywhere in its result 11ms
+   → expected [ …(8) ] to deeply equal []
+ × server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > says Japanese-data needs are case by case under ICH E5, citing the 2023 MHLW notice 2ms
+   → expected 'Bridging study or Japanese sub-popula…' to match /case by case/i
+ × server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > reads the paediatric position from the jp-programs record 3ms
+   → expected 'Pediatric guidance follows ICH E11; n…' to contain 'Paediatric development plan (effort o…'
+ × server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > places Japan in the ICH Q1A(R2) long-term conditions, not zone IVa 1ms
+   → expected 'Zone IVa (hot/humid) conditions requi…' to contain 'ICH Q1A(R2)'
+ × server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > gives every PMDA position a well-formed basis, all labelled recall (no regulator text was read) 1ms
+   → expected [ 'Primary Endpoint Acceptance', …(7) ] to deeply equal []
+ × server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > PMDA consultation catalogue (ha-meetings) > has one row per consultation type in the jp-programs record, named as PMDA names it 1ms
+   → pmda-consultation-clinical-trial: expected undefined to be defined
+ × server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > PMDA consultation catalogue (ha-meetings) > keeps the two existing codes for compatibility 2ms
+   → expected undefined to be 'pmda-consultation-clinical-trial' // Object.is equality
+ × server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > PMDA consultation catalogue (ha-meetings) > recommends the end-of-Phase II consultation at end of Phase II 1ms
+   → expected [ undefined ] to include 'pmda-consultation-end-of-phase-2'
+ × server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > the shared PMDA meeting type > names the RS strategy consultation as PMDA does, not "RS Soudankai" 1ms
+   → expected 'PMDA regulatory consultation (面談) cov…' not to match /Soudankai/i
+ × server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > prompt prose about Japanese conditional approval > no prompt names the pre-2025 conditional early approval or its criteria 1ms
+   → expected [ 'ja: /条件付き早期承認/', …(4) ] to deeply equal []
+ × server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > prompt prose about Japanese conditional approval > names it as amended in 2025, without restating criteria 4ms
+   → expected '## TARGET MARKET AWARENESS — JAPAN (P…' to contain 'conditional approval (amended 2025)'
+ × server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > prompt prose about Japanese conditional approval > keeps the Japan conditional-approval and paediatric prose of the migrated engine in jp-programs.ts only 2ms
+   → expected [ Array(1) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > states none of the unsourced Japan claims anywhere in its result
+AssertionError: expected [ …(8) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Requires bridging study data for Japanese population; ethnicity sensitivity assessment",
++   "Japanese standard of care comparator required; dose-finding in Japanese subjects",
++   "Pediatric guidance follows ICH E11; no mandatory pediatric plan but encouraged",
++   "Bridging study or Japanese sub-population data mandatory per ICH E5",
++   "Zone IVa (hot/humid) conditions required for Japanese market stability",
++   "QT study in Japanese subjects or bridging QT data; ethnic sensitivity assessment for CV safety",
++   "Requires Japanese bridging data before PMDA filing",
++   "PMDA/NMPA still require local data independently",
++ ]
+
+ ❯ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts:68:18
+     66|     for (const s of result.filingSequences) texts.push(s.rationale, ..…
+     67|     const hits = texts.filter((t) => UNSOURCED_JP_CLAIMS.some((re) => …
+     68|     expect(hits).toEqual([]);
+       |                  ^
+     69|   });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > says Japanese-data needs are case by case under ICH E5, citing the 2023 MHLW notice
+AssertionError: expected 'Bridging study or Japanese sub-popula…' to match /case by case/i
+
+- Expected:
+/case by case/i
+
++ Received:
+"Bridging study or Japanese sub-population data mandatory per ICH E5"
+
+ ❯ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts:75:26
+     73|     for (const topic of ['Ethnic Sensitivity / Bridging', 'Primary End…
+     74|       const p = pmdaPosition(result, topic);
+     75|       expect(p.position).toMatch(/case by case/i);
+       |                          ^
+     76|       expect(p.position).toContain('ICH E5');
+     77|       expect(p.position).toContain('医薬薬審発1225第2号');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > reads the paediatric position from the jp-programs record
+AssertionError: expected 'Pediatric guidance follows ICH E11; n…' to contain 'Paediatric development plan (effort o…'
+
+Expected: "Paediatric development plan (effort obligation)"
+Received: "Pediatric guidance follows ICH E11; no mandatory pediatric plan but encouraged"
+
+ ❯ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts:85:24
+     83|     const plan = getJpProgram('jp-pediatric-development-plan');
+     84|     const p = pmdaPosition(await analyzeAll(), 'Pediatric Requirements…
+     85|     expect(p.position).toContain(plan.name);
+       |                        ^
+     86|     expect(p.position).toContain(plan.nameJa);
+     87|     expect(p.position).toContain(plan.effectiveFrom!);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > places Japan in the ICH Q1A(R2) long-term conditions, not zone IVa
+AssertionError: expected 'Zone IVa (hot/humid) conditions requi…' to contain 'ICH Q1A(R2)'
+
+Expected: "ICH Q1A(R2)"
+Received: "Zone IVa (hot/humid) conditions required for Japanese market stability"
+
+ ❯ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts:93:24
+     91|   it('places Japan in the ICH Q1A(R2) long-term conditions, not zone I…
+     92|     const p = pmdaPosition(await analyzeAll(), 'Stability Testing Requ…
+     93|     expect(p.position).toContain('ICH Q1A(R2)');
+       |                        ^
+     94|     expect(p.position).toMatch(/zones? I and II/i);
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > gives every PMDA position a well-formed basis, all labelled recall (no regulator text was read)
+AssertionError: expected [ 'Primary Endpoint Acceptance', …(7) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Primary Endpoint Acceptance",
++   "Comparator Selection",
++   "Pediatric Requirements",
++   "Ethnic Sensitivity / Bridging",
++   "Stability Testing Requirements",
++   "Process Validation",
++   "Risk Management",
++   "Cardiovascular Safety Assessment",
++ ]
+
+ ❯ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts:102:21
+    100|     expect(pmda.length).toBeGreaterThan(0);
+    101|     const missing = pmda.filter((p) => !p.basis || p.basis.length === …
+    102|     expect(missing).toEqual([]);
+       |                     ^
+    103|     for (const p of pmda) {
+    104|       for (const b of p.basis as RegulatoryBasis[]) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > PMDA consultation catalogue (ha-meetings) > has one row per consultation type in the jp-programs record, named as PMDA names it
+AssertionError: pmda-consultation-clinical-trial: expected undefined to be defined
+ ❯ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts:120:25
+    118|     for (const c of consultations) {
+    119|       const row = rows.find((r) => r.programId === c.id);
+    120|       expect(row, c.id).toBeDefined();
+       |                         ^
+    121|       expect(row!.name).toContain(c.nameJa);
+    122|       expect(row!.purpose).toBe(c.description);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > PMDA consultation catalogue (ha-meetings) > keeps the two existing codes for compatibility
+AssertionError: expected undefined to be 'pmda-consultation-clinical-trial' // Object.is equality
+
+- Expected:
+"pmda-consultation-clinical-trial"
+
++ Received:
+undefined
+
+ ❯ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts:132:99
+    130|     const codes = MEETING_CATALOG.filter((m) => m.market === 'PMDA').m…
+    131|     expect(codes).toEqual(expect.arrayContaining(['pmda_clinical_trial…
+    132|     expect(MEETING_CATALOG.find((m) => m.code === 'pmda_clinical_trial…
+       |                                                                                                   ^
+    133|     expect(MEETING_CATALOG.find((m) => m.code === 'pmda_pre_nda_consul…
+    134|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > PMDA consultation catalogue (ha-meetings) > recommends the end-of-Phase II consultation at end of Phase II
+AssertionError: expected [ undefined ] to include 'pmda-consultation-end-of-phase-2'
+ ❯ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts:138:53
+    136|   it('recommends the end-of-Phase II consultation at end of Phase II',…
+    137|     const res = recommendMeetings({ market: 'PMDA', milestone: 'end_of…
+    138|     expect(res.recommended.map((m) => m.programId)).toContain('pmda-co…
+       |                                                     ^
+    139|   });
+    140| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > the shared PMDA meeting type > names the RS strategy consultation as PMDA does, not "RS Soudankai"
+AssertionError: expected 'PMDA regulatory consultation (面談) cov…' not to match /Soudankai/i
+
+- Expected:
+/Soudankai/i
+
++ Received:
+"PMDA regulatory consultation (面談) covering development strategy, clinical trial design, and submission planning for the Japanese market. Available as RS Soudankai (regulatory science consultation) or individual consultations."
+
+ ❯ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts:145:31
+    143|   it('names the RS strategy consultation as PMDA does, not "RS Soudank…
+    144|     const t = REGULATORY_MEETING_TYPES.find((m) => m.value === 'consul…
+    145|     expect(t.description).not.toMatch(/Soudankai/i);
+       |                               ^
+    146|     expect(t.description).toContain('RS戦略相談');
+    147|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > prompt prose about Japanese conditional approval > no prompt names the pre-2025 conditional early approval or its criteria
+AssertionError: expected [ 'ja: /条件付き早期承認/', …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "ja: /条件付き早期承認/",
++   "pmda: /conditional early approval/i",
++   "deepDive: /条件付き早期承認/",
++   "deepDive: /confirmatory (clinical )?trials? (are|is) difficult/i",
++   "jpInstr: /conditional early approval/i",
++ ]
+
+ ❯ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts:157:18
+    155|     const prompts = { ja: CULTURAL_OVERLAYS.ja, pmda: MARKET_BRIEFS.pm…
+    156|     const hits = Object.entries(prompts).flatMap(([k, text]) => STALE.…
+    157|     expect(hits).toEqual([]);
+       |                  ^
+    158|   });
+    159|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > prompt prose about Japanese conditional approval > names it as amended in 2025, without restating criteria
+AssertionError: expected '## TARGET MARKET AWARENESS — JAPAN (P…' to contain 'conditional approval (amended 2025)'
+
+- Expected
++ Received
+
+- conditional approval (amended 2025)
++ ## TARGET MARKET AWARENESS — JAPAN (PMDA)
++ The program targets Japan. Apply Japanese regulatory and professional context even though the conversation is not in Japanese:
++
++ - **Authority & pathway:** PMDA review with MHLW approval (J-NDA/Shonin). Know the accelerators (SAKIGAKE designation, conditional early approval) and Japan-specific expectations: J-GMP, ICH E5 bridging strategy, the question of Japanese-subject data, and the consultation system (PMDA面談) — strategy in Japan is built around pre-submission consultations, not around filing first. Reimbursement via Chuikyo pricing decisions often shapes the business case as much as approval.
++ - **Interaction norms:** Japanese counterparts and reviewers value careful evidence over assertive conclusions, indirect and concrete framing of risk, and respect for internal consensus-building (nemawashi/ringi). When advising on meetings or correspondence with Japanese partners or PMDA, shape recommendations to support that consensus process and avoid putting any party in a face-losing position.
++ - **Conventions:** Japanese fiscal year starts in April; dates may appear in the Japanese era calendar; family name precedes given name.
+
+ ❯ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts:162:32
+    160|   it('names it as amended in 2025, without restating criteria', () => {
+    161|     const jpInstr = buildDefaultInstructions(getApplicationType('JP_MK…
+    162|     expect(MARKET_BRIEFS.pmda).toContain('conditional approval (amende…
+       |                                ^
+    163|     expect(jpInstr).toContain('conditional approval (amended 2025)');
+    164|     expect(CULTURAL_OVERLAYS.ja).toContain('条件付き承認（2025年改正）');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > prompt prose about Japanese conditional approval > keeps the Japan conditional-approval and paediatric prose of the migrated engine in jp-programs.ts only
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "          PMDA: 'Pediatric guidance follows ICH E11; no mandatory pediatric plan but encouraged',",
++ ]
+
+ ❯ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts:172:19
+    170|     const PATTERNS = [/Conditional Early Approval/i, /confirmatory (cl…
+    171|     const lines = src.split('\n').filter((l) => PATTERNS.some((re) => …
+    172|     expect(lines).toEqual([]);
+       |                   ^
+    173|   });
+    174| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed (12)
+   Start at  04:54:11
+   Duration  585ms (transform 233ms, setup 75ms, import 206ms, tests 35ms, environment 0ms)
+
