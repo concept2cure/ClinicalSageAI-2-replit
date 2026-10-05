@@ -116,3 +116,26 @@ create the sequence is not treated as its author.
   signature (the dispatch signature) already exists, and the transmit-intent
   signature is a separate Gate 1 checked at the request, not a precondition a
   hidden button waits on.
+
+## Decision, 2026-10-05: a sequence's author is its creator, not its leaf placers
+
+The founder asked for the choice best suited to the launch client base (small
+biotech and pharma regulatory teams). Kept as is, now written down at
+`separation-of-duties.ts` (`SINGLE_AUTHOR['ectd-sequence']`):
+
+- **Content independence is already enforced where content is written.** Freeze
+  and dispatch refuse a sequence carrying an unapproved document
+  (`LEAF-UNAPPROVED`, Gate 3), and approving a document excludes everyone who
+  wrote any version of it (`documentAuthors`). Placing an approved document is
+  assembly.
+- **Small teams.** Counting every leaf placer as an author would bar the
+  colleague who helped publish from releasing the sequence, so a two-or-three-
+  person team could not sign its own IND, for no independence over content
+  that the document gate hasn't already separated.
+
+What the rule guarantees: whoever assembled the sequence never releases it.
+
+**Found while recording this:** the module's header says "admin may tighten,
+never loosen", but no per-org tightening setting exists. An organization that
+wants stricter four-eyes on releases has no way to ask for it today. Not built
+here (RULE 2: no new capability unless a launch row needs it); handed on.
