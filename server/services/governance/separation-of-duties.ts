@@ -279,6 +279,23 @@ const SINGLE_AUTHOR: Record<string, { sql: string; column: string; source: strin
   task: { sql: `SELECT owner_id FROM c2c_project_work_items WHERE id = $1 AND org_id = $2 LIMIT 1`, column: 'owner_id', source: 'recorded owner' },
   blocker: { sql: `SELECT owner_user_id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`, column: 'owner_user_id', source: 'recorded owner' },
   // The one target the Part 11 freeze/dispatch/transmit chain signs.
+  //
+  // Its author is the sequence's CREATOR only — a decision (founder,
+  // 2026-10-05), not an oversight. Leaf placers are deliberately not authors:
+  //   • Content independence is enforced where content is written. Every
+  //     placed document must be approved before freeze or dispatch
+  //     (LEAF-UNAPPROVED, submission-service Gate 3), and approving a document
+  //     excludes everyone who wrote any version of it (documentAuthors).
+  //     Placing an approved document is assembly, not authorship.
+  //   • Launch clients are small regulatory teams, often two or three people
+  //     for a whole IND. Counting every leaf placer as an author would bar the
+  //     colleague who helped publish from releasing it, leaving the team unable
+  //     to sign its own submission, with no independence gained over content
+  //     the document gate has not already separated.
+  // Guarantee: whoever assembled the sequence never releases it. A stricter
+  // rule belongs in a per-org tightening (the header's "admin may tighten,
+  // never loosen") — NOTE no such setting exists yet; that principle has no
+  // mechanism today. Evidence: docs/evidence/D7/2026-09-28-dispatch-reachable/.
   'ectd-sequence': { sql: `SELECT created_by FROM ectd_sequences WHERE id = $1 AND organization_id = $2 LIMIT 1`, column: 'created_by', source: 'sequence creator' },
   program: { sql: `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, column: 'created_by', source: 'program creator' },
   // Report finalize is signed (reporting review 2026-10-01). The run's content
