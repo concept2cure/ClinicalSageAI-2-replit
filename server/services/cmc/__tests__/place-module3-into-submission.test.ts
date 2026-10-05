@@ -54,7 +54,11 @@ vi.mock('../../../db', () => ({
   getPool: () => ({
     query: async (sql: string, params: unknown[] = []) => {
       poolQueries.push({ sql, params });
-      if (sql.includes('FROM cmc_module3_sections')) return { rows: sectionRows };
+      // Fixture rows stand for sections filed as signed; the binding is
+      // proven in section-signature-binding.pglite.test.ts.
+      if (sql.includes('FROM cmc_module3_sections')) {
+        return { rows: sectionRows.map((r) => ({ snapshotCoversNarrative: true, signedAsIs: true, ...r })) };
+      }
       return { rows: [] };
     },
   }),

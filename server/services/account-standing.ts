@@ -23,7 +23,7 @@
  * @module server/services/account-standing
  */
 
-import { runWithPreAuthScope } from '../db/tenantStore';
+import { runAsAccount } from '../db/tenantStore';
 import { sessionStartSecondsOf } from './session-inactivity';
 
 /** The one status in which an account may act. */
@@ -217,11 +217,12 @@ export async function endEverySessionOf(userId: number, at: Date = new Date()): 
 
 /**
  * The same reading, for a check that runs before a tenant is known: sign-in and
- * the checks that turn a token into an identity. It runs in the pre-auth scope,
- * which grants no role and so no policy bypass, as the sign-in's own reads do.
+ * the checks that turn a token into an identity. It runs in a pre-auth scope
+ * bound to this one account (runAsAccount), which grants no role and reaches
+ * no other account's row (D3, 2026-10-04).
  */
 export function readAccountStandingBeforeTenant(userId: number, organizationId: number | null = null): Promise<AccountStanding> {
-  return runWithPreAuthScope('auth:account-standing', () => readAccountStanding(userId, organizationId));
+  return runAsAccount(userId, 'auth:account-standing', () => readAccountStanding(userId, organizationId));
 }
 
 /**
@@ -234,7 +235,7 @@ export async function isAccountActive(userId: number): Promise<boolean> {
 
 /** isAccountActive, before a tenant is known (see readAccountStandingBeforeTenant). */
 export function isAccountActiveBeforeTenant(userId: number): Promise<boolean> {
-  return runWithPreAuthScope('auth:account-standing', () => isAccountActive(userId));
+  return runAsAccount(userId, 'auth:account-standing', () => isAccountActive(userId));
 }
 
 /**
@@ -316,7 +317,7 @@ export async function isSessionCurrent(userId: number, issuedAtSeconds: number |
 
 /** isSessionCurrent, before a tenant is known (see readAccountStandingBeforeTenant). */
 export function isSessionCurrentBeforeTenant(userId: number, issuedAtSeconds: number | null): Promise<boolean> {
-  return runWithPreAuthScope('auth:account-standing', () => isSessionCurrent(userId, issuedAtSeconds));
+  return runAsAccount(userId, 'auth:account-standing', () => isSessionCurrent(userId, issuedAtSeconds));
 }
 
 /** A positive integer id given as a number or a string of digits, else null. */

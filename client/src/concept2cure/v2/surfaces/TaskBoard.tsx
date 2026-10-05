@@ -1522,7 +1522,7 @@ interface TaskCreateBody {
 /** Real org project (from GET /api/projects — a bare row array). */
 interface ProjectOpt { id: number; name: string }
 /** Real assignable org member (from GET /api/task-management/assignees). */
-interface AssigneeOpt { id: string; name: string }
+interface AssigneeOpt { id: string; name: string; label?: string }
 
 interface TaskCreateProps {
   onClose: () => void;
@@ -1633,7 +1633,7 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
           </div>
           <div className="tb-frow">
             <div className="tb-field"><label htmlFor="tb-status">Status</label><select id="tb-status" value={f.status} onChange={e => set('status', e.target.value)}>{TB_COLS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></div>
-            <div className="tb-field"><label htmlFor="tb-assignee">Assignee</label><select id="tb-assignee" value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value="auto">Auto — optimal assignee</option>{assignees.rows.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
+            <div className="tb-field"><label htmlFor="tb-assignee">Assignee</label><select id="tb-assignee" value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value="auto">Auto — optimal assignee</option>{assignees.rows.map(a => <option key={a.id} value={a.id}>{a.label ?? a.name}</option>)}</select></div>
           </div>
           <div className="tb-frow">
             <div className="tb-field"><label htmlFor="tb-impact-score-10">Impact score — {f.impactScore}/10</label><input id="tb-impact-score-10" type="range" min="0" max="10" value={f.impactScore} onChange={e => set('impactScore', +e.target.value)} /></div>

@@ -6197,9 +6197,10 @@ registerToolHandler('check_dossier_consistency', async (input: Record<string, un
 // errors are relayed as needs_parameters so the model asks rather than guesses.
 registerToolHandler('reconcile_extracted_figures', async (input: Record<string, unknown>) => {
   try {
-    const { reconcileDossierNumbers } = await import(
-      '../reconciliation/dossier-number-reconciler.js'
-    );
+    const [{ reconcileDossierNumbers }, { reconciliationInstructionFor }] = await Promise.all([
+      import('../reconciliation/dossier-number-reconciler.js'),
+      import('../intelligence/consistency-verdict.js'),
+    ]);
     const report = reconcileDossierNumbers({
       figures: input.figures as any,
       tolerance: input.tolerance as any,
@@ -6208,8 +6209,12 @@ registerToolHandler('reconcile_extracted_figures', async (input: Record<string, 
       status: 'computed',
       engine: 'deterministic',
       result: report,
-      instruction:
+      // Row 74, track NC: 'clean' and 'not_assessed' (nothing compared across
+      // documents) are stated from the report, not as "report these conflicts".
+      instruction: reconciliationInstructionFor(
+        report,
         'Report these conflicts and values verbatim. A cross-document number mismatch (especially enrolment N or dose) is a recurring reviewer finding — surface each conflict, its sources, and the consensus.',
+      ),
     });
   } catch (err: any) {
     const message = err?.message || 'unknown error';
@@ -6489,16 +6494,30 @@ registerToolHandler('reconcile_device_documents', async (input: Record<string, u
       }
     : undefined;
   try {
-    const { reconcileDeviceDocuments } = await import('../reconciliation/device-document-reconciler.js');
+    const [{ reconcileDeviceDocuments, DEVICE_TEXT_READ }, { reconciliationInstructionFor }] = await Promise.all([
+      import('../reconciliation/device-document-reconciler.js'),
+      import('../intelligence/consistency-verdict.js'),
+    ]);
     const result = await reconcileDeviceDocuments({ programId, organizationId, tolerance });
     if (!result.ok) return JSON.stringify({ status: 'not_found', message: result.message });
     return JSON.stringify({
       status: 'computed',
       engine: 'deterministic',
       documentsScanned: result.documentsScanned,
+      versionsSetAside: result.versionsSetAside,
       result: result.report,
-      instruction:
+      // Row 74, track NC: documents with no figure, or none shared, are
+      // 'not_assessed' and say so; they used to arrive here as 'clean'. The
+      // copy names the text read and the superseded versions set aside.
+      instruction: reconciliationInstructionFor(
+        result.report,
         'Report each conflict verbatim: the quantity, its distinct values with source documents, the consensus, and the severity. A cross-document performance-claim mismatch is a submission blocker.',
+        {
+          textRead: DEVICE_TEXT_READ,
+          documentsRead: result.documentsScanned,
+          versionsSetAside: result.versionsSetAside,
+        },
+      ),
     });
   } catch (err: any) {
     return JSON.stringify({ error: `reconcile_device_documents failed: ${err?.message ?? 'unknown error'}` });

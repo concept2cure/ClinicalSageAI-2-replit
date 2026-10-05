@@ -1,0 +1,677 @@
+$ APPLY_C2C_MIGRATIONS=true node scripts/db/apply-c2c-migrations.mjs
+◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+  ✓ authoring subsystem provisioned as a unit (9 files, 23 tables, tenant-isolated)
+✓ applied: migrations/20260506_kit_section_draft_provenance.sql
+✓ applied: migrations/20260524_program_workbench_schema.sql
+✓ applied: migrations/20260527_mutation_primitives.sql
+✓ applied: migrations/20260528_phase9_document_schema.sql
+✓ applied: migrations/20260529_phase9_backfill.sql
+✓ applied: migrations/20260604_shadow_review.sql
+✓ applied: migrations/20260609_audit_hmac_seal.sql
+✓ applied: migrations/20260921_audit_logs_chain_seq.sql
+✓ applied: migrations/20260604_submission_core_canonical.sql
+✓ applied: migrations/20260603_ai_capability_governance.sql
+✓ applied: migrations/20260603_pv_operational.sql
+✓ applied: migrations/20260603_commitments.sql
+✓ applied: db/migrations/044b_gcc_lumen_schema_prerequisite.sql
+✓ applied: migrations/20260724_lumen_council_provisioning.sql
+✓ applied: migrations/20260724_ana_deep_investigations.sql
+✓ applied: db/migrations/20260724_clinical_regulatory_evidence_spine.sql
+✓ applied: migrations/20260726_file_uploads_tenancy.sql
+✓ applied: migrations/20260726_cre_source_program_scope.sql
+✓ applied: migrations/20260727_authoring_document_program_scope.sql
+✓ applied: migrations/20260726_authoring_citation_source_usage.sql
+✓ applied: db/migrations/20260727_industry_context_profiles.sql
+✓ applied: db/migrations/20260727_unified_tasks_mdx_metadata.sql
+✓ applied: migrations/20260629_rbm_surfaces.sql
+✓ applied: migrations/20260630_rbm_kri_values.sql
+✓ applied: migrations/20260701_rbm_patient_profiles.sql
+✓ applied: migrations/20260726_rbm_metric_ingestion.sql
+✓ applied: migrations/20260726_rbm_not_evaluated_backfill.sql
+✓ applied: db/migrations/20260727_collab_document_state.sql
+✓ applied: db/migrations/20260728_artifacts_table.sql
+✓ applied: migrations/20260728_c2c_document_sections_timestamps.sql
+✓ applied: db/migrations/20260401_cmc_convergence_os.sql
+✓ applied: db/migrations/20260402_cmc_runtime_ddl_to_migration.sql
+✓ applied: db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql
+✓ applied: migrations/20260728_cmc_module3_org_scoped_uniqueness.sql
+✓ applied: migrations/20260728_c2c_section_version_author_kind.sql
+✓ applied: migrations/20260728_authoring_comments_threading.sql
+✓ applied: migrations/20260728_authoring_document_governed_binding.sql
+✓ applied: migrations/20260921_authoring_document_provenance.sql
+    [WARNING] there is no transaction in progress
+✗ failed:  db/migrations/20260730_fix_atom_embedding_dimension.sql — extension "vector" is not available (Could not open extension control file "/usr/share/postgresql/16/extension/vector.control": No such file or directory.)
+✓ applied: db/migrations/20260725_submission_orchestrator_store_port.sql
+✓ applied: migrations/20260629_orchestrator_region_check_alignment.sql
+✓ applied: db/migrations/20260725_esig_gate_columns_port.sql
+✓ applied: db/migrations/20260725_users_signing_lockout_columns.sql
+✓ applied: db/migrations/20260730_project_milestones_reconciliation.sql
+    [NOTICE] policy "project_sections_org_policy" for relation "project_sections" does not exist, skipping
+    [NOTICE] policy "section_status_log_org_policy" for relation "section_status_log" does not exist, skipping
+    [NOTICE] policy "section_comments_org_policy" for relation "section_comments" does not exist, skipping
+    [NOTICE] policy "project_milestones_org_policy" for relation "project_milestones" does not exist, skipping
+    [NOTICE] policy "project_notifications_org_policy" for relation "project_notifications" does not exist, skipping
+    [NOTICE] trigger "trg_project_sections_updated_at" for relation "project_sections" does not exist, skipping
+    [NOTICE] trigger "trg_section_status_log" for relation "project_sections" does not exist, skipping
+✓ applied: db/migrations/20260220_ind_section_tracking.sql
+✓ applied: db/migrations/20260323_assumption_decision_contradiction.sql
+✓ applied: db/migrations/20260725_governance_boundary_tables.sql
+✓ applied: db/migrations/20260725_resolution_orchestration_tables.sql
+✓ applied: db/migrations/20260725_bundle_execution_receipts.sql
+✓ applied: db/migrations/20260725_project_sections_content_columns.sql
+✓ applied: db/migrations/20260725_ectd_compilations_project_level.sql
+✓ applied: db/migrations/20260730_ectd_compilations_sequence_columns.sql
+✓ applied: db/migrations/20260730_ectd_compilations_leaf_manifest.sql
+✓ applied: db/migrations/20260923_ectd_compilations_external_validation.sql
+✓ applied: db/migrations/20260730_esign_audit_db_level_immutability.sql
+✓ applied: db/migrations/20260730_orchestrator_run_ledger_hardening.sql
+✓ applied: db/migrations/20260730_release_signature_uniqueness.sql
+✓ applied: db/migrations/20260224_ai_trace_chain.sql
+    [NOTICE] index "idx_ai_claims_has_flags" does not exist, skipping
+✓ applied: db/migrations/20260224_ai_claims_verifier_flags.sql
+✓ applied: db/migrations/20260730_cmc_projects_reconstruction.sql
+✓ applied: db/migrations/20260730_manufacturing_processes_reconstruction.sql
+✓ applied: db/migrations/20260730_fk_delete_policies_port.sql
+✓ applied: db/migrations/20260730_c2c_ana_actions_command_vocab.sql
+✓ applied: migrations/20260730_estar_registration.sql
+✓ applied: migrations/20260730_estar_submission.sql
+✓ applied: migrations/20260730_estar_submission_project_link.sql
+✓ applied: migrations/20260903_regulatory_programs_estar_device_fields.sql
+✓ applied: migrations/20260903_estar_registration_correspondent.sql
+✓ applied: migrations/20260904_estar_registration_declaration_company_name.sql
+✓ applied: migrations/20260730_work_item_source_ref.sql
+    [NOTICE] [20260810] added unique constraint on (org_id, source_type, source_id)
+✓ applied: db/migrations/20260810_c2c_work_items_source_uniqueness.sql
+✓ applied: db/migrations/082_ectd_submission_agent.sql
+✓ applied: db/migrations/20260730_cmc_evidence_tables.sql
+✓ applied: db/migrations/20260730_submission_center_tables.sql
+    [NOTICE] pgvector unavailable; knowledge_graph_nodes.embedding skipped (similarity search degrades to no-op).
+✓ applied: db/migrations/20260730_graphrag_knowledge_tables.sql
+✓ applied: db/migrations/20260730_licensing_ip_tables.sql
+✓ applied: db/migrations/022_stability_v2.sql
+✓ applied: db/migrations/024_stability_step3.sql
+✓ applied: db/migrations/030_stability_results.sql
+    [NOTICE] policy "source_docs_org_policy" for relation "intelligent_docs.source_documents" does not exist, skipping
+    [NOTICE] policy "trace_links_org_policy" for relation "intelligent_docs.traceability_links" does not exist, skipping
+    [NOTICE] policy "propagation_org_policy" for relation "intelligent_docs.change_propagation_events" does not exist, skipping
+    [NOTICE] policy "compliance_scores_org_policy" for relation "intelligent_docs.compliance_scores" does not exist, skipping
+    [NOTICE] policy "compliance_rules_org_policy" for relation "intelligent_docs.compliance_rules" does not exist, skipping
+    [NOTICE] policy "auto_tables_org_policy" for relation "intelligent_docs.auto_generated_tables" does not exist, skipping
+    [NOTICE] trigger "traceability_links_immutable" for relation "intelligent_docs.traceability_links" does not exist, skipping
+    [NOTICE] trigger "propagation_events_immutable" for relation "intelligent_docs.change_propagation_events" does not exist, skipping
+✓ applied: db/migrations/20260129_phase5_intelligent_document_system.sql
+✓ applied: db/migrations/20260206_phase5_contradiction_scanner.sql
+✓ applied: db/migrations/20260206_phase5_evidence_fabric.sql
+✓ applied: db/migrations/20260207_phase6_6_predicate_intelligence.sql
+✓ applied: db/migrations/20260223_ivdr_binder_packs.sql
+    [NOTICE] constraint "chk_binder_evidence_source_integrity" of relation "ivdr_binder_evidence" does not exist, skipping
+✓ applied: db/migrations/20260224_binder_evidence_source_types.sql
+✓ applied: db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql
+✓ applied: db/migrations/20260306_chat_tool_runs.sql
+    [NOTICE] Could not log migration to audit_events: invalid input syntax for type integer: "20260317_global_regulatory_compliance"
+✓ applied: db/migrations/20260317_global_regulatory_compliance.sql
+✓ applied: db/migrations/20260322_regulatory_precedent_intelligence.sql
+✓ applied: db/migrations/20260323_reactive_dependency_layer.sql
+✓ applied: db/migrations/20260324_ai_goal_plan_runs.sql
+✓ applied: db/migrations/20260324_ai_kernel_agent_protocol_events.sql
+✓ applied: db/migrations/20260324_ai_kernel_decision_records.sql
+✓ applied: db/migrations/20260324_ai_kernel_policy_outcomes.sql
+✓ applied: db/migrations/20260325_ai_goal_plan_step_events.sql
+✓ applied: db/migrations/20260325_decision_receipts.sql
+✓ applied: db/migrations/20260326_conversation_os_durability.sql
+✓ applied: db/migrations/20260508_ana_submission_chat_proposals.sql
+✓ applied: db/migrations/20260520_ana_failure_learning.sql
+✓ applied: db/migrations/20260520_document_templates.sql
+✓ applied: db/migrations/20260520_regulatory_intelligence_layer.sql
+✓ applied: db/migrations/20260716_nonclinical_display.sql
+✓ applied: db/migrations/20260717_agency_meetings_store.sql
+✓ applied: db/migrations/20260717_design_controls_store.sql
+✓ applied: db/migrations/20260717_evidence_asks_store.sql
+✓ applied: db/migrations/20260717_evidence_objects_store.sql
+✓ applied: db/migrations/20260717_human_factors_store.sql
+✓ applied: db/migrations/20260717_labeling_pi_store.sql
+✓ applied: db/migrations/20260717_maa_module1_store.sql
+✓ applied: db/migrations/20260717_nda_m1_docs_store.sql
+✓ applied: db/migrations/20260717_nda_rtf_store.sql
+✓ applied: db/migrations/20260717_program_journey_store.sql
+✓ applied: db/migrations/20260718_pediatric_orphan_cards.sql
+✓ applied: db/migrations/20260718_smpc_sections_store.sql
+✓ applied: db/migrations/20260724_qms_change_control_store.sql
+✓ applied: db/migrations/20260730_cmc_change_control_store.sql
+✓ applied: db/migrations/20260801_hf_files_store.sql
+✓ applied: db/migrations/20260801_market_access_store.sql
+✓ applied: db/migrations/20260801_reg_change_store.sql
+✓ applied: db/migrations/20260801_labeling_pi_store.sql
+✓ applied: db/migrations/20260801_program_journey_store.sql
+✓ applied: db/migrations/026_stability_step4.sql
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_audit" does not exist, skipping
+    [NOTICE] [stab-rls] isolated public.stab_audit
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_conditions" does not exist, skipping
+    [NOTICE] [stab-rls] isolated public.stab_conditions
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_exports" does not exist, skipping
+    [NOTICE] [stab-rls] isolated public.stab_exports
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_inuse" does not exist, skipping
+    [NOTICE] [stab-rls] isolated public.stab_inuse
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_lineage" does not exist, skipping
+    [NOTICE] [stab-rls] isolated public.stab_lineage
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_oot_rules" does not exist, skipping
+    [NOTICE] [stab-rls] isolated public.stab_oot_rules
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_reminders" does not exist, skipping
+    [NOTICE] [stab-rls] isolated public.stab_reminders
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_results" does not exist, skipping
+    [NOTICE] [stab-rls] isolated public.stab_results
+    [NOTICE] [stab-rls] isolated public.stab_signoffs
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_studies" does not exist, skipping
+    [NOTICE] [stab-rls] isolated public.stab_studies
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_tests" does not exist, skipping
+    [NOTICE] [stab-rls] isolated public.stab_tests
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_timepoints" does not exist, skipping
+    [NOTICE] [stab-rls] isolated public.stab_timepoints
+    [NOTICE] [stab-rls] tenant isolation applied to 12 stab_* table(s)
+✓ applied: db/migrations/20260728_stability_tenant_isolation.sql
+    [NOTICE] view "v_stab_upcoming_tp" does not exist, skipping
+    [NOTICE] view "v_stab_due_tp" does not exist, skipping
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_assignments" does not exist, skipping
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_capa" does not exist, skipping
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_chain" does not exist, skipping
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_excursions" does not exist, skipping
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_protocols" does not exist, skipping
+    [NOTICE] policy "tenant_isolation_policy" for relation "public.stab_samples" does not exist, skipping
+✓ applied: db/migrations/20260728_stability_backing_tables.sql
+    [NOTICE] trigger "trg_canonical_ae_hash" for relation "regulatory_harmonization.canonical_adverse_events" does not exist, skipping
+    [NOTICE] trigger "trg_canonical_product_hash" for relation "regulatory_harmonization.canonical_products" does not exist, skipping
+    [NOTICE] trigger "trg_audit_log_hash" for relation "regulatory_harmonization.audit_log" does not exist, skipping
+    [NOTICE] trigger "trg_export_job_audit_hash" for relation "regulatory_harmonization.export_job_audit_log" does not exist, skipping
+    [NOTICE] =============================================================
+    [NOTICE] Migration 081: GRDHE Regulatory Mapping Layer Complete
+    [NOTICE] =============================================================
+    [NOTICE] Created Schema: regulatory_harmonization
+    [NOTICE] Tables Created:
+    [NOTICE] - tenant_data_residency (GDPR/FDA data location control)
+    [NOTICE] - terminology_versions (MedDRA/SNOMED version registry)
+    [NOTICE] - terminology_mappings (cross-version term mappings)
+    [NOTICE] - submission_terminology_usage (audit: versions per submission)
+    [NOTICE] - mapping_rules (transformation rule configuration)
+    [NOTICE] - mapping_rule_history (Part 11 audit trail)
+    [NOTICE] - export_jobs (job tracking)
+    [NOTICE] - export_job_audit_log (detailed job audit)
+    [NOTICE] - electronic_signatures (21 CFR Part 11 e-signatures)
+    [NOTICE] - canonical_adverse_events (jurisdiction-neutral AEs)
+    [NOTICE] - canonical_products (jurisdiction-neutral products)
+    [NOTICE] - gdpr_processing_records (Article 30 ROPA)
+    [NOTICE] - audit_log (comprehensive audit, partitioned)
+    [NOTICE] Key Functions:
+    [NOTICE] - validate_data_region()
+    [NOTICE] - get_terminology_version()
+    [NOTICE] - create_export_job()
+    [NOTICE] - log_audit()
+    [NOTICE] Seed Data:
+    [NOTICE] - 14 terminology versions (MedDRA, SNOMED, GUDID, etc.)
+    [NOTICE] - 2 mapping rules (FDA 3500A, EMA E2B R3)
+    [NOTICE] COMPLIANCE:
+    [NOTICE] - 21 CFR Part 11: Electronic signatures, audit trails
+    [NOTICE] - GDPR Article 30: Records of processing activities
+    [NOTICE] - ISO 13485: QMS integration points
+    [NOTICE] - ALCOA+: Data integrity enforcement
+    [NOTICE] =============================================================
+✓ applied: db/migrations/081_grdhe_regulatory_mapping_layer.sql
+✓ applied: db/migrations/20260209_phase6_6a_fda_ingest_runs.sql
+✓ applied: db/migrations/20260211_phase6_6d_defense_packets.sql
+✓ applied: db/migrations/20260211_phase6_6e_proof_pack_exports.sql
+✓ applied: db/migrations/20260211_phase7_0a_render_jobs.sql
+    [NOTICE] trigger "trg_session_duration" for relation "user_work_sessions" does not exist, skipping
+    [NOTICE] trigger "trg_uwq_updated" for relation "user_work_queue" does not exist, skipping
+✓ applied: db/migrations/20260220_user_intelligence_platform.sql
+✓ applied: db/migrations/20260322_quality_checkpoints.sql
+✓ applied: db/migrations/20260326_artifact_compute_plane.sql
+✓ applied: db/migrations/20260331_communication_center_scaffold.sql
+✓ applied: db/migrations/20260331_regulatory_correspondence_os.sql
+✓ applied: db/migrations/20260401_submission_center_items.sql
+✓ applied: db/migrations/20260508_artifact_citations.sql
+✓ applied: db/migrations/20260520_growth_mindset_extensions.sql
+✓ applied: db/migrations/20260621_weekly_usage_limits.sql
+    [NOTICE] [c2c/C-40] identity reconciliation: 0 empty table(s) dropped for recreation, 0 populated table(s) preserved for human review
+✓ applied: db/migrations/20260801_atom_identity_existing_db_reconciliation.sql
+✓ applied: db/migrations/20260125_enhanced_cortex_schema.sql
+    [WARNING] there is no transaction in progress
+✗ failed:  db/migrations/20260207_phase6_6a_fda_clearance_universe.sql — extension "vector" is not available (Could not open extension control file "/usr/share/postgresql/16/extension/vector.control": No such file or directory.)
+    [WARNING] there is no transaction in progress
+✗ failed:  db/migrations/20260306_precedent_engine.sql — extension "vector" is not available (Could not open extension control file "/usr/share/postgresql/16/extension/vector.control": No such file or directory.)
+    [NOTICE] precedent.regulatory_precedents not present; skipping org-isolation column (no-op).
+✓ applied: db/migrations/20260617_precedent_org_isolation.sql
+    [WARNING] there is no transaction in progress
+✗ failed:  db/migrations/20260208_phase6_6a_risk_rollups.sql — relation "predicate.fda_510k_clearances" does not exist
+    [NOTICE] function get_org_ai_usage(uuid,pg_catalog.timestamptz,pg_catalog.timestamptz) does not exist, skipping
+✓ applied: db/migrations/20260125_ai_provider_audit_log.sql
+✓ applied: db/migrations/20260324_ana_kernel_decision_log.sql
+✓ applied: db/migrations/20260326_conversation_os_durability_phase2.sql
+    [NOTICE] [c2c] pgvector absent — literature_entries.embedding not added
+✓ applied: db/migrations/20260801_consolidated_tree_reconciliation.sql
+✓ applied: db/migrations/20260803_document_span_lineage.sql
+✓ applied: db/migrations/20260809_source_attribution_draft_candidates.sql
+✓ applied: migrations/20260804_phase9_rule_pack_outlines.sql
+✓ applied: migrations/20260806_cta_ema_ctr536_outline.sql
+✓ applied: migrations/20260806b_anda_ide_filing_types.sql
+✓ applied: migrations/20260810_pma_fda_814_20_outline.sql
+✓ applied: migrations/20260810b_eu_mdr_ivdr_outlines.sql
+    [NOTICE] c2c_rule_packs provenance columns added and backfilled.
+✓ applied: migrations/20260810c_rule_pack_provenance.sql
+    [NOTICE] c2c_rule_packs review attribution columns added; 0 packs marked reviewed.
+    [NOTICE] c2c_rule_packs_review_state view created.
+✓ applied: migrations/20260810d_rule_pack_review_attribution.sql
+✓ applied: migrations/20260901_ind_fda_m1_v2_3_outline.sql
+✓ applied: migrations/20260902_ind_fda_outline_v2_2_initial_ind_flags.sql
+✓ applied: migrations/20260901b_estar_510k_denovo_outlines.sql
+✓ applied: migrations/20260902_ind_icsr_transmissions_transport_receipt.sql
+✓ applied: migrations/20260903_rendered_leaf_files.sql
+✓ applied: migrations/20260331_performance_indexes.sql
+✓ applied: migrations/20260821_regulatory_twin_simulations.sql
+✓ applied: migrations/20260729_unified_documents_provision.sql
+✓ applied: migrations/20260729b_unified_workflow_companion_tables.sql
+✓ applied: migrations/20260730_workflow_doc_versions_org_id.sql
+✓ applied: migrations/20260731_workflow_doc_versions_org_not_null.sql
+✓ applied: db/migrations/20260807_unified_tasks_soft_delete.sql
+✓ applied: db/migrations/20260807_collab_section_locks.sql
+✓ applied: db/migrations/20260807_task_graph_org_columns.sql
+    [NOTICE] trigger "trg_prevent_audit_mutation" for relation "audit.tamper_proof_log" does not exist, skipping
+    [NOTICE] [audit] append-only grants applied to app_service
+✓ applied: db/migrations/20260813_audit_tamper_proof_log.sql
+    [NOTICE] [kg-tenant] knowledge_graph_nodes gained organization_id
+    [NOTICE] [kg-tenant] knowledge_graph_nodes policied
+    [NOTICE] [kg-tenant] knowledge_graph_edges gained organization_id
+    [NOTICE] [kg-tenant] knowledge_graph_edges policied
+    [NOTICE] [kg-tenant] lumen_knowledge_graph_edges gained organization_id
+    [NOTICE] [kg-tenant] lumen_knowledge_graph_edges policied
+✓ applied: db/migrations/20260813_knowledge_graph_tenant_keys.sql
+✓ applied: migrations/20260813_tenant_offboarding_lifecycle.sql
+    [NOTICE] [ai-gateway] grants applied to app_service
+✓ applied: db/migrations/20260813_ai_gateway_audit_log.sql
+    [NOTICE] [child-rls] ai_generation_runs already policied — leaving it alone
+    [NOTICE] [child-rls] ai_messages already policied — leaving it alone
+    [NOTICE] [child-rls] ai_retrieval_chunks already policied — leaving it alone
+    [NOTICE] [child-rls] approval_checkpoints already policied — leaving it alone
+    [NOTICE] [child-rls] audit_trail already policied — leaving it alone
+    [NOTICE] [child-rls] c2c_correspondence_issues scoped to c2c_correspondence(organization_id)
+    [NOTICE] [child-rls] c2c_document_sections already policied — leaving it alone
+    [NOTICE] [child-rls] cer_exports already policied — leaving it alone
+    [NOTICE] [child-rls] chat_messages already policied — leaving it alone
+    [NOTICE] [child-rls] cmc_document_versions already policied — leaving it alone
+    [NOTICE] [child-rls] coauthor_document_versions or coauthor_documents absent — skipping
+    [NOTICE] [child-rls] csr_details already policied — leaving it alone
+    [NOTICE] [child-rls] document_versions already policied — leaving it alone
+    [NOTICE] [child-rls] embedding_audit_log scoped to lumen_data_atoms(organization_id)
+    [NOTICE] [child-rls] fda_510k_stage_progress already policied — leaving it alone
+    [NOTICE] [child-rls] lumen_atom_citations scoped to lumen_data_atoms(organization_id)
+    [NOTICE] [child-rls] lumen_atom_conflicts scoped to lumen_data_atoms(organization_id)
+    [NOTICE] [child-rls] lumen_atom_quality_scores scoped to lumen_data_atoms(organization_id)
+    [NOTICE] [child-rls] lumen_atom_versions scoped to lumen_data_atoms(organization_id)
+    [NOTICE] [child-rls] program_milestones already policied — leaving it alone
+    [NOTICE] [child-rls] rag_chunks or rag_documents absent — skipping
+    [NOTICE] [child-rls] csr_adverse_events or csr_studies absent — skipping
+    [NOTICE] [child-rls] csr_biomarkers or csr_studies absent — skipping
+    [NOTICE] [child-rls] csr_dose_response or csr_studies absent — skipping
+    [NOTICE] [child-rls] csr_eligibility_criteria or csr_studies absent — skipping
+    [NOTICE] [child-rls] csr_endpoints or csr_studies absent — skipping
+    [NOTICE] [child-rls] csr_pharmacokinetics or csr_studies absent — skipping
+    [NOTICE] [child-rls] csr_populations or csr_studies absent — skipping
+    [NOTICE] [child-rls] csr_references or csr_studies absent — skipping
+    [NOTICE] [child-rls] csr_safety_summaries or csr_studies absent — skipping
+    [NOTICE] [child-rls] csr_sections or csr_studies absent — skipping
+    [NOTICE] [child-rls] csr_statistical_analyses or csr_studies absent — skipping
+    [NOTICE] [child-rls] csr_tables_and_figures or csr_studies absent — skipping
+    [NOTICE] [child-rls] csr_treatment_arms or csr_studies absent — skipping
+    [NOTICE] [child-rls] ctd_nonclinical_studies already policied — leaving it alone
+    [NOTICE] [child-rls] ctd_quality_data already policied — leaving it alone
+    [NOTICE] [child-rls] ctd_submissions already policied — leaving it alone
+    [NOTICE] [child-rls] csr_knowledge_edges or csr_studies absent — skipping
+    [NOTICE] [child-rls] ctd_cross_references or csr_studies absent — skipping
+    [WARNING] [child-rls] complaints → regulatory_programs: key or tenant column type does not fit the integer-tenant predicate — policied by text comparison instead (key_cast=t, tenant_cast=f)
+    [NOTICE] [child-rls] complaints already policied — leaving it alone
+    [WARNING] [child-rls] mdr_events → regulatory_programs: key or tenant column type does not fit the integer-tenant predicate — policied by text comparison instead (key_cast=t, tenant_cast=f)
+    [NOTICE] [child-rls] mdr_events already policied — leaving it alone
+    [WARNING] [child-rls] vigilance_events → regulatory_programs: key or tenant column type does not fit the integer-tenant predicate — policied by text comparison instead (key_cast=t, tenant_cast=f)
+    [NOTICE] [child-rls] vigilance_events already policied — leaving it alone
+    [NOTICE] [child-rls] activity_reactions already policied — leaving it alone
+    [NOTICE] [child-rls] agency_validation_results already policied — leaving it alone
+    [NOTICE] [child-rls] ai_ml_modifications already policied — leaving it alone
+    [NOTICE] [child-rls] c2c_ana_conversation_turns already policied — leaving it alone
+    [NOTICE] [child-rls] c2c_milestone_sections already policied — leaving it alone
+    [NOTICE] [child-rls] c2c_secure_attachments scoped to c2c_correspondence(organization_id)
+    [NOTICE] [child-rls] cer_clinical_evidence already policied — leaving it alone
+    [NOTICE] [child-rls] cer_compliance_checks already policied — leaving it alone
+    [NOTICE] [child-rls] cer_essential_requirements already policied — leaving it alone
+    [NOTICE] [child-rls] cer_faers_data already policied — leaving it alone
+    [NOTICE] [child-rls] cer_literature already policied — leaving it alone
+    [NOTICE] [child-rls] cer_sections already policied — leaving it alone
+    [NOTICE] [child-rls] cer_version_history already policied — leaving it alone
+    [NOTICE] [child-rls] cer_workflows already policied — leaving it alone
+    [NOTICE] [child-rls] charter_sections already policied — leaving it alone
+    [NOTICE] [child-rls] cognitive_hitl_breakpoints already policied — leaving it alone
+    [NOTICE] [child-rls] cognitive_reasoning_traces already policied — leaving it alone
+    [NOTICE] [child-rls] cognitive_thread_messages already policied — leaving it alone
+    [NOTICE] [child-rls] cognitive_workflow_checkpoints already policied — leaving it alone
+    [NOTICE] [child-rls] context_members already policied — leaving it alone
+    [NOTICE] [child-rls] dlt_events already policied — leaving it alone
+    [NOTICE] [child-rls] document_attachments already policied — leaving it alone
+    [NOTICE] [child-rls] document_audit_logs already policied — leaving it alone
+    [NOTICE] [child-rls] document_comments already policied — leaving it alone
+    [NOTICE] [child-rls] document_locks already policied — leaving it alone
+    [NOTICE] [child-rls] doe_analysis_results already policied — leaving it alone
+    [NOTICE] [child-rls] doe_experiments already policied — leaving it alone
+    [NOTICE] [child-rls] doe_factors already policied — leaving it alone
+    [NOTICE] [child-rls] doe_responses already policied — leaving it alone
+    [NOTICE] [child-rls] dose_cohorts already policied — leaving it alone
+    [NOTICE] [child-rls] dose_levels already policied — leaving it alone
+    [NOTICE] [child-rls] ind_narrative_sections already policied — leaving it alone
+    [NOTICE] [child-rls] ind_package_plan_documents already policied — leaving it alone
+    [NOTICE] [child-rls] ind_package_plan_modalities already policied — leaving it alone
+    [NOTICE] [child-rls] ind_package_plan_regions already policied — leaving it alone
+    [NOTICE] [child-rls] ind_package_plan_requirements already policied — leaving it alone
+    [NOTICE] [child-rls] ind_package_plan_timelines already policied — leaving it alone
+    [NOTICE] [child-rls] leaf_citations already policied — leaving it alone
+    [NOTICE] [child-rls] leaf_patches already policied — leaving it alone
+    [NOTICE] [child-rls] lumen_collection_atoms scoped to lumen_atom_collections(organization_id)
+    [NOTICE] [child-rls] obligation_updates already policied — leaving it alone
+    [NOTICE] [child-rls] pdev_program_activities already policied — leaving it alone
+    [NOTICE] [child-rls] pdev_readiness_snapshots already policied — leaving it alone
+    [NOTICE] [child-rls] pkpd_compartments already policied — leaving it alone
+    [NOTICE] [child-rls] project_predictions already policied — leaving it alone
+    [NOTICE] [child-rls] report_details already policied — leaving it alone
+    [NOTICE] [child-rls] report_program_group_projects already policied — leaving it alone
+    [NOTICE] [child-rls] resolution_bundle_items scoped to resolution_bundles(organization_id)
+    [NOTICE] [child-rls] risk_detections already policied — leaving it alone
+    [NOTICE] [child-rls] section_patches already policied — leaving it alone
+    [NOTICE] [child-rls] sharepoint_comments already policied — leaving it alone
+    [NOTICE] [child-rls] sharepoint_file_versions already policied — leaving it alone
+    [NOTICE] [child-rls] sharepoint_locks already policied — leaving it alone
+    [NOTICE] [child-rls] sharepoint_shares already policied — leaving it alone
+    [NOTICE] [child-rls] simple_document_versions already policied — leaving it alone
+    [NOTICE] [child-rls] species_comparisons already policied — leaving it alone
+    [NOTICE] [child-rls] timeline_phases already policied — leaving it alone
+    [NOTICE] [child-rls] validation_findings already policied — leaving it alone
+    [NOTICE] [child-rls] validation_harmonization_opportunities already policied — leaving it alone
+    [NOTICE] [child-rls] validation_issues already policied — leaving it alone
+    [NOTICE] [child-rls] workflow_approvals already policied — leaving it alone
+    [NOTICE] [child-rls] workflow_history already policied — leaving it alone
+    [NOTICE] [child-rls] workflow_steps already policied — leaving it alone
+    [NOTICE] [child-rls] 9 policied, 96 skipped
+    [NOTICE] [child-rls] public.ai_claims already policied — leaving it alone
+    [NOTICE] [child-rls] public.ai_claim_citations already policied — leaving it alone
+    [NOTICE] [child-rls] public.c2c_document_section_evidence already policied — leaving it alone
+    [NOTICE] [child-rls] public.c2c_document_section_versions already policied — leaving it alone
+    [NOTICE] [child-rls] public.section_propagations already policied — leaving it alone
+    [NOTICE] [child-rls] ai.risk_assessments or global_dossier.dossier_instances absent — skipping
+    [NOTICE] [child-rls] audit.config_bundles already policied — leaving it alone
+    [NOTICE] [child-rls] audit.dataset_snapshots already policied — leaving it alone
+    [NOTICE] [child-rls] audit.idempotency_keys already policied — leaving it alone
+    [NOTICE] [child-rls] audit.purge_requests already policied — leaving it alone
+    [NOTICE] [child-rls] audit.purge_approvals already policied — leaving it alone
+    [NOTICE] [child-rls] audit.tombstones already policied — leaving it alone
+    [NOTICE] [child-rls] core.entities already policied — leaving it alone
+    [NOTICE] [child-rls] ectd.project_folders already policied — leaving it alone
+    [NOTICE] [child-rls] global_dossier.content_versions already policied — leaving it alone
+    [NOTICE] [child-rls] global_dossier.dossier_branches already policied — leaving it alone
+    [NOTICE] [child-rls] global_dossier.dossier_sync_events already policied — leaving it alone
+    [NOTICE] [child-rls] global_dossier.regulatory_comments already policied — leaving it alone
+    [NOTICE] [child-rls] manufacturing.rtrt_predictions already policied — leaving it alone
+    [NOTICE] [child-rls] precedent.csr_precedent_links or precedent.regulatory_precedents absent — skipping
+    [WARNING] [child-rls] regulatory_harmonization.export_job_audit_log → regulatory_harmonization.export_jobs: the parent is not scoped, so delegating to it would scope nothing — skipping
+    [NOTICE] [child-rls] chained: 0 policied, 21 skipped
+✓ applied: db/migrations/20260813_child_table_parent_scoped_rls.sql
+✓ applied: migrations/20260813b_tenant_export_receipts.sql
+    [NOTICE] index "idx_ivdr_class_class" does not exist, skipping
+    [NOTICE] index "idx_ivdr_class_org" does not exist, skipping
+✓ applied: migrations/20260813c_ivdr_schema_reconciliation.sql
+✓ applied: migrations/20260508_ivd_diagnostic_surfaces.sql
+✓ applied: migrations/20260501_q_sub.sql
+✓ applied: migrations/20260507_mdx_beta_surfaces.sql
+✓ applied: migrations/001_create_ivdr_tables.sql
+✓ applied: migrations/20260813c2_electronic_signatures_tenant_key.sql
+✓ applied: migrations/20260813d_esignature_governed_unification.sql
+    [NOTICE] program anchor backfill: 0 project row(s) linked on an unambiguous same-org exact code/name match; every ambiguous or unmatched project left NULL
+✓ applied: migrations/20260814_projects_regulatory_program_anchor.sql
+✓ applied: migrations/20260814b_literature_screening_decisions.sql
+✓ applied: migrations/20260429_gspr_postmarket.sql
+✓ applied: migrations/20260814c_pmcf_enrollment_records.sql
+✓ applied: migrations/20260814d_document_alias_map.sql
+✓ applied: migrations/20260817_reconcile_declared_updated_at_columns.sql
+✓ applied: migrations/20260814e_submission_leaf_source_pin.sql
+✓ applied: migrations/20260814f_section_version_ana_action_backlink.sql
+✓ applied: migrations/20260814g_section_version_reason_required.sql
+✓ applied: migrations/20260822_section_version_author_kind_unspecified.sql
+✓ applied: migrations/20260829_cre_source_versioning.sql
+✓ applied: migrations/20260814h_review_task_type_domain_repair.sql
+✓ applied: migrations/20260814i_draft_candidate_generator.sql
+✓ applied: migrations/20260906c_draft_candidate_assertions.sql
+✓ applied: migrations/20260907_span_lineage_accepted_machine_draft.sql
+✓ applied: migrations/20260908_span_lineage_machine_draft.sql
+✓ applied: migrations/20260814j_catalog_missing_product_surfaces.sql
+    [NOTICE] Mission Control catalog entry ensured
+✓ applied: migrations/20260814k_catalog_mission_control.sql
+    [NOTICE] Global filing strategy catalog entry ensured
+✓ applied: migrations/20260814l_catalog_filing_strategy.sql
+    [NOTICE] regulatory_intel platform tier ensured
+✓ applied: migrations/20260814m_regulatory_intel_platform_tier.sql
+    [NOTICE] regulatory_intel platform knowledge seeded
+✓ applied: migrations/20260814n_seed_regulatory_intel_platform_knowledge.sql
+✓ applied: migrations/20260814m_catalog_honest_module_descriptions.sql
+✓ applied: migrations/20260815_workflow_approval_tables.sql
+✓ applied: migrations/20260814o_catalog_retire_duplicate_ind_lifecycle.sql
+    [NOTICE] trigger "trg_audit_events_hash_chain" for relation "audit_events" does not exist, skipping
+✓ applied: db/migrations/20260222_audit_events_hash_chain.sql
+    [NOTICE] trigger "trg_audit_events_no_update" for relation "audit_events" does not exist, skipping
+    [NOTICE] trigger "trg_audit_events_no_delete" for relation "audit_events" does not exist, skipping
+    [NOTICE] trigger "trg_audit_events_no_truncate" for relation "audit_events" does not exist, skipping
+    [NOTICE] audit_events immutability enforced: 3 triggers installed (UPDATE, DELETE, TRUNCATE)
+✓ applied: db/migrations/20260222_audit_events_immutability.sql
+    [NOTICE] trigger "trg_audit_log_archives_no_update" for relation "public.audit_log_archives" does not exist, skipping
+    [NOTICE] trigger "trg_audit_log_archives_no_delete" for relation "public.audit_log_archives" does not exist, skipping
+    [NOTICE] trigger "trg_audit_log_archives_no_truncate" for relation "public.audit_log_archives" does not exist, skipping
+    [NOTICE] trigger "trg_audit_logs_no_update" for relation "public.audit_logs" does not exist, skipping
+    [NOTICE] trigger "trg_audit_logs_no_delete" for relation "public.audit_logs" does not exist, skipping
+    [NOTICE] trigger "trg_audit_logs_no_truncate" for relation "public.audit_logs" does not exist, skipping
+    [NOTICE] [audit_logs] archive door EXECUTE granted to app_service
+    [NOTICE] public.audit_logs immutability enforced: 3 triggers installed (UPDATE, DELETE-except-archive-door, TRUNCATE)
+    [NOTICE] public.audit_logs archive door verified: SECURITY DEFINER, owner audit_archiver, not executable by PUBLIC
+✓ applied: db/migrations/20260617_audit_logs_immutability.sql
+✓ applied: migrations/20260911_charter_audit_immutability.sql
+✓ applied: migrations/20260911_contradiction_consequence_log_convergence.sql
+    [NOTICE] audit_events.hmac_seal column added (nullable, unsealed by default).
+    [NOTICE] audit_events.hmac_seal present and nullable — additive seal column ready.
+✓ applied: db/migrations/20260617_audit_events_hmac_seal.sql
+✓ applied: migrations/20260820_working_memory_project_id.sql
+    [WARNING] there is no transaction in progress
+✗ failed:  migrations/20260602_working_memory_embeddings.sql — extension "vector" is not available (Could not open extension control file "/usr/share/postgresql/16/extension/vector.control": No such file or directory.)
+✓ applied: migrations/20260612_ana_relational_external_intel.sql
+✓ applied: migrations/20260820b_rim_learned_patterns.sql
+✓ applied: migrations/0013_ana_intelligence_system.sql
+✓ applied: db/migrations/20260810_reconcile_module_catalog.sql
+✓ applied: db/migrations/20260823_fix_provision_org_modules_tier_ladder.sql
+✓ applied: db/migrations/20260823_module_catalog_commercial_packaging.sql
+✓ applied: db/migrations/20260823_module_catalog_customer_copy.sql
+✓ applied: db/migrations/20260823_module_catalog_mdx_registers.sql
+✓ applied: db/migrations/20260824_cmc_professional_tier.sql
+✓ applied: migrations/20260820c_catalog_maa_module1_regional.sql
+✓ applied: db/migrations/20260907_module_catalog_submission_orchestrator.sql
+✓ applied: migrations/20260821_vault_documents_canonical_shape.sql
+✓ applied: migrations/20260823_vault_document_placement.sql
+✓ applied: migrations/20260905_document_catalog.sql
+✓ applied: migrations/20260905b_vault_document_chunks.sql
+✓ applied: db/migrations/20260905_gdpr_dsar_execution_evidence.sql
+✓ applied: db/migrations/20260824_module_grant_expiry.sql
+✓ applied: db/migrations/20260824_module_access_requests.sql
+✓ applied: db/migrations/20260824_enforcement_mode_setting.sql
+    [NOTICE] [reg-twin-tenant] organization_id is NOT NULL — every simulation is tenant-owned
+✓ applied: db/migrations/20260821_regulatory_twin_simulations_tenant_scope.sql
+    [NOTICE] [uuid-guc-heal] 0 policy expression(s) repaired (uuid casts via identity.current_org_id(), integer casts via substring extraction)
+✓ applied: db/migrations/20260821_uuid_org_guc_cast_heal.sql
+✓ applied: db/migrations/20260828_program_org_resolution_canonical.sql
+    [NOTICE] [orphaned-guc] keeping project_notifications.project_notifications_org_policy — canonical tenant_isolation_policy is absent, so dropping this would leave the table with no tenant predicate. Run the tenant-isolation sweep first.
+    [NOTICE] [orphaned-guc] keeping project_sections.project_sections_org_policy — canonical tenant_isolation_policy is absent, so dropping this would leave the table with no tenant predicate. Run the tenant-isolation sweep first.
+    [NOTICE] [orphaned-guc] keeping section_comments.section_comments_org_policy — canonical tenant_isolation_policy is absent, so dropping this would leave the table with no tenant predicate. Run the tenant-isolation sweep first.
+    [NOTICE] [orphaned-guc] keeping section_status_log.section_status_log_org_policy — canonical tenant_isolation_policy is absent, so dropping this would leave the table with no tenant predicate. Run the tenant-isolation sweep first.
+    [NOTICE] [orphaned-guc] dropped 1 policy(ies), skipped 4.
+✓ applied: db/migrations/20260828_drop_orphaned_org_guc_policies.sql
+    [NOTICE] [fail-closed] 2 non-public tenant policy(ies) now filter strictly under app.rls_enforce=on.
+✓ applied: db/migrations/20260828_fail_closed_org_coalesce_policies.sql
+✓ applied: db/migrations/20260828_artifact_versions_updated_at.sql
+    [NOTICE] [column-align] 0 column(s) added to match shared/schema.ts.
+✓ applied: db/migrations/20260828_align_written_columns_with_migrations.sql
+    [NOTICE] [file-uploads-checksum] added checksum_sha256 (existing rows left NULL).
+✓ applied: db/migrations/20260828_file_uploads_checksum.sql
+✓ applied: db/migrations/20260828_ectd_compilations_submission_id.sql
+✓ applied: db/migrations/20260830_reg_questions_response_doc.sql
+    [NOTICE] [fail-closed-insert] 0 write policy(ies) now refuse an unresolved scope.
+✓ applied: db/migrations/20260828_fail_closed_insert_withcheck_policies.sql
+✓ applied: db/migrations/20260901_cmc_container_closure_reference_standard_registers.sql
+    [NOTICE] constraint "cmc_batch_records_project_id_fkey" of relation "cmc_batch_records" does not exist, skipping
+✓ applied: migrations/20260823_cmc_register_store_parity.sql
+    [NOTICE] quality_specifications_tenant_id_required already present
+✓ applied: migrations/20260907_quality_specifications_tenant_required.sql
+    [NOTICE] table "c2c_cmc_changes" does not exist, skipping
+✓ applied: migrations/20260823_drop_dead_c2c_cmc_changes.sql
+    [NOTICE] column "pass_fail" of relation "cmc_dissolution_profiles" does not exist, skipping
+✓ applied: db/migrations/20260902_cmc_impurity_dissolution_registers.sql
+    [NOTICE] policy "tenant_isolation_policy" for relation "clinical_ops.studies" does not exist, skipping
+    [NOTICE] policy "tenant_isolation_policy" for relation "clinical_ops.sites" does not exist, skipping
+    [NOTICE] policy "tenant_isolation_policy" for relation "clinical_ops.enrollment_records" does not exist, skipping
+    [NOTICE] policy "tenant_isolation_policy" for relation "clinical_ops.monitoring_visits" does not exist, skipping
+    [NOTICE] policy "tenant_isolation_policy" for relation "clinical_ops.deviations" does not exist, skipping
+    [NOTICE] policy "tenant_isolation_policy" for relation "clinical_ops.milestones" does not exist, skipping
+    [NOTICE] policy "tenant_isolation_policy" for relation "clinical_ops.endpoint_results" does not exist, skipping
+✓ applied: db/migrations/20260902_clinical_ops_schema.sql
+    [NOTICE] policy "tenant_isolation_policy" for relation "manufacturing.responses" does not exist, skipping
+✓ applied: db/migrations/20260902_manufacturing_responses.sql
+✓ applied: db/migrations/20260903_cmc_material_formulation_registers.sql
+✓ applied: db/migrations/20260903_cmc_manufacturing_characterization_registers.sql
+✓ applied: db/migrations/20260903_cmc_impurity_route_of_administration.sql
+✓ applied: db/migrations/20260906_cmc_interview_sessions.sql
+✓ applied: db/migrations/20260906_cmc_impurity_m7_inputs.sql
+✓ applied: db/migrations/20260906_cmc_formulation_development.sql
+✓ applied: db/migrations/20260907_qc_testing_batch_attribution.sql
+    [NOTICE] [dead-audit-drop] dropped 4, kept 0 (rows / dependencies / wrong relkind), 15 already absent.
+✓ applied: db/migrations/20260901_drop_dead_audit_tables.sql
+    [NOTICE] vault.documents.organization_id: 0 row(s) backfilled, 0 live row(s) unattributable and quarantined
+✓ applied: migrations/20260905_vault_documents_organization_id.sql
+    [NOTICE] vault.documents full-text index ready
+✓ applied: migrations/20260906_vault_documents_fulltext.sql
+✓ applied: migrations/20260906_artifact_section_map_unique.sql
+    [NOTICE] vault.legal_holds ready (RLS: tenant_isolation_policy)
+✓ applied: migrations/20260906b_vault_legal_holds.sql
+✓ applied: migrations/20260906c_vault_documents_content_hash_idx.sql
+✓ applied: migrations/20260917_vault_documents_storage_version.sql
+✓ applied: migrations/20260917b_submission_leaf_document_uuid.sql
+✓ applied: migrations/20260911_vault_evidence_citations.sql
+✓ applied: migrations/20260716_template_doc_types.sql
+✓ applied: migrations/20260917_project_charters_declared_columns.sql
+✓ applied: migrations/20260701_protocol_soa.sql
+✓ applied: migrations/20260702_protocol_budget.sql
+✓ applied: migrations/20260703_dmsp.sql
+✓ applied: migrations/20260704_biosketch.sql
+✓ applied: migrations/20260704_other_support.sql
+✓ applied: migrations/20260705_export_control.sql
+✓ applied: migrations/20260705_invention_disclosure.sql
+✓ applied: migrations/20260705_research_agreements.sql
+✓ applied: migrations/20260728_chat_thread_store.sql
+✓ applied: migrations/20260731c_canonical_documents.sql
+✓ applied: migrations/20260925_canonical_documents_append_only.sql
+    [NOTICE] [ivdr-history-rls] parent-scoped tenant_isolation_policy applied to 0 table(s)
+✓ applied: migrations/20260906_ivdr_history_tenant_isolation.sql
+    [NOTICE] constraint "cmc_comparability_assessments_project_id_fkey" of relation "cmc_comparability_assessments" does not exist, skipping
+✓ applied: migrations/20260907_cmc_comparability_register_reachable.sql
+✓ applied: migrations/20260908_drug_substance_biologic_origin.sql
+✓ applied: migrations/20260907_regulatory_programs_application_number.sql
+    [NOTICE] compliance_tracking has no project_id (the 0000 shape); nothing to attribute
+✓ applied: migrations/20260908_compliance_tracking_organization_backfill.sql
+✓ applied: migrations/20260908b_estar_submissions_filed_artifact.sql
+✓ applied: db/migrations/20260910_contradiction_links_port.sql
+✓ applied: db/migrations/20260917_ana_runs.sql
+✓ applied: migrations/20260918_rbm_author_attribution.sql
+✓ applied: migrations/20260919_cmc_playbook_schema.sql
+✓ applied: migrations/20260919_capa_code_uniqueness_per_program.sql
+✓ applied: migrations/20260920_mcp_oauth.sql
+✓ applied: migrations/20260921_protocol_documents_sponsor_pi.sql
+✓ applied: migrations/20260922_protocol_document_study_design.sql
+✓ applied: migrations/20260922b_protocol_discontinuation_section.sql
+✓ applied: migrations/20260922c_amendment_design_snapshot.sql
+✓ applied: migrations/20260610_irb_submissions.sql
+✓ applied: migrations/20260922d_irb_submission_context.sql
+✓ applied: migrations/20260922e_amendment_declarations_nullable.sql
+✓ applied: migrations/20260923_organization_default_client_workspace.sql
+✓ applied: migrations/20260923_users_mfa_totp_last_step.sql
+    [NOTICE] concept2cure_artifacts: cleared a stale approval on 0 non-approved row(s).
+✓ applied: migrations/20260923b_artifact_approval_follows_status.sql
+✓ applied: migrations/20260922f_protocol_deviation_assessment.sql
+    [NOTICE] [c48-stage1] backfilled 0 public org(s) into identity.organizations; every public org now has a uuid-matched FK parent
+    [NOTICE] trigger "trg_sync_org_to_identity" for relation "public.organizations" does not exist, skipping
+✓ applied: db/migrations/20260919_c48_stage1_identity_org_bridge.sql
+✓ applied: migrations/20260924_license_requests.sql
+    [NOTICE] [org-relationships-rls] identity.org_relationships: sponsor writes, parties read
+✓ applied: migrations/20260924_org_relationships_sponsor_rls.sql
+    [NOTICE] [organizations-tenant-key] public.organizations: id and uuid immutable
+✓ applied: migrations/20260925_organizations_tenant_key_immutable.sql
+    [NOTICE] [organizations-own-writes] public.organizations: own-org or platform writes
+✓ applied: migrations/20260926_organizations_own_writes.sql
+    [NOTICE] [organization-users-writes] own-org or platform writes; staff roles minted by the platform only
+✓ applied: migrations/20260926_organization_users_own_writes.sql
+    [NOTICE] [users-membership-rls] tenant scopes reach their own members; pre-auth and system scopes the whole table
+✓ applied: migrations/20260928_users_membership_rls.sql
+    [NOTICE] [platform-role-grants-writes] reads open; grants written by the platform scope only
+✓ applied: migrations/20260928_platform_role_grants_platform_writes.sql
+✓ applied: migrations/20260925b_submissions_program_anchor.sql
+✓ applied: migrations/20260608_ai_placement_policies.sql
+✓ applied: migrations/20260926_ana_turn_records.sql
+    [NOTICE] constraint "governed_decision_transitions_project_id_fkey" of relation "governed_decision_transitions" does not exist, skipping
+✓ applied: migrations/0011_governed_decision_transitions.sql
+    [NOTICE] [uuid-rls] SKIPPED cortex.atoms — not provisioned in this environment
+    [NOTICE] [uuid-rls] SKIPPED cortex.threads — not provisioned in this environment
+    [NOTICE] [uuid-rls] SKIPPED cortex.traces — not provisioned in this environment
+    [NOTICE] [uuid-rls] SKIPPED federated_ml.safety_signals — not provisioned in this environment
+    [NOTICE] [uuid-rls] policied regulatory_intel.crl_trigger_patterns on organization_id
+    [NOTICE] [uuid-rls] policied regulatory_intel.crl_trajectory_records on organization_id
+    [NOTICE] [uuid-rls] policied regulatory_intel.rtf_trigger_patterns on organization_id
+    [NOTICE] [uuid-rls] policied regulatory_intel.ema_question_patterns on organization_id
+    [NOTICE] [uuid-rls] policied regulatory_intel.advisory_committee_patterns on organization_id
+    [NOTICE] [uuid-rls] policied regulatory_intel.precedent_application_rules on organization_id
+    [NOTICE] [uuid-rls] policied regulatory_intel.confidence_calibration_log on organization_id
+    [NOTICE] [uuid-rls] policied regulatory_intel.cross_jurisdictional_frameworks on organization_id
+    [NOTICE] [uuid-rls] policied regulatory_intel.jurisdictional_divergence_map on organization_id
+    [NOTICE] [uuid-rls] policied regulatory_intel.reliance_pathways on organization_id
+    [NOTICE] [uuid-rls] policied regulatory_intel.filing_sequence_strategies on organization_id
+    [NOTICE] [uuid-rls] policied regulatory_harmonization.canonical_products on tenant_id
+    [NOTICE] [uuid-rls] policied regulatory_harmonization.canonical_adverse_events on tenant_id
+    [NOTICE] [uuid-rls] policied regulatory_harmonization.export_jobs on tenant_id
+    [NOTICE] [uuid-rls] policied regulatory_harmonization.gdpr_processing_records on tenant_id
+    [NOTICE] [uuid-rls] policied regulatory_harmonization.tenant_data_residency on tenant_id
+    [NOTICE] [uuid-rls] tenant_isolation_policy applied to 16 non-public uuid-tenant table(s); 4 skipped (unprovisioned/drift). federated_ml.federation_participants and audit.event_log are intentionally EXEMPT (cross-tenant by design).
+✓ applied: db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql
+    [NOTICE] [rls-sweep] FORCED row-level security on compliance.data_residency (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on core.program_ownerships (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on core.programs (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on global_dossier.dossier_instances (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on manufacturing.batch_execution_records (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on manufacturing.digital_twins (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on manufacturing.equipment_registry (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on manufacturing.isa95_fhir_mappings (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on manufacturing.quality_test_results (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_harmonization.canonical_adverse_events (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_harmonization.canonical_products (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_harmonization.export_jobs (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_harmonization.gdpr_processing_records (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_harmonization.tenant_data_residency (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_intel.advisory_committee_patterns (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_intel.confidence_calibration_log (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_intel.crl_trajectory_records (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_intel.crl_trigger_patterns (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_intel.cross_jurisdictional_frameworks (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_intel.ema_question_patterns (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_intel.filing_sequence_strategies (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_intel.jurisdictional_divergence_map (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_intel.precedent_application_rules (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_intel.reliance_pathways (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] FORCED row-level security on regulatory_intel.rtf_trigger_patterns (it carried tenant_isolation_policy but not FORCE)
+    [NOTICE] [rls-sweep] tenant_isolation_policy applied to 106 newly-provisioned table(s); 0 rebuilt to the canonical shape; 25 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+✓ applied: db/migrations/20260801_tenant_isolation_sweep.sql
+
+5 file(s) failed.
+exit=1

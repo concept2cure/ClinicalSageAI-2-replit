@@ -109,7 +109,7 @@ describe('the checkout carries the scope withTenantConnection was asked for', ()
 
     const local = driverLog.find(e => e.sql.startsWith(TENANT_LOCAL_SQL_PREFIX));
     expect(local, 'BEGIN must be followed by the LOCAL tenant vars').toBeDefined();
-    expect(local!.params).toEqual(['0', '', 'app_super_admin']);
+    expect(local!.params).toEqual(['0', '', 'app_super_admin', '']);
   });
 });
 

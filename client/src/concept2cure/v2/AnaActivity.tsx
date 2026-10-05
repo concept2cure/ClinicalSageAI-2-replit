@@ -45,8 +45,9 @@ import type { AnaChatMessage, AnaToolCall } from '../components/ana/useAnaChat';
 import type { AnaPlanChange, AnaPlanStep, AnaStoppedReason, AnaTurnRecordStatus } from '../components/ana/useAnaChat.types';
 import { formatElapsed, LENS_PHRASE, PLAN_TOOL } from '../components/ana/anaProgress';
 import { statusGlyph } from './AnaWorkSections';
-import { isContinuable, stepDuration } from './anaWorkModel';
+import { isContinuable, replacedNoteText, stepDuration, stoppedNoteText } from './anaWorkModel';
 import { useNow } from './useNow';
+import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
 
 export interface AnaActivityProps {
   /** True while the turn is still in flight. */
@@ -95,6 +96,12 @@ export interface AnaActivityProps {
    */
   stoppedReason?: AnaStoppedReason;
   rounds?: number;
+  /** The run policy the turn ran under (row 74). */
+  runPolicy?: AnaRunPolicy;
+  /** The steps she had chosen that a Manual stop left unrun, by label. */
+  pendingSteps?: string[];
+  /** The steps a steer replaced under Manual: they never ran, and the turn says so. */
+  replacedSteps?: string[];
   /**
    * Offered by the host on the LATEST settled turn only; sends the continue
    * sentence as a new turn. Absent everywhere else, so an earlier stopped turn
@@ -121,30 +128,15 @@ export function activityPropsFor(m: AnaChatMessage): AnaActivityProps {
     turnRecord: m.turnRecord,
     stoppedReason: m.stoppedReason,
     rounds: m.rounds,
+    runPolicy: m.runPolicy,
+    pendingSteps: m.pendingSteps,
+    replacedSteps: m.replacedSteps,
   };
 }
 
-/**
- * What the transcript says under a turn the loop stopped before she was done,
- * or null when there is nothing to say: she finished (`no_more_tools`), or the
- * person pressed Stop (`cancelled`) — they know. Only the stops the server
- * produces today have words; each reserved run-policy reason gets its sentence
- * with the change that produces it.
- */
-export function stoppedNoteText(reason: AnaStoppedReason | undefined, rounds?: number): string | null {
-  switch (reason) {
-    case 'max_rounds':
-      return typeof rounds === 'number' && rounds > 0
-        ? `AnA reached this turn's round limit (${rounds} ${rounds === 1 ? 'round' : 'rounds'}) before she said she was done.`
-        : "AnA reached this turn's round limit before she said she was done.";
-    case 'duplicate_thrash':
-      return 'AnA stopped because she was repeating the same step. Tell her what to change.';
-    case 'answer_cut_off':
-      return "AnA's answer was cut off before she finished it. It ends where it stopped.";
-    default:
-      return null;
-  }
-}
+/* The stopped note's words are a projection of the turn, with the panel's
+   other projections (anaWorkModel.ts); re-exported so hosts keep one import. */
+export { stoppedNoteText };
 
 /** True when the record has something real to show for a settled turn. */
 export function hasReportableWork(a: AnaActivityProps): boolean {
@@ -158,7 +150,8 @@ export function hasReportableWork(a: AnaActivityProps): boolean {
       a.draftTitle ||
       // A turn stopped short has something to say even with nothing else:
       // no host may drop it as a plain answer.
-      stoppedNoteText(a.stoppedReason, a.rounds),
+      stoppedNoteText(a.stoppedReason, a.rounds, a.pendingSteps) ||
+      replacedNoteText(a.replacedSteps),
   );
 }
 
@@ -438,6 +431,8 @@ export function AnaActivity({
   turnRecord,
   stoppedReason,
   rounds,
+  pendingSteps,
+  replacedSteps,
   onContinue,
 }: AnaActivityProps) {
   const calls = toolCalls ?? [];
@@ -493,7 +488,7 @@ export function AnaActivity({
      guard stopped her, and a reader must not have to open the record to learn
      that. Continue is offered only where the host offers it (the latest
      settled turn) and only for a stop that picking up again can help. */
-  const stoppedText = streaming ? null : stoppedNoteText(stoppedReason, rounds);
+  const stoppedText = streaming ? null : stoppedNoteText(stoppedReason, rounds, pendingSteps);
   /* Continue unmounts in the render after its own click: the host's send makes
      a new turn the latest, and this one stops being offered it. Focus on a
      removed button falls to <body>, so it moves first to the note the button
@@ -519,16 +514,21 @@ export function AnaActivity({
       ) : null}
     </p>
   ) : null;
+  /* A step a steer replaced never ran: said beside the turn, never folded,
+     like the stop above — the steer itself is on the turn, this is its cost. */
+  const replacedText = replacedNoteText(replacedSteps);
+  const replaced = replacedText ? <p className="ana-activity-replaced" role="note">{replacedText}</p> : null;
   if (!streaming && !hasBody) {
     /* The short branch keeps the polite region in the same place as the full
        one, so a turn that streamed a phase with no rows and then settled
        speaks its stop from the region that was already mounted. A role=note
        paragraph is not announced; a region created in the same paint as its
        first content is the case AT misses. */
-    return unrecorded || stopped ? (
+    return unrecorded || stopped || replaced ? (
       <div className="ana-activity">
         <span aria-live="polite" style={SR_ONLY_STYLE}>{stoppedText ?? ''}</span>
         {stopped}
+        {replaced}
         {unrecorded}
       </div>
     ) : null;
@@ -577,6 +577,7 @@ export function AnaActivity({
         </button>
       )}
       {stopped}
+      {replaced}
       {unrecorded}
 
       <div className="ana-activity-body" id={bodyId} hidden={!expanded}>

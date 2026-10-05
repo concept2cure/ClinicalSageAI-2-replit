@@ -13,6 +13,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { C2CForm, type C2CFormConfig, type C2CFormField } from '../C2CForm';
+import { memberLabels } from '@shared/utils/member-labels';
 import { useAuthUser } from '@/services/portal/authService';
 import {
   addBudgetItem, addScheduleVisit, addSoaAssessment, assessProtocolDeviation, listReviewerCandidates, optionalNumber,
@@ -206,7 +207,13 @@ export type ReviewerChoice =
 
 const NO_ACCOUNT = { value: '', label: 'No account here: their decision is recorded on their behalf' };
 
-const candidateLabel = (m: ReviewerCandidate) => `${m.name || m.email} · ${m.role}`;
+/** Each candidate's option text: the name (the address where two members share
+ *  one, shared/utils/member-labels.ts) and the role. Two accounts named
+ *  "JM Smith" were offered as "JM Smith · admin" twice. */
+function candidateLabels(members: ReviewerCandidate[]): Map<string, string> {
+  const names = memberLabels(members);
+  return new Map(members.map((m) => [String(m.id), `${names.get(String(m.id))} · ${m.role}`]));
+}
 
 /** The reviewer-account select for the member list's current state. It never
  *  shows a failed read as an organization with no one to assign. */
@@ -214,14 +221,16 @@ function reviewerFieldFor(field: C2CFormField, choice: ReviewerChoice): C2CFormF
   // The server stores an account's own name and refuses a different one (SEC-C-7).
   const signsOwn = 'The assigned account signs its own review, as review or approval, and the review is listed under the account’s own name.';
   switch (choice.state) {
-    case 'ready':
+    case 'ready': {
+      const labels = candidateLabels(choice.members);
       return {
         ...field,
-        options: [NO_ACCOUNT, ...choice.members.map((m) => ({ value: String(m.id), label: candidateLabel(m) }))],
+        options: [NO_ACCOUNT, ...choice.members.map((m) => ({ value: String(m.id), label: labels.get(String(m.id)) ?? String(m.id) }))],
         desc: choice.members.length
           ? `${signsOwn} Without an account, someone takes responsibility for recording the decision.`
           : 'No member of this organization can sign a review, so name the reviewer below; their decision is recorded on their behalf.',
       };
+    }
     case 'failed':
       return { ...field, options: [NO_ACCOUNT], desc: `The organization’s members could not be loaded (${choice.message}), so only a reviewer without an account can be named here.` };
     case 'unavailable':

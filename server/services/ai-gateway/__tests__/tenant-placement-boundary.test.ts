@@ -250,9 +250,11 @@ describe('tenant placement boundary (D6) — the tenant is bound even when the c
     const gateway = buildGateway(['anthropic']);
     const dispatch = stubDispatch(gateway);
 
+    // Since ADR-0015 §5 (track GW review [24]) it is refused at admission with
+    // its own code: a lost binding is a platform fault, not the tenant's policy.
     await expect(gateway.route(chat())).rejects.toMatchObject({
       name: GatewayPolicyError.name,
-      message: expect.stringContaining('DENY_TENANT_POLICY'),
+      message: expect.stringContaining('DENY_NO_TENANT_BINDING'),
     });
     expect(dispatch).not.toHaveBeenCalled();
   });

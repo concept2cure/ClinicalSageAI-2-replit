@@ -143,7 +143,7 @@ describe('poolInstrumentation tenant-scope enforcement', () => {
     expect(texts[2]).toBe('SELECT * FROM projects WHERE id = $1');
     expect(texts[3]).toBe('COMMIT');
     // tenant vars carried the active scope
-    expect(clientCalls[1].params).toEqual(['42', 'org-uuid-42', '']);
+    expect(clientCalls[1].params).toEqual(['42', 'org-uuid-42', '', '']);
   });
 
   it('wraps callback-form pool.query without bypassing tenant scope', async () => {

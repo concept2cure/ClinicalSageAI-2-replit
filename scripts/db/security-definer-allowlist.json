@@ -105,7 +105,11 @@
     },
     "public.user_id_for_email(p_email text)": {
       "status": "reviewed",
-      "reason": "Called by atomicQuotaService (member creation) to find an existing account by email across tenants; returns only the id. Owned by the pre-auth-scope lane (\u202601YZFCXR)."
+      "reason": "Called by atomicQuotaService (member creation) to find an existing account by email across tenants, and since 2026-10-04 by sign-in, signup, resend and forgot-password (server/services/auth/pre-auth-account.ts), which bind the request to the id it answers; returns only the id. Owned by the pre-auth-scope lane (\u202601YZFCXR)."
+    },
+    "public.user_id_for_reset_token(p_token_hash text)": {
+      "status": "reviewed",
+      "reason": "Called only by the password-reset confirmation (server/services/auth/pre-auth-account.ts) with the SHA-256 of the token the person presented; returns only the id of the account holding that hash, which the request is then bound to. Added 2026-10-04 with the pre-auth narrowing (D3; migrations/20260928_users_membership_rls.sql). Owned by the pre-auth-scope lane (\u202601YZFCXR)."
     },
     "regulatory_harmonization.create_export_job(p_tenant_id uuid, p_source_entity_type text, p_source_entity_ids uuid[], p_target_format regulatory_harmonization.regulatory_format, p_target_jurisdiction text, p_created_by text)": {
       "status": "reviewed-risk",

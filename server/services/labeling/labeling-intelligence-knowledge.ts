@@ -18,6 +18,8 @@
  * @module server/services/labeling/labeling-intelligence-knowledge
  */
 
+import { PLR_FORMAT_RULES } from '../ind/ctd/fda-technical-rules.js';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -443,20 +445,30 @@ const LABELING_CITATIONS = {
   },
 } as const;
 
+/**
+ * A 21 CFR 201.57 format rule as this knowledge base states it: the rule, then
+ * its paragraph. PLR_FORMAT_RULES is the one source; a missing id is a defect.
+ */
+function plrRule(id: string): string {
+  const r = PLR_FORMAT_RULES.find((x) => x.id === id);
+  if (!r) throw new Error(`PLR format rule ${id} is not in PLR_FORMAT_RULES`);
+  return `${r.rule} (${r.basis.ref})`;
+}
+
 /** PLR Highlights of Prescribing Information — Section Structure */
 const HIGHLIGHTS_SECTIONS: PLRSectionDescriptor[] = [
   {
     sectionNumber: 'H.1',
     sectionTitle: 'Boxed Warning (if applicable)',
     required: false,
-    contentGuidance: 'A concise summary of the boxed warning from FPI; included only if the product has a boxed warning. Must be enclosed in a box. Limited to the most critical information.',
+    contentGuidance: `A concise summary of the boxed warning from FPI; included only if the product has a boxed warning. ${plrRule('plr-hl-boxed-warning')}`,
     loincCode: '34066-1',
   },
   {
     sectionNumber: 'H.2',
     sectionTitle: 'Recent Major Changes',
-    required: true,
-    contentGuidance: 'List of sections with substantive labeling changes within the past year. Each entry includes section name/number and date of change (month/year). Updated on a rolling basis.',
+    required: false,
+    contentGuidance: `Present only while a change is within its listing period. ${plrRule('plr-hl-rmc-one-year')}`,
     loincCode: '43683-2',
   },
   {
@@ -1277,10 +1289,11 @@ export function assessPLRStructure(params: AssessPLRStructureInput): AssessPLRSt
     );
   }
 
-  // Formatting requirements per PLR guidance
+  // Formatting requirements: the type size, length and Highlights statements
+  // come from PLR_FORMAT_RULES (21 CFR 201.57), not from text written here.
   const formattingRequirements: FormattingRequirements = {
-    highlightsFontSize: 'Minimum 8-point type for Highlights of Prescribing Information',
-    fpiMinFontSize: 'Minimum 6-point type for Full Prescribing Information per 21 CFR 201.57(d)(8)',
+    highlightsFontSize: plrRule('plr-type-size'),
+    fpiMinFontSize: plrRule('plr-type-size'),
     headingFormat: 'Section headings must be in bold and in upper case. Subsection headings in bold with initial capitals.',
     boldingRules: [
       'Section headings: ALL CAPS, bold',
@@ -1291,11 +1304,9 @@ export function assessPLRStructure(params: AssessPLRStructureInput): AssessPLRSt
       'Reference to Boxed Warning: bold, with inverted black triangle symbol',
     ],
     layoutRules: [
-      'Highlights limited to approximately one half page (one column of a two-column page) per 21 CFR 201.57(d)(4)',
+      ...['plr-hl-limitation-statement', 'plr-hl-initial-approval', 'plr-hl-boxed-warning', 'plr-hl-ae-reporting', 'plr-hl-length', 'plr-contents'].map(plrRule),
       'FPI organized in two-column format for print labeling',
-      'Table of Contents required between Highlights and FPI if FPI exceeds one page',
       'Horizontal hairline rules separate major sections in Highlights',
-      'Running header includes drug name and initial U.S. approval year',
     ],
     columnFormat: 'Two-column format for print labeling. Single-column acceptable for electronic labeling (DailyMed).',
   };

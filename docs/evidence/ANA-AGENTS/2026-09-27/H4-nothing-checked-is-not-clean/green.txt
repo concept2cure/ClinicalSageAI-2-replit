@@ -1,0 +1,209 @@
+# GREEN, track NC (row 74; ADR-0014 §7), HEAD eb62b566c + the track NC working tree (uncommitted; sha256 of every file in tree.sha256), 2026-09-28.
+# ANSI stripped. Trimmed: every test line of the four track NC test files, per-file pass counts for the neighbours, and the summaries.
+
+## 0. Working tree at the start of the review pass (git status --short). Files not in tree.sha256 belong to other lanes and were not touched.
+ M scripts/verify-rag-corpus.mjs
+ M server/eval/pq/__tests__/run-pq.test.ts
+ M server/eval/pq/pq-verdict.ts
+ M server/eval/pq/run-pq.ts
+ M server/eval/rag/gold-dataset.json
+ M server/services/ai-gateway/gateway-error-map.ts
+ M server/services/ai-gateway/gateway.ts
+ M server/services/ai-gateway/policy.ts
+ M server/services/ai-governance/approved-models.ts
+ M server/services/ana/AnaToolExecutor.ts
+ M server/services/ana/changePropagationTools.ts
+ M server/services/ana/document-intake-tool-defs.ts
+ M server/services/ana/reconciliationTools.ts
+ M server/services/intelligence/consistency-verdict.ts
+ M server/services/intelligence/cross-artifact-consistency.ts
+ M server/services/lumen-context/base-system-prompt.ts
+ M server/services/reconciliation/device-document-reconciler.ts
+ M server/services/reconciliation/dossier-number-reconciler.ts
+ M shared/ana/dossier-consistency.ts
+ M shared/utils/plural.ts
+?? docs/evidence/D4/2026-09-28-pq-rag-unblock-misdescribed/
+?? server/eval/pq/__tests__/pq-verdict-rag.test.ts
+?? server/eval/rag/guidance-corpus-manifest.json
+?? server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts
+?? server/services/ai-gateway/__tests__/fixtures/
+?? server/services/ai-gateway/__tests__/gateway-model-governance.test.ts
+?? server/services/ai-gateway/__tests__/governance-parity.test.ts
+?? server/services/ai-gateway/__tests__/pq-production-gate.test.ts
+?? server/services/ai-gateway/__tests__/support/governed-gateway.ts
+?? server/services/ai-gateway/__tests__/support/selection-table.ts
+?? server/services/ai-gateway/__tests__/tenant-capacity.test.ts
+?? server/services/ai-gateway/model-governance.ts
+?? server/services/ai-governance/__tests__/approved-models-invariant.test.ts
+?? server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts
+?? server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts
+?? tests/ops/verify-rag-corpus.test.mjs
+
+## 1. Track NC tests + neighbours (every existing test that imports the engines, the tools, the tool definitions, the base
+##    system prompt, the extractor (document-citations) or H2's dossier check)
+$ npx vitest run --config vitest.config.ts --maxWorkers=2 server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts server/services/intelligence/__tests__/figure-agreement.test.ts server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts server/services/intelligence/__tests__/cross-artifact-consistency.test.ts server/services/reconciliation/__tests__/device-document-reconciler.test.ts server/services/ana/__tests__/reconciliation-tools.test.ts server/services/ana/__tests__/change-propagation-tools.test.ts server/services/ana/__tests__/dossier-reconciliation.test.ts server/services/ana/__tests__/document-intake-tools.test.ts server/services/ana-ri/__tests__/response-register.test.ts server/services/ana/__tests__/tool-authorization-rule-zero.test.ts server/services/ana/__tests__/authoring-plan-generator.test.ts server/services/living-record/__tests__/document-citations.test.ts
+
+### The track NC test files
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft with no labelled figures is not_assessed (no_figures), never clean
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft whose labelled quantities are each stated once is not_assessed (no_repeated_figures)
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > content under the extractor minimum is not_assessed (content_too_short), not "no figures"
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > the minimum is one shared constant, and content at it is read
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a quantity stated twice with one value is clean
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > clean counts the quantities compared and carries no reason
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > one value written with and without a thousands separator is a comparison that agreed
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > values inside the 0.5% spread are a comparison that agreed: clean, counted
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a critical quantity stated with two values is still likely_inconsistency
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a high-severity quantity stated with two values is still review_candidates
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a candidate is reported with its comparison counted, beside quantities stated once
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > every verdict the engine returns is in the shared list
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a single figure is not_assessed (no_shared_quantities), never clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a quantity stated twice in the same document is not a cross-document comparison
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > two documents that state different quantities compare nothing
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > an empty figure set is still a parameter error, not a verdict
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a quantity stated in two documents with one value is clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > clean counts the quantities compared across documents and carries no reason
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > two modules of one file are two places in the dossier: compared
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > one document stated with and without its module is one place: not_assessed, never clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a module-less figure in one document and a moduled one in another are two places (the overcorrection guard)
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a disagreement across documents is still a blocker
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a high-severity disagreement across documents is still needs_review (the shared severity ladder)
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a disagreement inside one document is still flagged, though nothing was compared across documents
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > every verdict the engine returns is in the shared list
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > documents that state no labelled figure are not_assessed (no_figures), never clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > only one document with figures is not_assessed (no_shared_quantities)
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two documents that restate one sensitivity are still clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two documents that disagree are still a blocker
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > a programme with no documents is still not_found, not a report
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a superseded version and its verbatim successor are one document: not_assessed, never clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a version another document names as its predecessor is set aside even if its status was not updated
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a value corrected in the successor is not a conflict with the superseded version
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a withdrawn document is set aside
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > two current documents with a superseded third still compare, and a real conflict is still a blocker
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > every document superseded or withdrawn is not_assessed (no_current_documents), not "no figures"
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > no labelled figures: not_assessed with the reason, and no "No numerical inconsistencies detected"
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > content too short to read: the copy states the minimum, and claims nothing about the content
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > each quantity stated once: not_assessed, and the copy counts what was found
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > a real agreement is still clean, and the copy counts what was compared
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > a disagreement keeps its copy and its candidates
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > every reason has its own copy, and no copy is the clean one
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the tool description names not_assessed and says it is not clean, within the 1024-character trim
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the base system prompt tells AnA never to call not_assessed numbers consistent
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: not_assessed, and the instruction says nothing was reconciled instead of "report each conflict"
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: the instruction names what was read, and claims nothing about the rest of the documents
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a superseded version and its copy: not_assessed, and the instruction says the version was set aside
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > every document retired: the instruction says there was no current document
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > one document with figures: not_assessed, and the instruction counts what was found
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a real agreement is clean, and the instruction counts what was compared
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a conflict keeps its instruction
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > figures from one document: not_assessed, and the instruction is not "report these conflicts"
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > a real agreement is clean with a counted instruction; a conflict keeps its instruction
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > every reason has its own copy, and no copy is the clean one
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents names not_assessed and says it is not clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures names not_assessed and says it is not clean, before the trim
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures states the engine's definition: two documents, or two modules of one document
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents says superseded and withdrawn versions are not compared
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents fits the trim whole, so its grounding note is not cut
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: the same lower CI bound with a different upper bound is a candidate, never clean
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: an age range whose upper bound differs is a candidate
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: a range stated twice with both bounds equal is clean (the overcorrection guard)
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > dossier: a CI whose upper bound differs from another document is a divergence, not clean
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > dossier: the same CI in another document is clean
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: N = 1000 against N = 1004 in one document is a likely inconsistency
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: the same N written with a thousands separator still agrees (the overcorrection guard)
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: a batch count stated as 3 and as 4 is a candidate
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > dossier: N = 1000 in the draft against N = 1004 in another document is a blocker
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > the spread is one shared constant, 0.5%
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: a measured value inside the shared spread agrees, and one just outside it does not
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > dossier: a measured value inside the shared spread agrees across documents
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > the clean copy states the rule the check applied (reviews [5], [7]) > names exact matching for counts and the shared spread, not a hard-coded 0.5%
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > the clean copy states the rule the check applied (reviews [5], [7]) > the dossier check's clean copy states the same rule, from the same place
+ ✓ server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > documents with no labelled figure: 200, verdict not_assessed with the reason, never clean
+ ✓ server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > two documents that agree: 200, still clean
+ ✓ server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > a superseded version and its verbatim successor: 200, not_assessed, never clean
+ ✓ server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > no documents: still 404 not_found
+
+### Passes per file
+      4 server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts
+     42 server/services/ana-ri/__tests__/response-register.test.ts
+      3 server/services/ana/__tests__/authoring-plan-generator.test.ts
+      5 server/services/ana/__tests__/change-propagation-tools.test.ts
+     15 server/services/ana/__tests__/document-intake-tools.test.ts
+      6 server/services/ana/__tests__/dossier-reconciliation.test.ts
+      7 server/services/ana/__tests__/reconciliation-tools.test.ts
+     16 server/services/ana/__tests__/tool-authorization-rule-zero.test.ts
+     39 server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts
+      4 server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts
+      8 server/services/intelligence/__tests__/cross-artifact-consistency.test.ts
+     14 server/services/intelligence/__tests__/figure-agreement.test.ts
+     20 server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts
+     11 server/services/living-record/__tests__/document-citations.test.ts
+      4 server/services/reconciliation/__tests__/device-document-reconciler.test.ts
+     39 server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts
+ Test Files  16 passed (16)
+      Tests  237 passed (237)
+
+## 2. Tool classification gates (tool-authorization, ana-launch-scope, tool-registry-consistency)
+$ npx vitest run --config vitest.config.ts --maxWorkers=2 server/services/ana/__tests__/tool-authorization.test.ts server/services/ana/__tests__/ana-launch-scope.test.ts server/services/ana/__tests__/tool-registry-consistency.test.ts
+ Test Files  3 passed (3)
+      Tests  825 passed (825)
+
+## 3. npx tsc --noEmit (full project), NODE_OPTIONS=--max-old-space-size=12288
+$ NODE_OPTIONS="--max-old-space-size=12288" npx tsc --noEmit
+exit=0 (no output: 0 errors in the whole project, on the final tree; sha256sum -c tree.sha256 all OK immediately before).
+# An earlier full run, before the last test-file edit (a describe split for max-lines-per-function), also exited 0. One attempt
+# was killed by the kernel (exit 137) while another session's tsc held 6 GB; it was re-run alone.
+
+## 4. eslint, each touched file against its HEAD content (git show HEAD:<f> | eslint --stdin), and the new test files
+shared/utils/plural.ts HEAD=0e/0w NOW=0e/0w
+shared/ana/dossier-consistency.ts HEAD=0e/0w NOW=0e/0w
+server/services/intelligence/consistency-verdict.ts HEAD=0e/0w NOW=0e/0w
+server/services/intelligence/cross-artifact-consistency.ts HEAD=0e/1w NOW=0e/0w
+server/services/reconciliation/dossier-number-reconciler.ts HEAD=0e/1w NOW=0e/1w
+server/services/reconciliation/device-document-reconciler.ts HEAD=0e/0w NOW=0e/0w
+server/services/ana/AnaToolExecutor.ts HEAD=0e/101w NOW=0e/101w
+server/services/ana/document-intake-tool-defs.ts HEAD=0e/0w NOW=0e/0w
+server/services/lumen-context/base-system-prompt.ts HEAD=0e/0w NOW=0e/0w
+server/services/ana/changePropagationTools.ts HEAD=0e/0w NOW=0e/0w
+server/services/ana/reconciliationTools.ts HEAD=0e/0w NOW=0e/0w
+server/services/intelligence/__tests__/figure-agreement.test.ts NEW=0e/0w ignored=false
+server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts NEW=0e/0w ignored=false
+server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts NEW=0e/0w ignored=false
+server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts NEW=0e/0w ignored=false
+# cross-artifact-consistency.ts: the HEAD warning was complexity on the old checkInternalNumericalIntegrity (removed by the build).
+# dossier-number-reconciler.ts: the same complexity warning on reconcileDossierNumbers as HEAD; no branch was added to it.
+# AnaToolExecutor.ts: 101 before and after; none in the three NC handlers.
+
+## 5. Repository scans
+$ npm run ci:check-unrun-tests
+ci:check-unrun-tests exit=0
+[ci:unrun-tests] OK — every test file is reachable by a runner, or explained.
+
+$ npm run ci:internals-in-copy
+ci:internals-in-copy exit=0
+check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s).
+
+$ npm run ci:unreferenced-modules
+ci:unreferenced-modules exit=0
+Unreferenced modules: 86 (baseline 86)
+OK: no new unreachable modules.
+
+$ npm run ci:unverified-verdicts
+ci:unverified-verdicts exit=0
+[ci:unverified-verdicts] inspector self-test OK — catches the seven fabricated shapes WO-16B found, accepts the six honest ones
+[ci:unverified-verdicts] ✅ no surface reports a verdict for a check that did not run
+
+$ npm run ci:duplicate-exported-types
+ci:duplicate-exported-types exit=1
+🚫 [ci:duplicate-exported-types] 2 NEW exported type name(s) now mean more than one thing:
+  DocumentProvenance
+  EligibilityAssessment
+
+# ci:duplicate-exported-types exits 1 on the two collisions recorded at HEAD by the build pass (DocumentProvenance,
+# EligibilityAssessment), in files nobody in this lane touched. No name added here (DocumentScope and the new constants) is flagged.
+
+## 6. docs/ana-capability-manifest.json (review [12]): regenerated once to inspect, then restored
+before  sha256 4e7198086899da14737318a0668ea267077560d7912e33f8a1c0355b5583c6bc
+after restore: 4e7198086899da14737318a0668ea267077560d7912e33f8a1c0355b5583c6bc; git status --short: ''
+entries the regeneration changed: check_dossier_consistency, check_numerical_integrity, reconcile_device_documents,
+reconcile_extracted_figures (this lane); catalog_project_document, list_vault_documents (governed), place_project_document (governed),
+read_spreadsheet, read_vault_document (governed), qms_change_transition, retire_qms_document, and update_plan (added) (other lanes).

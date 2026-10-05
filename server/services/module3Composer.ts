@@ -16,6 +16,7 @@ import {
   readRecordedStabilityResults,
   type RecordedStabilityRead,
   type RecordedTrendSeries,
+  type StabilityPointRecord,
 } from './cmc/recorded-stability';
 import { assessRecordedCapability, capabilitySentence, isBatchAnalysisFor } from './cmc/recorded-capability';
 /* The dissolution purposes live in shared/, not in the write-through module:
@@ -307,40 +308,124 @@ function assessRecordedStability(stabilitySources: CanonicalSource[]): {
     const payload = (s.sourcePayload || {}) as Record<string, unknown>;
     const reads = recordedStabilityReads(payload);
     unreadable += reads.filter((r) => r.unreadable).length;
-    const series = reads.flatMap((r) => r.points);
-    for (const point of series) {
-      const value = parseNumeric(point.result);
-      if (value === null) continue;
-      const criterion = parseAcceptanceCriterion([
-        point.specification,
-        (point as Record<string, unknown>).acceptanceCriteria,
-        payload.acceptanceCriteria,
-        payload.releaseCriteria,
-      ]);
-      if (!criterion) { uncomparable += 1; continue; }
+    for (const point of reads.flatMap((r) => r.points)) {
+      const verdict = pointVerdict(point, payload);
+      if (verdict.kind === 'not numeric') continue;
+      if (verdict.kind === 'no criterion') { uncomparable += 1; continue; }
       compared += 1;
-      /* A two-sided range fails on either side; a one-sided criterion fails on
-         the side it names. `direction` says which way the attribute trends
-         TOWARD its limit, so `increasing` means the limit is an upper bound. */
-      const belowLower = criterion.direction === 'decreasing' && value < criterion.limit;
-      const aboveUpper = criterion.direction === 'increasing' && value > criterion.limit;
-      const aboveRange = criterion.twoSided && criterion.upperLimit !== null && value > criterion.upperLimit;
-      if (belowLower || aboveUpper || aboveRange) {
+      if (verdict.kind === 'outside') {
         outOfSpec.push({
           parameter: String(point.parameter ?? 'the recorded attribute'),
           timePoint: String(point.timePoint ?? '—'),
-          result: value,
-          criterion: String(
-            point.specification ??
-              (point as Record<string, unknown>).acceptanceCriteria ??
-              payload.acceptanceCriteria ??
-              '',
-          ).trim(),
+          result: verdict.value,
+          criterion: verdict.criterion,
         });
       }
     }
   }
   return { compared, outOfSpec, uncomparable, unreadable };
+}
+
+/** The acceptance criterion a recorded stability point is read against, as written. */
+function pointCriterionText(point: StabilityPointRecord, payload: Record<string, unknown>): string {
+  return String(
+    point.specification ??
+      (point as Record<string, unknown>).acceptanceCriteria ??
+      payload.acceptanceCriteria ??
+      '',
+  ).trim();
+}
+
+/**
+ * One recorded stability point against its acceptance criterion. The one
+ * comparison the conformance verdict counts and the results table prints, so
+ * the narrative's count and the table's column cannot disagree.
+ */
+function pointVerdict(
+  point: StabilityPointRecord,
+  payload: Record<string, unknown>,
+):
+  | { kind: 'not numeric' }
+  | { kind: 'no criterion'; value: number }
+  | { kind: 'within' | 'outside'; value: number; criterion: string } {
+  const value = parseNumeric(point.result);
+  if (value === null) return { kind: 'not numeric' };
+  const criterion = parseAcceptanceCriterion([
+    point.specification,
+    (point as Record<string, unknown>).acceptanceCriteria,
+    payload.acceptanceCriteria,
+    payload.releaseCriteria,
+  ]);
+  if (!criterion) return { kind: 'no criterion', value };
+  /* A two-sided range fails on either side; a one-sided criterion fails on
+     the side it names. `direction` says which way the attribute trends
+     TOWARD its limit, so `increasing` means the limit is an upper bound. */
+  const belowLower = criterion.direction === 'decreasing' && value < criterion.limit;
+  const aboveUpper = criterion.direction === 'increasing' && value > criterion.limit;
+  const aboveRange = criterion.twoSided && criterion.upperLimit !== null && value > criterion.upperLimit;
+  return {
+    kind: belowLower || aboveUpper || aboveRange ? 'outside' : 'within',
+    value,
+    criterion: pointCriterionText(point, payload),
+  };
+}
+
+const STABILITY_VERDICT_TEXT: Record<string, string> = {
+  within: 'within',
+  outside: 'OUTSIDE',
+  'no criterion': 'no criterion recorded',
+  'not numeric': 'not compared',
+};
+
+/**
+ * Every recorded pull-point result on the given side, as filed data:
+ * batch, condition, attribute, time point, result, criterion, and the one
+ * deterministic comparison. Null when no result is recorded — the narrative
+ * then says so rather than citing a table that is not there.
+ */
+function stabilityResultsTable(
+  sources: CanonicalSource[],
+  material: 'drug_substance' | 'drug_product',
+): GeneratedTable | null {
+  const rows = sources
+    .filter((s) => s.sourceType === 'stability' && stabilityCovers(s, material))
+    .flatMap((s) => stabilityResultRows((s.sourcePayload || {}) as Record<string, unknown>));
+  if (rows.length === 0) return null;
+  const tp = (v: string) => (Number.isFinite(Number(v)) ? Number(v) : Number.MAX_SAFE_INTEGER);
+  rows.sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]) || a[2].localeCompare(b[2]) || tp(a[3]) - tp(b[3]));
+  return {
+    title: `Stability Results — ${material === 'drug_substance' ? 'Drug Substance' : 'Drug Product'}`,
+    headers: ['Batch', 'Condition', 'Attribute', 'Time Point (months)', 'Result', 'Acceptance Criterion', 'Compared'],
+    rows,
+  };
+}
+
+/** One study's recorded pull points as results-table rows. */
+function stabilityResultRows(payload: Record<string, unknown>): string[][] {
+  const batches = Array.isArray(payload.batchesStudied) ? payload.batchesStudied.map(String) : [];
+  const batch = batches.join(', ') || String(payload.studyName ?? '').trim() || '—';
+  const text = (v: unknown) => String(v ?? '').trim() || '—';
+  return recordedStabilityReads(payload)
+    .flatMap((r) => r.points)
+    .map((point) => [
+      batch,
+      text(point.condition ?? point.storageCondition ?? payload.storageCondition),
+      text(point.parameter),
+      text(point.timePoint),
+      text(point.result),
+      pointCriterionText(point, payload) || '—',
+      STABILITY_VERDICT_TEXT[pointVerdict(point, payload).kind],
+    ]);
+}
+
+/** The proposed shelf life, and the data it is subject to review of — named, never "above". */
+function shelfLifeSentence(shelf: string | null | undefined, results: GeneratedTable | null): string {
+  const basis = results
+    ? `the ${results.rows.length} recorded result(s) tabulated in the stability results table`
+    : 'stability results, none of which is recorded on the drug product studies yet';
+  return shelf
+    ? `A shelf life of ${shelf} is proposed, subject to review of ${basis}. `
+    : `The proposed shelf life is subject to review of ${basis}. `;
 }
 
 /**
@@ -2404,28 +2489,30 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         ...(batchesStudied.length > 0 ? [['Batches Studied', batchesStudied.join(', ')]] : []),
       ],
     });
-    // Stability data matrix if parameters provided
-    if (stabilityParameters.length > 0) {
+    /* A per-time-point matrix only when the parameters carry their values.
+       The register records `stabilityParameters` as the list of test NAMES,
+       which this used to render as one-cell rows under a time-point header. */
+    const objectParameters = stabilityParameters.filter((sp: any) => typeof sp === 'object' && sp !== null);
+    if (objectParameters.length > 0 && objectParameters.length === stabilityParameters.length) {
       const paramHeaders = ['Test Parameter', ...timePoints.map((tp: any) => `${tp} mo`)];
       tables.push({
         title: 'Stability Data Summary — Drug Substance',
         headers: paramHeaders.length > 1 ? paramHeaders : ['Test Parameter', 'Acceptance Criteria', 'Result'],
-        rows: stabilityParameters.map((sp: any) => {
-          if (typeof sp === 'object' && sp !== null) {
-            const row = [sp.parameter || sp.test || 'Unknown'];
-            if (timePoints.length > 0) {
-              for (const tp of timePoints) {
-                row.push(sp[`t${tp}`] || sp[String(tp)] || '—');
-              }
-            } else {
-              row.push(String(sp.acceptanceCriteria || '—'), String(sp.result || '—'));
+        rows: objectParameters.map((sp: any) => {
+          const row = [sp.parameter || sp.test || 'Unknown'];
+          if (timePoints.length > 0) {
+            for (const tp of timePoints) {
+              row.push(sp[`t${tp}`] || sp[String(tp)] || '—');
             }
-            return row;
+          } else {
+            row.push(String(sp.acceptanceCriteria || '—'), String(sp.result || '—'));
           }
-          return [String(sp)];
+          return row;
         }),
       });
     }
+    const dsResults = stabilityResultsTable(dsOnly, 'drug_substance');
+    if (dsResults) tables.push(dsResults);
     // Do NOT assert a passing stability conclusion the data does not establish.
     // Read a deterministic pass/concern signal from the matched stability
     // source(s); assert stability only on a clear positive signal, flag a clear
@@ -2435,6 +2522,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
       narrative: `Stability studies for the drug substance were conducted under ${condition || '[condition not specified]'} ` +
         (timePoints.length > 0 ? `at time points: ${timePoints.join(', ')} months. ` : '. ') +
         (batchesStudied.length > 0 ? `${batchesStudied.length} batch(es) were placed on stability. ` : '') +
+        (dsResults
+          ? `The ${dsResults.rows.length} recorded result(s) are tabulated in the stability results table. `
+          : 'No stability results are recorded on the drug substance studies. ') +
         conclusion,
       tables,
     };
@@ -2762,10 +2852,15 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
   '3.2.P.7': (m) => containerClosureSection(m, 'drug_product'),
 
   '3.2.P.8': (m) => {
-    const shelf = val(m, 'shelfLifeClaim');
+    /* The product's claims come from the studies recorded for the product. The
+       first-match read over every source let a newer drug-substance retest
+       study file its condition and retest period as the product's shelf life
+       — the mirror of §3.2.S.7's dsOnly filter, which this section lacked. */
+    const dpOnly = m.filter((s) => s.sourceType !== 'stability' || stabilityCovers(s, 'drug_product'));
+    const shelf = val(dpOnly, 'drugProductShelfLifeClaim') || val(dpOnly, 'shelfLifeClaim');
     const comp = val(m, 'comparabilityStatus');
-    const condition = val(m, 'storageCondition');
-    const timePoints = valArr(m, 'timePoints');
+    const condition = val(dpOnly, 'storageCondition');
+    const timePoints = valArr(dpOnly, 'timePoints');
     // 3.2.P.8 requiredSourceTypes is ['stability','comparability'], so this
     // section fires when ONLY a comparability source is present (no stability
     // study). Claim stability studies / a shelf life only when a stability
@@ -2787,15 +2882,15 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         ...(timePoints.length > 0 ? [['Time Points (months)', timePoints.join(', ')]] : []),
       ],
     });
+    const dpResults = stabilityResultsTable(stabilitySources, 'drug_product');
+    if (dpResults) tables.push(dpResults);
     const compTable = comparabilityTable(m);
     if (compTable) tables.push(compTable);
     let narrative = '';
     if (hasStability) {
       narrative += `Stability studies for the drug product were conducted under ${condition || '[condition not specified]'}` +
         (timePoints.length > 0 ? ` at time points: ${timePoints.join(', ')} months` : '') + `. `;
-      narrative += shelf
-        ? `A shelf life of ${shelf} is proposed, subject to review of the stability data summarized above. `
-        : `The proposed shelf life is subject to review of the stability data summarized above. `;
+      narrative += shelfLifeSentence(shelf, dpResults);
       narrative += `${stabilityConclusion(stabilitySources, 'drug product')} `;
     } else {
       narrative += `No drug product stability study is present in this section; a shelf life and the stability of the drug product are not established here. `;

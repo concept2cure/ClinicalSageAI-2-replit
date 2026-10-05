@@ -494,18 +494,18 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "required": true,
         "contentType": "mixed",
         "guidance": "Summary of the pivotal efficacy results and the planned integrated summary of effectiveness (ISE) approach, including pre-specified primary and key secondary analyses.",
-        "authoringGuidance": "This section previews the efficacy evidence and the analytic approach FDA will scrutinize at filing, so it should present the pivotal trial results against the pre-specified primary endpoint and estimand, the key secondary results within the multiplicity hierarchy, and the planned structure of the integrated summary of effectiveness per ICH M4E(R2) (CTD 2.7.3). It should confirm that the analyses match prior agreements and describe any pooling or subgroup approach. Reviewers issue requests when the applicant proposes post-hoc analyses, deviates from the agreed estimand, pools heterogeneous studies without justification, or bases claims on unadjusted secondary endpoints.",
+        "authoringGuidance": "This section previews the efficacy evidence and the analytic approach FDA will scrutinize at filing, so it should present the pivotal trial results against the pre-specified primary endpoint and estimand, the key secondary results within the multiplicity hierarchy, and the planned integrated summary of effectiveness (ISE), filed in 5.3.5.3 and summarized in CTD 2.7.3. It should confirm that the analyses match prior agreements and describe any pooling or subgroup approach. Reviewers issue requests when the applicant proposes post-hoc analyses, deviates from the agreed estimand, pools heterogeneous studies without justification, or bases claims on unadjusted secondary endpoints.",
         "keyContentElements": [
           "Pivotal study designs and pre-specified primary analysis (estimand)",
           "Primary efficacy results with effect estimates and confidence intervals (tables)",
           "Key secondary results and the multiplicity/testing hierarchy outcome",
-          "Planned structure of the integrated summary of effectiveness (CTD 2.7.3)",
+          "Planned ISE structure (filed in 5.3.5.3; summarized in 2.7.3)",
           "Pooling strategy and consistency across studies/subgroups",
           "Durability / maintenance of effect where relevant",
           "Consistency with prior FDA agreements on endpoints and analyses",
           "Summary efficacy tables"
         ],
-        "generationPrompt": "Summarize clinical efficacy and the planned integrated summary of effectiveness for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present pivotal designs and the pre-specified primary analysis and estimand, primary and key secondary results in tables, the planned CTD 2.7.3 structure, pooling/subgroup approach, and consistency with prior FDA agreements. Describe where data reside without fabricating specific values."
+        "generationPrompt": "Summarize clinical efficacy and the planned integrated summary of effectiveness for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present pivotal designs and the pre-specified primary analysis and estimand, primary and key secondary results in tables, the planned ISE (5.3.5.3) structure and how 2.7.3 will summarize it, pooling/subgroup approach, and consistency with prior FDA agreements. Describe where data reside without fabricating specific values."
       },
       {
         "code": "MTG-SAFETY",
@@ -513,19 +513,19 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "required": true,
         "contentType": "mixed",
         "guidance": "Overview of the integrated safety analysis (ISS) approach and the cumulative safety findings that will support the NDA and labeling.",
-        "authoringGuidance": "FDA uses this to preview the safety database, the pooling strategy for the integrated summary of safety, and how the applicant will characterize important risks in labeling, so it should present cumulative exposure, the AE/SAE profile, deaths and discontinuations, adverse events of special interest, and the planned ISS structure per CTD 2.7.4. It should confirm the safety database meets ICH E1 expectations and describe the approach to adjudicated events and special populations. Deficiencies that draw requests include an ISS pooling strategy that masks study-level signals, inadequate exposure for a chronic indication, unaddressed safety signals, and analyses that do not support the proposed labeling.",
+        "authoringGuidance": "FDA uses this to preview the safety database, the pooling strategy for the integrated summary of safety, and how the applicant will characterize important risks in labeling, so it should present cumulative exposure, the AE/SAE profile, deaths and discontinuations, adverse events of special interest, and the planned ISS structure (filed in 5.3.5.3; summarized in 2.7.4). It should confirm the safety database meets ICH E1 expectations and describe the approach to adjudicated events and special populations. Deficiencies that draw requests include an ISS pooling strategy that masks study-level signals, inadequate exposure for a chronic indication, unaddressed safety signals, and analyses that do not support the proposed labeling.",
         "keyContentElements": [
           "Cumulative exposure by dose and duration (ICH E1 adequacy statement)",
           "Integrated AE and SAE profile (tables)",
           "Deaths, discontinuations, and dose modifications",
           "Adverse events of special interest and adjudicated events",
           "Laboratory, ECG/QT, and vital-sign findings",
-          "Planned integrated summary of safety structure and pooling strategy (CTD 2.7.4)",
+          "Planned ISS structure and pooling strategy (filed in 5.3.5.3; summarized in 2.7.4)",
           "Special-population safety (hepatic/renal, elderly, pediatric, pregnancy)",
           "Link between safety findings and proposed labeling / risk management",
           "Summary safety tables"
         ],
-        "generationPrompt": "Prepare a clinical safety summary and integrated safety analysis plan for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present cumulative exposure and ICH E1 adequacy, integrated AE/SAE tables, deaths and discontinuations, AEs of special interest, lab/QT findings, the planned CTD 2.7.4 pooling strategy, special-population safety, and the link to proposed labeling. State where data reside without fabricating counts."
+        "generationPrompt": "Prepare a clinical safety summary and integrated safety analysis plan for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present cumulative exposure and ICH E1 adequacy, integrated AE/SAE tables, deaths and discontinuations, AEs of special interest, lab/QT findings, the planned ISS (5.3.5.3) pooling strategy and how 2.7.4 will summarize it, special-population safety, and the link to proposed labeling. State where data reside without fabricating counts."
       },
       {
         "code": "MTG-DATA",
@@ -739,18 +739,18 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "required": true,
         "contentType": "mixed",
         "guidance": "Summary of pivotal efficacy results and the planned integrated summary of effectiveness, including pre-specified primary and key secondary analyses.",
-        "authoringGuidance": "As in a Pre-NDA package, this previews the efficacy evidence and the analytic approach FDA will scrutinize, presenting the pivotal results against the pre-specified primary endpoint and estimand, the key secondary results within the multiplicity hierarchy, and the planned integrated summary of effectiveness per CTD 2.7.3. It must confirm the analyses match prior agreements and, for biologics, that efficacy conclusions rest on material representative of the to-be-marketed product. Reviewers issue requests for post-hoc analyses, deviations from the agreed estimand, unjustified pooling, or efficacy claims resting on non-representative early-process material.",
+        "authoringGuidance": "As in a Pre-NDA package, this previews the efficacy evidence and the analytic approach FDA will scrutinize, presenting the pivotal results against the pre-specified primary endpoint and estimand, the key secondary results within the multiplicity hierarchy, and the planned integrated summary of effectiveness (ISE), filed in 5.3.5.3 and summarized in CTD 2.7.3. It must confirm the analyses match prior agreements and, for biologics, that efficacy conclusions rest on material representative of the to-be-marketed product. Reviewers issue requests for post-hoc analyses, deviations from the agreed estimand, unjustified pooling, or efficacy claims resting on non-representative early-process material.",
         "keyContentElements": [
           "Pivotal study designs and pre-specified primary analysis (estimand)",
           "Primary efficacy results with effect estimates and confidence intervals (tables)",
           "Key secondary results and the multiplicity/testing hierarchy outcome",
-          "Planned integrated summary of effectiveness structure (CTD 2.7.3)",
+          "Planned ISE structure (filed in 5.3.5.3; summarized in 2.7.3)",
           "Pooling strategy and consistency across studies/subgroups",
           "Representativeness of the clinical material to the commercial product",
           "Consistency with prior FDA agreements on endpoints and analyses",
           "Summary efficacy tables"
         ],
-        "generationPrompt": "Summarize clinical efficacy and the planned integrated summary of effectiveness for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present pivotal designs and the pre-specified primary analysis and estimand, primary and key secondary results in tables, the planned CTD 2.7.3 structure, pooling/subgroup approach, the representativeness of clinical material to the commercial product, and consistency with prior FDA agreements. Describe where data reside without fabricating values."
+        "generationPrompt": "Summarize clinical efficacy and the planned integrated summary of effectiveness for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present pivotal designs and the pre-specified primary analysis and estimand, primary and key secondary results in tables, the planned ISE (5.3.5.3) structure and how 2.7.3 will summarize it, pooling/subgroup approach, the representativeness of clinical material to the commercial product, and consistency with prior FDA agreements. Describe where data reside without fabricating values."
       },
       {
         "code": "MTG-SAFETY",
@@ -758,7 +758,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "required": true,
         "contentType": "mixed",
         "guidance": "Overview of the integrated safety analysis approach and cumulative safety findings, including immunogenicity-related safety, supporting the BLA and labeling.",
-        "authoringGuidance": "FDA uses this to preview the safety database and the pooling strategy for the integrated summary of safety and, for biologics, to see immunogenicity-related safety (hypersensitivity, injection/infusion reactions, ADA-associated events) characterized. It should present cumulative exposure, the AE/SAE profile, deaths and discontinuations, adverse events of special interest including immunogenicity-related events, and the planned ISS structure per CTD 2.7.4, confirming ICH E1 adequacy. Deficiencies drawing requests include an ISS that masks study-level signals, inadequate exposure for a chronic indication, immunogenicity-related safety not linked to ADA data, and analyses that do not support the proposed labeling and risk management.",
+        "authoringGuidance": "FDA uses this to preview the safety database and the pooling strategy for the integrated summary of safety and, for biologics, to see immunogenicity-related safety (hypersensitivity, injection/infusion reactions, ADA-associated events) characterized. It should present cumulative exposure, the AE/SAE profile, deaths and discontinuations, adverse events of special interest including immunogenicity-related events, and the planned ISS structure (filed in 5.3.5.3; summarized in 2.7.4), confirming ICH E1 adequacy. Deficiencies drawing requests include an ISS that masks study-level signals, inadequate exposure for a chronic indication, immunogenicity-related safety not linked to ADA data, and analyses that do not support the proposed labeling and risk management.",
         "keyContentElements": [
           "Cumulative exposure by dose and duration (ICH E1 adequacy statement)",
           "Integrated AE and SAE profile (tables)",
@@ -766,12 +766,12 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Immunogenicity-related safety (hypersensitivity, infusion reactions, ADA-associated events)",
           "Other adverse events of special interest and adjudicated events",
           "Laboratory, ECG/QT, and vital-sign findings",
-          "Planned integrated summary of safety structure and pooling strategy (CTD 2.7.4)",
+          "Planned ISS structure and pooling strategy (filed in 5.3.5.3; summarized in 2.7.4)",
           "Special-population safety",
           "Link between safety findings and proposed labeling / risk management",
           "Summary safety tables"
         ],
-        "generationPrompt": "Prepare a clinical safety summary and integrated safety analysis plan for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present cumulative exposure and ICH E1 adequacy, integrated AE/SAE tables, deaths and discontinuations, immunogenicity-related and other AEs of special interest, lab/QT findings, the planned CTD 2.7.4 pooling strategy, special-population safety, and the link to labeling and risk management. State where data reside without fabricating counts."
+        "generationPrompt": "Prepare a clinical safety summary and integrated safety analysis plan for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present cumulative exposure and ICH E1 adequacy, integrated AE/SAE tables, deaths and discontinuations, immunogenicity-related and other AEs of special interest, lab/QT findings, the planned ISS (5.3.5.3) pooling strategy and how 2.7.4 will summarize it, special-population safety, and the link to labeling and risk management. State where data reside without fabricating counts."
       },
       {
         "code": "MTG-DATA-PLANS",

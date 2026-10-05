@@ -20,6 +20,18 @@
 --   - Row D3, 2026-09-29. Evidence: docs/evidence/D3/2026-09-29-actor-names/.
 -- =============================================================================
 --
+-- AMENDED IN PLACE 2026-10-04 (Rule 1; D3, the pre-auth narrowing; evidence
+-- docs/evidence/D3/2026-10-04-pre-auth-narrowing/). REMOVED: the arm admitting
+-- the tenant-less scopes (app.current_tenant_id = '0'). Inside this function the
+-- platform role is set for its own body, so that arm could not tell the system
+-- scope from the pre-auth scope, and gave pre-auth anyone's name and email by id
+-- — the reach 20260928_users_membership_rls.sql removed from users the same day.
+-- Nothing calls this function from the system scope; a system scope reads users
+-- directly through the platform-role arm. The membership and actor arms now
+-- also refuse tenant 0, which is no organization: sign-in events are audited
+-- under it, so without that test its "actors" would be everyone who ever tried
+-- to sign in.
+--
 -- audit_logs carries the actor's id and no name (audit_events snapshots
 -- user_name at write time; audit_logs does not, and it is hash-chained, so no
 -- column is added to it here). The audit-trail ledger resolved the name by
@@ -33,8 +45,8 @@
 --   - a member of it (organization_users, whose reads are open), or
 --   - an actor in its own audit trail (audit_logs.tenant_id = that organization
 --     and actor_id = the user),
--- and, as for users itself, anyone in the tenant-less scopes (pre-auth, system)
--- or where enforcement is off (owner connections). Anyone else: no row. So a
+-- and anyone where enforcement is off (owner connections). Anyone else,
+-- and any caller in a tenant-less scope: no row. So a
 -- tenant learns the name of people who worked in it, and nothing about anyone
 -- else; password hashes, MFA secrets and tokens stay behind the users policy.
 --
@@ -86,16 +98,22 @@ BEGIN
        WHERE u.id = p_user_id
          AND (
            NULLIF(current_setting('app.rls_enforce', true), '') IS DISTINCT FROM 'on'
-           OR NULLIF(current_setting('app.current_tenant_id', true), '') = '0'
-           OR EXISTS (
-             SELECT 1 FROM public.organization_users ou
-              WHERE ou.user_id = p_user_id
-                AND ou.organization_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::integer
-           )
-           OR EXISTS (
-             SELECT 1 FROM public.audit_logs a
-              WHERE a.actor_id = p_user_id
-                AND a.tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::integer
+           OR (
+             -- Tenant 0 is no organization: sign-in events are written to it,
+             -- so its "actors" are everyone who ever tried to sign in.
+             NULLIF(current_setting('app.current_tenant_id', true), '') IS DISTINCT FROM '0'
+             AND (
+               EXISTS (
+                 SELECT 1 FROM public.organization_users ou
+                  WHERE ou.user_id = p_user_id
+                    AND ou.organization_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::integer
+               )
+               OR EXISTS (
+                 SELECT 1 FROM public.audit_logs a
+                  WHERE a.actor_id = p_user_id
+                    AND a.tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::integer
+               )
+             )
            )
          )
     $body$

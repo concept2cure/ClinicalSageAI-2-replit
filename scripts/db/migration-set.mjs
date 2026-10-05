@@ -2713,6 +2713,14 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D3/2026-09-29-actor-names/.
   'migrations/20260929_actor_names.sql',
 
+  // ── user_presence: row security before its first writer (D3, 2026-10-04) ─
+  // A person's presence (IP address, user agent, current page and document)
+  // was readable and writable from any scope. Members read their colleagues';
+  // only the person (a bound pre-auth scope) or the platform writes. No reader
+  // or writer exists yet; the policy ships first. Evidence
+  // docs/evidence/D3/2026-10-04-user-presence/.
+  'migrations/20261004_user_presence_rls.sql',
+
   // ── submissions.program_id: a submission carries its project (LX-22) ─────
   // The project → submission link was guessed from product names; two projects
   // for one product shared a filing spine. Additive column, a composite

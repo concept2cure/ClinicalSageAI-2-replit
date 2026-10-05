@@ -76,6 +76,14 @@ describe('section guard (completeness)', () => {
     expect(g.missing).toContain('5 WARNINGS AND PRECAUTIONS');
   });
 
+  it('flags a US draft with every FPI section but no Highlights or Contents (21 CFR 201.57(a), (b))', () => {
+    const fpiOnly = requiredSectionHeaders('us').filter((h) => /^\d+ /.test(h));
+    const g = checkSectionGuard('us', fpiOnly.join('\n'));
+    expect(g.complete).toBe(false);
+    expect(g.missing).toContain('HIGHLIGHTS OF PRESCRIBING INFORMATION');
+    expect(g.missing).toContain('FULL PRESCRIBING INFORMATION: CONTENTS');
+  });
+
   it('flags a missing EU QRD section (e.g. dropped 4.8 Undesirable effects)', () => {
     const headers = requiredSectionHeaders('eu').filter((h) => !/Undesirable effects/.test(h));
     const g = checkSectionGuard('eu', headers.join('\n'));

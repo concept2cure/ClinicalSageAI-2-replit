@@ -16,6 +16,24 @@
  * numeric, so they are out of scope here — numeric performance/risk quantities
  * are where reviewer-relevant drift lives.
  *
+ * 2026-09-28 (row 74, track NC; ADR-0015 §7): nothing compared is no longer
+ * 'clean'. Documents that state no labelled figure used to short-circuit to a
+ * hand-built 'clean' report with figuresReconciled 0, and a programme whose
+ * figures all sit in one document was 'clean' from the engine. They now report
+ * verdict 'not_assessed' with `notAssessedReason` ('no_figures',
+ * 'no_shared_quantities'), decided by the engine's one verdict function.
+ *
+ * 2026-09-28 (row 74, track NC review [1]): only current documents are
+ * reconciled. supersedeDocument (post-market.service.ts) inserts the new
+ * version with the old one's narratives copied verbatim and marks the old row
+ * 'superseded'; both rows were read, so a programme whose only PSUR had been
+ * superseded once compared that PSUR with its own copy and came back 'clean'
+ * ("1 quantity compared"), and a value corrected in the new version read as a
+ * conflict with the old. A superseded or withdrawn document, or one another
+ * document names as its previous version, is now set aside and counted
+ * (`versionsSetAside`), never compared; `documentsScanned` counts the current
+ * documents read. With none current, the reason is 'no_current_documents'.
+ *
  * @module server/services/reconciliation/device-document-reconciler
  */
 
@@ -25,10 +43,39 @@ import { db } from '../../db';
 import { postMarketDocuments } from '../../../shared/schema/gspr-postmarket';
 import { extractNumericalFacts } from '../intelligence/cross-artifact-consistency';
 import {
+  noFiguresReport,
   reconcileDossierNumbers,
   type ExtractedFigure,
   type ReconciliationReport,
 } from './dossier-number-reconciler';
+
+/**
+ * The text read from each document, for the copy. The structured `content`
+ * JSON is not read: a figure only it states is not reconciled.
+ */
+export const DEVICE_TEXT_READ = 'summary, risks-identified and benefit-risk narratives (not the structured content)';
+
+/** Lifecycle statuses whose document is no longer the programme's claim. */
+const RETIRED_STATUSES: ReadonlySet<string> = new Set(['superseded', 'withdrawn']);
+
+/**
+ * The programme's current documents, and the versions set aside. A document is
+ * set aside when it is superseded or withdrawn, or when another document names
+ * it as its previous version (the successor exists even if the old row's status
+ * was never updated). Comparing a version with its successor compares a
+ * document with its own copy.
+ */
+export function currentDocuments<T extends { id: string; status?: string | null; previousDocumentId?: string | null }>(
+  docs: readonly T[],
+): { current: T[]; setAside: T[] } {
+  const succeeded = new Set(docs.map(d => d.previousDocumentId).filter((id): id is string => !!id));
+  const current: T[] = [];
+  const setAside: T[] = [];
+  for (const doc of docs) {
+    (RETIRED_STATUSES.has(doc.status ?? '') || succeeded.has(doc.id) ? setAside : current).push(doc);
+  }
+  return { current, setAside };
+}
 
 /** Turn one device document's prose into reconciler figures (numeric labels only). */
 export function documentToFigures(doc: {
@@ -53,7 +100,10 @@ export function documentToFigures(doc: {
 export interface DeviceReconcileResult {
   ok: true;
   programId: string;
+  /** Current documents read. Superseded or withdrawn versions are not: see versionsSetAside. */
   documentsScanned: number;
+  /** Superseded or withdrawn versions, and versions another document succeeds, set aside and not compared. */
+  versionsSetAside: number;
   report: ReconciliationReport;
 }
 
@@ -65,8 +115,9 @@ export interface DeviceReconcileFailure {
 
 /**
  * Reconcile the numeric governed quantities across a device/IVD program's
- * post-market documents. Returns 'clean' (with an empty report) when fewer than
- * two documents carry comparable figures — there is nothing to disagree.
+ * current post-market documents. When no quantity is stated in two current
+ * documents, nothing was compared: the report's verdict is 'not_assessed' with
+ * the reason, never 'clean'. A programme with no documents is not_found.
  */
 export async function reconcileDeviceDocuments(params: {
   programId: string;
@@ -80,6 +131,8 @@ export async function reconcileDeviceDocuments(params: {
       summary: postMarketDocuments.summary,
       risksIdentified: postMarketDocuments.risksIdentified,
       benefitRiskConclusion: postMarketDocuments.benefitRiskConclusion,
+      status: postMarketDocuments.status,
+      previousDocumentId: postMarketDocuments.previousDocumentId,
     })
     .from(postMarketDocuments)
     .where(
@@ -93,32 +146,26 @@ export async function reconcileDeviceDocuments(params: {
     return { ok: false, code: 'not_found', message: 'No post-market documents for this program' };
   }
 
+  const { current, setAside } = currentDocuments(docs);
   const figures: ExtractedFigure[] = [];
-  for (const doc of docs) {
+  for (const doc of current) {
     const prose = [doc.summary, doc.risksIdentified, doc.benefitRiskConclusion]
       .filter(Boolean)
       .join('\n\n');
     figures.push(...documentToFigures({ id: doc.id, documentType: doc.documentType, prose }));
   }
 
-  // reconcileDossierNumbers throws on an empty figure set; short-circuit to a
-  // clean report so "nothing to reconcile" is a success, not an error.
-  if (figures.length === 0) {
-    return {
-      ok: true,
-      programId: params.programId,
-      documentsScanned: docs.length,
-      report: {
-        figuresReconciled: 0,
-        quantityKeysExamined: 0,
-        conflictCount: 0,
-        conflicts: [],
-        verdict: 'clean',
-        generatedAt: new Date().toISOString(),
-      },
-    };
-  }
-
-  const report = reconcileDossierNumbers({ figures, tolerance: params.tolerance });
-  return { ok: true, programId: params.programId, documentsScanned: docs.length, report };
+  // reconcileDossierNumbers refuses an empty figure set as a parameter error.
+  // Documents that state no figure are a result, not an error: not_assessed.
+  const report =
+    figures.length === 0
+      ? noFiguresReport(current.length)
+      : reconcileDossierNumbers({ figures, tolerance: params.tolerance });
+  return {
+    ok: true,
+    programId: params.programId,
+    documentsScanned: current.length,
+    versionsSetAside: setAside.length,
+    report,
+  };
 }

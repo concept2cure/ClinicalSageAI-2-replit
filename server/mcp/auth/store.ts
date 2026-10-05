@@ -40,7 +40,7 @@
 import { createHash, randomBytes } from 'crypto';
 import type { OAuthClientInformationFull } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { getPool } from '../../db';
-import { runWithPreAuthScope, runWithTenantScope } from '../../db/tenantStore';
+import { runAsAccount, runWithPreAuthScope, runWithTenantScope } from '../../db/tenantStore';
 import { ACCOUNT_STATUS_ACTIVE } from '../../services/account-standing';
 
 export function sha256Hex(value: string): string {
@@ -141,7 +141,10 @@ export interface Membership {
  * not proof of membership now.
  */
 export async function findMembership(userId: number, organizationId: number): Promise<Membership | null> {
-  return preAuth('find-membership', async () => {
+  if (!Number.isInteger(userId) || userId <= 0) return null;
+  // Bound to this one account: the pre-auth scope reaches no users row but the
+  // account it is bound to (D3, 2026-10-04; tenantStore.runAsAccount).
+  return runAsAccount(userId, 'mcp-oauth:find-membership', async () => {
     const { rows } = await getPool().query<{
       id: number;
       organization_id: number;

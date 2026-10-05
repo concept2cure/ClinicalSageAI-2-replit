@@ -34,6 +34,7 @@ import type {
   AnaToolCall,
   AnaTurnRecordStatus,
 } from './useAnaChat.types';
+import { isAnaRunPolicy, stepLabels } from '@shared/ana/run-policy';
 
 /**
  * Phases the client itself observes (no server `status` event carries them).
@@ -314,34 +315,65 @@ export function readTurnRecord(raw: unknown): AnaTurnRecordStatus | undefined {
 }
 
 /**
- * The stop reasons the server produces today. The reserved run-policy names in
- * `AnaStoppedReason` are deliberately absent: nothing writes them yet and no
- * surface has words for them, so one arriving must not reach a surface whose
- * last branch reads "Finished". The change that produces each adds it here
- * together with its copy.
+ * The stop reasons the server produces: the loop's own four (S1) and the run
+ * policy's four (row 74, S4), each of which every surface has words for. A
+ * value outside this set is ignored, so it cannot reach a surface whose last
+ * branch reads "Finished".
  */
 const KNOWN_STOPPED_REASONS: ReadonlySet<string> = new Set<AnaStoppedReason>([
   'no_more_tools',
   'max_rounds',
   'duplicate_thrash',
   'cancelled',
+  'budget_exhausted',
+  'approval_timeout',
+  'hold_expired',
+  'hold_unavailable',
   'answer_cut_off',
 ]);
+
+/** Labels that are non-empty strings (shared/ana/run-policy.ts), or undefined when there are none. */
+function readLabels(raw: unknown): string[] | undefined {
+  const labels = stepLabels(raw);
+  return labels.length > 0 ? labels : undefined;
+}
+
+/**
+ * The steps a steer replaced, from the stored holds ('redirected': "Do this
+ * instead"; 'superseded': a steer that was already waiting) — so a reopened
+ * turn still says they did not run. The done frame carries no holds; the live
+ * turn has them from `interjected.replaced`.
+ */
+function readReplacedSteps(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const replaced = raw
+    .filter((h) => h && typeof h === 'object' && (h.outcome === 'redirected' || h.outcome === 'superseded'))
+    .flatMap((h) => stepLabels(h.next));
+  return replaced.length > 0 ? replaced : undefined;
+}
+
+type TurnEnding = Pick<AnaChatMessage, 'stoppedReason' | 'rounds' | 'runPolicy' | 'pendingSteps' | 'replacedSteps'>;
 
 /**
  * How the turn's loop ended, from the `done` frame or a stored message's
  * metadata: the stop reason when it is one the server produces, the rounds
- * when they are a whole, positive count. Anything else is left out rather than
- * guessed, so the result spreads onto a message without inventing a field.
+ * when they are a whole, positive count, the run policy when it is one, and
+ * the steps a stop left unrun. Anything else is left out rather than guessed,
+ * so the result spreads onto a message without inventing a field.
  */
-export function readTurnEnding(raw: unknown): Pick<AnaChatMessage, 'stoppedReason' | 'rounds'> {
+export function readTurnEnding(raw: unknown): TurnEnding {
   if (!raw || typeof raw !== 'object') return {};
-  const r = raw as { stoppedReason?: unknown; rounds?: unknown };
-  const out: Pick<AnaChatMessage, 'stoppedReason' | 'rounds'> = {};
+  const r = raw as { stoppedReason?: unknown; rounds?: unknown; runPolicy?: unknown; pendingSteps?: unknown; policyHolds?: unknown };
+  const out: TurnEnding = {};
   if (typeof r.stoppedReason === 'string' && KNOWN_STOPPED_REASONS.has(r.stoppedReason)) {
     out.stoppedReason = r.stoppedReason as AnaStoppedReason;
   }
   if (typeof r.rounds === 'number' && Number.isInteger(r.rounds) && r.rounds > 0) out.rounds = r.rounds;
+  if (isAnaRunPolicy(r.runPolicy)) out.runPolicy = r.runPolicy;
+  const pending = readLabels(r.pendingSteps);
+  if (pending) out.pendingSteps = pending;
+  const replaced = readReplacedSteps(r.policyHolds);
+  if (replaced) out.replacedSteps = replaced;
   return out;
 }
 

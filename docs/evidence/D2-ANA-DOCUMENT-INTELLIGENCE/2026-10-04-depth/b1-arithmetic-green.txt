@@ -1,0 +1,74 @@
+# b1-arithmetic green (after review 2: the arm list is compared only with the count in its own clause) — 2026-10-04
+# npx vitest run server/services/ana/__tests__/clinical-arithmetic.test.ts server/services/ana/__tests__/dossier-reconciliation.test.ts server/services/ana/__tests__/writing-precision-gate.test.ts server/services/ana/__tests__/reconciliation-tools.test.ts server/services/truth-engine/__tests__/figure-consistency.test.ts
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > flags a percentage that does not match its own n/N, with the recomputed value 9ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > accepts a percentage that rounds correctly at its stated precision 2ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > judges an integer percentage at integer precision (USPI §6 convention) 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > reads the n/N (x%) order and thousands separators 1ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > still recomputes a pair whose N merely falls in the year range 1ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > accepts an exact half either way 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > skips bounded percentages, impossible pairs and a pair the parenthesis does not close on 2ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > flags arm counts that do not sum to the randomized total 2ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > reads the total after the verb and the "<arm> (n=<int>)" form 1ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > accepts arms that add up, including treated totals and thousands separators 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > raises no finding on a randomization ratio or a parenthetical that is not an arm list 1ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: A total of 612 subjects were randomized (610 in the FAS and 598 in the PP population). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: A total of 612 subjects were randomized (610 received at least one dose and 598 received all doses). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: 612 subjects were randomized (612 in the ITT and 600 in the safety set). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: A total of 612 subjects were randomized (306 to drug and 300 in the per-protocol set). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: 612 patients were enrolled (612 in the mITT population, 590 completed the study). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: Of the 612 subjects randomized, 610 received at least one dose (305 to Drug X and 305 to placebo). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: A total of 612 subjects were randomized, and 598 completed the study (300 in Drug X and 298 in placebo). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: 612 subjects were randomized; 610 were treated (305 to Drug X and 305 to placebo). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: Of 612 patients randomized, 600 were treated (300 received Drug X and 300 received placebo). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: 612 subjects were randomized and those completing the study were analysed (300 in Drug X and 298 in placebo). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > compares the arm list with the count immediately before it 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > reads the "<arm>, n=<int>" form 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkTerminologyConsistency — arithmetic > fails a draft whose percentage does not match its own n/N 3ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkTerminologyConsistency — arithmetic > stays ok on arithmetic that holds 2ms
+ ✓ server/services/ana/__tests__/dossier-reconciliation.test.ts > reconcileDossierNumbers > flags an enrolled-N disagreement across documents 4ms
+ ✓ server/services/ana/__tests__/dossier-reconciliation.test.ts > reconcileDossierNumbers > flags alpha/power/HR drift between SAP and results 7ms
+ ✓ server/services/ana/__tests__/dossier-reconciliation.test.ts > reconcileDossierNumbers > reports no discrepancy when figures agree 1ms
+ ✓ server/services/ana/__tests__/dossier-reconciliation.test.ts > reconcileDossierNumbers > throws a parameter error for malformed input 1ms
+ ✓ server/services/ana/__tests__/dossier-reconciliation.test.ts > reconcile_dossier_numbers tool > is registered and returns discrepancies through the tool envelope 2ms
+ ✓ server/services/ana/__tests__/dossier-reconciliation.test.ts > reconcile_dossier_numbers tool > relays malformed input as needs_parameters 0ms
+ ✓ server/services/ana/__tests__/reconciliation-tools.test.ts > reconciliation tools — registration > every defined tool has a registered handler 2ms
+ ✓ server/services/ana/__tests__/reconciliation-tools.test.ts > reconcile_extracted_figures — cross-document reconciliation > a clean dossier (all sources agree) yields zero conflicts 26ms
+ ✓ server/services/ana/__tests__/reconciliation-tools.test.ts > reconcile_extracted_figures — cross-document reconciliation > a divergent enrolled_n across 3 sources is one conflict with values, sources, and consensus 1ms
+ ✓ server/services/ana/__tests__/reconciliation-tools.test.ts > reconcile_extracted_figures — cross-document reconciliation > values within tolerance are not flagged 1ms
+ ✓ server/services/ana/__tests__/reconciliation-tools.test.ts > reconcile_extracted_figures — cross-document reconciliation > the same near-equal values ARE flagged when no tolerance is given (exact match) 1ms
+ ✓ server/services/ana/__tests__/reconciliation-tools.test.ts > reconcile_extracted_figures — cross-document reconciliation > relays missing figures as needs_parameters (does not throw) 1ms
+ ✓ server/services/ana/__tests__/reconciliation-tools.test.ts > reconcile_extracted_figures — cross-document reconciliation > relays a malformed figure (no source documentId) as needs_parameters 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > flags the same document-level quantity stated with two different values 4ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not flag legitimately multi-valued quantities (n per arm, p per endpoint, week per visit) 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not flag a value that is stated consistently 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not treat a leading qualifier as a second expansion 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > flags an acronym expanded two different ways 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > flags US/UK spelling drift and mixed interchangeable terms 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not flag a single consistent spelling 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > combined report reports ok when clean 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > claims dimension (composes promotional-screening, no second lexicon) > flags absolute safety, guarantees, and causal overreach as claims findings 8ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > claims dimension (composes promotional-screening, no second lexicon) > does not flag appropriately hedged scientific prose 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDraft > penalizes an ungrounded number and a self-contradiction, verdict revise 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDraft > a grounded, consistent regulator paragraph passes 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDraft > buildRevisionBrief lists findings most-severe first, or empty on pass 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critique_draft tool > is well-formed and requires text 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critique_draft tool > runs live and returns a score, verdict, and revision brief 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critique_draft tool > rejects an empty draft as needs_parameters 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > verifyRevision + verify_revision tool > confirms a revision that fixes the finding improved and now passes 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > verifyRevision + verify_revision tool > detects a non-improving revision 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > verifyRevision + verify_revision tool > tool contract requires both texts and runs live 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDocument + critique_document tool > catches a value stated inconsistently ACROSS sections 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDocument + critique_document tool > passes a coherent two-section document 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDocument + critique_document tool > tool requires sections and runs live 1ms
+ ✓ server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > gives no verdict on a figure a text states more than once: Primary endpoint p<0.001; key secondary endpoint p=0.03. 4ms
+ ✓ server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > gives no verdict on a figure a text states more than once: PFS HR 0.62; OS HR 0.81. 0ms
+ ✓ server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > gives no verdict on a figure a text states more than once: 312 primary events were observed; 3 deaths occurred. 0ms
+ ✓ server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > reads "p<0.001" as a bound: consistent with 0.0004, in conflict with 0.03, never a match 2ms
+ ✓ server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > compares at the coarser precision of the two 1ms
+ ✓ server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > gives no verdict on an alpha that may differ only by sidedness 0ms
+ ✓ server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > does not compare one arm's size with a total 0ms
+ ✓ server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > names each figure of the claim a source does not state 0ms
+ ✓ server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > names a source that states none of the claim's figures 1ms
+ ✓ server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > records a plain disagreement as a conflict with each side's own value 0ms
+ Test Files  5 passed (5)
+      Tests  70 passed (70)

@@ -1669,7 +1669,23 @@ router.get('/sequences/:seqId/dispatch-readiness', limiter, requireRole(AUTHOR),
   try {
     const { assessSequenceDispatchReadiness } = await import('../services/ectd/assess-dispatch-readiness');
     const assessment = await assessSequenceDispatchReadiness({ sequenceId: seqId, organizationId: ctx.organizationId });
-    res.json(assessment);
+    // Whether THIS user may sign the sequence's freeze and dispatch, answered
+    // in advance by the lookup the sign step enforces (resolveTargetAuthors),
+    // so the Dispatch tab can say so before a password is typed rather than
+    // after the server refuses. Informational: the sign route and Gate 1 still
+    // decide. A failed lookup is 'unverified', never 'independent'.
+    let signer: { state: 'independent' | 'author' | 'unresolved' | 'unverified'; sources: string[] };
+    try {
+      const { resolveTargetAuthors } = await import('../services/governance/separation-of-duties');
+      const a = await resolveTargetAuthors(`ectd-sequence:${seqId}`, ctx.organizationId);
+      signer = {
+        state: !a.modelled || a.authors.length === 0 ? 'unresolved' : a.authors.includes(ctx.userId) ? 'author' : 'independent',
+        sources: a.sources,
+      };
+    } catch {
+      signer = { state: 'unverified', sources: [] };
+    }
+    res.json({ ...assessment, signer });
   } catch (err) {
     fail(res, err);
   }

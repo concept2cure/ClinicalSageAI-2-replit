@@ -54,7 +54,7 @@ import { getStorageProvider, getStorageProviderFor } from '../storage';
 import { readLocalUploadBuffer } from '../anthropic-files';
 import { sectionPlainText, C2C_SECTION_COMPLETE_STATUSES } from '../c2c/section-content';
 import { renderLeafPdf } from './leaf-pdf-renderer';
-import { renderMarkdownLeafPdf } from './typeset-leaf-pdf';
+import { renderComposedSectionLeafPdf } from './typeset-leaf-pdf';
 import { isModule3PlacementSnapshot } from '../cmc/module3-placement-marker';
 import { externalDocumentTableReason } from './leaf-document-tables';
 import type { LeafLineage, ResolvedFile } from './core-to-packager';
@@ -468,16 +468,17 @@ export async function materializeLeafSources(
         miss(`coauthor document "${doc.title ?? documentId}" has no authored content — not materialized`);
         continue;
       }
-      /* A placed Module 3 section stores its composition as markdown (the same
-         bytes as its governed artifact). Rendered as text it was filed with
-         "##" headings and "| --- |" table rows on the page (hand-off item 17);
-         typeset, it is headings, prose and ruled tables. */
+      /* A placed Module 3 section stores its composition in the composer's
+         format (the same bytes as its governed artifact). Rendered as text it
+         was filed with "##" headings and "| --- |" table rows on the page
+         (hand-off item 17); typeset, it is headings, prose and ruled tables,
+         every recorded character kept. */
       await write(
         key,
         doc.moduleNumber || doc.title,
         coauthorBody,
         { title: doc.title ?? undefined, sectionCode: doc.moduleNumber ?? undefined },
-        isModule3PlacementSnapshot(doc.metadata) ? renderMarkdownLeafPdf : renderLeafPdf,
+        isModule3PlacementSnapshot(doc.metadata) ? renderComposedSectionLeafPdf : renderLeafPdf,
       );
       // Lineage by identity: which authoring document this snapshot represents,
       // read from the alias map rather than matched by title. Recorded on the

@@ -15,6 +15,7 @@ const ROOT = path.resolve(__dirname, '../..');
 const OWN_CLASS: Record<string, string> = {
   'services/mfaService.ts': 'verifyMfaChallengeToken admits only type mfa_challenge, the one class it exists to read',
   'services/email-verification.ts': 'admits only type email_verification, the one class it exists to read',
+  'middleware/sign-in-limits.ts': 'partialTokenUserId admits only a token with mfaPending: true (the enterprise partial), and only to key the per-account second-factor limiter; it authorises nothing',
   'services/token-revocation.ts': 'verifyLiveToken is the shared signature, revocation and standing primitive; each caller applies the class it expects (an access route the access rule, the refresh route the refresh class)',
 };
 
