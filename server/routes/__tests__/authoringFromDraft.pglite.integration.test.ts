@@ -250,3 +250,52 @@ describe('a program holds many documents (control tower, 2026-09-21)', () => {
     expect(other.body.documents.map((d: { title: string }) => d.title)).not.toContain('Protocol synopsis');
   });
 });
+
+describe('POST /docs/from-draft: a model\'s image is never a figure (item 18)', () => {
+  /* Work-orders item 18 (2026-10-05), from the figure rule's refute-review
+     (O2): a model's image is never an uploaded figure. The from-draft path kept
+     a model's inline PNG and a model-written governed reference to someone's
+     existing upload as figures, and stored "<p></p>" for a section that held
+     only a non-figure image. */
+  it('a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>', async () => {
+    const res = await author(request(app).post('/api/authoring/docs/from-draft')).send(
+      draftBody({
+        title: 'Model figures',
+        sections: [
+          { code: '2.5.1', title: 'Inline', content: '<p>Results.</p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" alt="Figure 1">' },
+          { code: '2.5.2', title: 'Reference', content: '<p>Results.</p><img src="/api/authoring/images/file_1727500000000_k3v9qa">' },
+          { code: '2.5.3', title: 'Pre', content: '<p>Results.</p><pre><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="></pre>' },
+        ],
+      }),
+    );
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const stored = (res.body.data.sections as Array<{ content: string }>).map(x => String(x.content));
+    for (const c of stored) {
+      expect(c).not.toMatch(/<img/i);
+      expect(c).toContain('Results.');
+    }
+  });
+
+  it("a machine draft's section that held only an image is stored empty (a gap), not as <p></p>", async () => {
+    const res = await author(request(app).post('/api/authoring/docs/from-draft')).send(
+      draftBody({
+        title: 'Image only',
+        sections: [{ code: '2.5.1', title: 'Only a figure', content: '<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="></p>' }],
+      }),
+    );
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data.sections[0].content).toBe('');
+  });
+
+  it('an imported draft keeps its governed figure (a person placed it)', async () => {
+    const res = await author(request(app).post('/api/authoring/docs/from-draft')).send(
+      draftBody({
+        title: 'Imported',
+        provenance: { source: 'import', note: 'from the sponsor file' },
+        sections: [{ code: '2.5.1', title: 'With figure', content: '<p>Results.</p><img src="/api/authoring/images/file_1727500000000_k3v9qa">' }],
+      }),
+    );
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data.sections[0].content).toMatch(/<img src="\/api\/authoring\/images\/file_1727500000000_k3v9qa"/);
+  });
+});

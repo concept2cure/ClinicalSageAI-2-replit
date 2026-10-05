@@ -227,9 +227,10 @@ export function mapConsistencyResult(
   if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
 
   const allowedVerdicts: ConsistencyVerdict[] = ['clean', 'minor_issues', 'needs_review', 'blocker'];
-  const verdict = allowedVerdicts.includes(parsed.verdict as ConsistencyVerdict)
-    ? (parsed.verdict as ConsistencyVerdict)
-    : 'clean';
+  // An unknown or missing verdict is no result, never "clean" (row 74,
+  // ADR-0015 §7): coercing it read as a finding of consistency.
+  if (!allowedVerdicts.includes(parsed.verdict as ConsistencyVerdict)) return null;
+  const verdict = parsed.verdict as ConsistencyVerdict;
 
   const sev = parsed.bySeverity;
   const bySeverity =

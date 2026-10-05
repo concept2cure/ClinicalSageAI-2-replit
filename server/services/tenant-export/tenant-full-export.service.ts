@@ -92,6 +92,85 @@ export const EXPORT_EXCLUDED_TABLES: readonly string[] = Object.freeze([
   'api_keys',
 ]);
 
+/**
+ * Columns whose VALUES are withheld from a tenant export, and why.
+ *
+ * The export reads every tenant-keyed table with SELECT *. Until 2026-10-05 that
+ * returned credential material to whoever downloaded the data return: OAuth
+ * access and refresh tokens, connector and agency-gateway credentials, session
+ * keys, and the hashes bearer tokens are checked against. None of it is the
+ * customer's data in the GDPR Art. 20 sense. It is key material: usable, or
+ * replayable, by whoever holds the file, and re-issued, not returned, when an
+ * account closes (the api_keys rule above, one level down).
+ *
+ * Withheld, not dropped: a non-null value becomes `[withheld: <reason>]`, null
+ * stays null, and the table names the columns it withheld. So the customer can
+ * see that a credential existed and which account held it, but cannot read it.
+ * Every other column of the row is returned as stored.
+ *
+ * A new secret-shaped column in an exported table is caught against the fully
+ * migrated schema by tests/db/tenant-export-withheld-columns.dbtest.ts: it must
+ * be listed here or in EXPORT_COLUMNS_NOT_SECRET.
+ */
+export const EXPORT_WITHHELD_COLUMNS: Readonly<Record<string, Readonly<Record<string, string>>>> = Object.freeze({
+  connector_credentials: { credentials: 'connector credentials' },
+  document_sessions: { session_token: 'a session token' },
+  gate_approvals: { verification_token: 'a one-time verification token' },
+  integration_tokens: { access_token: 'an OAuth access token', refresh_token: 'an OAuth refresh token' },
+  mcp_oauth_refresh_tokens: { token_hash: 'the hash a refresh token is checked against' },
+  organization_gateway_accounts: { credentials_ciphertext: 'agency gateway credentials, encrypted under a platform key' },
+  scim_tenants: { token_hash: 'the hash a SCIM bearer token is checked against' },
+  session_activity: { session_key: 'a sign-in session key' },
+  submission_gateway_credentials: { secrets_ref: 'where a gateway secret is stored' },
+});
+
+/**
+ * Text columns whose NAMES look like secrets but whose values are not, and why.
+ * Read with EXPORT_WITHHELD_COLUMNS by the schema guard; a column on neither
+ * list fails it, so this is a decision record, not a convenience.
+ */
+export const EXPORT_COLUMNS_NOT_SECRET: Readonly<Record<string, Readonly<Record<string, string>>>> = Object.freeze({
+  audit_logs: { hmac_seal: "the row's integrity seal; it proves the row, it does not unlock anything" },
+  authoring_tokens: { token_key: 'a citation token in authored content' },
+  client_security_settings: { password_policy_settings: 'the password POLICY (length, expiry), no password' },
+  ind_investigators: { credentials: 'professional credentials such as MD, PhD' },
+  organization_gateway_accounts: { credential_fields: 'the NAMES of the credential fields held, not their values' },
+  submission_gateway_credentials: { credential_kind: 'the kind of credential, a label' },
+});
+
+const withheldMarker = (reason: string) => `[withheld: ${reason}]`;
+
+/** One table of the export, with its withheld columns' values replaced. */
+function exportedTable(
+  table: string,
+  tenantColumn: string,
+  rows: Array<Record<string, unknown>>,
+  truncated: boolean,
+): ExportedTable {
+  // Own-key lookup: a bare index reaches Object.prototype.
+  const withheld = Object.prototype.hasOwnProperty.call(EXPORT_WITHHELD_COLUMNS, table)
+    ? EXPORT_WITHHELD_COLUMNS[table]
+    : null;
+  if (!withheld) return { table, tenantColumn, rowCount: rows.length, truncated, rows };
+  return {
+    table,
+    tenantColumn,
+    rowCount: rows.length,
+    truncated,
+    withheldColumns: Object.keys(withheld),
+    rows: rows.map((row) => withholdSecrets(row, withheld)),
+  };
+}
+
+/** The row with its withheld columns' non-null values replaced by a marker. */
+function withholdSecrets(row: Record<string, unknown>, withheld: Readonly<Record<string, string>>): Record<string, unknown> {
+  const out = { ...row };
+  for (const [column, reason] of Object.entries(withheld)) {
+    if (Object.prototype.hasOwnProperty.call(out, column) && out[column] != null) out[column] = withheldMarker(reason);
+  }
+  return out;
+}
+
 /** Row cap per table, so one pathological table cannot exhaust memory. */
 const MAX_ROWS_PER_TABLE = 50_000;
 
@@ -117,6 +196,8 @@ export interface ExportedTable {
   rowCount: number;
   /** True when the table hit MAX_ROWS_PER_TABLE and the dump is partial. */
   truncated: boolean;
+  /** Columns whose values this export withheld (EXPORT_WITHHELD_COLUMNS); absent when none. */
+  withheldColumns?: string[];
   rows: Array<Record<string, unknown>>;
 }
 
@@ -274,7 +355,7 @@ export async function exportTenantFull(
       if (truncated) truncatedTables.push(label);
       if (kept.length === 0) tablesEmpty += 1;
       totalRows += kept.length;
-      tables.push({ table: label, tenantColumn, rowCount: kept.length, truncated, rows: kept });
+      tables.push(exportedTable(label, tenantColumn, kept, truncated));
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       logger.warn('Tenant export could not read a table', {
