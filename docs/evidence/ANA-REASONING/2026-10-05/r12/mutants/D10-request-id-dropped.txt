@@ -1,0 +1,12 @@
+Mutant D10-request-id-dropped: the parked generator names no gateway request
+
+--- server/routes/authoring.router.ts
+- requestId: gwResponse.requestId ?? null,
++ requestId: null,
+
+Tests run: server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the record follows the draft to its accept > the accept’s trail row names the turn record and the gateway request the draft came from 75ms
+      Tests  1 failed | 8 passed (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

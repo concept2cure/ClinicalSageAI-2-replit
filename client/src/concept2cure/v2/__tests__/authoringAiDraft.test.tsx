@@ -138,6 +138,7 @@ describe('describeGrounding', () => {
     sectionId: 'S1',
     generated: 'x',
     draftId: 'DC-1',
+    check: null,
     metadata: meta,
   });
 
@@ -473,5 +474,62 @@ describe('DocumentAuthoring — the drafting panel is reachable', () => {
     // author takes, and it costs a model call and a draft candidate.
     const urls = apiRequest.mock.calls.map((c: unknown[]) => String(c[1]));
     expect(urls.some((u) => u.includes('/ai/draft'))).toBe(false);
+  });
+});
+
+/* ── AnA reasoning round 12 (RT-6): the draft's check and its record ──────
+   The door now checks the draft against the evidence the model was shown and
+   files the turn's record. The panel shows the check before the accept, says
+   when a draft was not checked or not recorded, and never renders either as a
+   pass. The check describes the draft as generated, so edits are said to be
+   unchecked. */
+describe('AuthoringAiDraft — what was checked about the draft (round 12)', () => {
+  const CHECK = {
+    engine: 'answer-check/2', basis: 'sources', claims: 3, checked: 3, found: 2,
+    notFound: [{ kind: 'figure', text: 'stable for 36 months' }],
+    unchecked: [], fromPerson: [], fromInput: [], sources: ['Data Room', 'context'], unreadable: [],
+    verdicts: [{ text: 'This section is fully compliant.', reason: 'compliance' }],
+  };
+  const RECORDED = { status: 'recorded', id: 'rec-12', sha256: 'c'.repeat(64) };
+  const withCheck = (draft: Record<string, unknown>) => {
+    const base = MODEL_DRAFT();
+    return { ...base, draft: { ...base.draft, ...draft } };
+  };
+
+  it('shows the engine’s check of the draft before the accept: what was not found, and the verdict', async () => {
+    apiRequest.mockResolvedValue(res(200, withCheck({ check: CHECK, turnRecord: RECORDED })));
+    mount();
+    await generate();
+    const block = screen.getByTestId('ai-draft-check');
+    expect(block.textContent).toMatch(/Checked as drafted/);
+    expect(block.textContent).toMatch(/1 of 3 specific claims not found/);
+    expect(block.textContent).toMatch(/stable for 36 months/);
+    expect(block.textContent).toMatch(/fully compliant/);
+  });
+
+  it('a draft the server did not check says so, and never reads as a pass', async () => {
+    apiRequest.mockResolvedValue(res(200, withCheck({ check: null, turnRecord: RECORDED })));
+    mount();
+    await generate();
+    const block = screen.getByTestId('ai-draft-check');
+    expect(block.textContent).toMatch(/was not checked against its sources/);
+    expect(block.textContent).not.toMatch(/found in/);
+  });
+
+  it('a draft whose record was not filed says so, with the server’s reason', async () => {
+    apiRequest.mockResolvedValue(
+      res(200, withCheck({ check: CHECK, turnRecord: { status: 'not_recorded', reason: 'The record of this turn could not be written.' } })),
+    );
+    mount();
+    await generate();
+    expect(screen.getByTestId('ai-draft-record').textContent).toMatch(/Not recorded — The record of this turn could not be written\./);
+  });
+
+  it('once the author edits the draft, the check says the edits are not checked', async () => {
+    apiRequest.mockResolvedValue(res(200, withCheck({ check: CHECK, turnRecord: RECORDED })));
+    mount();
+    await generate();
+    fireEvent.change(screen.getByTestId('ai-draft-body'), { target: { value: 'Drafted section body, edited by the author.' } });
+    expect(screen.getByTestId('ai-draft-check').textContent).toMatch(/your edits are not checked/i);
   });
 });

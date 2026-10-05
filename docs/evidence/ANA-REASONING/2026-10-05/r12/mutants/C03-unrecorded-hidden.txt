@@ -1,0 +1,12 @@
+Mutant C03-unrecorded-hidden: a draft whose record was not filed says nothing
+
+--- client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx
+- if (turnRecord?.status === 'recorded') return null;
++ return null;
+
+Tests run: client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > a draft whose record was not filed says so, with the server’s reason 48ms
+      Tests  1 failed | 23 passed (24)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

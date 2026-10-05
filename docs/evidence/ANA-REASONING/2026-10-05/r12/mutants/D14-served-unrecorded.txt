@@ -1,0 +1,12 @@
+Mutant D14-served-unrecorded: the record names no call, so no model or request
+
+--- server/services/ana/turn-record-draft.ts
+- this.recorder.addServed(1, response, callSent({}));
++ 
+
+Tests run: server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > files one record holding the prompt sent, the draft returned, the model and the gateway request 143ms
+      Tests  1 failed | 8 passed (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

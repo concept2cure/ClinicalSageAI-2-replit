@@ -1,0 +1,12 @@
+Mutant D04-empty-answer-unfiled: an empty answer leaves no record
+
+--- server/routes/authoring.router.ts
+- await fileFailedDraftTurn(draftTurn, 'The AI provider returned no draft content.');
++ 
+
+Tests run: server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a provider that answers with no draft is filed as a failed turn holding the prompt it was sent 31ms
+      Tests  1 failed | 8 passed (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

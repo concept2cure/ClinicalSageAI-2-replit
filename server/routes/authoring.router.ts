@@ -85,6 +85,7 @@ import {
   type CreateAuditTrailOptions,
 } from '../services/authoring/authoring-evidence';
 import { loadAuthoringRecord, resolveTurnRecordSources, textSha256, type TurnRecordSource } from '../services/authoring/authoring-record';
+import { evidenceShown, fileFailedDraftTurn, openDraftTurn, type DraftTurn } from '../services/ana/turn-record-draft';
 import { sendAuditedExport, walkTenantChain } from '../services/audit/audited-export';
 import { canReadAuditTrail } from '../services/audit/audit-api-authority';
 import {
@@ -3243,6 +3244,10 @@ router.post('/documents/:id/request-review', async (req: Request, res: Response)
 
 // POST /api/authoring/sections/:sectionId/ai/draft - Generate AI draft
 router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response) => {
+  /* The turn this draft is (RT-6, AnA reasoning round 12): one record, opened
+     before the model is asked and filed however the request ends, as the
+     conversation's turns are (services/ana/turn-record.ts). */
+  let draftTurn: DraftTurn | null = null;
   try {
     const { sectionId } = req.params;
     const { tone = 'professional', region = 'FDA', context, requirements } = req.body;
@@ -3385,6 +3390,14 @@ Return ONLY a JSON object of this exact shape:
 - Omit sentences that are your own analysis or not based on a provided source. Never cite a src not shown above.
 Provide detailed, compliance-ready content following ${region} guidelines.`;
 
+    draftTurn = openDraftTurn(pool, {
+      orgId: tenantId,
+      userId: getActorId(req),
+      sectionId: String(sectionId),
+      request: { tone, region, context: context ?? null, requirements: requirements ?? null },
+      prompt,
+      audit: { ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined },
+    });
     let gwResponse: Awaited<ReturnType<typeof gw.route>>;
     try {
       gwResponse = await gw.route({
@@ -3407,10 +3420,12 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
       if (isGatewayError(aiError)) {
         const { code, message } = classifyGatewayError(aiError);
         logger.warn('ai/draft refused: the AI gateway declined the request', { code, sectionId });
+        await fileFailedDraftTurn(draftTurn, `The AI gateway refused this draft (${code}).`);
         return res
           .status(GATEWAY_ERROR_HTTP_STATUS[code])
           .json({ success: false, error: { code, message } });
       }
+      await fileFailedDraftTurn(draftTurn, 'The model call failed on the server.');
       return serverError(res, logger, 'drafting AI', aiError);
     }
 
@@ -3422,6 +3437,7 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
     // shapes it has to survive are unit-testable without the route.
     const { content: generatedContent, attributions: modelAttributions } =
       parseDraftEnvelope(gwResponse.content);
+    draftTurn?.served(gwResponse);
     if (!generatedContent) {
       /* The provider answered and said nothing usable. That is not a draft and
          it is not an outage; it is refused as an invalid response. */
@@ -3429,6 +3445,7 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
         sectionId,
         model: gwResponse.model ?? null,
       });
+      await fileFailedDraftTurn(draftTurn, 'The AI provider returned no draft content.');
       return res.status(GATEWAY_ERROR_HTTP_STATUS.INVALID_AI_RESPONSE).json({
         success: false,
         error: {
@@ -3438,6 +3455,18 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
         },
       });
     }
+    /* The engine's check of the draft against what the model was SHOWN, and
+       the turn's record, filed before the candidate is parked so the parked
+       generator can name it. */
+    const drafted = await draftTurn?.drafted(generatedContent, {
+      label: `${section.code} ${section.title}`,
+      authoringDocId: String(section.doc_id),
+      shownEvidence: retrievalStatus === 'ok' ? evidenceShown(evidenceBlock) : null,
+      // The header lines exactly as the prompt shows them.
+      sectionHeader: `Module: ${section.module}\nSection: ${section.code} - ${section.title}\nProduct: ${section.product_code || 'Medical Product'}`,
+      personWords: [context, requirements].filter((v) => typeof v === 'string' && v.trim()).join('\n'),
+      retrievalStatus,
+    });
     // Park the draft + the sources it came from so the accept endpoint can
     // record verified span-level source lineage (Phase 3). Best-effort:
     // attribution prep must never break drafting, so any failure just omits
@@ -3504,6 +3533,8 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
           provider: gwResponse.provider ?? null,
           promptSha256: crypto.createHash('sha256').update(prompt).digest('hex'),
           generatedAt: new Date().toISOString(),
+          requestId: gwResponse.requestId ?? null,
+          turnRecordId: drafted?.turnRecord.status === 'recorded' ? drafted.turnRecord.id : null,
         },
         assertions,
       );
@@ -3525,6 +3556,9 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
         // Present when the draft was parked for attributed acceptance; POST
         // …/ai/draft/accept with this id records source + author lineage.
         draftId,
+        // The engine's check of the draft as generated, and whether its turn was filed.
+        check: drafted?.check ?? null,
+        turnRecord: drafted?.turnRecord ?? { status: 'not_recorded', reason: 'This draft had no organization to file it under.' },
         metadata: {
           tone,
           region,
@@ -3551,6 +3585,7 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
     });
   } catch (error) {
     console.error('Error generating AI draft:', error);
+    await fileFailedDraftTurn(draftTurn, 'Drafting failed on the server.');
     return serverError(res, logger, 'drafting AI', error);
   }
 });

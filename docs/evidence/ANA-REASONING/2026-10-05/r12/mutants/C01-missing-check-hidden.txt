@@ -1,0 +1,12 @@
+Mutant C01-missing-check-hidden: a draft with no check shows nothing, which reads as nothing found
+
+--- client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx
+- <div>This draft was not checked against its sources.</div>
++ null
+
+Tests run: client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > a draft the server did not check says so, and never reads as a pass 43ms
+      Tests  1 failed | 23 passed (24)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

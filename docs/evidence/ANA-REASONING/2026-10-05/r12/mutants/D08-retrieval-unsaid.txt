@@ -1,0 +1,12 @@
+Mutant D08-retrieval-unsaid: the record does not say retrieval failed
+
+--- server/services/ana/turn-record-draft.ts
+- if (d.retrievalStatus !== 'ok') this.recorder.warn(RETRIEVAL_STATUS_MESSAGE[d.retrievalStatus]);
++ 
+
+Tests run: server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a failed retrieval consulted nothing: every claim unchecked, none not found, and the record says why in the fixed sentence 43ms
+      Tests  1 failed | 8 passed (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

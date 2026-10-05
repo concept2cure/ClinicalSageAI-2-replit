@@ -1,0 +1,12 @@
+Mutant C02-edits-unsaid: edits after the check are not said to be unchecked
+
+--- client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx
+- {edited ? ' — your edits are not checked' : ''}
++ {''}
+
+Tests run: client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > once the author edits the draft, the check says the edits are not checked 33ms
+      Tests  1 failed | 23 passed (24)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
