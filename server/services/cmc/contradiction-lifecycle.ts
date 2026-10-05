@@ -57,6 +57,27 @@ export interface SweepOutcome {
 
 const key = (type: string, details: string) => `${type}\u0000${details}`;
 
+/**
+ * Critical findings the detector reports in the program's records NOW that
+ * its contradiction record does not hold at all: the program was never swept,
+ * or its data changed since the last sweep. A finding the record holds is
+ * already counted by its status (open blocks, resolved does not), so only an
+ * unrecorded one is returned. Pure: the caller supplies both sides.
+ */
+export function unrecordedCriticalFindings(
+  detected: DetectedContradiction[],
+  stored: Array<{ contradiction_type?: unknown; details?: unknown }>,
+): DetectedContradiction[] {
+  const recorded = new Set(stored.map((r) => key(String(r.contradiction_type ?? ''), String(r.details ?? ''))));
+  const seen = new Set<string>();
+  return detected.filter((c) => {
+    const k = key(c.contradictionType, c.details);
+    if (c.severity !== 'critical' || recorded.has(k) || seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
 /** Reconcile the program's stored findings with what the detector found now. Run inside the caller's transaction. */
 export async function reconcileContradictions(
   client: Queryable,

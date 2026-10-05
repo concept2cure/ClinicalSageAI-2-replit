@@ -212,11 +212,27 @@ router.post('/contradictions/:projectId', async (req, res) => {
        next sweep and the critical finding blocked approval again. The same
        conflict over the same data keeps its standing; changed data is a new
        finding; an open finding the data no longer shows is cleared. */
+    /* What the sweep looked at, so "nothing found" is a statement about named
+       records and not about nothing: a sweep over empty registers finds
+       nothing too (GA review 2026-10-05, plan item 5). */
+    const examined = {
+      specifications: registers.specifications.length,
+      methods: registers.methods.length,
+      stability: registers.stability.length,
+      batches: registers.batch.length,
+      comparability: registers.comparability.length,
+    };
     const client = await pool.connect();
     let sweep;
     try {
       await client.query('BEGIN');
       sweep = await reconcileContradictions(client, orgId, projectId, contradictions);
+      // The sweep itself is on the record: when, by whom, over what.
+      await client.query(
+        `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
+         VALUES ($1, $2, 'contradiction_sweep', $2, 'swept', $3::jsonb, $4)`,
+        [orgId, projectId, JSON.stringify({ examined, found: contradictions.length, outcome: sweep }), governedActorId(req) != null ? String(governedActorId(req)) : null],
+      );
       await client.query('COMMIT');
     } catch (e) {
       await client.query('ROLLBACK');
@@ -246,6 +262,7 @@ router.post('/contradictions/:projectId', async (req, res) => {
       success: true,
       contradictions,
       sweep,
+      examined,
       impactTasks: deriveImpactTasks(contradictions),
       tasks: taskSync,
     });
@@ -271,7 +288,19 @@ router.get('/contradictions/:projectId', async (req, res) => {
        ORDER BY updated_at DESC`,
       [orgId, projectId]
     );
-    return res.json({ success: true, data: rows });
+    /* When the program was last swept and over what. Without it, an empty list
+       read as "no contradictions" for a program nobody had swept. */
+    const last = await pool.query(
+      `SELECT created_at AS "at", created_by AS "by", event_payload AS "payload"
+         FROM cmc_provenance_events
+        WHERE organization_id = $1 AND project_id = $2 AND artifact_type = 'contradiction_sweep'
+        ORDER BY created_at DESC LIMIT 1`,
+      [orgId, projectId],
+    );
+    const lastSweep = last.rows[0]
+      ? { at: last.rows[0].at, by: last.rows[0].by || null, examined: last.rows[0].payload?.examined ?? null, found: last.rows[0].payload?.found ?? null }
+      : null;
+    return res.json({ success: true, data: rows, meta: { lastSweep } });
   } catch (error) {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
