@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-05T11:31:27.600Z",
+  "generatedAt": "2026-10-05T11:39:27.003Z",
   "git": {
-    "sha": "65b92951b1735d9652cd5ae5b1c676ffec01e244",
+    "sha": "537a6959a133808f4447418e4f35a0625939ff74",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2042,7 +2042,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1124629
+        "bytes": 1124944
       },
       {
         "file": "shared/schema.ts",
@@ -2134,7 +2134,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 133880
+        "bytes": 133906
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2248,7 +2248,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21707
+        "lines": 21714
       },
       {
         "file": "shared/schema.ts",
@@ -2348,7 +2348,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2870
+        "lines": 2872
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2584,7 +2584,7 @@
       },
       {
         "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 1796
+        "lines": 1801
       },
       {
         "file": "ui_kits/home/Projects.jsx",
