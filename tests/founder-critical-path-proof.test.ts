@@ -151,7 +151,10 @@ describe('Sign-out is wired', () => {
     expect(authService).toMatch(/async\s+logout\s*\(/);
     // Server-side revocation, not just a client-side token drop — a logout that
     // only clears localStorage leaves the token valid until it expires.
-    expect(authService).toMatch(/post\(`?\$\{?this\.baseUrl\}?\/logout/);
+    // The call may carry a type argument and break across lines: since
+    // 5bbc43317 (P0-4b R4) logout reads the server's answer, as
+    // `this.api.post<{ success?: boolean }>(\n  `${this.baseUrl}/logout`, ...)`.
+    expect(authService).toMatch(/post(?:<[^>]*>)?\(\s*`?\$\{?this\.baseUrl\}?\/logout/);
     expect(authService).toContain('terminateAllSessions');
   });
 });

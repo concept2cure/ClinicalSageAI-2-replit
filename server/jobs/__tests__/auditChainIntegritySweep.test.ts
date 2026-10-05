@@ -164,8 +164,19 @@ function answerQueries(overrides: Partial<Record<'regclass' | 'audit_events' | '
 const originalEnv = { ...process.env };
 let emitWarning: ReturnType<typeof vi.spyOn>;
 
+/**
+ * The run's clock: the next daily sweep, 24 hours after `anchorOk` was written
+ * (the day `writeAuditChainAnchor` is faked to anchor). The sweep ages the
+ * anchor against Date.now() and calls anything past 48 hours `stale`, an
+ * incident (f97d49331). Left on the wall clock, this fixed-date fixture went
+ * stale on 2026-10-02T02:00Z and every "clean run" case failed from then on.
+ */
+const SWEEP_RUN_AT = Date.parse(anchorOk.anchoredAt) + 24 * 3_600_000;
+
 /** Every store verifies, the anchor bucket is configured and its latest anchor holds. */
 function setUpSweep(): void {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(SWEEP_RUN_AT);
   process.env.NODE_ENV = 'test';
   process.env.AUDIT_HMAC_KEY = 'k'.repeat(32);
   process.env.AUDIT_HMAC_SECRET = 's'.repeat(32);
@@ -189,6 +200,7 @@ function setUpSweep(): void {
 }
 
 function tearDownSweep(): void {
+  vi.useRealTimers();
   emitWarning.mockRestore();
   process.env = { ...originalEnv };
 }
