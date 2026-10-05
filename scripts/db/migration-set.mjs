@@ -2999,6 +2999,20 @@ export const C2C_MIGRATION_FILES = [
   // EXISTS, no DROP. Evidence docs/evidence/CMC-M3-GA/2026-10-05/08-cmc-evidence-from-the-vault/.
   'migrations/20261005b_cmc_source_evidence.sql',
 
+  // ── Module 1 filed where FDA and PMDA file it (2026-10-05, D2) ─────────────
+  // nda:fda and bla:fda ich-m4-v2.2, anda:fda fda-anda-21cfr314-94-v1.1 and
+  // jnda:pmda ich-m4-v2.2 as NEW versions superseding v2.1 / v1.0: the gates
+  // required '1.19 Environmental analysis' of an NDA (FDA 1.19 is Pre-EUA and
+  // EUA; environmental analysis is 1.12.14), 1.14.4/1.14.5 for carton labels and
+  // SPL (investigational / foreign labeling), and of an ANDA patent
+  // certification under 1.15 (Promotional material); the J-NDA outline had no
+  // 1.11 draft RMP. Modules 2–5 unchanged. ON CONFLICT DO NOTHING, the
+  // 20260810c provenance UPDATE (so after 20260810c), guarded supersede, a
+  // row-count RAISE; no DROP, no edit of 20260804/20260806b. Documents bound to
+  // the old versions keep their outline. maa:ema not minted (decision 3).
+  // Evidence docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-fda-jnda-rule-pack-m1-v2-2-*.
+  'migrations/20261005_fda_jnda_m1_outline_v2_2.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
