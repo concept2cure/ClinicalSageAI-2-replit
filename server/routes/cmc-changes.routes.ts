@@ -28,8 +28,13 @@ import auditService from '../services/auditService';
 import { writeThroughChangeControl } from '../services/cmc-write-through';
 import { observeWriteThroughFailure } from '../services/cmc/link-to-module3';
 import { projectBelongsToTenant } from '../services/cmc/project-membership';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
+// A viewer reads change control and writes none of it (the CMC write-role
+// gate's rule, server/api/cmc/cmc-write-role-gate.ts): this router is mounted
+// at /api/cmc-changes, outside /api/cmc, so that gate does not cover it.
+router.use(requireEditorAccessForWrites);
 
 function getOrgId(req: Request): number | null {
   const r = req as {

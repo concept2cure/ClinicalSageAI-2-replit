@@ -10,7 +10,7 @@
  */
 
 import type { E3Section } from './types.js';
-import { E3_QA_R1, FDA_PDF_SPECS, FDA_STUDY_DATA_TRC } from './csr-e3-basis.js';
+import { E3_QA_R1, FDA_PDF_SPECS, FDA_STUDY_DATA_TRC } from './regulatory-basis.js';
 
 export const E3_PLAN_SECTIONS: E3Section[] = [
   {

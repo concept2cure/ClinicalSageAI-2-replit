@@ -1,0 +1,261 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > no regulator URL is bound to two top-level declarations 826ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > each shared constant is declared only in regulatory-basis.ts, and the retired duplicate names nowhere 175ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > no file in ind/ctd keeps a local recall()/practice() helper 149ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > csr-e3-basis.ts keeps only the E3-specific CDISC_CONVENTION and e3SectionBasis 1ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > exports every shared basis constant, well formed under the shared rules 17ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > cfr201_57, recall and practice build well-formed bases of the stated confidence 0ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > FDA_E3 is ICH E3 itself, not FDA’s E3 Q&A (R1) 0ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > nothing in ind/ctd binds the E3 Q&A URL to a basis that is not the Q&A 217ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > readers hold the one object, not a copy > the submission chain, the technical rules and the E3 overlay cite the exported constants 130ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > pediatric obligation catalog > models program + citation for every market 2ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > pediatric obligation catalog > exposes exactly the three modeled markets 1ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > pediatric obligation catalog > throws for an unmodeled market in getPediatricObligation 1ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — FDA (PREA / iPSP) > plan outstanding when nothing has been submitted 7ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — FDA (PREA / iPSP) > satisfied when the iPSP has been submitted 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — FDA (PREA / iPSP) > waiver/deferral pending when a waiver is requested 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — FDA (PREA / iPSP) > waiver/deferral pending when a deferral is requested 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — FDA (PREA / iPSP) > not_applicable when the application does not trigger the requirement 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — EMA (PIP) > PIP required with timing referencing pharmacokinetic / Phase 1 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — EMA (PIP) > satisfied when the PIP has been agreed/submitted 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — PMDA (paediatric development plan, effort obligation since 2026-05-01) > reports the effort obligation, not "no mandatory plan" 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — PMDA (paediatric development plan, effort obligation since 2026-05-01) > an application that triggers the duty has a plan outstanding until PMDA has confirmed one 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — PMDA (paediatric development plan, effort obligation since 2026-05-01) > satisfied when the plan has been confirmed by PMDA 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — PMDA (paediatric development plan, effort obligation since 2026-05-01) > not_applicable when the application does not trigger the duty 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — duty > FDA and EMA are mandatory duties when triggered 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — errors + determinism > throws for an unmodeled market 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — errors + determinism > is deterministic for the same input 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — errors + determinism > produces sorted actions and notes 0ms
+stderr | tests/regulatory-programs-routes.test.ts > regulatory-programs routes — list > GET / returns 500 with sanitized envelope on service error
+{
+  "timestamp": "2026-10-05T04:08:08.464Z",
+  "level": "error",
+  "message": "[regulatory-programs] list failed",
+  "context": {
+    "err": "DB down",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — auth gate > GET / returns 403 when no org context attached 25ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — auth gate > GET /:id returns 403 when no org context attached 4ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — auth gate > GET /:id/activity returns 403 when no org context attached 7ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — auth gate > GET /portfolio-insights returns 403 when no org context attached 11ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — list > GET / returns 200 with { data: Program[] } envelope 6ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — list > GET /?programType=510K passes the filter to the service 4ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — list > GET /?programType=invalid returns 422 with field errors 4ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — list > GET / returns 500 with sanitized envelope on service error 3ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — single program > GET /:id returns 200 + { data } when program found 4ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — single program > GET /:id returns 404 with notFoundInTenant envelope when program missing 5ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/activity returns 200 + { data: ActivityEvent[] } 4ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/activity respects ?limit query param via Zod 3ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/activity returns 422 when limit is out of range 3ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/activity returns 404 when program not in tenant 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/milestones returns 200 + { data: Milestone[] } 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/rim-recommendations returns 200 + { data: RimRec[] } 4ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/change-impact returns 200 + { data: ChangeImpact[] } 2ms
+stdout | server/routes/__tests__/global-ri.routes.test.ts
+{
+  "timestamp": "2026-10-05T04:08:08.494Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T04:08:08.495Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/global-ri.routes.test.ts
+{
+  "timestamp": "2026-10-05T04:08:08.495Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — FDA orphan > usPrevalence 150000 → orphan eligible (ODD) 2ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — FDA orphan > usPrevalence 500000 → not eligible 1ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — FDA orphan > boundary: exactly 200000 → not eligible (must be fewer than) 0ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — EMA orphan > euPrevalencePer10k 4 + serious + noSatisfactoryTreatment → eligible 0ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — EMA orphan > euPrevalencePer10k 4 with significantBenefit (no satisfactory flag) → eligible 0ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — EMA orphan > euPrevalencePer10k 4 but not serious → not eligible 0ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — EMA orphan > euPrevalencePer10k 6 (over threshold) → not eligible 0ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — EMA orphan > boundary: exactly 5 per 10k + serious + need → eligible 0ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — PMDA orphan > jpPrevalence 40000 → eligible 1ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — PMDA orphan > jpPrevalence 60000 → not eligible 0ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — pediatric > pediatricDevelopment true on FDA → pediatric.applicable true with PSP/PREA mention 8ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — pediatric > pediatricDevelopment true on EMA → PIP requirement 0ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — pediatric > no pediatricDevelopment → pediatric undefined 0ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — insufficient inputs > FDA missing usPrevalence → orphan.eligible false with "not supplied" rationale 0ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — insufficient inputs > EMA missing euPrevalencePer10k → orphan.eligible false with "not supplied" rationale 0ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > assessDesignationEligibility — insufficient inputs > PMDA missing jpPrevalence → orphan.eligible false with "not supplied" rationale 0ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > determinism & shape > produces identical output for identical input 1ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > determinism & shape > designations and notes are sorted 0ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > determinism & shape > echoes the queried market 0ms
+ ✓ server/services/global-ri/__tests__/special-designations.test.ts > determinism & shape > getDesignationCriteria returns the reference entry 0ms
+stderr | server/routes/__tests__/global-ri.routes.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/global-ri.routes.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/global-ri.routes.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/safety-signals returns 200 + { data: SafetySignalRow[] } 10ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/literature returns 200 + { data: buckets, meta: { total, productName } } 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/pma-modules returns 200 + { data: PmaModule[] } 10ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/pma-trial-metrics returns 200 + { data: TrialMetric[], meta: { study } } 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/pma-trial-metrics returns meta.study=null when no study linked 14ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /portfolio-insights returns 200 + { data: PortfolioInsight[] } 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > GET / returns 403 without org context 14ms
+ ✓ tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > POST / returns 422 when body is missing required fields 48ms
+ ✓ tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > POST / returns 422 when label is empty string 2ms
+stdout | tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > POST / returns 201 + { data } on successful create
+{
+  "timestamp": "2026-10-05T04:08:08.618Z",
+  "level": "info",
+  "message": "[saved-precedent-queries] saved precedent query created",
+  "context": {
+    "orgId": 99,
+    "userId": 777,
+    "savedQueryId": 1,
+    "label": "CGM 14-day wear"
+  }
+}
+
+ ✓ tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > POST / returns 422 when scope contains an unknown pathway 17ms
+ ✓ tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > POST / returns 201 + { data } on successful create 3ms
+ ✓ tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > PATCH /:id returns 422 when id is non-numeric 48ms
+stderr | tests/regulatory-programs-routes.test.ts > mdx module health — /api/mdx/health > returns 500 with sanitized envelope when probe throws
+{
+  "timestamp": "2026-10-05T04:08:08.781Z",
+  "level": "error",
+  "message": "[mdx-health] health failed",
+  "context": {
+    "err": "pg pool exhausted",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > DELETE /:id returns 422 when id is non-numeric 62ms
+ ✓ tests/regulatory-programs-routes.test.ts > mdx module health — /api/mdx/health > does NOT require org context (deployment-wide probe) 10ms
+ ✓ tests/regulatory-programs-routes.test.ts > mdx module health — /api/mdx/health > returns 200 + full report when ready 14ms
+ ✓ tests/regulatory-programs-routes.test.ts > mdx module health — /api/mdx/health > reports readiness=not_ready when a required table is missing 21ms
+ ✓ tests/regulatory-programs-routes.test.ts > mdx module health — /api/mdx/health > reports readiness=partial when only optional tables missing 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > mdx module health — /api/mdx/health > returns 500 with sanitized envelope when probe throws 6ms
+ ✓ tests/regulatory-programs-routes.test.ts > envelope shape — every successful response is { data } or { data, meta } > list endpoint never sets sibling fields outside meta 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > envelope shape — every successful response is { data } or { data, meta } > literature endpoint puts total + productName under meta (no sibling fields) 18ms
+ ✓ tests/regulatory-programs-routes.test.ts > envelope shape — every successful response is { data } or { data, meta } > pma-trial-metrics puts study under meta (no sibling fields) 8ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > EXPEDITED_PROGRAMS catalog > encodes the FDA, EMA and PMDA programs 2ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > EXPEDITED_PROGRAMS catalog > is ordered by id and every program is well-formed 35ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > EXPEDITED_PROGRAMS catalog > has unique program ids 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > serious + unmet need → Fast Track eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > serious + preliminary evidence + substantial improvement → Breakthrough eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > surrogate + serious + unmet need → Accelerated Approval eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > regenerative + serious + preliminary evidence → RMAT eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > substantial improvement alone → Priority Review eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — EMA > unmet need + preliminary evidence → PRIME eligible 15ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — EMA > serious + unmet need → Conditional MA eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — EMA > comprehensive data unobtainable → Exceptional Circumstances eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > all four Sakigake criteria → eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > only substantial improvement + early JP development → NOT Sakigake eligible (all four criteria required) 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > conditional approval is the system as amended in 2025: approval at the exploratory-trial stage, not "confirmatory trials are difficult" 1ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > the conditional-approval screen explains itself from the record and says it is recall 3ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > orphan → Orphan Drug Designation eligible 3ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — non-matching and scoping > empty input → nothing eligible, programs reported as notSuitable 2ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — non-matching and scoping > only returns programs for the requested region 4ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — non-matching and scoping > partitions: a program is either eligible or notSuitable, never both 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — determinism and ordering > identical input yields identical output 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — determinism and ordering > both result lists are ordered by program id 0ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > produces one market section per target market, in order 30ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > maps each market to its agency and a pathway 1ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > assesses orphan designation eligibility for FDA/EMA from the disease profile 1ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > matches expedited programs for the serious/unmet-need profile 1ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > recommends HA meetings for the next milestone and a Module 1 checklist 5ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > includes CTA requirements, labeling sections, and an orphan-waived fee estimate 0ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > handles a market without designation modeling (AU) gracefully 0ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > is deterministic 1ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > holds each programme once, with the ids the engines read 7ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > names the consultations as PMDA does 1ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > every entry has a well-formed basis, and nothing unread is presented as regulator text 8ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > a regulator-text basis must have been checked on or after the date the programme took effect 1ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > conditional approval is the 2025 system: exploratory-trial stage, revocable, drugs only until read 1ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > the paediatric plan is an effort obligation confirmed by PMDA 0ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > SAKIGAKE keeps the four criteria the matcher screens 1ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > getJpProgram throws for an id it does not hold 1ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > readers of the record > special-designations states the PMDA paediatric duty from the record, not "encouraged" 5ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > readers of the record > the global pathway comparison describes Japan conditional approval as amended 1ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > readers of the record > no migrated file carries its own Japan paediatric or conditional-approval prose 21ms
+ ✓ server/services/global-ri/__tests__/expedited-programs-sakigake.qa.test.ts > matchExpeditedPrograms — PMDA Sakigake eligibility > is NOT eligible when only the two old criteria are met 10ms
+ ✓ server/services/global-ri/__tests__/expedited-programs-sakigake.qa.test.ts > matchExpeditedPrograms — PMDA Sakigake eligibility > is NOT eligible when the novel-mechanism criterion is missing 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs-sakigake.qa.test.ts > matchExpeditedPrograms — PMDA Sakigake eligibility > is eligible only when all four catalog criteria are met 0ms
+ ✓ server/services/ana/__tests__/special-designations.test.ts > adviseSpecialDesignation > resolves Breakthrough Therapy and notes the clinical-evidence requirement 6ms
+ ✓ server/services/ana/__tests__/special-designations.test.ts > adviseSpecialDesignation > resolves Accelerated Approval and flags the confirmatory-trial obligation 0ms
+ ✓ server/services/ana/__tests__/special-designations.test.ts > adviseSpecialDesignation > filters candidates to EU designations 1ms
+ ✓ server/services/ana/__tests__/special-designations.test.ts > adviseSpecialDesignation > maps jurisdiction synonyms (fda → us) 0ms
+ ✓ server/services/ana/__tests__/special-designations.test.ts > adviseSpecialDesignation > resolves orphan alias to the US orphan record 0ms
+ ✓ server/services/ana/__tests__/special-designations.test.ts > adviseSpecialDesignation > lists FDA and EMA designations 0ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > 403 without the regulatory-author role 38ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > GET /module1/requirements/:market → 200 list 12ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > GET /module1/requirements/:market → 404 for an unmodeled market 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > POST /module1/assess → 200 not-ready when a component is missing 29ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > POST /module1/assess → 400 without market/providedComponents 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > review-timeline projection > POST /review-timeline → 200 with milestones for FDA IND 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > review-timeline projection > POST /review-timeline → 400 for an unknown region/procedure 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > review-timeline projection > POST /review-timeline → 400 without required fields 11ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > expedited programs > GET /expedited-programs → 200 catalog 4ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > expedited programs > POST /expedited-programs/match → 200 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > expedited programs > POST /expedited-programs/match → 400 without region 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > pathway advice > POST /pathway → 200 with per-market recommendations 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > pathway advice > POST /pathway → 400 without productType/targetMarkets 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > HA meetings > GET /meetings → 200 catalog; ?market=FDA filters 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > HA meetings > POST /meetings/recommend → 200 with a Pre-IND meeting 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > HA meetings > POST /meetings/recommend → 400 without market/milestone 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > special designations > GET /designations/criteria/:market → 200 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > special designations > POST /designations/assess → 200 orphan-eligible for low US prevalence 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > special designations > POST /designations/assess → 400 without market 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > strategy brief > POST /strategy-brief → 200 cross-market brief 4ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > strategy brief > POST /strategy-brief → 400 without productType/targetMarkets 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > GET /fees/schedule/:market → 200 8ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > GET /fees/schedule/:market → 404 for an unmodeled market 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > POST /fees/estimate → 200 with a total 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > POST /fees/estimate → orphan waives to zero 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > POST /fees/estimate → 400 without market 1ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > cross-market labeling > GET /labeling/requirements/:market → 200 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > cross-market labeling > POST /labeling/assess → 200 not-ready when a section is missing 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > cross-market labeling > POST /labeling/assess → 400 without market/providedSections 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > clinical-trial-application requirements > GET /cta/requirements/:market → 200 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > clinical-trial-application requirements > POST /cta/assess → 200 not-ready when a component is missing 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > clinical-trial-application requirements > POST /cta/assess → 400 without required fields 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > post-approval changes > GET /changes/vehicles/:market → 200 with categories + vehicles 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > post-approval changes > POST /changes/classify → 200 (EMA major → Type II) 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > post-approval changes > POST /changes/classify → 400 for an unknown category 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > post-approval changes > POST /changes/classify → 400 without market/category 1ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > ICH guideline catalog > GET /ich-guidelines → 200 catalog; ?q= searches; ?category= filters 5ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > ICH guideline catalog > GET /ich-guidelines/:code → 200 (E6 = GCP); unknown → 404 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory guidance map > GET /guidance/topics → 200 list 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory guidance map > GET /guidance/:topic → 200 grounds CSR in E3 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory guidance map > GET /guidance/:topic → 404 for an unmodeled topic 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > submission economics > POST /submission-economics → 200 with fees + timeline + summary 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > submission economics > POST /submission-economics → 400 for an unknown procedure 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > submission economics > POST /submission-economics → 400 without required fields 2ms
+
+ Test Files  10 passed (10)
+      Tests  178 passed (178)
+   Start at  04:08:03
+   Duration  7.00s (transform 5.58s, setup 709ms, import 11.69s, tests 2.42s, environment 1ms)
+

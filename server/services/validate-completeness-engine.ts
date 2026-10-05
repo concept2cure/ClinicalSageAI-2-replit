@@ -2,16 +2,60 @@
  * VALIDATE-COMPLETENESS Engine — Submission Readiness Assessment
  *
  * Provides:
- * - CTD module completeness checklist per submission type
+ * - CTD completeness checklist per submission type, from the canonical
+ *   required-section profile
  * - RTF risk scoring
  * - Go/No-Go decision framework
  * - Gap analysis with remediation guidance
+ *
+ * ── 2026-10-05 (g-validate-completeness-canonical) ───────────────────────────
+ * This engine kept its own requirement table, and every RTF/CRL prediction
+ * (scoreSubmissionDraft, the report-os pre-mortem) inherited its errors:
+ *   - blockers were chosen by `c.module <= '3'`, so an NDA missing all of
+ *     Modules 4 and 5 had zero blockers and read 'conditional_go', and an empty
+ *     IVDR file (module 'A') did too;
+ *   - presence was a substring match: '3.2.S.1.1' and '1.10' both satisfied
+ *     '1.1 Forms (FDA 356h)';
+ *   - US Module 1 numbers were wrong (EA at 1.14, patent at 1.12, right of
+ *     reference at 1.12.2, Paragraph IV at 1.12.1 — FDA's Pre-IND
+ *     correspondence);
+ *   - TYPE_MAP sent an EU MAA to the FDA NDA table (356h, no RMP) and CTA to
+ *     IND, which in turn fell through to the NDA table;
+ *   - devices got invented CTD-like "modules 1-6" and FDA 3601, the user-fee
+ *     cover sheet, as their "application form"; the IVDR list filed PMPF under
+ *     Annex XIV.
+ *
+ * Deleted: the commonCTD / ANDA / 505(b)(2) / device / IVDR / MAA literal
+ * arrays, TYPE_MAP (MAA→NDA, CTA→IND), the substring match and the module
+ * split. Now:
+ *   - requirements: `ectd/required-sections.requiredSectionProfileFor` — the
+ *     one profile the eCTD leaf validator reads (Module 1 from the region
+ *     profile, Modules 2-5 per ICH M4);
+ *   - presence: `ectd/section-code-match.sectionMatches` (exact or a
+ *     descendant on a separator boundary);
+ *   - every missing required section is a blocker — the profile carries no
+ *     criticality, and refusal to file is incompleteness on its face;
+ *   - a type with no profile (ANDA, 505(b)(2), CTA, a non-home region, an
+ *     unknown string) is `not_assessed`. Devices (510(k), De Novo, PMA) point
+ *     at the eSTAR filing-readiness engine and EU MDR/IVDR at the tech-doc
+ *     engine (DECISIONS.md #13), because a CTD-code checklist cannot represent
+ *     their slots.
  *
  * @module server/services/validate-completeness-engine
  */
 
 import { createScopedLogger } from '../utils/logger';
-import { resolveToRegistryEntry, resolveToDeficiencyType, getSubmissionTypeContext } from '../../shared/regulatory/submission-type-bridge.js';
+import { resolveToRegistryEntry, resolveToRegistryId, type RegulatoryApplicationType } from '../../shared/regulatory/submission-type-bridge.js';
+import {
+  requiredSectionProfileFor,
+  type ProfiledSubmissionType,
+  type RequiredSectionProfile,
+  type RequiredSectionRegion,
+} from './ectd/required-sections';
+import { sectionMatches } from './ectd/section-code-match';
+import { getSubmissionRegionProfile } from './region-profiles/region-profile-service';
+import { CTD_AUTHORING_GUIDANCE } from './ind/ctd/authoring-guidance';
+import type { CTDSection } from './regional-ctd-templates';
 
 const log = createScopedLogger('validate-completeness');
 
@@ -19,49 +63,81 @@ const log = createScopedLogger('validate-completeness');
 
 export interface ValidateInput {
   submissionType: string;
-  /** Sections present in the submission (section IDs or CTD module paths) */
+  /** Sections present in the submission (CTD codes, bare or 'm'-prefixed). */
   presentSections: string[];
-  /** Optional: section quality scores (0-100) */
+  /** Optional: section quality scores (0-100), keyed by the required section code. */
   sectionScores?: Record<string, number>;
   /** Optional: known issues from HARMONIZE */
   harmonizeIssueCount?: number;
   /** Optional: known escalations */
   openEscalations?: number;
-  /** Target agency */
+  /**
+   * Target agency. When given, it must be the profile's home region (an NDA
+   * with 'EMA' is not assessed — never judged against another region's set).
+   */
   targetAgency?: string;
 }
 
 export interface CompletenessCheckItem {
+  /** CTD module ('1'..'5'), from the section code. */
   module: string;
   section: string;
   description: string;
   required: boolean;
   present: boolean;
   qualityScore: number | null;
-  status: 'complete' | 'present_needs_review' | 'missing_required' | 'missing_optional';
+  status: 'complete' | 'present_needs_review' | 'missing_required';
   remediation?: string;
 }
 
 export interface RTFRiskAssessment {
   overallRTFRisk: 'low' | 'medium' | 'high' | 'critical';
   rtfScore: number;
+  /** Every missing required section, `${code}: ${title}`. Each is a blocker. */
   missingCritical: string[];
-  missingImportant: string[];
   weakSections: string[];
 }
 
 export interface GoNoGoDecision {
-  decision: 'go' | 'conditional_go' | 'no_go';
-  readinessScore: number;
+  /** 'not_assessed': no canonical required-section profile for this type/region. */
+  decision: 'go' | 'conditional_go' | 'no_go' | 'not_assessed';
+  /** Null when not assessed — never a 0/0. */
+  readinessScore: number | null;
   rationale: string;
   conditions: string[];
   blockers: string[];
   risks: string[];
 }
 
-export interface ValidateCompletenessResult {
+/** The engine that does assess a type this engine cannot. */
+export interface CompletenessAssessor {
+  /** Exported function name. */
+  engine: string;
+  /** Repo-relative module path. */
+  module: string;
+  /** The route that reaches it. */
+  route: string;
+}
+
+export type CompletenessAssessment =
+  | {
+      status: 'assessed';
+      profile: { submissionType: ProfiledSubmissionType; region: RequiredSectionRegion; basis: string };
+    }
+  | {
+      status: 'not_assessed';
+      reason: string;
+      /** Where this type IS assessed, or null when nothing in the platform does. */
+      assessWith: CompletenessAssessor | null;
+    };
+
+interface CompletenessResultBase {
   submissionType: string;
   targetAgency: string;
+}
+
+export interface AssessedCompletenessResult extends CompletenessResultBase {
+  assessment: Extract<CompletenessAssessment, { status: 'assessed' }>;
   checklist: CompletenessCheckItem[];
   rtfRisk: RTFRiskAssessment;
   goNoGo: GoNoGoDecision;
@@ -73,6 +149,121 @@ export interface ValidateCompletenessResult {
   };
 }
 
+export interface NotAssessedCompletenessResult extends CompletenessResultBase {
+  assessment: Extract<CompletenessAssessment, { status: 'not_assessed' }>;
+  checklist: [];
+  rtfRisk: null;
+  goNoGo: GoNoGoDecision;
+  summary: null;
+}
+
+export type ValidateCompletenessResult = AssessedCompletenessResult | NotAssessedCompletenessResult;
+
+export function isCompletenessAssessed(r: ValidateCompletenessResult): r is AssessedCompletenessResult {
+  return r.assessment.status === 'assessed';
+}
+
+// ─── Where unprofiled device types are assessed ──────────────────────────────
+
+const ESTAR_FILING_READINESS: CompletenessAssessor = {
+  engine: 'assessEstarFilingReadiness',
+  module: 'server/services/pathway-engines/estar/estar-filing-readiness.ts',
+  route: 'POST /api/510k/estar/filing-readiness',
+};
+
+function euTechDoc(regulation: 'mdr' | 'ivdr'): CompletenessAssessor {
+  return {
+    engine: 'assembleTechDoc',
+    module: 'server/services/pathway-engines/mdr-ivdr/tech-doc-assembler.ts',
+    route: `GET /api/submissions/sequences/:seqId/technical-file?regulation=${regulation}`,
+  };
+}
+
+/** Home agency of each profiled region, reported for every assessed result. */
+const REGION_AGENCY: Readonly<Record<RequiredSectionRegion, string>> = { fda: 'FDA', eu: 'EMA', jp: 'PMDA' };
+
+/**
+ * Registry ids whose completeness another engine DOES assess — an explicit
+ * allow-list, never a category or segment rule.
+ *
+ * Review fix (2026-10-05, round 1): the first cut routed by category/segment,
+ * so US_EUA and US_HDE pointed at eSTAR (whose assessContent handles only
+ * 510k / de_novo / pma / q_sub / ide / 513g), and every EU device or IVD
+ * entry — MIR, FSCA, vigilance, PSUR, trend report, clinical investigation,
+ * performance study, NB / Art. 48 consultation, CER, DoC, significant change —
+ * pointed at the Annex II/III technical-file assembler, with a reason that
+ * called each "a device pathway assessed by" an engine that does not assess
+ * it. Any id not listed here gets `assessWith: null` and the plain
+ * no-profile reason.
+ *
+ * eSTAR: estar-filing-readiness `assessContent` maps 510(k) (device and IVD
+ * variant), De Novo, PMA (original and supplements, PMA_KEY_TO_TYPE) and IDE.
+ * Tech doc: tech-doc-assembler `EuRegulation` is 'mdr' | 'ivdr' — the MDR
+ * Annex II/III and IVDR Annex II/III technical documentation, and nothing
+ * else. EU_IVDR_TECHDOC is the bridge's alias target for 'IVDR_TD' and has no
+ * registry entry, which is why this keys on the resolved id, not the entry.
+ */
+const ASSESSOR_BY_REGISTRY_ID: Readonly<Record<string, CompletenessAssessor>> = {
+  US_510K: ESTAR_FILING_READINESS,
+  US_510K_MOD: ESTAR_FILING_READINESS,
+  US_510K_IVD: ESTAR_FILING_READINESS,
+  US_DE_NOVO: ESTAR_FILING_READINESS,
+  US_DE_NOVO_IVD: ESTAR_FILING_READINESS,
+  US_PMA: ESTAR_FILING_READINESS,
+  US_PMA_IVD: ESTAR_FILING_READINESS,
+  US_PMA_SUPP: ESTAR_FILING_READINESS,
+  US_IDE: ESTAR_FILING_READINESS,
+  EU_MDR_TECHDOC: euTechDoc('mdr'),
+  EU_MDR_CLASS_I: euTechDoc('mdr'),
+  EU_MDR_CLASS_IIA: euTechDoc('mdr'),
+  EU_MDR_CLASS_IIB: euTechDoc('mdr'),
+  EU_MDR_CLASS_III: euTechDoc('mdr'),
+  EU_IVDR: euTechDoc('ivdr'),
+  EU_IVDR_TECHDOC: euTechDoc('ivdr'),
+  EU_IVDR_CLASS_A: euTechDoc('ivdr'),
+  EU_IVDR_CLASS_B: euTechDoc('ivdr'),
+  EU_IVDR_CLASS_CD: euTechDoc('ivdr'),
+};
+
+function assessorFor(submissionType: string): CompletenessAssessor | null {
+  const id = resolveToRegistryId(submissionType);
+  return (id && ASSESSOR_BY_REGISTRY_ID[id]) || null;
+}
+
+// ─── Section titles (from the canonical records, never a local table) ────────
+
+function moduleOf(code: string): string {
+  return /^([1-5])\./.exec(code)?.[1] ?? '';
+}
+
+const module1TitleCache = new Map<RequiredSectionRegion, Map<string, string>>();
+
+function module1Titles(region: RequiredSectionRegion): Map<string, string> {
+  let titles = module1TitleCache.get(region);
+  if (titles) return titles;
+  titles = new Map();
+  const walk = (sections: CTDSection[]): void => {
+    for (const s of sections) {
+      titles!.set(s.number, s.title);
+      if (s.childSections?.length) walk(s.childSections);
+    }
+  };
+  walk(getSubmissionRegionProfile(region)?.module1Sections ?? []);
+  module1TitleCache.set(region, titles);
+  return titles;
+}
+
+/**
+ * Module 1 titles come from the region profile; Modules 2-5 from the CTD
+ * authoring record, exact key only (its nearest-node fallback would title
+ * '3.2.S' with a child's heading). A code neither record titles is shown by
+ * its number alone.
+ */
+function titleFor(code: string, region: RequiredSectionRegion): string {
+  const title = moduleOf(code) === '1' ? module1Titles(region).get(code) : CTD_AUTHORING_GUIDANCE[code]?.title;
+  return title ?? `CTD section ${code}`;
+}
+
 // ─── Engine ──────────────────────────────────────────────────────────────────
 
 export class ValidateCompletenessEngine {
@@ -80,13 +271,11 @@ export class ValidateCompletenessEngine {
   async validate(input: ValidateInput): Promise<ValidateCompletenessResult> {
     log.info(`VALIDATE-COMPLETENESS: ${input.submissionType}, ${input.presentSections.length} sections`);
 
-    const targetAgency = input.targetAgency || 'FDA';
-    // Resolve international types to nearest compatible type for requirements lookup
-    const registryCtx = getSubmissionTypeContext(input.submissionType);
-    const resolvedType = this.normalizeForRequirements(input.submissionType);
-    const resolvedAgency = registryCtx?.agency ?? targetAgency;
-    const requirements = this.getRequirements(resolvedType, targetAgency);
-    const checklist = this.buildChecklist(requirements, input);
+    const entry = resolveToRegistryEntry(input.submissionType);
+    const profile = this.resolveProfile(input, entry);
+    if (!profile) return this.notAssessed(input, entry);
+
+    const checklist = this.buildChecklist(profile, input);
     const rtfRisk = this.assessRTFRisk(checklist, input);
     const goNoGo = this.buildGoNoGo(checklist, rtfRisk, input);
 
@@ -95,7 +284,13 @@ export class ValidateCompletenessEngine {
 
     return {
       submissionType: input.submissionType,
-      targetAgency,
+      // A profile resolved only for the home region (or none named), so the
+      // home agency is the normalized form of whatever the caller sent.
+      targetAgency: REGION_AGENCY[profile.region],
+      assessment: {
+        status: 'assessed',
+        profile: { submissionType: profile.submissionType, region: profile.region, basis: profile.basis },
+      },
       checklist,
       rtfRisk,
       goNoGo,
@@ -108,134 +303,67 @@ export class ValidateCompletenessEngine {
     };
   }
 
-  private getRequirements(submissionType: string, agency: string): Array<{
-    module: string; section: string; description: string; required: boolean; criticality: 'blocking' | 'important' | 'supporting';
-  }> {
-    // Common CTD requirements applicable to NDA/BLA/MAA/ANDA/505(b)(2)
-    const commonCTD = [
-      { module: '1', section: '1.1', description: 'Forms (FDA 356h / EMA Application Form)', required: true, criticality: 'blocking' as const },
-      { module: '1', section: '1.2', description: 'Cover Letter', required: true, criticality: 'blocking' as const },
-      { module: '1', section: '1.3', description: 'Administrative Information', required: true, criticality: 'blocking' as const },
-      { module: '1', section: '1.12', description: 'Patent Information / Certifications', required: submissionType === 'ANDA' || submissionType === '505(b)(2)', criticality: 'blocking' as const },
-      { module: '1', section: '1.14', description: 'Environmental Assessment', required: true, criticality: 'important' as const },
-      { module: '2', section: '2.2', description: 'Introduction', required: true, criticality: 'important' as const },
-      { module: '2', section: '2.3', description: 'Quality Overall Summary (QOS)', required: true, criticality: 'blocking' as const },
-      { module: '2', section: '2.4', description: 'Nonclinical Overview', required: true, criticality: 'blocking' as const },
-      { module: '2', section: '2.5', description: 'Clinical Overview', required: true, criticality: 'blocking' as const },
-      { module: '2', section: '2.6', description: 'Nonclinical Written and Tabulated Summaries', required: true, criticality: 'important' as const },
-      { module: '2', section: '2.7', description: 'Clinical Summary', required: true, criticality: 'blocking' as const },
-      { module: '3', section: '3.2.S', description: 'Drug Substance', required: true, criticality: 'blocking' as const },
-      { module: '3', section: '3.2.P', description: 'Drug Product', required: true, criticality: 'blocking' as const },
-      { module: '3', section: '3.2.A', description: 'Appendices (Facilities, Adventitious Agents)', required: true, criticality: 'important' as const },
-      { module: '3', section: '3.2.R', description: 'Regional Information', required: true, criticality: 'important' as const },
-      { module: '4', section: '4.2', description: 'Study Reports (Pharmacology, PK, Toxicology)', required: submissionType !== 'ANDA', criticality: 'blocking' as const },
-      { module: '4', section: '4.3', description: 'Literature References', required: true, criticality: 'supporting' as const },
-      { module: '5', section: '5.2', description: 'Tabular Listing of All Clinical Studies', required: true, criticality: 'blocking' as const },
-      { module: '5', section: '5.3', description: 'Clinical Study Reports', required: true, criticality: 'blocking' as const },
-      { module: '5', section: '5.3.5', description: 'Reports of Efficacy and Safety Studies', required: submissionType !== 'ANDA', criticality: 'blocking' as const },
-      { module: '5', section: '5.4', description: 'Literature References', required: true, criticality: 'supporting' as const },
-    ];
-
-    // ANDA-specific
-    if (submissionType === 'ANDA') {
-      return [
-        ...commonCTD,
-        { module: '5', section: '5.3.1', description: 'Bioequivalence Study Reports', required: true, criticality: 'blocking' as const },
-        { module: '1', section: '1.12.1', description: 'Paragraph IV Certification Letters', required: false, criticality: 'important' as const },
-        { module: '3', section: '3.2.P.2', description: 'Pharmaceutical Development (comparative dissolution)', required: true, criticality: 'blocking' as const },
-      ];
-    }
-
-    // 505(b)(2)-specific
-    if (submissionType === '505(b)(2)') {
-      return [
-        ...commonCTD,
-        { module: '1', section: '1.12.2', description: 'Right of Reference Letters', required: true, criticality: 'blocking' as const },
-        { module: '2', section: '2.7.1', description: 'Summary of Biopharmaceutics and Bridging', required: true, criticality: 'blocking' as const },
-      ];
-    }
-
-    // Device submissions (PMA/510k/De Novo)
-    if (['PMA', '510(k)', 'De Novo'].includes(submissionType)) {
-      return [
-        { module: '1', section: '1.1', description: 'Device Application Form (FDA 3601 or equivalent)', required: true, criticality: 'blocking' as const },
-        { module: '1', section: '1.2', description: 'Cover Letter and Table of Contents', required: true, criticality: 'blocking' as const },
-        { module: '2', section: '2.1', description: 'Device Description and Intended Use', required: true, criticality: 'blocking' as const },
-        { module: '2', section: '2.2', description: 'Substantial Equivalence Comparison (510k) / Classification (De Novo)', required: submissionType !== 'PMA', criticality: 'blocking' as const },
-        { module: '3', section: '3.1', description: 'Non-Clinical Testing (Bench, Biocompatibility)', required: true, criticality: 'blocking' as const },
-        { module: '3', section: '3.2', description: 'Software Documentation (if SaMD)', required: false, criticality: 'important' as const },
-        { module: '4', section: '4.1', description: 'Clinical Study Reports / Literature', required: submissionType === 'PMA', criticality: 'blocking' as const },
-        { module: '5', section: '5.1', description: 'Labeling (IFU, Package Insert)', required: true, criticality: 'blocking' as const },
-        { module: '5', section: '5.2', description: 'Sterilization Validation (if applicable)', required: false, criticality: 'important' as const },
-        { module: '5', section: '5.3', description: 'Shelf Life / Packaging Validation', required: true, criticality: 'important' as const },
-        { module: '6', section: '6.1', description: 'Manufacturing Information', required: true, criticality: 'blocking' as const },
-      ];
-    }
-
-    // IVD / IVDR technical file (EU IVDR 2017/746, Annexes I–III/XIII/XIV) and
-    // FDA IVD 510(k)/PMA. Previously IVD was folded into the device branch with
-    // no dedicated requirement set; this makes IVD a first-class citizen with the
-    // performance-evaluation + GSPR structure that distinguishes it from devices.
-    if (['IVDR', 'IVDR-TF', 'IVD-510(k)', 'IVD-PMA', 'IVD'].includes(submissionType)) {
-      return [
-        { module: 'A', section: 'Annex I', description: 'General Safety and Performance Requirements (GSPR) checklist', required: true, criticality: 'blocking' as const },
-        { module: 'A', section: 'Annex II.1', description: 'Device Description and Specification (intended purpose, analytes)', required: true, criticality: 'blocking' as const },
-        { module: 'A', section: 'Annex II.2', description: 'Information supplied by the manufacturer (labelling, IFU)', required: true, criticality: 'blocking' as const },
-        { module: 'A', section: 'Annex II.3', description: 'Design and Manufacturing Information', required: true, criticality: 'blocking' as const },
-        { module: 'A', section: 'Annex II.4', description: 'GSPR mapping to standards / common specifications', required: true, criticality: 'blocking' as const },
-        { module: 'A', section: 'Annex II.5', description: 'Benefit–Risk Analysis and Risk Management (ISO 14971)', required: true, criticality: 'blocking' as const },
-        { module: 'A', section: 'Annex II.6.1', description: 'Analytical Performance (sensitivity, specificity, LoD/LoQ)', required: true, criticality: 'blocking' as const },
-        { module: 'A', section: 'Annex II.6.2', description: 'Clinical Performance (diagnostic sensitivity/specificity, PPV/NPV)', required: true, criticality: 'blocking' as const },
-        { module: 'A', section: 'Annex XIII', description: 'Performance Evaluation Report (PER) — scientific validity + analytical + clinical', required: true, criticality: 'blocking' as const },
-        { module: 'A', section: 'Annex I.9', description: 'Software / cybersecurity documentation (if applicable)', required: false, criticality: 'important' as const },
-        { module: 'A', section: 'Annex XIV', description: 'Post-Market Performance Follow-up (PMPF) plan', required: true, criticality: 'important' as const },
-        { module: 'A', section: 'Annex III', description: 'Post-Market Surveillance (PMS) plan / PSUR', required: true, criticality: 'important' as const },
-        { module: 'A', section: 'Stability', description: 'Stability (shelf-life, in-use, transport)', required: true, criticality: 'important' as const },
-      ];
-    }
-
-    // MAA (EMA)
-    if (submissionType === 'MAA') {
-      return [
-        ...commonCTD,
-        { module: '1', section: '1.5', description: 'Risk Management Plan (RMP)', required: true, criticality: 'blocking' as const },
-        { module: '1', section: '1.6', description: 'Paediatric Investigation Plan (PIP) or Waiver', required: true, criticality: 'blocking' as const },
-        { module: '1', section: '1.8', description: 'Environmental Risk Assessment', required: true, criticality: 'important' as const },
-        { module: '2', section: '2.5', description: 'Clinical Overview (EU-specific benefit-risk)', required: true, criticality: 'blocking' as const },
-      ];
-    }
-
-    return commonCTD;
+  /**
+   * The caller's string first ('NDA', 'JNDA', 'eu_maa'), then the registry's
+   * application type for an id the profile does not alias ('US_IND' → 'IND').
+   * The region is passed only when the caller named one, so an MAA sent with
+   * no agency is judged as the EU MAA it is rather than against FDA.
+   */
+  private resolveProfile(input: ValidateInput, entry: RegulatoryApplicationType | null): RequiredSectionProfile | null {
+    const region = input.targetAgency?.trim() || null;
+    const direct = requiredSectionProfileFor(input.submissionType, region);
+    if (direct) return direct;
+    if (!entry) return null;
+    return requiredSectionProfileFor(entry.applicationType, region ?? entry.agency);
   }
 
-  private buildChecklist(
-    requirements: ReturnType<ValidateCompletenessEngine['getRequirements']>,
-    input: ValidateInput
-  ): CompletenessCheckItem[] {
-    return requirements.map(req => {
-      const present = input.presentSections.some(s =>
-        s.includes(req.section) || s.includes(req.description.toLowerCase()) ||
-        s.toLowerCase().includes(req.section.toLowerCase())
-      );
-      const qualityScore = input.sectionScores?.[req.section] ?? null;
+  private notAssessed(input: ValidateInput, entry: RegulatoryApplicationType | null): NotAssessedCompletenessResult {
+    const assessWith = assessorFor(input.submissionType);
+    const label = entry?.displayName ? `${input.submissionType} (${entry.displayName})` : input.submissionType;
+    const agency = input.targetAgency?.trim() || null;
+    const where = agency ? ` for ${agency}` : '';
+    const reason = assessWith
+      ? `${label} is a device pathway; its completeness is assessed by ${assessWith.engine} (${assessWith.module}), not by a CTD section checklist.`
+      : `No canonical required-section profile exists for ${label}${where}. Completeness was not assessed; no checklist or score is produced.`;
+    return {
+      submissionType: input.submissionType,
+      targetAgency: agency ?? entry?.agency ?? 'unspecified',
+      assessment: { status: 'not_assessed', reason, assessWith },
+      checklist: [],
+      rtfRisk: null,
+      goNoGo: {
+        decision: 'not_assessed',
+        readinessScore: null,
+        rationale: `Not assessed. ${reason}`,
+        conditions: assessWith ? [`Assess with ${assessWith.engine}: ${assessWith.route}`] : [],
+        blockers: [],
+        risks: [],
+      },
+      summary: null,
+    };
+  }
+
+  private buildChecklist(profile: RequiredSectionProfile, input: ValidateInput): CompletenessCheckItem[] {
+    return [...profile.sections].map(section => {
+      const description = titleFor(section, profile.region);
+      const present = input.presentSections.some(s => sectionMatches(s, section));
+      const qualityScore = input.sectionScores?.[section] ?? null;
       const needsReview = present && qualityScore !== null && qualityScore < 70;
 
-      let status: CompletenessCheckItem['status'];
-      if (present && !needsReview) status = 'complete';
-      else if (present && needsReview) status = 'present_needs_review';
-      else if (!present && req.required) status = 'missing_required';
-      else status = 'missing_optional';
+      const status: CompletenessCheckItem['status'] = !present
+        ? 'missing_required'
+        : needsReview ? 'present_needs_review' : 'complete';
 
       return {
-        module: req.module,
-        section: req.section,
-        description: req.description,
-        required: req.required,
+        module: moduleOf(section),
+        section,
+        description,
+        required: true,
         present,
         qualityScore,
         status,
         remediation: status === 'missing_required'
-          ? `BLOCKER: ${req.description} is required for ${input.submissionType} submission. Prepare and include before filing.`
+          ? `BLOCKER: ${section} ${description} is required for ${input.submissionType} (${profile.basis}). Prepare and include before filing.`
           : status === 'present_needs_review'
             ? `Quality score ${qualityScore}/100 is below threshold. Review and strengthen this section.`
             : undefined,
@@ -245,11 +373,7 @@ export class ValidateCompletenessEngine {
 
   private assessRTFRisk(checklist: CompletenessCheckItem[], input: ValidateInput): RTFRiskAssessment {
     const missingCritical = checklist
-      .filter(c => c.status === 'missing_required' && c.module <= '3')
-      .map(c => `${c.section}: ${c.description}`);
-
-    const missingImportant = checklist
-      .filter(c => c.status === 'missing_required' && c.module > '3')
+      .filter(c => c.status === 'missing_required')
       .map(c => `${c.section}: ${c.description}`);
 
     const weakSections = checklist
@@ -259,7 +383,6 @@ export class ValidateCompletenessEngine {
     // RTF score: 0 = definitely RTF, 100 = no RTF risk
     let rtfScore = 100;
     rtfScore -= missingCritical.length * 20;
-    rtfScore -= missingImportant.length * 8;
     rtfScore -= weakSections.length * 5;
     if (input.harmonizeIssueCount) rtfScore -= Math.min(input.harmonizeIssueCount * 3, 15);
     if (input.openEscalations) rtfScore -= Math.min(input.openEscalations * 5, 20);
@@ -271,7 +394,7 @@ export class ValidateCompletenessEngine {
           : rtfScore < 75 ? 'medium'
             : 'low';
 
-    return { overallRTFRisk, rtfScore, missingCritical, missingImportant, weakSections };
+    return { overallRTFRisk, rtfScore, missingCritical, weakSections };
   }
 
   private buildGoNoGo(
@@ -284,10 +407,7 @@ export class ValidateCompletenessEngine {
       blockers.push(`${input.openEscalations} open escalation(s) require resolution`);
     }
 
-    const risks = [
-      ...rtfRisk.missingImportant.map(s => `Missing: ${s}`),
-      ...rtfRisk.weakSections.map(s => `Low quality: ${s}`),
-    ];
+    const risks = rtfRisk.weakSections.map(s => `Low quality: ${s}`);
 
     if (input.harmonizeIssueCount && input.harmonizeIssueCount > 0) {
       risks.push(`${input.harmonizeIssueCount} HARMONIZE consistency issue(s) detected`);
@@ -303,10 +423,10 @@ export class ValidateCompletenessEngine {
 
     if (blockers.length > 0) {
       decision = 'no_go';
-      rationale = `${blockers.length} blocking issue(s) prevent submission. Critical sections are missing or unresolved escalations exist.`;
+      rationale = `${blockers.length} blocking issue(s) prevent submission. Required sections are missing or unresolved escalations exist.`;
     } else if (risks.length > 3 || rtfRisk.overallRTFRisk === 'high') {
       decision = 'conditional_go';
-      rationale = `Submission is substantially complete but ${risks.length} risk(s) require mitigation before filing.`;
+      rationale = `Every required section is present, but ${risks.length} risk(s) require mitigation before filing.`;
       conditions.push(
         'Address all high-priority consistency issues from HARMONIZE check',
         'Complete quality review for sections below threshold',
@@ -314,26 +434,13 @@ export class ValidateCompletenessEngine {
       );
     } else {
       decision = 'go';
-      rationale = `Submission is ready for filing. ${readinessScore}% completeness with ${risks.length} minor risk(s).`;
+      rationale = `Every required section is present. ${readinessScore}% completeness with ${risks.length} minor risk(s).`;
       if (risks.length > 0) {
         conditions.push('Document accepted risks in submission risk register');
       }
     }
 
     return { decision, readinessScore, rationale, conditions, blockers, risks };
-  }
-
-  private normalizeForRequirements(submissionType: string): string {
-    // Map registry entries to the requirement set they match
-    const entry = resolveToRegistryEntry(submissionType);
-    if (!entry) return submissionType;
-    // Use the applicationType from the registry as the requirements key
-    const appType = entry.applicationType.toUpperCase();
-    const TYPE_MAP: Record<string, string> = {
-      IND: 'IND', NDA: 'NDA', BLA: 'BLA', ANDA: 'ANDA', PMA: 'PMA',
-      '510K': '510(k)', 'DE_NOVO': 'De Novo', MAA: 'NDA', CTA: 'IND',
-    };
-    return TYPE_MAP[appType] ?? submissionType;
   }
 }
 

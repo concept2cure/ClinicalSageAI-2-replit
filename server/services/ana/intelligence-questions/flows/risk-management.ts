@@ -12,8 +12,12 @@
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { riskAcceptabilityPolicy } from '../../../market-specs/risk-management-structure.js';
 
 export function createRiskManagementFlow(): FlowDefinition {
+  // The EU acceptability principle (AFAP, no economic stopping rule) is stated
+  // once, in risk-management-structure.ts; this flow quotes it.
+  const euAcceptability = riskAcceptabilityPolicy('EU_MDR').statement;
   return {
     id: 'risk-management-v1',
     category: 'risk_management',
@@ -605,7 +609,8 @@ export function createRiskManagementFlow(): FlowDefinition {
         question:
           'How were risks evaluated against acceptability criteria? What is the threshold for acceptable risk?',
         guidance:
-          'ISO 14971:2019 Section 6 requires each estimated risk to be evaluated using the criteria for risk acceptability defined in the risk management plan. Risks that are not acceptable require risk control measures. The ALARP (As Low As Reasonably Practicable) principle is commonly applied.',
+          'ISO 14971:2019 clause 6 requires each estimated risk to be evaluated against the criteria for risk acceptability defined in the risk management plan. ISO 14971:2019 does not prescribe the criteria: the manufacturer defines them under its policy (clause 4.2) and plan (clause 4.4). Risks that are not acceptable require risk control measures. ' +
+          euAcceptability,
         provideExpertFeedback: true,
         fields: [
           {
@@ -614,8 +619,9 @@ export function createRiskManagementFlow(): FlowDefinition {
             type: 'select',
             required: true,
             options: [
-              { value: 'iso_14971_annex_d', label: 'ISO 14971 Annex D Guidance' },
-              { value: 'ich_q9_alarp', label: 'ICH Q9 ALARP Principle' },
+              // Value kept for stored answers; the former ISO 14971 Annex D material is ISO/TR 24971:2020.
+              { value: 'iso_14971_annex_d', label: 'ISO/TR 24971:2020 guidance' },
+              { value: 'mdr_ivdr_afap', label: 'AFAP — EU MDR/IVDR Annex I §2' },
               { value: 'custom_criteria', label: 'Custom Criteria' },
             ],
           },
@@ -652,9 +658,10 @@ export function createRiskManagementFlow(): FlowDefinition {
         id: 'risk_acceptability',
         section: 'risk_analysis',
         question:
-          'Are all risks acceptable after evaluation? Provide ALARP demonstration and residual risk justification details.',
+          'Are all risks acceptable after evaluation? Show how residual risks were reduced and justify each residual risk.',
         guidance:
-          'ISO 14971:2019 Section 7.4 requires that residual risks be evaluated and that the ALARP principle be demonstrated. If risks remain unacceptable, the manufacturer must either implement further risk controls or perform a benefit-risk analysis.',
+          'ISO 14971:2019 clause 7.3 evaluates each residual risk against the acceptability criteria. If a residual risk is not acceptable and further risk control is not possible, the manufacturer performs a benefit-risk analysis under clause 7.4; clause 8 evaluates the overall residual risk. ' +
+          euAcceptability,
         fields: [
           {
             id: 'all_risks_acceptable_after_eval',
@@ -671,9 +678,10 @@ export function createRiskManagementFlow(): FlowDefinition {
           },
           {
             id: 'alarp_demonstration',
-            label: 'ALARP Demonstration',
+            // Field id kept: stored answers and the war-game auditor key on it.
+            label: 'Residual-risk reduction demonstration',
             type: 'textarea',
-            helpText: 'Demonstrate that risks have been reduced As Low As Reasonably Practicable. Describe the analysis showing further risk reduction is impracticable or disproportionate.',
+            helpText: 'Describe the further risk-control options considered for each residual risk and why the residual risk is acceptable. ' + euAcceptability,
           },
           {
             id: 'residual_risk_justification_approach',
@@ -692,10 +700,10 @@ export function createRiskManagementFlow(): FlowDefinition {
             id: 'alarp_not_demonstrated',
             condition: { field: 'alarp_demonstration', operator: 'eq', value: '' },
             severity: 'warning',
-            title: 'ALARP Not Demonstrated',
+            title: 'Residual-Risk Reduction Not Demonstrated',
             message:
-              'The ALARP principle requires documentation that risks have been reduced as far as reasonably practicable. Please provide this justification.',
-            reference: 'ISO 14971:2019 Section 7.4',
+              'Document the further risk-control options considered and why each residual risk is acceptable. ' + euAcceptability,
+            reference: 'ISO 14971:2019 clauses 7.3 and 8; EU MDR/IVDR Annex I §2 and §4',
           },
         ],
         defaultNext: 'risk_controls',

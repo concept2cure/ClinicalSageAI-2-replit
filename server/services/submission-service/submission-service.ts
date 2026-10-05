@@ -45,6 +45,9 @@ import { deriveGovernedTargetBinding, BINDING_BASIS, isSignatureWithdrawn } from
 import { createScopedLogger } from '../../utils/logger';
 import { programInOrganization } from '../c2c/program-access';
 import { requiresIndependence } from '../governance/separation-of-duties';
+import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge';
+import { cespChannelRefusal } from '../submission-gateways/ema-cesp';
+import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage';
 import {
   validateSectionCode,
   vocabularyForApplicationType,
@@ -1088,48 +1091,90 @@ export function dispatchSequence(
 // submission_transmittals record and performs the real transport (AS2 / OAuth2 /
 // mTLS+HMAC). Tenant-scoped + audited.
 
+/** Where transmitSequence sends a sequence, or why it sends it nowhere. */
+export type TransmitRoute =
+  | { ok: true; gwRegion: string; gwName: string }
+  | { ok: false; reason: string };
+
 /**
- * Select the agency gateway for a submission by region AND client type. The EU
- * splits by product class: device/IVD (mdx|ivd) register through EUDAMED, while
- * drug/biologic dossiers go through CESP. FDA (incl. eSTAR) routes through ESG;
- * Japan through the PMDA gateway.
+ * Route a submission to its agency gateway by region, client type and filing
+ * type. FDA (incl. eSTAR) routes through ESG; Japan through the PMDA gateway.
+ *
+ * The EU splits twice. Device/IVD (mdx|ivd) register through EUDAMED. A drug or
+ * biologic dossier goes to CESP only when its filing type resolves
+ * (`resolveToRegistryEntry`) to a filing the one channel function,
+ * `submissionChannelFor` (regulatory/registry/submittabilityCoverage.ts), routes
+ * to ema:cesp — the national, MRP and DCP filings. Anything else is refused with
+ * the channel named: a centralised-procedure filing (MAA, variation, renewal,
+ * PSUR, ASMF) goes through the EMA eSubmission Gateway / Web Client, which the
+ * platform has no connector for (DECISIONS.md row 10); a CTA through CTIS; an
+ * orphan, PIP, PRIME or advice request through IRIS. A filing type that names
+ * no registry filing is refused too: nothing says CESP accepts it.
+ *
+ * 2026-10-05 (D2 record, step g-cesp-centralised-refusal; finding 42): every
+ * non-device EU dossier was routed to ema:cesp, so an e-signed centralised MAA
+ * sequence would have been POSTed to CESP's /baskets. EMA has made the
+ * eSubmission Gateway / Web Client mandatory for centralised-procedure eCTD
+ * submissions since 2014-03-01 (basis: docs/evidence/
+ * D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-cesp-centralised-refusal-facts.md).
  */
-export function selectGateway(
+export function transmitRouteFor(
   region: string,
-  clientType: string
-): { gwRegion: string; gwName: string } | null {
+  clientType: string,
+  applicationType?: string | null
+): TransmitRoute {
   switch (region) {
     case 'fda':
-      return { gwRegion: 'fda', gwName: 'esg' };
+      return { ok: true, gwRegion: 'fda', gwName: 'esg' };
     case 'jp':
     case 'pmda':
-      return { gwRegion: 'pmda', gwName: 'pmda_gateway' };
+      return { ok: true, gwRegion: 'pmda', gwName: 'pmda_gateway' };
     case 'eu':
-    case 'ema':
-      return clientType === 'mdx' || clientType === 'ivd'
-        ? { gwRegion: 'ema', gwName: 'eudamed' }
-        : { gwRegion: 'ema', gwName: 'cesp' };
+    case 'ema': {
+      if (clientType === 'mdx' || clientType === 'ivd') return { ok: true, gwRegion: 'ema', gwName: 'eudamed' };
+      const type = typeof applicationType === 'string' ? applicationType.trim() : '';
+      const entry = type ? resolveToRegistryEntry(type) : null;
+      if (!entry) {
+        return {
+          ok: false,
+          reason: `The filing type ${type ? `"${type}"` : '(none recorded)'} names no filing in the regulatory registry, so the platform cannot tell whether CESP accepts it (CESP carries national, MRP and DCP filings only; a centralised-procedure filing goes through the EMA eSubmission Gateway / Web Client). Nothing was sent.`,
+        };
+      }
+      const notCesp = cespChannelRefusal(entry, submissionChannelFor(entry));
+      if (notCesp) return { ok: false, reason: `${notCesp} Nothing was sent.` };
+      return { ok: true, gwRegion: 'ema', gwName: 'cesp' };
+    }
     case 'ca':
-      return { gwRegion: 'ca', gwName: 'hc_cesg' };
+      return { ok: true, gwRegion: 'ca', gwName: 'hc_cesg' };
     case 'uk':
-      return { gwRegion: 'uk', gwName: 'mhra_gateway' };
+      return { ok: true, gwRegion: 'uk', gwName: 'mhra_gateway' };
     case 'cn':
-      return { gwRegion: 'cn', gwName: 'nmpa_gateway' };
+      return { ok: true, gwRegion: 'cn', gwName: 'nmpa_gateway' };
     case 'au':
-      return { gwRegion: 'au', gwName: 'tga_ebs' };
+      return { ok: true, gwRegion: 'au', gwName: 'tga_ebs' };
     case 'ch':
-      return { gwRegion: 'ch', gwName: 'swissmedic_egateway' };
+      return { ok: true, gwRegion: 'ch', gwName: 'swissmedic_egateway' };
     case 'br':
-      return { gwRegion: 'br', gwName: 'anvisa_gateway' };
+      return { ok: true, gwRegion: 'br', gwName: 'anvisa_gateway' };
     case 'in':
-      return { gwRegion: 'in', gwName: 'cdsco_sugam' };
+      return { ok: true, gwRegion: 'in', gwName: 'cdsco_sugam' };
     case 'kr':
-      return { gwRegion: 'kr', gwName: 'mfds_dbio' };
+      return { ok: true, gwRegion: 'kr', gwName: 'mfds_dbio' };
     case 'sg':
-      return { gwRegion: 'sg', gwName: 'hsa_prism' };
+      return { ok: true, gwRegion: 'sg', gwName: 'hsa_prism' };
     default:
-      return null;
+      return { ok: false, reason: `No transmit gateway is mapped for region "${region}".` };
   }
+}
+
+/** The gateway pair `transmitRouteFor` names, or null when it refuses. */
+export function selectGateway(
+  region: string,
+  clientType: string,
+  applicationType?: string | null
+): { gwRegion: string; gwName: string } | null {
+  const route = transmitRouteFor(region, clientType, applicationType);
+  return route.ok ? { gwRegion: route.gwRegion, gwName: route.gwName } : null;
 }
 
 /** Project a gateway transmit status onto the sequence's coarse dispatch_status. */
@@ -1305,15 +1350,18 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     throw new SubmissionError('DISPATCH_BLOCKED', `Dispatch gate blocks transmit: ${assessment.gate.blockers.join(' ')}`);
   }
 
-  // Route by region AND client type (EU device/IVD → EUDAMED, else CESP).
+  // Route by region, client type and filing type (EU device/IVD → EUDAMED; an
+  // EU dossier → CESP only for a national/MRP/DCP filing — see transmitRouteFor).
+  // The submission's applicationType names the filing; seq.type is the
+  // lifecycle (original|amendment|…) and is read only when it is empty.
   const submission = await getSubmission(seq.submissionId, ctx);
-  const route = selectGateway(seq.region, submission.clientType);
-  if (!route) {
-    throw new SubmissionError('VALIDATION', `No transmit gateway is mapped for region "${seq.region}".`);
+  const route = transmitRouteFor(seq.region, submission.clientType, submission.applicationType || seq.type);
+  if (!route.ok) {
+    throw new SubmissionError('VALIDATION', route.reason);
   }
 
   const { getGateway, preTransmitFindings } = await import('../submission-gateways/index');
-  // gwRegion and gwName are always valid Region/GatewayName values returned by selectGateway
+  // gwRegion and gwName are always valid Region/GatewayName values returned by transmitRouteFor
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const gw = getGateway(route.gwRegion as any, route.gwName as any);
 

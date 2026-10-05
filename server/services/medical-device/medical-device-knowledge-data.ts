@@ -22,6 +22,10 @@ export interface Citation {
   source: string;
   /** Human-readable description of what the citation supports. */
   note: string;
+  /** Regulator-hosted URL the statement was checked against (a currency fact's `sourceUrl`). */
+  url?: string;
+  /** currency-registry fact id when a date in the statement is read from that fact. */
+  factId?: string;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -119,7 +123,10 @@ export interface CfrRef {
 export const CFR: Record<string, CfrRef> = {
   '860.3': { key: '21 CFR 860.3', title: 'Definitions (Class I/II/III)' },
   '860.7': { key: '21 CFR 860.7', title: 'Determination of safety and effectiveness' },
-  '860.93': { key: '21 CFR 860.93', title: 'Reclassification / De Novo classification process' },
+  /* 2026-10-05: this entry was keyed '860.93' and titled "Reclassification / De
+     Novo classification process". 21 CFR 860.93 is "Classification of implants,
+     life-supporting or life-sustaining devices". De Novo is Subpart D. */
+  '860-D': { key: '21 CFR 860 Subpart D (860.200-860.260; content 860.220)', title: 'De Novo classification' },
   '807.81': { key: '21 CFR 807.81', title: 'When a premarket notification submission is required' },
   '807.87': { key: '21 CFR 807.87', title: 'Information required in a premarket notification submission' },
   '807.92': { key: '21 CFR 807.92', title: '510(k) summary content' },
@@ -147,11 +154,13 @@ export const CLASSIFY_CITATIONS: Citation[] = [
 export const PATHWAY_CITATIONS: Citation[] = [
   { source: '21 CFR 807.81', note: 'When a 510(k) premarket notification submission is required.' },
   { source: '21 CFR 807.100', note: 'FDA action on a 510(k): substantial equivalence (SE) vs not-SE (NSE).' },
-  { source: '21 CFR 860.93', note: 'De Novo classification process for novel low/moderate-risk devices.' },
+  { source: '21 CFR 860 Subpart D (860.200-860.260; content 860.220)', note: 'De Novo classification into class I or II for a device with no legally marketed predicate.' },
   { source: '21 CFR 814.20', note: 'PMA application content for Class III devices.' },
   { source: '21 CFR 814.104', note: 'Humanitarian Device Exemption (HDE) application.' },
-  { source: 'FD&C Act §513(f)(2)', note: 'De Novo request statutory basis.' },
-  { source: 'FD&C Act §515 / §520(m)', note: 'PMA and HDE statutory bases.' },
+  { source: 'FD&C Act §513(f)(1) / §513(f)(2)', note: 'A device of a new type is class III by operation of 513(f)(1); 513(f)(2) is the De Novo request.' },
+  { source: '21 CFR 862.9-892.9', note: 'Limitations of 510(k) exemption, per classification panel; reserved class I devices need a 510(k).' },
+  { source: 'FD&C Act §513(g)', note: 'Request for FDA\'s view of a device\'s classification and applicable requirements.' },
+  { source: 'FD&C Act §515 / §520(m)', note: 'PMA and HDE statutory bases; a HUD serves not more than 8,000 individuals in the US per year.' },
 ];
 
 /** Citations backing `assessSubstantialEquivalence`. */

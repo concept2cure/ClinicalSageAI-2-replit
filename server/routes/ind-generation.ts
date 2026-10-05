@@ -1,9 +1,16 @@
 /**
  * IND Generation Routes — API for AnA to guide IND submission preparation.
  *
- * Uses the existing concept2cure artifact API for persistence (not raw SQL).
- * Uses the AI gateway for content generation.
- * Uses the IND Section Registry for structure.
+ * Uses the existing concept2cure artifact API for persistence (not raw SQL),
+ * called with the caller's own credentials. Uses the AI gateway for content
+ * generation. Uses the IND Section Registry for structure.
+ *
+ * Fails closed (record step g-ind-generation-route-fails-closed, 2026-10-05):
+ * a section is reported drafted only when the artifact store returned the id it
+ * saved it under, and a failed artifact read is an error, never "every section
+ * not started". Before, both loopback calls went out with no Authorization
+ * header to a route behind authenticateToken, failed every time, and the
+ * failure was swallowed into `success: true` and all-`not_started` answers.
  *
  * @module server/routes/ind-generation
  */
@@ -27,6 +34,7 @@ import {
 import { getGateway } from '../services/ai-gateway/index.js';
 import { serverError } from '../lib/api-response.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { resolveOrgId, resolveUserId } from '../types/auth-request.js';
 
 // Also import device registry
 let getDeviceSections: ((type: '510K' | 'PMA' | 'DE_NOVO' | 'CER') => Array<{ code: string; title: string; required: boolean; guidance: string }>) | null = null;
@@ -63,6 +71,118 @@ const UNRESOLVED_PLACEHOLDER_PATTERN = /\[[A-Z][A-Z0-9 _/()-]{2,}\]/g;
 function findUnresolvedPlaceholders(content: string): string[] {
   const matches = content.match(UNRESOLVED_PLACEHOLDER_PATTERN);
   return matches ? Array.from(new Set(matches)) : [];
+}
+
+// ─── The project's artifacts, read and written as the caller ──────────────────
+//
+// Both go through the canonical artifact route
+// (server/routes/c2c/artifacts.ts, mounted behind authenticateToken), so the
+// project is authorized there, by authorizedProjectId, for the caller's
+// organization. The caller's own Authorization header is forwarded: this router
+// is itself mounted behind authenticateToken, so every request here carries one.
+// Without it the artifact route answers 401, which is what it answered on every
+// call before.
+
+/**
+ * A project reference as the artifact route accepts it: an integer id or a
+ * program UUID. Anything else is refused before it is put in a URL path, where
+ * a "/" or ".." would address a different route with the caller's credentials.
+ */
+const PROJECT_REF = /^[A-Za-z0-9_-]{1,64}$/;
+
+function projectRefOf(value: unknown): string | null {
+  const ref = typeof value === 'number' && Number.isInteger(value) ? String(value) : value;
+  return typeof ref === 'string' && PROJECT_REF.test(ref) ? ref : null;
+}
+
+function projectArtifactsUrl(projectRef: string): string {
+  const port = process.env.PORT || 5000;
+  return `http://localhost:${port}/api/concept2cure/projects/${projectRef}/artifacts`;
+}
+
+function callerHeaders(req: Request): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (typeof req.headers.authorization === 'string') headers.Authorization = req.headers.authorization;
+  return headers;
+}
+
+/**
+ * The status to answer when the artifact route refused or failed: its own 403
+ * or 404 (the project is not the caller's), otherwise 502 — the store did not
+ * answer, which is this server's failure, not the caller's.
+ */
+function failedStoreStatus(upstream: number | null): 403 | 404 | 502 {
+  return upstream === 403 || upstream === 404 ? upstream : 502;
+}
+
+type ProjectArtifact = { id: string; ctdSection?: string | null; status?: string };
+type ArtifactRead = { ok: true; artifacts: ProjectArtifact[] } | { ok: false; status: 403 | 404 | 502 };
+
+async function readProjectArtifacts(req: Request, projectRef: string): Promise<ArtifactRead> {
+  try {
+    const fetchRes = await fetch(projectArtifactsUrl(projectRef), { headers: callerHeaders(req) });
+    if (!fetchRes.ok) {
+      log.warn('project artifact read refused', { projectRef, status: fetchRes.status });
+      return { ok: false, status: failedStoreStatus(fetchRes.status) };
+    }
+    const json = await fetchRes.json();
+    const list = json?.data?.artifacts ?? json?.data;
+    if (!Array.isArray(list)) {
+      log.warn('project artifact read returned no list', { projectRef });
+      return { ok: false, status: 502 };
+    }
+    return { ok: true, artifacts: list as ProjectArtifact[] };
+  } catch (error) {
+    log.error('project artifact read failed', { projectRef, error: error instanceof Error ? error.message : String(error) });
+    return { ok: false, status: 502 };
+  }
+}
+
+/**
+ * Create the section's artifact through the artifact route. Returns the id the
+ * store saved it under, or null with the route's status (null when it never
+ * answered).
+ */
+async function saveSectionArtifact(
+  req: Request,
+  projectRef: string,
+  body: Record<string, unknown>,
+): Promise<{ artifactId: string | null; status: number | null }> {
+  try {
+    const createRes = await fetch(projectArtifactsUrl(projectRef), {
+      method: 'POST',
+      headers: callerHeaders(req),
+      body: JSON.stringify(body),
+    });
+    if (!createRes.ok) return { artifactId: null, status: createRes.status };
+    const json = await createRes.json();
+    const id = json?.data?.id ?? json?.data?.artifactId;
+    return { artifactId: typeof id === 'string' && id.length > 0 ? id : null, status: createRes.status };
+  } catch (error) {
+    log.error('section artifact save failed', {
+      projectRef,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return { artifactId: null, status: null };
+  }
+}
+
+function sendUnreadable(res: Response, status: 403 | 404 | 502): Response {
+  return res.status(status).json({
+    success: false,
+    code: 'ARTIFACTS_UNREADABLE',
+    error:
+      status === 502
+        ? "The project's saved sections could not be read, so no section status is reported."
+        : 'Project not found or not accessible.',
+  });
+}
+
+function sendBadProjectRef(res: Response): Response {
+  return res.status(400).json({
+    success: false,
+    error: 'projectId is required: the integer id or program UUID of the project the sections belong to.',
+  });
 }
 
 // ─── GET /api/ind/structure ───────────────────────────────────────────────────
@@ -167,7 +287,9 @@ router.get('/guidance', (_req: Request, res: Response) => {
 
 router.get('/device-status/:type/:projectId', async (req: Request, res: Response) => {
   try {
-    const { type, projectId } = req.params;
+    const { type } = req.params;
+    const projectRef = projectRefOf(req.params.projectId);
+    if (!projectRef) return sendBadProjectRef(res);
     const deviceType = String(type).toUpperCase() as '510K' | 'PMA' | 'DE_NOVO' | 'CER';
 
     if (!getDeviceSections) {
@@ -179,20 +301,9 @@ router.get('/device-status/:type/:projectId', async (req: Request, res: Response
       return res.json({ success: true, data: { sections: [], totalSections: 0, completedSections: 0 } });
     }
 
-    // Fetch project artifacts via internal API
-    let artifacts: Array<{ id: string; ctdSection?: string; status?: string }> = [];
-    try {
-      const port = process.env.PORT || 5000;
-      const fetchRes = await fetch(`http://localhost:${port}/api/concept2cure/projects/${projectId}/artifacts`, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (fetchRes.ok) {
-        const json = await fetchRes.json();
-        artifacts = json.data?.artifacts || json.data || [];
-      }
-    } catch {
-      artifacts = [];
-    }
+    const read = await readProjectArtifacts(req, projectRef);
+    if (!read.ok) return sendUnreadable(res, read.status);
+    const { artifacts } = read;
 
     const sectionStatus = sections.map(section => {
       const artifact = artifacts.find(a => a.ctdSection === section.code);
@@ -224,25 +335,14 @@ router.get('/device-status/:type/:projectId', async (req: Request, res: Response
 
 router.get('/status/:projectId', async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
+    const projectRef = projectRefOf(req.params.projectId);
+    if (!projectRef) return sendBadProjectRef(res);
 
-    // Fetch project artifacts using the internal concept2cure API pattern
-    // This uses the same data path as the frontend
-    let artifacts: Array<{ id: string; ctdSection?: string; status?: string }> = [];
-    try {
-      // Try to fetch from the concept2cure artifacts endpoint internally
-      const port = process.env.PORT || 5000;
-      const fetchRes = await fetch(`http://localhost:${port}/api/concept2cure/projects/${projectId}/artifacts`, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (fetchRes.ok) {
-        const json = await fetchRes.json();
-        artifacts = json.data?.artifacts || json.data || [];
-      }
-    } catch {
-      // If internal fetch fails, return empty — sections will show as not_started
-      artifacts = [];
-    }
+    // A failed read is an error. Reading it as an empty list reported every
+    // section as not_started for a project that may have them all drafted.
+    const read = await readProjectArtifacts(req, projectRef);
+    if (!read.ok) return sendUnreadable(res, read.status);
+    const { artifacts } = read;
 
     // Map against IND structure
     const sectionStatus = IND_SECTIONS.map(section => {
@@ -258,7 +358,7 @@ router.get('/status/:projectId', async (req: Request, res: Response) => {
     });
 
     const moduleStatus = getModuleStatus(
-      artifacts.map(a => ({ ctdSection: a.ctdSection, status: a.status }))
+      artifacts.map(a => ({ ctdSection: a.ctdSection ?? undefined, status: a.status }))
     );
 
     res.json({
@@ -286,6 +386,9 @@ router.post('/generate-section', async (req: Request, res: Response) => {
     if (!section) {
       return res.status(400).json({ success: false, error: `Unknown section code: ${sectionCode}` });
     }
+    // Checked before the model call: a draft that cannot be saved is not spent.
+    const projectRef = projectRefOf(projectId);
+    if (!projectRef) return sendBadProjectRef(res);
 
     // Build the generation prompt. When the caller supplies structured
     // source/evidence material (study data, tabulated results, etc.) via
@@ -313,6 +416,11 @@ router.post('/generate-section', async (req: Request, res: Response) => {
       ],
       temperature: 0.3,
       maxTokens: 8192,
+      // The caller's tenant and identity, so the gateway's placement floor and
+      // approved-model rule for high-risk drafting apply to this call.
+      organizationId: resolveOrgId(req) ?? undefined,
+      userId: resolveUserId(req) ?? undefined,
+      projectId: projectRef,
       callerModule: 'ind-generation',
     });
 
@@ -327,59 +435,43 @@ router.post('/generate-section', async (req: Request, res: Response) => {
     const needsData = unresolvedPlaceholders.length > 0;
     const incompleteMessage = `${title} drafted, but ${unresolvedPlaceholders.length} statement(s) could not be grounded in supplied source data and were left as placeholders. Supply source/evidence data and regenerate before this section can be considered submission-ready.`;
 
-    // Save as governed artifact via the concept2cure API
-    try {
-      const port = process.env.PORT || 5000;
-      const createRes = await fetch(`http://localhost:${port}/api/concept2cure/projects/${projectId}/artifacts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          content,
-          type: 'regulatory_document',
-          category: 'document',
-          ctdSection: section.code,
-          metadata: { needsData, unresolvedPlaceholders },
-        }),
+    // Save as governed artifact via the concept2cure API. The section is
+    // reported drafted only with the id the store saved it under; anything
+    // else is a refusal, and the unsaved text is not handed back as if it
+    // were a draft on record.
+    const { artifactId, status: saveStatus } = await saveSectionArtifact(req, projectRef, {
+      title,
+      content,
+      type: 'regulatory_document',
+      category: 'document',
+      ctdSection: section.code,
+      metadata: { needsData, unresolvedPlaceholders },
+    });
+    if (!artifactId) {
+      log.warn('section drafted but not saved', { projectRef, sectionCode: section.code, saveStatus });
+      const status = failedStoreStatus(saveStatus);
+      return res.status(status).json({
+        success: false,
+        code: 'SECTION_NOT_SAVED',
+        error:
+          status === 502
+            ? `${title} was not saved to the project, so no draft is on record. Try again.`
+            : `${title} was not saved: project not found or not accessible.`,
       });
-
-      if (createRes.ok) {
-        const json = await createRes.json();
-        const artifact = json.data;
-        return res.json({
-          success: true,
-          data: {
-            artifactId: artifact?.id || artifact?.artifactId,
-            sectionCode: section.code,
-            sectionTitle: section.title,
-            status: 'draft',
-            needsData,
-            unresolvedPlaceholders,
-            wordCount: content.split(/\s+/).length,
-            content: content.substring(0, 500) + (content.length > 500 ? '...' : ''),
-            message: needsData ? incompleteMessage : `${title} drafted successfully.`,
-          },
-        });
-      }
-    } catch {
-      // Artifact creation failed — still return the content
     }
 
-    // Fallback: return content without artifact creation
-    res.json({
+    return res.json({
       success: true,
       data: {
+        artifactId,
         sectionCode: section.code,
         sectionTitle: section.title,
-        status: needsData ? 'draft' : 'generated',
+        status: 'draft',
         needsData,
         unresolvedPlaceholders,
         wordCount: content.split(/\s+/).length,
         content: content.substring(0, 500) + (content.length > 500 ? '...' : ''),
-        fullContent: content,
-        message: needsData
-          ? incompleteMessage
-          : `${title} content generated. Save it as an artifact to track in your submission.`,
+        message: needsData ? incompleteMessage : `${title} drafted successfully.`,
       },
     });
   } catch (error) {

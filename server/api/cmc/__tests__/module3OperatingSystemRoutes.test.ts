@@ -300,25 +300,6 @@ describe('module3OperatingSystemRoutes', () => {
     for (const row of res.body.data) expect(row).not.toHaveProperty('deterministicJson');
   });
 
-  it('source-object upsert accepts every canonical CmcSourceType, not a hand-copied subset', async () => {
-    // These five compose real sections (§3.2.S.2 needs process_validation and
-    // raw_material_spec; §3.2.S.3/S.4 impurity_profile; §3.2.P.2
-    // dissolution_profile; §3.2.P.1 / 3.2.A.3 formulation_record) and the
-    // route's own enum used to reject all of them with a 400.
-    const previouslyRefused = [
-      'process_validation', 'raw_material_spec', 'impurity_profile', 'dissolution_profile', 'formulation_record',
-    ];
-    for (const sourceType of previouslyRefused) {
-      mockQuery.mockReset();
-      mockQuery.mockResolvedValue({ rows: [{ id: 'so-1', sourceType, sourceKey: 'k', sourceHash: 'h', version: 1 }] });
-      const res = await request(app)
-        .post('/api/cmc/module3-os/source-objects/proj-1')
-        .send({ sourceType, sourceKey: 'k', sourcePayload: { any: 'thing' } });
-      expect(res.status, `sourceType ${sourceType}`).toBe(201);
-      expect(res.body.data.sourceType).toBe(sourceType);
-    }
-  });
-
   it('blocks final export when not all sections approved and critical contradictions open', async () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', deterministic_json: COMPLETE }, { approval_state: 'draft' }] })

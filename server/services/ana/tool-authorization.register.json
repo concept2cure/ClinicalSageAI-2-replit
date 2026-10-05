@@ -2390,16 +2390,6 @@
    "writes": "none",
    "site": "AnaToolExecutor.ts:17373"
   },
-  "ind_generate_section": {
-   "class": "confirm",
-   "writes": "loopback POST that creates an artifact for the given project",
-   "site": "routes/ind-generation.ts:338"
-  },
-  "ind_get_status": {
-   "class": "read",
-   "writes": "none",
-   "site": "AnaToolExecutor.ts:6563"
-  },
   "insert_clause_template": {
    "class": "self",
    "writes": "writes edited .docx copy to tmp/docbuilder",

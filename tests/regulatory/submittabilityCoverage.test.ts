@@ -33,9 +33,34 @@ import {
 } from '../../server/services/regulatory/registry/submittabilityCoverage';
 import { GLOBAL_REGISTRY } from '../../shared/regulatory/global-document-registry';
 
+/* 2026-10-05 (finding 42, g-submission-channel-function). EMA filings that are
+   build-only because their channel has no connector, each allowed ONLY with the
+   channel it is known to use — every other gap is still a wiring defect.
+   - Centralised-procedure eCTD filings: EMA eSubmission Gateway / Web Client,
+     never CESP; no connector (Rule 2; DECISIONS.md row 10). Matched by channel.
+   - Orphan designation, scientific advice, PIP, PRIME: EMA IRIS; no connector.
+     Listed by id.
+   - EMA-agency entries whose channel is not modelled: they used to borrow the
+     EU region default (CESP) and now fail closed. Listed by id, so a NEW EMA
+     entry with no channel fails this file instead of joining them silently. */
+const EMA_IRIS_FILINGS = new Set(['EU_ORPHAN', 'EU_SCIENTIFIC_ADVICE', 'EU_PIP', 'EU_PRIME']);
+const EMA_CHANNEL_NOT_MODELLED = new Set([
+  'EU_EUDRAVIGILANCE_ICSR', 'EU_PSMF', 'EU_ACCEL_ASSESS', 'EU_REF_LAB',
+  'EU_PERF_STUDY', 'EU_PMPF', 'EU_IVD_REEVAL', 'EU_IVDR_ART48_CONSULT',
+]);
+function isKnownUnconnectedEmaFiling(c: { id: string; tier: string; channel?: string }): boolean {
+  if (c.tier !== 'no_gateway') return false;
+  const channel = String(c.channel ?? '');
+  return (
+    /eSubmission Gateway/.test(channel) ||
+    (EMA_IRIS_FILINGS.has(c.id) && /IRIS/.test(channel)) ||
+    (EMA_CHANNEL_NOT_MODELLED.has(c.id) && /not modelled/.test(channel))
+  );
+}
+
 describe('every startable filing type is finishable', () => {
-  it('NO filing type is selectable but unsubmittable', () => {
-    const gaps = getUnsubmittableFilings();
+  it('NO filing type is selectable but unsubmittable — except the known unconnected EMA channels', () => {
+    const gaps = getUnsubmittableFilings().filter(g => !isKnownUnconnectedEmaFiling(g));
     expect(
       gaps,
       `these filing types can be chosen at project initiation but cannot reach a gateway:\n` +
@@ -98,10 +123,14 @@ describe('the classification is not hiding real filings', () => {
     // The other half, split out so neither claim rides on the other. Everything
     // with a real gateway must still say so — a repair that demoted the spine
     // would be worthless — and the one portal filing must name its portal.
-    for (const id of ['US_IND', 'US_NDA', 'US_BLA', 'EU_MAA', 'CA_NDS', 'JP_CTN']) {
+    for (const id of ['US_IND', 'US_NDA', 'US_BLA', 'EU_GENERIC_DCP', 'CA_NDS', 'JP_CTN']) {
       const entry = GLOBAL_REGISTRY.find(e => e.id === id)!;
       expect(getSubmittability(entry).tier, `${id} lost its gateway`).toBe('submittable');
     }
+    // A centralised MAA names its channel; CESP is not it (finding 42).
+    const maa = getSubmittability(GLOBAL_REGISTRY.find(e => e.id === 'EU_MAA')!);
+    expect(maa.tier).toBe('no_gateway');
+    expect(String(maa.channel ?? '')).toMatch(/eSubmission Gateway/);
     const cta = getSubmittability(GLOBAL_REGISTRY.find(e => e.id === 'EU_CTA')!);
     expect(cta.tier, 'a CTR CTA is a CTIS portal submission, not a CESP dossier').toBe('portal_only');
     expect(String(cta.portalChannel ?? '')).toMatch(/CTIS/i);
@@ -126,9 +155,17 @@ describe('the classification is not hiding real filings', () => {
     );
     expect(regionalSafety.length).toBeGreaterThan(0);
     for (const e of regionalSafety) {
-      expect(getSubmittability(e).tier, `${e.id} is a regional filing, not a component`).toBe(
-        'submittable'
-      );
+      // A regional filing, never a component. Submittable — except an EMA
+      // safety filing that is no_gateway ONLY because its named channel is a
+      // known unconnected one (EU_RMP, EU_PSUR: eSubmission Gateway;
+      // EU_PSMF, EU_EUDRAVIGILANCE_ICSR: channel not modelled — finding 42).
+      // Any other unwired regional safety filing fails.
+      const s = getSubmittability(e);
+      if (s.agency === 'EMA' && s.tier === 'no_gateway') {
+        expect(isKnownUnconnectedEmaFiling(s), `${e.id} is no_gateway without a known EMA channel`).toBe(true);
+      } else {
+        expect(s.tier, `${e.id} is a regional filing, not a component`).toBe('submittable');
+      }
     }
   });
 });

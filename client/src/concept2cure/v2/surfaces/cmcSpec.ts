@@ -64,7 +64,10 @@ export interface CmcSpecCreateBody {
 
 /** Body for PUT /api/cmc/specifications/:id (updateSpecSchema — approval_status
  *  is intentionally omitted; approval is only via the governed /approve path). */
-export type CmcSpecUpdateBody = Omit<CmcSpecCreateBody, 'projectId' | 'approvalStatus'>;
+export type CmcSpecUpdateBody = Omit<CmcSpecCreateBody, 'projectId' | 'approvalStatus'> & {
+  /** Required by the server when the specification is approved: the edit withdraws that approval. */
+  reason?: string;
+};
 
 /** Tolerantly resolve a jsonb column to an object: pass objects through, parse
  *  JSON strings, and never throw on malformed input. */
@@ -142,6 +145,7 @@ export function specUpdateBody(v: Record<string, string>): CmcSpecUpdateBody {
     testMethods: { method: v.method || '' },
     regulatoryBasis: { ich: v.ich || '' },
     justification: v.justification || undefined,
+    reason: v.reason?.trim() || undefined,
   };
 }
 

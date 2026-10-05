@@ -455,7 +455,7 @@ export function buildSuggestedActions(
       break;
     case 'ind_submission':
       actions.push(
-        { label: 'Draft an IND Section', actionType: 'ind_generate_section', description: 'Generate a governed draft of a specific CTD section for the IND (ind_generate_section with the section_code)' },
+        { label: 'Draft an IND Section', actionType: 'draft_authoring_document', description: 'Look up what the CTD section must contain (get_document_section_requirements), then draft it as an authoring document in the open project (draft_authoring_document; batch_draft_sections for several sections)' },
         { label: 'Author IND Module 2 Narrative', actionType: 'plan_ind_module_authoring', description: 'Author the Module 2.5 Clinical Overview or 2.7 Clinical Summary from the collected facts (plan_ind_module_authoring)' },
       );
       break;

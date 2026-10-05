@@ -38,6 +38,7 @@ import path from 'path';
 import { getGateway, refusedBeforeWire } from '../index';
 import { FdaEsgGateway } from '../fda-esg';
 import { MhraGateway } from '../mhra-gateway';
+import { EmaCespGateway } from '../ema-cesp';
 import { RequestSentTransportError } from '../as2-transport';
 import { submissionBundleRoot } from '../bundle-namespace';
 import {
@@ -144,6 +145,27 @@ describe('refusedBeforeWire — refusals inside a gateway that PROVE nothing was
     expect(wire).toHaveBeenCalledTimes(1);
     expect(err).toBeInstanceOf(ValidationError);
     expect(String((err as Error).message)).toMatch(/four-digit eCTD sequence number/);
+    expect(refusedBeforeWire(err)).toBe(true);
+  });
+
+  // 2026-10-05 (D2 record, step g-cesp-centralised-refusal): CESP refuses a
+  // filing the channel function does not route to ema:cesp — a centralised MAA
+  // (EMA eSubmission Gateway / Web Client), a CTIS or IRIS filing — before its
+  // transmittal row. It is a ValidationError carrying NOTHING_TRANSMITTED, not a
+  // GatewayError: a GatewayError reads as "may have reached the agency" and
+  // would strand the caller's claim at 'transmitting'. Nor is it a
+  // CredentialError, so the audited CredentialError count below is unchanged.
+  it('is true for the CESP refusal of a centralised-procedure MAA, raised before the transmittal row', async () => {
+    dbCalls.length = 0;
+    const wire = vi.spyOn(EmaCespGateway.prototype, 'transmit');
+    const err = await failureOf(getGateway('ema', 'cesp').transmit(request({
+      submissionType: 'EU_MAA',
+      metadata: { applicationId: 'EMEA/H/C/000000', sequence: '0000', environment: 'staging' },
+    })));
+    expect(wire).toHaveBeenCalledTimes(1);
+    expect(err).toBeInstanceOf(ValidationError);
+    expect(String((err as Error).message)).toMatch(/eSubmission Gateway/);
+    expect(dbCalls.some((t) => /INSERT INTO submission_transmittals/.test(t))).toBe(false);
     expect(refusedBeforeWire(err)).toBe(true);
   });
 

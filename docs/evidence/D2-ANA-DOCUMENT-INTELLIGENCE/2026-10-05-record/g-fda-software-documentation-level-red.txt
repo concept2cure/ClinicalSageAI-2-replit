@@ -1,0 +1,311 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > is undetermined — never Basic — when the pre-risk-control hazard fact is absent 5ms
+   → fdaDocumentationLevel is not a function
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > is Enhanced for a device IEC 62304 rates Class B after controls whose failure could cause probable serious injury before controls 1ms
+   → fdaDocumentationLevel is not a function
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > is Basic only when the fact is recorded as false 0ms
+   → fdaDocumentationLevel is not a function
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > cites the 2023 guidance on fda.gov as regulator text, with a well-formed basis 0ms
+   → fdaDocumentationLevel is not a function
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > reads the documentation-level fact from questionnaire answers (yes/no), not from a Level of Concern or an IEC class 0ms
+   → fdaDocumentationLevelFromAnswers is not a function
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > Basic excludes the SDS, unit/integration protocols and reports, and the full CM/maintenance plan 0ms
+   → fdaSoftwareDocumentationSet is not a function
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > Basic includes the testing summary (unit, integration and system) and the system-level protocol and report 0ms
+   → fdaSoftwareDocumentationSet is not a function
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > Enhanced is Basic plus the SDS, unit/integration protocols and reports, and the full CM/maintenance plan 0ms
+   → fdaSoftwareDocumentationSet is not a function
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > carries no cybersecurity item — that branch is keyed on the cyber-device flag, not on the level 1ms
+   → Cannot read properties of undefined (reading 'map')
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > every row has a well-formed basis, and every row is labelled recall (only the level definition was checked) 0ms
+   → FDA_SOFTWARE_DOCUMENTATION_SET is not iterable
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaCybersecurityDocumentation (FD&C Act §524B; DEVICE_FLAGS.cyberDevice) > is undetermined when cyber-device status is unknown, never "not required" 0ms
+   → fdaCybersecurityDocumentation is not a function
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaCybersecurityDocumentation (FD&C Act §524B; DEVICE_FLAGS.cyberDevice) > requires the SBOM and threat model for a cyber device, whatever the documentation level 0ms
+   → fdaCybersecurityDocumentation is not a function
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaCybersecurityDocumentation (FD&C Act §524B; DEVICE_FLAGS.cyberDevice) > is not required for a device recorded as not a cyber device 0ms
+   → fdaCybersecurityDocumentation is not a function
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > eSTAR software slots (nIVD template) > every named slot exists in the template and files into CH3.05.05.x (software) or CH3.05.05.11 (cybersecurity) 195ms
+   → Cannot read properties of undefined (reading 'filter')
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > 510(k) auditor: a software device with no documentation-level fact gets "FDA software documentation level not determined" 2ms
+   → expected undefined to be defined
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > 510(k) auditor: no software Level of Concern finding anywhere 2ms
+   → expected 'Software Level of Concern Not Specifi…' not to match /level of concern/i
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > 510(k) auditor: silent once the fact is recorded, and for a device recorded as containing no software 1ms
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > PMA auditor: the software finding names the Documentation Level and lists the set for the level 1ms
+   → expected '{"id":"pma_no_software_documentation"…' not to match /level of concern/i
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > software reviewer persona: asks for the Documentation Level, not a "basic / moderate / major" Level of Concern 1ms
+   → expected 'IEC 62304 lifecycle, software level o…' not to match /level of concern/i
+ × server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > shadow reviewer: the 510(k) software question asks for the Documentation Level; cybersecurity is its own question 1ms
+   → expected 'For software, is the documentation pr…' not to match /level of concern/i
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > is undetermined — never Basic — when the pre-risk-control hazard fact is absent
+TypeError: fdaDocumentationLevel is not a function
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:54:15
+     52| describe('fdaDocumentationLevel', () => {
+     53|   it('is undetermined — never Basic — when the pre-risk-control hazard…
+     54|     const d = fdaDocumentationLevel({});
+       |               ^
+     55|     expect(d.level).toBe('undetermined');
+     56|     expect(d.rationale).toMatch(/not been determined|not recorded/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > is Enhanced for a device IEC 62304 rates Class B after controls whose failure could cause probable serious injury before controls
+TypeError: fdaDocumentationLevel is not a function
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:63:15
+     61|     expect(classifySoftware({ canContributeToNonSeriousInjury: true })…
+     62|     // Before risk controls the same failure could present a probable …
+     63|     const d = fdaDocumentationLevel({ failureCouldPresentProbableRiskO…
+       |               ^
+     64|     expect(d.level).toBe('enhanced');
+     65|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > is Basic only when the fact is recorded as false
+TypeError: fdaDocumentationLevel is not a function
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:68:12
+     66|
+     67|   it('is Basic only when the fact is recorded as false', () => {
+     68|     expect(fdaDocumentationLevel({ failureCouldPresentProbableRiskOfDe…
+       |            ^
+     69|   });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > cites the 2023 guidance on fda.gov as regulator text, with a well-formed basis
+TypeError: fdaDocumentationLevel is not a function
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:72:15
+     70|
+     71|   it('cites the 2023 guidance on fda.gov as regulator text, with a wel…
+     72|     const d = fdaDocumentationLevel({});
+       |               ^
+     73|     expect(FDA_DEVICE_SOFTWARE_GUIDANCE.title).toBe('Content of Premar…
+     74|     expect(FDA_DEVICE_SOFTWARE_GUIDANCE.issued).toBe('2023-06-14');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > reads the documentation-level fact from questionnaire answers (yes/no), not from a Level of Concern or an IEC class
+TypeError: fdaDocumentationLevelFromAnswers is not a function
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:83:12
+     81|
+     82|   it('reads the documentation-level fact from questionnaire answers (y…
+     83|     expect(fdaDocumentationLevelFromAnswers({}).level).toBe('undetermi…
+       |            ^
+     84|     expect(fdaDocumentationLevelFromAnswers({ software_level_of_concer…
+     85|     expect(fdaDocumentationLevelFromAnswers({ [FDA_DOCUMENTATION_LEVEL…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > Basic excludes the SDS, unit/integration protocols and reports, and the full CM/maintenance plan
+TypeError: fdaSoftwareDocumentationSet is not a function
+ ❯ ids server/services/market-specs/__tests__/software-documentation-level.test.ts:50:46
+     48|
+     49| const LEVEL_OF_CONCERN = /level of concern/i;
+     50| const ids = (level: 'basic' | 'enhanced') => fdaSoftwareDocumentationS…
+       |                                              ^
+     51|
+     52| describe('fdaDocumentationLevel', () => {
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:95:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > Basic includes the testing summary (unit, integration and system) and the system-level protocol and report
+TypeError: fdaSoftwareDocumentationSet is not a function
+ ❯ ids server/services/market-specs/__tests__/software-documentation-level.test.ts:50:46
+     48|
+     49| const LEVEL_OF_CONCERN = /level of concern/i;
+     50| const ids = (level: 'basic' | 'enhanced') => fdaSoftwareDocumentationS…
+       |                                              ^
+     51|
+     52| describe('fdaDocumentationLevel', () => {
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:102:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > Enhanced is Basic plus the SDS, unit/integration protocols and reports, and the full CM/maintenance plan
+TypeError: fdaSoftwareDocumentationSet is not a function
+ ❯ ids server/services/market-specs/__tests__/software-documentation-level.test.ts:50:46
+     48|
+     49| const LEVEL_OF_CONCERN = /level of concern/i;
+     50| const ids = (level: 'basic' | 'enhanced') => fdaSoftwareDocumentationS…
+       |                                              ^
+     51|
+     52| describe('fdaDocumentationLevel', () => {
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:120:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > carries no cybersecurity item — that branch is keyed on the cyber-device flag, not on the level
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:129:48
+    127|
+    128|   it('carries no cybersecurity item — that branch is keyed on the cybe…
+    129|     const all = FDA_SOFTWARE_DOCUMENTATION_SET.map((i) => `${i.id} ${i…
+       |                                                ^
+    130|     expect(all).not.toMatch(/sbom|threat model|penetration|cyber/i);
+    131|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > every row has a well-formed basis, and every row is labelled recall (only the level definition was checked)
+TypeError: FDA_SOFTWARE_DOCUMENTATION_SET is not iterable
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:134:24
+    132|
+    133|   it('every row has a well-formed basis, and every row is labelled rec…
+    134|     for (const item of FDA_SOFTWARE_DOCUMENTATION_SET) {
+       |                        ^
+    135|       expect(item.basis.length).toBeGreaterThan(0);
+    136|       for (const b of item.basis) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaCybersecurityDocumentation (FD&C Act §524B; DEVICE_FLAGS.cyberDevice) > is undetermined when cyber-device status is unknown, never "not required"
+TypeError: fdaCybersecurityDocumentation is not a function
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:146:15
+    144| describe('fdaCybersecurityDocumentation (FD&C Act §524B; DEVICE_FLAGS.…
+    145|   it('is undetermined when cyber-device status is unknown, never "not …
+    146|     const c = fdaCybersecurityDocumentation({});
+       |               ^
+    147|     expect(c.status).toBe('undetermined');
+    148|     expect(c.items).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaCybersecurityDocumentation (FD&C Act §524B; DEVICE_FLAGS.cyberDevice) > requires the SBOM and threat model for a cyber device, whatever the documentation level
+TypeError: fdaCybersecurityDocumentation is not a function
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:152:15
+    150|
+    151|   it('requires the SBOM and threat model for a cyber device, whatever …
+    152|     const c = fdaCybersecurityDocumentation({ cyberDevice: true });
+       |               ^
+    153|     expect(c.status).toBe('required');
+    154|     const cids = c.items.map((i) => i.id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaCybersecurityDocumentation (FD&C Act §524B; DEVICE_FLAGS.cyberDevice) > is not required for a device recorded as not a cyber device
+TypeError: fdaCybersecurityDocumentation is not a function
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:161:12
+    159|
+    160|   it('is not required for a device recorded as not a cyber device', ()…
+    161|     expect(fdaCybersecurityDocumentation({ cyberDevice: false }).statu…
+       |            ^
+    162|   });
+    163| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > eSTAR software slots (nIVD template) > every named slot exists in the template and files into CH3.05.05.x (software) or CH3.05.05.11 (cybersecurity)
+TypeError: Cannot read properties of undefined (reading 'filter')
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:177:41
+    175|     }
+    176|     const named = [
+    177|       ...FDA_SOFTWARE_DOCUMENTATION_SET.filter((i) => i.estarSlot),
+       |                                         ^
+    178|       ...fdaCybersecurityDocumentation({ cyberDevice: true }).items.fi…
+    179|     ];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > 510(k) auditor: a software device with no documentation-level fact gets "FDA software documentation level not determined"
+AssertionError: expected undefined to be defined
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:198:15
+    196|     const findings = run(k510.rules, { contains_software: true, softwa…
+    197|     const f = findings.find((x) => /documentation level/i.test(x.title…
+    198|     expect(f).toBeDefined();
+       |               ^
+    199|     expect(f!.title).toBe('FDA Software Documentation Level Not Determ…
+    200|     expect(f!.relatedFields).toContain(FDA_DOCUMENTATION_LEVEL_FACT);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > 510(k) auditor: no software Level of Concern finding anywhere
+AssertionError: expected 'Software Level of Concern Not Specifi…' not to match /level of concern/i
+
+- Expected:
+/level of concern/i
+
++ Received:
+"Software Level of Concern Not Specified For software-containing devices, FDA guidance on Content of Premarket Submissions for Device Software Functions requires documentation proportional to the software safety classification per IEC 62304. Has the level of concern been identified?"
+
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:208:46
+    206|   it('510(k) auditor: no software Level of Concern finding anywhere', …
+    207|     for (const r of k510.rules) {
+    208|       expect(`${r.title} ${r.question}`).not.toMatch(LEVEL_OF_CONCERN);
+       |                                              ^
+    209|     }
+    210|     for (const f of run(k510.rules, { contains_software: true })) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > PMA auditor: the software finding names the Documentation Level and lists the set for the level
+AssertionError: expected '{"id":"pma_no_software_documentation"…' not to match /level of concern/i
+
+- Expected:
+/level of concern/i
+
++ Received:
+"{\"id\":\"pma_no_software_documentation\",\"dimension\":\"documentation\",\"severity\":\"critical\",\"title\":\"Software Documentation Absent (IEC 62304)\",\"question\":\"The device appears to contain software but the PMA does not include software documentation per IEC 62304. For a Class III device, software lifecycle documentation including architecture, hazard analysis, and testing is required. How does the applicant address this gap?\",\"observation\":\"Device contains software but no IEC 62304 lifecycle documentation is provided.\",\"requirement\":\"Medical device software must be developed per IEC 62304 with documentation appropriate to the software safety classification. FDA expects Level of Concern documentation for PMA submissions.\",\"reference\":\"IEC 62304:2006+AMD1:2015; FDA Guidance: Content of Premarket Submissions for Device Software Functions (2023); 21 CFR 820.30\",\"recommendation\":\"Provide IEC 62304-compliant documentation including: software safety classification, requirements specification, architecture design, unit/integration/system test reports, anomaly/defect lists, and revision history.\",\"relatedFields\":[\"software_documentation\",\"iec_62304_level\",\"contains_software\"]}"
+
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:224:46
+    222|     const undetermined = run(pma.rules, { contains_software: 'yes' }).…
+    223|     expect(undetermined).toBeDefined();
+    224|     expect(JSON.stringify(undetermined)).not.toMatch(LEVEL_OF_CONCERN);
+       |                                              ^
+    225|     expect(undetermined!.recommendation).toMatch(/Documentation Level/…
+    226|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > software reviewer persona: asks for the Documentation Level, not a "basic / moderate / major" Level of Concern
+AssertionError: expected 'IEC 62304 lifecycle, software level o…' not to match /level of concern/i
+
+- Expected:
+/level of concern/i
+
++ Received:
+"IEC 62304 lifecycle, software level of concern, validation"
+
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:235:25
+    233|   it('software reviewer persona: asks for the Documentation Level, not…
+    234|     const p = REVIEWER_PERSONAS.fda_software_reviewer;
+    235|     expect(p.scope).not.toMatch(LEVEL_OF_CONCERN);
+       |                         ^
+    236|     const out = p.rules({
+    237|       program: { programType: '510K', productType: 'device', deviceCla…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/19]⎯
+
+ FAIL  server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > shadow reviewer: the 510(k) software question asks for the Documentation Level; cybersecurity is its own question
+AssertionError: expected 'For software, is the documentation pr…' not to match /level of concern/i
+
+- Expected:
+/level of concern/i
+
++ Received:
+"For software, is the documentation provided per the device’s level of concern (IEC 62304), with cybersecurity (threat model, SBOM)?"
+
+ ❯ server/services/market-specs/__tests__/software-documentation-level.test.ts:248:69
+    246|
+    247|   it('shadow reviewer: the 510(k) software question asks for the Docum…
+    248|     for (const q of K510_REVIEWER_QUESTIONS) expect(q.question).not.to…
+       |                                                                     ^
+    249|     const software = K510_REVIEWER_QUESTIONS.filter((q) => q.sectionId…
+    250|     expect(software.some((q) => /Documentation Level \(Basic or Enhanc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/19]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  19 failed | 1 passed (20)
+   Start at  03:40:43
+   Duration  984ms (transform 300ms, setup 102ms, import 376ms, tests 216ms, environment 0ms)
+

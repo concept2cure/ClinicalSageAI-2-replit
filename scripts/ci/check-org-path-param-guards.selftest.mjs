@@ -343,7 +343,7 @@ router.get('/j/:tenant_id/subjects/:subjectId', async (req, res) => {
 export default router;
 `;
 
-/** One router.param guard, three bodies with none — projectRoutes.ts's shape, on a tenant param. */
+/** One router.param guard, three bodies with none — module3-project-guard.ts's shape, on a tenant param. */
 const PARAM_GUARDED = `
 const router = Router();
 

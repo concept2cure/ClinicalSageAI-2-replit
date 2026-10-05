@@ -10,6 +10,12 @@
  */
 
 import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '../types.js';
+import {
+  FDA_DOCUMENTATION_LEVEL_FACT,
+  describeFdaSoftwareDocumentation,
+  fdaDocumentationLevelFromAnswers,
+} from '../../../../market-specs/software-lifecycle.js';
+import { basisLabel } from '../../../../../../shared/regulatory/regulatory-basis.js';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -709,8 +715,8 @@ const rules: AuditRule[] = [
   {
     id: rid('no_software_documentation'),
     dimension: 'documentation',
-    title: 'Software Documentation Absent (IEC 62304)',
-    question: 'The device appears to contain software but the PMA does not include software documentation per IEC 62304. For a Class III device, software lifecycle documentation including architecture, hazard analysis, and testing is required. How does the applicant address this gap?',
+    title: 'Software Documentation Absent',
+    question: 'The device appears to contain software but the PMA does not include its software documentation. FDA recommends premarket software documentation by Documentation Level (Basic or Enhanced). How does the applicant address this gap?',
     check(answers) {
       const hasSoftware = String(answers.contains_software ?? '').toLowerCase();
       if (
@@ -718,17 +724,19 @@ const rules: AuditRule[] = [
         isBlank(answers.software_documentation) &&
         isBlank(answers.iec_62304_level)
       ) {
+        // The level and the set it selects come from market-specs/software-lifecycle.ts.
+        const determination = fdaDocumentationLevelFromAnswers(answers);
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'Device contains software but no IEC 62304 lifecycle documentation is provided.',
-          'Medical device software must be developed per IEC 62304 with documentation appropriate to the software safety classification. FDA expects Level of Concern documentation for PMA submissions.',
-          'IEC 62304:2006+AMD1:2015; FDA Guidance: Content of Premarket Submissions for Device Software Functions (2023); 21 CFR 820.30',
-          'Provide IEC 62304-compliant documentation including: software safety classification, requirements specification, architecture design, unit/integration/system test reports, anomaly/defect lists, and revision history.',
-          ['software_documentation', 'iec_62304_level', 'contains_software'],
+          `Device contains software but no software documentation is provided. ${determination.rationale}`,
+          'A premarket submission that includes device software functions provides the documentation for its FDA Documentation Level, Basic or Enhanced. IEC 62304 conformity can support the development-practices item; its safety class is assigned after risk controls and is not the Documentation Level.',
+          `${determination.basis.map(basisLabel).join('; ')}; IEC 62304:2006+AMD1:2015; 21 CFR 820.30`,
+          describeFdaSoftwareDocumentation(determination.level),
+          ['software_documentation', FDA_DOCUMENTATION_LEVEL_FACT, 'iec_62304_level', 'contains_software'],
         );
       }
       return null;

@@ -1,0 +1,149 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > LABELING_REQUIREMENTS > models every market with a non-empty, well-formed section set 8ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > LABELING_REQUIREMENTS > uses unique section codes within each market 0ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > LABELING_REQUIREMENTS > models the expected core sections per market 1ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > LABELING_REQUIREMENTS > keeps every FDA and EMA section required (their behaviour is unchanged) 1ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > has item 9 特定の背景を有する患者に関する注意 with 9.1–9.8, citing the MHLW/PMDA notice 0ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > numbers items 1–26 in order 1ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > deletes the 12 old-format codes with no alias 1ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > classes 警告, 承認条件 and every item that may be a missing number as conditional 1ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > gives every item a well-formed basis, and regulator-text only where the notice was seen 5ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > marks a correct insert with no 警告 and no 承認条件 as ready 1ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > recognises a sub-item code as a modeled section, not an extra one 0ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > refuses 慎重投与 as obsolete and names the replacement item 0ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > refuses 原則禁忌 and the old 使用上の注意 umbrella as obsolete 1ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > notes electronic publication, the unread 2026 amendment and the drugs-only scope 0ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > assessLabeling > ready when all modeled sections are provided (every market) 0ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > assessLabeling > flags a missing required FDA section (Indications and Usage) as a blocking error 0ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > assessLabeling > warns (non-blocking) on an unrecognized provided section 0ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > assessLabeling > errors on an unknown market 0ms
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > assessLabeling > sorts findings by section then severity (errors before warnings) 9ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > does not report an SmPC with no shelf life, container or date of revision as complete 3ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > takes its headers from the QRD catalog, sections 1-10 only 2ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > keeps radiopharmaceutical sections 11 and 12 in the catalog, flagged and excluded by default 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > writes top-level headings as "N. UPPER CASE" and subsections as "N.N Sentence case" 2ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > accepts the QRD forms of 6.6 (optional "<and other handling>") and 9 (no spaces around the slash) 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > prints the full QRD heading in the scaffold while the guard accepts the short 6.6 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > carries a basis for the headings: QRD v10.4 on an EMA URL, wording labelled recall 2ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > structure_smpc says sections 1-10, with 11 and 12 for radiopharmaceuticals only > no longer promises "12 numbered SmPC sections" 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > structure_smpc says sections 1-10, with 11 and 12 for radiopharmaceuticals only > labels its statements about the QRD template text as recall 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/ana/labeling-authoring.ts holds no SmPC section title of its own 4ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/ana/labeling-structure.ts holds no SmPC section title of its own 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/labeling/labeling-intelligence-knowledge.ts holds no SmPC section title of its own 4ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/market-specs/document-template-library.ts holds no SmPC section title of its own 1ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > produces one market section per target market, in order 11ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > maps each market to its agency and a pathway 1ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > assesses orphan designation eligibility for FDA/EMA from the disease profile 2ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > matches expedited programs for the serious/unmet-need profile 1ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > recommends HA meetings for the next milestone and a Module 1 checklist 1ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > includes CTA requirements, labeling sections, and an orphan-waived fee estimate 0ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > handles a market without designation modeling (AU) gracefully 0ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > is deterministic 1ms
+ ✓ server/services/global-ri/__tests__/ana-tools.test.ts > GLOBAL_RI_TOOL_SPECS catalog > has exactly 26 entries 2ms
+ ✓ server/services/global-ri/__tests__/ana-tools.test.ts > GLOBAL_RI_TOOL_SPECS catalog > every spec has a non-empty name, description, and object input_schema 8ms
+ ✓ server/services/global-ri/__tests__/ana-tools.test.ts > GLOBAL_RI_TOOL_SPECS catalog > names are unique 0ms
+ ✓ server/services/global-ri/__tests__/ana-tools.test.ts > GLOBAL_RI_TOOL_SPECS catalog > GLOBAL_RI_TOOL_NAMES matches the spec names in order 1ms
+ ✓ server/services/global-ri/__tests__/ana-tools.test.ts > isGlobalRiTool > is true for a known name and false for an unknown one 0ms
+ ✓ server/services/global-ri/__tests__/ana-tools.test.ts > dispatchGlobalRiTool routing > routes global_ri_exclusivity and returns bindingMonths 0ms
+ ✓ server/services/global-ri/__tests__/ana-tools.test.ts > dispatchGlobalRiTool routing > routes global_ri_device_classification and returns a pathway 0ms
+ ✓ server/services/global-ri/__tests__/ana-tools.test.ts > dispatchGlobalRiTool routing > routes global_ri_safety_reporting and returns reportable=true within 15 days 0ms
+ ✓ server/services/global-ri/__tests__/ana-tools.test.ts > dispatchGlobalRiTool routing > routes global_ri_stability_conditions and returns a longTerm condition 0ms
+ ✓ server/services/global-ri/__tests__/ana-tools.test.ts > dispatchGlobalRiTool routing > throws for an unknown tool name 1ms
+ ✓ server/services/global-ri/__tests__/ana-tools.test.ts > dispatchGlobalRiTool routing > is deterministic for a given tool + input 0ms
+ ✓ server/services/global-ri/__tests__/global-ri-capabilities.test.ts > global-RI capability catalog > every capability is well-formed 7ms
+ ✓ server/services/global-ri/__tests__/global-ri-capabilities.test.ts > global-RI capability catalog > capability ids are unique 0ms
+ ✓ server/services/global-ri/__tests__/global-ri-capabilities.test.ts > global-RI capability catalog > every referenced AnA tool exists in the tool registry 1ms
+ ✓ server/services/global-ri/__tests__/global-ri-capabilities.test.ts > global-RI capability catalog > every AnA tool is surfaced by at least one capability (catalog completeness) 1ms
+ ✓ server/services/global-ri/__tests__/global-ri-capabilities.test.ts > global-RI capability catalog > routes look like "METHOD /path" 1ms
+ ✓ server/services/global-ri/__tests__/global-ri-capabilities.test.ts > getGlobalRiCatalog > returns a complete, grouped catalog with per-tool input schemas 1ms
+ ✓ server/services/global-ri/__tests__/global-ri-capabilities.test.ts > getGlobalRiCatalog > capabilitiesByGroup buckets every capability under a known group 0ms
+ ✓ server/services/global-ri/__tests__/global-ri-capabilities.test.ts > getGlobalRiCatalog > is deterministic 1ms
+stdout | server/routes/__tests__/global-ri.routes.test.ts
+{
+  "timestamp": "2026-10-05T03:29:33.579Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:29:33.580Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/global-ri.routes.test.ts
+{
+  "timestamp": "2026-10-05T03:29:33.580Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/global-ri.routes.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/global-ri.routes.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/global-ri.routes.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > 403 without the regulatory-author role 18ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > GET /module1/requirements/:market → 200 list 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > GET /module1/requirements/:market → 404 for an unmodeled market 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > POST /module1/assess → 200 not-ready when a component is missing 16ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > POST /module1/assess → 400 without market/providedComponents 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > review-timeline projection > POST /review-timeline → 200 with milestones for FDA IND 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > review-timeline projection > POST /review-timeline → 400 for an unknown region/procedure 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > review-timeline projection > POST /review-timeline → 400 without required fields 6ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > expedited programs > GET /expedited-programs → 200 catalog 4ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > expedited programs > POST /expedited-programs/match → 200 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > expedited programs > POST /expedited-programs/match → 400 without region 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > pathway advice > POST /pathway → 200 with per-market recommendations 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > pathway advice > POST /pathway → 400 without productType/targetMarkets 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > HA meetings > GET /meetings → 200 catalog; ?market=FDA filters 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > HA meetings > POST /meetings/recommend → 200 with a Pre-IND meeting 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > HA meetings > POST /meetings/recommend → 400 without market/milestone 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > special designations > GET /designations/criteria/:market → 200 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > special designations > POST /designations/assess → 200 orphan-eligible for low US prevalence 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > special designations > POST /designations/assess → 400 without market 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > strategy brief > POST /strategy-brief → 200 cross-market brief 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > strategy brief > POST /strategy-brief → 400 without productType/targetMarkets 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > GET /fees/schedule/:market → 200 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > GET /fees/schedule/:market → 404 for an unmodeled market 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > POST /fees/estimate → 200 with a total 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > POST /fees/estimate → orphan waives to zero 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > POST /fees/estimate → 400 without market 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > cross-market labeling > GET /labeling/requirements/:market → 200 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > cross-market labeling > POST /labeling/assess → 200 not-ready when a section is missing 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > cross-market labeling > POST /labeling/assess → 400 without market/providedSections 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > clinical-trial-application requirements > GET /cta/requirements/:market → 200 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > clinical-trial-application requirements > POST /cta/assess → 200 not-ready when a component is missing 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > clinical-trial-application requirements > POST /cta/assess → 400 without required fields 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > post-approval changes > GET /changes/vehicles/:market → 200 with categories + vehicles 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > post-approval changes > POST /changes/classify → 200 (EMA major → Type II) 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > post-approval changes > POST /changes/classify → 400 for an unknown category 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > post-approval changes > POST /changes/classify → 400 without market/category 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > ICH guideline catalog > GET /ich-guidelines → 200 catalog; ?q= searches; ?category= filters 5ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > ICH guideline catalog > GET /ich-guidelines/:code → 200 (E6 = GCP); unknown → 404 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory guidance map > GET /guidance/topics → 200 list 1ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory guidance map > GET /guidance/:topic → 200 grounds CSR in E3 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory guidance map > GET /guidance/:topic → 404 for an unmodeled topic 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > submission economics > POST /submission-economics → 200 with fees + timeline + summary 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > submission economics > POST /submission-economics → 400 for an unknown procedure 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > submission economics > POST /submission-economics → 400 without required fields 1ms
+
+ Test Files  6 passed (6)
+      Tests  103 passed (103)
+   Start at  03:29:31
+   Duration  2.64s (transform 2.12s, setup 368ms, import 3.02s, tests 263ms, environment 1ms)
+

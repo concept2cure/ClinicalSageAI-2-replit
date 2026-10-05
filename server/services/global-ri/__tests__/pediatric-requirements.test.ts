@@ -82,12 +82,46 @@ describe('assessPediatricPlan — EMA (PIP)', () => {
   });
 });
 
-describe('assessPediatricPlan — PMDA', () => {
-  it('not required / not_applicable with an explanatory note', () => {
+describe('assessPediatricPlan — PMDA (paediatric development plan, effort obligation since 2026-05-01)', () => {
+  it('reports the effort obligation, not "no mandatory plan"', () => {
+    const ob = getPediatricObligation('PMDA');
+    expect(ob.instrument).not.toMatch(/No mandatory/i);
+    expect(ob.planName).not.toMatch(/No mandatory|voluntary/i);
+    expect(ob.instrument).toMatch(/paediatric development plan/i);
+    expect(ob.instrument).toMatch(/effort obligation/i);
+    expect(ob.citation).toMatch(/recall — not checked against the regulator's text/);
+  });
+
+  it('an application that triggers the duty has a plan outstanding until PMDA has confirmed one', () => {
     const r = assessPediatricPlan({ market: 'PMDA' });
+    expect(r.duty).toBe('effort');
+    // An effort obligation (努力義務) is not an approval prerequisite: never reported as mandatory.
     expect(r.required).toBe(false);
+    expect(r.status).toBe('plan_outstanding');
+    expect(r.planName).toMatch(/paediatric development plan/i);
+    expect(r.dueTiming).toMatch(/before the adult/i);
+    expect([...r.actions, ...r.notes].join(' ')).not.toMatch(/encouraged|No mandatory|voluntary/i);
+    expect(r.notes.some((n) => /effort obligation/i.test(n))).toBe(true);
+  });
+
+  it('satisfied when the plan has been confirmed by PMDA', () => {
+    const r = assessPediatricPlan({ market: 'PMDA', planSubmitted: true });
+    expect(r.status).toBe('satisfied');
+    expect(r.duty).toBe('effort');
+  });
+
+  it('not_applicable when the application does not trigger the duty', () => {
+    const r = assessPediatricPlan({ market: 'PMDA', triggersRequirement: false });
     expect(r.status).toBe('not_applicable');
-    expect(r.notes.some((n) => /encouraged/i.test(n))).toBe(true);
+    expect(r.duty).toBe('none');
+  });
+});
+
+describe('assessPediatricPlan — duty', () => {
+  it('FDA and EMA are mandatory duties when triggered', () => {
+    expect(assessPediatricPlan({ market: 'FDA' }).duty).toBe('mandatory');
+    expect(assessPediatricPlan({ market: 'EMA' }).duty).toBe('mandatory');
+    expect(assessPediatricPlan({ market: 'FDA', triggersRequirement: false }).duty).toBe('none');
   });
 });
 

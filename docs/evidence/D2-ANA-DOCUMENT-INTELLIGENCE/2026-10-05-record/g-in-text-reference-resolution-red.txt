@@ -1,0 +1,122 @@
+# g-in-text-reference-resolution — RED (before the change), 2026-10-05, HEAD 0c3dcab4
+# grounding-core.ts, writing-precision-gate.ts and grounding-core.test.ts are byte-identical at 0c3dcab4 and at the
+# current HEAD 3e4c1f3f (git diff --stat 0c3dcab4 HEAD -- <those files> is empty), so this red holds at 3e4c1f3f too.
+
+## 1. npx vitest run server/services/ana/__tests__/in-text-references.test.ts
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/in-text-references.test.ts [ server/services/ana/__tests__/in-text-references.test.ts ]
+Error: Cannot find module '../in-text-references' imported from /home/user/ClinicalSageAI-2-replit/server/services/ana/__tests__/in-text-references.test.ts
+ ❯ server/services/ana/__tests__/in-text-references.test.ts:14:1
+     12|  */
+     13| import { describe, it, expect } from 'vitest';
+     14| import {
+       | ^
+     15|   classifyInTextReferences,
+     16|   extractInTextReferences,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  03:40:39
+   Duration  529ms (transform 95ms, setup 92ms, import 0ms, tests 0ms, environment 0ms)
+
+
+## 2. Behaviour at HEAD: critiqueDraft over a fabricated E3 reference (npx tsx probe, DB log lines removed)
+{"text":"TEAEs occurred in 45% (54/120) of patients (Table 14.9.99).","documentType":"csr","verdict":"revise","score":74,"findings":["high/structure","medium/abbreviations"],"groundingFindings":0}
+{"text":"TEAEs occurred in 45% (54/120) of patients (Table 14.9.99).","documentType":null,"verdict":"pass","score":92,"findings":["medium/abbreviations"],"groundingFindings":0}
+{"text":"A total of 240 patients were randomised (Section 9.12).","documentType":"csr","verdict":"revise","score":82,"findings":["high/structure"],"groundingFindings":0}
+
+groundingFindings is 0 in every case: an invented Table 14.9.99 / Section 9.12 grounds the number.
+
+## 3. Fix round 1 — red: the new tests against the round-0 working copy, before the fix
+# Review found false critical findings for a compliant 'Module 2.5.7', sponsor TFL numbering (Table 14.3.5.1,
+# Listing 16.2.9, Appendix 16.1.13), 'Table 7' when another section is titled 'Table 1 …', and missed a
+# self-reference ('see CSR Section 9.12' inside a CSR). Also: no-opts grounding ignored Listing references (second regex).
+$ npx vitest run server/services/ana/__tests__/{in-text-references,grounding-core}.test.ts
+ × server/services/ana/__tests__/grounding-core.test.ts > assessGrounding > without options, a Listing reference grounds like a Table one 17ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 1 — a compliant reference is never reported as fabricated > Module 2.5.7 (M4E Literature References) is not unresolved although the registry stops at 2.5.6 12ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 1 — a compliant reference is never reported as fabricated > a gap under a CTD heading whose registered children are complete stays unresolved 4ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 1 — a compliant reference is never reported as fabricated > sponsor TFL numbering beyond an E3 sub-heading — Table 14.3.5.1 — is a notice, never a finding 2ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 1 — a compliant reference is never reported as fabricated > sponsor TFL numbering beyond an E3 sub-heading — Listing 16.2.9 — is a notice, never a finding 1ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 1 — a compliant reference is never reported as fabricated > sponsor TFL numbering beyond an E3 sub-heading — Appendix 16.1.13 — is a notice, never a finding 1ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 1 — a compliant reference is never reported as fabricated > a section title that is a table caption does not make the other sections' tables unresolved 1ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 1 — a compliant reference is never reported as fabricated > inside a CSR, "the CSR" is this document: an invented E3 number there is unresolved 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected false to be true // Object.is equality
+AssertionError: expected 'unresolved' to be 'not-resolvable-from-input' // Object.is equality
+AssertionError: expected [ Array(1) ] to deeply equal [ 'Module 5.9:unresolved' ]
+AssertionError: expected [ { category: 'grounding', …(3) } ] to deeply equal []
+AssertionError: expected [ { category: 'grounding', …(3) } ] to deeply equal []
+AssertionError: expected [ { category: 'grounding', …(3) } ] to deeply equal []
+AssertionError: expected [ { category: 'grounding', …(3) } ] to deeply equal []
+AssertionError: expected [ Array(1) ] to deeply equal [ 'Section 9.12:unresolved' ]
+ Test Files  2 failed (2)
+      Tests  8 failed | 30 passed (38)
+
+## 1a. Note on the original red (review, fix round 2)
+# Section 1 is a load failure (module absent), not an assertion failure. The behavioural red against HEAD gate code
+# is section 2: the npx tsx probe of critiqueDraft at HEAD finds 0 grounding findings for Table 14.9.99 and Section 9.12.
+# writing-precision-gate.test.ts is outside this step's file list, so the probe stands in for an assertion there.
+
+## 4. Fix round 2 — red: the new tests against the round-1 working copy, before the fix
+# Review found false critical findings in a CSR for references into the protocol, SAP, IB or another study's CSR
+# named with an id, version, amendment, edition or modifier ('Protocol ABC-001, Section 9.12' -> 'Section 9.12 does
+# not resolve — ICH E3 §9 has no 9.12'); 'Study 201 CSR Section 9.12' read as this CSR; a coordinated
+# 'Section 9.12 of the protocol and Section 9.13' leaving 9.13 unqualified; Module 2.7.4.99 'resolved' unchecked.
+$ npx vitest run server/services/ana/__tests__/in-text-references.test.ts
+ × server/services/ana/__tests__/in-text-references.test.ts > extractInTextReferences / classifyInTextReferences > classifies CTD module codes with no descendant leniency 7ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > Protocol ABC-001, Section 9.12 — not resolvable, and no grounding finding on the number it cites 2ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > Protocol ABC-001 Section 9.12 — not resolvable, and no grounding finding on the number it cites 1ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > Protocol Amendment 2, Section 9.12 — not resolvable, and no grounding finding on the number it cites 1ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > protocol amendment 2 Section 9.12 — not resolvable, and no grounding finding on the number it cites 1ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > Section 9.12 of the Study 201 protocol — not resolvable, and no grounding finding on the number it cites 1ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > Section 9.12 of the ABC-001 protocol — not resolvable, and no grounding finding on the number it cites 0ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > Section 9.12 of the clinical protocol — not resolvable, and no grounding finding on the number it cites 0ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > SAP v2.0 Section 9.12 — not resolvable, and no grounding finding on the number it cites 1ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > SAP version 2.0, Section 9.12 — not resolvable, and no grounding finding on the number it cites 1ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > the SAP (version 3.0), Section 9.12 — not resolvable, and no grounding finding on the number it cites 0ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > Section 9.12 of the final SAP — not resolvable, and no grounding finding on the number it cites 0ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > IB Edition 5, Section 9.12 — not resolvable, and no grounding finding on the number it cites 0ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > Study 201 CSR Section 9.12 — not resolvable, and no grounding finding on the number it cites 0ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > the Phase 2 CSR Section 9.12 — not resolvable, and no grounding finding on the number it cites 0ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > the CSR for Study 201, Section 9.12 — not resolvable, and no grounding finding on the number it cites 6ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > Section 9.12 of the CSR for Study 201 — not resolvable, and no grounding finding on the number it cites 1ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > Table 14.4.1 of the Study 201 CSR — not resolvable, and no grounding finding on the number it cites 0ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > Study 201 CSR Table 14.4.1 — not resolvable, and no grounding finding on the number it cites 0ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > a protocol named earlier in the same sentence makes an unqualified section a notice, never a finding 1ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > a coordinated reference shares the qualifier of its neighbour 1ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > an unresolved §14 table says how to clear it: the TFL captions 1ms
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > a module code below a registry leaf is not resolvable, never resolved unchecked 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 23 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  23 failed | 30 passed (53)
+# (the 23rd: the existing 'Module 3.2.P.2.1' expectation, changed from resolved to not-resolvable in this round)
+
+## 4b. Fix round 2 — three further guards, each shown failing with it removed (scratch variants of the fixed module)
+# noplural = without the plural keyword and the 'Section 9.12, 9.13 of' number-list lead;
+# nopct    = without the never-a-percentage ID guard and the keyword-only suffix for a sentence-earlier document.
+cur "Sections 9.12 and 9.13 of the SAP" => Section 9.12:not-resolvable-from-input
+cur "Section 9.12, 9.13 of the SAP" => Section 9.12:not-resolvable-from-input
+cur "Response was 45% (Tables 14.2.1 and 14.2.2)." => Table 14.2.1:resolved
+cur "As described in the clinical study report, 45% had TEAEs (Table 14.9.99)." => Table 14.9.99:unresolved
+noplural "Sections 9.12 and 9.13 of the SAP" => (no reference extracted)
+noplural "Section 9.12, 9.13 of the SAP" => Section 9.12:unresolved
+noplural "Response was 45% (Tables 14.2.1 and 14.2.2)." => (no reference extracted)
+noplural "As described in the clinical study report, 45% had TEAEs (Table 14.9.99)." => Table 14.9.99:unresolved
+nopct "Sections 9.12 and 9.13 of the SAP" => Section 9.12:not-resolvable-from-input
+nopct "Section 9.12, 9.13 of the SAP" => Section 9.12:not-resolvable-from-input
+nopct "Response was 45% (Tables 14.2.1 and 14.2.2)." => Table 14.2.1:resolved
+nopct "As described in the clinical study report, 45% had TEAEs (Table 14.9.99)." => Table 14.9.99:not-resolvable-from-input
+# 'the SAP (version 3.0), Section 9.12' was qualified only by the same-sentence fallback until ')' was allowed in the
+# filler; the added qualifierInferred=false assertion failed first:
+ × server/services/ana/__tests__/in-text-references.test.ts > fix round 2 — a reference into another document is never judged against this CSR > the SAP (version 3.0), Section 9.12 — not resolvable, and no grounding finding on the number it cites 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected true to be false // Object.is equality
+      Tests  1 failed | 54 passed (55)

@@ -1,0 +1,21 @@
+# npx vitest run <the new test + 11 test files importing the changed modules> — after fix round 1, 2026-10-05T03:36:37Z
+# filtered: per-test result lines for the new test, per-file results and totals; database/audit startup warnings omitted
+# files run: tests/regulatory/post-filing-citations.test.ts server/services/ana-ri/__tests__/document-templates.test.ts server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts tests/regulatory/meetings-and-dsur-truth.test.ts tests/regulatory/ana-ctd-section-truth.test.ts tests/regulatory/csr-e3-overlay.test.ts server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts server/services/ana/intelligence-questions/__tests__/visible-when-deadlock.test.ts tests/ana-intelligence/engine.test.ts tests/ana-intelligence/flow-registry-consistency.test.ts tests/constants-domain/aliases.test.ts server/services/market-specs/__tests__/document-template-library.test.ts
+✓ tests/regulatory/post-filing-citations.test.ts > briefing book: the 120-day safety update cites 314.50(d)(5)(vi)(b) > no text in the flow cites the field-alert paragraph 314.81(b)(1) 1ms
+✓ tests/regulatory/post-filing-citations.test.ts > briefing book: the 120-day safety update cites 314.50(d)(5)(vi)(b) > the guidance cites 314.50(d)(5)(vi)(b) and names its three filing points 1ms
+✓ tests/regulatory/post-filing-citations.test.ts > briefing book: the 120-day safety update cites 314.50(d)(5)(vi)(b) > keeps the regulation's waiver qualifier on the case report forms 0ms
+✓ tests/regulatory/post-filing-citations.test.ts > briefing book: the 120-day safety update cites 314.50(d)(5)(vi)(b) > the guidance does not present the BLA safety update as the NDA regulation 0ms
+✓ tests/regulatory/post-filing-citations.test.ts > briefing book: the 120-day safety update cites 314.50(d)(5)(vi)(b) > the missing-update issue cites 314.50(d)(5)(vi)(b) in its message and reference 0ms
+✓ tests/regulatory/post-filing-citations.test.ts > NDA flow: the iPSP is due 60 calendar days after the EOP2 meeting, under 505B(e) > never ties the deadline to the meeting request 1ms
+✓ tests/regulatory/post-filing-citations.test.ts > NDA flow: the iPSP is due 60 calendar days after the EOP2 meeting, under 505B(e) > states 60 calendar days after the end-of-phase 2 meeting in guidance, help and issue 0ms
+✓ tests/regulatory/post-filing-citations.test.ts > NDA flow: the iPSP is due 60 calendar days after the EOP2 meeting, under 505B(e) > attributes the requirement to FD&C Act 505B(e) (FDASIA 2012), not FDARA 2017 0ms
+✓ tests/regulatory/post-filing-citations.test.ts > NDA flow: the iPSP is due 60 calendar days after the EOP2 meeting, under 505B(e) > gives the 210-day agreement cycle as FDA 90, sponsor 90, FDA 30 0ms
+✓ tests/regulatory/post-filing-citations.test.ts > NDA flow: the iPSP is due 60 calendar days after the EOP2 meeting, under 505B(e) > does not say orphan designation exempts every drug from PREA 0ms
+✓ tests/regulatory/post-filing-citations.test.ts > NDA flow: the iPSP is due 60 calendar days after the EOP2 meeting, under 505B(e) > limits the RACE for Children Act exception to an original application for a new active ingredient 0ms
+✓ tests/regulatory/post-filing-citations.test.ts > ana-ri IR response template cites 314.60 and claims no device scope > cites 21 CFR 314.60 and drops the review-timeline and CRL-guidance citations 0ms
+✓ tests/regulatory/post-filing-citations.test.ts > ana-ri IR response template cites 314.60 and claims no device scope > keeps FDA's option under 314.60(b)(1) to defer a late major amendment to the next cycle 0ms
+✓ tests/regulatory/post-filing-citations.test.ts > ana-ri IR response template cites 314.60 and claims no device scope > no longer claims 510(k) under the drug amendment basis 0ms
+✓ tests/regulatory/post-filing-citations.test.ts > ana-ri IR response template cites 314.60 and claims no device scope > says a 510(k) additional-information request is out of its scope 0ms
+✓ tests/regulatory/post-filing-citations.test.ts > ana-ri IR response template cites 314.60 and claims no device scope > is still what an IR-response request routes to 6ms
+ Test Files  12 passed (12)
+ Tests  362 passed (362)

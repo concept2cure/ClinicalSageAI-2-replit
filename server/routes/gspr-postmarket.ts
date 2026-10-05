@@ -63,6 +63,7 @@ import {
 } from '../services/gspr-postmarket/pmcf-enrollment.service';
 import type { PostMarketDocumentType } from '../../shared/schema/gspr-postmarket';
 import {
+  POST_MARKET_DOCUMENT_TYPES,
   PMCF_ACTIVITY_KINDS,
   PMCF_ACTIVITY_STATUSES,
   type PmcfActivityKind,
@@ -222,14 +223,7 @@ router.get(
 // Post-market documents
 // ─────────────────────────────────────────────────────────────────────────────
 
-const VALID_DOC_TYPES = new Set([
-  'pms_plan',
-  'pms_report',
-  'pmcf_plan',
-  'pmcf_evaluation',
-  'psur',
-  'sscp',
-] as const);
+const VALID_DOC_TYPES: ReadonlySet<string> = new Set<string>(POST_MARKET_DOCUMENT_TYPES);
 
 postMarketRouter.get(
   '/programs/:programId/documents',
@@ -237,7 +231,7 @@ postMarketRouter.get(
   async (req: Request, res: Response) => {
     const orgId = getOrgId(req)!;
     const t = req.query.type as string | undefined;
-    if (t && !VALID_DOC_TYPES.has(t as any)) {
+    if (t && !VALID_DOC_TYPES.has(t)) {
       return res.status(422).json({ error: `type must be one of: ${[...VALID_DOC_TYPES].join(', ')}` });
     }
     try {
@@ -368,8 +362,10 @@ postMarketRouter.post(
   }
 );
 
-// Author a DRAFT post-market document of any supported type (pms_plan,
-// pms_report, pmcf_plan, pmcf_evaluation, psur, sscp) from device/CER context.
+// Author a DRAFT post-market document of any type in AUTHORABLE_DOCUMENT_TYPES
+// (post-market-authoring.ts; the same set as POST_MARKET_DOCUMENT_TYPES in
+// shared/schema/gspr-postmarket.ts) from device/CER context. A type that belongs
+// to the other regulation (SSCP/PMCF under IVDR, SSP/PMPF under MDR) is 422.
 // Persists in `draft` via the same lifecycle and returns the document plus its
 // conformance validation. Never approves, locks, or asserts sufficiency.
 postMarketRouter.post(
@@ -447,22 +443,45 @@ postMarketRouter.post(
   }
 );
 
+/**
+ * An optional boolean query fact: 'true' / 'false', absent = not stated (null).
+ * Any other value is refused rather than read as false.
+ */
+function booleanFact(value: unknown): boolean | null | 'invalid' {
+  if (value === undefined) return null;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return 'invalid';
+}
+
 // Honest post-market documentation status for a program: per-type presence,
-// lifecycle status and validation-gate result, with required-vs-optional driven
-// by device class. Not a fabricated readiness score.
+// lifecycle status and validation-gate result, with what the device owes
+// decided by EU_POSTMARKET_OBLIGATIONS from the regulation, the class and the
+// stated implantable / customMade facts (mirroring isImplantable on /coverage).
+// An unstated fact is passed as unknown, never as false. Not a readiness score.
 postMarketRouter.get(
   '/programs/:programId/documentation-status',
   requireProgramAccess,
   async (req: Request, res: Response) => {
     const orgId = getOrgId(req)!;
     const deviceClass = typeof req.query.deviceClass === 'string' ? req.query.deviceClass : null;
-    const regulation = req.query.regulation === 'IVDR' ? 'IVDR' : 'MDR';
+    const rawRegulation = req.query.regulation;
+    if (rawRegulation !== undefined && rawRegulation !== 'MDR' && rawRegulation !== 'IVDR') {
+      return res.status(422).json({ error: 'regulation must be MDR or IVDR' });
+    }
+    const regulation: 'MDR' | 'IVDR' = rawRegulation === 'IVDR' ? 'IVDR' : 'MDR';
+    const implantable = booleanFact(req.query.implantable);
+    const customMade = booleanFact(req.query.customMade);
+    if (implantable === 'invalid' || customMade === 'invalid') {
+      return res.status(422).json({ error: 'implantable and customMade must be true or false when given' });
+    }
     try {
       const report = await getPostMarketDocStatus(
         orgId,
         String(req.params.programId),
         deviceClass,
-        regulation
+        regulation,
+        { implantable, customMade }
       );
       res.json(report);
     } catch (err: any) {

@@ -1,0 +1,243 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > holds the six PDUFA meeting types with their schedule and package deadlines 3ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > labels every figure not read in FDA text as recall 0ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > every row names the basis of its package deadline, and that basis is one of its cited sources 6ms
+   → A: packageDueBasis: expected undefined to be defined
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > a deadline read only from recall is said to be recall where it is stated (F18) 2ms
+   → expected 'no later than 47 calendar days before…' to match /recall/i
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > timing is 70 days to the meeting and the package 50 calendar days before it 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > no EOP2 component tells the sponsor the package is due 30 days ahead 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_ind_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_nda_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_bla_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_ind_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > end_of_phase_2_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_nda_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_bla_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > a pre-IND meeting package carries the CMC summary and no "accompanies the request" claim 5ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > an EOP2 briefing document gets the EOP2 components and the 50-day package deadline 3ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "end of phase 1 meeting" is not served the EOP2 (Type B(EOP)) template 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "EOP1 meeting package" is not served the EOP2 (Type B(EOP)) template 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "draft the pre-NDA meeting package" gets the pre_nda_meeting components 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "prepare our pre-BLA meeting briefing document" gets the pre_bla_meeting components 0ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > no meeting template is a hand-kept heading list 1ms
+   → Cannot read properties of undefined (reading 'map')
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > its sections are the meeting-package core, not one lifecycle entry's wording 1ms
+   → Cannot read properties of undefined (reading 'map')
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > no section guidance names one meeting type or one meeting 2ms
+   → expected [ …(5) ] to not include 'Product Background and Development Ra…'
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > the request-letter section says which meeting types take the package with the request, from the table 2ms
+   → expected 'Formal Type B meeting request that tr…' to contain 'Type A'
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > its instructions state every meeting type's schedule and package deadline from the table 8ms
+   → A: expected 'Draft an FDA formal-meeting package p…' to contain 'Type A: scheduled within 30 days'
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > an EOP1 request is told its package deadline is 30 or 50 days by product, not given the pre-IND wording 4ms
+   → expected '## DOCUMENT TYPE DETECTED: FDA FORMAL…' not to contain 'Formal Type B meeting request'
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > dsur sections have no targetWords 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_pre_ind_meeting_package sections have no targetWords 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_eop_meeting_package sections have no targetWords 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_pre_nda_meeting_package sections have no targetWords 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_pre_bla_meeting_package sections have no targetWords 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_formal_meeting_package sections have no targetWords 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > some component asks for E2F Section 19 (Summary of Important Risks) 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > no component calls Section 19 the conclusions 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > the conclusions are E2F Section 20 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > interval line listings are of serious adverse reactions (E2F 7.2), tabulations of SAEs (7.3) 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > exports the E2F outline once, every heading cited 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > the injected block carries §16, §19 and §20 under their E2F numbers 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > every E2F section is required: E2F says complete all of them, stating when there is nothing to report 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > the injected block lists the E2F headings in E2F order, none of them optional 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > no detection pattern carries a form feed 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > every DSUR and meeting detection pattern matches a request it is written for 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > every row names the basis of its package deadline, and that basis is one of its cited sources
+AssertionError: A: packageDueBasis: expected undefined to be defined
+ ❯ tests/regulatory/meetings-and-dsur-truth.test.ts:106:63
+    104|   it('every row names the basis of its package deadline, and that basi…
+    105|     for (const [type, row] of Object.entries(lifecycle.FDA_FORMAL_MEET…
+    106|       expect(row.packageDueBasis, `${type}: packageDueBasis`).toBeDefi…
+       |                                                               ^
+    107|       expect(row.basis, `${type}: packageDueBasis listed in basis`).to…
+    108|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > a deadline read only from recall is said to be recall where it is stated (F18)
+AssertionError: expected 'no later than 47 calendar days before…' to match /recall/i
+
+- Expected:
+/recall/i
+
++ Received:
+"no later than 47 calendar days before the meeting"
+
+ ❯ tests/regulatory/meetings-and-dsur-truth.test.ts:116:51
+    114|   it('a deadline read only from recall is said to be recall where it i…
+    115|     expect(lifecycle.meetingPackageDeadline('C')).toMatch(/\b47\b/);
+    116|     expect(lifecycle.meetingPackageDeadline('C')).toMatch(/recall/i);
+       |                                                   ^
+    117|     for (const type of ['A', 'B', 'B(EOP)', 'D', 'INTERACT'] as const)…
+    118|       expect(lifecycle.meetingPackageDeadline(type), type).not.toMatch…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > no meeting template is a hand-kept heading list
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ tests/regulatory/meetings-and-dsur-truth.test.ts:191:45
+    189|     const titles = new Set([
+    190|       ...meetings.flatMap((m) => m.components.map((c) => c.title)),
+    191|       ...lifecycle.FDA_MEETING_PACKAGE_CORE.map((c) => c.title),
+       |                                             ^
+    192|     ]);
+    193|     for (const t of Object.values(DOCUMENT_TEMPLATES).filter((x) => /m…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > its sections are the meeting-package core, not one lifecycle entry's wording
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ tests/regulatory/meetings-and-dsur-truth.test.ts:204:81
+    202|   it('its sections are the meeting-package core, not one lifecycle ent…
+    203|     const core = lifecycle.FDA_MEETING_PACKAGE_CORE;
+    204|     expect(generic().sections.map((s) => [s.heading, s.guidance])).toE…
+       |                                                                                 ^
+    205|     for (const c of core) {
+    206|       for (const m of meetings) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > no section guidance names one meeting type or one meeting
+AssertionError: expected [ …(5) ] to not include 'Product Background and Development Ra…'
+ ❯ tests/regulatory/meetings-and-dsur-truth.test.ts:217:58
+    215|       expect(s.guidance, s.heading).not.toMatch(/pre-?IND|Phase 2|Phas…
+    216|     }
+    217|     expect(generic().sections.map((s) => s.heading)).not.toContain('Pr…
+       |                                                          ^
+    218|   });
+    219|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > the request-letter section says which meeting types take the package with the request, from the table
+AssertionError: expected 'Formal Type B meeting request that tr…' to contain 'Type A'
+
+Expected: "Type A"
+Received: "Formal Type B meeting request that triggers FDA scheduling and travels ahead of (or with) the briefing document. It states the meeting type, product, proposed indication, and the rationale for the meeting."
+
+ ❯ tests/regulatory/meetings-and-dsur-truth.test.ts:224:55
+    222|     const withRequest = Object.values(lifecycle.FDA_FORMAL_MEETING_TIM…
+    223|       .filter((r) => r.packageDue === 'with-request').map((r) => r.typ…
+    224|     for (const t of withRequest) expect(req.guidance).toContain(typeNa…
+       |                                                       ^
+    225|     expect(req.guidance).not.toMatch(/Formal Type B meeting request/);
+    226|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > its instructions state every meeting type's schedule and package deadline from the table
+AssertionError: A: expected 'Draft an FDA formal-meeting package p…' to contain 'Type A: scheduled within 30 days'
+
+Expected: "Type A: scheduled within 30 days"
+Received: "Draft an FDA formal-meeting package per FDA Guidance for Industry: Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products (final, Aug 2026). Name the meeting type first, because the deadline follows from it. FDA schedules a Type B meeting within 60 days of receiving the meeting request. The meeting package is a separate submission from the request, due no later than 30 calendar days before the meeting. For an end-of-phase meeting (Type B(EOP)) the package is due no later than 50 calendar days before the meeting. An End-of-Phase 1 meeting is Type B(EOP) only for a product under 21 CFR 312 subpart E or 21 CFR 314 subpart H; otherwise it is Type B. Type A, D and INTERACT packages go with the meeting request. The sections below are the ones every pre-IND, EOP, pre-NDA and pre-BLA package carries; add the discipline summaries the meeting's questions need. Questions must be specific and answerable, each with the sponsor's position and the data behind it — do NOT ask open-ended questions."
+
+ ❯ tests/regulatory/meetings-and-dsur-truth.test.ts:231:30
+    229|     const text = generic().draftingInstructions;
+    230|     for (const row of Object.values(lifecycle.FDA_FORMAL_MEETING_TIMEL…
+    231|       expect(text, row.type).toContain(`${typeName(row.type)}: schedul…
+       |                              ^
+    232|       expect(text, row.type).toContain(lifecycle.meetingPackageDeadlin…
+    233|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > an EOP1 request is told its package deadline is 30 or 50 days by product, not given the pre-IND wording
+AssertionError: expected '## DOCUMENT TYPE DETECTED: FDA FORMAL…' not to contain 'Formal Type B meeting request'
+
+- Expected
++ Received
+
+- Formal Type B meeting request
++ ## DOCUMENT TYPE DETECTED: FDA FORMAL MEETING PACKAGE
++
++ **Regulatory Reference:** FDA
++ **Submission Family:** IND/NDA/BLA
++
++ ### DRAFTING INSTRUCTIONS
++ Draft an FDA formal-meeting package per FDA Guidance for Industry: Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products (final, Aug 2026). Name the meeting type first, because the deadline follows from it. FDA schedules a Type B meeting within 60 days of receiving the meeting request. The meeting package is a separate submission from the request, due no later than 30 calendar days before the meeting. For an end-of-phase meeting (Type B(EOP)) the package is due no later than 50 calendar days before the meeting. An End-of-Phase 1 meeting is Type B(EOP) only for a product under 21 CFR 312 subpart E or 21 CFR 314 subpart H; otherwise it is Type B. Type A, D and INTERACT packages go with the meeting request. The sections below are the ones every pre-IND, EOP, pre-NDA and pre-BLA package carries; add the discipline summaries the meeting's questions need. Questions must be specific and answerable, each with the sponsor's position and the data behind it — do NOT ask open-ended questions.
++
++ ### KEY REGULATORY REFERENCES
++ - FDA Guidance for Industry: Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products (final, Aug 2026)
++ - 21 CFR 312.47 (meetings)
++ - PDUFA VII commitment letter (meeting management goals)
++
++ ### REQUIRED DOCUMENT STRUCTURE
++
++ You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present.
++
++ **Required sections:**
++ - **Meeting Request Letter and Cover Letter**
++   Formal Type B meeting request that triggers FDA scheduling and travels ahead of (or with) the briefing document. It states the meeting type, product, proposed indication, and the rationale for the meeting.
++ - **Proposed Agenda**
++   Time-boxed agenda listing the topics and questions to be discussed and the sponsor speaker for each item.
++ - **Sponsor Attendee List**
++   Table of sponsor and consultant attendees with names, titles, roles, and affiliations, plus any specifically requested FDA attendees.
++ - **Product Background and Development Rationale**
++   Concise overview of the product, its mechanism, the target indication and unmet need, and the overall development strategy that sets context for the questions.
++ - **Numbered Questions for FDA with Sponsor Positions**
++   The heart of the package: a numbered list of focused questions, each stating the sponsor's position and the supporting rationale, on which agreement is sought.
++
++ ### OUTPUT RULES
++ 1. Use the section headings above verbatim as level-2 Markdown headers (`##`).
++ 2. Write [PLACEHOLDER] where the user has not yet provided the specific data needed — do NOT fabricate clinical data, patient numbers, p-values, or study results.
++ 3. After completing the document, add a brief "**What data do I still need?**" section listing any placeholders and the specific information needed to complete each.
++ 4. Write at the level expected by an FDA/EMA regulatory reviewer — precise, evidence-backed, and free of promotional language.
++ 5. Do NOT include a preamble like "Here is the draft you requested" — start directly with the first section heading.
+
+ ❯ tests/regulatory/meetings-and-dsur-truth.test.ts:239:23
+    237|   it('an EOP1 request is told its package deadline is 30 or 50 days by…
+    238|     const block = blockFor('EOP1 meeting package');
+    239|     expect(block).not.toContain('Formal Type B meeting request');
+       |                       ^
+    240|     expect(block).toContain('Type B(EOP): scheduled within 70 days');
+    241|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 33 passed (41)
+   Start at  04:20:24
+   Duration  993ms (transform 532ms, setup 81ms, import 526ms, tests 52ms, environment 0ms)
+
+
+=== F19: the new liveness check applied to the code it replaced ===
+(the dsur detectionPatterns of 1275c890^, i.e. before b3-meetings-dsur; script: f19-old-red.mjs, text at the end of this file, same predicate as deadPatterns() in the test)
+dsur patterns at 1275c890^: [
+  '/\\bdsur\\b/i',
+  '/\\bdevelopment\\s+safety\\s+update\\s+(?:report|annual)\\b/i',
+  '/\\bannual\\s+(?:safety\\s+)?report\\s+(?:to\\s+fda|for\\s+ind)\\b/i',
+  '/\\find\\s+annual\\s+report\\b/i'
+]
+dead patterns: [ '"\\\\find\\\\s+annual\\\\s+report\\\\b"' ]
+FAIL: 1 dead pattern(s)
+exit 1
+
+The old test 'an IND annual report request is not served the DSUR template' passes on the same code: 'prepare the ind annual report' matches none of the four patterns, so detection never returned dsur either way.
+
+--- f19-old-red.mjs (run as: node f19-old-red.mjs <patterns file>, the patterns file being the four regex lines of git show 1275c890^:server/services/ana-ri/document-templates.ts, dsur block) ---
+// F19 red: the liveness check in tests/regulatory/meetings-and-dsur-truth.test.ts
+// ("every DSUR and meeting detection pattern matches a request it is written for"),
+// applied to the dsur detectionPatterns of 1275c890^ (before b3-meetings-dsur).
+import { readFileSync } from 'node:fs';
+const src = readFileSync(process.argv[2], 'utf8').split('\n').filter(Boolean);
+const patterns = src.map((l) => { const m = l.trim().replace(/,$/, '').match(/^\/(.*)\/([a-z]*)$/s); return new RegExp(m[1], m[2]); });
+const requests = ['draft our DSUR', 'development safety update report for the 2026 period', 'annual safety report to FDA',
+  // the request the dead pattern was written for, given to it too:
+  'prepare the IND annual report'];
+const dead = patterns.filter((p) => !requests.some((r) => p.test(r.toLowerCase())));
+console.log('dsur patterns at 1275c890^:', patterns.map(String));
+console.log('dead patterns:', dead.map((p) => JSON.stringify(p.source)));
+console.log(dead.length ? `FAIL: ${dead.length} dead pattern(s)` : 'PASS');
+process.exitCode = dead.length ? 1 : 0;
