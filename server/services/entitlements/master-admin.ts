@@ -138,19 +138,20 @@ export interface MasterAdminIdentity {
 }
 
 /**
- * PURE: does this identity carry an owner signal (role or allowlisted e-mail)?
+ * PURE: does this identity carry an owner signal (an allowlisted e-mail on the
+ * owner's own sign-in)?
+ *
+ * `role` and `roles` are accepted and NOT read (D6, 2026-10-05,
+ * docs/evidence/D6/2026-10-05-platform-standing/). On every authenticated
+ * route they carry the tenant membership role, a column with no CHECK, so a
+ * membership naming super_admin was an owner signal. The other signal is a
+ * super_admin platform_role_grants row, which resolveAdminStanding looks up.
  *
  * A signal, not the verdict: the verdict also requires platform
  * administration, which this cannot see ({@link resolveAdminStanding}).
  * Exported so the rule can be tested directly.
  */
 export function isMasterAdminIdentity(identity: MasterAdminIdentity): boolean {
-  const primaryRole = (identity.role ?? '').toString().trim().toLowerCase();
-  if (primaryRole && MASTER_ADMIN_ROLES.has(primaryRole)) return true;
-
-  const roles = (identity.roles ?? []).map((r) => String(r ?? '').trim().toLowerCase());
-  if (roles.some((r) => r && MASTER_ADMIN_ROLES.has(r))) return true;
-
   // Not for a federated session: its e-mail is the identity provider's word.
   const provider = (identity.provider ?? '').toString().trim().toLowerCase();
   const email = (identity.email ?? '').toString().trim().toLowerCase();

@@ -131,22 +131,28 @@ describe('isMasterAdminIdentity — email signal', () => {
     expect(isMasterAdminIdentity({ email: OWNER, provider: ' SAML ' })).toBe(false);
     // The owner's own password sign-in still matches.
     expect(isMasterAdminIdentity({ email: OWNER, provider: 'local-jwt' })).toBe(true);
-    // The role is the platform's record, not the IdP's, so it is not provider-bound.
-    expect(isMasterAdminIdentity({ role: 'super_admin', provider: 'saml' })).toBe(true);
+    // No request role is a signal on any provider (D6, 2026-10-05, below).
+    expect(isMasterAdminIdentity({ role: 'super_admin', provider: 'saml' })).toBe(false);
   });
 });
 
-describe('isMasterAdminIdentity — role signal', () => {
-  it('grants super_admin via the primary `role` field', () => {
-    expect(isMasterAdminIdentity({ role: 'super_admin' })).toBe(true);
-    expect(isMasterAdminIdentity({ role: '  Super_Admin  ' })).toBe(true);
+describe('isMasterAdminIdentity — no request role is a signal', () => {
+  /* D6, 2026-10-05 (docs/evidence/D6/2026-10-05-platform-standing/). These two
+     cases read "grants super_admin via the primary `role` field / `roles[]`"
+     and pinned the defect. The comment above them called the role "the
+     platform's record", but on every authenticated route it is the TENANT
+     membership role (server/auth.ts reads organization_users), a column with
+     no CHECK. The owner signal is the allowlist (own sign-in) or a super_admin
+     platform_role_grants row (resolveAdminStanding), never a membership. */
+  it('a role of super_admin is not the owner signal, however it is spelled', () => {
+    expect(isMasterAdminIdentity({ role: 'super_admin' })).toBe(false);
+    expect(isMasterAdminIdentity({ role: '  Super_Admin  ' })).toBe(false);
   });
 
-  it('grants super_admin via the `roles[]` array', () => {
-    expect(isMasterAdminIdentity({ roles: ['member', 'super_admin'] })).toBe(true);
-    expect(isMasterAdminIdentity({ roles: ['SUPER_ADMIN'] })).toBe(true);
-    // Nulls in the array are tolerated, not treated as a match.
-    expect(isMasterAdminIdentity({ roles: [null, undefined, 'super_admin'] })).toBe(true);
+  it('a roles[] entry of super_admin is not the owner signal', () => {
+    expect(isMasterAdminIdentity({ roles: ['member', 'super_admin'] })).toBe(false);
+    expect(isMasterAdminIdentity({ roles: ['SUPER_ADMIN'] })).toBe(false);
+    expect(isMasterAdminIdentity({ roles: [null, undefined, 'super_admin'] })).toBe(false);
   });
 
   it('MASTER_ADMIN_ROLES contains super_admin and nothing else', () => {
@@ -226,10 +232,12 @@ describe('isMasterAdmin(req) — the request adapter', () => {
     expect(isMasterAdmin(reqOf({ userEmail: OWNER, identity: { provider: 'local-jwt' } }))).toBe(true);
   });
 
-  it('reads userRole and req.user.role / req.user.roles', () => {
-    expect(isMasterAdmin(reqOf({ userRole: 'super_admin' }))).toBe(true);
-    expect(isMasterAdmin(reqOf({ user: { role: 'super_admin' } }))).toBe(true);
-    expect(isMasterAdmin(reqOf({ user: { roles: ['super_admin'] } }))).toBe(true);
+  it('does not read userRole or req.user.role / req.user.roles (the tenant membership role)', () => {
+    // Inverted 2026-10-05: it read "reads userRole and req.user.role / roles"
+    // and pinned the defect (see "no request role is a signal" above).
+    expect(isMasterAdmin(reqOf({ userRole: 'super_admin' }))).toBe(false);
+    expect(isMasterAdmin(reqOf({ user: { role: 'super_admin' } }))).toBe(false);
+    expect(isMasterAdmin(reqOf({ user: { roles: ['super_admin'] } }))).toBe(false);
   });
 
   it('an unauthenticated request is never the owner', () => {

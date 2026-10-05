@@ -1,0 +1,4 @@
+# Each mutant applied alone to the fix; the twelve suites must go red.
+M1 the platform guard reads the request role again → Tests  10 failed | 158 passed (168)
+M2 the owner signal reads the request role again → Tests  3 failed | 165 passed (168)
+M3 platform standing ignores the grant row → Tests  59 failed | 109 passed (168)
