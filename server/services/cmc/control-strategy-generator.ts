@@ -9,10 +9,11 @@
  *   - Stability monitoring program
  *   - Risk-based justification per CQA
  *
- * Replaces the placeholder fallback at server/api/cmc/playbookRoutes.ts
- * that returned "Regulatory guidance ... AI service temporarily
- * unavailable." This generator never returns a placeholder — it returns
- * a real strategy or explicit gaps.
+ * Replaced the placeholder fallback in server/api/cmc/playbookRoutes.ts
+ * (retired 2026-10-05, no caller) that returned "Regulatory guidance ... AI
+ * service temporarily unavailable." This generator never returns a
+ * placeholder — it returns a real strategy or explicit gaps. Served at
+ * POST /api/cmc/control-strategy.
  *
  * Pure-deterministic. Inputs come from the QbD analyzer, the analytical
  * methods table, the stability program, and the CMC source-object store.

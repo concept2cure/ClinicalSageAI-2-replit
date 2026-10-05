@@ -1,0 +1,21 @@
+# Mutation probes on the AFTER tree — each check shown failing on the case it exists to catch, then restored
+
+## 1. client/src/__retired_probe__.ts calling /api/cmc/cmc-copilot/query (file deleted after)
+   → Client calls to retired CMC endpoints:
+  client/src/__retired_probe__.ts:1: export const probe = () => fetch('/api/cmc/cmc-copilot/query');: expected [ Array(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: Client calls to retired CMC endpoints:
+
+## 2. app.use('/api/cmc', authenticateToken) moved below the /api/cmc/specifications mount (file restored after)
+   → server/bootstrap/register-core-routes.ts:116 app.use('/api/cmc/specifications', …) is mounted ABOVE the authenticator: expected [ Array(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: server/bootstrap/register-core-routes.ts:116 app.use('/api/cmc/specifications', …) is mounted ABOVE the authenticator: expected [ Array(1) ] to deeply equal []
+
+## 3. cmcConvergenceMap.test.ts run against the HEAD map (file restored after)
+   → Convergence map lists missing files:
+  server/api/cmc/workflowRoutes.ts
+  server/api/cmc/projectRoutes.ts
+  server/api/cmc/blueprintRoutes.ts
+  server/api/cmc/documentRoutes.ts
+  server/routes/cmc-dashboard.ts: expected [ …(5) ] to deeply equal []
+ ✓ server/api/cmc/__tests__/cmcConvergenceMap.test.ts > CMC convergence map (code authority) > lists each file once 0ms

@@ -1,0 +1,278 @@
+
+── 0. Sign in (dev-login, seeded admin)
+   ✓ signed in
+
+── 1. Nav entitlements — the rail's licence verdicts include cmc
+   ✓ navigation verdicts served (200); cmc entitled=
+
+── 2. Regulatory lead creates the program (one project: spine + anchor)
+   ✓ program d43e3072-3b48-4d54-b6d8-fbafdca64e22 created
+   meta: {
+  "created": true,
+  "documentId": "doc_0cd2f8383e2c40089c4fbc578353f8f1",
+  "scaffoldedSections": 92,
+  "submissionId": 39,
+  "submissionCreated": true,
+  "projectAnchorId": 77,
+  "projectAnchorCreated": true
+}
+   ✓ program anchored to PM-spine project 77
+
+── 3. Process development registers the drug substance (feeds 3.2.S.1/S.2)
+   ✓ drug substance registered (200)
+   ✓ the drug substance carries its ICH Q5A(R2) record
+
+── 3b. A read-only colleague reads the CMC registers and writes none of them
+   meta: add viewer → 400 {"success":false,"error":"USER_EXISTS","message":"User is already a member of this organization"}
+   ✓ a viewer of this organization is signed in
+   ✓ the viewer reads the drug substance register (200)
+   ✓ the viewer cannot register a drug substance (403)
+   ✓ the viewer cannot edit the registered substance (403)
+   ✓ the viewer cannot run the contradiction sweep (403)
+   ✓ the viewer runs the ICH compliance check, which saves nothing (200)
+
+── 4. Analytical development registers the assay method (feeds 3.2.S.4)
+   ✓ method registered (200)
+
+── 5. QC runs the test; a second person reviews (feeds 3.2.S.4)
+   ✓ QC result recorded (200)
+
+── 5b. The QC reviewer is the session, not the request body — and never the analyst
+   ✓ review recorded against the signed-in user (1), not the body's 999999
+   ✓ the analyst cannot review their own result (409)
+
+── 5c. Four more release results against the SAME criterion — a capability series needs batches
+   ✓ four further release results recorded against the same criterion
+
+── 6. QA sets the specification (feeds 3.2.S.4.1)
+   ✓ specification created (201)
+
+── 7. Stability manager registers the study + a pull point (feeds 3.2.S.7)
+   ✓ stability study registered (200)
+
+── 8. Manufacturing logs a batch (feeds 3.2.P.3 / batch analyses)
+   ✓ batch logged (201)
+
+── 8b. Packaging engineering records the container closure system + E&L (feeds 3.2.P.7)
+   ✓ container closure system recorded and linked to Module 3 (200)
+
+── 8c. Analytical development records the reference standard (feeds 3.2.S.5)
+   ✓ reference standard recorded and linked to Module 3 (200)
+
+── 8d. Qualification is a signature, not a field — the ungoverned path refuses, the governed one records who
+   ✓ self-declared qualification refused (409), governed path named
+   ✓ container closure qualified under signature act_d9f0ba2fe63241dfbf4d85dd82061110 by user 1
+   ✓ a second signature over an already-qualified system is refused
+   ✓ an edit cannot repoint a record at another program (still d43e3072-3b48-4d54-b6d8-fbafdca64e22)
+   ✓ reference standard qualified under signature
+
+── 8e. Analytical development records the impurity file (feeds 3.2.S.3.2)
+   ✓ impurity recorded and linked to Module 3 (200)
+   ✓ residual solvent recorded in ppm (200)
+   ✓ mutagenic impurity recorded with its ICH M7 inputs (200)
+   ✓ qualification refused over an empty qualification basis (409)
+   ✓ qualification basis recorded
+   ✓ impurity qualified under signature act_9c7e23cc072f439b8cc8d1061c195cb2
+
+── 8f. Formulation development records the dissolution profiles (feeds 3.2.P.2 and 3.2.P.5)
+   ✓ development dissolution profile recorded and linked (200)
+   ✓ release-specification dissolution profile recorded (200)
+
+── 8g. Formulation development records the composition and the excipients (feeds 3.2.P.1 / 3.2.P.4 / 3.2.A.3)
+   ✓ formulation recorded as the current version and linked (200)
+   ✓ a second current formulation is refused (409)
+   ✓ excipient specification recorded (200)
+   ✓ animal-origin excipient recorded with its TSE certificate (200)
+   ✓ starting material recorded (200)
+
+── 8h. Process development records the manufacturing process (feeds 3.2.S.2.2), and characterisation records what the substance IS (3.2.S.3.1)
+   ✓ drug substance process recorded and linked (200)
+   ✓ a self-declared process validation is refused (409)
+   ✓ an undescribed process may be recorded (200)
+   ✓ validating a process with no steps is refused (409)
+   ✓ process validated under signature act_25d90e2147924e11a0bf9b01f4ce4c1c
+   ✓ structural characterisation recorded and linked (200)
+   ✓ physicochemical characterisation recorded (200)
+   ✓ a study still in flight may be recorded without a result (200)
+   ✓ signing a study with no result is refused (409)
+   ✓ biological-activity study result recorded
+   ✓ characterisation study qualified under signature
+
+── 8i. The drug-product side — every register §3.2.P reads (product, process, specification, release result, impurity, standard, stability, comparability)
+   ✓ drug product registered and linked (200)
+   ✓ the drug-product list returns the recorded batch formula
+   ✓ editing the product leaves the batch formula intact
+   ✓ tablet process described, with its development history
+   ✓ drug-product specification recorded (201)
+   ✓ finished-product release result recorded (200)
+   ✓ drug-product degradant recorded (200)
+   ✓ drug-product working standard recorded with its CoA (200)
+   ✓ drug-product stability study registered with its proposed claim (200)
+   ✓ comparability assessment recorded and linked to Module 3 (200)
+
+── 9. Change manager proposes a governed change WITH project (marks 3.2 stale)
+   ✓ governed change proposed; module3WriteThrough=recorded
+
+── 10. Build state BEFORE compile — the seam fix: 200, honest registry
+   ✓ build-state 200 (was 500 pre-fix); artifactRegistry=linked
+
+── 11. Regulatory CMC author compiles Module 3
+   ✓ compiled 21 sections; bridged=21 artifacts; bridgeSkips=0
+   ✓ auto-bridge created governed artifacts (pre-fix: 0, silently)
+
+── 11b. The compiled §3.2.S.4 CONTAINS the recorded QC result — captured data reaches the document
+   ✓ §3.2.S.4 renders the batch-analyses table with sample S-2026-001 and reports it in the narrative
+
+── 11b-cap. Process capability over the recorded batches — the same indices §3.2.S.4.4 carries, askable without compiling
+   ✓ capability assessed over 6 drug-substance batches (Ppk 0.6482, preliminary); the single drug-product result is reported as not assessed
+   ✓ §3.2.S.4.4 renders the same batch count the route reports
+
+── 11c. The recorded shelf-life engine answers over the study on file (the AnA tools' engine)
+   ✓ shelf-life engine refuses a study with no recorded results (shared engine, honest refusal)
+   ✓ trending refuses a study with no recorded results, with the reason
+   ✓ six pull points recorded on the study
+   ✓ trend fitted over the recorded assay series: slope -0.1248/month (established), 0 out-of-trend point(s), reaches the limit at 38.32 months
+   ✓ shelf life estimated once the pull points exist (limiting: assay)
+
+── 11c-file. The recorded pull points reach Module 3, and the section that files them carries them
+   ✓ the recorded pull points were linked into Module 3 under the study's own program
+   ✓ recompiled after recording the pull points
+   ✓ §3.2.S.7 tabulates the six recorded pull points it cites
+
+── 11d. §3.2.P.7 and §3.2.S.5 compose from the two new registers — and the unrecorded side stays honestly empty
+   ✓ §3.2.P.7 complete, with materials of construction and the E&L analyte rendered
+   ✓ §3.2.S.5 complete, with the standard and its characterisation rendered
+   ✓ §3.2.S.6 stays at 0% and says the drug-substance system is not recorded — no cross-bleed from the product side
+
+── 11e. The impurity and dissolution registers compose into their OWN sections
+   ✓ §3.2.S.3.2 renders 300 ppm as ppm (never 300%) and states the ICH threshold basis
+   ✓ §3.2.S.3.2 assesses the residual solvent against ICH Q3C and counts each population under its own guideline
+   ✓ §3.2.S.3.2 assesses the nitrosamine under ICH M7(R2) as Class 2 against its cohort-of-concern intake
+   ✓ §3.2.P.2 carries the development batch and NOT the release-specification batch
+   ✓ §3.2.P.5 carries the release-specification batch and NOT the development batch
+
+── 11f. §3.2.P.1, §3.2.P.4 and §3.2.A.3 compose from the formulation and material registers
+   ✓ §3.2.P.1 names the current formulation and renders its quantitative composition
+   ✓ §3.2.P.4 lists both excipients; the starting material files under §3.2.S.2.3
+   ✓ §3.2.A.3 lists the animal-origin excipient once, with the certificate the register holds (R1-CEP 2019-123)
+   ✓ §3.2.A.2 does not file a chemical-substance all-clear for a cell-culture product
+
+── 11g. §3.2.S.2 and §3.2.S.3 compose from the process and characterisation registers
+   ✓ §3.2.S.2 renders the steps in recorded order with their CPP range and in-process controls
+   ✓ the drug product process does not leak into §3.2.S.2
+   ✓ §3.2.S.3 renders every study and counts the biological one once it reads out
+
+── 11h. §3.2.R.1.US is written for the IND this program files — 21 CFR 312.23(a)(7), not an NDA's 314.50
+   ✓ §3.2.R.1.US cites 21 CFR 312.23(a)(7) and files none of a marketing application's obligations
+
+── 12. Contradiction sweep
+   ✓ sweep complete — 2 finding(s)
+
+── 12b. QA resolves each open finding with a recorded note
+   ✓ resolved 2 finding(s) with notes in the provenance chain
+
+── 12c. Re-running the sweep keeps QA's resolutions — the same finding over the same data stays resolved
+   ✓ re-swept: 2 finding(s) still resolved, none reopened
+
+── 13. Export gate MUST refuse now (nothing approved) — fail closed
+   ✓ gate refused (409): Critical contradictions or missing approvals block final export
+
+── 14. Placement MUST refuse the same way — same gate, before any write
+   ✓ placement refused (409), zero leaves written
+   ✓ a placement with no stated reason is refused (400 REASON_REQUIRED)
+
+── 14b. The signer can READ what the signature covers — §11.50 is over content, not a section number
+   ✓ §3.2.S.4 reads back in full: 1293 chars of narrative, 6 tables, 14 source records, content hash on the record
+   ✓ what the signer reads is the filed document, heading and all
+   ✓ an uncompiled section refuses to be read (404), rather than serving an empty one to sign
+
+── 15. QA approves every COMPLETE compiled section (Part 11 re-auth each time); an incomplete one is refused
+   ✓ approved 20 complete sections
+   ✓ approval of the empty §3.2.S.6 refused (409): §3.2.S.6 is 0% complete and cannot be approved. Missing required inputs: drugSubstanceContainerDescription, drugSubstanceClosureDescription
+
+── 15a. A signature meaning outside 21 CFR 11.50(a)(3) is refused, never substituted
+   ✓ a meaning outside 11.50(a)(3) is refused (400 INVALID_SIGNATURE_MEANING), not rewritten
+   ✓ every Module 3 approval recorded the meaning its signer declared (approval)
+
+── 15b. The staffer records what §3.2.S.6 was missing — the drug-substance container closure — and recompiles
+   ✓ drug-substance container closure recorded and linked (200)
+   ✓ recompiled: §3.2.S.6 now 100% from the drug-substance record
+   ✓ approved 2 newly complete section(s), re-signed 3 the recompile returned to draft; still incomplete: none
+
+── 16. Export gate now — passes only when every section is approved AND complete
+   ✓ gate passed
+
+── 17. Find the submission spine the program intake created
+   ✓ submission spine id=39
+
+── 18. Create sequence 0001 for it
+   ✓ sequence id=74
+
+── 19. Place the approved Module 3 into the sequence
+   ✓ 21 section(s) placed as leaves (0 skipped with reasons)
+   placed: m3.1 m3.2.A.1 m3.2.A.2 m3.2.A.3 m3.2.P.1 m3.2.P.2 m3.2.P.3 m3.2.P.4 m3.2.P.5 m3.2.P.6 m3.2.P.7 m3.2.P.8 m3.2.R.1.US m3.2.S.1 m3.2.S.2 m3.2.S.3 m3.2.S.4 m3.2.S.5 m3.2.S.6 m3.2.S.7 m3.3 
+
+── 19b. The REAL eCTD generator materializes the placed Module 3
+   ✓ eCTD compile completed — 21 real PDF leaves, zero placeholder leaves
+   ✓ every required Module 3 section (3.2.S / 3.2.P / 3.2.R) is placed and recognized
+
+── 20. The IND checklist sees the M3 leaves
+   ✓ checklist shows 189 Module 3 sections
+
+── 21. The data room lists the Module 3 branch + an upload
+   ✓ vault read-model 200
+   ✓ Module 3 (CMC) branch lists 21 artifacts
+   ✓ upload (201) appears in Uploaded files branch (1)
+
+── 21b. A batch record cites the Vault certificate it was taken from; a reissued certificate holds the sections that read it until a person re-verifies
+   ✓ the program's records list, batch record batch:3783f3ec-1f33-458b-bb0b-934702ba7285 among them
+   ✓ batch:3783f3ec-1f33-458b-bb0b-934702ba7285 linked to the certificate it was taken from
+   ✓ the Vault names the use: evidence for batch:3783f3ec-1f33-458b-bb0b-934702ba7285, read by Module 3 §3.2.P.3
+   ✓ the reissued certificate holds 1 approved section(s): 1 approved section(s) read CMC records taken from a Vault document that has since been superseded or withdrawn. Verify each record against t
+   ✓ re-verified: the link moved to the reissued certificate with the person's reason, and the hold lifted
+
+── 21c. Placing Module 3 again into the SAME sequence updates its leaves — never a second copy
+   ✓ re-placed: still 21 Module 3 leaves in sequence 74, each updated in place
+
+── 21d. A CMC amendment: sequence 0002 receives Module 3 as replace of what 0001 filed
+   ✓ sequence 0002 carries the Module 3 leaves as replace=21
+
+── 22. Governed change marked sections stale → gate refuses again (fail closed end-to-end)
+   ✓ change write-through=recorded; gate now refuses (409): 2 section(s) went stale after approval and must be re-approved before final export
+
+── 23. Regulatory lead logs an agency question (the correspondence WRITE half)
+   ✓ question logged (id=53, OPEN, org-stamped)
+
+── 24. The board's correspondence lists it, ordered into the open set
+   ✓ board correspondence lists question 53
+
+── 25. Triage: DRAFTED with a LINKED response draft, then CLOSED — the row leaves the open list, stays in the record
+   ✓ response draft created (2640bf05-eeb4-4e69-9a95-bcca78430f29)
+   ✓ dangling responseDocId refused (400, nothing linked)
+   ✓ status → DRAFTED, response draft linked
+   ✓ board serves the linked draft id
+   ✓ sent for review (IN_REVIEW)
+   ✓ stale transition answers 409 (row is IN_REVIEW now)
+   ✓ closed: off the open list (0), kept in the store
+   ✓ closed file lists the answered question
+   ✓ reopened to DRAFTED (guarded on CLOSED)
+
+── 26. A signed record is not changed under its signature
+   ✓ QA approves the specification under a signature
+   ✓ an approved specification is not signed a second time (409)
+   ✓ widening an approved specification's limits with no reason is refused (422)
+   ✓ with a reason, the edit lands and WITHDRAWS the approval (approval_status=draft)
+   ✓ the revised specification is approved again under a new signature
+   ✓ a qualified container closure's content is closed to an ordinary edit (409)
+   ✓ a validated process's content is closed to an ordinary edit (409)
+   ✓ retiring a qualified reference standard needs a reason (422)
+   ✓ with a reason, the qualified standard is retired (status=retired)
+   ✓ no QC result recorded against B-001: the release is refused (409), whatever the request claims
+   ✓ QC records B-001's release assay and a second person reviews it
+   ✓ QA releases batch B-001 under a signature
+   ✓ released_by is the signer (JM Smith), not the name the request typed
+   ✓ a released batch's record is closed to an ordinary edit (409)
+   ✓ a released batch cannot be dispositioned again (409)
+   ✓ a batch cannot be created already 'released' (409)
+
+════ RESULT: 153 passed, 0 failed ════

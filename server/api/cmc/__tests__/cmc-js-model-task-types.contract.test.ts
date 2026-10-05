@@ -10,6 +10,14 @@
  * other half: each call names a task, and the drafting and review calls name
  * the high-risk ones, so dropping a taskType cannot silently reopen the path.
  *
+ * The three CMC routers this first covered — server/api/cmc/global-compliance.js,
+ * preclinical-translator.js and change-impact-simulator.js — were retired on
+ * 2026-10-05 with no caller (server/api/cmc/__tests__/
+ * cmc-retired-routers.contract.test.ts keeps them gone), and with them
+ * server/utils/document-generator.js, whose only importer was the retired
+ * blueprint-generator.js. Their entries are gone with them; the module that
+ * remains keeps the same pin.
+ *
  * Source-level on purpose: the modules write to disk and read Supabase, and the
  * property under test is the request each call makes.
  */
@@ -35,24 +43,6 @@ function chatCallHeads(rel: string): string[] {
 const taskOf = (head: string) => head.match(/taskType:\s*'([a-z_]+)'/)?.[1] ?? null;
 
 const EXPECTED: Record<string, string[]> = {
-  'server/api/cmc/global-compliance.js': [
-    'document_drafting',
-    'regulatory_review',
-    'document_drafting',
-    'document_analysis',
-    'regulatory_review',
-    'regulatory_review',
-  ],
-  'server/api/cmc/preclinical-translator.js': [
-    'document_drafting',
-    'document_drafting',
-    'document_drafting',
-    'document_drafting',
-    'document_analysis',
-    'document_drafting',
-  ],
-  'server/api/cmc/change-impact-simulator.js': ['regulatory_review', 'regulatory_review'],
-  'server/utils/document-generator.js': ['document_drafting'],
   'server/services/indCopilot.js': [
     'structured_output',
     'regulatory_review',

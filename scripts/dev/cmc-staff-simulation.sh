@@ -187,16 +187,18 @@ QSIG=$(cat "$OUT/ccsq1.json" | JQ '.governance.actionId // empty')
 CODE=$(req ccsq2 POST "/api/cmc/container-closures/$CCSID/qualify" '{"reason":"Attempting to re-sign an already qualified system.","meaning":"approval","reauth":{"password":"pass-word"}}')
 [ "$CODE" = 409 ] && ok "a second signature over an already-qualified system is refused" \
   || bad "re-qualification was accepted ($CODE)"
+# The program a record is evidence for is fixed at creation. Asked of the
+# standard BEFORE it is qualified: a qualified record refuses any content
+# edit (step 26), which would prove nothing about the program.
+CODE=$(req rstdmove PUT "/api/cmc/reference-standards/$RSTDID" '{"projectId":"00000000-0000-4000-8000-000000000000","materialSource":"DS lot B-001 (retained sample)"}')
+MOVED=$(cat "$OUT/rstdmove.json" | JQ '.data.projectId // empty')
+[ "$CODE" = 200 ] && [ "$MOVED" = "$PROGRAM" ] \
+  && ok "an edit cannot repoint a record at another program (still $PROGRAM)" \
+  || bad "projectId was moved by an ordinary edit ($CODE, now $MOVED)"
 CODE=$(req rstdq POST "/api/cmc/reference-standards/$RSTDID/qualify" '{"reason":"Characterisation complete; standard released for use.","meaning":"approval","reauth":{"password":"pass-word"}}')
 RQST=$(cat "$OUT/rstdq.json" | JQ '.data.status // empty')
 [ "$CODE" = 200 ] && [ "$RQST" = "qualified" ] && ok "reference standard qualified under signature" \
   || bad "reference standard qualify failed ($CODE): $(head -c250 "$OUT/rstdq.json")"
-# The program a record is evidence for is fixed at creation.
-CODE=$(req ccsmove PUT "/api/cmc/container-closures/$CCSID" '{"projectId":"00000000-0000-4000-8000-000000000000","supplier":"Schott / West Pharmaceutical"}')
-MOVED=$(cat "$OUT/ccsmove.json" | JQ '.data.projectId // empty')
-[ "$CODE" = 200 ] && [ "$MOVED" = "$PROGRAM" ] \
-  && ok "an edit cannot repoint a record at another program (still $PROGRAM)" \
-  || bad "projectId was moved by an ordinary edit ($CODE, now $MOVED)"
 
 step "8e. Analytical development records the impurity file (feeds 3.2.S.3.2)"
 # One row per impurity. The ICH threshold that governs each level is derived
@@ -955,6 +957,62 @@ CODE=$(req qreopen PATCH "/api/cmc/agency-questions/$QID" '{"status":"DRAFTED","
 ST=$(cat "$OUT/qreopen.json" | JQ '.data.status // empty')
 [ "$CODE" = 200 ] && [ "$ST" = "DRAFTED" ] && ok "reopened to DRAFTED (guarded on CLOSED)" || bad "reopen: $CODE $ST"
 req qreclose PATCH "/api/cmc/agency-questions/$QID" '{"status":"CLOSED","expectedStatus":"DRAFTED"}' >/dev/null
+
+step "26. A signed record is not changed under its signature"
+# Last, because it retires and re-signs records the Module 3 steps above read.
+# The signatures bind the ledger hash, not the content, so an edit that kept
+# the signed state left the signature on values nobody signed.
+SPECID=$(cat "$OUT/spec.json" | JQ '.data.id // empty')
+BATCHID=$(cat "$OUT/batch.json" | JQ '.data.id // empty')
+CODE=$(req specsign POST "/api/cmc/specifications/$SPECID/approve" '{"reason":"Limits justified by batch history n=12.","meaning":"approval","reauth":{"password":"pass-word"}}')
+[ "$CODE" = 200 ] && ok "QA approves the specification under a signature" || bad "spec approval: $CODE $(head -c200 "$OUT/specsign.json")"
+CODE=$(req specsign1 POST "/api/cmc/specifications/$SPECID/approve" '{"reason":"Signing the same approval a second time.","meaning":"approval","reauth":{"password":"pass-word"}}')
+[ "$CODE" = 409 ] && ok "an approved specification is not signed a second time (409)" || bad "a second approval signature landed on an approved specification ($CODE)"
+CODE=$(req specedit0 PUT "/api/cmc/specifications/$SPECID" '{"acceptanceCriteria":{"release":"90.0-110.0%","shelf":"85.0-115.0%"}}')
+ST=$(cat "$OUT/specedit0.json" | JQ '.error // empty')
+[ "$CODE" = 422 ] && [ "$ST" = REASON_REQUIRED ] && ok "widening an approved specification's limits with no reason is refused (422)" \
+  || bad "an approved specification was edited with no reason ($CODE $ST)"
+CODE=$(req specedit1 PUT "/api/cmc/specifications/$SPECID" '{"acceptanceCriteria":{"release":"97.0-103.0%","shelf":"95.0-105.0%"},"reason":"Release limit tightened after batch B-2026-005 trend review."}')
+ST=$(cat "$OUT/specedit1.json" | JQ '.data.approval_status // empty')
+WD=$(cat "$OUT/specedit1.json" | JQ '.approvalWithdrawn // empty')
+[ "$CODE" = 200 ] && [ "$ST" = draft ] && [ "$WD" = true ] && ok "with a reason, the edit lands and WITHDRAWS the approval (approval_status=draft)" \
+  || bad "approved-spec edit with reason: $CODE status=$ST withdrawn=$WD"
+CODE=$(req specsign2 POST "/api/cmc/specifications/$SPECID/approve" '{"reason":"Tightened limits reviewed and accepted.","meaning":"approval","reauth":{"password":"pass-word"}}')
+[ "$CODE" = 200 ] && ok "the revised specification is approved again under a new signature" || bad "re-approval: $CODE $(head -c200 "$OUT/specsign2.json")"
+
+CODE=$(req ccsedit PUT "/api/cmc/container-closures/$CCSID" '{"containerDescription":"Changed after qualification"}')
+ST=$(cat "$OUT/ccsedit.json" | JQ '.code // empty')
+[ "$CODE" = 409 ] && [ "$ST" = SIGNED_RECORD ] && ok "a qualified container closure's content is closed to an ordinary edit (409)" \
+  || bad "a qualified container closure was edited ($CODE $ST)"
+CODE=$(req procedit PUT "/api/cmc/manufacturing-processes/$PROCID" '{"processDescription":"Edited under the validation signature"}')
+[ "$CODE" = 409 ] && ok "a validated process's content is closed to an ordinary edit (409)" || bad "a validated process was edited ($CODE)"
+CODE=$(req rstdret0 PUT "/api/cmc/reference-standards/$RSTDID" '{"status":"retired"}')
+[ "$CODE" = 422 ] && ok "retiring a qualified reference standard needs a reason (422)" || bad "retire with no reason: $CODE"
+CODE=$(req rstdret1 PUT "/api/cmc/reference-standards/$RSTDID" '{"status":"retired","reason":"Lot exhausted; replaced by lot RS-2027-01."}')
+ST=$(cat "$OUT/rstdret1.json" | JQ '.data.status // empty')
+[ "$CODE" = 200 ] && [ "$ST" = retired ] && ok "with a reason, the qualified standard is retired (status=retired)" || bad "retire with reason: $CODE $ST"
+
+# A release is signed over the batch's RECORDED, reviewed QC results — never
+# over results the request supplies, and never over none.
+CODE=$(req batchrel0 POST "/api/cmc/batch-records/$BATCHID/release" '{"releaseTesting":{"assay":"pass"},"decision":"approved","reason":"Attempting a release with nothing recorded against the batch.","reauth":{"password":"pass-word"}}')
+ST=$(cat "$OUT/batchrel0.json" | JQ '.code // empty')
+[ "$CODE" = 409 ] && [ "$ST" = RELEASE_EVIDENCE ] && ok "no QC result recorded against B-001: the release is refused (409), whatever the request claims" \
+  || bad "a batch was released over no recorded result ($CODE $ST)"
+CODE=$(req qcb001 POST /api/cmc/qc-testing "{\"sampleId\":\"S-B001-REL\",\"batchNumber\":\"B-001\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-20T00:00:00.000Z\",\"testResults\":{\"value\":\"99.2\",\"unit\":\"%\"},\"specifications\":{\"acceptanceCriteria\":\"98.0-102.0%\"},\"passFailStatus\":\"pass\",\"projectId\":\"$PROGRAM\"}")
+QCB=$(cat "$OUT/qcb001.json" | JQ '.data.id // empty')
+CODE2=$(req qcb001rev PUT "/api/cmc/qc-testing/$QCB" '{"reviewedBy":1,"passFailStatus":"pass"}')
+[ "$CODE" = 201 -o "$CODE" = 200 ] && [ "$CODE2" = 200 ] && ok "QC records B-001's release assay and a second person reviews it" \
+  || bad "B-001 QC record/review: $CODE/$CODE2 $(head -c200 "$OUT/qcb001rev.json")"
+CODE=$(req batchrel POST "/api/cmc/batch-records/$BATCHID/release" '{"releaseTesting":{"assay":"99.2%","identity":"conforms"},"releasedBy":"Someone Else","decision":"approved","reason":"All release tests within specification.","reauth":{"password":"pass-word"}}')
+RB=$(cat "$OUT/batchrel.json" | JQ '.data.batchRecord.released_by // .data.released_by // empty')
+[ "$CODE" = 200 ] && ok "QA releases batch B-001 under a signature" || bad "batch release: $CODE $(head -c200 "$OUT/batchrel.json")"
+[ -n "$RB" ] && [ "$RB" != "Someone Else" ] && ok "released_by is the signer ($RB), not the name the request typed" || bad "released_by came from the request: '$RB'"
+CODE=$(req batchedit PUT "/api/cmc/batch-records/$BATCHID" '{"yieldData":{"percent":99}}')
+[ "$CODE" = 409 ] && ok "a released batch's record is closed to an ordinary edit (409)" || bad "a released batch was edited ($CODE)"
+CODE=$(req batchrel2 POST "/api/cmc/batch-records/$BATCHID/release" '{"releaseTesting":{"assay":"fail"},"releasedBy":"QA","decision":"rejected","reason":"Attempting to re-disposition a released batch.","reauth":{"password":"pass-word"}}')
+[ "$CODE" = 409 ] && ok "a released batch cannot be dispositioned again (409)" || bad "a released batch was re-dispositioned ($CODE)"
+CODE=$(req batchself POST /api/cmc/batch-records "{\"batchNumber\":\"B-SELF\",\"productName\":\"Drug substance\",\"status\":\"released\",\"projectId\":\"$PROGRAM\"}")
+[ "$CODE" = 409 ] && ok "a batch cannot be created already 'released' (409)" || bad "a batch was created with a self-declared release ($CODE)"
 
 echo; echo "════ RESULT: $PASS passed, $FAIL failed ════"
 exit $([ "$FAIL" = 0 ] && echo 0 || echo 1)
