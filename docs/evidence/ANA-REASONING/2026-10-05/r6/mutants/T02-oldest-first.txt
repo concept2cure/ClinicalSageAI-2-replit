@@ -1,0 +1,12 @@
+Mutant T02-oldest-first: the oldest tools are carried first, so the cap keeps the wrong ones
+
+--- server/services/ana/tool-trace.ts
+- for (const e of [...entries].reverse()) {
++ for (const e of entries) {
+
+Tests run: server/services/ana/__tests__/tool-selection-carry-over.test.ts server/services/ana/__tests__/tool-selection-context.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/tool-selection-context.test.ts > what a conversation carries into the next turn > the tools that succeeded, most recent first, each once 7ms
+      Tests  1 failed | 43 passed (44)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

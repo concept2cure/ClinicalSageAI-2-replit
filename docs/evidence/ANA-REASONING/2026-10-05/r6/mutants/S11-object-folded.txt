@@ -1,0 +1,12 @@
+Mutant S11-object-folded: an object document type reads "[object Object]", as before
+
+--- server/services/ana/tool-selection.ts
+- asText(ctx?.documentType)
++ String(ctx?.documentType ?? '')
+
+Tests run: server/services/ana/__tests__/tool-selection-carry-over.test.ts server/services/ana/__tests__/tool-selection-context.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/tool-selection-context.test.ts > the selector reads a context field only as the string it is declared to be > an object never adds the word "object" 21ms
+      Tests  1 failed | 43 passed (44)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

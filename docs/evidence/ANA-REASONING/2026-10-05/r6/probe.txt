@@ -1,0 +1,57 @@
+Round 6 evidence probe: the real selector (round-6 tree, merged with trunk d11ee2368) on the production shape — the launch-scoped catalog (withoutHiddenAppTools(getAllEnabledTools())), SELF_DRIVE_TOOLS pinned, cap 50, project type IND and none. 'trunk' is the same call with nothing carried, which is what trunk's selector does with any carry.
+
+Surface: 609 launch-scoped tools; cap 50; 21 always-on + self-drive pins; MAX_CARRIED_TOOLS 4.
+
+1. Recovery: the tool the previous turn ran, on its follow-ups
+  IND | "and for the EU?" -> get_cmc_requirements: trunk NOT offered, round 6 offered
+  IND | "what about Japan" -> get_cmc_requirements: trunk offered, round 6 offered
+  IND | "and for a biologic?" -> get_cmc_requirements: trunk offered, round 6 offered
+  IND | "and as a victim?" -> assess_ddi_risk: trunk NOT offered, round 6 offered
+  IND | "what about with itraconazole?" -> assess_ddi_risk: trunk NOT offered, round 6 offered
+  IND | "and for P-gp?" -> assess_ddi_risk: trunk NOT offered, round 6 offered
+  IND | "and with 80% power?" -> estimate_sample_size: trunk NOT offered, round 6 offered
+  IND | "what if dropout is 15%?" -> estimate_sample_size: trunk NOT offered, round 6 offered
+  IND | "redo it for a one-sided test" -> estimate_sample_size: trunk NOT offered, round 6 offered
+  IND | "and for the drug product?" -> design_stability_study: trunk NOT offered, round 6 offered
+  IND | "what about photostability?" -> design_stability_study: trunk NOT offered, round 6 offered
+  IND | "which batches?" -> design_stability_study: trunk NOT offered, round 6 offered
+  IND | "now the toxicology part" -> draft_nonclinical_overview_m2_4: trunk NOT offered, round 6 offered
+  IND | "make it shorter" -> draft_nonclinical_overview_m2_4: trunk NOT offered, round 6 offered
+  IND | "add the safety pharmacology" -> draft_nonclinical_overview_m2_4: trunk NOT offered, round 6 offered
+  IND | "and the dog study?" -> classify_tox_findings: trunk offered, round 6 offered
+  IND | "which are adverse?" -> classify_tox_findings: trunk offered, round 6 offered
+  IND | "now the 13-week one" -> classify_tox_findings: trunk offered, round 6 offered
+  IND | "and for a cell therapy?" -> explain_cmc_topic: trunk offered, round 6 offered
+  IND | "what data would FDA want?" -> explain_cmc_topic: trunk NOT offered, round 6 offered
+  IND | "go on" -> explain_cmc_topic: trunk NOT offered, round 6 offered
+  IND | "and with a safety factor of 20?" -> compute_fih_dose: trunk NOT offered, round 6 offered
+  IND | "now for the dog" -> compute_fih_dose: trunk NOT offered, round 6 offered
+  IND | "what if it is 30?" -> compute_fih_dose: trunk NOT offered, round 6 offered
+  (none) | "and for the EU?" -> get_cmc_requirements: trunk NOT offered, round 6 offered
+  (none) | "what about Japan" -> get_cmc_requirements: trunk offered, round 6 offered
+  (none) | "and for a biologic?" -> get_cmc_requirements: trunk offered, round 6 offered
+  (none) | "and as a victim?" -> assess_ddi_risk: trunk NOT offered, round 6 offered
+  (none) | "what about with itraconazole?" -> assess_ddi_risk: trunk NOT offered, round 6 offered
+  (none) | "and for P-gp?" -> assess_ddi_risk: trunk NOT offered, round 6 offered
+  (none) | "and with 80% power?" -> estimate_sample_size: trunk offered, round 6 offered
+  (none) | "what if dropout is 15%?" -> estimate_sample_size: trunk offered, round 6 offered
+  (none) | "redo it for a one-sided test" -> estimate_sample_size: trunk offered, round 6 offered
+  (none) | "and for the drug product?" -> design_stability_study: trunk NOT offered, round 6 offered
+  (none) | "what about photostability?" -> design_stability_study: trunk offered, round 6 offered
+  (none) | "which batches?" -> design_stability_study: trunk NOT offered, round 6 offered
+  (none) | "now the toxicology part" -> draft_nonclinical_overview_m2_4: trunk NOT offered, round 6 offered
+  (none) | "make it shorter" -> draft_nonclinical_overview_m2_4: trunk NOT offered, round 6 offered
+  (none) | "add the safety pharmacology" -> draft_nonclinical_overview_m2_4: trunk NOT offered, round 6 offered
+  (none) | "and the dog study?" -> classify_tox_findings: trunk NOT offered, round 6 offered
+  (none) | "which are adverse?" -> classify_tox_findings: trunk offered, round 6 offered
+  (none) | "now the 13-week one" -> classify_tox_findings: trunk NOT offered, round 6 offered
+  (none) | "and for a cell therapy?" -> explain_cmc_topic: trunk offered, round 6 offered
+  (none) | "what data would FDA want?" -> explain_cmc_topic: trunk NOT offered, round 6 offered
+  (none) | "go on" -> explain_cmc_topic: trunk NOT offered, round 6 offered
+  (none) | "and with a safety factor of 20?" -> compute_fih_dose: trunk offered, round 6 offered
+  (none) | "now for the dog" -> compute_fih_dose: trunk NOT offered, round 6 offered
+  (none) | "what if it is 30?" -> compute_fih_dose: trunk NOT offered, round 6 offered
+  Lost: trunk 33/48, round 6 0/48
+
+2. Change of topic: 26 in-scope routing prompts x 10 earlier topics x 2 project types; each earlier topic carries the 8 tools its question selects first (the selector keeps 4)
+  520 checks: 0 lost, 0 with a name offered twice
