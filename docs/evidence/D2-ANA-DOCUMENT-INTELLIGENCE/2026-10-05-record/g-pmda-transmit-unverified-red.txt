@@ -1,0 +1,174 @@
+# g-pmda-transmit-unverified — RED, before the change (HEAD a9ac124a, 2026-10-05)
+# npx vitest run server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA transmit — refused before the wire until a sourced protocol exists > with every credential set, refuses with UnverifiedTransportError: no socket, no transmittal row, claim releasable 10ms
+   → expected the transmit to reject
+ × server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA transmit — refused before the wire until a sourced protocol exists > the unguarded implementation refuses the same way (no path around the refusal) 3ms
+   → expected the transmit to reject
+ ✓ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA transmit — refused before the wire until a sourced protocol exists > a request missing its sequence number is still refused for that first, before any row 2ms
+ × server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA transmit — refused before the wire until a sourced protocol exists > the source header says the protocol is unverified and names the real system 2ms
+   → expected '/**\n * PMDA Gateway — Japan\'s regul…' to match /UNVERIFIED — no regulator source/
+ × server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA status and configuration — no poll, no "configured" over an unsourced protocol > checkStatus never opens a request; it returns the stored row as source=stored with the reason 3ms
+   → expected [ { …(9) } ] to have a length of +0 but got 1
+ × server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA status and configuration — no poll, no "configured" over an unsourced protocol > isConfigured is false even with every variable set 1ms
+   → expected true to be false // Object.is equality
+ × server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > Japan devices/IVDs — not transmittable > getMarket('jp-pmda').canTransmit is false, with no gateway and an honest note 1ms
+   → expected true to be false // Object.is equality
+ × server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > pre-transmit size limit — the unsourced PMDA figure warns, it does not block > a JP bundle over the recorded 1 GB figure clears with a warning naming the figure as unsourced 2ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > pre-transmit size limit — the unsourced PMDA figure warns, it does not block > a sourced limit still blocks (FDA control) 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA transmit — refused before the wire until a sourced protocol exists > with every credential set, refuses with UnverifiedTransportError: no socket, no transmittal row, claim releasable
+Error: expected the transmit to reject
+ ❯ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts:131:31
+    129|
+    130| async function failureOf(p: Promise<unknown>): Promise<unknown> {
+    131|   return p.then(() => { throw new Error('expected the transmit to reje…
+       |                               ^
+    132| }
+    133|
+ ❯ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts:136:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA transmit — refused before the wire until a sourced protocol exists > the unguarded implementation refuses the same way (no path around the refusal)
+Error: expected the transmit to reject
+ ❯ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts:131:31
+    129|
+    130| async function failureOf(p: Promise<unknown>): Promise<unknown> {
+    131|   return p.then(() => { throw new Error('expected the transmit to reje…
+       |                               ^
+    132| }
+    133|
+ ❯ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts:148:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA transmit — refused before the wire until a sourced protocol exists > the source header says the protocol is unverified and names the real system
+AssertionError: expected '/**\n * PMDA Gateway — Japan\'s regul…' to match /UNVERIFIED — no regulator source/
+
+- Expected:
+/UNVERIFIED — no regulator source/
+
++ Received:
+"/**
+ * PMDA Gateway — Japan's regulatory submission gateway operated by
+ * Pharmaceuticals and Medical Devices Agency. Per the \"Notification on
+ * Electronic Common Technical Document\" (2016, updated 2021) and the
+ * PMDA Gateway System Operating Procedure (2022).
+ *
+ * Transport: HTTPS POST with mTLS, JSON metadata + zipped eCTD package
+ * as multipart upload. PMDA also exposes a SOAP-based status query API
+ * for legacy clients; we implement the REST path (preferred since 2022).
+ *
+ * Key differences from FDA ESG / EMA CESP:
+ *   - Endpoint: https://gateway.pmda.go.jp/submission/v1/* (production)
+ *               https://gateway-test.pmda.go.jp/submission/v1/* (staging)
+ *   - Authentication: mTLS using a PMDA-issued client certificate
+ *     (rotated annually) + an HMAC-SHA256 request signature
+ *   - Package: eCTD-JP zip with Module 1 under m1/jp/ + jp-regional.xml
+ *   - Multi-byte filenames + titles require UTF-8 with BOM in metadata
+ *   - Pre-validation: PMDA runs their own validator after upload + emits
+ *     a result via /receipts/{id}; ack types are 'receipt' (transport),
+ *     'pre-check' (validation), and 'review-accepted' (final)
+ "
+
+ ❯ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts:165:20
+    163|     const src = await fs.readFile(path.resolve(__dirname, '../pmda-gat…
+    164|     const header = src.slice(0, src.indexOf('*/'));
+    165|     expect(header).toMatch(/UNVERIFIED — no regulator source/);
+       |                    ^
+    166|     expect(header).toMatch(/申請電子データシステム/);
+    167|     // The invented endpoint and signature scheme are gone from the co…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA status and configuration — no poll, no "configured" over an unsourced protocol > checkStatus never opens a request; it returns the stored row as source=stored with the reason
+AssertionError: expected [ { …(9) } ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts:177:23
+    175|   it('checkStatus never opens a request; it returns the stored row as …
+    176|     const result = await new PmdaGateway().checkStatus(777);
+    177|     expect(wireCalls).toHaveLength(0);
+       |                       ^
+    178|     expect(result.source).toBe('stored');
+    179|     expect(result.status).toBe('received');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA status and configuration — no poll, no "configured" over an unsourced protocol > isConfigured is false even with every variable set
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts:184:64
+    182|
+    183|   it('isConfigured is false even with every variable set', async () =>…
+    184|     expect(await new PmdaGateway().isConfigured(7, 'staging')).toBe(fa…
+       |                                                                ^
+    185|   });
+    186| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > Japan devices/IVDs — not transmittable > getMarket('jp-pmda').canTransmit is false, with no gateway and an honest note
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts:191:28
+    189|   it("getMarket('jp-pmda').canTransmit is false, with no gateway and a…
+    190|     const jp = getMarket('jp-pmda')!;
+    191|     expect(jp.canTransmit).toBe(false);
+       |                            ^
+    192|     expect(jp.gatewayRegion).toBeUndefined();
+    193|     expect(jp.assembleNote).toMatch(/Japanese device\/IVD applications…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > pre-transmit size limit — the unsourced PMDA figure warns, it does not block > a JP bundle over the recorded 1 GB figure clears with a warning naming the figure as unsourced
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Package is 1.00 GB, over the PMDA gateway limit of 1.00 GB. Submit via the agency's large-submission channel (e.g. physical media) instead of the gateway.",
++ ]
+
+ ❯ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts:207:66
+    205|       env: {},
+    206|     });
+    207|     expect(r.blockers.filter((b) => /gateway limit|GB/.test(b))).toEqu…
+       |                                                                  ^
+    208|     expect(r.warnings.some((w) => /PMDA/.test(w) && /no PMDA source/i.…
+    209|     const size = r.checks.find((c) => c.name === 'gateway-size-limit')…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed (9)
+   Start at  05:04:58
+   Duration  1.50s (transform 956ms, setup 76ms, import 1.08s, tests 33ms, environment 0ms)
+

@@ -11,8 +11,8 @@
  *   - global-markets/market-readiness (assessMarketReadiness)
  *
  * HONEST BY CONSTRUCTION: capability flags come straight from the registry;
- * `canTransmit` mirrors the registry — true for the 12 markets with a live
- * gateway, false for TW/SA/ZA/MDSAP. The planner never asserts a capability
+ * `canTransmit` mirrors the registry — true for the 11 markets with a live
+ * gateway, false for JP/TW/SA/ZA/MDSAP. The planner never asserts a capability
  * the registry does not have.
  *
  * PURE + DETERMINISTIC: same inputs ⇒ same output (apart from the ISO timestamp

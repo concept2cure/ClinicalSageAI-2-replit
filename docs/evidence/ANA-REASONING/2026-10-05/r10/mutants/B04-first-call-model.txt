@@ -1,0 +1,13 @@
+Mutant B04-first-call-model: the verifier names the first call’s model, as before round 10
+
+--- server/services/authoring/machine-claim-verify.ts
+- return { outputs, servedBy: servedModelsOf(body.model) };
++ return { outputs, servedBy: body.model?.model ? [{ provider: body.model.provider ?? null, model: body.model.model }] : [] };
+
+Tests run: server/routes/__tests__/authoring-decision-source.pglite.test.ts server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > a verified source names every model that wrote the words, as RULE 2 reads it > single: two models served the turn → both, each qualified or not, with its PQ status 36ms
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > a verified source names every model that wrote the words, as RULE 2 reads it > the claim verifier names every model that served a turn, and no one model for a turn two served 20ms
+      Tests  2 failed | 18 passed (20)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

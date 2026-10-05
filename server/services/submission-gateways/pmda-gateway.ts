@@ -1,316 +1,79 @@
 /**
- * PMDA Gateway — Japan's regulatory submission gateway operated by
- * Pharmaceuticals and Medical Devices Agency. Per the "Notification on
- * Electronic Common Technical Document" (2016, updated 2021) and the
- * PMDA Gateway System Operating Procedure (2022).
+ * PMDA Gateway — Japan (Pharmaceuticals and Medical Devices Agency).
  *
- * Transport: HTTPS POST with mTLS, JSON metadata + zipped eCTD package
- * as multipart upload. PMDA also exposes a SOAP-based status query API
- * for legacy clients; we implement the REST path (preferred since 2022).
+ * PROTOCOL: UNVERIFIED — no regulator source. Nothing is transmitted.
  *
- * Key differences from FDA ESG / EMA CESP:
- *   - Endpoint: https://gateway.pmda.go.jp/submission/v1/* (production)
- *               https://gateway-test.pmda.go.jp/submission/v1/* (staging)
- *   - Authentication: mTLS using a PMDA-issued client certificate
- *     (rotated annually) + an HMAC-SHA256 request signature
- *   - Package: eCTD-JP zip with Module 1 under m1/jp/ + jp-regional.xml
- *   - Multi-byte filenames + titles require UTF-8 with BOM in metadata
- *   - Pre-validation: PMDA runs their own validator after upload + emits
- *     a result via /receipts/{id}; ack types are 'receipt' (transport),
- *     'pre-check' (validation), and 'review-accepted' (final)
+ * 2026-10-05 (D2 record, step g-pmda-transmit-unverified; finding
+ * drugs-jp-ectd-v4-only-for-new-applications). This file used to describe, and
+ * implement, an HTTPS + mTLS + HMAC-SHA256 REST protocol at
+ * gateway.pmda.go.jp/submission/v1 (multipart upload, /receipts/{id} polling,
+ * 'receipt' / 'pre-check' / 'review-accepted' acks), citing a "PMDA Gateway
+ * System Operating Procedure (2022)". No regulator text for any of it was ever
+ * filed. With five environment variables set it POSTed an eCTD package to that
+ * endpoint and polled it for status.
+ *
+ * PMDA's actual electronic channel is 申請電子データシステム (the "gateway
+ * system", https://esg.pmda.go.jp/). Per PMDA's own material (search extracts,
+ * 2026-10-05; see docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
+ * g-pmda-transmit-unverified-facts.md) it is used with a personal electronic
+ * certificate and a user registration, and a 提出予告 (advance notice) issues
+ * the eCTD reception number before the eCTD is uploaded. Its operation manual
+ * (esg.pmda.go.jp/files/manual_ectd_sd.pdf) has not been read here.
+ *
+ * So, until a protocol taken from that source replaces this file:
+ *   - transmit refuses with the typed UnverifiedTransportError (transmitted ===
+ *     false) — after the pure metadata check, before any transmittal row, any
+ *     credential read and any socket — so refusedBeforeWire (index.ts) releases
+ *     a caller's transmit claim;
+ *   - checkStatus never polls: it returns the stored row as source 'stored',
+ *     with the reason;
+ *   - isConfigured is false: there is no sourced transport to configure.
+ * The invented credential variables (PMDA_URL, PMDA_APPLICANT_ID,
+ * PMDA_CERT_PATH, PMDA_KEY_PATH, PMDA_HMAC_SECRET) are no longer read.
+ *
+ * Separately, from 2026-04-01 PMDA accepts only eCTD v4.0 for new approval
+ * applications and this platform builds Japan packages in v3.2.2 only; a new
+ * Japanese application is blocked earlier, at dispatch (JP_ECTD_V4_REQUIRED,
+ * server/services/ectd/dispatch-readiness.ts).
  */
 
-import { promises as fs } from 'fs';
-import { createHash, createHmac } from 'crypto';
-import * as https from 'node:https';
-import { URL } from 'url';
 import { pool } from '../../db';
-import { readVerifiedBundle } from './bundle-integrity';
 import { platformTransmittalRecord } from './acknowledgement';
 import {
-  CredentialError, GatewayError, TransportError,
-  resolveToRegistryEntry, getSubmissionTypeLabel,
+  GatewayError, UnverifiedTransportError, requiredAgencyMetadata,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
-  requiredAgencyMetadata
 } from './types';
 
-interface PmdaCredentials {
-  endpointUrl:    string;
-  applicantId:    string;        // PMDA-issued applicant id
-  clientCertPem:  string;        // PMDA-issued client cert (annual rotation)
-  clientKeyPem:   string;
-  hmacSecret:     string;        // shared secret for request signing
-}
-
-async function loadPmdaCredentials(
-  environment: 'staging' | 'production',
-): Promise<PmdaCredentials> {
-  const prefix = environment === 'production' ? 'PMDA_' : 'PMDA_STAGING_';
-  const endpointUrl = process.env[prefix + 'URL'];
-  const applicantId = process.env[prefix + 'APPLICANT_ID'];
-  const certPath    = process.env[prefix + 'CERT_PATH'];
-  const keyPath     = process.env[prefix + 'KEY_PATH'];
-  const hmacSecret  = process.env[prefix + 'HMAC_SECRET'];
-  const missing: string[] = [];
-  if (!endpointUrl) missing.push(prefix + 'URL');
-  if (!applicantId) missing.push(prefix + 'APPLICANT_ID');
-  if (!certPath)    missing.push(prefix + 'CERT_PATH');
-  if (!keyPath)     missing.push(prefix + 'KEY_PATH');
-  if (!hmacSecret)  missing.push(prefix + 'HMAC_SECRET');
-  if (missing.length > 0) {
-    throw new CredentialError('pmda', 'pmda_gateway', environment, missing);
-  }
-  const [clientCertPem, clientKeyPem] = await Promise.all([
-    fs.readFile(certPath!, 'utf8'),
-    fs.readFile(keyPath!, 'utf8'),
-  ]);
-  return {
-    endpointUrl: endpointUrl!,
-    applicantId: applicantId!,
-    clientCertPem, clientKeyPem,
-    hmacSecret: hmacSecret!,
-  };
-}
-
-/**
- * Build the PMDA HMAC signature string. Per the PMDA Gateway spec,
- * signature = HMAC-SHA256(secret, METHOD + '\n' + PATH + '\n' + DATE
- * + '\n' + SHA256(body)).
- */
-function buildPmdaSignature(
-  method: string, path: string, date: string, bodySha256: string, secret: string,
-): string {
-  const canonical = `${method}\n${path}\n${date}\n${bodySha256}`;
-  return createHmac('sha256', secret).update(canonical).digest('hex');
-}
-
-interface PmdaResponse {
-  httpStatus: number;
-  body:       Buffer;
-  headers:    Record<string, string | string[] | undefined>;
-}
-
-function postPmda(
-  endpoint: string, headers: Record<string, string>, body: Buffer, creds: PmdaCredentials,
-): Promise<PmdaResponse> {
-  return new Promise((resolve, reject) => {
-    const url = new URL(endpoint);
-    const req = https.request({
-      hostname: url.hostname,
-      port:     url.port ? Number(url.port) : 443,
-      path:     url.pathname + url.search,
-      method:   'POST',
-      headers,
-      cert:     creds.clientCertPem,
-      key:      creds.clientKeyPem,
-      rejectUnauthorized: true,
-      timeout:  300_000,
-    }, (res) => {
-      const chunks: Buffer[] = [];
-      res.on('data', (c: Buffer) => chunks.push(c));
-      res.on('end', () => resolve({
-        httpStatus: res.statusCode ?? 0,
-        body: Buffer.concat(chunks),
-        headers: res.headers as Record<string, string | string[] | undefined>,
-      }));
-    });
-    req.on('error', (err) => reject(new TransportError(`PMDA POST failed: ${err.message}`, err)));
-    req.on('timeout', () => { req.destroy(); reject(new TransportError('PMDA POST timeout')); });
-    req.write(body);
-    req.end();
-  });
-}
-
-function getPmda(
-  endpoint: string, headers: Record<string, string>, creds: PmdaCredentials,
-): Promise<PmdaResponse> {
-  return new Promise((resolve, reject) => {
-    const url = new URL(endpoint);
-    const req = https.request({
-      hostname: url.hostname,
-      port:     url.port ? Number(url.port) : 443,
-      path:     url.pathname + url.search,
-      method:   'GET',
-      headers,
-      cert:     creds.clientCertPem,
-      key:      creds.clientKeyPem,
-      rejectUnauthorized: true,
-      timeout:  60_000,
-    }, (res) => {
-      const chunks: Buffer[] = [];
-      res.on('data', (c: Buffer) => chunks.push(c));
-      res.on('end', () => resolve({
-        httpStatus: res.statusCode ?? 0,
-        body: Buffer.concat(chunks),
-        headers: res.headers as Record<string, string | string[] | undefined>,
-      }));
-    });
-    req.on('error', (err) => reject(new TransportError(`PMDA GET failed: ${err.message}`, err)));
-    req.on('timeout', () => { req.destroy(); reject(new TransportError('PMDA GET timeout')); });
-    req.end();
-  });
-}
-
-async function createTransmittalRow(req: GatewayTransmitRequest): Promise<number> {
-  const { rows } = await pool.query<{ id: number }>(
-    `INSERT INTO submission_transmittals (
-       organization_id, program_id, package_id, region, gateway, format,
-       submission_type, transport, bundle_path, bundle_sha256,
-       bundle_size_bytes, status, submitted_by, metadata
-     ) VALUES ($1, $2, $3, 'pmda', 'pmda_gateway', 'pmda_ectd', $4, 'rest', $5, $6, $7, 'pending', $8, $9)
-     RETURNING id`,
-    [
-      req.organizationId, req.programId, req.packageId,
-      req.submissionType ?? null,
-      req.bundle.path, req.bundle.sha256, req.bundle.sizeBytes, req.userId,
-      JSON.stringify(req.metadata ?? {}),
-    ],
-  );
-  return rows[0].id;
-}
-
-async function updateTransmittal(id: number, patch: Record<string, unknown>): Promise<void> {
-  const COL: Record<string, string> = {
-    status: 'status', transmissionId: 'transmission_id', httpStatus: 'http_status',
-    errorClass: 'error_class', errorMessage: 'error_message',
-    ackReceivedAt: 'ack_received_at', completedAt: 'completed_at',
-  };
-  const setFrags: string[] = []; const args: unknown[] = [];
-  for (const [k, v] of Object.entries(patch)) {
-    if (v === undefined) continue;
-    const col = COL[k]; if (!col) continue;
-    args.push(v); setFrags.push(`${col} = $${args.length}`);
-  }
-  if (setFrags.length === 0) return;
-  setFrags.push(`updated_at = NOW()`);
-  args.push(id);
-  await pool.query(
-    `UPDATE submission_transmittals SET ${setFrags.join(', ')} WHERE id = $${args.length}`,
-    args,
-  );
-}
+/** Why nothing is sent to, or read from, PMDA. One sentence, used by every refusal here. */
+const PMDA_PROTOCOL_UNVERIFIED =
+  "PMDA's electronic submission channel is 申請電子データシステム (https://esg.pmda.go.jp/); this platform holds no " +
+  'regulator-sourced specification of its protocol, so it neither sends to PMDA nor polls it. Submit through the ' +
+  'gateway system directly.';
 
 export class PmdaGateway implements SubmissionGateway {
   readonly region    = 'pmda' as const;
   readonly gateway   = 'pmda_gateway' as const;
   readonly transport = 'rest' as const;
 
-  async isConfigured(_orgId: number, environment: 'staging' | 'production'): Promise<boolean> {
-    try { await loadPmdaCredentials(environment); return true; }
-    catch { return false; } // an unreadable cert or key is not 'configured'
+  /** Always false: no sourced transport exists to be configured. */
+  async isConfigured(_orgId: number, _environment: 'staging' | 'production'): Promise<boolean> {
+    return false;
   }
 
   async transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult> {
-    /* Resolve the caller-supplied submission type through the canonical bridge
-       so the transmittal row and PMDA metadata use the canonical identifier.
-       Falls back to the raw string for unrecognized types. */
-    const resolvedEntry = req.submissionType ? resolveToRegistryEntry(req.submissionType) : null;
-    const normalizedReq: GatewayTransmitRequest = resolvedEntry
-      ? { ...req, submissionType: resolvedEntry.applicationType }
-      : req;
-
-    const agency = requiredAgencyMetadata(normalizedReq);
-    const transmittalId = await createTransmittalRow(normalizedReq);
-    try {
-      const creds = await loadPmdaCredentials(normalizedReq.environment);
-      await updateTransmittal(transmittalId, { status: 'in_transit' });
-
-      const zipBuf = await readVerifiedBundle(normalizedReq.bundle);
-      const boundary = `----c2c-pmda-${Date.now()}`;
-      const metaPart = Buffer.from(
-        '﻿' + JSON.stringify({
-          applicantId:     creds.applicantId,
-          applicationId:   normalizedReq.metadata?.applicationId ?? null,
-          sequenceNumber:  agency.sequenceNumber,
-          submissionType:  agency.submissionType,
-          productName:     normalizedReq.metadata?.productName ?? null,
-          sha256:          normalizedReq.bundle.sha256,
-        }),
-        'utf8',
-      );
-      const parts: Buffer[] = [
-        Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="metadata"\r\nContent-Type: application/json; charset=utf-8\r\n\r\n`),
-        metaPart,
-        Buffer.from(`\r\n--${boundary}\r\nContent-Disposition: form-data; name="package"; filename="ectd-jp.zip"\r\nContent-Type: application/zip\r\n\r\n`),
-        zipBuf,
-        Buffer.from(`\r\n--${boundary}--\r\n`),
-      ];
-      const body = Buffer.concat(parts);
-
-      const path = '/submission/v1/submissions';
-      const date = new Date().toUTCString();
-      const bodySha = createHash('sha256').update(body).digest('hex');
-      const signature = buildPmdaSignature('POST', path, date, bodySha, creds.hmacSecret);
-
-      const headers = {
-        'Content-Type':       `multipart/form-data; boundary=${boundary}`,
-        'Content-Length':     String(body.length),
-        'X-PMDA-Applicant':   creds.applicantId,
-        'X-PMDA-Date':        date,
-        'X-PMDA-Signature':   signature,
-        'X-PMDA-Sha256':      bodySha,
-        'Accept':             'application/json',
-        'Accept-Language':    'ja-JP, en-US',
-      };
-
-      const resp = await postPmda(
-        `${creds.endpointUrl.replace(/\/$/, '')}${path}`, headers, body, creds,
-      );
-
-      if (resp.httpStatus < 200 || resp.httpStatus >= 300) {
-        await updateTransmittal(transmittalId, {
-          status: 'rejected', httpStatus: resp.httpStatus, errorClass: 'gateway',
-          errorMessage: `HTTP ${resp.httpStatus}: ${resp.body.toString('utf8').slice(0, 500)}`,
-        });
-        throw new GatewayError(`PMDA returned HTTP ${resp.httpStatus}`, resp.httpStatus, null, resp.body.toString('utf8'));
-      }
-      let parsed: { receiptId?: string; submissionId?: string };
-      try { parsed = JSON.parse(resp.body.toString('utf8')); }
-      catch {
-        throw new GatewayError('PMDA returned non-JSON success', resp.httpStatus, null, resp.body.toString('utf8'));
-      }
-      const receiptId = parsed.receiptId ?? parsed.submissionId ?? null;
-      if (!receiptId) {
-        // A 2xx whose body names no receipt is not an accepted submission. This
-        // minted `pmda-<timestamp>` here, recorded the row as received with an
-        // acknowledgement time from the platform clock, told the operator
-        // "accepted. Receipt: pmda-…", and later polled the agency for a
-        // receipt that never existed. CESP refuses the same case; so does this.
-        await updateTransmittal(transmittalId, {
-          status: 'rejected', httpStatus: resp.httpStatus,
-          errorClass: 'gateway', errorMessage: 'Agency returned success with no receipt identifier in the body.',
-        });
-        throw new GatewayError('PMDA response missing a receipt identifier', resp.httpStatus, null, parsed);
-      }
-      await updateTransmittal(transmittalId, {
-        status: 'received', transmissionId: receiptId,
-        httpStatus: resp.httpStatus, ackReceivedAt: new Date(),
-      });
-      return {
-        transmittalId, transmissionId: receiptId, status: 'received', transport: 'rest',
-        httpStatus: resp.httpStatus, ackReceivedAt: new Date(),
-        message: `PMDA Gateway submission accepted. Receipt: ${receiptId}.`,
-      };
-    } catch (err: unknown) {
-      if (err instanceof CredentialError) {
-        await updateTransmittal(transmittalId, { status: 'rejected', errorClass: 'auth', errorMessage: err.message });
-      } else if (err instanceof TransportError) {
-        await updateTransmittal(transmittalId, { status: 'rejected', errorClass: 'transport', errorMessage: err.message });
-      } else if (!(err instanceof GatewayError)) {
-        await updateTransmittal(transmittalId, {
-          status: 'rejected', errorClass: 'gateway',
-          errorMessage: err instanceof Error ? err.message : String(err),
-        });
-      }
-      throw err;
-    }
+    // The request's own defects are reported first (a pure check, typed as
+    // nothing transmitted), then the refusal that applies to every request.
+    const agency = requiredAgencyMetadata(req);
+    throw new UnverifiedTransportError(
+      'pmda', 'pmda_gateway', 'rest',
+      `Sequence ${agency.sequenceNumber} was not sent and no transmittal was recorded. ${PMDA_PROTOCOL_UNVERIFIED}`,
+    );
   }
 
   async checkStatus(transmittalId: number): Promise<GatewayStatusResult> {
     const { rows } = await pool.query<{
       transmission_id: string | null; status: string; ack_received_at: Date | null;
-      metadata: Record<string, unknown> | null;
     }>(
       `SELECT transmission_id, status, ack_received_at, metadata FROM submission_transmittals
         WHERE id = $1 AND region = 'pmda' AND gateway = 'pmda_gateway'`,
@@ -319,47 +82,9 @@ export class PmdaGateway implements SubmissionGateway {
     if (rows.length === 0 || !rows[0].transmission_id) {
       throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
     }
-    /* Live status poll via /receipts/{id}. */
-    let pollError: string | null = 'The agency status poll did not complete.';
-    try {
-      const env = (rows[0].metadata?.environment as 'staging' | 'production' | undefined) ?? 'production';
-      const creds = await loadPmdaCredentials(env);
-      const date = new Date().toUTCString();
-      const path = `/submission/v1/receipts/${encodeURIComponent(rows[0].transmission_id)}`;
-      const sig = buildPmdaSignature('GET', path, date, '', creds.hmacSecret);
-      const resp = await getPmda(
-        `${creds.endpointUrl.replace(/\/$/, '')}${path}`,
-        {
-          'X-PMDA-Applicant': creds.applicantId,
-          'X-PMDA-Date':      date,
-          'X-PMDA-Signature': sig,
-          'Accept':           'application/json',
-        },
-        creds,
-      );
-      if (resp.httpStatus === 200) {
-        const parsed = JSON.parse(resp.body.toString('utf8')) as { status?: string };
-        const mapped: SubmissionStatus =
-            parsed.status === 'received'           ? 'received'
-          : parsed.status === 'pre_check_passed'   ? 'validation_passed'
-          : parsed.status === 'pre_check_failed'   ? 'validation_failed'
-          : parsed.status === 'review_accepted'    ? 'review_started'
-          : (rows[0].status as SubmissionStatus);
-        if (mapped !== rows[0].status) {
-          await updateTransmittal(transmittalId, { status: mapped });
-        }
-        return {
-          source: 'agency',
-          transmittalId,
-          transmissionId: rows[0].transmission_id,
-          status: mapped,
-          ackReceivedAt: rows[0].ack_received_at,
-          rawResponse: parsed,
-        };
-      }
-    } catch (err) { pollError = err instanceof Error ? err.message : String(err); }
     return {
-      source: 'stored', pollError,
+      source: 'stored',
+      pollError: `Not polled: the PMDA status protocol is unverified. ${PMDA_PROTOCOL_UNVERIFIED}`,
       transmittalId,
       transmissionId: rows[0].transmission_id,
       status: rows[0].status as SubmissionStatus,

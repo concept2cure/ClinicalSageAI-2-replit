@@ -1,0 +1,714 @@
+# g-jp-data-claims-truth — green, 2026-10-05
+# npx vitest run <new test> + every importer's tests (25 files)
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — auth gate > GET / returns 403 when no org context attached 24ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — auth gate > GET /:id returns 403 when no org context attached 4ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — auth gate > GET /:id/activity returns 403 when no org context attached 4ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — auth gate > GET /portfolio-insights returns 403 when no org context attached 3ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — list > GET / returns 200 with { data: Program[] } envelope 5ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — list > GET /?programType=510K passes the filter to the service 4ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — list > GET /?programType=invalid returns 422 with field errors 3ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — list > GET / returns 500 with sanitized envelope on service error 3ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — single program > GET /:id returns 200 + { data } when program found 4ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — single program > GET /:id returns 404 with notFoundInTenant envelope when program missing 3ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/activity returns 200 + { data: ActivityEvent[] } 8ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/activity respects ?limit query param via Zod 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/activity returns 422 when limit is out of range 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/activity returns 404 when program not in tenant 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/milestones returns 200 + { data: Milestone[] } 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/rim-recommendations returns 200 + { data: RimRec[] } 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/change-impact returns 200 + { data: ChangeImpact[] } 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/safety-signals returns 200 + { data: SafetySignalRow[] } 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/literature returns 200 + { data: buckets, meta: { total, productName } } 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/pma-modules returns 200 + { data: PmaModule[] } 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/pma-trial-metrics returns 200 + { data: TrialMetric[], meta: { study } } 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /:id/pma-trial-metrics returns meta.study=null when no study linked 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > regulatory-programs routes — sidecar feeds > GET /portfolio-insights returns 200 + { data: PortfolioInsight[] } 4ms
+ ✓ tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > GET / returns 403 without org context 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > POST / returns 422 when body is missing required fields 12ms
+ ✓ tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > POST / returns 422 when label is empty string 3ms
+ ✓ tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > POST / returns 422 when scope contains an unknown pathway 3ms
+ ✓ tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > POST / returns 201 + { data } on successful create 3ms
+ ✓ tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > PATCH /:id returns 422 when id is non-numeric 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > saved-precedent-queries routes — auth + validation gates > DELETE /:id returns 422 when id is non-numeric 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > mdx module health — /api/mdx/health > does NOT require org context (deployment-wide probe) 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > mdx module health — /api/mdx/health > returns 200 + full report when ready 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > mdx module health — /api/mdx/health > reports readiness=not_ready when a required table is missing 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > mdx module health — /api/mdx/health > reports readiness=partial when only optional tables missing 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > mdx module health — /api/mdx/health > returns 500 with sanitized envelope when probe throws 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > envelope shape — every successful response is { data } or { data, meta } > list endpoint never sets sibling fields outside meta 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > envelope shape — every successful response is { data } or { data, meta } > literature endpoint puts total + productName under meta (no sibling fields) 2ms
+ ✓ tests/regulatory-programs-routes.test.ts > envelope shape — every successful response is { data } or { data, meta } > pma-trial-metrics puts study under meta (no sibling fields) 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > 403 without the regulatory-author role 27ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > GET /module1/requirements/:market → 200 list 4ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > GET /module1/requirements/:market → 404 for an unmodeled market 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > POST /module1/assess → 200 not-ready when a component is missing 15ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regional Module 1 requirements > POST /module1/assess → 400 without market/providedComponents 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > review-timeline projection > POST /review-timeline → 200 with milestones for FDA IND 4ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > review-timeline projection > POST /review-timeline → 400 for an unknown region/procedure 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > review-timeline projection > POST /review-timeline → 400 without required fields 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > expedited programs > GET /expedited-programs → 200 catalog 4ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > expedited programs > POST /expedited-programs/match → 200 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > expedited programs > POST /expedited-programs/match → 400 without region 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > pathway advice > POST /pathway → 200 with per-market recommendations 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > pathway advice > POST /pathway → 400 without productType/targetMarkets 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > HA meetings > GET /meetings → 200 catalog; ?market=FDA filters 4ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > HA meetings > POST /meetings/recommend → 200 with a Pre-IND meeting 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > HA meetings > POST /meetings/recommend → 400 without market/milestone 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > special designations > GET /designations/criteria/:market → 200 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > special designations > POST /designations/assess → 200 orphan-eligible for low US prevalence 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > special designations > POST /designations/assess → 400 without market 7ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > strategy brief > POST /strategy-brief → 200 cross-market brief 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > strategy brief > POST /strategy-brief → 400 without productType/targetMarkets 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > GET /fees/schedule/:market → 200 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > GET /fees/schedule/:market → 404 for an unmodeled market 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > POST /fees/estimate → 200 with a total 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > POST /fees/estimate → orphan waives to zero 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory fees > POST /fees/estimate → 400 without market 1ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > cross-market labeling > GET /labeling/requirements/:market → 200 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > cross-market labeling > POST /labeling/assess → 200 not-ready when a section is missing 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > cross-market labeling > POST /labeling/assess → 400 without market/providedSections 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > clinical-trial-application requirements > GET /cta/requirements/:market → 200 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > clinical-trial-application requirements > POST /cta/assess → 200 not-ready when a component is missing 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > clinical-trial-application requirements > POST /cta/assess → 400 without required fields 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > post-approval changes > GET /changes/vehicles/:market → 200 with categories + vehicles 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > post-approval changes > POST /changes/classify → 200 (EMA major → Type II) 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > post-approval changes > POST /changes/classify → 400 for an unknown category 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > post-approval changes > POST /changes/classify → 400 without market/category 1ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > ICH guideline catalog > GET /ich-guidelines → 200 catalog; ?q= searches; ?category= filters 5ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > ICH guideline catalog > GET /ich-guidelines/:code → 200 (E6 = GCP); unknown → 404 3ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory guidance map > GET /guidance/topics → 200 list 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory guidance map > GET /guidance/:topic → 200 grounds CSR in E3 4ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > regulatory guidance map > GET /guidance/:topic → 404 for an unmodeled topic 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > submission economics > POST /submission-economics → 200 with fees + timeline + summary 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > submission economics > POST /submission-economics → 400 for an unknown procedure 2ms
+ ✓ server/routes/__tests__/global-ri.routes.test.ts > submission economics > POST /submission-economics → 400 without required fields 1ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > keeps every locale bundle key/placeholder/markup-faithful to English 26ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > resolves every static t()/i18nKey reference in the client to a real key 46ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > keeps the client registry, locale dirs and server AnaLanguage overlays in sync 0ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > gives every non-English language a non-empty response + cultural overlay 1ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > maps every language home-market to a real market brief 1ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > declares a usable Intl locale and endonym for every registered language 28ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the always-on bridge + core are always offered 11ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the surface is genuinely over the cap (filtering actually engages) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_fda_form'" for: "'prepare FDA form 1571 as an editable …'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'amend_fda_form'" for: "'amend this FDA form with a reason for…'" 11ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_forms'" for: "'list all FDA forms available in the c…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_effort_certification'" for: "'open a time and effort certification …'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_coi_disclosure'" for: "'file a foreign appointment conflict o…'" 12ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'search_grants_gov'" for: "'search grants.gov for posted cancer f…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'screen_restricted_party'" for: "'screen this vendor against the SAM.go…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'research_compliance_briefing'" for: "'what needs my attention across resear…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'open_grant_closeout'" for: "'open the grant closeout and track the…'" 9ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'request_no_cost_extension'" for: "'request a no cost extension to extend…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_grant_budget'" for: "'reconcile the budget versus actual ex…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_expenditure'" for: "'record an actual expenditure booked a…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_subaward'" for: "'record a subaward to a subrecipient u…'" 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses a write to a surface outside the launch catalog, 403 LAUNCH_SCOPE, and does not call the route 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses it for a request with no organisation too: scope is about the product, not the tenant 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a prefix any launch surface claims, even when an out-of-scope surface claims it too 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes the narrow launch sub-path, and refuses the rest of the out-of-scope prefix 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > matches at a segment boundary: a longer, unclaimed name is not the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a path no surface claims (unmapped) and a never-gated path 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope off (a development server) > passes the out-of-scope path through to the module modes, which are off 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with LAUNCH_SCOPE_ENFORCE unset enforces 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with a value that is not on/off refuses to build (boot), rather than guess 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the locked boards' APIs: the contradiction scan and the execution history (VSR-001 §16.5) 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > passes what the launch catalog and AnA use: execute, templates, the package model, tasks, dispatch readiness 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device kit under /api/mdx, and passes the launch apps that live there 11ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call 8ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses a surface outside the catalog, and leaves the public API and webhooks alone 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > report (the default): passes the request and records the would-refuse 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: refuses it 403 LAUNCH_SCOPE and records it as enforced 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: never refuses infrastructure (the public API, webhooks) or a non-API path (the app itself) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > records one row per route, not per record: numeric and uuid segments collapse to :id 7ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > a request with no organisation is recorded against organisation 0, not dropped 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > outside production, unset still only reports (a development server serves everything) 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > never refuses a path the auth boundary serves unauthenticated (PUBLIC_API_ALLOWLIST) 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > passes the identity router at its second mount, /api/user 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses a mounted namespace no launch screen, shell or external caller uses 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses the unrecorded regulatory-document generators 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > a public prefix does not widen: an exact public path is not its parent namespace 1ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'register_controlled_substance'" for: "'register a schedule II controlled sub…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'fulfill_regulatory_commitment'" for: "'mark this PMR regulatory commitment f…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_ha_interaction'" for: "'is this FDA formal meeting interactio…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_cost_share_contribution'" for: "'record an institutional cost share co…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_training_gate'" for: "'review the training gate, is the PI c…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_opportunity'" for: "'record this grants.gov funding opport…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'assess_study_onboarding'" for: "'what approvals and training do we nee…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_award_closeout'" for: "'can we close out this grant award yet…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_meeting_package'" for: "'are we ready for the FDA meeting, do …'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'triage_compliance_attention'" for: "'triage the critical compliance attent…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what has to go in section 12.2 advers…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what should the summary of clinical e…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'we just locked the database, what hap…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'what is blocking the clinical overvie…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'will our dossier pass FDA technical v…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'why would the FDA gateway reject our …'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what CMC quality information does the…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what does the EU IMPD quality dossier…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'is ICH Q2(R2) final and which guidanc…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'which guidance covers nitrosamine imp…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'explain_cmc_topic'" for: "'explain how impurity limits are justi…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > each record tool is in the launch-scoped pool (so the cases below cannot pass vacuously) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the ISS'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should I write the clinical overv…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what does FDA want in 2.7.4'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how do I structure a CSR'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'help me write the quality overall sum…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should the investigator brochure …'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'review my clinical overview'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'list_fda_technical_rules'" for: "'will my submission be rejected'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'plan_submission_from_database_lock'" for: "'what do I do after database lock'" 2ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps US IND from legacy type 54ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps US IND from registryId 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps EU MAA from legacy type 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps 510K from legacy type 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps BLA from registryId 2ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps EU CTA from registryId 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps Canada NDS from registryId with the dedicated HC blueprint 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps Japan marketing approval with the dedicated PMDA blueprint 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > returns null for unknown type 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > returns null when no type specified 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > generates instructions with product name 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > each section row has required fields 7ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > getSectionCountForType > returns count for US_IND 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > getSectionCountForType > returns count for legacy type 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > getSectionCountForType > returns 0 for unknown type 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps IND without error 8ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps NDA without error 1ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps BLA without error 1ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps 510K without error 1ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps PMA without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps DE_NOVO without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps EUA without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps MAA without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all new registry types produce valid bootstrap > bootstraps EU_CTA without error 1ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all new registry types produce valid bootstrap > bootstraps CA_NDS without error 1ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all new registry types produce valid bootstrap > bootstraps JP_MKT_APPROVAL without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all new registry types produce valid bootstrap > bootstraps CN_CTA without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all new registry types produce valid bootstrap > bootstraps AU_CTN without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all new registry types produce valid bootstrap > bootstraps BR_DDCM without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all new registry types produce valid bootstrap > bootstraps IN_CT04 without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > normalizeProjectMetadata > normalizes IND input 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > normalizeProjectMetadata > normalizes registryId input 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > normalizeProjectMetadata > handles unknown type gracefully 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > normalizeProjectMetadata > preserves user-supplied region over registry default 2ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > buildDefaultInstructions > generates specialized instructions for US_IND 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > buildDefaultInstructions > generates specialized instructions for EU_MAA 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > buildDefaultInstructions > generates generic instructions for types without specialized template 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > buildInstructionsFromLegacyType > resolves legacy IND to instructions 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > buildInstructionsFromLegacyType > falls back gracefully for unknown types 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > getSuggestedActions > returns actions for IND 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > getSuggestedActions > returns device-specific actions for 510K 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > getSuggestedActions > returns EU-specific actions for EU_MAA 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > getSuggestedActions > returns actions sorted by priority 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > getTemplatesForType > returns CTD templates for IND 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > getTemplatesForType > returns device templates for 510K 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > getTemplatesForType > returns EU-specific templates for EU_MAA 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > governed project assignment > requires projectId for governed documents 1ms
+ ✓ tests/constants-domain/mappings.test.ts > flow-war-game-mapping > returns a war-game category for all 15 auditable flow categories 9ms
+ ✓ tests/constants-domain/mappings.test.ts > flow-war-game-mapping > returns undefined for project_setup (no war game) 0ms
+ ✓ tests/constants-domain/mappings.test.ts > flow-war-game-mapping > hasWarGame is consistent with getWarGameCategory 0ms
+ ✓ tests/constants-domain/mappings.test.ts > therapeutic-area-endpoints > returns an endpoint array for a known area 1ms
+ ✓ tests/constants-domain/mappings.test.ts > therapeutic-area-endpoints > returns an empty array for an area with no mapping 0ms
+ ✓ tests/constants-domain/mappings.test.ts > therapeutic-area-endpoints > primary endpoints are a subset of all endpoints for the area 1ms
+ ✓ tests/constants-domain/mappings.test.ts > phase-enrollment > returns min <= typical <= max for area-specific and default ranges 0ms
+ ✓ tests/constants-domain/mappings.test.ts > phase-enrollment > falls back to the default range for an area without a specific entry 0ms
+ ✓ tests/constants-domain/mappings.test.ts > phase-enrollment > flags low and high enrollment correctly 1ms
+ ✓ tests/constants-domain/mappings.test.ts > ich-guideline-registry > every guideline carries the required fields 7ms
+ ✓ tests/constants-domain/mappings.test.ts > ich-guideline-registry > getGuideline finds by id and returns undefined for an unknown id 0ms
+ ✓ tests/constants-domain/mappings.test.ts > ich-guideline-registry > getGuidelinesForFlow returns only guidelines listing that flow 0ms
+ ✓ tests/constants-domain/mappings.test.ts > ich-guideline-registry > getGuidelinesForProduct returns only guidelines listing that product class 3ms
+ ✓ tests/constants-domain/mappings.test.ts > ich-guideline-registry > getGuidelinesByCategory partitions the registry by category 1ms
+ ✓ tests/constants-domain/mappings.test.ts > product-class-requirements > getRequirements returns the full requirement shape for a known class 0ms
+ ✓ tests/constants-domain/mappings.test.ts > product-class-requirements > returns undefined for an unknown product class 0ms
+ ✓ tests/constants-domain/mappings.test.ts > product-class-requirements > every entry has a unique product class 0ms
+ ✓ tests/constants-domain/mappings.test.ts > designation-eligibility > every designation carries the required fields 1ms
+ ✓ tests/constants-domain/mappings.test.ts > designation-eligibility > getDesignation finds by id; unknown id -> undefined 0ms
+ ✓ tests/constants-domain/mappings.test.ts > designation-eligibility > getDesignationsForAgency filters by agency 0ms
+ ✓ tests/constants-domain/mappings.test.ts > agency-filing-requirements > every filing requirement carries the required shape 1ms
+ ✓ tests/constants-domain/mappings.test.ts > agency-filing-requirements > getFilingRequirements filters by agency + product class 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'THERAPEUTIC_AREAS' > is a non-empty array of the expected length 2ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'THERAPEUTIC_AREAS' > has unique values 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'THERAPEUTIC_AREAS' > has a non-empty string label for every entry 4ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'THERAPEUTIC_AREAS' > toQuestionOptions() returns one option per entry with value + label 13ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'CLINICAL_PHASES' > is a non-empty array of the expected length 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'CLINICAL_PHASES' > has unique values 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'CLINICAL_PHASES' > has a non-empty string label for every entry 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'CLINICAL_PHASES' > toQuestionOptions() returns one option per entry with value + label 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ROUTES_OF_ADMINISTRATION' > is a non-empty array of the expected length 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ROUTES_OF_ADMINISTRATION' > has unique values 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ROUTES_OF_ADMINISTRATION' > has a non-empty string label for every entry 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ROUTES_OF_ADMINISTRATION' > toQuestionOptions() returns one option per entry with value + label 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'DOSAGE_FORMS' > is a non-empty array of the expected length 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'DOSAGE_FORMS' > has unique values 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'DOSAGE_FORMS' > has a non-empty string label for every entry 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'DOSAGE_FORMS' > toQuestionOptions() returns one option per entry with value + label 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'STUDY_DESIGNS' > is a non-empty array of the expected length 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'STUDY_DESIGNS' > has unique values 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'STUDY_DESIGNS' > has a non-empty string label for every entry 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'STUDY_DESIGNS' > toQuestionOptions() returns one option per entry with value + label 3ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'EXPRESSION_SYSTEMS' > is a non-empty array of the expected length 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'EXPRESSION_SYSTEMS' > has unique values 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'EXPRESSION_SYSTEMS' > has a non-empty string label for every entry 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'EXPRESSION_SYSTEMS' > toQuestionOptions() returns one option per entry with value + label 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'MANUFACTURING_PROCESSES' > is a non-empty array of the expected length 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'MANUFACTURING_PROCESSES' > has unique values 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'MANUFACTURING_PROCESSES' > has a non-empty string label for every entry 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'MANUFACTURING_PROCESSES' > toQuestionOptions() returns one option per entry with value + label 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ANALYTICAL_METHODS' > is a non-empty array of the expected length 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ANALYTICAL_METHODS' > has unique values 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ANALYTICAL_METHODS' > has a non-empty string label for every entry 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ANALYTICAL_METHODS' > toQuestionOptions() returns one option per entry with value + label 2ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'CONTAINER_CLOSURES' > is a non-empty array of the expected length 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'CONTAINER_CLOSURES' > has unique values 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'CONTAINER_CLOSURES' > has a non-empty string label for every entry 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'CONTAINER_CLOSURES' > toQuestionOptions() returns one option per entry with value + label 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'EXCIPIENT_CLASSES' > is a non-empty array of the expected length 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'EXCIPIENT_CLASSES' > has unique values 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'EXCIPIENT_CLASSES' > has a non-empty string label for every entry 2ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'EXCIPIENT_CLASSES' > toQuestionOptions() returns one option per entry with value + label 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ENDPOINT_TYPES' > is a non-empty array of the expected length 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ENDPOINT_TYPES' > has unique values 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ENDPOINT_TYPES' > has a non-empty string label for every entry 2ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ENDPOINT_TYPES' > toQuestionOptions() returns one option per entry with value + label 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'STATISTICAL_METHODS' > is a non-empty array of the expected length 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'STATISTICAL_METHODS' > has unique values 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'STATISTICAL_METHODS' > has a non-empty string label for every entry 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'STATISTICAL_METHODS' > toQuestionOptions() returns one option per entry with value + label 6ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ORGANIZATION_TYPES' > is a non-empty array of the expected length 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ORGANIZATION_TYPES' > has unique values 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ORGANIZATION_TYPES' > has a non-empty string label for every entry 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'ORGANIZATION_TYPES' > toQuestionOptions() returns one option per entry with value + label 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'REGULATORY_MEETING_TYPES' > is a non-empty array of the expected length 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'REGULATORY_MEETING_TYPES' > has unique values 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'REGULATORY_MEETING_TYPES' > has a non-empty string label for every entry 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > domain constant arrays > 'REGULATORY_MEETING_TYPES' > toQuestionOptions() returns one option per entry with value + label 1ms
+ ✓ tests/constants-domain/domain-constants.test.ts > organization-types bridge functions > orgToClientSegment > maps product-owning orgs to a regulatory segment 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > organization-types bridge functions > orgToClientSegment > returns null for service / institutional orgs 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > organization-types bridge functions > orgToSubmissionClientType > maps to submission-constants ClientType (medtech -> mdx) 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > organization-types bridge functions > orgToSubmissionClientType > returns null for service orgs 0ms
+ ✓ tests/constants-domain/domain-constants.test.ts > organization-types bridge functions > orgToFlowClientType > maps to flow clientTypes (ivd folded into medtech) 3ms
+ ✓ tests/constants-domain/domain-constants.test.ts > organization-types bridge functions > orgToFlowClientType > returns null for service orgs 0ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > produces one market section per target market, in order 16ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > maps each market to its agency and a pathway 2ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > assesses orphan designation eligibility for FDA/EMA from the disease profile 2ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > matches expedited programs for the serious/unmet-need profile 1ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > recommends HA meetings for the next milestone and a Module 1 checklist 1ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > includes CTA requirements, labeling sections, and an orphan-waived fee estimate 0ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > handles a market without designation modeling (AU) gracefully 0ms
+ ✓ server/services/global-ri/__tests__/regulatory-strategy-brief.test.ts > buildStrategyBrief > is deterministic 1ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > holds each programme once, with the ids the engines read 3ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > names the consultations as PMDA does 1ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > every entry has a well-formed basis, and nothing unread is presented as regulator text 3ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > a regulator-text basis must have been checked on or after the date the programme took effect 1ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > conditional approval is the 2025 system: exploratory-trial stage, revocable, drugs only until read 1ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > the paediatric plan is an effort obligation confirmed by PMDA 0ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > SAKIGAKE keeps the four criteria the matcher screens 1ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > getJpProgram throws for an id it does not hold 1ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > readers of the record > special-designations states the PMDA paediatric duty from the record, not "encouraged" 5ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > readers of the record > the global pathway comparison describes Japan conditional approval as amended 1ms
+ ✓ server/services/ind/ctd/__tests__/jp-programs.test.ts > readers of the record > no migrated file carries its own Japan paediatric or conditional-approval prose 6ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > EXPEDITED_PROGRAMS catalog > encodes the FDA, EMA and PMDA programs 2ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > EXPEDITED_PROGRAMS catalog > is ordered by id and every program is well-formed 10ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > EXPEDITED_PROGRAMS catalog > has unique program ids 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > serious + unmet need → Fast Track eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > serious + preliminary evidence + substantial improvement → Breakthrough eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > surrogate + serious + unmet need → Accelerated Approval eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > regenerative + serious + preliminary evidence → RMAT eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > substantial improvement alone → Priority Review eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — EMA > unmet need + preliminary evidence → PRIME eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — EMA > serious + unmet need → Conditional MA eligible 1ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — EMA > comprehensive data unobtainable → Exceptional Circumstances eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > all four Sakigake criteria → eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > only substantial improvement + early JP development → NOT Sakigake eligible (all four criteria required) 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > conditional approval is the system as amended in 2025: approval at the exploratory-trial stage, not "confirmatory trials are difficult" 1ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > the conditional-approval screen explains itself from the record and says it is recall 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > orphan → Orphan Drug Designation eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — non-matching and scoping > empty input → nothing eligible, programs reported as notSuitable 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — non-matching and scoping > only returns programs for the requested region 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — non-matching and scoping > partitions: a program is either eligible or notSuitable, never both 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — determinism and ordering > identical input yields identical output 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — determinism and ordering > both result lists are ordered by program id 0ms
+ ✓ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > states none of the unsourced Japan claims anywhere in its result 8ms
+ ✓ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > says Japanese-data needs are case by case under ICH E5, citing the 2023 MHLW notice 5ms
+ ✓ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > reads the paediatric position from the jp-programs record 1ms
+ ✓ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > places Japan in the ICH Q1A(R2) long-term conditions, not zone IVa 1ms
+ ✓ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > cross-jurisdictional engine — PMDA positions > gives every PMDA position a well-formed basis, all labelled recall (no regulator text was read) 3ms
+ ✓ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > PMDA consultation catalogue (ha-meetings) > has one row per consultation type in the jp-programs record, named as PMDA names it 2ms
+ ✓ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > PMDA consultation catalogue (ha-meetings) > keeps the two existing codes for compatibility 1ms
+ ✓ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > PMDA consultation catalogue (ha-meetings) > recommends the end-of-Phase II consultation at end of Phase II 1ms
+ ✓ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > the shared PMDA meeting type > names the RS strategy consultation as PMDA does, not "RS Soudankai" 1ms
+ ✓ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > prompt prose about Japanese conditional approval > no prompt names the pre-2025 conditional early approval or its criteria 1ms
+ ✓ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > prompt prose about Japanese conditional approval > names it as amended in 2025, without restating criteria 0ms
+ ✓ server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts > prompt prose about Japanese conditional approval > keeps the Japan conditional-approval and paediatric prose of the migrated engine in jp-programs.ts only 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > 510k resolves to a device 2ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > de_novo resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > pma resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > hde resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ide resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > device resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > cer resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > mdr resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivd resolves to an IVD 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivdr resolves to an IVD 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > 510k can never resolve to a drug or a biologic 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > de_novo can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > pma can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > hde can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ide can never resolve to a drug or a biologic 2ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > device can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > cer can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > mdr can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivd can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivdr can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > resolves the EU technical files that used to fall through to a drug 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > does not guess at a filing type it has never seen 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > normalises casing and separators the store actually holds 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > reads a 510(k) started from the Diagnostics lane as an IVD 510(k) 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > cannot make a device filing medicinal, whatever the lane says 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > leaves medicinal filings alone 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > treats companion diagnostics as IVDs 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > treats software as a medical device as a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > keeps medicinal products out of the device family 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > is null-safe and case-insensitive 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > lists exactly the four device-family classes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the vocabulary itself > carries the six classes, each with a label and a regulatory reference 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the vocabulary itself > recognises its own members and nothing else 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > puts every device and IVD instrument in MDX 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > buckets the medicinal lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > returns null rather than guessing for an unknown filing type 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > generates SQL that agrees with the function, member for member 3ms
+ ✓ server/services/global-ri/__tests__/openapi-builder.test.ts > buildGlobalRiOpenApi > is a valid OpenAPI 3.0 envelope 1ms
+ ✓ server/services/global-ri/__tests__/openapi-builder.test.ts > buildGlobalRiOpenApi > emits a path for every catalog route under /api/global-ri 6ms
+ ✓ server/services/global-ri/__tests__/openapi-builder.test.ts > buildGlobalRiOpenApi > POST operations carry a JSON request body; path params are declared 1ms
+ ✓ server/services/global-ri/__tests__/openapi-builder.test.ts > buildGlobalRiOpenApi > tags every group; is deterministic 7ms
+ ✓ server/services/global-ri/__tests__/ha-meetings.test.ts > MEETING_CATALOG > is well-formed (unique codes, market populated, ≥1 milestone each) 4ms
+ ✓ server/services/global-ri/__tests__/ha-meetings.test.ts > MEETING_CATALOG > every market has at least one meeting 0ms
+ ✓ server/services/global-ri/__tests__/ha-meetings.test.ts > recommendMeetings > recommends a Pre-IND meeting (FDA) for the pre_ind milestone 0ms
+ ✓ server/services/global-ri/__tests__/ha-meetings.test.ts > recommendMeetings > recommends the End-of-Phase 2 meeting (FDA) for end_of_phase_2 0ms
+ ✓ server/services/global-ri/__tests__/ha-meetings.test.ts > recommendMeetings > recommends a Type A meeting for a clinical hold, with the soonest target first 0ms
+ ✓ server/services/global-ri/__tests__/ha-meetings.test.ts > recommendMeetings > orders recommendations by soonest scheduling target 1ms
+ ✓ server/services/global-ri/__tests__/ha-meetings.test.ts > recommendMeetings > recommends EMA Scientific Advice for early development 0ms
+ ✓ server/services/global-ri/__tests__/ha-meetings.test.ts > recommendMeetings > notes when no meeting is modeled for a milestone 0ms
+ ✓ server/services/global-ri/__tests__/ha-meetings.test.ts > recommendMeetings > is deterministic 1ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > expanded role inference > routes biostatistician signals 1ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > expanded role inference > routes pharmacovigilance signals 7ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > expanded role inference > routes quality/QA signals (no longer collapsed into cmc) 1ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > expanded role inference > falls back to general when no signal matches 0ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > new role overlays reach the system prompt > biostatistician overlay mentions estimand/E9(R1) 1ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > new role overlays reach the system prompt > pharmacovigilance overlay mentions reporting clocks 1ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > new role overlays reach the system prompt > quality overlay mentions CAPA / 21 CFR 210/211 0ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > role-adaptive output structure covers new roles > emits tailored structure for each new role 1ms
+ ✓ server/services/global-ri/__tests__/expedited-programs-sakigake.qa.test.ts > matchExpeditedPrograms — PMDA Sakigake eligibility > is NOT eligible when only the two old criteria are met 9ms
+ ✓ server/services/global-ri/__tests__/expedited-programs-sakigake.qa.test.ts > matchExpeditedPrograms — PMDA Sakigake eligibility > is NOT eligible when the novel-mechanism criterion is missing 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs-sakigake.qa.test.ts > matchExpeditedPrograms — PMDA Sakigake eligibility > is eligible only when all four catalog criteria are met 0ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > defines the requested traits 2ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > is composed into the AnA RI system prompt 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > is composed into the cortex prompts (single source of truth) 0ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > injects relational context when provided 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > renders nothing when no relational notes exist yet 0ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Orchestrator — relational + external intelligence injection > injects the pre-fetched relational overlay and external intel block 11ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Orchestrator — relational + external intelligence injection > omits both blocks when not provided 6ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Relational reflection signal detection > fires on emotional and corrective signals 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Relational reflection signal detection > stays quiet on neutral turns 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > parses RSS 2.0 items 2ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > parses Atom entries 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > registry covers regulatory agencies and knowledge centers (incl. SCDM) 1ms
+ ✓ tests/constants-domain/aliases.test.ts > alias bridge — completeness against the live flow registry > collected at least one value for every relevant domain 1ms
+ ✓ tests/constants-domain/aliases.test.ts > alias bridge — completeness against the live flow registry > every therapeuticArea flow value maps to a canonical member or is intentionally unmapped 1ms
+ ✓ tests/constants-domain/aliases.test.ts > alias bridge — completeness against the live flow registry > every clinicalPhase flow value maps to a canonical member or is intentionally unmapped 1ms
+ ✓ tests/constants-domain/aliases.test.ts > alias bridge — completeness against the live flow registry > every routeOfAdministration flow value maps to a canonical member or is intentionally unmapped 1ms
+ ✓ tests/constants-domain/aliases.test.ts > alias bridge — completeness against the live flow registry > every dosageForm flow value maps to a canonical member or is intentionally unmapped 1ms
+ ✓ tests/constants-domain/aliases.test.ts > alias bridge — targeted mappings > therapeutic area aliases 0ms
+ ✓ tests/constants-domain/aliases.test.ts > alias bridge — targeted mappings > clinical phase aliases 0ms
+ ✓ tests/constants-domain/aliases.test.ts > alias bridge — targeted mappings > route of administration aliases 0ms
+ ✓ tests/constants-domain/aliases.test.ts > alias bridge — targeted mappings > dosage form aliases 1ms
+ ✓ tests/constants-domain/aliases.test.ts > alias bridge — targeted mappings > unknown values return null 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects audit intent from reviewer language 4ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects improve intent from rewrite language 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects risk intent from rejection language 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects strategy intent from pathway language 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects compare intent from comparison language 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > returns auto for generic messages 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects IND from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects 510(k) from message 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects NDA from message 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects BLA from message 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects CER from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects eCTD from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > returns null for generic message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > intent lens changes affect orchestration output 12ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > explicit intent overrides auto-detection 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > role changes affect system prompt 3ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > submission type injects deficiency context 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > conversation history builds continuity context 3ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > detects an active workstream and injects it into the prompt 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > routes deficiency-heavy messages into the deficiency response workstream 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > detects a workstream handoff when the thread pivots from strategy into drafting 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > continuity context does not inject conflicting submission type 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > continuity concern patterns require problem context, not just mention 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > suggested actions match intent lens 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Evaluation > penalizes hedging language in writing quality 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Evaluation > rewards evidence labels in evidence discipline 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Evaluation > detects document consequence in responses 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Evaluation > assigns correct grade thresholds 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for IND submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for 510k submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for PMA submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for De Novo submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for CER submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns critical deficiencies 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > finds deficiency by ID 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns category summary 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > infers CEO role from title 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > infers RA lead from title 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > infers medical writer from screen name 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > infers CMC lead from screen name 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > returns general for unknown signals 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > builds role-specific output structure for CEO 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > builds role-specific output structure for medical writer 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > builds role-specific output structure for investor 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Document Actions > returns all actions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Document Actions > filters actions by audit lens 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Document Actions > filters actions by improve lens 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > includes evidence discipline instructions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > includes document consequence mandate 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > adapts for different roles 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects intent lens overlay 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects workstream context when provided 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects workstream handoff context when provided 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > leaves the prompt unchanged for English (default language) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects a localized response-language overlay for non-English 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > keeps regulatory identifiers canonical while localizing prose 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects market-specific cultural awareness for each non-English market 6ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > does not add any cultural overlay for English 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects an English market brief when the target agency is non-US 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects the dedicated Japan regulatory deep-dive whenever Japan is in scope 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > does not add the Japan deep-dive when Japan is not in scope 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects the dedicated EU regulatory deep-dive whenever the EU is in scope 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > does not add the EU deep-dive when the EU is not in scope 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > covers additional non-US target markets by agency name 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > skips the market brief when the language overlay already covers that market 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > adds no market brief for FDA or unknown agencies 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > intent detection edge cases > handles empty string without crashing 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > intent detection edge cases > handles very long messages 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > intent detection edge cases > resolves ties deterministically — highest score wins 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > submission type edge cases > returns null for empty string 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > submission type edge cases > detects de novo from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > submission type edge cases > detects PMA from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > orchestrator edge cases > handles empty conversation history 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > orchestrator edge cases > handles single-message history 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > evaluation edge cases > handles empty response 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > evaluation edge cases > calculateDimensionScore boundary: exactly 3 signals = score 3 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Artifact Generator > returns all 8 artifact types with titles 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Artifact Generator > includes all expected action types 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateResponseStructure > passes structured response with required sections 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateResponseStructure > fails unstructured response 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateResponseStructure > detects evidence labels 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > checkEvidenceDiscipline > flags substantive response without evidence labels 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > checkEvidenceDiscipline > passes response with evidence labels 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > checkEvidenceDiscipline > passes short casual responses without labels 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateArtifactQuality > passes high-quality artifact 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateArtifactQuality > rejects too-short artifact 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateArtifactQuality > flags generic AI filler 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateArtifactQuality > flags missing structure 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > buildArtifactContract > builds complete contract with all required fields 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > generation observability > logs and retrieves generation events 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > generation observability > tracks generation stats 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > COMMAND_REGISTRY completeness > has all 27 commands registered 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > COMMAND_REGISTRY completeness > every command has name, description, parameters, and example 12ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > COMMAND_REGISTRY completeness > includes all critical workflow commands 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > COMMAND_REGISTRY completeness > has no duplicate command names 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > buildCommandContextForPrompt > returns a string with command list 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > buildCommandContextForPrompt > includes command format instructions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > handles narrative slash commands without unhandled markers 10ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > supports deterministic preflight slash enrichment 9ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > reads an @app mention with NO project — the front-door composer — into the block and the rewrite 24ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > with a project, an @app mention also attempts the app's data enrichment, by any handle, anywhere in the text 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > supports deterministic draft slash enrichment 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > detects every supported slash command token 4ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled) 164ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > gives AnA a distinct character (Who You Are) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > licenses polite, grounded pushback (Constructive Dissent) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > makes AnA aware of her wayfinding, wisdom, and challenge reflexes 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > carries an always-on empathy posture (Meet the human) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > keeps the reconciled regulatory breadth index in the live prompt 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > stays inside the design-system voice (no emoji, no exclamation) in the new copy 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > covers all three segments plus cross-cutting wisdom 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > every heuristic is pattern -> consequence -> veteran move, with a basis 3ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > infers segment from submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > infers segment and stage from free text 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > selectWisdom always includes cross-cutting heuristics for a segment 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > builds a non-empty wisdom block for any segment 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > keeps wisdom copy inside the design-system voice (no emoji, no exclamation) 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > provides journeys for all three segments 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > every use case names first moves and a pitfall to watch 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > builds an orientation that asks to place the user when segment is unknown 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > builds a segment-specific tour-guide block 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > keeps playbook copy inside the design-system voice (no emoji, no exclamation) 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > covers all three segments plus cross-cutting challenges 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > every pattern has a claim, triggers, risk, challenge, reframe, and basis 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > linked heuristics resolve to real wisdom entries 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > fires on representative risky assertions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > does not fire on neutral questions 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > builds a polite-challenge block that invokes the dissent doctrine 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > returns empty when nothing is challengeable 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > keeps challenge copy inside the design-system voice (no emoji, no exclamation) 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > covers all three segments plus cross-cutting frameworks 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > every framework states the trade-off, both tilt sets, and how to decide 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > fires on representative trade-off questions 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > does not fire on a plain factual question 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > builds a framework block that refuses to decide for the user 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > forceGeneric makes an explicit /decide always do work 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > returns empty for a non-trade-off message without forceGeneric 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > keeps framework copy inside the design-system voice 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > covers meeting prep, response strategy, and posture 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > every tactic states the move, why, watch-out, and basis 7ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > fires on meeting-prep and response-letter situations 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > can narrow by kind 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > does not fire on an unrelated drafting request 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > builds a tactics block, and forceGeneric always does work 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > keeps tactics copy inside the design-system voice 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > covers reading precedent, positioning, and differentiation 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > every play states the insight, move, watch-out, and basis 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > fires on precedent and positioning situations 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > does not fire on an unrelated drafting request 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > builds a block, and forceGeneric always does work 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > keeps competitive copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > every state has a reading, attune, leadWith, and avoid 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > reads the salient state from a message 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > crisis outranks a co-occurring softer state 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > returns null on a neutral, unemotional message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > builds an attunement directive scoped to delivery, not truth 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > exposes a lookup by state 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > keeps attunement copy inside the design-system voice (no emoji, no exclamation) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > covers cross-functional, commercial, executive, and partner axes 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > every alignment play states tension, insight, move, watch-out, and basis 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > fires on representative internal-tension situations 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > does not fire on a plain regulatory question 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > builds an alignment block, and forceGeneric always does work 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > ties the internal tension to regulatory consequence and leaves the call to the client 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > keeps stakeholder-alignment copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > handles /align via enrichment and proactively detects stakeholder tension 10ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > every claim check has a label, directive, and triggers 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > detects each high-stakes claim category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > does not fire on a plain conversational message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > builds a non-negotiable grounding directive scoped to the claims present 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > returns empty when there is nothing groundable 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > can scan AnA's drafted answer as a self-check, not only the user message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > exposes a lookup by category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > keeps claim-grounding copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > persona declares the claim-grounding discipline 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — claim-grounding integration > proactively injects the grounding guard on a high-stakes claim 3ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — claim-grounding integration > grounds a high-stakes claim for a project-less user 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — claim-grounding integration > does not inject the guard on a plain orientation request 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > every capability has commands, a description, and a category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > command lookups resolve in both directions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > lists capabilities by category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > has no duplicate command across capabilities 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > ANTI-DRIFT: every registered capability command is a wired slash command 3ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > ANTI-DRIFT: every judgment-pack slash command is catalogued here 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > builds a grounded catalogue that is not a recite-this menu 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > keeps capability copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — capabilities command > grounds a "what can you do" request in the capability catalogue 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — capabilities command > grounds capabilities for a project-less user 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > tokenizes, drops stopwords, and keeps regulatory tokens like 510(k) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > approxTokens scales with length and is always positive 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > BM25 ranks the block that shares query terms highest 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > returns all-zero relevance for an empty or stopword-only query 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > lexical similarity is high for near-duplicates, low for unrelated text 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > composes within budget, dropping the lowest-value block when it cannot fit 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > always keeps pinned blocks regardless of relevance 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > de-duplicates near-identical blocks via MMR under tight budget 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > is a no-op (keeps everything) when budget is generous 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > handles the empty candidate set 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > emits an explainable trace for every candidate 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > maps source priorities and slash-command aliases to pack weights 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — composer integration > preserves legacy join when no budget is requested 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — composer integration > engages the composer and emits a trace when a budget is set 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > returns the prior exactly when there are no samples 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > rewards an all-accepted source above an all-rejected one 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > treats edited as partial credit (between accepted and rejected) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > shrinks low-sample sources toward the prior (small-sample safety) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > maps rewards to bounded multipliers centered on 1.0 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > builds a multiplier map only for sources with stats 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > applyAdaptivePriority scales and clamps, and is a no-op for unknown sources 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > learned multipliers can reorder composer selection under tight budget 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > every scope check has a label, mode, directive, and triggers 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > detects each scope-sensitive category 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > flags data-integrity requests as requiring refusal, not just handoff 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > does not fire on a normal in-scope request 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > builds a hand-off directive that keeps AnA useful, not stonewalling 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > builds an integrity-boundary directive on a data-integrity ask 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > returns empty when the request is fully in scope 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > exposes a lookup by category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > keeps scope-guard copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > persona declares the know-your-limits discipline 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — scope-guard integration > proactively injects the scope guard on a determination request 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — scope-guard integration > injects the integrity boundary for a project-less data-integrity ask 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — scope-guard integration > does not inject the guard on a normal drafting request 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Lens > produces a distinct audience lens for each non-general role 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Lens > returns empty for the general role and reports lens availability 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Lens > keeps lens copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > provides a first-session tour for every segment plus a generic fallback 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > builds a segment-specific welcome from the message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > keeps onboarding copy inside the design-system voice 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > every use-case command resolves to a registered slash command (no drift) 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > every mdx use-case surface resolves to a known MDX surface key (no drift) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /wisdom as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /guide as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > orients a project-less (new) user from a wayfinding question 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > surfaces industry wisdom from a natural-language pitfall question 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /challenge as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively challenges a risky assertion mid-conversation 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > challenges a risky assertion from a project-less user 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > welcomes a project-less new user with a first-session tour 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /decide as a first-class slash command 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively frames a trade-off the user is weighing 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > frames a trade-off for a project-less user 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /meeting as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively coaches an agency-interaction situation 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > applies a role lens when a role is supplied and a pack fired 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /position as a first-class slash command 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively reads the landscape on a positioning question 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > reads a client in crisis and steadies the delivery 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > attunes to an overwhelmed project-less newcomer 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > does not apply a role lens for the general role 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Diff Service Integration > diffText produces correct results for simple changes 14ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Diff Service Integration > diffText handles identical content 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Diff Service Integration > diffText handles empty strings 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Quality Gate Regression > dynamic maxScore: depth types get 12, others get 10 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Quality Gate Regression > semantic depth gate rewards root cause + evidence + action 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Quality Gate Regression > filler patterns are detected correctly 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "evidence labels" doctrine 2ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "no fabrication" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "constructive dissent" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "context clarity (no hallucinated context)" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "document consequence" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "proactive foresight" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "know your limits / hand off" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "response grounding mode" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > keeps the serious-room floor (no exclamation marks, no emoji where it counts) 1ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > every core doctrine survives into the assembled system prompt 1ms
+ ✓ server/services/__tests__/ana-proactive-foresight.test.ts > AnA proactive foresight directive > core prompt contains the Proactive Foresight section 1ms
+ ✓ server/services/__tests__/ana-proactive-foresight.test.ts > AnA proactive foresight directive > directs proactive deadline + deficiency surfacing with no fabrication 1ms
+ ✓ server/services/__tests__/ana-proactive-foresight.test.ts > AnA proactive foresight directive > the directive flows into the assembled system prompt 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are offered to the model 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > have a handler 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are classed read, so a read never asks the person to confirm 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are in launch scope 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > have a plan label of their own, not a humanised tool name 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > report deterministic pedigree: the registry lookups as registry, the Vault read as a query 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are named in the prompt AnA drafts and audits under, and Elsa is never promised 1ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > are offered to the model 1ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > have a handler 1ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > are classed read, so a read never asks the person to confirm 0ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > are in launch scope 1ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > have a plan label of their own, not a humanised tool name 1ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > report deterministic registry pedigree: no model wrote these answers 0ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > are named in the prompt AnA works under, which tells her not to supply requirements from memory 1ms
+ Test Files  25 passed (25)
+      Tests  710 passed (710)

@@ -1,0 +1,283 @@
+g-assemble-device-project-scope — GREEN (fix round 1, 2026-10-05)
+
+=== 1. The new test, verbose ===
+$ npx vitest run --reporter=verbose server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts
+ ✓ assemble_device_submission — project scope > drafted governed content is not ready, whatever substantive/flags/templates the model types 41ms
+ ✓ assemble_device_submission — project scope > approved governed content is ready with no model leaves, flags or templates at all 2ms
+ ✓ assemble_device_submission — project scope > the device answers are the program's, not the model's 1ms
+ ✓ assemble_device_submission — project scope > a template whose bytes are not the pinned ones does not count, whatever file names the model lists 1ms
+ ✓ assemble_device_submission — project scope > a program with no authored governed sections answers from the legacy store and says so ('legacy_org_wide') 1ms
+ ✓ assemble_device_submission — project scope > with no project open and no hypothetical mode, it asks for a project 1ms
+ ✓ assemble_device_submission — project scope > mode 'hypothetical' ignores substantive and template claims and is labelled as not the project's content 1ms
+ ✓ assemble_device_submission — project scope > the AnA tool's project verdict equals assembleProgramDeviceSubmission's (the function POST /assemble runs) 8ms
+ ✓ assemble_device_submission — failed reads > a failed read is reported as a failed read — never as missing sections 7ms
+ ✓ assemble_device_submission — failed reads > a failed CONTENT read after the scope resolved is a failed read — never missing sections 1ms
+ ✓ assemble_device_submission — failed reads > a failed project lookup is a failed read too 1ms
+ ✓ advise_device_readiness — project scope > with a project open, drafted governed content is not ready, whatever the model types 6ms
+ ✓ advise_device_readiness — project scope > with a project open, approved governed content is ready with no model input but the question 1ms
+ ✓ advise_device_readiness — project scope > the advice and assemble_device_submission give the open project the same verdict 3ms
+ ✓ advise_device_readiness — project scope > with no project open, model leaves marked substantive plus the template name never yield an official eSTAR 1ms
+ ✓ advise_device_readiness — project scope > with no project open and no outline, it asks for a project 1ms
+ ✓ advise_device_readiness — project scope > a failed content read is read_failed, never a verdict 6ms
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+
+=== 2. MUTATION: '.catch(() => [])' on loadDeviceContentLeaves(organizationId, scope) inside loadProgramDeviceAssemblyInput
+    (server/services/pathway-engines/device-assembly/assemble-device-submission.ts) — applied, run, reverted ===
+applied at line 284:    loadDeviceContentLeaves(organizationId, scope).catch(() => []), /* MUTATION */
+ × assemble_device_submission — failed reads > a failed CONTENT read after the scope resolved is a failed read — never missing sections 7ms
+ × advise_device_readiness — project scope > a failed content read is read_failed, never a verdict 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  assemble_device_submission — failed reads > a failed CONTENT read after the scope resolved is a failed read — never missing sections
+AssertionError: expected 'computed' to be 'read_failed' // Object.is equality
+ FAIL  advise_device_readiness — project scope > a failed content read is read_failed, never a verdict
+AssertionError: expected undefined to be 'read_failed' // Object.is equality
+      Tests  2 failed | 15 passed (17)
+reverted: MUTATION markers left in file = 0
+
+=== 3. The new test + every test file that imports a changed module or names the device tools (18 files) ===
+$ npx vitest run server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts server/services/ana/__tests__/device-submission-tools.test.ts server/services/ana-advisory/__tests__/device-market-advisor.test.ts server/routes/__tests__/510k-estar-entitlement.test.ts server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts tests/ci/export-governance-guard.test.ts tests/golden-journeys/device-510k-estar.journey.test.ts tests/governed-export-behavioral.test.ts tests/routes/estar-build-pma-package.test.ts tests/routes/estar-entitlement-precheck.test.ts tests/routes/estar-export-governance.test.ts tests/routes/estar-official-pdf.test.ts tests/routes/estar-registration-correspondent.test.ts tests/routes/estar-submission-filing.test.ts tests/schema-contract/pma-governed-assembly.contract.test.ts client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx
+ ✓ tests/schema-contract/pma-governed-assembly.contract.test.ts > a governed PMA reaches the PMA assembly verdict > resolves the program to its governed PMA document and scores it as a PMA 4348ms
+ ✓ tests/schema-contract/pma-governed-assembly.contract.test.ts > a governed PMA reaches the PMA assembly verdict > the gate fails on the case it exists to catch: a placeholder statistical analysis blocks assembly 2558ms
+ ✓ tests/schema-contract/pma-governed-assembly.contract.test.ts > a governed PMA reaches the PMA assembly verdict > another tenant sees nothing of this program (docType never leaks across orgs) 2268ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > drafted governed content is not ready, whatever substantive/flags/templates the model types 58ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > approved governed content is ready with no model leaves, flags or templates at all 2ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > the device answers are the program's, not the model's 7ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > a template whose bytes are not the pinned ones does not count, whatever file names the model lists 1ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > a program with no authored governed sections answers from the legacy store and says so ('legacy_org_wide') 2ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > with no project open and no hypothetical mode, it asks for a project 10ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > mode 'hypothetical' ignores substantive and template claims and is labelled as not the project's content 3ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > the AnA tool's project verdict equals assembleProgramDeviceSubmission's (the function POST /assemble runs) 23ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — failed reads > a failed read is reported as a failed read — never as missing sections 19ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — failed reads > a failed CONTENT read after the scope resolved is a failed read — never missing sections 1ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — failed reads > a failed project lookup is a failed read too 7ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > advise_device_readiness — project scope > with a project open, drafted governed content is not ready, whatever the model types 2ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > advise_device_readiness — project scope > with a project open, approved governed content is ready with no model input but the question 1ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > advise_device_readiness — project scope > the advice and assemble_device_submission give the open project the same verdict 8ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > advise_device_readiness — project scope > with no project open, model leaves marked substantive plus the template name never yield an official eSTAR 1ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > advise_device_readiness — project scope > with no project open and no outline, it asks for a project 0ms
+ ✓ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > advise_device_readiness — project scope > a failed content read is read_failed, never a verdict 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > enumerates AcroForm fields into a skeleton map from inline template bytes 125ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > fails closed (422) when no template is available to scaffold against 35ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > honest fail-closed (no template / empty map) > returns 422 with blockers and officialEstarPdf:false; never persists 3ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > end-to-end official PDF when template + verified map present > produces a real PDF and asserts officialEstarPdf:true truthfully 14ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > not ready (no template / empty map) > reports ready:false with blockers and persists nothing 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > ready (template + verified map present) > reports ready:true with no blockers 8ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'device', descriptorId: 'pma-device' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'ivd', descriptorId: 'pma-ivd' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'q_sub', variant: 'device', descriptorId: 'q_sub-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'ide', variant: 'ivd', descriptorId: 'ide-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: '513g', variant: 'device', descriptorId: '513g-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > governed wins, request fills the gap, blanks + ignored keys are reported, provenance is persisted 9ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > without useProgramData the loader is never consulted and the response carries no fieldReport 7ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > with nothing governed and nothing requested no official eSTAR is produced at all 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: one row per mapped field with value + source; unsourced keys are null/null but name their declared home; no request data 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: the Phase 3 homes are sourced when the program and registration rows hold them 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 404 when the ident resolves to nothing in this organization — and reads no governed data 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 422 ESTAR_FIELD_MAP_NOT_POPULATED when the descriptor has no verified map 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 400 on a bad query (missing ident / unknown variant) 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('numeric' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('program uuid' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('numeric' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('program uuid' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 0ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > retains the delivered bytes and reports where they went 7ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it 5ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > says plainly when a legacy project has no vault, and still delivers 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > names the erased keys in the 200 body AND in the registered metadata 414ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > reports an EMPTY erased list rather than omitting it (assessed ≠ unassessed) 1205ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 when every written value is one the form erases (P3) 304ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 on the reviewer's non-string declaring entity (P1, over HTTP) 185ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (governed path) > says the same thing beside the fieldReport, and in the metadata 8ms
+ ✓ tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey 5870ms
+ ✓ server/routes/__tests__/510k-estar-entitlement.test.ts > ENTITLEMENTS_ENFORCE=off (today's default) > reaches the handler (zod 400 on an invalid body), no entitlement queries 5883ms
+ ✓ server/routes/__tests__/510k-estar-entitlement.test.ts > ENTITLEMENTS_ENFORCE=on > 403s an unentitled org with the NOT_ENTITLED contract, before the handler 30ms
+ ✓ server/routes/__tests__/510k-estar-entitlement.test.ts > ENTITLEMENTS_ENFORCE=on > an entitled org passes the gate and reaches the handler 73ms
+ ✓ server/routes/__tests__/510k-estar-entitlement.test.ts > ENTITLEMENTS_ENFORCE=warn > allows an unentitled org through with the warning header 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > files the document and says where it went 2679ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > the governed record names what was filed, not only the form 1343ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > reads the tenant and the program from the REQUEST, never from the body 918ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > the first painted frame asserts nothing it has not checked 23ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders while every request is still pending — checking is a visible status, not only a title 313ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders when the user is NOT signed in (401 everywhere) — disabled with a reason, no empty table 231ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders when the network throws outright — a failed read, in plain words, with retry 115ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > with no program says so and fetches no field list 52ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > hands the resolver a client it can actually query with 925ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > not ready ⇒ Generate disabled with the blockers in the title, no input claims data 160ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > a failed field read disables Generate with the reason — the user has not seen what will be written 245ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > busy ⇒ Exporting… is a visible status line and the reason on the control 507ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > generateDisabledReason (pure): lock, then program, then readiness, then busy, then not ready, then field list 9ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > ready ⇒ governed rows are read-only with source words; unsourced rows have labelled inputs 65ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses the export, with the reason, when a section is not fileable 976ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > switching programs never shows the previous program’s values while the next field list loads 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a failed field read (5xx) renders ErrorState with a sentence and retry, never an empty table or the raw body 39ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a 404 says the program was not found — and offers no retry, which could not succeed 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a 422 says the field map is not populated — and offers no retry 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > posts useProgramData:true and only the typed non-empty keys, then reports filled/blank 145ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > switching programs forgets the previous program’s outcome — no stale Downloaded line under the new header 148ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > renders one PDF per authored 814.20 section plus the combined PDF/DOCX, labelled as a PMA draft — never the six 510(k) slots 54ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > a governed 510(k) program renders EVERY authored section, not six fixed slots 12ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > a governed denovo document is cut per section and labelled as itself, never as a 510(k) 5ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > a governed cer document is cut per section and labelled as itself, never as a 510(k) 19ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > after a run, says how to see the values in Acrobat — the form hides those sections until then 62ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > says which written values the form clears when the filer follows the instruction 87ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > the LEGACY store keeps the six 510(k) slots those slots were built for 8ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/assemble — pathway pma > does not call the official eSTAR producible on a template whose bytes are not the pinned ones 95ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses a slot the template does not declare 1010ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > rejects a malformed attachment request at the schema, before any work 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > warns that the Declaration of Conformity company name is rebuilt from the applicant 120ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/assemble — pathway pma > computes the PMA assembly verdict against the PMA modules 36ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/assemble — pathway pma > a 510(k) carries its device properties in the request; without them the conditional sections stay undetermined 41ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/assemble — pathway pma > accepts the PMA supplement type and scopes the required modules to it 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > names the typed keys the server dropped 115ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > a 403 NOT_ENTITLED renders Locked with the tier in the title — never a dead button 91ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > does not inflate the administrative field report by one 643ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > never builds a resolver when no attachment was asked for 320ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > a 422 refusal shows the blockers on the status line 96ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > an enforced denial locks Generate on mount, names the tier, and never posts 61ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > a denial in warn mode does not lock — the POST would go through 99ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > a failed entitlement read locks nothing 56ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > officialEstarVariantFor (pure): the product type decides, never the surface 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > the header names the family, and the reads carry the variant 8ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > a device program reads as the nIVD eSTAR 4ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > value null + declaredSource set ⇒ the caption, "Not set — <home>", AND the export-only input 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > value null + declaredSource null ⇒ export-only, no "Not set" line 29ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > a registration-held key names the eSTAR registration as its home 20ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > a governed value never shows "Not set" even though its declaredSource is set 11ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > officialEstarTypeFor (pure): the regulatory path decides, never the surface 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the header names the pathway and the family 9ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the type travels in the readiness and official-fields reads 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the type travels in the POST body 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > switching the pathway forgets what was typed under the previous one 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a saved device profile makes the preview re-read the governed values 58ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a rejected device-profile save does NOT re-read — nothing changed to re-read 132ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a saved correspondent block makes the preview re-read 54ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx > SubmissionCenter — 510(k) device assembly caption > reports the 11 missing and 7 undetermined sections, not "2 blockers" 48ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx > SubmissionCenter — 510(k) device assembly caption > counts a template blocker beside the section counts as one more blocker 11ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx > SubmissionCenter — 510(k) device assembly caption > still reads "0 blockers" for a verdict with nothing blocking (over-correction guard) 11ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > creates governed bundle consequence with durable references 24ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > 404s when the project does not resolve in the caller org 1ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > answers 500 PROJECT_RESOLUTION_FAILED — never 404 — when the anchor READ fails 2ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > still 404s on schema absence (42P01): a database without the table has no row to find 1ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > delivers an audited (registry-unplaced) export for a program-spine UUID project 7ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > places the export in the registry when the program HAS a C1 project anchor 4ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > keeps the unplaced path when the program resolves but has NO anchor 7ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > assembles content server-side from authored sections with useProjectContent 5ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > a program anchor reads ITS governed document, not the org-wide legacy store (ESTAR-01/02) 3ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > a program anchor with nothing authored in its governed document 422s and names the store 1ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > 422s honestly when useProjectContent finds no authored sections 1ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > fails closed when governed persistence fails 4ms
+ ✓ tests/routes/estar-export-governance.test.ts > POST /api/510k/estar/assemble — the device-assembly contract over HTTP > reports artifactKind none with blockers when nothing is authored 13ms
+ ✓ tests/routes/estar-export-governance.test.ts > POST /api/510k/estar/assemble — the device-assembly contract over HTTP > reports a draft-only artifact for authored content with no vendored template 15ms
+ ✓ tests/routes/estar-export-governance.test.ts > an unplaced export whose audit row does not persist > is refused with a 500 and no downloadable bytes 27ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > creates artifact + version + provenance + audit + snapshot in a single transaction 4ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > returns artifactId, version, status, placementState, governance refs 2ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > sets placementState to "placed" when ctdSection is provided 1ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > sets placementState to "unplaced" when no ctdSection 1ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > persists governance source metadata in artifact record 1ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > creates provenance event with export hash and format details 1ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > creates audit log with EXPORT action and is_gxp_relevant=true 1ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > creates submission snapshot with filename/size/export-format action 1ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > throws on DB failure and issues ROLLBACK 3ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > handles 510k eSTAR export type correctly 1ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > handles CERV2 ZIP export type correctly 1ms
+ ✓ tests/governed-export-behavioral.test.ts > CER v2 export routes — governed wiring > imports createGovernedExportConsequence from governed service 1ms
+ ✓ tests/governed-export-behavioral.test.ts > CER v2 export routes — governed wiring > PDF route calls createGovernedExportConsequence before response 0ms
+ ✓ tests/governed-export-behavioral.test.ts > CER v2 export routes — governed wiring > DOCX route calls createGovernedExportConsequence before response 0ms
+ ✓ tests/governed-export-behavioral.test.ts > CER v2 export routes — governed wiring > sets X-Concept2Cure-Governance-Persistence header to "governed" 0ms
+ ✓ tests/governed-export-behavioral.test.ts > CER v2 export routes — governed wiring > does not have old "none" governance persistence default 0ms
+ ✓ tests/governed-export-behavioral.test.ts > CER v2 export routes — governed wiring > consequence includes sourceType export_pdf and export_docx 0ms
+ ✓ tests/governed-export-behavioral.test.ts > CER v2 export routes — governed wiring > consequence includes backendRoute for traceability 0ms
+ ✓ tests/governed-export-behavioral.test.ts > 510(k) eSTAR build route — governed wiring > imports createGovernedExportConsequence 0ms
+ ✓ tests/governed-export-behavioral.test.ts > 510(k) eSTAR build route — governed wiring > calls createGovernedExportConsequence in build handler 0ms
+ ✓ tests/governed-export-behavioral.test.ts > 510(k) eSTAR build route — governed wiring > accepts projectId in request schema 0ms
+ ✓ tests/governed-export-behavioral.test.ts > 510(k) eSTAR build route — governed wiring > consequence sourceType is export_estar_zip 0ms
+ ✓ server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission (B5) > produces an official eSTAR when sections complete AND the template is present 3ms
+ ✓ server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission (B5) > does not claim an official eSTAR while any section is of undetermined applicability 1ms
+ ✓ server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission (B5) > falls back to a draft content package (not submittable) when the official template is missing 1ms
+ ✓ server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission (B5) > reports missing required sections as blockers 0ms
+ ✓ server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission (B5) > returns 'none' when there is no content at all 0ms
+ ✓ server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission (B5) > never blocks on a missing template in staging / when not required (report-only) 0ms
+ ✓ server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission (B5) > overlays market readiness and surfaces the honest cannot-transmit blocker 1ms
+ ✓ server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission (B5) > de-duplicates blockers and records provenance 0ms
+ ✓ server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission — PMA pathway > scores a PMA against the PMA modules (pma-mapper), never the 510(k) eSTAR slots 1ms
+ ✓ server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission — PMA pathway > a complete PMA with no vendored template is a draft content package with the honest template blocker 1ms
+ ✓ server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission — PMA pathway > a PMA without its statistical analysis is blocked on exactly that module 1ms
+ ✓ server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission — PMA pathway > a 30-day notice owes only administrative + manufacturing content (814.39(f)) 0ms
+ ✓ server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission — PMA pathway > the pack's CHILD sections, keyed by their 814.20 letters, satisfy the PMA modules (a sponsor authors leaves, not folders) 0ms
+ ✓ server/services/ana/__tests__/device-submission-tools.test.ts > device-submission tools — registration > assemble_device_submission is defined and has a handler 2ms
+ ✓ server/services/ana/__tests__/device-submission-tools.test.ts > device-submission tools — registration > score_predicate_adequacy is defined and has a handler 0ms
+ ✓ server/services/ana/__tests__/device-submission-tools.test.ts > device-submission tools — registration > code_drug is defined and has a handler 0ms
+ ✓ server/services/ana/__tests__/device-submission-tools.test.ts > assemble_device_submission > validates pathway and variant 2ms
+ ✓ server/services/ana/__tests__/device-submission-tools.test.ts > assemble_device_submission > maps a hypothetical PMA outline onto the PMA modules (pathway 'pma'), ignoring the model's substantive claim 2ms
+ ✓ server/services/ana/__tests__/device-submission-tools.test.ts > assemble_device_submission > requires leaves[] in mode 'hypothetical' 0ms
+ ✓ server/services/ana/__tests__/device-submission-tools.test.ts > assemble_device_submission > with no project open and no hypothetical mode, asks for a project 0ms
+ ✓ server/services/ana/__tests__/device-submission-tools.test.ts > assemble_device_submission > computes an honest hypothetical assembly state with blockers and artifactKind 1ms
+ ✓ server/services/ana/__tests__/device-submission-tools.test.ts > score_predicate_adequacy > requires non-empty candidates[] 1ms
+ ✓ server/services/ana/__tests__/device-submission-tools.test.ts > score_predicate_adequacy > ranks candidates and recommends the strongest 9ms
+ ✓ server/services/ana/__tests__/device-submission-tools.test.ts > code_drug > requires a name (offline guard) 0ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseDeviceReadiness > returns submittable advice when sections are complete and the official template is present 4ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseDeviceReadiness > returns not-submittable advice and surfaces blockers when the official template is missing 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseDeviceReadiness > surfaces missing required sections as blockers and critical actions 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseDeviceReadiness > returns artifactKind "none" with honest headline when no content is supplied 0ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseDeviceReadiness > includes a target-market overlay finding when a market is supplied 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseGlobalMarketStrategy > ranks markets best-ready first based on readiness score 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseGlobalMarketStrategy > reports transmission capability honestly — true for markets with live gateways 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseGlobalMarketStrategy > reports which markets the platform can assemble and which need a local rep 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseGlobalMarketStrategy > assesses every registry market when no candidates are supplied 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseGlobalMarketStrategy > reports unrecognised candidate market ids without throwing 2ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseGlobalMarketStrategy > always recommends self-submission (critical) 2ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > ANA_ADVISORY_TOOL_SPECS > exports a well-formed spec for each advisory function 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > cerv2-export-routes.ts must import or call a governed export function 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > 510k-estar-routes.ts must import or call a governed export function 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > ectd-export.ts must import or call a governed export function 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > rtm-export.ts must import or call a governed export function 0ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > docx-factory.ts must import or call a governed export function 0ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > ivdr-routes.ts must import or call a governed export function 0ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > all export route files exist in the inventory 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > exempted files have documented reasons 0ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > files with the artifact, the declared meaning and what was actually verified 5ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > records a second factor only when one was actually presented 1ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing with no artifact, and nothing is advanced 1ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing with no reason, and nothing is advanced 1ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing with a too-short reason, and nothing is advanced 2ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing whose re-authentication failed, before anything is advanced 1ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > has nowhere to put a client-supplied filing date 1ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > leaves every other transition unsigned and un-gated 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > admits the delivered bytes through the canonical vault ingest 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > versions by content, so the same bytes are idempotent and new bytes are a new version 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > says plainly when a program has no vault to retain into 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when storage refused the bytes — an unretained submission artifact is not delivered 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the program is not ours — an unretained submission artifact is not delivered 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when different bytes already hold this version — an unretained submission artifact is not delivered 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the ingest itself fails, rather than reporting a retention 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the stored hash is not the delivered hash 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > listRetainedEstarArtifacts > reads this org only, only retained eSTARs, and only live rows 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > listRetainedEstarArtifacts > maps the row to what a signer needs to tell two eSTARs apart 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > the five facts reach the audited upsert exactly as sent, and come back on `registration` 4ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > null CLEARS a fact (it is forwarded as null, not dropped) 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > the declaration name and address travel together, so the DoC names one legal entity 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > correspondentCompanyName over its column width is refused 400 and nothing is written 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > correspondentContactEmail over its column width is refused 400 and nothing is written 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > correspondentTelephone over its column width is refused 400 and nothing is written 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > declarationCompanyName over its column width is refused 400 and nothing is written 0ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > declarationCompanyAddress over its column width is refused 400 and nothing is written 0ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > the widths are the column widths, not smaller: the maximum length is accepted 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > GET /api/510k/estar/registration — the stored facts come back > returns the five facts on `registration` when the org has a row 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > GET /api/510k/estar/registration — the stored facts come back > an org that never registered gets registered:false and a null registration — nothing invented 1ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — mode off evaluates nothing > ENTITLEMENTS_ENFORCE 'unset': 200 mode off, allowed null, and the evaluator is NEVER called 3ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — mode off evaluates nothing > ENTITLEMENTS_ENFORCE '\'off\'': 200 mode off, allowed null, and the evaluator is NEVER called 1ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — the verdict the gate would reach > mode 'on' + below tier: enforced true, allowed false, requiredTier from the evaluation — the POST would refuse 1ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — the verdict the gate would reach > mode 'warn' + below tier: allowed false but enforced false — the surface must NOT lock 1ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — the verdict the gate would reach > mode 'on' + entitled (via a pilot toggle): allowed true, reason null 1ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — reason is copy or null, never query text > a failed tier lookup is reported as unknown (tier null, reason null) — the driver text never reaches the body 1ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — reason is copy or null, never query text > an unknown tier with a copy reason ('organization not found') forwards that reason 0ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — failure envelopes > 500 ESTAR_ENTITLEMENT_FAILED when the evaluator throws; the body carries no error text 1ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — failure envelopes > 400 when no organization context resolves; nothing evaluated 1ms
+ Test Files  18 passed (18)
+      Tests  238 passed (238)
+
+=== 4. Tool-registry / executor tests (AnaToolExecutor importers) ===
+ Test Files  7 passed (7)
+      Tests  141 passed (141)

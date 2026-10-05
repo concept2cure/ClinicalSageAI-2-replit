@@ -1,7 +1,6 @@
 import { runWithTenantScope } from '../../../db/tenantStore';
 import { describe, it, expect, type Mock } from 'vitest';
 import { mockPool } from '../../../../tests/setup';
-import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
 /* Tools run inside the caller's tenant scope (see the process-capability
    helper below), where the instrumented pool runs each query on a connection
@@ -12,6 +11,9 @@ import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
   query: () => Promise.resolve({ rows: [], rowCount: 0 }),
   release: () => undefined,
 });
+// Imported after the mock is set: AnaToolDefinitions' graph now reaches the
+// instrumented pool too (writing-precision-gate, 8d919b1f8).
+const { ALL_ANA_TOOLS } = await import('../AnaToolDefinitions.js');
 const { getToolHandler } = await import('../AnaToolExecutor.js');
 
 const names = ALL_ANA_TOOLS.map(t => t.name);

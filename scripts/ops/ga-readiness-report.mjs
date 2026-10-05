@@ -158,7 +158,11 @@ const GATEWAY_CREDENTIALS = [
   { key: 'fda:esg', label: 'FDA ESG (AS2/SFTP)', vars: ['FDA_ESG_URL', 'FDA_ESG_AS2_FROM', 'FDA_ESG_CERT_PATH', 'FDA_ESG_KEY_PATH', 'FDA_ESG_FDA_CERT_PATH'] },
   { key: 'ema:cesp', label: 'EMA CESP', vars: ['EMA_CESP_URL', 'EMA_CESP_CLIENT_ID', 'EMA_CESP_CLIENT_SECRET', 'EMA_CESP_ORG_ID'] },
   { key: 'ema:eudamed', label: 'EUDAMED', vars: ['EUDAMED_URL', 'EUDAMED_BEARER'] },
-  { key: 'pmda:pmda_gateway', label: 'PMDA gateway', vars: ['PMDA_URL', 'PMDA_APPLICANT_ID', 'PMDA_CERT_PATH', 'PMDA_KEY_PATH', 'PMDA_HMAC_SECRET'] },
+  // 2026-10-05 (g-pmda-transmit-unverified): the PMDA gateway reads no
+  // credentials. Its former REST/HMAC protocol had no regulator source and was
+  // removed; transmit raises UnverifiedTransportError before the wire. The row
+  // is therefore always blocked, whatever is set — never 'ready'.
+  { key: 'pmda:pmda_gateway', label: 'PMDA gateway', vars: [], unverified: 'protocol unverified (no regulator source for a PMDA transport; the real system is the 申請電子データシステム, esg.pmda.go.jp); transmit raises UnverifiedTransportError (transmitted:false)' },
   { key: 'ca:hc_cesg', label: 'Health Canada CESG', vars: ['HC_CESG_URL', 'HC_CESG_COMPANY_ID', 'HC_CESG_CERT_PATH', 'HC_CESG_KEY_PATH', 'HC_CESG_HMAC_SECRET'] },
   { key: 'uk:mhra_gateway', label: 'MHRA gateway', vars: ['MHRA_URL', 'MHRA_API_KEY', 'MHRA_ORG_ID'] },
   { key: 'cn:nmpa_gateway', label: 'NMPA gateway', vars: ['NMPA_URL', 'NMPA_TOKEN', 'NMPA_COMPANY_ID'] },
@@ -469,10 +473,12 @@ for (const gw of GATEWAY_CREDENTIALS) {
     id: `gateway:${gw.key}`,
     group: 'Agency gateway credentials (production)',
     label: restSelected ? `${gw.label} — transport: rest (NextGen)` : gw.label,
-    status: missing.length === 0 && !restSelected && !badTransport ? 'ready' : 'blocked',
+    status: missing.length === 0 && !restSelected && !badTransport && !gw.unverified ? 'ready' : 'blocked',
     // Only FDA ESG is on a GA critical path; the rest are per-market expansion.
     severity: gw.key === 'fda:esg' ? 'blocker' : 'advisory',
-    observed: badTransport
+    observed: gw.unverified
+      ? gw.unverified
+      : badTransport
       ? `FDA_ESG_TRANSPORT='${esgTransport}' is not 'as2' or 'rest'; the gateway refuses every transmit as a configuration error`
       : missing.length === 0
         ? (restSelected
@@ -481,7 +487,9 @@ for (const gw of GATEWAY_CREDENTIALS) {
         : `missing: ${missing.join(', ')}`,
     gate: 'server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()',
     owner: 'Regulatory Ops (agency account) + Ops (secrets manager)',
-    unblock: restSelected
+    unblock: gw.unverified
+      ? 'Source the PMDA electronic-submission protocol from PMDA material (or UAT) and implement it in server/services/submission-gateways/pmda-gateway.ts; no credential setting unblocks this row.'
+      : restSelected
       ? 'Set FDA_ESG_TRANSPORT=as2 with the AS2 credentials for the verified path, or complete the ESG NextGen REST UAT and replace transmitViaNextGenRest in fda-esg.ts.'
       : 'Register with the agency, obtain the credentials, load them into the production secrets manager.',
   });

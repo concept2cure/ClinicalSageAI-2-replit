@@ -1,0 +1,320 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > LABELING_REQUIREMENTS > models every market with a non-empty, well-formed section set 5ms
+   → flattenLabelingSections is not a function or its return value is not iterable
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > LABELING_REQUIREMENTS > uses unique section codes within each market 1ms
+   → flattenLabelingSections is not a function
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > LABELING_REQUIREMENTS > models the expected core sections per market 0ms
+   → flattenLabelingSections is not a function
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > LABELING_REQUIREMENTS > keeps every FDA and EMA section required (their behaviour is unchanged) 0ms
+   → flattenLabelingSections is not a function
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > has item 9 特定の背景を有する患者に関する注意 with 9.1–9.8, citing the MHLW/PMDA notice 1ms
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > numbers items 1–26 in order 5ms
+   → expected [] to deeply equal [ '1', '2', '3', '4', '5', '6', …(20) ]
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > deletes the 12 old-format codes with no alias 0ms
+   → flattenLabelingSections is not a function
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > classes 警告, 承認条件 and every item that may be a missing number as conditional 0ms
+   → flattenLabelingSections is not a function
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > gives every item a well-formed basis, and regulator-text only where the notice was seen 1ms
+   → flattenLabelingSections is not a function
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > marks a correct insert with no 警告 and no 承認条件 as ready 0ms
+   → flattenLabelingSections is not a function
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > recognises a sub-item code as a modeled section, not an extra one 0ms
+   → flattenLabelingSections is not a function
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > refuses 慎重投与 as obsolete and names the replacement item 0ms
+   → flattenLabelingSections is not a function
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > refuses 原則禁忌 and the old 使用上の注意 umbrella as obsolete 0ms
+   → flattenLabelingSections is not a function
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > notes electronic publication, the unread 2026 amendment and the drugs-only scope 0ms
+   → getLabelingNotes is not a function
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > assessLabeling > ready when all modeled sections are provided (every market) 0ms
+   → flattenLabelingSections is not a function
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > assessLabeling > flags a missing required FDA section (Indications and Usage) as a blocking error 0ms
+   → flattenLabelingSections is not a function
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > assessLabeling > warns (non-blocking) on an unrecognized provided section 0ms
+   → flattenLabelingSections is not a function
+ ✓ server/services/global-ri/__tests__/labeling-requirements.test.ts > assessLabeling > errors on an unknown market 1ms
+ × server/services/global-ri/__tests__/labeling-requirements.test.ts > assessLabeling > sorts findings by section then severity (errors before warnings) 9ms
+   → flattenLabelingSections is not a function
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > LABELING_REQUIREMENTS > models every market with a non-empty, well-formed section set
+TypeError: flattenLabelingSections is not a function or its return value is not iterable
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:45:23
+     43|       const reqs = getLabelingRequirements(m);
+     44|       expect(reqs.length).toBeGreaterThan(0);
+     45|       for (const s of flattenLabelingSections(reqs)) {
+       |                       ^
+     46|         expect(s.code).toBeTruthy();
+     47|         expect(s.title).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > LABELING_REQUIREMENTS > uses unique section codes within each market
+TypeError: flattenLabelingSections is not a function
+ ❯ allCodes server/services/global-ri/__tests__/labeling-requirements.test.ts:30:38
+     28|
+     29| /** Every modeled section code for a market, sub-items included. */
+     30| const allCodes = (m: LabelMarket) => flattenLabelingSections(LABELING_…
+       |                                      ^
+     31| /** Only the codes a draft must carry (requirement 'required', inherit…
+     32| const requiredCodes = (m: LabelMarket) =>
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:54:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > LABELING_REQUIREMENTS > models the expected core sections per market
+TypeError: flattenLabelingSections is not a function
+ ❯ allCodes server/services/global-ri/__tests__/labeling-requirements.test.ts:30:38
+     28|
+     29| /** Every modeled section code for a market, sub-items included. */
+     30| const allCodes = (m: LabelMarket) => flattenLabelingSections(LABELING_…
+       |                                      ^
+     31| /** Only the codes a draft must carry (requirement 'required', inherit…
+     32| const requiredCodes = (m: LabelMarket) =>
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:60:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > LABELING_REQUIREMENTS > keeps every FDA and EMA section required (their behaviour is unchanged)
+TypeError: flattenLabelingSections is not a function
+ ❯ requiredCodes server/services/global-ri/__tests__/labeling-requirements.test.ts:33:3
+     31| /** Only the codes a draft must carry (requirement 'required', inherit…
+     32| const requiredCodes = (m: LabelMarket) =>
+     33|   flattenLabelingSections(LABELING_REQUIREMENTS[m])
+       |   ^
+     34|     .filter((s) => s.requirement === 'required')
+     35|     .map((s) => s.code);
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:70:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > has item 9 特定の背景を有する患者に関する注意 with 9.1–9.8, citing the MHLW/PMDA notice
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:78:25
+     76|   it('has item 9 特定の背景を有する患者に関する注意 with 9.1–9.8, citing the MHLW/PMDA …
+     77|     const nine = getLabelingRequirements('PMDA').find((s) => s.number …
+     78|     expect(nine?.title).toContain('特定の背景を有する患者に関する注意');
+       |                         ^
+     79|     const childNumbers = (nine?.children ?? []).map((c) => c.number);
+     80|     expect(childNumbers).toEqual(['9.1', '9.2', '9.3', '9.4', '9.5', '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > numbers items 1–26 in order
+AssertionError: expected [] to deeply equal [ '1', '2', '3', '4', '5', '6', …(20) ]
+
+- Expected
++ Received
+
+- [
+-   "1",
+-   "2",
+-   "3",
+-   "4",
+-   "5",
+-   "6",
+-   "7",
+-   "8",
+-   "9",
+-   "10",
+-   "11",
+-   "12",
+-   "13",
+-   "14",
+-   "15",
+-   "16",
+-   "17",
+-   "18",
+-   "19",
+-   "20",
+-   "21",
+-   "22",
+-   "23",
+-   "24",
+-   "25",
+-   "26",
+- ]
++ []
+
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:87:17
+     85|   it('numbers items 1–26 in order', () => {
+     86|     const top = getLabelingRequirements('PMDA').filter((s) => s.number…
+     87|     expect(top).toEqual(Array.from({ length: 26 }, (_, i) => String(i …
+       |                 ^
+     88|     expect(pmdaByNumber('1')?.title).toContain('警告');
+     89|     expect(pmdaByNumber('10')?.title).toContain('相互作用');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > deletes the 12 old-format codes with no alias
+TypeError: flattenLabelingSections is not a function
+ ❯ allCodes server/services/global-ri/__tests__/labeling-requirements.test.ts:30:38
+     28|
+     29| /** Every modeled section code for a market, sub-items included. */
+     30| const allCodes = (m: LabelMarket) => flattenLabelingSections(LABELING_…
+       |                                      ^
+     31| /** Only the codes a draft must carry (requirement 'required', inherit…
+     32| const requiredCodes = (m: LabelMarket) =>
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:103:36
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > classes 警告, 承認条件 and every item that may be a missing number as conditional
+TypeError: flattenLabelingSections is not a function
+ ❯ pmda server/services/global-ri/__tests__/labeling-requirements.test.ts:37:20
+     35|     .map((s) => s.code);
+     36|
+     37| const pmda = () => flattenLabelingSections(LABELING_REQUIREMENTS.PMDA);
+       |                    ^
+     38| const pmdaByNumber = (n: string) => pmda().find((s) => s.number === n);
+     39|
+ ❯ pmdaByNumber server/services/global-ri/__tests__/labeling-requirements.test.ts:38:37
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:108:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > gives every item a well-formed basis, and regulator-text only where the notice was seen
+TypeError: flattenLabelingSections is not a function
+ ❯ pmda server/services/global-ri/__tests__/labeling-requirements.test.ts:37:20
+     35|     .map((s) => s.code);
+     36|
+     37| const pmda = () => flattenLabelingSections(LABELING_REQUIREMENTS.PMDA);
+       |                    ^
+     38| const pmdaByNumber = (n: string) => pmda().find((s) => s.number === n);
+     39|
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:117:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > marks a correct insert with no 警告 and no 承認条件 as ready
+TypeError: flattenLabelingSections is not a function
+ ❯ requiredCodes server/services/global-ri/__tests__/labeling-requirements.test.ts:33:3
+     31| /** Only the codes a draft must carry (requirement 'required', inherit…
+     32| const requiredCodes = (m: LabelMarket) =>
+     33|   flattenLabelingSections(LABELING_REQUIREMENTS[m])
+       |   ^
+     34|     .filter((s) => s.requirement === 'required')
+     35|     .map((s) => s.code);
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:130:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > recognises a sub-item code as a modeled section, not an extra one
+TypeError: flattenLabelingSections is not a function
+ ❯ requiredCodes server/services/global-ri/__tests__/labeling-requirements.test.ts:33:3
+     31| /** Only the codes a draft must carry (requirement 'required', inherit…
+     32| const requiredCodes = (m: LabelMarket) =>
+     33|   flattenLabelingSections(LABELING_REQUIREMENTS[m])
+       |   ^
+     34|     .filter((s) => s.requirement === 'required')
+     35|     .map((s) => s.code);
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:140:72
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > refuses 慎重投与 as obsolete and names the replacement item
+TypeError: flattenLabelingSections is not a function
+ ❯ requiredCodes server/services/global-ri/__tests__/labeling-requirements.test.ts:33:3
+     31| /** Only the codes a draft must carry (requirement 'required', inherit…
+     32| const requiredCodes = (m: LabelMarket) =>
+     33|   flattenLabelingSections(LABELING_REQUIREMENTS[m])
+       |   ^
+     34|     .filter((s) => s.requirement === 'required')
+     35|     .map((s) => s.code);
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:145:72
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > refuses 原則禁忌 and the old 使用上の注意 umbrella as obsolete
+TypeError: flattenLabelingSections is not a function
+ ❯ requiredCodes server/services/global-ri/__tests__/labeling-requirements.test.ts:33:3
+     31| /** Only the codes a draft must carry (requirement 'required', inherit…
+     32| const requiredCodes = (m: LabelMarket) =>
+     33|   flattenLabelingSections(LABELING_REQUIREMENTS[m])
+       |   ^
+     34|     .filter((s) => s.requirement === 'required')
+     35|     .map((s) => s.code);
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:156:74
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > PMDA package insert — the numbered new format > notes electronic publication, the unread 2026 amendment and the drugs-only scope
+TypeError: getLabelingNotes is not a function
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:171:19
+    169|
+    170|   it('notes electronic publication, the unread 2026 amendment and the …
+    171|     const notes = getLabelingNotes('PMDA').join('\n');
+       |                   ^
+    172|     expect(notes).toMatch(/2021-08-01/);
+    173|     expect(notes).toMatch(/医薬安発0430第1号/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > assessLabeling > ready when all modeled sections are provided (every market)
+TypeError: flattenLabelingSections is not a function
+ ❯ allCodes server/services/global-ri/__tests__/labeling-requirements.test.ts:30:38
+     28|
+     29| /** Every modeled section code for a market, sub-items included. */
+     30| const allCodes = (m: LabelMarket) => flattenLabelingSections(LABELING_…
+       |                                      ^
+     31| /** Only the codes a draft must carry (requirement 'required', inherit…
+     32| const requiredCodes = (m: LabelMarket) =>
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:185:65
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > assessLabeling > flags a missing required FDA section (Indications and Usage) as a blocking error
+TypeError: flattenLabelingSections is not a function
+ ❯ allCodes server/services/global-ri/__tests__/labeling-requirements.test.ts:30:38
+     28|
+     29| /** Every modeled section code for a market, sub-items included. */
+     30| const allCodes = (m: LabelMarket) => flattenLabelingSections(LABELING_…
+       |                                      ^
+     31| /** Only the codes a draft must carry (requirement 'required', inherit…
+     32| const requiredCodes = (m: LabelMarket) =>
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:193:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > assessLabeling > warns (non-blocking) on an unrecognized provided section
+TypeError: flattenLabelingSections is not a function
+ ❯ allCodes server/services/global-ri/__tests__/labeling-requirements.test.ts:30:38
+     28|
+     29| /** Every modeled section code for a market, sub-items included. */
+     30| const allCodes = (m: LabelMarket) => flattenLabelingSections(LABELING_…
+       |                                      ^
+     31| /** Only the codes a draft must carry (requirement 'required', inherit…
+     32| const requiredCodes = (m: LabelMarket) =>
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:202:71
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/18]⎯
+
+ FAIL  server/services/global-ri/__tests__/labeling-requirements.test.ts > assessLabeling > sorts findings by section then severity (errors before warnings)
+TypeError: flattenLabelingSections is not a function
+ ❯ requiredCodes server/services/global-ri/__tests__/labeling-requirements.test.ts:33:3
+     31| /** Only the codes a draft must carry (requirement 'required', inherit…
+     32| const requiredCodes = (m: LabelMarket) =>
+     33|   flattenLabelingSections(LABELING_REQUIREMENTS[m])
+       |   ^
+     34|     .filter((s) => s.requirement === 'required')
+     35|     .map((s) => s.code);
+ ❯ server/services/global-ri/__tests__/labeling-requirements.test.ts:221:36
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/18]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  18 failed | 1 passed (19)
+   Start at  03:28:00
+   Duration  564ms (transform 138ms, setup 113ms, import 48ms, tests 30ms, environment 0ms)
+
+
+=== Behavioural probe of HEAD labeling-requirements.ts (git show HEAD:...) ===
+item 9 特定の背景を有する患者に関する注意 present: false
+draft without 警告/承認条件 ready: false findings: [["MISSING_SECTION","jp_approval_conditions"],["MISSING_SECTION","jp_warnings"]]
+draft with 慎重投与 ready: true findings: [["warning","EXTRA_SECTION","jp_careful_administration"]]

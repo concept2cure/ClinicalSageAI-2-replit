@@ -1,0 +1,13 @@
+Mutant B17-approval-unstated: an approved model whose PQ is pending reads like one not approved at all
+
+--- server/services/ai-governance/approved-models.ts
+- approvedForHighRisk: entry ? entry.approvedForHighRisk : null,
++ approvedForHighRisk: null,
+
+Tests run: server/services/ana/__tests__/turn-record-served-models.test.ts server/routes/__tests__/authoring-decision-source.pglite.test.ts server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/turn-record-served-models.test.ts > qualifyServedModels: RULE 2, per model > outside production: approved for high-risk work, whatever its PQ, and the facts it rests on 12ms
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > a verified source names every model that wrote the words, as RULE 2 reads it > single: two models served the turn → both, each qualified or not, with its PQ status 48ms
+      Tests  2 failed | 23 passed (25)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

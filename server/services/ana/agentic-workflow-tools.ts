@@ -18,6 +18,16 @@ import type { AnaTool } from '../ai-gateway/types';
 import { capToolResultForModel } from './agentic-loop.js';
 import type { ToolContext } from './AnaToolExecutor.js';
 import { handleUpdatePlan, UPDATE_PLAN_TOOL_NAME } from './turn-plan.js';
+import {
+  AGENT_INSTRUCTIONS_MAX,
+  AGENT_OBJECTIVE_MAX,
+  AGENT_TEXT_TO_CHECK_MAX,
+  CHILD_ACTIVE_MS,
+  CHILD_MAX_ROUNDS,
+  MAX_AGENTS_PER_ROUND,
+  MAX_AGENTS_PER_TURN,
+  RUN_AGENT_TOOL,
+} from '@shared/ana/run-control-limits';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool definitions
@@ -105,6 +115,57 @@ export const CHECK_DEEP_INVESTIGATION: AnaTool = {
 };
 
 
+/**
+ * AnA's delegation tool (row 74, S5; ADR-0015 §2). The description is the
+ * model's whole contract, so every number in it is the server's own constant
+ * and every claim is one the runner enforces (sub-agent.ts). It says what the
+ * checks do NOT establish as plainly as what they do (brief D18).
+ */
+export const RUN_AGENT: AnaTool = {
+  name: RUN_AGENT_TOOL,
+  description:
+    'Start a sub-agent for ONE bounded, independent sub-task and wait for its report before you continue. ' +
+    `Put run_agent calls in a step of their own: up to ${MAX_AGENTS_PER_ROUND} in one step run together, at most ` +
+    `${MAX_AGENTS_PER_TURN} per turn, and all report back before your next step. A sub-agent cannot see this ` +
+    'conversation, cannot change, file, approve or sign anything, cannot ask the person, cannot start agents and ' +
+    `cannot search the web. It stops at its budget: ${CHILD_MAX_ROUNDS} rounds, ${CHILD_ACTIVE_MS / 60_000} minutes ` +
+    'of work. Its tools are the project, Vault and governed-document reads, the ICH and regulatory-currency ' +
+    'registries, and the public literature, trial and FDA adverse-event searches. None of them can call a ' +
+    'generative model; searches embed the query, and the public searches send it to PubMed, ClinicalTrials.gov and ' +
+    'openFDA. role research: investigate and report, citing the tool result behind every figure. role verify: pass ' +
+    'the exact text in text_to_check. Checks then run on that text as given, before the agent starts: whether each ' +
+    'figure carries a citation marker (the marker is not checked against any source), whether any labelled figure ' +
+    'stated more than once is stated with two different values, and, when a numbered project is open, whether any ' +
+    'figure differs from the same labelled figure in the project records. No checker verifies that a citation ' +
+    'exists or supports the text, or that a quotation matches its source. For those, the agent can only find and ' +
+    'quote source passages, and its report is advisory. The verdict comes only from the checks.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      role: {
+        type: 'string',
+        enum: ['research', 'verify'],
+        description: "'research' to investigate and report; 'verify' to check text_to_check.",
+      },
+      objective: {
+        type: 'string',
+        description: `One line naming the sub-task, shown to the person (at most ${AGENT_OBJECTIVE_MAX} characters).`,
+      },
+      instructions: {
+        type: 'string',
+        description:
+          `Everything the agent needs, self-contained: it cannot see this conversation (at most ${AGENT_INSTRUCTIONS_MAX} characters).`,
+      },
+      text_to_check: {
+        type: 'string',
+        description: `verify only: the exact text to check, as written (at most ${AGENT_TEXT_TO_CHECK_MAX} characters).`,
+      },
+    },
+    required: ['role', 'objective', 'instructions'],
+  },
+};
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Handler registration (injected register avoids an import cycle)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -121,6 +182,17 @@ export function registerAgenticWorkflowHandlers(register: RegisterFn): void {
 // (four sequential gateway calls, each Part-11 audit-logged); the pre-flight
 // keeps it honest-by-construction in deployments where the lumen schema /
 // agent registry has not been provisioned (npm run db:apply-c2c seeds it).
+  // Delegation (row 74, S5). Every refusal and limit lives in the runner; the
+  // host is attached by the stream only on a turn that may host agents, so any
+  // other caller that names this tool is answered AGENTS_NEED_A_LIVE_RUN.
+  // By literal: the governed-reason scan reads registrations by name
+  // (governed-reason-not-invented.test.ts). It is RUN_AGENT_TOOL's value,
+  // which sub-agent-toolset.test.ts pins.
+  register('run_agent', async (input, ctx) => {
+    const { runSubAgent } = await import('./sub-agent.js');
+    return runSubAgent(input, ctx ?? {}, ctx?.subAgentHost);
+  });
+
   register('convene_drafting_council', async (input, ctx) => {
   const sectionPath = typeof input.section_path === 'string' ? input.section_path.trim() : '';
   if (!sectionPath) {

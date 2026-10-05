@@ -78,7 +78,9 @@ describe('governedToolsetFor, the one toolset every chat door composes', () => {
     const offered = names(await governedToolsetFor(pool, 42));
     for (const n of HIDDEN) expect(offered.has(n), n).toBe(false);
     for (const n of KEPT) expect(offered.has(n), n).toBe(true);
-    expect(offered.size).toBe(getAllEnabledTools().length - HIDDEN_APP_TOOLS.size);
+    // run_agent is offered only to a turn that hosts sub-agents (row 74, S5;
+    // governed-toolset-sub-agents.test.ts), and this call does not.
+    expect(offered.size).toBe(getAllEnabledTools().filter(t => t.name !== 'run_agent').length - HIDDEN_APP_TOOLS.size);
   });
 
   it('withholds them for a request with no organisation too', async () => {

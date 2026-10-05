@@ -58,6 +58,8 @@ import { useProgressDock } from '../workDock';
 import { shellProgramName } from '../shellProject';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
+import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types';
+import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal } from './anaInsertGate';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
 import { apiRequest, serverMessage, ApiRequestError, redactInternals } from '@/lib/queryClient';
 import { AuthoringFilingBar } from '../surfaces/AuthoringFilingBar';
@@ -678,8 +680,13 @@ export interface EditorBridge {
   editable: boolean;
   /** The document and section open, as this editor's own chat sends them; null with no project. */
   authoringContext: AuthoringContextPack | null;
-  /** Insert text as an attributed tracked suggestion; false when the section cannot take it. */
-  insert: (text: string, author: SuggestionAuthor) => boolean;
+  /**
+   * Insert text as an attributed tracked suggestion; false when the section
+   * cannot take it. AnA's text also needs the record status of the turn that
+   * wrote it, and is refused unless the governed-write rule admits every model
+   * that wrote it (anaInsertGate.ts, round 11).
+   */
+  insert: (text: string, author: SuggestionAuthor, record?: AnaTurnRecordStatus) => boolean;
   /**
    * Redline one quoted passage of the open section as an attributed tracked
    * suggestion (the editor handle's `proposeReplacement`). Asynchronous: the
@@ -832,6 +839,44 @@ function AuthoringSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
       style={{ display: 'grid', gap: 8, marginTop: 8 }}
       doneClassName="cmt-body"
     />
+  );
+}
+
+/**
+ * The pane's offer to put an AnA answer into the open section. AI output enters
+ * the record ONLY as an attributed in-text suggestion, pending until a person
+ * accepts or rejects each edit, and only when the governed-write rule admits
+ * every model that wrote it (anaInsertGate.ts, round 11). A refused offer is
+ * disabled, not hidden, with its reason as visible text it is described by
+ * (GE-P-3).
+ */
+function AnaInsertOffer({
+  sectionCode,
+  refusal,
+  refusalId,
+  onInsert,
+}: {
+  sectionCode: string;
+  refusal: string | null;
+  refusalId: string;
+  onInsert: () => void;
+}) {
+  return (
+    <div style={{ marginTop: 6 }}>
+      <button
+        className="nda-open"
+        disabled={!!refusal}
+        aria-describedby={refusal ? refusalId : undefined}
+        onClick={refusal ? undefined : onInsert}
+      >
+        {I.penLine} Insert into {sectionCode} as tracked suggestion
+      </button>
+      {refusal && (
+        <span id={refusalId} style={{ display: 'block', marginTop: 4, fontSize: 11.5, color: 'var(--text-400)' }}>
+          {refusal}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -1280,6 +1325,22 @@ export function DocumentWorkbench({
      own `authoringContext` too, so the host's turns name the document and
      section the person has open, as this editor's own chat does. A sealed
      document is still open, so it is still reported, as not editable. */
+  /* AnA's text goes into the section only under the governed-write rule
+     (anaInsertGate.ts, round 11): this is the one door for the pane and the
+     bridge. A turn it admits is remembered, so a paste of that suggestion
+     keeps AnA's name (suggestions.ts, the paste door); any other pasted AnA
+     suggestion becomes the pasting person's. */
+  const admittedAnaSources = useRef(new Set<string>());
+  const insertAnaText = useCallback(
+    (text: string, author: SuggestionAuthor, record: AnaTurnRecordStatus | undefined): boolean => {
+      if (author.id === ANA_SUGGESTION_AUTHOR_ID && anaInsertRefusal(record)) return false;
+      const ok = editorRef.current?.insertSuggestion(text, author) ?? false;
+      if (ok && author.id === ANA_SUGGESTION_AUTHOR_ID && author.sourceRecord) admittedAnaSources.current.add(author.sourceRecord);
+      return ok;
+    },
+    [],
+  );
+  const admitsAnaSource = useCallback((id: string | null) => id !== null && admittedAnaSources.current.has(id), []);
   const onEditorBridge = embedded?.onEditorBridge;
   useEffect(() => {
     if (!onEditorBridge) return undefined;
@@ -1308,7 +1369,7 @@ export function DocumentWorkbench({
       sectionTitle: activeSection.title,
       editable: !docSealed,
       authoringContext,
-      insert: (text, author) => editorRef.current?.insertSuggestion(text, author) ?? false,
+      insert: (text, author, record) => insertAnaText(text, author, record),
       /* A proposal is anchored to text AnA read, in one section. It must name
          this section and the version of it AnA read; every base it gives is
          checked against the section as this editor loaded it, so a section
@@ -1316,6 +1377,9 @@ export function DocumentWorkbench({
          the base: re-reading would not make a frozen document take it. The
          hash is WebCrypto's, so this is asynchronous — and the section is
          checked again after it, since a save can land while it runs. */
+      /* Not gated by the insert's governed-write rule: it has no production
+         caller (2026-10-05). A caller that redlines with AnA's text must apply
+         anaInsertRefusal to the turn's record first, as insert does (round 11). */
       propose: async (proposal, author) => {
         if (!live) return { ok: false, reason: 'stale' };
         if (proposal.sectionId !== loaded.id) return { ok: false, reason: 'wrong-section' };
@@ -1330,7 +1394,7 @@ export function DocumentWorkbench({
       live = false;
       onEditorBridge(null);
     };
-  }, [onEditorBridge, activeDocId, activeSection, docSealed, authoringContext]);
+  }, [onEditorBridge, activeDocId, activeSection, docSealed, authoringContext, insertAnaText]);
 
   /* With no project open there is no AuthoringContextPack to build (it requires
      a projectId), so the document/section identity still travels as module
@@ -4378,6 +4442,7 @@ export function DocumentWorkbench({
                       },
                       onToggle: toggleTrackChanges,
                       onResolve: recordTrackedChangeDecision,
+                      admitsAnaSource,
                     }}
                     commentsApi={{
                       onCreate: requestAnchoredComment,
@@ -4607,34 +4672,37 @@ export function DocumentWorkbench({
                     {/* AI output enters the record ONLY as an attributed
                         in-text suggestion — struck-in green, pending until a
                         human accepts or rejects each edit in the canvas.
-                        Never as settled text. */}
+                        Never as settled text, and only under the governed-
+                        write rule (AnaInsertOffer, round 11). */}
                     {!m.streaming && m.text && activeSection && (
-                      <div style={{ marginTop: 6 }}>
-                        <button
-                          className="nda-open"
-                          onClick={() => {
-                            const ok = editorRef.current?.insertSuggestion(m.text, {
-                              id: 'ana',
+                      <AnaInsertOffer
+                        refusalId={`ana-insert-refusal-${m.id}`}
+                        sectionCode={activeSection.code}
+                        refusal={anaInsertRefusal(m.turnRecord)}
+                        onInsert={() => {
+                          const ok = insertAnaText(
+                            m.text,
+                            {
+                              id: ANA_SUGGESTION_AUTHOR_ID,
                               name: 'AnA (AI draft)',
                               /* The turn that wrote this text, so accepting or
                                  rejecting it later names that turn's record. */
                               ...(m.turnRecord?.status === 'recorded' ? { sourceRecord: m.turnRecord.id } : {}),
-                            });
-                            if (ok) {
-                              fireToast(
-                                'Draft inserted as tracked suggestions — review each edit in the canvas, then save.'
-                              );
-                            } else {
-                              fireToast(
-                                'Couldn’t insert — the canvas is not editable right now.',
-                                'error'
-                              );
-                            }
-                          }}
-                        >
-                          {I.penLine} Insert into {activeSection.code} as tracked suggestion
-                        </button>
-                      </div>
+                            },
+                            m.turnRecord,
+                          );
+                          if (ok) {
+                            fireToast(
+                              'Draft inserted as tracked suggestions — review each edit in the canvas, then save.'
+                            );
+                          } else {
+                            fireToast(
+                              'Couldn’t insert — the canvas is not editable right now.',
+                              'error'
+                            );
+                          }
+                        }}
+                      />
                     )}
                     {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>

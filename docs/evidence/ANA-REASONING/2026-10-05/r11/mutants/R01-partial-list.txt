@@ -1,0 +1,12 @@
+Mutant R01-partial-list: an unreadable entry is dropped and the rest read as the whole list
+
+--- client/src/concept2cure/components/ana/anaProgress.ts
+- return models.every((m): m is AnaServedModel => m !== null) ? models : undefined;
++ return models.filter((m): m is AnaServedModel => m !== null);
+
+Tests run: client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > drops the whole list when any entry cannot be read, so it reads as unknown, never as approved 10ms
+      Tests  1 failed | 9 passed (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

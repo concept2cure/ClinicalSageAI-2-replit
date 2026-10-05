@@ -246,6 +246,26 @@ describe('INF-10: the blocking scan, run as written', () => {
     for (const code of [2, 7]) expect(run(code).status, `semgrep exit ${code}`).not.toBe(0);
   });
 
+  it('scans against the newest candidate that is in this commit\'s history, not one outside it', () => {
+    const outside = 'b'.repeat(40);
+    const inside = 'c'.repeat(40);
+    // git merge-base --is-ancestor: not an ancestor (exit 1) for the first candidate only.
+    const git = `case "$*" in *"merge-base --is-ancestor ${outside}"*) exit 1;; esac; exit 0`;
+    const r = runShellStep(step().run ?? '', { ...env, BASELINE: outside, CANDIDATES: `${outside}\n${inside}` }, { semgrep: 'exit 0', git });
+    expect(r.status, r.out).toBe(0);
+    const scan = r.argv.find((a) => a.startsWith('semgrep '));
+    expect(scan).toContain(`--baseline-commit ${inside}`);
+  });
+
+  it('fails without scanning when no candidate is in this commit\'s history', () => {
+    const r = runShellStep(step().run ?? '', { ...env, CANDIDATES: 'b'.repeat(40) }, {
+      semgrep: 'exit 0',
+      git: 'case "$*" in *merge-base*) exit 1;; esac; exit 0',
+    });
+    expect(r.status).not.toBe(0);
+    expect(r.argv.some((a) => a.startsWith('semgrep '))).toBe(false);
+  });
+
   it('fails without scanning when no baseline was resolved', () => {
     const r = run(0, { BASELINE: '' });
     expect(r.status).not.toBe(0);
@@ -308,6 +328,22 @@ describe('INF-10: the baseline is the newest commit whose Semgrep run passed', (
     const r = await runGithubScript(script(), { github: actionsApi(new Error('HTTP 403')).github, context: push });
     expect(r.failed.join(' ')).toMatch(/not a pass/);
     expect(r.outputs.sha).toBeUndefined();
+  });
+
+  // 2026-10-05: listed with status=success, GitHub returned a 2026-09-19 run
+  // (485b5bf39, no longer in trunk's history) ahead of that morning's green
+  // run, and the scan compared 10,698 files against it. The order is the
+  // script's own, newest first, and every green commit is offered.
+  it('takes the newest green run by its own date, whatever order the API lists', async () => {
+    const api = actionsApi([
+      run({ id: 3, head_sha: sha('3'), created_at: '2026-09-19T05:58:00Z' }),
+      run({ id: 5, head_sha: sha('5'), created_at: '2026-10-05T04:47:00Z' }),
+      run({ id: 4, head_sha: sha('4'), created_at: '2026-10-01T13:20:00Z' }),
+    ]);
+    const r = await runGithubScript(script(), { github: api.github, context: push });
+    expect(r.failed).toEqual([]);
+    expect(r.outputs.sha).toBe(sha('5'));
+    expect(String(r.outputs.candidates).split('\n')).toEqual([sha('5'), sha('4'), sha('3')]);
   });
 
   it('fails closed when no run ever passed', async () => {

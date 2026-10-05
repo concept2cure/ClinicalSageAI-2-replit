@@ -1,0 +1,205 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:04:26.203Z",
+  "level": "info",
+  "message": "start called",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:04:26.203Z",
+  "level": "info",
+  "message": "start() called",
+  "context": {}
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:04:26.204Z",
+  "level": "info",
+  "message": "document created",
+  "context": {
+    "docId": "f455af0c-63b1-4c01-8301-8dcc8654fcc9"
+  }
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:04:26.214Z",
+  "level": "info",
+  "message": "edit called",
+  "context": {
+    "docId": "f455af0c-63b1-4c01-8301-8dcc8654fcc9"
+  }
+}
+{
+  "timestamp": "2026-10-05T05:04:26.214Z",
+  "level": "info",
+  "message": "humanEdit() called",
+  "context": {
+    "docId": "f455af0c-63b1-4c01-8301-8dcc8654fcc9"
+  }
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:04:26.218Z",
+  "level": "info",
+  "message": "polish called",
+  "context": {
+    "docId": "f455af0c-63b1-4c01-8301-8dcc8654fcc9"
+  }
+}
+{
+  "timestamp": "2026-10-05T05:04:26.218Z",
+  "level": "info",
+  "message": "polish() called",
+  "context": {
+    "docId": "f455af0c-63b1-4c01-8301-8dcc8654fcc9"
+  }
+}
+
+stderr | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:04:26.219Z",
+  "level": "error",
+  "message": "AI polish failed, falling back to append",
+  "context": {
+    "docId": "f455af0c-63b1-4c01-8301-8dcc8654fcc9",
+    "err": "gateway disabled for fallback test"
+  }
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:04:26.220Z",
+  "level": "info",
+  "message": "audit log recorded",
+  "context": {
+    "auditId": "7bdb23c0-3c25-4cbd-8911-7a03ad18eafb",
+    "docId": "f455af0c-63b1-4c01-8301-8dcc8654fcc9",
+    "provider": "fallback"
+  }
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:04:26.224Z",
+  "level": "info",
+  "message": "start called",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:04:26.224Z",
+  "level": "info",
+  "message": "start() called",
+  "context": {}
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:04:26.224Z",
+  "level": "info",
+  "message": "document created",
+  "context": {
+    "docId": "90fa7b0b-7496-40f9-8cba-f36c134730f6"
+  }
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:04:26.229Z",
+  "level": "info",
+  "message": "polish called",
+  "context": {
+    "docId": "90fa7b0b-7496-40f9-8cba-f36c134730f6"
+  }
+}
+{
+  "timestamp": "2026-10-05T05:04:26.229Z",
+  "level": "info",
+  "message": "polish() called",
+  "context": {
+    "docId": "90fa7b0b-7496-40f9-8cba-f36c134730f6"
+  }
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:04:26.231Z",
+  "level": "info",
+  "message": "AI polish succeeded",
+  "context": {
+    "docId": "90fa7b0b-7496-40f9-8cba-f36c134730f6"
+  }
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:04:26.231Z",
+  "level": "info",
+  "message": "audit log recorded",
+  "context": {
+    "auditId": "65206921-1d16-4257-9019-5bbcfc940bde",
+    "docId": "90fa7b0b-7496-40f9-8cba-f36c134730f6",
+    "provider": "fallback"
+  }
+}
+
+stderr | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:04:26.235Z",
+  "level": "warn",
+  "message": "Attempt to access test routes in production blocked",
+  "context": {}
+}
+
+stderr | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > is disabled in production by default
+{
+  "timestamp": "2026-10-05T05:04:26.249Z",
+  "level": "warn",
+  "message": "Attempt to access test routes in production blocked",
+  "context": {}
+}
+
+stderr | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > enforces tenant gating when ALLOWED_TEST_ASSEMBLY_TENANTS is set
+[SECURITY] tenantAuth: header tenant (101) differs from JWT tenant (999). Using JWT value. { headerTenant: '101', jwtTenant: '999', userId: 1 }
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > enforces tenant gating when ALLOWED_TEST_ASSEMBLY_TENANTS is set
+{
+  "timestamp": "2026-10-05T05:04:26.265Z",
+  "level": "info",
+  "message": "start called",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:04:26.265Z",
+  "level": "info",
+  "message": "start() called",
+  "context": {}
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > enforces tenant gating when ALLOWED_TEST_ASSEMBLY_TENANTS is set
+{
+  "timestamp": "2026-10-05T05:04:26.265Z",
+  "level": "info",
+  "message": "document created",
+  "context": {
+    "docId": "1ecd3927-04c3-422d-add5-069823841aa7"
+  }
+}
+
+ ✓ server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end 64ms
+ ✓ server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > validates input 10ms
+ ✓ server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > is disabled in production by default 4ms
+ ✓ server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > enforces tenant gating when ALLOWED_TEST_ASSEMBLY_TENANTS is set 15ms
+ ✓ server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > exports a docx file for a docId 46ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  05:04:25
+   Duration  896ms (transform 200ms, setup 92ms, import 368ms, tests 145ms, environment 0ms)
+

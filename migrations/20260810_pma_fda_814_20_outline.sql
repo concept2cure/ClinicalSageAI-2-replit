@@ -1,6 +1,20 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- pma:fda — the real 21 CFR 814.20 outline
 --
+-- AMENDED IN PLACE 2026-10-05 (D2, g-pma-pack-software-doc-level; CLAUDE.md
+-- Rule 1): the supersede UPDATE at the end of this file now names the stub it
+-- replaces, version = 'fda-pma-2024', instead of every pma:fda version other
+-- than v1.0 (`version <> 'fda-pma-21cfr814-20-v1.0'`). This file re-runs on
+-- every deploy, so the old predicate marked ANY later live pma pack superseded
+-- by v1.0 on the next deploy — with
+-- migrations/20261005b_pma_fda_outline_v1_1_software_documentation_level.sql
+-- that is a cycle (v1.0 → v1.1 → v1.0) and no live PMA pack at all. Same
+-- exact-prior-version scoping as 20260901 and 20260902. Nothing else in this
+-- file changed: v1.0's tree, including its C.4 "level of concern" label, is the
+-- record documents bound to v1.0 were built against and stays as written; v1.1
+-- carries the correction. Proof:
+-- tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts.
+--
 -- WHAT THIS CLOSES
 -- pma:fda was six flat sections, seeded by 20260528 and never revisited:
 --   A Administrative · B SSED · C Preclinical · D Clinical · E Manufacturing ·
@@ -75,11 +89,13 @@ BEGIN
 
   -- Supersede the six-node stub, pointing at its replacement. Documents already
   -- built against 'fda-pma-2024' keep the version they were actually built from.
+  -- Scoped to that exact version (amended 2026-10-05, see header): a later pack
+  -- that supersedes v1.0 must not be re-superseded by v1.0 on the next replay.
   UPDATE c2c_rule_packs
      SET superseded_by = 'fda-pma-21cfr814-20-v1.0'
    WHERE doc_type = 'pma'
      AND agency = 'fda'
-     AND version <> 'fda-pma-21cfr814-20-v1.0'
+     AND version = 'fda-pma-2024'
      AND superseded_by IS NULL;
 END
 $mig$;

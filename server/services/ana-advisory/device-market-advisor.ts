@@ -9,7 +9,7 @@
  *
  * NO LLM, NO fabrication. Every finding, blocker and action is derived from the
  * underlying registries/readiness logic. `canTransmit` is carried straight from
- * the registry — true for the 12 markets with live gateways, false otherwise.
+ * the registry — true for the 11 markets with live gateways, false otherwise.
  *
  * PURE + DETERMINISTIC: static composition + pure shaping. No DB, no network.
  *

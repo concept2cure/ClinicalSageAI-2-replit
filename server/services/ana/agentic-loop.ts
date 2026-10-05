@@ -746,6 +746,12 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   start_deep_investigation: i =>
     `Starting a background deep investigation${i.question ? ` — ${quoteArg(i.question)}` : ''}`,
   check_deep_investigation: () => 'Checking on the background investigation',
+  // quoteArg does not escape `"`, and the client splits a label on its first
+  // quoted span, so a quote inside the objective is shown as ' (brief D21).
+  run_agent: i => {
+    const objective = typeof i.objective === 'string' ? quoteArg(i.objective.replace(/"/g, "'")) : 'it';
+    return i.role === 'verify' ? `Running a verification agent - ${objective}` : `Running an agent - ${objective}`;
+  },
   get_client_journey: () => 'Getting your bearings — from license to submission',
   // Drafting and project search, named by what they act on — the transcript
   // shows the quoted argument as the row's object.

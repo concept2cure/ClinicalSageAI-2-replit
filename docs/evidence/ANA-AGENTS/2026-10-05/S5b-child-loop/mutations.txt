@@ -1,0 +1,201 @@
+## child ctx spreads the parent ctx: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > the child is governed > its tools get a read-only, model-refusing context with nothing of the parent spread in (D11) 31ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 32 passed (33)
+
+## parentRunId omitted: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > the child is governed > every child model call is high-risk review, under its own run id and the parent's, with no user and no pin of the parent's (D7) 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 32 passed (33)
+
+## riskTier medium: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > the child is governed > every child model call is high-risk review, under its own run id and the parent's, with no user and no pin of the parent's (D7) 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 32 passed (33)
+
+## userId sent on child calls: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > the child is governed > every child model call is high-risk review, under its own run id and the parent's, with no user and no pin of the parent's (D7) 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 32 passed (33)
+
+## parent model override pinned: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > the child is governed > every child model call is high-risk review, under its own run id and the parent's, with no user and no pin of the parent's (D7) 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 32 passed (33)
+
+## tenant check removed: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: no scope is refused (D24) 19ms
+ × server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: the system scope '0' is refused (D24) 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: another tenant is refused (D24) 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: a host of another organization is refused 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 29 passed (33)
+
+## host org agreement dropped: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: a host of another organization is refused 21ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 32 passed (33)
+
+## depth check removed: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > a child cannot start an agent (depth) 24ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 32 passed (33)
+
+## allowlist removed: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > the child is governed > it is offered research tools the parent has, and nothing else: a write and run_agent are answered, not run 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 32 passed (33)
+
+## checks outside the refusal scope: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > a verify agent: the verdict comes from the checks only > runs the checks on the text as given, read-only and model-refusing, before the child model 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 32 passed (33)
+
+## no pre-start hold: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a pause before the start delays the first call; a run that will not resume starts nothing 29ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a run cancelled while the child waits between rounds is cancelled, not a time budget 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > an expired hold stops the child, and says so 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 30 passed (33)
+
+## hold outcome ignored: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a pause before the start delays the first call; a run that will not resume starts nothing 32ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a run cancelled while the child waits between rounds is cancelled, not a time budget 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a hold that expires between rounds is cancelled, and says the run stayed paused 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 30 passed (33)
+
+## expiredSignal not in the child signal: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > an expired hold stops the child, and says so 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 32 passed (33)
+
+## timer not in the child signal: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a call still running at the active-time limit is aborted: incomplete, time budget 10011ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the active-time timer excludes time held for a person 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > the record and the view > the full result keeps every step whole; the view drops the trace and keeps the outcome 4ms
+ × server/services/ana/__tests__/sub-agent.test.ts > the record and the view > frames: started, then steps, then finished 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 29 passed (33)
+
+## held time counted as active: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the active-time timer excludes time held for a person 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 32 passed (33)
+
+## slot released outside finally: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > the child is governed > its tools get a read-only, model-refusing context with nothing of the parent spread in (D11) 23ms
+ × server/services/ana/__tests__/sub-agent.test.ts > the child is governed > every child model call is high-risk review, under its own run id and the parent's, with no user and no pin of the parent's (D7) 3ms
+ × server/services/ana/__tests__/sub-agent.test.ts > the child is governed > it is offered research tools the parent has, and nothing else: a write and run_agent are answered, not run 3ms
+ × server/services/ana/__tests__/sub-agent.test.ts > a verify agent: the verdict comes from the checks only > runs the checks on the text as given, read-only and model-refusing, before the child model 5ms
+ × server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayPolicyError', code: 'MODEL_NOT_APPROVED_FOR_HIGH_RISK' } gives AGENT_FAILED MODEL_NOT_APPROVED 3ms
+ × server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayModelDeclinedError' } gives AGENT_FAILED MODEL_DECLINED 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayPolicyError' } gives AGENT_FAILED RATE_OR_POLICY_LIMIT 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'Error' } gives AGENT_FAILED ERROR 6ms
+ × server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > a failure after a call says it could not finish 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > caps > the seventh agent of a turn is refused, and a refusal changes no count 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > caps > the fifth in one round is refused; a later round may start 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > caps > an organization has at most 8 live agents per process; the next is busy 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > caps > the process has at most 10 live agents across organizations (ADR-0015 §5) 370ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the token budget stops the child, at most two calls past it (D23) 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the round limit stops the child as incomplete 4ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a pause before the start delays the first call; a run that will not resume starts nothing 22ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a run cancelled while the child waits between rounds is cancelled, not a time budget 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a hold that expires between rounds is cancelled, and says the run stayed paused 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a Stop mid-call is cancelled, not a failure 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > an expired hold stops the child, and says so 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a call still running at the active-time limit is aborted: incomplete, time budget 11ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the active-time timer excludes time held for a person 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > the record and the view > the full result keeps every step whole; the view drops the trace and keeps the outcome 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > the record and the view > frames: started, then steps, then finished 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 24 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  24 failed | 9 passed (33)
+
+## a child model call before the checks: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > the child is governed > every child model call is high-risk review, under its own run id and the parent's, with no user and no pin of the parent's (D7) 11ms
+ × server/services/ana/__tests__/sub-agent.test.ts > a verify agent: the verdict comes from the checks only > runs the checks on the text as given, read-only and model-refusing, before the child model 7ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the token budget stops the child, at most two calls past it (D23) 3ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a pause before the start delays the first call; a run that will not resume starts nothing 27ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a run cancelled while the child waits between rounds is cancelled, not a time budget 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 28 passed (33)
+
+## turn count taken before the org check: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > caps > the seventh agent of a turn is refused, and a refusal changes no count 7ms
+ × server/services/ana/__tests__/sub-agent.test.ts > caps > the fifth in one round is refused; a later round may start 4ms
+ × server/services/ana/__tests__/sub-agent.test.ts > caps > an organization has at most 8 live agents per process; the next is busy 3ms
+ × server/services/ana/__tests__/sub-agent.test.ts > caps > the process has at most 10 live agents across organizations (ADR-0015 §5) 319ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the token budget stops the child, at most two calls past it (D23) 3ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the round limit stops the child as incomplete 3ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a pause before the start delays the first call; a run that will not resume starts nothing 23ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a run cancelled while the child waits between rounds is cancelled, not a time budget 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a hold that expires between rounds is cancelled, and says the run stayed paused 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a Stop mid-call is cancelled, not a failure 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > an expired hold stops the child, and says so 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a call still running at the active-time limit is aborted: incomplete, time budget 3ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the active-time timer excludes time held for a person 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > the record and the view > the full result keeps every step whole; the view drops the trace and keeps the outcome 3ms
+ × server/services/ana/__tests__/sub-agent.test.ts > the record and the view > frames: started, then steps, then finished 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  15 failed | 18 passed (33)
+
+## process cap dropped: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > caps > the process has at most 10 live agents across organizations (ADR-0015 §5) 10012ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the token budget stops the child, at most two calls past it (D23) 3ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the round limit stops the child as incomplete 4ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a pause before the start delays the first call; a run that will not resume starts nothing 23ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a run cancelled while the child waits between rounds is cancelled, not a time budget 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a hold that expires between rounds is cancelled, and says the run stayed paused 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a Stop mid-call is cancelled, not a failure 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > an expired hold stops the child, and says so 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a call still running at the active-time limit is aborted: incomplete, time budget 4ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the active-time timer excludes time held for a person 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > the record and the view > the full result keeps every step whole; the view drops the trace and keeps the outcome 6ms
+ × server/services/ana/__tests__/sub-agent.test.ts > the record and the view > frames: started, then steps, then finished 2ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  12 failed | 21 passed (33)
+
+## trace left in the view: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > the record and the view > the full result keeps every step whole; the view drops the trace and keeps the outcome 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 32 passed (33)
+
+## declined classified as a rate limit: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayModelDeclinedError' } gives AGENT_FAILED MODEL_DECLINED 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 32 passed (33)
+
+## switch on in production by default: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > the switch: off when set false; off in production unless set true (ADR-0015 §2) 27ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 32 passed (33)
+
+
+# sub-agent-toolset.test.ts
+## a path reader added to RESEARCH_TOOLS: RED
+ × server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > rasterize_page is registered, classed read, and in launch scope 5ms
+ × server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > never includes a tool that delegates, calls a model, checks for the agent, or reads a path 3ms
+ × server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > no input of any child tool or check names a path, a directory or a folder 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 24 passed (27)
+
+## a model-backed read tool added: RED
+ × server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > never includes a tool that delegates, calls a model, checks for the agent, or reads a path 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 26 passed (27)
+
+## a write tool added: RED
+ × server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > save_document_to_vault is registered, classed read, and in launch scope 6ms
+ × server/services/ana/__tests__/sub-agent-toolset.test.ts > childToolsFrom > is the research tools the parent was offered, and nothing the parent was not 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 25 passed (27)
+
+## child set not intersected with the parent: RED
+ × server/services/ana/__tests__/sub-agent-toolset.test.ts > childToolsFrom > is the research tools the parent was offered, and nothing the parent was not 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 25 passed (26)
+
+## host gains a model field: RED
+ × server/services/ana/__tests__/sub-agent-toolset.test.ts > source pins > the host carries no provider or model 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 25 passed (26)

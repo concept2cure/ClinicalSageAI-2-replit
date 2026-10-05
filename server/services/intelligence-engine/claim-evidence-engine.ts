@@ -13,6 +13,7 @@ import type {
   ClaimEvidenceAlignment,
   ClaimEvidenceReport,
 } from './types';
+import { extractInTextReferences } from '../ana/in-text-references';
 
 // ─── Linguistic Markers ──────────────────────────────────────────────────────
 
@@ -52,7 +53,28 @@ const WEAK_CLAIM_MARKERS = [
   /\bunclear\b/i,
 ];
 
-const EVIDENCE_MARKERS = [
+/** Something that can be tested against a passage: a pattern or a detector. */
+interface Marker {
+  test(text: string): boolean;
+}
+
+/**
+ * A data reference — Table, Figure, Listing or Appendix — through the one
+ * in-text reference detector (server/services/ana/in-text-references.ts),
+ * since 2026-10-05 (g-cross-reference-extractor-migrations); this file held its
+ * own Table/Figure/Appendix regex until then.
+ *
+ * The signal here is presence, not resolution: a claim that points at data is
+ * stronger evidence than one that points at nothing. Whether the target exists
+ * is decided where the document is known — the precision gate's grounding
+ * dimension and HARMONIZE reference integrity classify the same references.
+ */
+const DATA_REFERENCE_KINDS = new Set(['Table', 'Figure', 'Listing', 'Appendix']);
+const DATA_REFERENCE: Marker = {
+  test: (text) => extractInTextReferences(text).some((r) => DATA_REFERENCE_KINDS.has(r.kind)),
+};
+
+const EVIDENCE_MARKERS: Marker[] = [
   /\bp\s*[<=>]\s*0?\.\d+/i,                       // p-values
   /\b(n\s*=\s*\d+|sample\s+size)/i,               // sample sizes
   /\bCI\s*[:=]?\s*\[?\d/i,                         // confidence intervals
@@ -64,7 +86,7 @@ const EVIDENCE_MARKERS = [
   /\bprimary\s+endpoint/i,
   /\bITT|intention[- ]to[- ]treat/i,
   /\bmedian\s+(PFS|OS|DFS|survival)/i,
-  /\b(Table|Figure|Appendix)\s+\d/i,               // data references
+  DATA_REFERENCE,                                  // data references
   /\bstudy\s+\w{3,}[-\s]\d+/i,                    // study identifiers
   /\bmeta[- ]analysis\b/i,
   /\bsystematic\s+review\b/i,

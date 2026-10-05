@@ -38,6 +38,13 @@
  *     ANY unresolved leaf, external ones included, so a dispatch-clear verdict
  *     here would promise an operator a transmit the system will refuse.
  *   - INVALID_LIFECYCLE_OP — an operation outside new|replace|append|delete
+ *   - JP_ECTD_V4_REQUIRED — an original sequence for a Japanese application
+ *     on or after the date PMDA stopped accepting eCTD v3.2.2 for new
+ *     applications. The platform builds Japan packages in v3.2.2 only, so such
+ *     a package would not be received. The date is the currency registry's
+ *     fact `pmda-ectd-v4-mandatory`, read here, never copied; a continuing
+ *     sequence of a lifecycle begun in v3.2.2 is not affected. Added
+ *     2026-10-05 (g-jp-ectd-v4-dispatch-blocker).
  *
  * The delete exemption is scoped to the CONTENT checks (UNRESOLVED_DOCUMENT
  * and DOCUMENT_CONTENT_MISMATCH). A delete is backbone-only and correctly
@@ -57,8 +64,10 @@
  * informative, not provable). Pathway/regional completeness is covered separately
  * by the pathway engines and the AI dispatch-qc advisory.
  *
- * PURE + DETERMINISTIC: no DB, no network, no LLM (leaf-document-tables holds
- * the table vocabulary and has no imports of its own). Document EXISTENCE and
+ * PURE + DETERMINISTIC: no DB, no network, no LLM, no wall clock
+ * (leaf-document-tables holds the table vocabulary and has no imports of its
+ * own; the currency registry and region identity are pure data). A date-
+ * effective rule is judged against the caller's explicit `asOf`. Document EXISTENCE and
  * the content-pin comparison need the database, so the DB-bound caller
  * (assess-dispatch-readiness) resolves each leaf's pointer through
  * leaf-document-resolver and hands the resolution in on `ReadinessLeaf.document`;
@@ -69,6 +78,8 @@
  */
 
 import type { RuleView } from './validation-rule-corpus';
+import { findFacts } from '../regulatory-currency/currency-registry';
+import { canonicalRegionOf } from '../../../shared/regulatory/region-identity.js';
 import {
   documentTableKeyKind,
   externalDocumentTableReason,
@@ -163,6 +174,73 @@ export interface ComputeReadinessOptions {
   isOriginalSequence?: boolean;
   /** The sequence number — eCTD requires exactly four digits (e.g. "0000"). */
   sequenceNumber?: string;
+  /**
+   * The sequence's region, in any of the platform's spellings ('jp', 'pmda',
+   * 'JP', 'PMDA' are all Japan — resolved through shared/regulatory/region-identity).
+   * Date-effective format-acceptance rules are judged for this region only;
+   * omitted, none is judged.
+   */
+  region?: string;
+  /**
+   * ISO date (YYYY-MM-DD) the sequence is judged as at — for dispatch, the day
+   * it would be filed. Explicit, never read from the clock here. A region with
+   * a date-effective rule and no usable date fails closed on that rule.
+   */
+  asOf?: string;
+}
+
+/** The currency fact that dates PMDA's end of eCTD v3.2.2 for new applications. */
+export const PMDA_ECTD_V4_FACT_ID = 'pmda-ectd-v4-mandatory';
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * JP_ECTD_V4_REQUIRED: an original sequence for a Japanese application, on or
+ * after the date in force for fact `pmda-ectd-v4-mandatory`, is not a package
+ * PMDA will receive — the platform builds Japan in eCTD v3.2.2 only and has no
+ * JP v4.0 packager (DECISIONS.md, decision 10). A continuing sequence of a
+ * lifecycle begun in v3.2.2 is not judged here.
+ *
+ * Fails closed when it cannot establish the answer: no usable as-of date, or
+ * the registry no longer carries the fact, is a blocker saying so — never a
+ * silent pass on a Japanese original.
+ */
+function jpEctdV4Findings(opts: ComputeReadinessOptions): ReadinessFinding[] {
+  if (!opts.isOriginalSequence || canonicalRegionOf(opts.region) !== 'JP') return [];
+  const asOf = opts.asOf;
+  if (!asOf || !ISO_DATE.test(asOf)) {
+    return [{
+      severity: 'error',
+      code: 'JP_ECTD_V4_REQUIRED',
+      sectionCode: null,
+      message:
+        'This is an original sequence for a Japanese application, and readiness was computed with no usable as-of date, ' +
+        'so it cannot be shown to precede the date PMDA stopped accepting eCTD v3.2.2 for new applications. ' +
+        'This platform builds Japan packages in v3.2.2 only.',
+    }];
+  }
+  const fact = findFacts({ jurisdiction: 'JP', asOf }).find((f) => f.id === PMDA_ECTD_V4_FACT_ID);
+  if (!fact || !ISO_DATE.test(fact.effectiveDate)) {
+    return [{
+      severity: 'error',
+      code: 'JP_ECTD_V4_REQUIRED',
+      sectionCode: null,
+      message:
+        `The regulatory currency registry carries no dated fact "${PMDA_ECTD_V4_FACT_ID}", so whether PMDA accepts eCTD v3.2.2 ` +
+        'for this new Japanese application cannot be established. This platform builds Japan packages in v3.2.2 only.',
+    }];
+  }
+  // Lexicographic comparison is exact for zero-padded ISO dates. A fact whose
+  // status as at asOf is not in force (e.g. rescinded) does not block.
+  if (asOf < fact.effectiveDate || fact.status !== 'in_force') return [];
+  return [{
+    severity: 'error',
+    code: 'JP_ECTD_V4_REQUIRED',
+    sectionCode: null,
+    message:
+      `PMDA accepts only eCTD v4.0 for new applications from ${fact.effectiveDate}; this platform builds Japan packages in v3.2.2 only. ` +
+      'A continuing sequence of an application first filed in v3.2.2 is not affected.',
+  }];
 }
 
 const VALID_OPS = new Set(['new', 'replace', 'append', 'delete']);
@@ -375,6 +453,9 @@ export function computeDispatchReadiness(
       message: `Sequence number "${opts.sequenceNumber}" is not a valid eCTD 4-digit sequence (expected e.g. "0000").`,
     });
   }
+
+  // ERROR: a new Japanese application in a format PMDA no longer receives.
+  findings.push(...jpEctdV4Findings(opts));
 
   for (const leaf of leaves) {
     // ERROR: invalid lifecycle operation.

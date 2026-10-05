@@ -1,0 +1,253 @@
+== RED: device-labeling-ivd.test.ts run against the HEAD (76e7528c) versions of:
+   server/services/market-specs/device-labeling.ts (git show HEAD:server/services/market-specs/device-labeling.ts, sha1 404d4a0b158d)
+   server/services/ivd-knowledge/regulatory/labeling-rules.ts (git show HEAD:server/services/ivd-knowledge/regulatory/labeling-rules.ts, sha1 84213b1c7dcd)
+   server/services/ivd-knowledge/regulatory/fda-ivd.ts (git show HEAD:server/services/ivd-knowledge/regulatory/fda-ivd.ts, sha1 acc3e71fa1d5)
+== 2026-10-05T11:18:54Z
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > (a) an IVD gets the 809.10(a) label elements and the 809.10(b)(1)–(b)(12) insert items 127ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > a non-IVD device gets no 809.10 element 1ms
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > an RUO IVD carries the 809.10(c)(2)(i) statement and is exempt from (a) and (b) 1ms
+   → expected false to be true // Object.is equality
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > every 809.10 / 812.5 element carries a well-formed basisDetail; regulator text points at eCFR 9ms
+   → expected 0 to be greater than 20
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 812.5 — investigational devices > (b) a device for clinical investigation carries the 812.5(a) caution statement on the FDA label 1ms
+   → expected undefined to be defined
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 812.5 — investigational devices > (c) an IVD study exempt under 812.2(c)(3) gets the IUO statement and no 812.5 element 1ms
+   → expected false to be true // Object.is equality
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 812.5 — investigational devices > an investigational IVD not shown exempt gets both the IUO statement and 812.5 1ms
+   → expected false to be true // Object.is equality
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > (d) an IVD insert without a Limitations heading reports 809.10(b)(10) as not_found 36ms
+   → checkAuthoredLabeling is exported: expected 'undefined' to be 'function' // Object.is equality
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > with the heading present, 809.10(b)(10) is found 1ms
+   → checkAuthoredLabeling is exported: expected 'undefined' to be 'function' // Object.is equality
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > no section, or only an unauthored one, is not_checkable rather than not_found 1ms
+   → checkAuthoredLabeling is exported: expected 'undefined' to be 'function' // Object.is equality
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > the 812.5(a) caution statement is found only when its wording is present 1ms
+   → checkAuthoredLabeling is exported: expected 'undefined' to be 'function' // Object.is equality
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > one requirement list — the ivd-knowledge prose points at the engine > labeling-rules no longer enumerates (and misnumbers) the 809.10(b) items 25ms
+   → expected '21 CFR 809.10 is the IVD-specific lab…' not to match /\(9\) limitations/i
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > one requirement list — the ivd-knowledge prose points at the engine > fda-ivd no longer holds a parallel package-insert list 1ms
+   → expected 'In-vitro diagnostic products are defi…' not to match /summary and explanation, principle o…/i
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > (a) an IVD gets the 809.10(a) label elements and the 809.10(b)(1)–(b)(12) insert items
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/market-specs/__tests__/device-labeling-ivd.test.ts:52:51
+     50|     const r = req({ isIvd: true });
+     51|     const b = bases(fdaAll(r));
+     52|     expect(b.some((x) => /809\.10\(a\)/.test(x))).toBe(true);
+       |                                                   ^
+     53|     for (const n of [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
+     54|       expect(b.some((x) => new RegExp(`809\\.10\\(b\\)\\(${n}\\)`).tes…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > an RUO IVD carries the 809.10(c)(2)(i) statement and is exempt from (a) and (b)
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/market-specs/__tests__/device-labeling-ivd.test.ts:65:66
+     63|     const r = req({ isIvd: true, isRuo: true });
+     64|     const b = bases(fdaAll(r));
+     65|     expect(b.some((x) => /809\.10\(c\)\(2\)\(i\)(?!i)/.test(x))).toBe(…
+       |                                                                  ^
+     66|     expect(b.some((x) => /809\.10\(a\)|809\.10\(b\)/.test(x))).toBe(fa…
+     67|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > every 809.10 / 812.5 element carries a well-formed basisDetail; regulator text points at eCFR
+AssertionError: expected 0 to be greater than 20
+ ❯ server/services/market-specs/__tests__/device-labeling-ivd.test.ts:72:26
+     70|     const els = fdaAll(req({ isIvd: true })).concat(fdaAll(req({ forCl…
+     71|     const fresh = els.filter((e) => /809\.10|812\.5/.test(e.basis));
+     72|     expect(fresh.length).toBeGreaterThan(20);
+       |                          ^
+     73|     for (const e of fresh) {
+     74|       expect(e.basisDetail, `basisDetail on ${e.id}`).toBeDefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 812.5 — investigational devices > (b) a device for clinical investigation carries the 812.5(a) caution statement on the FDA label
+AssertionError: expected undefined to be defined
+ ❯ server/services/market-specs/__tests__/device-labeling-ivd.test.ts:87:21
+     85|     const r = req({ forClinicalInvestigation: true });
+     86|     const caution = r.fdaLabel.find((e) => /812\.5\(a\)/.test(e.basis)…
+     87|     expect(caution).toBeDefined();
+       |                     ^
+     88|   });
+     89|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 812.5 — investigational devices > (c) an IVD study exempt under 812.2(c)(3) gets the IUO statement and no 812.5 element
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/market-specs/__tests__/device-labeling-ivd.test.ts:93:121
+     91|     const r = req({ isIvd: true, forClinicalInvestigation: true, isIuo…
+     92|     const all = fdaAll(r);
+     93|     expect(all.some((e) => /809\.10\(c\)\(2\)\(ii\)/.test(e.basis) && …
+       |                                                                                                                         ^
+     94|     expect(bases(all).some((x) => /812\.5/.test(x))).toBe(false);
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 812.5 — investigational devices > an investigational IVD not shown exempt gets both the IUO statement and 812.5
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/market-specs/__tests__/device-labeling-ivd.test.ts:99:71
+     97|   it('an investigational IVD not shown exempt gets both the IUO statem…
+     98|     const all = fdaAll(req({ isIvd: true, forClinicalInvestigation: tr…
+     99|     expect(bases(all).some((x) => /809\.10\(c\)\(2\)\(ii\)/.test(x))).…
+       |                                                                       ^
+    100|     expect(bases(all).some((x) => /812\.5\(a\)/.test(x))).toBe(true);
+    101|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > (d) an IVD insert without a Limitations heading reports 809.10(b)(10) as not_found
+AssertionError: checkAuthoredLabeling is exported: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ check server/services/market-specs/__tests__/device-labeling-ivd.test.ts:28:58
+     26| const check = (): Check => {
+     27|   const fn = (engine as unknown as { checkAuthoredLabeling?: Check }).…
+     28|   expect(typeof fn, 'checkAuthoredLabeling is exported').toBe('functio…
+       |                                                          ^
+     29|   return fn as Check;
+     30| };
+ ❯ server/services/market-specs/__tests__/device-labeling-ivd.test.ts:106:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > with the heading present, 809.10(b)(10) is found
+AssertionError: checkAuthoredLabeling is exported: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ check server/services/market-specs/__tests__/device-labeling-ivd.test.ts:28:58
+     26| const check = (): Check => {
+     27|   const fn = (engine as unknown as { checkAuthoredLabeling?: Check }).…
+     28|   expect(typeof fn, 'checkAuthoredLabeling is exported').toBe('functio…
+       |                                                          ^
+     29|   return fn as Check;
+     30| };
+ ❯ server/services/market-specs/__tests__/device-labeling-ivd.test.ts:114:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > no section, or only an unauthored one, is not_checkable rather than not_found
+AssertionError: checkAuthoredLabeling is exported: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ check server/services/market-specs/__tests__/device-labeling-ivd.test.ts:28:58
+     26| const check = (): Check => {
+     27|   const fn = (engine as unknown as { checkAuthoredLabeling?: Check }).…
+     28|   expect(typeof fn, 'checkAuthoredLabeling is exported').toBe('functio…
+       |                                                          ^
+     29|   return fn as Check;
+     30| };
+ ❯ server/services/market-specs/__tests__/device-labeling-ivd.test.ts:120:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > the 812.5(a) caution statement is found only when its wording is present
+AssertionError: checkAuthoredLabeling is exported: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ check server/services/market-specs/__tests__/device-labeling-ivd.test.ts:28:58
+     26| const check = (): Check => {
+     27|   const fn = (engine as unknown as { checkAuthoredLabeling?: Check }).…
+     28|   expect(typeof fn, 'checkAuthoredLabeling is exported').toBe('functio…
+       |                                                          ^
+     29|   return fn as Check;
+     30| };
+ ❯ server/services/market-specs/__tests__/device-labeling-ivd.test.ts:127:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  server/services/market-specs/__tests__/device-labeling-ivd.test.ts > one requirement list — the ivd-knowledge prose points at the engine > labeling-rules no longer enumerates (and misnumbers) the 809.10(b) items
+AssertionError: expected '21 CFR 809.10 is the IVD-specific lab…' not to match /\(9\) limitations/i
+
+- Expected:
+/\(9\) limitations/i
+
++ Received:
+"21 CFR 809.10 is the IVD-specific labeling rule. §809.10(a) (the container/outer label) requires the proprietary/established name, \"in vitro diagnostic use\" statement, manufacturer details, lot number, expiration date, storage conditions, quantity/contents, and any warnings/precautions. §809.10(b) (the package insert / instructions for use) requires a defined section set: (1) proprietary and established name, intended use; (2) summary and explanation of the test; (3) principle of the procedure; (4) reagents (with warnings/precautions, e.g., labeling for hazardous components); (5) instruments; (6) specimen collection and preparation; (7) procedure; (8) results/interpretation; (9) limitations of the procedure; (10) expected values/reference intervals; and (11) specific performance characteristics — accuracy, precision, analytical sensitivity and specificity (interferences), and, where applicable, clinical performance. The \"limitations\" and \"specific performance characteristics\" sections are where analytical/clinical validation results and IFU warnings (interferences, hook effect, specimen constraints) are surfaced to the user."
+
+ ❯ server/services/market-specs/__tests__/device-labeling-ivd.test.ts:141:28
+    139|
+    140|   it('labeling-rules no longer enumerates (and misnumbers) the 809.10(…
+    141|     expect(pkg.detail).not.toMatch(/\(9\) limitations/i);
+       |                            ^
+    142|     expect(pkg.detail).not.toMatch(/\(11\) specific performance/i);
+    143|     expect(pkg.detail).toMatch(/deviceLabelingRequirements/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  server/services/market-specs/__tests__/device-labeling-ivd.test.ts > one requirement list — the ivd-knowledge prose points at the engine > fda-ivd no longer holds a parallel package-insert list
+AssertionError: expected 'In-vitro diagnostic products are defi…' not to match /summary and explanation, principle o…/i
+
+- Expected:
+/summary and explanation, principle of the procedure, reagents/i
+
++ Received:
+"In-vitro diagnostic products are defined at 21 CFR 809.3 as reagents, instruments, and systems intended for use in the diagnosis of disease or other conditions, including a determination of the state of health, in order to cure, mitigate, treat, or prevent disease. Because they meet the device definition in section 201(h) of the FD&C Act, IVDs are subject to the full device framework: classification, premarket review, QSR/QMSR, labeling, registration/listing, and postmarket controls.
+
+21 CFR 809.10 governs IVD labeling and is more prescriptive than general device labeling: it requires intended use, summary and explanation, principle of the procedure, reagents, specimen collection/handling, procedure, quality control, results interpretation, limitations, and specific performance characteristics (accuracy, precision, analytical sensitivity/specificity, etc.) in the package insert.
+
+\"Research Use Only\" (RUO) products are in the laboratory research phase and must be labeled \"For Research Use Only. Not for use in diagnostic procedures.\" \"Investigational Use Only\" (IUO) products are in the product development/clinical investigation phase. FDA's 2013 guidance \"Distribution of IVD Products Labeled for Research Use Only or Investigational Use Only\" warns that the RUO/IUO label is not a safe harbor: if the manufacturer's totality of conduct (marketing claims, instructions, clinical support) shows intent for clinical diagnostic use, FDA treats the product as an unapproved/uncleared IVD. Analyte Specific Reagents (ASRs, 21 CFR 864.4020) are a distinct narrow class — \"the building blocks\" of lab-developed tests — and carry their own restrictions on combination and promotion."
+
+ ❯ server/services/market-specs/__tests__/device-labeling-ivd.test.ts:147:28
+    145|
+    146|   it('fda-ivd no longer holds a parallel package-insert list', () => {
+    147|     expect(def.detail).not.toMatch(/summary and explanation, principle…
+       |                            ^
+    148|     expect(def.detail).toMatch(/deviceLabelingRequirements/);
+    149|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 1 passed (13)
+   Start at  11:18:59
+   Duration  4.54s (transform 806ms, setup 724ms, import 324ms, tests 220ms, environment 0ms)
+

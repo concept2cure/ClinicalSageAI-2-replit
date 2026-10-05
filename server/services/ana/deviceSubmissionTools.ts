@@ -2,7 +2,9 @@
  * Device / IVD submission + coding tools — exposes engines that were built and
  * tested but had NO AnA tool surface (the model could not reach them):
  *
- *   assemble_device_submission -> pathway-engines/device-assembly/assembleDeviceSubmission
+ *   assemble_device_submission -> pathway-engines/device-assembly/assembleProgramDeviceSubmission
+ *       (the open project's governed content; mode 'hypothetical' maps a
+ *       supplied outline through assembleDeviceSubmission and can never pass)
  *       Honest 510(k)/De Novo/PMA eSTAR assembly state: which producible artifact
  *       (official eSTAR vs loose content draft vs none), section readiness,
  *       official-template gate, optional market overlay, and every blocker.
@@ -32,7 +34,7 @@ const DETERMINISTIC_NOTE =
 export const ASSEMBLE_DEVICE_SUBMISSION: AnaTool = {
   name: 'assemble_device_submission',
   description:
-    "Compute the HONEST assembly state of a 510(k), De Novo or PMA eSTAR submission using the DETERMINISTIC device-assembly engine. Given the canonical content leaves (section code + title) and which official FDA eSTAR templates are present, it returns the producible artifactKind ('official-estar' = sections complete AND official template available; 'content-package-draft' = content exists but no official template, NOT submittable; 'none' = required content missing), whether an official eSTAR can be produced, the section readiness summary (eSTAR slots for 510(k)/De Novo; the 21 CFR 814 PMA modules for a PMA), the template-availability gate, an optional target-market readiness overlay, and a de-duplicated list of every blocker. It does NOT render or transmit anything — it tells you exactly what can be assembled and what blocks a submittable artifact. " +
+    "Compute the HONEST assembly state of the OPEN PROJECT's 510(k), De Novo or PMA eSTAR submission using the DETERMINISTIC device-assembly engine — the same computation as the Submission Center's assembly check. With a project open it reads the project's own governed device sections (finished vs draft is decided by their review status, never by you), the device questions answered at intake, and the checksum-verified official FDA eSTAR templates; you supply only the pathway, variant and optional market. It returns the producible artifactKind ('official-estar' = sections complete AND official template available; 'content-package-draft' = content exists but not submittable; 'none' = required content missing), whether an official eSTAR can be produced, the section readiness summary (eSTAR slots for 510(k)/De Novo; the 21 CFR 814 PMA modules for a PMA), the template gate, an optional market overlay, every blocker, and deviceContentSource (which store answered — 'legacy_org_wide' is not specific to this project; say so). status 'read_failed' means the project could not be read: say so and do not report sections as missing. status 'needs_project' means no project is open. mode 'hypothetical' maps an outline you supply (leaves) onto the section tree; it is NOT this project's content, scores every leaf as unfinished and can never report a producible eSTAR. It does NOT render or transmit anything. " +
     DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
@@ -44,9 +46,14 @@ export const ASSEMBLE_DEVICE_SUBMISSION: AnaTool = {
         description: "PMA only: original application vs a 21 CFR 814.39 supplement/notice, which scopes the modules the filing owes. Defaults to 'original'.",
       },
       variant: { type: 'string', enum: ['device', 'ivd'], description: 'Selects the official eSTAR template variant (device vs IVD).' },
+      mode: {
+        type: 'string',
+        enum: ['project', 'hypothetical'],
+        description: "'project' (default): assess the open project's own content. 'hypothetical': map the leaves you supply — labelled not this project's content; every leaf is scored as unfinished and no template counts as present.",
+      },
       leaves: {
         type: 'array',
-        description: 'Canonical content leaves to project onto the eSTAR section tree.',
+        description: "mode 'hypothetical' only (ignored for a project): outline leaves to map onto the eSTAR section tree.",
         items: {
           type: 'object',
           properties: {
@@ -57,12 +64,24 @@ export const ASSEMBLE_DEVICE_SUBMISSION: AnaTool = {
           required: ['sectionCode', 'title'],
         },
       },
-      presentTemplates: { type: 'array', items: { type: 'string' }, description: 'Official eSTAR template filenames present in the drop-point (omit if none).' },
+      deviceFlags: {
+        type: 'object',
+        description: "mode 'hypothetical' only (a project's intake answers are always used for a project): the device questions as booleans.",
+        properties: {
+          combinationProduct: { type: 'boolean' },
+          softwareAiMl: { type: 'boolean' },
+          cyberDevice: { type: 'boolean' },
+          sterile: { type: 'boolean' },
+          implantable: { type: 'boolean' },
+          cliaWaived: { type: 'boolean' },
+          clinicalData: { type: 'boolean' },
+        },
+      },
       market: { type: 'string', description: 'Optional target market id for a readiness overlay (e.g. "us-fda", "eu-mdr-ivdr", "jp-pmda").' },
-      availableArtifacts: { type: 'array', items: { type: 'string' }, description: 'Artifact ids available, for the market-readiness overlay.' },
-      environment: { type: 'string', enum: ['staging', 'production'], description: 'Build environment. "production" gates the official-template requirement.' },
+      availableArtifacts: { type: 'array', items: { type: 'string' }, description: "mode 'hypothetical' only: artifact ids for the market-readiness overlay." },
+      environment: { type: 'string', enum: ['staging', 'production'], description: "mode 'hypothetical' only: build environment; \"production\" gates the official-template requirement." },
     },
-    required: ['pathway', 'variant', 'leaves'],
+    required: ['pathway', 'variant'],
   },
 };
 

@@ -75,12 +75,12 @@ describe('eSTAR submission catalog', () => {
   it('resolves catalog template metadata (family, current version, OMB) from the version registry', () => {
     const resolved = resolveCatalogTemplate('pma_180_day_supplement', 'ivd');
     expect(resolved?.family).toBe('ivd');
-    expect(resolved?.currentVersion).toBe('7.0');
+    expect(resolved?.currentVersion).toBe('7.1');
     expect(resolved?.ombNumbers).toContain('0910-0231');
 
     const qsub = resolveCatalogTemplate('qsub_pma_day_100_meeting', 'device');
     expect(qsub?.family).toBe('prestar');
-    expect(qsub?.currentVersion).toBe('3.0');
+    expect(qsub?.currentVersion).toBe('3.1');
     expect(qsub?.ombNumbers).toContain('0910-0756');
   });
 

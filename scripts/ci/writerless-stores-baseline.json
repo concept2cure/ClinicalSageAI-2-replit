@@ -18,6 +18,10 @@
       "readerCount": 1,
       "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
+    "cmcProjects": {
+      "readerCount": 1,
+      "reason": "An empty read is correct here (2026-10-05). The only writer was retired with the /api/cmc routers (e073f9a0b, D2). The one reader, POST Module 3 drafting in server/routes/knowledge-base.ts, uses a CMC project only to fill fields the request left blank; with no row it keeps the request's own values and reports no count, verdict or 'none' from the table. Whether CMC project identity moves to the registers' project_id (90b34d33c) is the D2 lane's decision."
+    },
     "croTeamAssignments": {
       "readerCount": 1,
       "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."

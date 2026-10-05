@@ -345,6 +345,11 @@ export function hydrateToolTrace(
         status: 'error',
         message: `This step (${humanStep}) isn't available here. AnA will work around it.`,
       });
+    } else if (t.status === 'incomplete') {
+      // A sub-agent that stopped at its budget (row 74, S5): the same sentence
+      // the live tool_result carried, not "AnA couldn't finish".
+      const summary = typeof t.resultSummary === 'string' && t.resultSummary ? t.resultSummary : humanStep;
+      calls.push({ name, label, status: 'error', message: `The agent's result is incomplete: ${summary}.` });
     } else {
       calls.push({
         name,

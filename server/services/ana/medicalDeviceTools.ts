@@ -169,10 +169,12 @@ export const SELECT_DEVICE_PATHWAY: AnaTool = {
     'Humanitarian Device Exemption (HDE), 510(k)-exempt, IDE-then-PMA, or BLA) and the EU conformity ' +
     'assessment route (self-certification vs notified-body involvement), with rationale, alternatives, ' +
     'and an approximate FDA review clock. Implements the decision logic of 21 CFR 807.81 (when a 510(k) is ' +
-    'required), 21 CFR 860.93 (De Novo), 21 CFR 814 (PMA/HDE), and MDR/IVDR conformity routing by class. ' +
-    'Handles HUD/HDE eligibility (<8,000 US patients/year), predicate availability, novel low/moderate-risk ' +
-    'devices, biologics, and EU Class I sterile/measuring/reusable-instrument special routes. Use when the ' +
-    'user needs to choose a regulatory filing pathway for a device or IVD. ' + DETERMINISTIC_NOTE,
+    'required), FD&C Act §513(f)(2) and 21 CFR 860 Subpart D (De Novo), 21 CFR 814 (PMA/HDE), and MDR/IVDR ' +
+    'conformity routing by class. Handles HUD/HDE eligibility (not more than 8,000 US patients/year, with an OOPD ' +
+    'HUD designation), predicate availability, 510(k) exemption by product code, novel low/moderate-risk ' +
+    'devices, biologics, and EU Class I sterile/measuring/reusable-instrument special routes. When the inputs ' +
+    'cannot decide the US pathway it returns "undetermined" with a NEEDS-INPUT finding naming what is missing. ' +
+    'Use when the user needs to choose a regulatory filing pathway for a device or IVD. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
@@ -195,11 +197,11 @@ export const SELECT_DEVICE_PATHWAY: AnaTool = {
       },
       estimatedAnnualUSPopulation: {
         type: 'number',
-        description: 'Estimated US patient population per year. <8,000 supports HUD/HDE eligibility.',
+        description: 'Estimated US patient population per year. Not more than 8,000 supports HUD/HDE eligibility; without it HDE is undetermined.',
       },
       exempt: {
         type: 'boolean',
-        description: 'Whether the device/product code is 510(k)-exempt.',
+        description: 'Whether the product code\'s classification regulation exempts it from 510(k) with no .9 limitation applying. Without it a class I device is undetermined.',
       },
       isBiologic: {
         type: 'boolean',
@@ -421,7 +423,7 @@ export const PLAN_DEVICE_SUBMISSION: AnaTool = {
   name: 'plan_device_submission',
   description:
     'Produce a submission plan for a medical device or IVD: the required content for the chosen US pathway ' +
-    '(eSTAR/510(k) sections per 21 CFR 807.87, De Novo content per 21 CFR 860.93, PMA modules per 21 CFR ' +
+    '(eSTAR/510(k) sections per 21 CFR 807.87, De Novo content per 21 CFR 860 Subpart D (860.220), PMA modules per 21 CFR ' +
     '814.20, HDE per 21 CFR 814.104, or general-controls file when exempt), the EU technical documentation ' +
     'set (MDR/IVDR Annex II/III: device description, labeling, design & manufacturing, GSPR checklist, ' +
     'benefit-risk, verification & validation, post-market surveillance), an indicative end-to-end timeline ' +
@@ -458,10 +460,6 @@ export const PLAN_DEVICE_SUBMISSION: AnaTool = {
       preSubmissionDone: {
         type: 'boolean',
         description: 'Whether a Pre-Submission (Q-Sub) has already occurred (changes the timeline and Q-Sub strategy).',
-      },
-      useEStar: {
-        type: 'boolean',
-        description: 'Whether the submission will use the FDA eSTAR template (mandatory for 510(k)/De Novo).',
       },
     },
     required: ['usPathway'],

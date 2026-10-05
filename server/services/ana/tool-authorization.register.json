@@ -2390,16 +2390,6 @@
    "writes": "none",
    "site": "AnaToolExecutor.ts:17373"
   },
-  "ind_generate_section": {
-   "class": "confirm",
-   "writes": "loopback POST that creates an artifact for the given project",
-   "site": "routes/ind-generation.ts:338"
-  },
-  "ind_get_status": {
-   "class": "read",
-   "writes": "none",
-   "site": "AnaToolExecutor.ts:6563"
-  },
   "insert_clause_template": {
    "class": "self",
    "writes": "writes edited .docx copy to tmp/docbuilder",
@@ -3361,6 +3351,11 @@
    "class": "confirm",
    "writes": "opens a controlled revision (reason of 8+ characters required; caller must hold an editor role in organization_users, 2026-09-28 Q-0928-2): document back to draft, approval cleared; the effective version is withdrawn in place (hand-on) + governed-action row",
    "site": "AnaToolExecutor.ts:13678"
+  },
+  "run_agent": {
+   "class": "self",
+   "writes": "none to a tenant record; starts bounded read-only sub-agents inside this turn, whose model calls are ledgered under their own run id with this run as parent",
+   "site": "agentic-workflow-tools.ts registerAgenticWorkflowHandlers -> sub-agent.ts runSubAgent"
   },
   "run_cdisc_pipeline": {
    "class": "read",

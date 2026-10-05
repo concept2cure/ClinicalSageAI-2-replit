@@ -109,3 +109,95 @@ every request answered 500.
   embedding log groups should move to a customer-managed KMS key. The contract
   test makes it one decision for all three.
 - **The 711 pre-existing findings.** They do not block. Nobody has triaged them.
+
+## The whole unit tier, after the push (2026-10-05)
+
+`npx vitest run` over the merged tree: 3,374 of 3,398 files pass, 16 fail
+(51 tests). Each failing file was rerun in isolation, on an export of HEAD
+without the checkout's ignored `.env`, and on exports of earlier commits.
+
+**Four were the checkout, not the code.** An ignored local `.env` (2026-09-28)
+sets `RLS_ENFORCE=on` and a `DATABASE_URL`, and the test setup loads it. These
+pass on a clean export:
+
+- `document-consequence`
+- `conversation-os`
+- `transmit-guard-reports-checks`
+- `CrossReferenceMapping.no-fabricated-content`
+
+**Six were already red before this session's D3 work** (`dd73adb63`). Session
+015w92's `1ca5c0727`, which landed while this was in progress, fixes them:
+
+- `auditChainIntegritySweep`
+- `mdx-esg-transmit-gateway`
+- `test-assembly.routes`
+- `scanned-pdf-native-canvas`
+- `founder-critical-path-proof`
+- `governed-reason-not-invented`
+
+**Six were broken since, each fixed here.** Each was found by bisecting on
+clean exports.
+
+| Suite | Broken by | Cause | Fix |
+|---|---|---|---|
+| `session-open-contract` | mine, `proposal-seal.ts` (item 22) | The contract reads every `jwt.sign` payload literal, and the seal passed a variable. | The payload is an object literal at the call. |
+| `audit-compliance-reports` | `fe916edf4` (D6 platform standing) | The test granted platform standing through the request role `support`, which that commit closed on purpose. | The tenant role `support` cannot run reports; the owner allowlist can. `canReadAuditTrail` is one of the synchronous `isPlatformAdmin` sites that do not read grant rows, which `fe916edf4` handed on as board item 3. |
+| `unifiedTasks-governed` | `90b34d33c` (D2 CMC registers) | The Drizzle model reads `stability_studies.project_id`, and the suite's schema lacked it. | Fixed by `1ca5c0727` (session 015w92), which runs the whole migration. My parallel fix was withdrawn so there is one. |
+| `deepening-tools` | `8d919b1f8` (writing gate) | `AnaToolDefinitions` now reaches the instrumented pool before the test's mock is set. | It is imported after the mock is set. |
+| `device-blueprint` | `433200b94` (510(k) readiness) | It expected the old form `eSTAR 510(k) template`. | It expects the canonical `eSTAR (submitted via CDRH Portal)` and `FDA 3601`. |
+| `workbenchAssignReview` | the calendar | Its due date was 2026-10-05, which is today, so the row read "due today". | The date is 2099-10-05. |
+
+A note on method: an in-place `git bisect` over the main checkout named a
+wrong commit, because the checkout's `.env` follows every step. These were
+bisected on `git archive` exports instead.
+
+## Check-in on `69ff00050` (12:31 UTC): the baseline resolver picked a commit from 2026-09-19
+
+Semgrep went red again. It compared against `485b5bf39`, a run from 2026-09-19
+whose commit is not in trunk's history, instead of `5b45c168e`, the green run
+from 04:47 that day. The diff then covered 10,698 files and returned 113
+findings.
+
+**Cause.** The resolver listed runs with `status=success` and took the first
+one. That listing does not come back newest-first: today it returns
+`c064711c4` (Oct 1) ahead of the Oct 5 green run. The listing with
+`status=completed` is ordered.
+
+**Fix** (`.github/workflows/semgrep.yml`):
+- The resolver lists completed runs, sorts them by their own `created_at`, and
+  outputs `sha` (the newest green run) and `candidates` (up to 20 green
+  commits, newest first).
+- The blocking step scans against the first candidate that is an ancestor of
+  the commit under scan. It fails closed, without scanning, when none is.
+
+Three new contract cases in `tests/ci/ci-honesty.contract.test.ts`:
+- `red/baseline-resolver.txt`: the three cases fail; the other 46 pass.
+- `green/baseline-resolver.txt`: 49 of 49 pass.
+
+All 16 CI-workflow suites pass (200 tests).
+
+**What the right baseline will report.** Five of CI's findings fall in files
+changed since `5b45c168e`:
+
+| Finding | Verdict |
+|---|---|
+| `separation-of-duties.ts:401`: a signature target interpolated into a log template (`unsafe-formatstring`) | Fixed: passed as a `%s` argument. |
+| `validate-completeness-canonical.test.ts` (regexp) | Reviewed and marked: a test literal. |
+| `document-template-description.test.ts` (regexp) | Reviewed and marked: a test literal. |
+| `pmda-shonin.ts` `titleWord` (regexp) | Reviewed and marked: literal words at every call site. |
+| `refused-before-wire.test.ts` (`path-join-resolve-traversal`) | Reviewed and marked: a test walking the repository's own tree. |
+
+The local scan against `5b45c168e`, with the 10 rules that fired, reports 0.
+
+### The Lint reds on `69ff00050`, each from a 2026-10-05 D2 commit
+
+| Step | Cause | Fix |
+|---|---|---|
+| `ci:writerless-stores` | `e073f9a0b` retired the `/api/cmc` routers, which held `cmcProjects`' only writer. `knowledge-base.ts` still reads it. | Baselined with the reason: the read only fills blank Module 3 draft fields and reports nothing from an empty table. Whether CMC project identity moves to the registers' `project_id` is D2's decision. |
+| `ci:unkeyed-request-tables` and its self-test | `cmc_document_collaborators`, `cmc_document_links` and `cmc_document_versions` are now tenant-keyed, so their baseline entries were stale. | Baseline regenerated: 108 → 105. Both pass. |
+| `ci:tenant-isolation:no-regression` | `88f27b53d` reads the release signer as `SELECT name, email FROM users WHERE id = $1`. | Marked `tenant-isolation-safe`: it is the session's own account, read under the users membership policy. Now 8 findings against a baseline of 8. |
+| `test:proof-tier`, `cmc-batch-record-tenant-scope` | `88f27b53d` signs a release over the batch's recorded `qc_testing` results and the signer's `users` row. The contract's PGlite schema had neither, so release returned 500. | The contract creates the columns those reads select, plus one reviewed passing result per batch in organisation 1. 8 of 8 pass. |
+
+Locally the proof tier also timed out two PDF proofs (10 s) while running the
+whole tier. Each passes alone in under 300 ms; that was this machine under
+load.

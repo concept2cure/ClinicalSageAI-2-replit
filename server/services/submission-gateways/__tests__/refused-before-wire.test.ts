@@ -38,6 +38,7 @@ import path from 'path';
 import { getGateway, refusedBeforeWire } from '../index';
 import { FdaEsgGateway } from '../fda-esg';
 import { MhraGateway } from '../mhra-gateway';
+import { EmaCespGateway } from '../ema-cesp';
 import { RequestSentTransportError } from '../as2-transport';
 import { submissionBundleRoot } from '../bundle-namespace';
 import {
@@ -147,6 +148,43 @@ describe('refusedBeforeWire — refusals inside a gateway that PROVE nothing was
     expect(refusedBeforeWire(err)).toBe(true);
   });
 
+  // 2026-10-05 (D2 record, step g-cesp-centralised-refusal): CESP refuses a
+  // filing the channel function does not route to ema:cesp — a centralised MAA
+  // (EMA eSubmission Gateway / Web Client), a CTIS or IRIS filing — before its
+  // transmittal row. It is a ValidationError carrying NOTHING_TRANSMITTED, not a
+  // GatewayError: a GatewayError reads as "may have reached the agency" and
+  // would strand the caller's claim at 'transmitting'. Nor is it a
+  // CredentialError, so the audited CredentialError count below is unchanged.
+  it('is true for the CESP refusal of a centralised-procedure MAA, raised before the transmittal row', async () => {
+    dbCalls.length = 0;
+    const wire = vi.spyOn(EmaCespGateway.prototype, 'transmit');
+    const err = await failureOf(getGateway('ema', 'cesp').transmit(request({
+      submissionType: 'EU_MAA',
+      metadata: { applicationId: 'EMEA/H/C/000000', sequence: '0000', environment: 'staging' },
+    })));
+    expect(wire).toHaveBeenCalledTimes(1);
+    expect(err).toBeInstanceOf(ValidationError);
+    expect(String((err as Error).message)).toMatch(/eSubmission Gateway/);
+    expect(dbCalls.some((t) => /INSERT INTO submission_transmittals/.test(t))).toBe(false);
+    expect(refusedBeforeWire(err)).toBe(true);
+  });
+
+  // 2026-10-05 (D2 record, step g-pmda-transmit-unverified): the PMDA gateway's
+  // REST/mTLS/HMAC protocol had no regulator source; transmit now refuses with
+  // the typed UnverifiedTransportError before any row or socket. The full
+  // suite (credentials set, no wire, status not polled) is
+  // pmda-gateway-unverified.test.ts.
+  it('is true for the PMDA refusal over its unsourced protocol', async () => {
+    dbCalls.length = 0;
+    const err = await failureOf(getGateway('pmda', 'pmda_gateway').transmit(request({
+      bundle: { ...bundle, format: 'pmda_ectd' },
+      metadata: { applicationId: 'JP-2026-0001', sequence: '0001', environment: 'staging' },
+    })));
+    expect(err).toBeInstanceOf(UnverifiedTransportError);
+    expect(dbCalls.some((t) => /INSERT INTO submission_transmittals/.test(t))).toBe(false);
+    expect(refusedBeforeWire(err)).toBe(true);
+  });
+
   it('requiredAgencyMetadata marks both of its refusals, and only those', () => {
     const noSeq = (() => { try { requiredAgencyMetadata(request({ metadata: {} })); } catch (e) { return e; } })();
     const noType = (() => { try { requiredAgencyMetadata(request({ submissionType: '' })); } catch (e) { return e; } })();
@@ -210,7 +248,9 @@ describe('refusedBeforeWire — CredentialError and the proof-carrying Transport
       'server/services/submission-gateways/mfds-gateway.ts': 1,
       'server/services/submission-gateways/mhra-gateway.ts': 1,
       'server/services/submission-gateways/nmpa-gateway.ts': 1,
-      'server/services/submission-gateways/pmda-gateway.ts': 1,
+      // pmda-gateway.ts: 0 since 2026-10-05 (g-pmda-transmit-unverified) — it no
+      // longer reads the invented credential variables; it refuses every
+      // transmit with UnverifiedTransportError (pinned above).
       'server/services/submission-gateways/swissmedic-egateway.ts': 1,
       'server/services/submission-gateways/tga-ebs-gateway.ts': 1,
     };
@@ -218,6 +258,7 @@ describe('refusedBeforeWire — CredentialError and the proof-carrying Transport
     const found: Record<string, number> = {};
     const walk = (dir: string): void => {
       for (const name of readdirSync(dir)) {
+        // nosemgrep: path-join-resolve-traversal -- a test walking the repository tree: name comes from readdirSync of a directory under it
         const abs = path.join(dir, name);
         if (statSync(abs).isDirectory()) {
           if (name !== '__tests__' && name !== 'node_modules') walk(abs);

@@ -1,0 +1,42 @@
+# g-device-pathway-decisions RED (fix round 1): server/services/medical-device/__tests__/pathway-decisions.test.ts (13 tests) run against a git-archive snapshot of HEAD db4dc657 server/ shared/ tests/, 2026-10-05T04:37:24Z
+ × server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > class III by default, no predicate, novel low/moderate risk → De Novo, PMA the alternative 7ms
+ × server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > class III with no predicate and no novelty claim → PMA route, with De Novo offered 2ms
+ × server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > class I is exempt only when the product code says so 1ms
+ × server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > a class III device stated to be 510(k)-exempt is not exempt: the inputs conflict 1ms
+ × server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > class II or unclassified with no predicate is never sent to a 510(k) 1ms
+ × server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > HUD population: not more than 8,000 qualifies; more does not; unknown is not an HDE 1ms
+ × server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > review clocks are the eSTAR catalog MDUFA V goals 1ms
+ × server/services/medical-device/__tests__/pathway-decisions.test.ts > planDeviceSubmission — eSTAR mandate and clocks from the registries > a 510(k) plan is an eSTAR filing and the eSTAR finding is a requirement, sourced 2ms
+ × server/services/medical-device/__tests__/pathway-decisions.test.ts > planDeviceSubmission — eSTAR mandate and clocks from the registries > De Novo eSTAR is not mandatory before the registry date and is after it 1ms
+ × server/services/medical-device/__tests__/pathway-decisions.test.ts > planDeviceSubmission — eSTAR mandate and clocks from the registries > the tool no longer offers a useEStar switch 2ms
+ × server/services/medical-device/__tests__/pathway-decisions.test.ts > planDeviceSubmission — eSTAR mandate and clocks from the registries > the Q-Sub phase uses the 70-day Pre-Submission goal 5ms
+ × server/services/medical-device/__tests__/pathway-decisions.test.ts > De Novo citation and HUD wording > no De Novo citation names 21 CFR 860.93 1ms
+ × server/services/medical-device/__tests__/pathway-decisions.test.ts > De Novo citation and HUD wording > no text states the superseded "<8,000" HUD threshold 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > class III by default, no predicate, novel low/moderate risk → De Novo, PMA the alternative
+AssertionError: expected 'IDE-then-PMA' to be 'De Novo' // Object.is equality
+ FAIL  server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > class III with no predicate and no novelty claim → PMA route, with De Novo offered
+AssertionError: expected [ 'HDE' ] to include 'De Novo'
+ FAIL  server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > class I is exempt only when the product code says so
+AssertionError: predicateExists=false: expected 'exempt' to be 'undetermined' // Object.is equality
+ FAIL  server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > a class III device stated to be 510(k)-exempt is not exempt: the inputs conflict
+AssertionError: expected 'exempt' to be 'undetermined' // Object.is equality
+ FAIL  server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > class II or unclassified with no predicate is never sent to a 510(k)
+AssertionError: II: expected '510(k)' to be 'undetermined' // Object.is equality
+ FAIL  server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > HUD population: not more than 8,000 qualifies; more does not; unknown is not an HDE
+AssertionError: expected 'IDE-then-PMA' to be 'HDE' // Object.is equality
+ FAIL  server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > review clocks are the eSTAR catalog MDUFA V goals
+AssertionError: expected 'PMA MDUFA goal ~180 FDA-days (substan…' to contain '150'
+ FAIL  server/services/medical-device/__tests__/pathway-decisions.test.ts > planDeviceSubmission — eSTAR mandate and clocks from the registries > a 510(k) plan is an eSTAR filing and the eSTAR finding is a requirement, sourced
+AssertionError: expected '510(k) premarket notification (Tradit…' to match /eSTAR/
+ FAIL  server/services/medical-device/__tests__/pathway-decisions.test.ts > planDeviceSubmission — eSTAR mandate and clocks from the registries > De Novo eSTAR is not mandatory before the registry date and is after it
+AssertionError: expected 'De Novo classification request' to match /eSTAR not mandatory as of 2025-09-30/
+ FAIL  server/services/medical-device/__tests__/pathway-decisions.test.ts > planDeviceSubmission — eSTAR mandate and clocks from the registries > the tool no longer offers a useEStar switch
+AssertionError: expected { usPathway: { …(3) }, …(10) } to not have property "useEStar"
+ FAIL  server/services/medical-device/__tests__/pathway-decisions.test.ts > planDeviceSubmission — eSTAR mandate and clocks from the registries > the Q-Sub phase uses the 70-day Pre-Submission goal
+AssertionError: expected '~75-90 days to FDA written feedback /…' to contain '70'
+ FAIL  server/services/medical-device/__tests__/pathway-decisions.test.ts > De Novo citation and HUD wording > no De Novo citation names 21 CFR 860.93
+AssertionError: expected '21 CFR 807.81 When a 510(k) premarket…' not to match /860\.93/
+ FAIL  server/services/medical-device/__tests__/pathway-decisions.test.ts > De Novo citation and HUD wording > no text states the superseded "<8,000" HUD threshold
+AssertionError: expected '{"name":"select_device_pathway","desc…' not to match /<\s*8,?000/
+      Tests  13 failed (13)

@@ -128,8 +128,10 @@ export interface MarketDescriptor {
   assembleNote: string;
   /**
    * Whether the platform can transmit to this market's regulatory gateway.
-   * True for all 12 markets that have a live submission gateway configured.
-   * False for markets without a wired gateway (TW, SA, ZA, MDSAP).
+   * True for the 11 markets that have a live submission gateway configured.
+   * False for markets without a wired gateway (JP, TW, SA, ZA, MDSAP). JP is
+   * false because no sourced PMDA transport exists (g-pmda-transmit-unverified,
+   * 2026-10-05).
    */
   canTransmit: boolean;
   /**

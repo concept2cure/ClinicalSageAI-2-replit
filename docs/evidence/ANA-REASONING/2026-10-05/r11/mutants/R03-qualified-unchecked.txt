@@ -1,0 +1,12 @@
+Mutant R03-qualified-unchecked: a verdict that is not a boolean is kept
+
+--- client/src/concept2cure/components/ana/anaProgress.ts
+- if (!nameOrNull(m.provider) || !nameOrNull(m.model) || typeof m.qualified !== 'boolean') return null;
++ if (!nameOrNull(m.provider) || !nameOrNull(m.model)) return null;
+
+Tests run: client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > drops the whole list when any entry cannot be read, so it reads as unknown, never as approved 10ms
+      Tests  1 failed | 9 passed (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

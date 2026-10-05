@@ -1,0 +1,12 @@
+Mutant G04-not-filed-unsaid: an unfiled record is refused for the wrong reason
+
+--- client/src/concept2cure/v2/editor/anaInsertGate.ts
+- if (record.status === 'not_recorded') return `This answer’s record was not filed, so which model wrote it cannot be confirmed. ${ASK_AGAIN}`;
++ 
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > fails closed on everything that does not say which models wrote it 6ms
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

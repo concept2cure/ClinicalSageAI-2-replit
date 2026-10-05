@@ -1,0 +1,12 @@
+Mutant B05-one-model-for-two: a turn two models served is filed under one of them
+
+--- server/services/authoring/machine-claim-verify.ts
+- model: rec.servedBy.length === 1 ? rec.servedBy[0].model : null,
++ model: rec.servedBy[0]?.model ?? null,
+
+Tests run: server/routes/__tests__/authoring-decision-source.pglite.test.ts server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > a verified source names every model that wrote the words, as RULE 2 reads it > the claim verifier names every model that served a turn, and no one model for a turn two served 37ms
+      Tests  1 failed | 19 passed (20)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

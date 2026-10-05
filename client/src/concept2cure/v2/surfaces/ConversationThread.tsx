@@ -6,6 +6,7 @@ import { AnaActionChips } from '../AnaActionChips';
 import { LiveDriveSwitch } from '../LiveDriveSwitch';
 import { RunPolicySwitch } from '../RunPolicySwitch';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
+import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal } from '../editor/anaInsertGate';
 import { useChatUpload, readyAttachmentLabel, composeTurn, type SentAttachment } from '../../hooks/useChatUpload';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
 import { SignoffList } from '../SignoffList';
@@ -72,6 +73,7 @@ function toTurn(m: AnaChatMessage): CtTurn {
     answer: m.text || undefined,
     settled: !m.streaming,
     sourceRecord: m.turnRecord?.status === 'recorded' ? m.turnRecord.id : undefined,
+    turnRecord: m.turnRecord,
     contextUsed: contextUsed.length ? contextUsed : undefined,
     evidence: m.evidence,
     /* Present while the turn is in flight — the phase line IS the waiting
@@ -188,16 +190,22 @@ function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: Insert
   if (!target?.bridge.editable || !turn.settled || !turn.answer?.trim()) return null;
   if (turn.authoringDoc?.docId === target.bridge.docId) return null;
   const { bridge, open, reopen, fireToast } = target;
+  /* The governed-write rule (anaInsertGate.ts, round 11): an answer a model it
+     does not admit wrote is not offered as an insert. The offer stays, disabled,
+     with the reason beside it (GE-P-3); the bridge checks again. */
+  const refusal = anaInsertRefusal(turn.turnRecord);
+  const refusalId = `ct-insert-refusal-${turn.turnRecord?.status === 'recorded' ? turn.turnRecord.id : 'turn'}`;
   const insert = () => {
+    if (refusal) return;
     /* A suggestion lands only where the person can see it: a closed editor is
        reopened first. Below 1100px the conversation is hidden while the editor
        is open, so this is the only way the offer and its target meet. */
     if (!open) reopen();
-    const ok = bridge.insert(turn.answer ?? '', {
-      id: 'ana',
-      name: 'AnA (AI draft)',
-      ...(turn.sourceRecord ? { sourceRecord: turn.sourceRecord } : {}),
-    });
+    const ok = bridge.insert(
+      turn.answer ?? '',
+      { id: ANA_SUGGESTION_AUTHOR_ID, name: 'AnA (AI draft)', ...(turn.sourceRecord ? { sourceRecord: turn.sourceRecord } : {}) },
+      turn.turnRecord,
+    );
     fireToast(ok
       ? `Inserted into ${bridge.sectionCode} as tracked suggestions — review each edit in the editor, then save.`
       : 'Couldn\u2019t insert — the editor is not editable right now (source view, or the document is locked).', ok ? 'ok' : 'error');
@@ -208,7 +216,9 @@ function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: Insert
         type="button"
         className="ct-ref"
         onClick={insert}
-        title={`Adds this answer to ${bridge.sectionCode} ${bridge.sectionTitle} as suggestions you accept or reject`}
+        disabled={!!refusal}
+        aria-describedby={refusal ? refusalId : undefined}
+        title={refusal ? undefined : `Adds this answer to ${bridge.sectionCode} ${bridge.sectionTitle} as suggestions you accept or reject`}
       >
         <span className="ct-ref-ic">{I.penLine}</span>
         <span className="ct-ref-l">
@@ -217,6 +227,11 @@ function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: Insert
             : `Open ${bridge.sectionCode} and insert as tracked suggestion`}
         </span>
       </button>
+      {refusal && (
+        <span id={refusalId} style={{ flexBasis: '100%', fontSize: 11.5, color: 'var(--text-400)' }}>
+          {refusal}
+        </span>
+      )}
     </div>
   );
 }

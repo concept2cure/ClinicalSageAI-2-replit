@@ -1,0 +1,37 @@
+# g-pma-pack-software-doc-level — RED (2026-10-05)
+#
+# Run against HEAD's migrations/20260810_pma_fda_814_20_outline.sql (git show HEAD:… written
+# back to the file for the run, then the amended version restored), with the new v1.1 file and
+# test present. Command: npx vitest run tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts
+# Result: 3 failed | 3 passed (6). The second deploy re-supersedes v1.1 by v1.0 (a cycle,
+# no live pma:fda pack) and the v1.1 file's live-pack RAISE fails the deploy.
+
+ × tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts > pma:fda v1.1 — FDA software Documentation Level, replay-safe > after two deploys v1.1 is the one live pack and the supersede chain is 2024 → v1.0 → v1.1 21399ms
+ × tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts > pma:fda v1.1 — FDA software Documentation Level, replay-safe > a third deploy changes nothing 15055ms
+ ✓ tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts > pma:fda v1.1 — FDA software Documentation Level, replay-safe > v1.1 is v1.0 node for node except the C.4 label, which names the Documentation Level 14068ms
+ × tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts > pma:fda v1.1 — FDA software Documentation Level, replay-safe > v1.1 provenance names the 2023 guidance it relabels C.4 from 13854ms
+ ✓ tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts > pma:fda v1.1 — FDA software Documentation Level, replay-safe > v1.1 carries its provenance attestation from the first deploy, not only after a replay 13208ms
+ ✓ tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts > pma:fda v1.1 — FDA software Documentation Level, replay-safe > the row-count assertion fails the deploy when a truncated v1.1 row already holds the key 11098ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts > pma:fda v1.1 — FDA software Documentation Level, replay-safe > after two deploys v1.1 is the one live pack and the supersede chain is 2024 → v1.0 → v1.1
+ FAIL  tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts > pma:fda v1.1 — FDA software Documentation Level, replay-safe > a third deploy changes nothing
+ FAIL  tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts > pma:fda v1.1 — FDA software Documentation Level, replay-safe > v1.1 provenance names the 2023 guidance it relabels C.4 from
+error: pma:fda has no live rule pack after v1.1 (a supersede cycle)
+      Tests  3 failed | 3 passed (6)
+
+# Raw state without the v1.1 file's tail assertions (pglite, /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/fbd725dd-0713-5601-8f23-652dab09bc56/scratchpad/red-g-pma-pack-software-doc-level/demo.mjs):
+# HEAD 20260810 leaves v1.1 superseded_by v1.0 after deploy 2. The third line is the
+# interrupted implementer's partial v1.1 (uncertainties only): on its first deploy v1.1 carries
+# source_basis 'undeclared' / confidence 'unknown' — the provenance test added in this run.
+HEAD 20260810, deploy 1: [{"version":"fda-pma-2024","superseded_by":"fda-pma-21cfr814-20-v1.0","source_basis":"statutory_transcription","confidence":"high"},{"version":"fda-pma-21cfr814-20-v1.0","superseded_by":"fda-pma-21cfr814-20-v1.1","source_basis":"statutory_transcription","confidence":"high"},{"version":"fda-pma-21cfr814-20-v1.1","superseded_by":null,"source_basis":"statutory_transcription","confidence":"high"}]
+HEAD 20260810, deploy 2: [{"version":"fda-pma-2024","superseded_by":"fda-pma-21cfr814-20-v1.0","source_basis":"statutory_transcription","confidence":"high"},{"version":"fda-pma-21cfr814-20-v1.0","superseded_by":"fda-pma-21cfr814-20-v1.1","source_basis":"statutory_transcription","confidence":"high"},{"version":"fda-pma-21cfr814-20-v1.1","superseded_by":"fda-pma-21cfr814-20-v1.0","source_basis":"statutory_transcription","confidence":"high"}]
+amended 20260810 + partial v1.1 (uncertainties only), deploy 1: [{"version":"fda-pma-2024","superseded_by":"fda-pma-21cfr814-20-v1.0","source_basis":"statutory_transcription","confidence":"high"},{"version":"fda-pma-21cfr814-20-v1.0","superseded_by":"fda-pma-21cfr814-20-v1.1","source_basis":"statutory_transcription","confidence":"high"},{"version":"fda-pma-21cfr814-20-v1.1","superseded_by":null,"source_basis":"undeclared","confidence":"unknown"}]
+
+# Provenance test, red against the interrupted implementer's v1.1 (uncertainties-only UPDATE):
+# npx vitest run tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts -t "first deploy"
+ × tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts > pma:fda v1.1 — FDA software Documentation Level, replay-safe > v1.1 carries its provenance attestation from the first deploy, not only after a replay 6713ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'undeclared' to be 'statutory_transcription' // Object.is equality
+Expected: "statutory_transcription"
+Received: "undeclared"
+      Tests  1 failed | 5 skipped (6)

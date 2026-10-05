@@ -11,6 +11,7 @@
  */
 
 import { createScopedLogger } from '../utils/logger';
+import { classifyInTextReferences, type ClassifiedReference } from './ana/in-text-references';
 
 const log = createScopedLogger('harmonize-engine');
 
@@ -25,6 +26,13 @@ export interface HarmonizeInput {
   productName?: string;
   /** Active ingredient name */
   activeIngredient?: string;
+  /**
+   * The document type of a section, by section key, when the caller knows it
+   * (medical-writing.ts DOCUMENT_TYPES id or alias, e.g. 'csr'). A CSR's
+   * Section/Table/Figure/Listing numbers are checked against ICH E3; with no
+   * type they are checked only against the section keys.
+   */
+  documentTypes?: Record<string, string>;
 }
 
 export interface HarmonizeIssue {
@@ -48,6 +56,28 @@ export interface HarmonizeResult {
   issues: HarmonizeIssue[];
   consistencyScore: number;
   checkedDimensions: string[];
+}
+
+// ─── Reference integrity ─────────────────────────────────────────────────────
+
+/** An unresolved reference is an error; one this input cannot decide is a notice. */
+function referenceIssue(ref: ClassifiedReference, sectionId: string, id: string): HarmonizeIssue {
+  const unresolved = ref.status === 'unresolved';
+  const where = ref.qualifier ? ` (${ref.qualifier})` : '';
+  return {
+    id,
+    type: 'reference',
+    severity: unresolved ? 'error' : 'info',
+    sectionA: sectionId,
+    description: unresolved
+      ? `${ref.label} does not resolve: ${ref.reason}`
+      : `${ref.label}${where} cannot be checked from these sections: ${ref.reason}`,
+    valueA: ref.raw,
+    recommendation: unresolved
+      ? `Correct the reference to an existing ${ref.kind.toLowerCase()}, or remove it.`
+      : 'Confirm the target when the referenced document or captions are assembled.',
+    autoFixable: false,
+  };
 }
 
 // ─── Engine ──────────────────────────────────────────────────────────────────
@@ -306,55 +336,65 @@ export class HarmonizeEngine {
     return issues;
   }
 
+  /**
+   * Reference integrity, on the one in-text reference detector
+   * (server/services/ana/in-text-references.ts) since 2026-10-05
+   * (g-cross-reference-extractor-migrations). This method held its own three
+   * regexes until then and resolved nothing: every dotted number not found in a
+   * section key became "verify target exists" — an invented Table 14.9.99 in a
+   * CSR, a CTD code the CTD does not have, a protocol section, and "per 1.5 kg"
+   * alike.
+   *
+   * Each reference is now classified against what this input can see: the
+   * section keys (as headings: "Section 2.7.4" resolves when 2.7.4 is checked
+   * here), the section's document type when the caller passes it (a CSR walks
+   * ICH E3), and the CTD registry for Module codes.
+   *   unresolved                 → error: the target does not exist;
+   *   not-resolvable-from-input  → info: an honest notice, no score deduction;
+   *   resolved                   → nothing.
+   */
   private checkReferences(input: HarmonizeInput): HarmonizeIssue[] {
     const issues: HarmonizeIssue[] = [];
     let issueIdx = 0;
 
-    // Collect all cross-references
-    const crossRefPattern = /(?:see|refer to|as described in|per|Section|Module|Table|Figure)\s+(\d+(?:\.\d+)*(?:\.\d+)?)/gi;
-    const tableRefPattern = /Table\s+(\d+(?:\.\d+)?(?:-\d+)?)/gi;
-    const figureRefPattern = /Figure\s+(\d+(?:\.\d+)?(?:-\d+)?)/gi;
+    const knownHeadings = Object.keys(input.sections).flatMap((key) => {
+      const code = /\d+(?:\.\d+)*/.exec(key)?.[0];
+      return code ? [`Section ${code}`] : [];
+    });
 
     for (const [sectionId, content] of Object.entries(input.sections)) {
-      // Check for dangling section references
-      const sectionRefs = Array.from(content.matchAll(crossRefPattern));
-      for (const ref of sectionRefs) {
-        const refTarget = ref[1];
-        // Check if referenced section exists in input
-        const targetExists = Object.keys(input.sections).some(
-          s => s.includes(refTarget) || s.includes(`module-${refTarget}`)
-        );
-        if (!targetExists && refTarget.includes('.')) {
-          issues.push({
-            id: `REF-${++issueIdx}`,
-            type: 'reference',
-            severity: 'warning',
-            sectionA: sectionId,
-            description: `Cross-reference to Section ${refTarget} — verify target exists in final submission`,
-            recommendation: 'Confirm all cross-references resolve to valid sections in the assembled eCTD',
-            autoFixable: false,
-          });
-        }
+      const refs = classifyInTextReferences(content, {
+        documentType: input.documentTypes?.[sectionId],
+        knownHeadings,
+      });
+
+      const reported = new Set<string>();
+      for (const ref of refs) {
+        const key = `${ref.label}|${ref.qualifier ?? ''}`;
+        if (ref.status === 'resolved' || reported.has(key)) continue;
+        reported.add(key);
+        issues.push(referenceIssue(ref, sectionId, `REF-${++issueIdx}`));
       }
 
-      // Check for duplicate table/figure numbers across sections
-      const tableRefs = Array.from(content.matchAll(tableRefPattern));
-      const figureRefs = Array.from(content.matchAll(figureRefPattern));
-
-      if (tableRefs.length > 0) {
-        const tableNums = tableRefs.map(m => m[1]);
-        const duplicates = tableNums.filter((v, i) => tableNums.indexOf(v) !== i);
-        for (const dup of new Set(duplicates)) {
-          issues.push({
-            id: `REF-${++issueIdx}`,
-            type: 'reference',
-            severity: 'info',
-            sectionA: sectionId,
-            description: `Table ${dup} referenced multiple times — verify consistency of table content`,
-            recommendation: 'Ensure all references to this table point to the same data',
-            autoFixable: false,
-          });
-        }
+      // A table cited more than once in a section: note it, so every citation
+      // is checked against the same table content.
+      const tableCounts = new Map<string, number>();
+      for (const ref of refs) {
+        if (ref.kind !== 'Table') continue;
+        const key = ref.qualifier ? `${ref.label} (${ref.qualifier})` : ref.label;
+        tableCounts.set(key, (tableCounts.get(key) ?? 0) + 1);
+      }
+      for (const [label, count] of tableCounts) {
+        if (count < 2) continue;
+        issues.push({
+          id: `REF-${++issueIdx}`,
+          type: 'reference',
+          severity: 'info',
+          sectionA: sectionId,
+          description: `${label} referenced multiple times — verify consistency of table content`,
+          recommendation: 'Ensure all references to this table point to the same data',
+          autoFixable: false,
+        });
       }
     }
 

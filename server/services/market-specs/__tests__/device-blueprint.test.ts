@@ -19,7 +19,8 @@ describe('device blueprint — 510(k) software implant', () => {
   });
 
   it('pulls the 510(k) required documents and forms', () => {
-    expect(bp.requiredForms).toContain('eSTAR 510(k) template');
+    // The canonical forms since 433200b94: the eSTAR through the CDRH Portal, and the user fee.
+    expect(bp.requiredForms).toEqual(expect.arrayContaining(['eSTAR (submitted via CDRH Portal)', 'FDA 3601']));
     expect(bp.requiredDocuments.some((d) => d.templateId === 'k510_summary')).toBe(true);
   });
 

@@ -38,6 +38,46 @@ export interface DeviceAuthoringContext {
   deviceClass?: string | null;
   regulation?: 'MDR' | 'IVDR';
   cerReference?: string | null;
+  /** PSUR only: sales and serious-incident figures the sponsor supplied. */
+  psurExposure?: PsurExposureFigures;
+}
+
+/**
+ * Figures for a PSUR's reporting period that only the sponsor can supply. The
+ * generator never invents them: without them the PSUR keeps its FACTUAL FIELD
+ * placeholder and states no rate.
+ */
+export interface PsurExposureFigures {
+  /** Units placed on the market in the reporting period (the volume of sales). */
+  unitsPlacedOnMarket: number;
+  /** Serious incidents reported in the reporting period. */
+  seriousIncidentCount: number;
+}
+
+function badInput(message: string): Error {
+  return Object.assign(new Error(message), { code: 'PM_BAD_INPUT' });
+}
+
+/**
+ * Serious incidents per unit placed on the market in the reporting period.
+ * Deterministic; the one figure the retired report-authoring.ts buildPsur
+ * computed, moved here so the PSUR has a single builder. Not rounded: buildPsur
+ * rounded to 1e-6, which reported one incident in ten million units as zero.
+ * Returns null, never 0, when no units were placed on the market, because the
+ * rate is then undefined. The numerator can exceed the denominator: incidents in
+ * the period may involve units placed on the market earlier.
+ */
+export function computePsurIncidentRate(f: PsurExposureFigures): number | null {
+  for (const [name, v] of [
+    ['unitsPlacedOnMarket', f.unitsPlacedOnMarket],
+    ['seriousIncidentCount', f.seriousIncidentCount],
+  ] as const) {
+    if (typeof v !== 'number' || !Number.isInteger(v) || v < 0) {
+      throw badInput(`${name} must be a non-negative integer (got ${String(v)}).`);
+    }
+  }
+  if (f.unitsPlacedOnMarket === 0) return null;
+  return f.seriousIncidentCount / f.unitsPlacedOnMarket;
 }
 
 type ContentRecord = Record<string, string>;
@@ -49,7 +89,7 @@ type ContentRecord = Record<string, string>;
 export function buildPmsPlanContent(ctx: DeviceAuthoringContext): ContentRecord {
   const d = ctx.deviceName.trim();
   const reg = ctx.regulation ?? 'MDR';
-  const annex = reg === 'IVDR' ? 'IVDR Article 78 / Annex III' : 'MDR Article 84 / Annex III §1.1';
+  const annex = reg === 'IVDR' ? 'IVDR Article 79 / Annex III' : 'MDR Article 84 / Annex III §1.1';
   return {
     proactiveCollectionMethods:
       `Proactive post-market data collection for ${d} per ${annex}: structured user feedback, ` +
@@ -113,6 +153,25 @@ export function buildPmcfEvaluationContent(ctx: DeviceAuthoringContext): Content
 
 export function buildPsurContent(ctx: DeviceAuthoringContext): ContentRecord {
   const d = ctx.deviceName.trim();
+  const exposure = ctx.psurExposure;
+  const rate = exposure ? computePsurIncidentRate(exposure) : null;
+  const incidents = exposure
+    ? `${exposure.seriousIncidentCount} serious ${exposure.seriousIncidentCount === 1 ? 'incident' : 'incidents'}`
+    : '';
+  const figures: ContentRecord = exposure
+    ? {
+        volumeOfSales:
+          `${exposure.unitsPlacedOnMarket} units of ${d} placed on the market during the reporting ` +
+          'period, as supplied by the sponsor.',
+        seriousIncidentRate:
+          rate === null
+            ? `${incidents} in the reporting period; no rate, ` +
+              'because no units were placed on the market in the period.'
+            : `${incidents} over ${exposure.unitsPlacedOnMarket} units ` +
+              `placed on the market in the reporting period: ${Number((rate * 1000).toPrecision(6))} per ` +
+              '1,000 units (computed).',
+      }
+    : {};
   return {
     summaryOfBenefitRisk:
       `Summary of the benefit-risk determination for ${d} over the reporting period and main conclusions ` +
@@ -128,6 +187,7 @@ export function buildPsurContent(ctx: DeviceAuthoringContext): ContentRecord {
     sizeAndCharacteristicsOfUsersPopulation:
       `${DRAFT} FACTUAL FIELD — insert the actual estimated size and characteristics of the population ` +
       `using ${d}, and where available the usage frequency. This must be the real figure; it is not generated.`,
+    ...figures,
   };
 }
 
@@ -164,34 +224,149 @@ export function buildSscpContent(ctx: DeviceAuthoringContext): ContentRecord {
   };
 }
 
+/**
+ * IVDR Summary of Safety and Performance (Article 29; Class C and D). Keys match
+ * validateSsp. The field list is recall of Art 29(2) (a)–(h); MDCG 2022-9 (the
+ * SSP template) has not been re-read.
+ */
+export function buildSspContent(ctx: DeviceAuthoringContext): ContentRecord {
+  const d = ctx.deviceName.trim();
+  const cls = ctx.deviceClass?.trim() || 'unspecified class';
+  return {
+    deviceIdentification:
+      `Device identification for ${d} (IVDR ${cls}): trade name, Basic UDI-DI, manufacturer name and SRN. ` +
+      `${DRAFT} insert the Basic UDI-DI, SRN and exact catalogue identifiers.`,
+    intendedPurpose:
+      `Intended purpose of ${d}: what is detected or measured, its function (screening, diagnosis, ` +
+      'monitoring, companion diagnostic), indications, contra-indications and target populations. ' +
+      `${DRAFT} align verbatim with the IFU and performance evaluation report.`,
+    deviceDescription:
+      `Description of ${d}, including previous generations or variants and the differences, and any ` +
+      'accessories, other devices or products intended to be used with it. ' +
+      `${DRAFT} describe the actual device configuration.`,
+    standardsApplied:
+      `Harmonised standards and common specifications applied to ${d}. ` +
+      `${DRAFT} list each standard or CS with its version.`,
+    summaryOfPerformanceEvaluation:
+      `Summary of the performance evaluation of ${d} (scientific validity, analytical and clinical ` +
+      'performance) and relevant information on the post-market performance follow-up. ' +
+      `${DRAFT} summarise the PER conclusions and PMPF status for the intended audience.`,
+    metrologicalTraceability:
+      `Metrological traceability of the values assigned to calibrators and control materials of ${d}. ` +
+      `${DRAFT} state the reference materials or procedures of higher order, or state that none apply.`,
+    suggestedProfileForUsers:
+      `Suggested profile and training for users of ${d}. ` +
+      `${DRAFT} state any required qualifications or training.`,
+    risksAndUndesirableEffects:
+      `Residual risks, undesirable effects, warnings and precautions for ${d} from the risk management file. ` +
+      `${DRAFT} list the actual residual risks, including the consequences of false results.`,
+  };
+}
+
+/**
+ * IVDR PMPF plan (Annex XIII Part B). Keys match validatePmpfPlan. The IVDR
+ * follow-up instrument is PMPF, not the MDR's PMCF.
+ */
+export function buildPmpfPlanContent(ctx: DeviceAuthoringContext): ContentRecord {
+  const d = ctx.deviceName.trim();
+  return {
+    generalMethods:
+      `General PMPF methods for ${d}: gathering of performance experience, user feedback, screening of ` +
+      'scientific literature and other sources of performance or scientific data. ' +
+      `${DRAFT} name the sources, cadence and responsible roles.`,
+    specificMethods:
+      `Specific PMPF methods for ${d}, such as ring trials and other quality-assurance activities, ` +
+      'epidemiological studies, evaluation of suitable registries or post-market performance studies. ' +
+      `${DRAFT} state which apply, or why none are needed.`,
+    rationale:
+      `Rationale for the appropriateness of the chosen methods for ${d}, with reference to the performance ` +
+      'evaluation report and the residual risks. ' +
+      `${DRAFT} tie each method to the evidence gap or risk it addresses.`,
+    specificObjectives:
+      `Specific objectives the PMPF for ${d} addresses. ` +
+      `${DRAFT} state measurable objectives.`,
+    timeSchedule:
+      `Time schedule for the PMPF activities for ${d} and for the PMPF evaluation report. ` +
+      `${DRAFT} give dates; do not leave the schedule open.`,
+  };
+}
+
+/** IVDR PMPF evaluation report (Annex XIII Part B). Keys match validatePmpfEvaluation. */
+export function buildPmpfEvaluationContent(ctx: DeviceAuthoringContext): ContentRecord {
+  const d = ctx.deviceName.trim();
+  return {
+    dataAnalyzed:
+      `PMPF data analysed for ${d} during the reporting period (ring-trial, registry, study, literature ` +
+      'and user-feedback results). ' +
+      `${DRAFT} insert the actual datasets, sample sizes and results — not placeholders.`,
+    conclusionsOnBenefitRisk:
+      `Conclusions on the benefit-risk of ${d} and on its analytical and clinical performance in light of ` +
+      'the PMPF data. ' +
+      `${DRAFT} state the evidence-based conclusions and any new risks identified.`,
+    updatesToPerformanceEvaluation:
+      'Required updates to the performance evaluation report, PMS plan, risk management file and IFU ' +
+      'arising from this PMPF evaluation. ' +
+      `${DRAFT} list the specific documents and changes, or state "none required" with justification.`,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Registry: type → builder, code, and whether it needs a reporting period
 // ─────────────────────────────────────────────────────────────────────────────
+
+type Regulation = 'MDR' | 'IVDR';
 
 interface TypeSpec {
   code: string;
   needsReportingPeriod: boolean;
   build: (ctx: DeviceAuthoringContext) => ContentRecord;
   titleNoun: string;
+  /** The regulations whose instrument this type is. */
+  regulations: readonly Regulation[];
+  /** The other regulation's equivalent, named in the refusal. */
+  counterpart?: PostMarketDocumentType;
 }
 
+const BOTH: readonly Regulation[] = ['MDR', 'IVDR'];
+
 const TYPE_SPECS: Record<PostMarketDocumentType, TypeSpec> = {
-  pms_plan: { code: 'PMS-PLAN', needsReportingPeriod: false, build: buildPmsPlanContent, titleNoun: 'PMS Plan' },
-  pms_report: { code: 'PMS-REPORT', needsReportingPeriod: true, build: buildPmsReportContent, titleNoun: 'PMS Report' },
+  pms_plan: { code: 'PMS-PLAN', needsReportingPeriod: false, build: buildPmsPlanContent, titleNoun: 'PMS Plan', regulations: BOTH },
+  pms_report: { code: 'PMS-REPORT', needsReportingPeriod: true, build: buildPmsReportContent, titleNoun: 'PMS Report', regulations: BOTH },
   pmcf_plan: {
     code: 'PMCF-PLAN',
     needsReportingPeriod: false,
     build: ctx => buildPmcfPlanContent(ctx) as unknown as ContentRecord,
     titleNoun: 'PMCF Plan',
+    regulations: ['MDR'],
+    counterpart: 'pmpf_plan',
   },
   pmcf_evaluation: {
     code: 'PMCF-EVAL',
     needsReportingPeriod: true,
     build: buildPmcfEvaluationContent,
     titleNoun: 'PMCF Evaluation',
+    regulations: ['MDR'],
+    counterpart: 'pmpf_evaluation',
   },
-  psur: { code: 'PSUR', needsReportingPeriod: true, build: buildPsurContent, titleNoun: 'PSUR' },
-  sscp: { code: 'SSCP', needsReportingPeriod: false, build: buildSscpContent, titleNoun: 'SSCP' },
+  psur: { code: 'PSUR', needsReportingPeriod: true, build: buildPsurContent, titleNoun: 'PSUR', regulations: BOTH },
+  sscp: { code: 'SSCP', needsReportingPeriod: false, build: buildSscpContent, titleNoun: 'SSCP', regulations: ['MDR'], counterpart: 'ssp' },
+  ssp: { code: 'SSP', needsReportingPeriod: false, build: buildSspContent, titleNoun: 'SSP', regulations: ['IVDR'], counterpart: 'sscp' },
+  pmpf_plan: {
+    code: 'PMPF-PLAN',
+    needsReportingPeriod: false,
+    build: buildPmpfPlanContent,
+    titleNoun: 'PMPF Plan',
+    regulations: ['IVDR'],
+    counterpart: 'pmcf_plan',
+  },
+  pmpf_evaluation: {
+    code: 'PMPF-EVAL',
+    needsReportingPeriod: true,
+    build: buildPmpfEvaluationContent,
+    titleNoun: 'PMPF Evaluation Report',
+    regulations: ['IVDR'],
+    counterpart: 'pmcf_evaluation',
+  },
 };
 
 export const AUTHORABLE_DOCUMENT_TYPES = Object.keys(TYPE_SPECS) as PostMarketDocumentType[];
@@ -208,6 +383,8 @@ export interface AuthorPostMarketArgs {
   title?: string;
   reportingPeriodStart?: Date;
   reportingPeriodEnd?: Date;
+  /** PSUR only: the sponsor's sales and serious-incident figures for the period. */
+  psurExposure?: PsurExposureFigures;
 }
 
 export interface AuthorPostMarketResult {
@@ -259,9 +436,35 @@ export async function authorPostMarketDocument(
     });
   }
 
-  const regulation =
-    args.regulation ?? (deviceClass && /ivd/i.test(deviceClass) ? 'IVDR' : 'MDR');
-  const content = spec.build({ deviceName, deviceClass, regulation, cerReference });
+  // The device decides the regulation first: an explicit regulation, else an
+  // IVD class. Only when neither says does a type that is one regulation's
+  // instrument fix it. Asking for a type under the other regulation is refused
+  // with the right type named (an IVDR device has no SSCP or PMCF; an MDR
+  // device has no SSP or PMPF).
+  const regulation: Regulation =
+    args.regulation ??
+    (deviceClass && /ivd/i.test(deviceClass)
+      ? 'IVDR'
+      : spec.regulations.length === 1
+        ? spec.regulations[0]
+        : 'MDR');
+  if (!spec.regulations.includes(regulation)) {
+    const instead = spec.counterpart ? ` The ${regulation} document is ${spec.counterpart}.` : '';
+    throw Object.assign(
+      new Error(`${args.documentType} is not an ${regulation} post-market document.${instead}`),
+      { code: 'PM_BAD_TYPE' }
+    );
+  }
+  if (args.psurExposure && args.documentType !== 'psur') {
+    throw badInput(`psurExposure applies to a PSUR only, not to ${args.documentType}.`);
+  }
+  const content = spec.build({
+    deviceName,
+    deviceClass,
+    regulation,
+    cerReference,
+    psurExposure: args.psurExposure,
+  });
 
   // Reporting period for report-style documents.
   let reportingPeriodStart: Date | null = args.reportingPeriodStart ?? null;

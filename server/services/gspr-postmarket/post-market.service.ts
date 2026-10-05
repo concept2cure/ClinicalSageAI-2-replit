@@ -2,14 +2,21 @@
  * Post-Market Lifecycle Service
  *
  * CRUD + lifecycle (draft → under_review → approved → superseded → withdrawn)
- * for the post_market_documents table. One service, six document types
- * discriminated by `document_type`:
- *   pms_plan         MDR Article 84 / IVDR Article 78
- *   pms_report       MDR Article 85 (Class I) / Article 86 (others) / IVDR Art. 80–81
+ * for the post_market_documents table. One service, nine document types
+ * discriminated by `document_type` (POST_MARKET_DOCUMENT_TYPES):
+ *   pms_plan         MDR Article 84 / IVDR Article 79
+ *   pms_report       MDR Article 85 (Class I) / IVDR Article 80 (Class A, B)
  *   pmcf_plan        MDR Annex XIV Part B
  *   pmcf_evaluation  MDR Annex XIV Part B
- *   psur             device PSUR — MDR Article 86 / IVDR Article 81
- *   sscp             MDR Article 32 (Class III + implantable Class IIb)
+ *   psur             device PSUR — MDR Article 86 (IIa, IIb, III) / IVDR Article 81 (C, D)
+ *   sscp             MDR Article 32 (implantable and Class III, not custom-made)
+ *   ssp              IVDR Article 29 (Class C, D)
+ *   pmpf_plan        IVDR Annex XIII Part B
+ *   pmpf_evaluation  IVDR Annex XIII Part B
+ *
+ * Which of them a device owes is decided in post-market-readiness.ts
+ * (EU_POSTMARKET_OBLIGATIONS), not here. The article references above and in
+ * the IVDR validators' citations are recall — not re-read against EUR-Lex.
  *
  * Per-type completeness checks live in `validateDocument` — deterministic,
  * no LLM, every finding cites the relevant MDR/IVDR article.
@@ -234,6 +241,62 @@ function validateSscp(doc: PostMarketDocument): PostMarketFinding[] {
   return out;
 }
 
+/**
+ * Content an IVDR SSP must carry. Recall of IVDR Article 29(2) (a)–(h), not
+ * re-read against EUR-Lex; MDCG 2022-9 (the SSP template) has not been re-read
+ * either. The finding citation says so.
+ */
+const SSP_FIELDS: ReadonlyArray<readonly [string, string]> = [
+  ['deviceIdentification', 'device identification, trade name, Basic UDI-DI and SRN'],
+  ['intendedPurpose', 'intended purpose, indications, contra-indications and target populations'],
+  ['deviceDescription', 'device description, previous generations or variants, and accessories'],
+  ['standardsApplied', 'harmonised standards and common specifications applied'],
+  ['summaryOfPerformanceEvaluation', 'summary of the performance evaluation and the PMPF'],
+  ['metrologicalTraceability', 'metrological traceability of assigned values'],
+  ['suggestedProfileForUsers', 'suggested profile and training for users'],
+  ['risksAndUndesirableEffects', 'residual risks, undesirable effects, warnings and precautions'],
+];
+
+const SSP_CITATION =
+  "IVDR Article 29(2) (recall — not checked against the regulator's text); MDCG 2022-9 (recall)";
+
+function validateSsp(doc: PostMarketDocument): PostMarketFinding[] {
+  const out: PostMarketFinding[] = [];
+  for (const [key, label] of SSP_FIELDS) {
+    if (!checkContentField(doc.content, key)) {
+      out.push(F('SSP-001', 'critical', `SSP is missing the ${label} (content.${key}).`, SSP_CITATION));
+    }
+  }
+  return out;
+}
+
+const PMPF_CITATION = "IVDR Annex XIII Part B (recall — not checked against the regulator's text)";
+
+function validatePmpfPlan(doc: PostMarketDocument): PostMarketFinding[] {
+  const out: PostMarketFinding[] = [];
+  // Recall of IVDR Annex XIII Part B: general and specific methods, their
+  // rationale, the specific objectives, and the time schedule.
+  for (const key of ['generalMethods', 'specificMethods', 'rationale', 'specificObjectives', 'timeSchedule']) {
+    if (!checkContentField(doc.content, key)) {
+      out.push(F('PMPFP-001', 'critical', `PMPF Plan is missing content.${key}.`, PMPF_CITATION));
+    }
+  }
+  return out;
+}
+
+function validatePmpfEvaluation(doc: PostMarketDocument): PostMarketFinding[] {
+  const out: PostMarketFinding[] = [];
+  if (!doc.reportingPeriodStart || !doc.reportingPeriodEnd) {
+    out.push(F('PMPFE-001', 'critical', 'PMPF Evaluation Report must declare a reporting period.', PMPF_CITATION));
+  }
+  for (const key of ['dataAnalyzed', 'conclusionsOnBenefitRisk', 'updatesToPerformanceEvaluation']) {
+    if (!checkContentField(doc.content, key)) {
+      out.push(F('PMPFE-002', 'critical', `PMPF Evaluation Report is missing content.${key}.`, PMPF_CITATION));
+    }
+  }
+  return out;
+}
+
 const VALIDATORS: Record<PostMarketDocumentType, (d: PostMarketDocument) => PostMarketFinding[]> = {
   pms_plan: validatePmsPlan,
   pms_report: validatePmsReport,
@@ -241,10 +304,24 @@ const VALIDATORS: Record<PostMarketDocumentType, (d: PostMarketDocument) => Post
   pmcf_evaluation: validatePmcfEvaluation,
   psur: validatePsur,
   sscp: validateSscp,
+  ssp: validateSsp,
+  pmpf_plan: validatePmpfPlan,
+  pmpf_evaluation: validatePmpfEvaluation,
 };
 
 export function validateDocument(doc: PostMarketDocument): PostMarketValidationResult {
-  const findings = VALIDATORS[doc.documentType as PostMarketDocumentType]?.(doc) ?? [];
+  const validator = VALIDATORS[doc.documentType as PostMarketDocumentType];
+  // A type with no validator has not been checked: fail closed, never pass it.
+  const findings = validator
+    ? validator(doc)
+    : [
+        F(
+          'PM-098',
+          'critical',
+          `Document type "${doc.documentType}" has no completeness validator; it cannot pass the gate.`,
+          'Platform rule — unchecked content is not passed'
+        ),
+      ];
   if (doc.locked && doc.status !== 'approved' && doc.status !== 'superseded') {
     findings.push(
       F(

@@ -1,0 +1,648 @@
+== mutation check: replacing either call site's buildSectionUserMessage(section) with the old recall sentence fails that path's tests (site 0: 4 failed | 7 passed; site 1: 3 failed | 8 passed); restored: 11 passed
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > validates and normalizes a complete pharma input 11ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > rejects missing required fields 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > warns on unusual alpha 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > warns on low power target 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > warns on high attrition rate 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > prefills default values 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > requires NI margin for non-inferiority studies 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > requires sensitivity/specificity for diagnostic accuracy studies 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes reproducible sample size for continuous superiority 5ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes sample size for binary endpoints 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes sample size for survival endpoints 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes diagnostic accuracy metrics 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > adjusts sample size for attrition 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > generates scenario comparisons 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes non-inferiority design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > compares two scenarios correctly 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > larger effect size requires fewer subjects 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > higher power requires more subjects 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > judges a well-powered study with estimand as adequate 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > flags an underpowered study 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > assesses fragility correctly 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > assesses endpoint-method fit 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > generates role-specific explanations 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > recommends escalation for critical issues 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > provides confidence assessment 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 4: Domain Track Adaptation > adapts for biotech/pharma track 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 4: Domain Track Adaptation > adapts for medical device track 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 4: Domain Track Adaptation > adapts for diagnostics/IVD track 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 4: Domain Track Adaptation > produces different adaptations for different tracks 2ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > customizes for FDA 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > customizes for EMA 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > customizes for PMDA 5ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > customizes for MHRA 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > produces different content for FDA vs EMA 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > generates a sample size rationale document 5ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > generates a statistical risk memo 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > generates an SAP section draft 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > preserves provenance in generated documents 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > includes regulatory notes when body is specified 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > project-binds generated documents 0ms
+stdout | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+{
+  "timestamp": "2026-10-05T05:13:18.741Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:13:18.742Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+{
+  "timestamp": "2026-10-05T05:13:18.742Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+{
+  "timestamp": "2026-10-05T05:13:19.281Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Database operation blocked because tenant scope is missing",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "insert into \"concept2cure_artifacts\" (\"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"conte...",
+    "enforcement": "on"
+  }
+}
+
+stderr | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+{
+  "timestamp": "2026-10-05T05:13:19.282Z",
+  "level": "error",
+  "message": "[workflow-integrator] Artifact creation failed",
+  "context": {
+    "err": "Failed query: insert into \"concept2cure_artifacts\" (\"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\") values (default, $1, $2, default, $3, $4, $5, $6, $7, $8, $9, default, default, default, default, $10, default, default, default, default, default, $11, $12, default, default, default, default, default) returning \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\"\nparams: artifact_1791177194792_d219bcbdb33a,0,1,statistical_summary,document,Sample Size Rationale (Pharma/Biotech) — NSCLC,# Sample Size Rationale\n\n## Study Context\n- **Track**: Pharma/Biotech\n- **Study Type**: superiority\n- **Endpoint Type**: continuous\n- **Objective**: efficacy\n- **Indication**: NSCLC\n- **Phase**: III\n- **Target Regulatory Body**: FDA\n\n## Sample Size Determination\n\n### Statistical Method\nTwo-sample t-test (superiority)\n\n### Formula\nn = (1 + 1/r) * σ² * (z_α + z_β)² / δ², where δ=0.5, σ=1.000\n\n### Assumptions\n\n| Parameter | Value | Source | Sensitivity |\n|-----------|-------|--------|-------------|\n| alpha | 0.05 | default | moderate |\n| power | 0.8 | default | high |\n| effect_size | 0.5 | user_provided | high |\n| variance | 1 | user_provided | high |\n| attrition_rate | 0.15 | default | moderate |\n| allocation_ratio | 1 | default | low |\n\n### Result\n\n- **Sample size per group**: 63\n- **Number of groups**: 2\n- **Total (unadjusted)**: 126\n- **Dropout adjustment**: 15%\n- **Total (adjusted)**: 150\n- **Achieved power**: 80.1%\n- **Significance level**: 0.05 (two-sided)\n\n### Scenario Analysis\n\n| Scenario | Sample Size (total) | Power | Notes |\n|----------|-------------------|-------|-------|\n| Conservative (75% effect) | 264 | 80% | Effect size = 0.3750 |\n| Base case | 150 | 80% | Effect size = 0.5000 |\n| Optimistic (125% effect) | 98 | 81% | Effect size = 0.6250 |\n| Optimistic (150% effect) | 66 | 80% | Effect size = 0.7500 |\n\n## Statistical Assessment\n\n- **Overall Verdict**: inadequate\n- **Action Recommendation**: escalate\n- **Fragility**: fragile (index: 65)\n- **Confidence Level**: moderate (65/100)\n\n### Sensitivity Points\n\n- **effect_size**: current=0.5, breakpoint=0.475 (5% margin)\n- **attrition_rate**: current=0.15, breakpoint=0.22499999999999998 (50% margin)\n\n## Limitations\n\n- 4 parameters used default values\n\n## Regulatory Considerations (FDA)\n\n- Prospective statistical planning required in protocol and separate SAP\n- Two-sided significance level of 0.05 unless justified\n- Power ≥80% is standard; ≥90% preferred for confirmatory trials\n- ICH E9/E9(R1) compliance expected\n- Pre-specified multiplicity adjustment for co-primary endpoints\n\n\n---\n*Generated by AnA Biostats Engine v1.0.0. All numeric results are deterministic. Judgment and framing are rule-backed. This document should be reviewed by a qualified biostatistician before regulatory submission.*\n,6de0781fb7efe232b548b4883d7a26bd3856be399a2fc1ad862c62bf3c6393d0,1,draft,1,{\"statisticalDocumentType\":\"sample_size_rationale\",\"clientTrack\":\"biotech_pharma\",\"regulatoryBody\":\"FDA\",\"studyType\":\"superiority\",\"indication\":\"NSCLC\",\"phase\":\"III\",\"provenanceEngineVersion\":\"1.0.0\",\"generatedAt\":\"2026-10-05T05:13:14.792Z\",\"tags\":[\"biotech_pharma\",\"superiority\",\"continuous\"]}"
+  }
+}
+
+stderr | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full statistical risk review workflow
+{
+  "timestamp": "2026-10-05T05:13:19.302Z",
+  "level": "error",
+  "message": "[workflow-integrator] Artifact creation failed",
+  "context": {
+    "err": "Failed query: insert into \"concept2cure_artifacts\" (\"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\") values (default, $1, $2, default, $3, $4, $5, $6, $7, $8, $9, default, default, default, default, $10, default, default, default, default, default, $11, $12, default, default, default, default, default) returning \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\"\nparams: artifact_1791177199284_b6e1ffbbb129,0,1,statistical_summary,document,Statistical Risk Memo (Pharma/Biotech) — NSCLC,# Statistical Risk Memo\n\n## Executive Summary\n\n✗ Study design has significant issues. 150 subjects needed. Escalation to senior biostatistician recommended.\n\n## Risk Classification\n\n- **Overall Risk**: high\n- **Action**: escalate\n- **Confidence**: moderate\n\n## Dimension Analysis\n\n| Dimension | Verdict | Score | Key Flags |\n|-----------|---------|-------|-----------|\n| Power Adequacy | adequate | 80/100 | None |\n| Sample Size Adequacy | adequate | 80/100 | None |\n| Assumption Quality | adequate | 70/100 | 4 parameters used default values — user should verify these match the actual study context |\n| Design Appropriateness | adequate | 85/100 | None |\n| Attrition Sensitivity | adequate | 90/100 | None |\n| Overinterpretation Risk | adequate | 80/100 | Conservative scenario requires >50% more subjects — base case may be optimistic |\n| Multiplicity Control | adequate | 95/100 | None |\n| Estimand Clarity | inadequate | 40/100 | No estimand strategy specified — ICH E9(R1) requires explicit estimand framework for confirmatory trials; Specify: population, variable, intercurrent event handling, summary measure |\n| Missing Data Risk | marginal | 60/100 | Missing data rate of 15% is manageable but should be addressed in SAP; No missing data handling method specified for Phase III — pre-specify in SAP |\n| Comparator Appropriateness | adequate | 85/100 | Placebo control — ethical justification required per Declaration of Helsinki |\n\n## Fragility Assessment\n\nThe design is fragile. Small changes in assumptions (especially effect_size, attrition_rate) could undermine study conclusions. Strongly recommend formal sensitivity analysis and contingency planning.\n\n## Endpoint-Method Fit\n\n- **Fit**: strong\n- **Current Method**: Two-sample t-test (superiority)\n- **Suggested Method**: Two-sample t-test\n- **Rationale**: The statistical method is well-matched to the continuous endpoint and superiority design.\n\n## Escalation Items\n\n- ⚠ Estimand Clarity: No estimand strategy specified — ICH E9(R1) requires explicit estimand framework for confirmatory trials\n\n## Domain-Specific Risks (Pharma/Biotech)\n\n- Statistical fragility may undermine confirmatory evidence — consider larger N or more conservative assumptions\n\n## Regulatory Risk Framing (FDA)\n\n- FDA review is likely to identify the statistical concerns flagged in this analysis\n- Consider pre-submission meeting (Pre-IND, Pre-Sub) to align on statistical approach\n- Statistical reviewer may question robustness of assumptions — prepare sensitivity analysis justification\n\n## Role-Specific Interpretations\n\n### For Clinical Team\nThis pharma/biotech study requires 150 subjects total to detect the expected treatment effect with 80.1% confidence. The design has significant statistical limitations.\n\n### For Regulatory Affairs\nThe sample size of 150 subjects provides 80.1% power using Two-sample t-test (superiority). Significant statistical gaps exist that would likely be identified in regulatory review.\n\n### For Biostatistics\nTwo-sample t-test (superiority) yields N=150 (63/group) at 80.1% power, α=0.05. Effect size: 0.5. Fragility: fragile (index 65). effect_size has 5% margin to breakpoint; attrition_rate has 50% margin to breakpoint.\n\n\n---\n*Generated by AnA Biostats Engine v1.0.0. All numeric results are deterministic. Judgment and framing are rule-backed. This document should be reviewed by a qualified biostatistician before regulatory submission.*\n,108c03bc3044a536c184c32c9011bbba783fc856a03adcd310219abb83d0d080,1,draft,1,{\"statisticalDocumentType\":\"statistical_risk_memo\",\"clientTrack\":\"biotech_pharma\",\"regulatoryBody\":\"FDA\",\"studyType\":\"superiority\",\"indication\":\"NSCLC\",\"phase\":\"III\",\"provenanceEngineVersion\":\"1.0.0\",\"generatedAt\":\"2026-10-05T05:13:19.284Z\",\"tags\":[\"biotech_pharma\",\"superiority\",\"continuous\"]}"
+  }
+}
+
+stderr | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes device track workflow
+{
+  "timestamp": "2026-10-05T05:13:19.313Z",
+  "level": "error",
+  "message": "[workflow-integrator] Artifact creation failed",
+  "context": {
+    "err": "Failed query: insert into \"concept2cure_artifacts\" (\"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\") values (default, $1, $2, default, $3, $4, $5, $6, $7, $8, $9, default, default, default, default, $10, default, default, default, default, default, $11, $12, default, default, default, default, default) returning \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\"\nparams: artifact_1791177199303_8a0c5271631e,0,1,statistical_summary,document,Sample Size Rationale (Medical Device),# Sample Size Rationale\n\n## Study Context\n- **Track**: Medical Device\n- **Study Type**: non_inferiority\n- **Endpoint Type**: continuous\n- **Objective**: performance\n- **Target Regulatory Body**: FDA\n\n## Sample Size Determination\n\n### Statistical Method\nTwo-sample t-test (non-inferiority) (device pivotal study)\n\n### Formula\nn = (1 + 1/r) * σ² * (z_α + z_β)² / (δ - Δ_NI)², where δ=0.3, Δ_NI=0.15\n\n### Assumptions\n\n| Parameter | Value | Source | Sensitivity |\n|-----------|-------|--------|-------------|\n| alpha | 0.05 | default | moderate |\n| power | 0.8 | default | high |\n| effect_size | 0.3 | user_provided | high |\n| variance | 1 | user_provided | high |\n| attrition_rate | 0.1 | user_provided | moderate |\n| allocation_ratio | 1 | default | low |\n\n### Result\n\n- **Sample size per group**: 698\n- **Number of groups**: 2\n- **Total (unadjusted)**: 1396\n- **Dropout adjustment**: 10%\n- **Total (adjusted)**: 1552\n- **Achieved power**: 80.0%\n- **Significance level**: 0.05 (two-sided)\n\n### Scenario Analysis\n\n| Scenario | Sample Size (total) | Power | Notes |\n|----------|-------------------|-------|-------|\n| Conservative (75% effect) | 6204 | 80% | Effect size = 0.2250 |\n| Base case | 1552 | 80% | Effect size = 0.3000 |\n| Optimistic (125% effect) | 692 | 80% | Effect size = 0.3750 |\n| Optimistic (150% effect) | 390 | 80% | Effect size = 0.4500 |\n\n## Statistical Assessment\n\n- **Overall Verdict**: inadequate\n- **Action Recommendation**: escalate\n- **Fragility**: fragile (index: 60)\n- **Confidence Level**: moderate (70/100)\n\n### Sensitivity Points\n\n- **effect_size**: current=0.3, breakpoint=0.285 (5% margin)\n- **attrition_rate**: current=0.1, breakpoint=0.15000000000000002 (50% margin)\n\n## Limitations\n\n- 3 parameters used default values\n\n## Regulatory Considerations (FDA)\n\n- Prospective statistical planning required in protocol and separate SAP\n- Two-sided significance level of 0.05 unless justified\n- Power ≥80% is standard; ≥90% preferred for confirmatory trials\n- Statistical methods appropriate for device risk classification\n- Performance goal derivation with supporting literature\n\n\n---\n*Generated by AnA Biostats Engine v1.0.0. All numeric results are deterministic. Judgment and framing are rule-backed. This document should be reviewed by a qualified biostatistician before regulatory submission.*\n,397ba19ca4cfc42be80baf8649d3a450de41649aff76504617d199e519a50260,1,draft,1,{\"statisticalDocumentType\":\"sample_size_rationale\",\"clientTrack\":\"medical_device\",\"regulatoryBody\":\"FDA\",\"studyType\":\"non_inferiority\",\"provenanceEngineVersion\":\"1.0.0\",\"generatedAt\":\"2026-10-05T05:13:19.303Z\",\"tags\":[\"medical_device\",\"non_inferiority\",\"continuous\"]}"
+  }
+}
+
+stderr | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes diagnostic track workflow
+{
+  "timestamp": "2026-10-05T05:13:19.315Z",
+  "level": "error",
+  "message": "[workflow-integrator] Artifact creation failed",
+  "context": {
+    "err": "Failed query: insert into \"concept2cure_artifacts\" (\"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\") values (default, $1, $2, default, $3, $4, $5, $6, $7, $8, $9, default, default, default, default, $10, default, default, default, default, default, $11, $12, default, default, default, default, default) returning \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\"\nparams: artifact_1791177199314_e5ebde57c391,0,1,statistical_summary,document,Sample Size Rationale (Diagnostics/IVD),# Sample Size Rationale\n\n## Study Context\n- **Track**: Diagnostics/IVD\n- **Study Type**: diagnostic_accuracy\n- **Endpoint Type**: sensitivity_specificity\n- **Objective**: diagnostic_accuracy\n- **Target Regulatory Body**: FDA\n\n## Sample Size Determination\n\n### Statistical Method\nDiagnostic accuracy study (sensitivity/specificity)\n\n### Formula\nn_sens = (z_α+z_β)² * Se(1-Se) / w², n_spec = (z_α+z_β)² * Sp(1-Sp) / w², total adjusted by prevalence=0.3\n\n### Assumptions\n\n| Parameter | Value | Source | Sensitivity |\n|-----------|-------|--------|-------------|\n| alpha | 0.05 | default | moderate |\n| power | 0.8 | default | high |\n| effect_size | 0.9 | user_provided | high |\n| attrition_rate | 0.1 | user_provided | moderate |\n| allocation_ratio | 1 | default | low |\n| prevalence | 0.3 | user_provided | high |\n\n### Result\n\n- **Sample size per group**: 944\n- **Number of groups**: 1\n- **Total (unadjusted)**: 944\n- **Dropout adjustment**: 10%\n- **Total (adjusted)**: 1049\n- **Achieved power**: 80.0%\n- **Significance level**: 0.05 (two-sided)\n\n### Diagnostic Performance\n\n- **Sensitivity**: 90.0%\n- **Specificity**: 85.0%\n- **PPV**: 72.0%\n- **NPV**: 95.2%\n\n### Scenario Analysis\n\n| Scenario | Sample Size (total) | Power | Notes |\n|----------|-------------------|-------|-------|\n| Prevalence = 10% | 3145 | 80% | Prev=0.1, Se=0.9, Sp=0.85 |\n| Prevalence = 30% | 1049 | 80% | Prev=0.3, Se=0.9, Sp=0.85 |\n| Prevalence = 50% | 892 | 80% | Prev=0.5, Se=0.9, Sp=0.85 |\n| Prevalence = 70% | 1486 | 80% | Prev=0.7, Se=0.9, Sp=0.85 |\n\n## Statistical Assessment\n\n- **Overall Verdict**: adequate\n- **Action Recommendation**: revise\n- **Fragility**: fragile (index: 60)\n- **Confidence Level**: moderate (70/100)\n\n### Sensitivity Points\n\n- **effect_size**: current=0.9, breakpoint=0.855 (5% margin)\n- **attrition_rate**: current=0.1, breakpoint=0.15000000000000002 (50% margin)\n\n## Limitations\n\n- 3 parameters used default values\n\n## Regulatory Considerations (FDA)\n\n- Prospective statistical planning required in protocol and separate SAP\n- Two-sided significance level of 0.05 unless justified\n- Power ≥80% is standard; ≥90% preferred for confirmatory trials\n- Clinical sensitivity and specificity with exact binomial confidence intervals\n- Adequate representation of disease spectrum and demographics\n\n\n---\n*Generated by AnA Biostats Engine v1.0.0. All numeric results are deterministic. Judgment and framing are rule-backed. This document should be reviewed by a qualified biostatistician before regulatory submission.*\n,22bcd3d80e6587e8a2bdb4ecbc134e363a0f5d134184ff5fa2191b0dd1cf051b,1,draft,1,{\"statisticalDocumentType\":\"sample_size_rationale\",\"clientTrack\":\"diagnostics_ivd\",\"regulatoryBody\":\"FDA\",\"studyType\":\"diagnostic_accuracy\",\"provenanceEngineVersion\":\"1.0.0\",\"generatedAt\":\"2026-10-05T05:13:19.314Z\",\"tags\":[\"diagnostics_ivd\",\"diagnostic_accuracy\",\"sensitivity_specificity\"]}"
+  }
+}
+
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow 4492ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full statistical risk review workflow 20ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes device track workflow 11ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes diagnostic track workflow 2ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > handles invalid input gracefully 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > quick compute returns results without document 17ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > quick compute handles validation failure 0ms
+ ✓ tests/services/ana-biostats.test.ts > Scenario Comparison Workflow > compares two pharma scenarios 1ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > handles missing effect size 0ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > handles zero effect size in computation 1ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > handles very small alpha 0ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > exposes confidence limitations 0ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > does not produce silent failures 0ms
+ ✓ tests/services/ana-biostats.test.ts > Deterministic Reproducibility > Scenario 1: Phase III NSCLC superiority — exact numeric reproduction 0ms
+ ✓ tests/services/ana-biostats.test.ts > Deterministic Reproducibility > Scenario 2: Device non-inferiority — exact numeric reproduction 0ms
+ ✓ tests/services/ana-biostats.test.ts > Deterministic Reproducibility > Scenario 3: Diagnostic accuracy — exact numeric reproduction 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Multiplicity Computation > computes Bonferroni adjustment for 3 endpoints 17ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Multiplicity Computation > computes Holm step-down adjustment 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Multiplicity Computation > returns no adjustment for single endpoint 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Crossover Computation > computes crossover sample size with efficiency gain 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Crossover Computation > higher correlation yields smaller crossover N 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Missing Data Impact > computes missing data impact for complete case 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Missing Data Impact > MMRM preserves more power than complete case 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Missing Data Impact > higher missing rate increases bias risk 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Agreement/Kappa Computation > computes kappa sample size 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: AUC Computation > computes AUC comparison sample size 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags missing multiplicity correction in Phase III 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > accepts single endpoint without multiplicity 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags missing estimand in Phase III pharma 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > accepts estimand for device track without penalty 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags high missing data rate 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags LOCF as not recommended 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags placebo in non-inferiority as contradictory 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Orchestrator with New Capabilities > includes multiplicity result in enhanced workflow 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Orchestrator with New Capabilities > includes missing data impact when specified 21ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Orchestrator with New Capabilities > includes 10 judgment dimensions in enhanced output 1ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: SAP Document Content > SAP section includes multiplicity adjustment when specified 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: SAP Document Content > SAP section includes missing data handling when specified 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: SAP Document Content > SAP section includes estimand framework when specified 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Agent Definitions > has exactly 5 SME agents defined 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Agent Definitions > all agents have required fields 1ms
+ ✓ tests/services/ana-biostats.test.ts > SME Agent Definitions > each agent has unique ID 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes sample size request to trial_design_power 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes device/diagnostics to device_diagnostics_performance 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes SAP workflow to sap_analysis_strategy 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes regulatory submission to regulatory_submission 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes adaptive design to adaptive_sensitivity 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > returns secondary SMEs when multiple match 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > provides routing rationale 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > trial_design_power provides design-specific guidance 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > sap_analysis_strategy provides SAP-specific guidance when estimand missing 0ms
+stderr | tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `failed` and the run rolls up to `failed` when gatewayReady=false
+[Orchestrator] run failed: Error: package not gateway-ready: 1 structural error(s), 1 regional error(s), 0 sequence error(s); hardenedScore=40
+    at /home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1914:17
+    at runStep (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1345:22)
+    at Module.runOrchestrator (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1867:7)
+    at /home/user/ClinicalSageAI-2-replit/tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:257:21
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > regulatory_submission provides body-specific guidance 25ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > device_diagnostics_performance provides diagnostic-specific guidance 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > adaptive_sensitivity provides fragility-focused guidance 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > different SMEs produce different enhancements for same input 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME in Orchestrator: End-to-End > orchestrator includes SME routing in workflow response 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME in Orchestrator: End-to-End > orchestrator includes SME enhancement in workflow response 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME in Orchestrator: End-to-End > SME guidance merges into anaInterpretation 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME in Orchestrator: End-to-End > device track routes to device specialist in full workflow 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Fallback & Failure Behavior > falls back to trial_design_power when no strong match 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Fallback & Failure Behavior > SME enhancement does not crash on minimal input 1ms
+ ✓ tests/services/ana-biostats.test.ts > SME Fallback & Failure Behavior > escalation notes appear when conditions are met 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > a non-inferiority design sized for 90% reports 90%, not the superiority power of δ 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > holds for a positive true difference and an unequal allocation 23ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > an equivalence design sized for 80% reports 80% 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > the judgment does not call a correctly sized non-inferiority design underpowered 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > a non-inferiority trial against placebo is still flagged — for its comparator, not its power 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > missing-data power loss is measured against the same test, not collapsed to the superiority power 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > superiority is unchanged: sized for 80%, reports 80% 29ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a continuous effect with no variance is standardised (BS4) > sizes d = 0.5 at 63 per group (80% power, two-sided 0.05), not 16 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a continuous effect with no variance is standardised (BS4) > N depends on the effect size: d = 0.3 needs more subjects than d = 0.5 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a continuous effect with no variance is standardised (BS4) > discloses the standardisation as a default assumption 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous superiority: Base case N and power equal the design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous non-inferiority: Base case N and power equal the design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous equivalence: Base case N and power equal the design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > binary superiority, 2:1: Base case N and power equal the design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > time to event: Base case N and power equal the design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > no scenario carries a missing or non-finite N 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > superiority sized for 80% reports a computed power at or just above 80%, not the target echoed 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > non-inferiority sized for 90% reports ~90% 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > each scenario reports the power computed for its own N, not one echoed target 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "Analyses followed the pre-specified SAP" as fact 15ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "analyzed on the ITT population" as fact 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "tipping-point sensitivity analyses" as fact 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "tested within a pre-specified hierarchy" as fact 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "handled per the pre-specified SAP approach" as fact 0ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `failed` and the run rolls up to `failed` when gatewayReady=false 619ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `complete` and run suspends at awaiting-signature when gatewayReady=true (happy path) 908ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 5 — m3.refine wires buildModule3WithNarrative > skips m3.refine when inputs.useAI=false; m3.regional sees deterministic m3.compose output 267ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 5 — m3.refine wires buildModule3WithNarrative > calls buildModule3WithNarrative with inputs.organizationId/projectId/userId when useAI=true 52ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > enqueues via launchCSRBuildAsync, transitions to awaiting-async, returns run.status=awaiting-async 5ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) returns the run unchanged when the job is still running 3ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) drives the step to complete and runs downstream when the job is complete 156ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) throws on tenant mismatch (previousRun.organizationId !== inputs.organizationId) 1ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — getRunResumeReadiness > returns ready:false on org mismatch (the SELECT filters by organization_id) 11ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > marks what the sponsor must confirm, in the placeholder the CSR completeness check detects 1549ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > still states what the plan and the engine do establish 1ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > threads submissionFk into every persistRun + persistStepEvent INSERT when supplied (Move 3 happy path) 190ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > leaves submissionFk NULL on every INSERT when caller omits it (back-compat) 273ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > refuses to persist a non-positive submissionFk — coerces to NULL rather than corrupting the column 177ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > Move 6: awaiting-async enqueue carries submissionFk on the suspended-run persistRun INSERT 9ms
+stderr | tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > a 510(k) never reaches package.sign — it cannot be filed on the eCTD backbone at all
+[Orchestrator] run failed: ValidationError: Cannot build the FDA regional backbone: no application type was supplied, and "510(k)" is not one. The eCTD Module 1 application-type vocabulary covers NDA, sNDA, ANDA, BLA, IND and master files; device pathways (510(k), De Novo, PMA) and non-US pathways (MAA, CTA) have no code in it and must not be filed on this backbone. Pass fda.applicationType. Defaulting to fdaat1 would declare this package a New Drug Application, which is a statement about the filing, not a formatting detail.
+    at buildFdaBackbone (/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/regional-packager.ts:572:11)
+    at Object.fda (/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/regional-packager.ts:1125:17)
+    at packageEctdSubmission (/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/regional-packager.ts:1142:46)
+    at assembleRealPackage (/home/user/ClinicalSageAI-2-replit/server/services/ectd/orchestrator-real-package.ts:182:20)
+    at assembleForValidation (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:593:16)
+    at /home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1833:42
+    at runStep (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1345:22)
+    at Module.runOrchestrator (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1832:5)
+    at /home/user/ClinicalSageAI-2-replit/tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:721:21
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  findings: [],
+  errorClass: 'validation'
+}
+
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > a 510(k) never reaches package.sign — it cannot be filed on the eCTD backbone at all 178ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > package.sign transitions to `awaiting-signature` when no matching signature exists (IND submission, no sig in DB) 504ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > resume path drives package.sign to `complete` when a matching signature row exists 356ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > resume path leaves the run in `awaiting-signature` when no signature row exists yet 168ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > runOrchestrator tenant-scope gate (Case 1) > throws when organizationId is missing (undefined) 48ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > runOrchestrator tenant-scope gate (Case 1) > throws when organizationId is zero 12ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > runOrchestrator tenant-scope gate (Case 1) > throws when organizationId is negative 5ms
+stderr | tests/unit/submission-orchestrator-tenant-isolation.test.ts > getRun tenant isolation (Cases 2 + 3) > getRun returns null for non-positive organizationId without throwing (defensive gate)
+[Orchestrator] getRun called with invalid organizationId: 0
+
+stderr | tests/unit/submission-orchestrator-tenant-isolation.test.ts > getRun tenant isolation (Cases 2 + 3) > getRun returns null for non-positive organizationId without throwing (defensive gate)
+[Orchestrator] getRun called with invalid organizationId: -1
+
+stderr | tests/unit/submission-orchestrator-tenant-isolation.test.ts > getRun tenant isolation (Cases 2 + 3) > getRun returns null for non-positive organizationId without throwing (defensive gate)
+[Orchestrator] getRun called with invalid organizationId: NaN
+
+stderr | tests/unit/submission-orchestrator-tenant-isolation.test.ts > getRunAudit tenant isolation (Case 4) > returns an empty array on org mismatch — same collapse-on-leak as getRun
+[Orchestrator] getRunAudit called with invalid organizationId: 0
+
+stderr | tests/unit/submission-orchestrator-tenant-isolation.test.ts > getRunAudit tenant isolation (Case 4) > returns an empty array on org mismatch — same collapse-on-leak as getRun
+[Orchestrator] getRunAudit called with invalid organizationId: -7
+
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > getRun tenant isolation (Cases 2 + 3) > two orgs running runOrchestrator in parallel cannot see each other via getRun 255ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > getRun tenant isolation (Cases 2 + 3) > getRun returns null when the runId exists but belongs to a different org (Case 3 — collapse with not-found) 7ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > getRun tenant isolation (Cases 2 + 3) > getRun returns null for non-positive organizationId without throwing (defensive gate) 19ms
+stderr | tests/unit/submission-orchestrator-tenant-isolation.test.ts > hashInputs undefined-field robustness (Case 9) > does not throw even when called via the route layer with a minimal body
+[Orchestrator] run failed: Error: package not gateway-ready: 18 structural error(s), 1 regional error(s), 0 sequence error(s); hardenedScore=0
+    at /home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1914:17
+    at runStep (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1345:22)
+    at runOrchestrator (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1867:7)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/submission-orchestrator.ts:509:20
+
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > getRunAudit tenant isolation (Case 4) > returns an empty array on org mismatch — same collapse-on-leak as getRun 130ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > regenerateAffected tenant-mismatch guard (Case 5) > throws when previousRun.organizationId !== inputs.organizationId 1ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > regenerateAffected tenant-mismatch guard (Case 5) > also throws when inputs.organizationId is missing / non-positive even if previousRun has one 1ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > POST /api/submission-orchestrator/runs auth gates (Cases 6 + 7) > returns 401 when there is no req.user (unauthenticated) — Case 6 26ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > POST /api/submission-orchestrator/runs auth gates (Cases 6 + 7) > returns 403 when authenticated but no organizationId in JWT — Case 7 4ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > GET /api/submission-orchestrator/runs/:runId cross-tenant (Case 8) > returns 404 when the run belongs to a different org (collapses with not-found) 28ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > hashInputs undefined-field robustness (Case 9) > runOrchestrator with every optional input omitted completes without throwing 9ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > hashInputs undefined-field robustness (Case 9) > does not throw even when called via the route layer with a minimal body 47ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > Path-to-GA §C.4 — submissionFk threading through persist/getRun > persistRun dual-writes submission_id_fk when caller supplies OrchestratorInputs.submissionFk 81ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > Path-to-GA §C.4 — submissionFk threading through persist/getRun > getRun round-trips submissionFk back onto OrchestratorRun 120ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > Path-to-GA §C.4 — submissionFk threading through persist/getRun > back-compat: persistRun leaves submission_id_fk NULL when caller omits submissionFk 25ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > loadSubmissionFkBySubmissionIdText (Path-to-GA §C.4 helper) > resolves integer-coercible TEXT to an FK owned by the same org 0ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > loadSubmissionFkBySubmissionIdText (Path-to-GA §C.4 helper) > returns null on cross-tenant lookup (submissions row exists but belongs to a different org) 0ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > loadSubmissionFkBySubmissionIdText (Path-to-GA §C.4 helper) > returns null on non-numeric TEXT (does NOT guess at GUID / business-domain codes) 0ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > loadSubmissionFkBySubmissionIdText (Path-to-GA §C.4 helper) > returns null on whitespace / empty TEXT 0ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > loadSubmissionFkBySubmissionIdText (Path-to-GA §C.4 helper) > returns null on missing / non-positive organizationId — defensive tenant gate 0ms
+ ✓ tests/unit/submission-orchestrator-tenant-isolation.test.ts > loadSubmissionFkBySubmissionIdText (Path-to-GA §C.4 helper) > returns null when the submissions row does not exist (the integer is well-formed but unmatched) 0ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted 162ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CTD code from the section brief, naming the entry and how it matched 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CSR alias from the ICH E3 outline, with the basis the outline carries 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a lifecycle document type by id, case-insensitively 0ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > says what it does not index, and never answers from another entry 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > is the only dispatch: the tool delegates and keeps no copy of the rule 9ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > imports the brief renderers and is imported by none of them 1ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — happy path > runs every step to complete|skipped and produces a gateway-ready package 1112ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — m3.refine with useAI=true > swaps the deterministic sections for the AI-refined set and surfaces refinementMeta 74ms
+stderr | tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — validator rejection > fails package.validate and surfaces run.status === "partial" when gatewayReady=false
+[Orchestrator] run failed: Error: package not gateway-ready: 3 structural error(s), 0 regional error(s), 0 sequence error(s); hardenedScore=64
+    at /home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1914:17
+    at runStep (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1345:22)
+    at Module.runOrchestrator (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1867:7)
+    at /home/user/ClinicalSageAI-2-replit/tests/integration/orchestrator-e2e-ind.test.ts:467:21
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — validator rejection > fails package.validate and surfaces run.status === "partial" when gatewayReady=false 470ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — tenant isolation > throws on organizationId === 0 BEFORE any persistence call 16ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — tenant isolation > throws when organizationId is undefined (cast-through) 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > returns 3.2.A.1, 3.2.A.2, 3.2.A.3 8ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > marks 3.2.A.2 as not applicable when the substance is RECORDED as a chemical synthesis 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > names the route itself when one IS recorded 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > does NOT declare 3.2.A.2 not applicable from a row that records no origin either way 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > lists novel excipients in 3.2.A.3 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeRegional > returns US-specific subsections for US region 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeRegional > returns EU-specific subsections for EU region 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeFullModule3 > returns S, P, A, and R sections together 11ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeFullModule3 > injects cross-references for sections that depend on others 22ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > injectAllCrossReferences > does not crash on empty input 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.3 QOS from a full Module 3 composition 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > flags missing inputs in M2.3 gaps 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.4 from nonclinical studies 0ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — awaiting-async resume > first call suspends in awaiting-async; second call with resumeRunId completes 440ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.7 from CSR inputs 249ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > csr-tabulation-builders > builds disposition, demographics, efficacy, AE tables 2ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > csr-tabulation-builders > reports correct subject counts in AE summary 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > flags missing us-regional.xml for US submissions 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > rejects non-4-digit sequence numbers 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > flags package size over FDA 4 GB gateway limit 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > accepts valid EU application number format 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing XML declaration 13ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing DOCTYPE 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing eCTD namespace 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags leaf missing required attributes 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > reports the W3C spelling of xmlns:xlink as DTD_WRONG_XLINK_NS, naming the #FIXED value 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > raises no xlink finding for the value the DTD fixes 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > passes the vendored conformant backbone fixture with zero findings 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > does not read <leaf> inside an XML comment as a leaf 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > fails the vendored non-conformant backbone fixture on every seeded violation 9ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > enforceMd5Checksums > flags malformed MD5 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > enforceMd5Checksums > detects MD5 mismatch when buffers provided 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > auditStudyIdTagging > flags M5.3.5 leaf without study-id 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > auditStudyIdTagging > does not flag M3 leaves (study-id not required) 0ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — awaiting-async resume > a resumed IND run whose validation was skipped is `partial`, not `complete` — the gate was never checked 616ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — awaiting-async resume cross-tenant > rejects when the resuming caller is a different org from the originator 13ms
+ ✓ tests/unit/csr-job-runner.test.ts > enqueueCSRBuildJob > inserts a row with status="queued" and returns jobId 3ms
+ ✓ tests/unit/csr-job-runner.test.ts > runCSRBuildJob — state machine > transitions queued -> drafting -> complete on success 7ms
+ ✓ tests/unit/csr-job-runner.test.ts > runCSRBuildJob — state machine > writes status="failed" with error JSON on a thrown section error 1ms
+ ✓ tests/unit/csr-job-runner.test.ts > runCSRBuildJob — content_hash > produces a 64-char lowercase hex SHA-256 of the content 1ms
+ ✓ tests/unit/csr-job-runner.test.ts > runCSRBuildJob — progress > reaches 100 on successful completion 1ms
+ ✓ tests/unit/csr-job-runner.test.ts > runCSRBuildJob — progress > is 100 (no divide-by-zero) when the filtered work list is empty 2ms
+ ✓ tests/unit/csr-job-runner.test.ts > getCSRBuildJobStatus — cross-tenant isolation > returns null when organizationId does not match 1ms
+ ✓ tests/unit/csr-job-runner.test.ts > getCSRSectionOutputs — cross-tenant isolation > returns only sections for the requested org 1ms
+ ✓ tests/unit/csr-job-runner.test.ts > runCSRBuildJob — regeneration upsert > produces ONE row per (jobId, sectionNumber) on re-draft, never duplicates 12ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — Move-7 region widening (KR) > persists a KR submission run without raising a 23514 check_violation 1051ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > runs end-to-end and produces all step records 1085ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > skips downstream steps when source data is missing 38ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > marks downstream steps stale when an upstream step changes 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > records input hashes for incremental rebuild detection 261ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > returns 202 with { jobId, status: "queued" } when authenticated 126ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > returns 401 when organizationId is missing from req 9ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns the status object when found in the same org 12ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns 404 when getCSRBuildJobStatus returns null 10ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns 400 when :jobId is non-numeric 3ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId/sections > returns the section array 14ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs/:jobId/cancel > transitions status to "cancelled" via the org-scoped Drizzle update 6ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs/:jobId/cancel > returns 409 when status is already "complete" 11ms
+stdout | server/services/__tests__/csr-builder-e3-outline.test.ts
+{
+  "timestamp": "2026-10-05T05:13:34.280Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:13:34.285Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/__tests__/csr-builder-e3-outline.test.ts
+{
+  "timestamp": "2026-10-05T05:13:34.286Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/__tests__/csr-builder-e3-outline.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/__tests__/csr-builder-e3-outline.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/__tests__/csr-builder-e3-outline.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > ICH_E3_STRUCTURE follows the ICH E3 numbered outline > carries the sixteen top-level sections, in order 13ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > ICH_E3_STRUCTURE follows the ICH E3 numbered outline > section 9 carries exactly the subsections E3 numbers under it 1ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > ICH_E3_STRUCTURE follows the ICH E3 numbered outline > section 10 carries exactly the subsections E3 numbers under it 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > ICH_E3_STRUCTURE follows the ICH E3 numbered outline > section 11 carries exactly the subsections E3 numbers under it 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > ICH_E3_STRUCTURE follows the ICH E3 numbered outline > section 12 carries exactly the subsections E3 numbers under it 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > ICH_E3_STRUCTURE follows the ICH E3 numbered outline > names the two sections a CSR reviewer opens when the analysis differs from the plan 1ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > ICH_E3_STRUCTURE follows the ICH E3 numbered outline > marks §1–§13 required — E3 leaves no discretion on the body of the report 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > ICH_E3_STRUCTURE follows the ICH E3 numbered outline > every child number extends its parent, and no number repeats anywhere in the tree 1ms
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-05T05:13:35.486Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:13:35.487Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-05T05:13:35.488Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB section registry (ICH E6(R2) §7) > exposes the full ICH E6(R2) §7 section set in order 3ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB section registry (ICH E6(R2) §7) > covers every IB content domain via at least one section 0ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB section registry (ICH E6(R2) §7) > returns a deep copy from getIBStructure so the registry is immutable 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB section registry (ICH E6(R2) §7) > flattens parents and their children into a single ordered list 0ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > input availability resolution > flags every domain absent for a bare product-only request 0ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > input availability resolution > detects each domain from its respective inputs 0ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > gap detection and section verdict > reports no gaps and renders boilerplate sections regardless of inputs 0ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > gap detection and section verdict > marks a single-domain section MISSING when its input is absent 0ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > gap detection and section verdict > marks a single-domain section RENDERED when its input is present 0ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > gap detection and section verdict > marks a multi-domain section PARTIAL when only some inputs are present 0ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > buildInvestigatorBrochure (deterministic with mocked AI) > produces a result for every section, with verdicts driven by inputs 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > buildInvestigatorBrochure (deterministic with mocked AI) > uses deterministic templates (and embeds the product name) when templateOnly is set 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > buildInvestigatorBrochure (deterministic with mocked AI) > renders nonclinical/clinical/safety sections once their inputs are supplied 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > buildInvestigatorBrochure (deterministic with mocked AI) > drives completeness down when only some domains are present 0ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB template mode does not report un-drafted sections complete > §1 Summary is NOT rendered in template mode — it still carries the "to be drafted" placeholder 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB template mode does not report un-drafted sections complete > §5.3 Marketing Experience does not assert "not currently marketed" when unknown 25ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB template mode does not report un-drafted sections complete > a boilerplate section with an optional [Sponsor] placeholder still renders 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > carries exactly the headings E3 numbers, in report order 15ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading sits under a heading that exists 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.1 has its 12 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.3 has its 2 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §14.3 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §11.4.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.2 has its 4 numbered headings 19ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.3.1 has its 3 numbered headings 5ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.4 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.5 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading cites its own E3 number; every checked source names its URL and date 5ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > a heading that names data sources says they are practice, not a requirement 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > E3 §16.2.7 and §12.2.4 name both the preferred and the investigator’s term; §16.3.1 names 314.50(f)(2) 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > resolves a number however it is written, and answers nothing for one E3 does not have 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > csr-builder's ICH_E3_STRUCTURE uses E3's numbers and headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR scaffold behind get_csr_template carries every E3 heading 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR template injected into AnA's prompt covers §1–§16 with E3's headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the medical-writing base outlines the CSR with E3's sixteen headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the stream's 5.3.5 playbook lists E3's sixteen headings 13ms
+stdout | server/services/__tests__/csr-builder-completeness.test.ts
+{
+  "timestamp": "2026-10-05T05:13:36.568Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:13:36.569Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/__tests__/csr-builder-completeness.test.ts
+{
+  "timestamp": "2026-10-05T05:13:36.570Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/__tests__/csr-builder-completeness.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/__tests__/csr-builder-completeness.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/__tests__/csr-builder-completeness.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > detects the documented placeholder tokens 2ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > detects a general bracketed placeholder even outside the known token list 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > returns false for clean prose with no bracketed content 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > returns false for empty/undefined/null content 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > does not flag a bare numeric-only bracket (e.g. a citation marker) 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > generateCSRSections — section status > marks a section with residual placeholders "needs_data", not "drafted" 11ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > generateCSRSections — section status > marks a section with fully-resolved content "drafted" 1ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > generateCSRSections — section status > marks a section with no content "empty" (unchanged behavior) 5ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > launchCSRBuild — job status/progress (fail closed) > does NOT report complete/100 when generated sections still carry data placeholders 3ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > launchCSRBuild — job status/progress (fail closed) > reports complete/100 when generated sections have no residual placeholders 3ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > launchCSRBuild — job status/progress (fail closed) > reports partial progress (0 < progress < 100) when only some targeted sections are data-complete 1ms
+stderr | server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job FAILED (not complete) when a section still has an unresolved placeholder
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 13; marking failed instead of complete
+
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job FAILED (not complete) when a section still has an unresolved placeholder 6ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job COMPLETE when the section is placeholder-free 1ms
+stdout | server/services/__tests__/csr-builder-structure.test.ts
+{
+  "timestamp": "2026-10-05T05:13:39.006Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:13:39.008Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/__tests__/csr-builder-structure.test.ts
+{
+  "timestamp": "2026-10-05T05:13:39.008Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/__tests__/csr-builder-structure.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/__tests__/csr-builder-structure.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/__tests__/csr-builder-structure.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/__tests__/csr-builder-e3-brief.test.ts
+{
+  "timestamp": "2026-10-05T05:13:38.990Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:13:38.991Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/__tests__/csr-builder-e3-brief.test.ts
+{
+  "timestamp": "2026-10-05T05:13:38.991Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/__tests__/csr-builder-e3-brief.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/__tests__/csr-builder-e3-brief.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/__tests__/csr-builder-e3-brief.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > draftCSRSectionWithProvenance (job runner) > §12 is drafted against the E3 record, not "per ICH E3 guidelines" 13ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > draftCSRSectionWithProvenance (job runner) > §2.3, the builder's own synopsis child, is briefed with E3 §2 and told so 1ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > draftCSRSectionWithProvenance (job runner) > §8.1 is briefed with E3 §8 0ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > draftCSRSection → generateSectionWithAI (on-demand route) > §12 is drafted against the E3 record, not "per ICH E3 guidelines" 5ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > draftCSRSection → generateSectionWithAI (on-demand route) > §2.3, the builder's own synopsis child, is briefed with E3 §2 and told so 0ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > draftCSRSection → generateSectionWithAI (on-demand route) > §8.1 is briefed with E3 §8 0ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > e3RequirementsFor > is the resolver's answer for an E3 heading — one source, not a second rendering 1ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > e3RequirementsFor > falls back to the parent heading for the builder's §2.x and §8.x 0ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > e3RequirementsFor > every section the builder drafts resolves to an E3 brief 3ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > e3RequirementsFor > a number E3 does not have at any level resolves to null 0ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > a section with no E3 heading at any level > is drafted with an honest "not indexed" line, never a recall instruction 0ms
+ ✓ server/services/__tests__/csr-builder-structure.test.ts > getICHE3Structure > returns a non-empty, well-formed ICH E3 section tree 2ms
+ ✓ server/services/__tests__/csr-builder-structure.test.ts > getICHE3Structure > has unique top-level section numbers 0ms
+ ✓ server/services/__tests__/csr-builder-structure.test.ts > getICHE3Structure > covers the ICH E3 backbone (efficacy, safety, study population, references/appendices) 0ms
+ ✓ server/services/__tests__/csr-builder-structure.test.ts > getICHE3Structure > is deterministic (same structure each call) 0ms
+
+ Test Files  15 passed (15)
+      Tests  311 passed (311)
+   Start at  05:13:12
+   Duration  26.84s (transform 13.85s, setup 919ms, import 51.58s, tests 17.29s, environment 1ms)
+

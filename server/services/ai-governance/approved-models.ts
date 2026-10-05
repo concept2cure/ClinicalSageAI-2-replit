@@ -421,6 +421,41 @@ export function isServedModelApprovedForHighRisk(
   return entry !== undefined && isQualifiedForHighRiskDrafting(entry, isProductionEnv(env));
 }
 
+/** A model that served a turn, with whether RULE 2 lets its text stand as governed content here. */
+export interface QualifiedServedModel {
+  provider: string | null;
+  model: string | null;
+  /** {@link isServedModelApprovedForHighRisk}, at the time this was read. */
+  qualified: boolean;
+  /** Its entry's `approvedForHighRisk`; null when the registry has no entry for it. */
+  approvedForHighRisk: boolean | null;
+  /** Its PQ status in this registry; null when the registry has no entry for it. */
+  pq: PqStatus['status'] | null;
+}
+
+/**
+ * Each model that served a turn (ana/turn-record-models.ts servedModelsOf), with RULE 2's
+ * verdict for it and the two facts it rests on, so a reader can tell a model
+ * not approved for regulatory drafting from an approved one whose PQ has not
+ * passed, and a PQ-pending model admitted outside production from one with a
+ * passed PQ (AnA reasoning round 10).
+ */
+export function qualifyServedModels(
+  served: ReadonlyArray<{ provider: string | null; model: string | null }>,
+  env: NodeJS.ProcessEnv = process.env,
+): QualifiedServedModel[] {
+  return served.map((s) => {
+    const entry = approvedEntryFor(s);
+    return {
+      provider: s.provider,
+      model: s.model,
+      qualified: isServedModelApprovedForHighRisk(s, env),
+      approvedForHighRisk: entry ? entry.approvedForHighRisk : null,
+      pq: entry ? entry.pq.status : null,
+    };
+  });
+}
+
 /**
  * The registry entry for the model that served a request, identified the way a
  * gateway response reports it: provider plus the wire model (the pinned

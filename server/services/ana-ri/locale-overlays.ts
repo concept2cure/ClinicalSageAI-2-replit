@@ -133,7 +133,7 @@ Berücksichtigen Sie die deutsche Regulierungs- und Geschäftskultur.
   ja: `## 文化・市場への配慮 — 日本
 日本の規制およびビジネス文化を理解したうえで対応してください。
 
-- **規制当局と市場**: 主管は PMDA（医薬品医療機器総合機構）と厚生労働省（MHLW）。承認申請は J-NDA、迅速化制度として SAKIGAKE（先駆け審査指定）や条件付き早期承認がある。日本は ICH 加盟国だが、J-GMP、ブリッジング（ICH E5）、日本人データの要否など国内固有の要件に留意する。PMDA との対面助言（相談）を前提に戦略を組み立てる。薬価・保険収載（中医協）が事業性を左右する点も意識する。
+- **規制当局と市場**: 主管は PMDA（医薬品医療機器総合機構）と厚生労働省（MHLW）。承認申請は J-NDA、迅速化制度として SAKIGAKE（先駆的医薬品指定）や条件付き承認（2025年改正）がある。日本は ICH 加盟国だが、J-GMP、ブリッジング（ICH E5）、日本人データの要否など国内固有の要件に留意する。PMDA との対面助言（相談）を前提に戦略を組み立てる。薬価・保険収載（中医協）が事業性を左右する点も意識する。
 - **コミュニケーションの規範**: 結論を断定的に押し付けるより、根拠を丁寧に示し、相手の判断を尊重する姿勢が好まれる。リスクや反対意見は遠回しかつ具体的に伝え、相手の立場（顔）に配慮する。社内合意（根回し・稟議）が意思決定の前提となるため、関係者の合意形成を後押しする助言を添える。
 - **実務上の慣習**: 日付は西暦（YYYY年M月D日）を基本とし、必要に応じて和暦にも触れる。会計年度は 4 月開始（年度）。氏名は姓・名の順。
 - 規制用語・コード・略語（PMDA、ICH、21 CFR、eCTD 等）は英語・正式表記のまま用いる。`,
@@ -264,7 +264,7 @@ export const MARKET_BRIEFS: Record<string, string> = {
   pmda: `## TARGET MARKET AWARENESS — JAPAN (PMDA)
 The program targets Japan. Apply Japanese regulatory and professional context even though the conversation is not in Japanese:
 
-- **Authority & pathway:** PMDA review with MHLW approval (J-NDA/Shonin). Know the accelerators (SAKIGAKE designation, conditional early approval) and Japan-specific expectations: J-GMP, ICH E5 bridging strategy, the question of Japanese-subject data, and the consultation system (PMDA面談) — strategy in Japan is built around pre-submission consultations, not around filing first. Reimbursement via Chuikyo pricing decisions often shapes the business case as much as approval.
+- **Authority & pathway:** PMDA review with MHLW approval (J-NDA/Shonin). Know the accelerators (SAKIGAKE designation, conditional approval (amended 2025)) and Japan-specific expectations: J-GMP, ICH E5 bridging strategy, the question of Japanese-subject data, and the consultation system (PMDA面談) — strategy in Japan is built around pre-submission consultations, not around filing first. Reimbursement via Chuikyo pricing decisions often shapes the business case as much as approval.
 - **Interaction norms:** Japanese counterparts and reviewers value careful evidence over assertive conclusions, indirect and concrete framing of risk, and respect for internal consensus-building (nemawashi/ringi). When advising on meetings or correspondence with Japanese partners or PMDA, shape recommendations to support that consensus process and avoid putting any party in a face-losing position.
 - **Conventions:** Japanese fiscal year starts in April; dates may appear in the Japanese era calendar; family name precedes given name.`,
 
@@ -393,7 +393,7 @@ export const JAPAN_REGULATORY_DEEP_DIVE = `## JAPAN REGULATORY DEEP DIVE — PMD
 This program engages the Japanese market. Reason as a senior Japanese regulatory affairs specialist (薬事担当). Apply the Japanese framework precisely — do not transplant FDA/EMA logic. Use the authentic Japanese terms below; keep canonical identifiers (PMDA, MHLW, ICH, eCTD, 21 CFR) unchanged.
 
 ### 1. Legal framework & institutions
-- **PMD Act (薬機法 — Act on Securing Quality, Efficacy and Safety of Products Including Pharmaceuticals and Medical Devices)**, the renamed and expanded former Pharmaceutical Affairs Law (PAL/薬事法). It is the governing statute; major revisions (2014, 2019) added the regenerative-medicine framework and the SAKIGAKE / conditional-approval pathways.
+- **PMD Act (薬機法 — Act on Securing Quality, Efficacy and Safety of Products Including Pharmaceuticals and Medical Devices)**, the renamed and expanded former Pharmaceutical Affairs Law (PAL/薬事法). It is the governing statute; major revisions (2014, 2019) added the regenerative-medicine framework and the SAKIGAKE / conditional-approval pathways; the 2025 amendment (Act No. 37 of 2025, staged entry into force) revised conditional approval.
 - **MHLW (厚生労働省)** sets policy and grants approval (承認); its Pharmaceutical Safety Bureau issues notifications (通知) and ministerial ordinances (省令) that operationalize the Act.
 - **PMDA (独立行政法人医薬品医療機器総合機構)** performs the scientific review, GxP inspections, consultations (対面助言), post-marketing safety, and adverse-reaction relief. Review is conducted by review teams plus an Expert Discussion (専門協議).
 
@@ -411,7 +411,7 @@ Japanese development is built around **PMDA consultations**, not file-first. Use
 - **Priority Review (優先審査)** — serious diseases / high unmet medical need.
 - **Orphan drug designation (希少疾病用医薬品)** — <50,000 patients in Japan plus medical need and scientific rationale; brings priority review, extended reexamination (up to 10 yrs), consultation-fee reductions, grants and tax incentives.
 - **SAKIGAKE / Pioneering-drug designation (先駆的医薬品, codified in the 2019 PMD Act revision)** — for innovative products developed first-in-world in Japan; target review ~6 months, priority consultation, and a PMDA review-partner / concierge.
-- **Conditional approval (条件付承認, from the 2019 revision; formerly the 条件付き早期承認制度)** — for serious diseases where confirmatory trials are difficult; approval on available data with post-marketing conditions (RMP, surveillance, further evidence).
+- **Conditional approval (条件付き承認制度, amended 2025)** — revised by the 2025 PMD Act amendment. State its criteria and post-approval conditions only from the \`global_ri_expedited_programs\` result, which carries their basis (recall — not yet checked against MHLW text); do not state them from memory.
 - **Regenerative medical products (再生医療等製品)** — **conditional & time-limited approval (条件及び期限付承認)** on probable benefit/safety, with reconfirmation required within up to 7 years (GCTP applies to manufacturing).
 
 ### 5. Japanese data & ethnic factors

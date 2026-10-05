@@ -1,0 +1,594 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' calls sessionBootstrapBlockFor 2ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' calls sessionBootstrapBlockFor 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' injects the block it gets back 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' injects the block it gets back 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > neither path carries its own copy of the gate 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' assembles its tools through governedToolsetFor 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' assembles its tools through governedToolsetFor 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' does not assemble the raw tool surface itself 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' does not assemble the raw tool surface itself 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > every composer of the AnA tool surface goes through the helper 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the realtime turn runs in the tenant scope its socket was authenticated for 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the helper applies the deny-list and says why it does not apply the allowlist 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' gives IND/NDA/BLA chats the one submission context block 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' gives IND/NDA/BLA chats the one submission context block 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > neither path carries its own copy of the submission context 2ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the helper still owns the gate, the kill-switch and the failure path 0ms
+stderr | server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > GET: when the loader itself throws, the text stays in the log and the client gets the envelope
+{
+  "timestamp": "2026-10-05T03:54:06.571Z",
+  "level": "error",
+  "message": "[ana-tool-policy] loading the tool policy failed",
+  "context": {
+    "err": "relation \"organizations\" does not exist",
+    "correlationId": "req-p1-17-2",
+    "code": "42P01"
+  }
+}
+
+stderr | server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > PUT: the relation name stays in the log, the client gets the envelope
+{
+  "timestamp": "2026-10-05T03:54:06.578Z",
+  "level": "error",
+  "message": "[ana-tool-policy] updating the tool policy failed",
+  "context": {
+    "err": "relation \"organizations\" does not exist",
+    "correlationId": "req-p1-17-2",
+    "code": "42P01"
+  }
+}
+
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns 403 when no organization context 279ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns 403 for non-admin 5ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns empty policy when none configured 4ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns existing policy when configured 3ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects allow as non-array 10ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects deny with non-string entries 13ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects unknown keys (typo defense) 3ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > persists through the one settings writer, recorded as ana_tool_policy.update 4ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > keeps every other setting as the writer read it under its lock (R7) 5ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > never writes organizations.settings itself 3ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > round-trips: PUT then GET returns the same shape 4ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > GET: a failed settings read is fail-soft — 200 and an empty policy, no error text 8ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > GET: when the loader itself throws, the text stays in the log and the client gets the envelope 7ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > PUT: the relation name stays in the log, the client gets the envelope 6ms
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts
+{
+  "timestamp": "2026-10-05T03:54:07.776Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/deep-investigation.test.ts
+{
+  "timestamp": "2026-10-05T03:54:07.991Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:54:07.993Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/deep-investigation.test.ts
+{
+  "timestamp": "2026-10-05T03:54:07.994Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/deep-investigation.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/deep-investigation.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/deep-investigation.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts
+{
+  "timestamp": "2026-10-05T03:54:10.336Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:54:10.342Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts
+{
+  "timestamp": "2026-10-05T03:54:10.342Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts
+{
+  "timestamp": "2026-10-05T03:54:13.732Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > isInvestigationStale > marks a running row with an old heartbeat as stalled 2ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > isInvestigationStale > a recent heartbeat means alive 0ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > isInvestigationStale > a queued row nothing ever picked up goes stale too 0ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > isInvestigationStale > terminal states are never stale 0ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > isInvestigationStale > stale window is minutes, not seconds 0ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > describeInvestigationStatus > reports a stalled run honestly instead of eternally running 2ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > describeInvestigationStatus > passes live statuses through 0ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > tool definitions > registers both investigation tools 0ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > tool definitions > start requires a question and steers away from in-turn answers 1ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > tool definitions > check works with or without an id and promises honest stalled reporting 4ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > tool definitions > caps concurrency at a small per-tenant number 0ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > start handler validation (no DB touched) > rejects a missing/too-short question 13ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > start handler validation (no DB touched) > honors the kill-switch 0ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > transparency labels > labels both tools calmly 0ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > provisioning migration — idempotency guard > creates the table and indexes idempotently 0ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > provisioning migration — idempotency guard > models the full lifecycle the runner writes 0ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > provisioning migration — idempotency guard > is wired into the standard apply set 1ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > the staleness window has ONE definition > states no staleness interval as a SQL literal 0ms
+ ✓ server/services/ana/__tests__/deep-investigation.test.ts > the staleness window has ONE definition > derives the window from the shared constant instead 0ms
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a member removed from the organisation is told why and disconnected within 60 s
+{
+  "timestamp": "2026-10-05T03:55:13.757Z",
+  "level": "warn",
+  "message": "[socket-session-recheck] [ana-realtime] Ending socket s-ana (org 7, user 42): membership_revoked",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a membership that can no longer be read (fail closed) is told why and disconnected within 60 s
+{
+  "timestamp": "2026-10-05T03:55:13.790Z",
+  "level": "warn",
+  "message": "[socket-session-recheck] [ana-realtime] Ending socket s-ana (org 7, user 42): membership_revoked",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a session that has ended (signed out, password changed, account out of use) is told why and disconnected within 60 s
+{
+  "timestamp": "2026-10-05T03:55:13.793Z",
+  "level": "warn",
+  "message": "[socket-session-recheck] [ana-realtime] Ending socket s-ana (org 7, user 42): session_ended",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > an organisation that stops being active is told why and disconnected within 60 s
+{
+  "timestamp": "2026-10-05T03:55:13.796Z",
+  "level": "warn",
+  "message": "[socket-session-recheck] [ana-realtime] Ending socket s-ana (org 7, user 42): tenant_inactive",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > an ending session also ends the AnA turn in flight
+{
+  "timestamp": "2026-10-05T03:55:13.814Z",
+  "level": "warn",
+  "message": "[socket-session-recheck] [ana-realtime] Ending socket s-ana (org 7, user 42): membership_revoked",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a member removed from the organisation is told why and disconnected within 60 s 34ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a membership that can no longer be read (fail closed) is told why and disconnected within 60 s 3ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a session that has ended (signed out, password changed, account out of use) is told why and disconnected within 60 s 3ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > an organisation that stops being active is told why and disconnected within 60 s 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > re-verifies the handshake token itself, without counting as activity 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a member in good standing is left alone 4ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > the timer stops when the socket disconnects 9ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > an ending session also ends the AnA turn in flight 2ms
+stdout | server/services/ana/__tests__/ana-realtime-auth.test.ts
+{
+  "timestamp": "2026-10-05T03:54:15.687Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:54:15.688Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+{
+  "timestamp": "2026-10-05T03:54:15.689Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana-ri/__tests__/command-rbac.test.ts
+{
+  "timestamp": "2026-10-05T03:54:15.758Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:54:15.758Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/command-rbac.test.ts
+{
+  "timestamp": "2026-10-05T03:54:15.759Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/command-rbac.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/command-rbac.test.ts
+{
+  "timestamp": "2026-10-05T03:54:16.137Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+{
+  "timestamp": "2026-10-05T03:54:18.061Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_challenge token (not an access token)
+{
+  "timestamp": "2026-10-05T03:54:18.091Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Rejected non-access token (mfa_challenge) for undefined",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_partial token (not an access token)
+{
+  "timestamp": "2026-10-05T03:54:18.100Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Rejected non-access token (mfa_partial) for undefined",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a refresh token (not an access token)
+{
+  "timestamp": "2026-10-05T03:54:18.101Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Rejected non-access token (refresh) for undefined",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token that declares no class at all
+{
+  "timestamp": "2026-10-05T03:54:18.102Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Rejected non-access token (missing_token_type) for undefined",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers revoked
+{
+  "timestamp": "2026-10-05T03:54:18.104Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Refused socket undefined — organization membership revoked",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers indeterminate
+{
+  "timestamp": "2026-10-05T03:54:18.105Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Refused socket undefined — organization membership indeterminate",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the tenant is not active
+{
+  "timestamp": "2026-10-05T03:54:18.106Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Refused socket undefined for org 7 — tenant not active",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > admits an access token of an active member and scopes the socket to the token tenant 19ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_challenge token (not an access token) 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_partial token (not an access token) 8ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a refresh token (not an access token) 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token that declares no class at all 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token offered only in the query string 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers revoked 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers indeterminate 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the tenant is not active 1ms
+stdout | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records the turn and returns its status
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+[Claude Agent] Tool: lookup_regulation [ 'cfr' ]
+
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > files the tool calls, an error result as a failed step, the answer, and what the door cannot report 53ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > a turn with no organization is not recorded, and says why 1ms
+stdout | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn under the tenant the auth middleware attaches, not only req.organizationId
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+[Claude Agent] Tool: lookup_regulation [ 'cfr' ]
+
+stdout | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn on the request’s own connection, never the shared pool
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+[Claude Agent] Tool: lookup_regulation [ 'cfr' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn on the request’s own connection, never the shared pool
+[turn-record] could not write the turn record: Request-scoped database context is required
+
+stdout | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn
+[Claude Intelligence] Agent error: gateway down
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn
+{
+  "timestamp": "2026-10-05T03:54:18.535Z",
+  "level": "error",
+  "message": "[ana-intelligence] running the agent failed",
+  "context": {
+    "err": "gateway down",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records an answered turn and emits its status with ana:done
+{
+  "timestamp": "2026-10-05T03:54:18.597Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records the turn and returns its status 49ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn under the tenant the auth middleware attaches, not only req.organizationId 18ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn on the request’s own connection, never the shared pool 8ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn 12ms
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a stopped turn when the signal was aborted
+{
+  "timestamp": "2026-10-05T03:54:18.612Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a failed turn and emits its status with ana:error
+{
+  "timestamp": "2026-10-05T03:54:18.623Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records an answered turn and emits its status with ana:done 74ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a stopped turn when the signal was aborted 11ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a failed turn and emits its status with ana:error 18ms
+stdout | server/services/ana-ri/__tests__/command-rbac.test.ts
+Loaded 0 academic documents
+
+stdout | server/services/ana/__tests__/agent-activity.test.ts
+{
+  "timestamp": "2026-10-05T03:54:19.694Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:54:19.695Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/agent-activity.test.ts
+{
+  "timestamp": "2026-10-05T03:54:19.696Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/agent-activity.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/agent-activity.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/agent-activity.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana/__tests__/ana-realtime.test.ts
+{
+  "timestamp": "2026-10-05T03:54:19.760Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:54:19.761Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-realtime.test.ts
+{
+  "timestamp": "2026-10-05T03:54:19.762Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/ana-realtime.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/ana-realtime.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/agent-activity.test.ts > summarizeAgentActivity > counts a live run as active (recent heartbeat) 2ms
+ ✓ server/services/ana/__tests__/agent-activity.test.ts > summarizeAgentActivity > counts an orphaned run as stalled, not active 1ms
+ ✓ server/services/ana/__tests__/agent-activity.test.ts > summarizeAgentActivity > counts a just-finished run as recently completed 0ms
+ ✓ server/services/ana/__tests__/agent-activity.test.ts > summarizeAgentActivity > does not count an old completed run as recent 0ms
+ ✓ server/services/ana/__tests__/agent-activity.test.ts > summarizeAgentActivity > truncates a long question and carries honest status per item 0ms
+ ✓ server/services/ana/__tests__/agent-activity.test.ts > buildAgentActivityPromptBlock > says nothing when there is no active or recent work (no greeting clutter) 0ms
+ ✓ server/services/ana/__tests__/agent-activity.test.ts > buildAgentActivityPromptBlock > announces active work and points at check_deep_investigation 0ms
+ ✓ server/services/ana/__tests__/agent-activity.test.ts > buildAgentActivityPromptBlock > announces a freshly-finished memo 0ms
+ ✓ server/services/ana/__tests__/agent-activity.test.ts > buildAgentActivityPromptBlock > honors the tone floor (no exclamation marks, no emoji) 4ms
+stderr | server/services/ana/__tests__/ana-realtime.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ana-realtime.test.ts
+{
+  "timestamp": "2026-10-05T03:54:21.212Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > emits thinking then done for a completed turn 2ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > barges in: a new message cancels the in-flight turn and suppresses its output 1ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > cancel interrupts the current turn and suppresses its done 1ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > emits ana:error when the runner throws 0ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > dispose aborts silently (no client to notify) 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed by construction > DENIES a dispatchable-looking command that carries no authorization metadata 2ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed by construction > allows a read-only command without consulting RBAC 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a non-MDX write that the tenant deny-list names 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a READ the tenant deny-list names (deny outranks the degraded-read path) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a command absent from a non-empty allow-list (whitelist actually constrains) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > ALLOWS a command that is on the allow-list, and when no policy is set 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation when the caller lacks the required role (viewer) 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > ALLOWS a mutation when the caller holds the required role 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > demands the manager tier for Part 11 record-altering commands 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES when the RBAC lookup throws (fail closed, never fail open) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with missing userId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with missing organizationId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with non-numeric userId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with zero organizationId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES a viewer (RBAC_DENIED), naming the manager tier 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES a member (RBAC_DENIED), naming the manager tier 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > ADMITS a manager 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > ADMITS a admin 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES when the role lookup throws (fail closed) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES without a provable identity, before any role lookup 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > a self-asserted ctx.userRole does not stand in for the RBAC lookup 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > stays a read: the tier is checked while governance is unresolved, and a manager is still admitted 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > leaves untiered reads open to every member without a role lookup 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > BLOCKS every mutation when tenant governance config could not be resolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > BLOCKS a Part 11 governed mutation when governance config is unresolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > keeps READ-ONLY commands available while governance is unresolved (documented degraded mode) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > lets the central gate through so the handler can apply the self-service rule 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > still demands provable identity for the GDPR commands 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > blocks the erase mutation when governance is unresolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is true for manager+ in the organization 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is true for a dedicated privacy role that has no hierarchy level 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false for an ordinary member and never trusts ctx.userRole 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false when the role lookup throws 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false without a provable identity 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > classifies EVERY dispatchable command 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > has no authorization entry for a command that is not dispatchable 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > gives every mutation-capable command a role tier or an explicit handler carve-out 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > puts a role tier on a read only where the read returns the audit trail (audit.explain, manager) 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > marks every dispatchable Part 11 governed command as a manager-tier write 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > mirrors the Part 11 e-signature subset exactly 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > never marks a Part 11 governed command as read-only 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > refuses a hidden-app command in production, read or write, whatever the role 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > leaves in-scope commands to the normal checks 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > with launch scope off (a development server), a hidden-app command reaches the normal checks 0ms
+
+ Test Files  9 passed (9)
+      Tests  133 passed (133)
+   Start at  03:54:05
+   Duration  15.64s (transform 17.16s, setup 419ms, import 38.61s, tests 5.03s, environment 1ms)
+

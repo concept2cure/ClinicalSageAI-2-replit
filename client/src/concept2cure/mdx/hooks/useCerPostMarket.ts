@@ -16,15 +16,12 @@
 
 import { useCallback, useState } from 'react';
 import { serverMessage } from '@/lib/queryClient';
+import type { PostMarketDocumentType } from '@shared/schema/gspr-postmarket';
+import type { RegulatoryBasis } from '@shared/regulatory/regulatory-basis';
 import { buildAuthHeaders, useFetchJson } from './useFetchJson';
 
-export type PostMarketDocType =
-  | 'pms_plan'
-  | 'pms_report'
-  | 'pmcf_plan'
-  | 'pmcf_evaluation'
-  | 'psur'
-  | 'sscp';
+/** The server's document-type vocabulary (shared/schema/gspr-postmarket.ts POST_MARKET_DOCUMENT_TYPES). */
+export type PostMarketDocType = PostMarketDocumentType;
 
 export const POST_MARKET_DOC_LABELS: Record<PostMarketDocType, string> = {
   pms_plan: 'PMS plan',
@@ -33,11 +30,17 @@ export const POST_MARKET_DOC_LABELS: Record<PostMarketDocType, string> = {
   pmcf_evaluation: 'PMCF evaluation report',
   psur: 'PSUR',
   sscp: 'SSCP',
+  ssp: 'SSP',
+  pmpf_plan: 'PMPF plan',
+  pmpf_evaluation: 'PMPF evaluation report',
 };
 
 export interface PostMarketDocTypeStatus {
   documentType: PostMarketDocType;
+  /** true for 'required' and 'required-or-justified'. */
   required: boolean;
+  /** 'undetermined' = a fact the rule needs was not stated, or the class is not recognised. */
+  obligation: 'required' | 'required-or-justified' | 'not-required' | 'undetermined';
   present: boolean;
   status: 'missing' | 'draft' | 'under_review' | 'approved' | 'superseded' | 'withdrawn';
   latestVersion?: number;
@@ -45,16 +48,28 @@ export interface PostMarketDocTypeStatus {
   gatePasses?: boolean;
   criticalFindings?: number;
   citation: string;
+  basis: RegulatoryBasis[];
+  cadence?: string;
+  recipient?: string;
+  note?: string;
 }
 
 export interface PostMarketStatusReport {
   programId: string;
   deviceClass: string | null;
   regulation: 'MDR' | 'IVDR';
+  /** 'class_unrecognised' = the server could not tell what the device owes. */
+  status: 'assessed' | 'class_unrecognised';
+  normalisedClass: string | null;
+  classProblem?: string;
+  implantable: boolean | null;
+  customMade: boolean | null;
+  assumptions: string[];
   documents: PostMarketDocTypeStatus[];
   requiredTotal: number;
   requiredPresent: number;
   requiredApprovedCount: number;
+  undeterminedTotal: number;
   allRequiredApproved: boolean;
   generatedAt: string;
 }
@@ -66,20 +81,40 @@ export interface UseCerPostMarketStatusResult {
   refresh: () => void;
 }
 
+/** Device facts the obligations depend on. null/undefined = not stated; never sent as false. */
+export interface PostMarketDeviceFacts {
+  implantable?: boolean | null;
+  customMade?: boolean | null;
+}
+
+/** The documentation-status query string (pinned by __tests__/useCerPostMarket.query.test.ts). */
+export function postMarketStatusQuery(
+  deviceClass: string | null,
+  regulation: 'MDR' | 'IVDR',
+  facts: PostMarketDeviceFacts = {},
+): string {
+  const params = new URLSearchParams({ regulation });
+  if (deviceClass) params.set('deviceClass', deviceClass);
+  if (typeof facts.implantable === 'boolean') params.set('implantable', String(facts.implantable));
+  if (typeof facts.customMade === 'boolean') params.set('customMade', String(facts.customMade));
+  return params.toString();
+}
+
 /**
- * Fetch the per-type documentation status. deviceClass sharpens which types
- * count as required (e.g. PSUR for IIa+, SSCP for III); omitting it keeps the
- * server's conservative default rather than inventing a class.
+ * Fetch the per-type documentation status. The server decides what the device
+ * owes from the regulation, the class and the stated facts. Without a class it
+ * reports 'class_unrecognised' rather than inventing one; without `implantable`
+ * the SSCP of a non-Class-III device stays 'undetermined' rather than assumed.
  */
 export function useCerPostMarketStatus(
   programId: string | null,
   deviceClass: string | null,
   regulation: 'MDR' | 'IVDR' = 'MDR',
+  facts: PostMarketDeviceFacts = {},
 ): UseCerPostMarketStatusResult {
-  const params = new URLSearchParams({ regulation });
-  if (deviceClass) params.set('deviceClass', deviceClass);
+  const query = postMarketStatusQuery(deviceClass, regulation, facts);
   const url = programId
-    ? `/api/post-market/programs/${encodeURIComponent(programId)}/documentation-status?${params.toString()}`
+    ? `/api/post-market/programs/${encodeURIComponent(programId)}/documentation-status?${query}`
     : null;
   const { data, loading, error, refresh } = useFetchJson<PostMarketStatusReport>(url);
   return { report: data ?? null, loading, error, refresh };

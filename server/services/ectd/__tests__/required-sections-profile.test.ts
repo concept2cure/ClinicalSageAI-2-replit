@@ -116,14 +116,12 @@ describe('required-sections — one profile, reachable outside the validator', (
     expect(profile('JNDA')!.has('3.2.A'), 'every small-molecule J-NDA told m3.2.A is missing').toBe(false);
   });
 
-  /* KNOWN DEFECT, pinned so the fix flips it. EMA's eCTD guidance: no table of
-     contents is required in eCTD, the XML backbone acts as one (regulator-text
-     via search, g-required-sections-home-facts.md row 8). The EU region profile
-     (server/services/regional-ctd-templates.ts) still marks EU 1.1
-     Comprehensive Table of Contents required, and the MAA profile reads Module 1
-     from there rather than keeping a second copy. When the region profile is
-     corrected, this starts passing and it.fails turns red: change it to it(). */
-  it.fails('does not demand an EU 1.1 table of contents of an eCTD MAA (known defect: EU region profile)', () => {
+  /* EMA's eCTD guidance: no table of contents is required in eCTD, the XML
+     backbone acts as one (regulator-text via search,
+     g-required-sections-home-facts.md row 8). The MAA profile reads Module 1
+     from the shared record (shared/regulatory/regional-module1.ts via
+     server/services/regional-ctd-templates.ts), where EU 1.1 is notInEctd. */
+  it('does not demand an EU 1.1 table of contents of an eCTD MAA', () => {
     expect(profile('MAA', 'eu')!.has('1.1')).toBe(false);
   });
 

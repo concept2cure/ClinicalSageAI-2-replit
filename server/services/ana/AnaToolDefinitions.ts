@@ -16,6 +16,7 @@ import { createScopedLogger } from '../../utils/logger';
 // them exactly as before.
 import {
   CONVENE_DRAFTING_COUNCIL,
+  RUN_AGENT,
   GET_CLIENT_JOURNEY,
   START_DEEP_INVESTIGATION,
   CHECK_DEEP_INVESTIGATION,
@@ -994,46 +995,6 @@ export const BUILD_FROM_TEMPLATE: AnaTool = {
       },
     },
     required: ['template_path', 'replacements'],
-  },
-};
-
-/** Generate an IND CTD section */
-export const IND_GENERATE_SECTION: AnaTool = {
-  name: 'ind_generate_section',
-  description: 'Generate a specific CTD section for an IND submission. Creates a governed draft artifact with regulatory-quality content. Use when the user asks to draft, generate, or create a specific IND/CTD section (e.g., "draft section 2.5", "generate the clinical overview", "create Module 3 drug substance section").',
-  input_schema: {
-    type: 'object',
-    properties: {
-      section_code: {
-        type: 'string',
-        description: 'CTD section code (e.g., "2.5" for Clinical Overview, "3.2.S" for Drug Substance, "4.2.3" for Toxicology)',
-      },
-      project_id: {
-        type: 'string',
-        description: 'Project ID to save the generated section to',
-      },
-      product_name: { type: 'string', description: 'Name of the drug/product' },
-      indication: { type: 'string', description: 'Therapeutic indication' },
-      sponsor: { type: 'string', description: 'Sponsor company name' },
-      phase: { type: 'string', description: 'Clinical phase (Phase 1, Phase 2, etc.)' },
-    },
-    required: ['section_code'],
-  },
-};
-
-/** Get IND submission status and structure */
-export const IND_GET_STATUS: AnaTool = {
-  name: 'ind_get_status',
-  description: 'Get the complete IND submission structure and section-by-section completion status. Use when the user asks about IND progress, what sections are done, what\'s missing, or the overall readiness of their IND submission.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      project_id: {
-        type: 'string',
-        description: 'Project ID to check status for',
-      },
-    },
-    required: ['project_id'],
   },
 };
 
@@ -2263,6 +2224,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   COMMIT_DOCUMENT_REVISION,
   START_DEEP_INVESTIGATION,
   CHECK_DEEP_INVESTIGATION,
+  RUN_AGENT,
   DRAFT_FDA_IR_RESPONSE,
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,
@@ -2315,8 +2277,6 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   MINE_PRECEDENTS,
   GENERATE_DOCUMENT,
   BUILD_FROM_TEMPLATE,
-  IND_GENERATE_SECTION,
-  IND_GET_STATUS,
   RASTERIZE_PAGE,
   PDF_OVERLAY,
   // AnA device/IVD + global-market advisory (grounded, non-LLM; honest about

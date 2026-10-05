@@ -1,0 +1,10 @@
+ × server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every registered tool has a class 16ms
+   → registered tools with no entry in tool-authorization.register.json — classify each (read, self, confirm, refuse, or conditional with a rule in tool-authorization.ts): expected [ 'run_agent' ] to deeply equal []
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool calling another tool’s handler directly is gated too (assemble_crl_premortem_artifact → author_docx_native) 0ms
+ × server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every enabled tool: a new one must be added as hiddenApp or inScope 8ms
+   → expected [ 'run_agent' ] to deeply equal []
+ × server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > in production, withholds tools that serve only hidden apps and keeps the rest 3ms
+   → expected 607 to be 608 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 2 passed (4)
+      Tests  3 failed | 890 passed (893)

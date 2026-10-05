@@ -297,6 +297,17 @@ const SINGLE_AUTHOR: Record<string, { sql: string; column: string; source: strin
   // never loosen") — NOTE no such setting exists yet; that principle has no
   // mechanism today. Evidence: docs/evidence/D7/2026-09-28-dispatch-reachable/.
   'ectd-sequence': { sql: `SELECT created_by FROM ectd_sequences WHERE id = $1 AND organization_id = $2 LIMIT 1`, column: 'created_by', source: 'sequence creator' },
+  // An assembled submission package, transmitted to an agency gateway
+  // (executeGovernedTransmit). Its author is the package's creator, on the same
+  // reasoning as 'ectd-sequence' above: whoever assembled it never sends it.
+  // A package created without one (AnA's create path, until it records the
+  // creator) has no author and is refused, never guessed.
+  'submission-package': {
+    sql: `SELECT created_by_id FROM c2c_submission_packages WHERE id = $1::int AND org_id = $2 LIMIT 1`,
+    column: 'created_by_id',
+    source: 'package creator',
+    numericId: true,
+  },
   program: { sql: `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, column: 'created_by', source: 'program creator' },
   // Report finalize is signed (reporting review 2026-10-01). The run's content
   // is computed by the engines; the person who requested it is its author. A
@@ -387,7 +398,7 @@ export async function assertSignerIsNotAuthor(
   } catch (err: unknown) {
     const e = err as { code?: unknown; message?: unknown } | null;
     const cause = typeof e?.code === 'string' ? `database error ${e.code}` : 'owner lookup failed';
-    console.error(`[governance/SoD] authorship lookup failed for "${target}"; refusing to sign:`, e?.message);
+    console.error('[governance/SoD] authorship lookup failed for "%s"; refusing to sign:', target, e?.message);
     throw new SeparationOfDutiesUnverifiedError(target, cause);
   }
 

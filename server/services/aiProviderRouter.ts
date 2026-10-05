@@ -39,6 +39,7 @@ import { LangfuseService } from './observability/langfuseService';
 // router's logical MODEL_CONFIGS otherwise pin retired snapshots).
 import { getGateway } from './ai-gateway/gateway.js';
 import { isTerminalGatewayError } from './ai-gateway/gateway-outcome.js';
+import { refuseModelCallHere } from './ai-gateway/model-call-scope.js';
 import type {
   TaskType as GatewayTaskType,
   ProviderName as GatewayProviderName,
@@ -604,6 +605,9 @@ export class AIProviderRouter {
    * Main routing function - executes AI request with intelligent routing
    */
   async route(request: AIRequest, strategy?: RoutingStrategy): Promise<AIResponse> {
+    // Before the LiteLLM branch, which reaches a model without gateway.route().
+    // Thrown outside the try below, so it is never counted as a provider failure.
+    await refuseModelCallHere('aiProviderRouter');
     const requestId = crypto.randomUUID();
     const startTime = Date.now();
 

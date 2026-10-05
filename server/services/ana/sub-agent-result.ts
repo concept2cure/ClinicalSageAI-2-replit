@@ -230,3 +230,24 @@ export function agentTraceStatus(mechanical: MechanicalStatus, fullResult: strin
       return 'incomplete';
   }
 }
+
+const BUDGET_SHORT: Record<string, string> = { rounds: 'round limit', tokens: 'token budget', time: 'time budget' };
+
+/**
+ * One line for a finished `run_agent` step, from what the result says it did:
+ * role, status, the budget that stopped it, the verdict. Never a prefix of the
+ * JSON, which would end mid-objective.
+ */
+export function agentResultSummary(fullResult: string): string {
+  const r = parsed(fullResult);
+  if (!r) return 'agent: result could not be read';
+  const agent = (r.agent ?? {}) as { role?: unknown };
+  const who = agent.role === 'verify' ? 'verification agent' : 'agent';
+  if (isText(r.error)) {
+    return `${who}: did not run (${r.error}${isText(r.code) ? `, ${r.code}` : ''})`;
+  }
+  const status = typeof r.status === 'string' ? r.status : 'unknown';
+  const budget = typeof r.budget === 'string' && BUDGET_SHORT[r.budget] ? ` (${BUDGET_SHORT[r.budget]})` : '';
+  const verdict = typeof r.verdict === 'string' ? `, ${r.verdict}` : '';
+  return `${who}: ${status}${budget}${verdict}`;
+}

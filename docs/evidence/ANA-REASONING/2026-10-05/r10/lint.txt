@@ -1,0 +1,13 @@
+ESLint warnings/errors per file touched by round 10, on the round-10 tree, and on trunk where the file exists there.
+Command: npx eslint --no-warn-ignored <file>
+authoring.router.ts keeps trunk's 24. The decisions suite stood at 497 of 500 counted lines on trunk, so round 10's cases are a new suite and it gains two pins only; turn-record.ts stood at 489, so the served-models reader is its own module.
+
+server/services/ana/turn-record-models.ts                                round10=0/0     trunk=new
+server/services/ai-governance/approved-models.ts                         round10=0/0     trunk=0/0
+server/services/authoring/machine-claim-verify.ts                        round10=0/0     trunk=0/0
+server/services/authoring/authoring-record.ts                            round10=0/0     trunk=0/0
+server/routes/authoring.router.ts                                        round10=24/0    trunk=24/0
+server/routes/__tests__/authoring-record-decisions.pglite.test.ts        round10=0/0     trunk=0/0
+server/routes/__tests__/authoring-decision-source.pglite.test.ts         round10=0/0     trunk=new
+server/services/ana/__tests__/turn-record-served-models.test.ts          round10=0/0     trunk=new
+scripts/db/authoring-subsystem.d.mts                                     round10=0/0     trunk=new

@@ -1,0 +1,185 @@
+# g-fda-jnda-rule-pack-m1-v2-2 — GREEN (after migrations/20261005_fda_jnda_m1_outline_v2_2.sql and its C2C_MIGRATION_FILES entry)
+# 2026-10-05
+
+## npx vitest run tests/regulatory/fda-module1-numbering.test.ts tests/regulatory/jnda-rule-pack-module1.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > the migration is on the deploy path, above the tenant sweep 2ms
+stdout | tests/regulatory/fda-module1-numbering.test.ts
+{
+  "timestamp": "2026-10-05T03:04:01.783Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:04:01.784Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+{
+  "timestamp": "2026-10-05T03:04:01.784Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/fda-module1-numbering.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA context-of-use list carries the Module 1 headings this contract is derived from 3ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the deep IND eCTD map (project bootstrap / readiness / checklist) files Module 1 where FDA does 3ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the IND section registry (AnA plans, coverage, chat) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the CTD authoring guidance (AnA drafting prompts) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live ind:fda rule pack (the editor outline and the gates' required set) files Module 1 where FDA does 18ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live nda:fda rule pack (the editor outline and the gates' required set) files Module 1 where FDA does 19ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live bla:fda rule pack (the editor outline and the gates' required set) files Module 1 where FDA does 32ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live anda:fda rule pack (the editor outline and the gates' required set) files Module 1 where FDA does 30ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > what the gates require of a nda is the FDA Module 1 an application files 35ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > what the gates require of a bla is the FDA Module 1 an application files 21ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > what the gates require of an ANDA is patent and exclusivity at 1.3.5.x, never under Promotional material (1.15) 17ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the placement and identity rules catch the misfilings they exist for, and stay ancestor-permissive 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live ind:fda rule pack carries the Module 1 content an initial IND must file 14ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the submission workflows AnA is guided by file Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the global-RI FDA Module 1 requirements file where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the reference FDA backbone template files Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the required-artifact matrix (IND / NDA / BLA project bootstrap) files Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the Module 1 authoring-surface structure (M1/M2 build state) files Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA regional template (dispatch-readiness required sections) files Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA regional template requires of an IND only what an IND files, and of an NDA only what an NDA files 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the compile gate baseline (unknown program type) files Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > what the compile gate requires of an IND (the live rule pack) is what the seeded IND tree creates 24ms
+ ✓ tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > after a deploy the live jnda:pmda outline has 1.11, in order, and the gates require it 2987ms
+ ✓ tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > every new row is live, every old row is superseded by it, and each records its basis 1653ms
+ ✓ tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > re-runs on every deploy without changing anything (Rule 1) 1680ms
+ ✓ tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > refuses a truncated row already holding a new key — ON CONFLICT DO NOTHING would otherwise keep it 1543ms
+ ✓ tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > a later version superseding a 2026-10-05 row does not break the replay 1508ms
+
+ Test Files  2 passed (2)
+      Tests  28 passed (28)
+   Start at  03:03:58
+   Duration  10.28s (transform 2.03s, setup 166ms, import 3.24s, tests 9.61s, environment 0ms)
+
+
+## importers / readers of the rule packs and the migration set
+## npx vitest run tests/regulatory/ind-required-set-agrees-with-rule-pack.test.ts tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts tests/schema-contract/c2c-project-scaffold.contract.test.ts tests/schema-contract/c2c-apply-path.contract.test.ts tests/schema-contract/tenant-isolation-sweep.contract.test.ts tests/schema-contract/check-constraint-replay.pglite.test.ts server/services/ectd/__tests__/required-sections.test.ts
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > is in C2C_MIGRATION_FILES, and is the LAST entry 7ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > the batch-2 files are wired ahead of it 0ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > the once-excluded files are now wired, having been RESOLVED not skipped 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > still refuses the _consolidated tree, which was never merely unwired 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > DOES wire enhanced_cortex, whose identity conflict C-36 resolved 0ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the canonical lumen_data_atoms.id is an integer, not a uuid 9ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > every atom-referencing column is an integer, so the FKs are implementable 11ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the two previously-impossible foreign keys now exist 3ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the services' real JOIN typechecks (it could not before) 2ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > the rule packs the scaffold reads are actually seeded > ships 13 packs and 115 sections 4525ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > no pack is empty 4483ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > scaffolding an IND > creates one document bound to a real rule pack 2974ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > every full CTD dossier pack carries all five modules, with content beneath them 3331ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > scaffolding an IND > writes the pack's full section outline — 24 for ind/fda 2948ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > every parent_key resolves inside its own pack 3059ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > creates tables and leaves NO integer-keyed tenant table unpoliced 26ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > policies electronic_signatures — the Part 11 record that had no tenant key 24ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > actually blocks a cross-tenant read on a table it sweeps 234ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > scaffolding an IND > every section is honestly empty — nothing is claimed drafted 3301ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > cta:ema carries the CTR 536/2014 Part I + Part II structure 3327ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > a TEXT tenant key is SKIPPED, not raised — a deploy must not halt on pre-existing drift 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > never clobbers a policy a subsystem installed for itself 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > FORCES a table that had the policy but no FORCE (owner-bypass close, C-43) 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > leaves a policy-LESS RLS table un-forced (no owner default-deny surprise) 16ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > HEALS an allowlisted table an earlier revision wrongly policied (api_keys pre-auth break, C-44) 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > leaves a clean allowlisted table unpoliced (the first loop honors the allowlist) 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > skips the allowlist, tables with no tenant column, and views 2ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > scaffolding an IND > preserves the pack's ordering and hierarchy 2913ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > anda:fda is a four-module CTD carrying the generic-specific sections 2919ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > it fails closed rather than guessing > skips ivd — the wizard accepts it but it names no pathway 2748ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'document_span_lineage kinds (20260803…' > a fresh database converges on the newest definition 3857ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > ide:fda carries the 21 CFR 812.20 lettered set, not a device-CTD shape 2868ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > it fails closed rather than guessing > skips device — the wizard accepts it but it names no pathway 2727ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'document_span_lineage kinds (20260803…' > the next deploy succeeds over a row only the newest definition admits 2684ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > pma:fda carries the 21 CFR 814.20 tree, not the six-node stub 2750ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'c2c_documents doc types (20260528 → 2…' > a fresh database converges on the newest definition 2364ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > it fails closed rather than guessing > skips biologic — the wizard accepts it but it names no pathway 2841ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > mdr:ema carries MDR Annex II + III, not a CTD 2936ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'c2c_documents doc types (20260528 → 2…' > the next deploy succeeds over a row only the newest definition admits 3305ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > it fails closed rather than guessing > skips anda on a database without its pack — mapped is not the same as seeded 3636ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > ivdr:ema carries the analytical and clinical performance evidence an IVD turns on 3535ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'submission_orchestrator_runs status (…' > a fresh database converges on the newest definition 3008ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > it fails closed rather than guessing > skips ide on a database without its pack — mapped is not the same as seeded 4173ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > no live rule pack is a stub > covers all three biotech marketing pathways 3800ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'submission_orchestrator_runs status (…' > the next deploy succeeds over a row only the newest definition admits 3883ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — lumen.data_atoms has exactly one definition (C-12) > the council provisioning migration no longer defines lumen.data_atoms 2ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — lumen.data_atoms has exactly one definition (C-12) > the canonical definition is the one in db/migrations 1ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — lumen.data_atoms has exactly one definition (C-12) > the apply script installs the canonical prerequisite BEFORE the file that reads it 0ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > it fails closed rather than guessing > skips an agency with no CHECK value instead of violating the constraint 3774ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a CTA > writes the real CTR 536/2014 outline, both assessment parts 5017ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > it fails closed rather than guessing > a mapped agency with no pack declines instead of borrowing the US one 4597ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — the resulting schema accepts the writes the code makes > produces the canonical 12-column shape, not the minimal one 11ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — the resulting schema accepts the writes the code makes > accepts a write carrying the provenance columns the minimal shape lacked 3ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — the resulting schema accepts the writes the code makes > the council seed still lands (the file is self-sufficient without its own atoms table) 1ms
+ ✓ server/services/ectd/__tests__/required-sections.test.ts > requiredSectionsFromPack — leaf-most mandatory claims by module > requires a mandatory node only when no descendant is mandatory 22ms
+ ✓ server/services/ectd/__tests__/required-sections.test.ts > requiredSectionsFromPack — leaf-most mandatory claims by module > never requires a module container or an optional node 1ms
+ ✓ server/services/ectd/__tests__/required-sections.test.ts > requiredSectionsFromPack — leaf-most mandatory claims by module > groups by CTD module and always returns the five modules in order 1ms
+ ✓ server/services/ectd/__tests__/required-sections.test.ts > resolveRequiredSections — the seeded ind:fda pack decides what an IND must file > reads the live pack for an FDA IND and reports its provenance 7ms
+ ✓ server/services/ectd/__tests__/required-sections.test.ts > resolveRequiredSections — the seeded ind:fda pack decides what an IND must file > falls through the ICH pack when the agency has none, and says which pack it used 1ms
+ ✓ server/services/ectd/__tests__/required-sections.test.ts > resolveRequiredSections — the seeded ind:fda pack decides what an IND must file > labels the baseline as a fallback, with the reason, when the program type is unknown 0ms
+ ✓ server/services/ectd/__tests__/required-sections.test.ts > resolveRequiredSections — the seeded ind:fda pack decides what an IND must file > labels the baseline as a fallback when no live pack exists or the store cannot be read 0ms
+ ✓ server/services/ectd/__tests__/required-sections.test.ts > resolveRequiredSections — the seeded ind:fda pack decides what an IND must file > the baseline Module 1 carries only what every FDA application files 0ms
+ ✓ tests/regulatory/ind-required-set-agrees-with-rule-pack.test.ts > the initial-IND required set has one answer across the repo > requires nothing the product’s own IND rule pack does not 2ms
+ ✓ tests/regulatory/ind-required-set-agrees-with-rule-pack.test.ts > the initial-IND required set has one answer across the repo > never asks an IND for a marketing-application debarment certification 1ms
+ ✓ tests/regulatory/ind-required-set-agrees-with-rule-pack.test.ts > the initial-IND required set has one answer across the repo > does not demand contact/agent information an initial IND files on Form 1571 0ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a CTA > binds the document to the CTR pack version, not a CTD one 5547ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > it fails closed rather than guessing > US filings are untouched — fda is matched directly, never as a fallback 3272ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an ANDA and an IDE > an ANDA scaffolds the four-module outline, through the real service 2136ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > it fails closed rather than guessing > never invents a rule_pack_version — the composite FK would reject it 2533ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an ANDA and an IDE > an IDE scaffolds the lettered set, through the real service 2962ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > the scaffold is audited in the same transaction > writes a hash-chained audit_logs row naming the document 3204ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an ANDA and an IDE > the ANDA binds to its own pack version, and to a doc_type the CHECK admits 4048ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > the scaffold is audited in the same transaction > writes NO audit row when the scaffold skips — nothing happened to record 3301ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an ANDA and an IDE > the IDE binds to its own pack version, and to a doc_type the CHECK admits 2203ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > it is safe to call twice > does not scaffold a second competing outline 2305ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an EU MDR and an EU IVDR > an EU MDR technical file scaffolds Annex II + III, not a CTD 3171ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > it never trips the Part 11 attribution trigger > scaffolds with no app.actor_id set at all 3057ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an EU MDR and an EU IVDR > an EU IVDR technical file scaffolds its performance evidence 4288ms
+ ✓ tests/schema-contract/c2c-project-scaffold.contract.test.ts > it never trips the Part 11 attribution trigger > and the trigger really would raise, so the above is not vacuous 5442ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding an EU MDR and an EU IVDR > both bind to their own pack and to a doc_type the widened CHECK admits 9558ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a BLA > writes the full nested outline, not five empty modules 2026ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a BLA > carries the sections a biologics reviewer looks for 1729ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > scaffolding a BLA > binds the document to the version it was actually built from 1990ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the guard is falsifiable > without the outlines migration the same BLA scaffold declines 2170ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > the guard is falsifiable > with every outline EXCEPT 20260806b, an ANDA still declines 2151ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > the live pack is ich-m4-v2.2 with five modules and the 21 CFR 312.23 Module 1 content 2210ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > an FDA IND project scaffolds against the new pack, not the superseded 24-node one 1819ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > an initial IND is not asked for post-initial contact changes (1.3.1) or a prior-study listing (5.2) 2391ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > FALSIFIABLE: without 20260902 the live pack is v2.1 and still demands 1.3.1 and 5.2 of an initial IND 4370ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at > FALSIFIABLE: without 20260901 the live ind:fda pack has no 1.20 and still uses the 24-node outline 3799ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > k510:fda and denovo:fda are eSTAR-era outlines > 510(k): no retired Form 3514 cover sheet; the Part 807 mandatory items and cybersecurity exist 1945ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > k510:fda and denovo:fda are eSTAR-era outlines > De Novo: no Form 3514, no table-of-contents slot, special controls and benefit-risk present 1667ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > k510:fda and denovo:fda are eSTAR-era outlines > a 510(k) project scaffolds against the eSTAR-era pack 1987ms
+ ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts > k510:fda and denovo:fda are eSTAR-era outlines > FALSIFIABLE: without 20260901b the live 510(k) pack still demands Form 3514 4537ms
+ Test Files  7 passed (7)
+      Tests  94 passed (94)
+
+## node --test tests/ops/apply-c2c-migrations-manifest.test.mjs
+# tests 9 / pass 9 / fail 0
+
+## npm run ci:migration-set-order
+[ci:migration-set-order] OK — 359 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+## npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 359 migrations, 36 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
