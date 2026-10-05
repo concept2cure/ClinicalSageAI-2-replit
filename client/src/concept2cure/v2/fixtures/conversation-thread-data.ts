@@ -18,6 +18,7 @@
    would be a second shape for the work record, free to drift from the one
    <AnaActivity /> renders. */
 import type { AnaChatAction } from '../../components/ana/useAnaChat';
+import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AnaActivityProps } from '../AnaActivity';
 import type { AnaGroundingEvidence } from '../../components/ana/anaAnswerCheck';
@@ -45,6 +46,12 @@ export interface CtTurn {
   settled?: boolean;
   /** The retained turn record that produced the answer, when the server confirmed one. */
   sourceRecord?: string;
+  /**
+   * The turn's record status as the server gave it, with the models that wrote
+   * the answer: whether it may go into a document is decided from this
+   * (anaInsertGate.ts, round 11). Absent when the server said nothing.
+   */
+  turnRecord?: AnaTurnRecordStatus;
   links?: CtLink[];
   /**
    * The context layers the platform added to the prompt this turn (names

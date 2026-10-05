@@ -135,3 +135,42 @@ describe('readTurnRecord', () => {
     expect(readTurnRecord({ status: 'not_recorded' })).toEqual({ status: 'not_recorded', reason: 'The server did not say why.' });
   });
 });
+
+describe('readTurnRecord: the models that wrote the turn (AnA reasoning round 11)', () => {
+  /* The insert of an answer into a document is refused unless every model that
+     wrote it may write governed content (anaInsertGate.ts). That rule reads
+     only what this keeps, so a list it cannot read whole is not kept. */
+  const OPUS = { provider: 'anthropic', model: 'claude-opus-5-5', qualified: true, approvedForHighRisk: true, pq: 'pending' };
+  const SONNET = { provider: 'anthropic', model: 'claude-sonnet-5', qualified: false, approvedForHighRisk: false, pq: 'pending' };
+  const recorded = (servedBy: unknown) => ({ status: 'recorded', id: 'rec-1', sha256: SHA, servedBy });
+
+  it('keeps a well-formed list, in order, and the status as before', () => {
+    expect(readTurnRecord(recorded([OPUS, SONNET]))).toEqual({ status: 'recorded', id: 'rec-1', sha256: SHA, servedBy: [OPUS, SONNET] });
+    // An entry the registry does not know: nulls, kept as unknown.
+    const unknown = { provider: 'anthropic', model: null, qualified: false, approvedForHighRisk: null, pq: null };
+    expect(readTurnRecord(recorded([unknown]))).toEqual({ status: 'recorded', id: 'rec-1', sha256: SHA, servedBy: [unknown] });
+  });
+
+  it('drops the whole list when any entry cannot be read, so it reads as unknown, never as approved', () => {
+    for (const bad of [
+      [{ ...OPUS, qualified: 'yes' }],
+      [OPUS, { ...SONNET, approvedForHighRisk: 'no' }],
+      [{ ...OPUS, pq: 'maybe' }],
+      [{ ...OPUS, model: 42 }],
+      [null],
+      'claude-opus-5-5',
+    ]) {
+      const read = readTurnRecord(recorded(bad));
+      expect(read, JSON.stringify(bad)).toEqual({ status: 'recorded', id: 'rec-1', sha256: SHA });
+    }
+  });
+
+  it('carries the list from post_done onto the turn', async () => {
+    const turn = await turnWith([
+      { type: 'text', content: 'PFS.' },
+      { type: 'done' },
+      { type: 'post_done', cleanedResponse: 'PFS.', turnRecord: recorded([SONNET]) },
+    ]);
+    expect(turn.turnRecord).toEqual({ status: 'recorded', id: 'rec-1', sha256: SHA, servedBy: [SONNET] });
+  });
+});

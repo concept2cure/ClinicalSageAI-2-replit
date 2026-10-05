@@ -30,6 +30,7 @@ import type {
   AnaPlanChange,
   AnaPlanStep,
   AnaProgressPhase,
+  AnaServedModel,
   AnaStoppedReason,
   AnaToolCall,
   AnaTurnRecordStatus,
@@ -298,6 +299,30 @@ export function readContextUsed(event: Record<string, unknown>): AnaContextUsed 
   };
 }
 
+const PQ_STATUSES: ReadonlySet<unknown> = new Set(['pending', 'passed', 'failed', null]);
+const nameOrNull = (v: unknown): v is string | null => v === null || typeof v === 'string';
+
+/** One served model, whole, or null: a field it cannot read voids it. */
+function readServedModel(raw: unknown): AnaServedModel | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const m = raw as Record<string, unknown>;
+  const approval = m.approvedForHighRisk;
+  if (!nameOrNull(m.provider) || !nameOrNull(m.model) || typeof m.qualified !== 'boolean') return null;
+  if (!(approval === null || typeof approval === 'boolean') || !PQ_STATUSES.has(m.pq)) return null;
+  return { provider: m.provider, model: m.model, qualified: m.qualified, approvedForHighRisk: approval, pq: m.pq as AnaServedModel['pq'] };
+}
+
+/**
+ * The models a filed record names, or undefined when the list cannot be read
+ * whole: one unreadable entry drops it, so it reads as unknown, never as a
+ * shorter list of approved models (round 11).
+ */
+function readServedBy(raw: unknown): AnaServedModel[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const models = raw.map(readServedModel);
+  return models.every((m): m is AnaServedModel => m !== null) ? models : undefined;
+}
+
 /**
  * Read the `turnRecord` a closing event carries. Undefined when it is absent or
  * malformed: a status that cannot be read is not shown, and never as recorded.
@@ -306,7 +331,8 @@ export function readTurnRecord(raw: unknown): AnaTurnRecordStatus | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const r = raw as Record<string, unknown>;
   if (r.status === 'recorded' && typeof r.id === 'string' && typeof r.sha256 === 'string' && /^[0-9a-f]{64}$/.test(r.sha256)) {
-    return { status: 'recorded', id: r.id, sha256: r.sha256 };
+    const servedBy = readServedBy(r.servedBy);
+    return { status: 'recorded', id: r.id, sha256: r.sha256, ...(servedBy ? { servedBy } : {}) };
   }
   if (r.status === 'not_recorded') {
     return { status: 'not_recorded', reason: typeof r.reason === 'string' && r.reason ? r.reason : 'The server did not say why.' };

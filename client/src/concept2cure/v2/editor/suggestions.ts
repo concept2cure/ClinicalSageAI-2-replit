@@ -74,6 +74,7 @@ import { Fragment, Slice } from '@tiptap/pm/model';
 import type { Node as PMNode, Mark as PMMark, MarkType, ResolvedPos, Schema } from '@tiptap/pm/model';
 
 import type { FindMatch } from './findReplace';
+import { ANA_SUGGESTION_AUTHOR_ID } from './anaInsertGate';
 
 /* ── Attribution ──────────────────────────────────────────────── */
 
@@ -1470,6 +1471,45 @@ const setContentUntracked =
     return commands.setContent(content);
   };
 
+/** `fragment` with each insertion mark `swap` replaces swapped, at any depth. */
+function swapInsertionMarks(fragment: Fragment, swap: (mark: PMMark) => PMMark | null): Fragment {
+  const nodes: PMNode[] = [];
+  fragment.forEach((node) => {
+    if (!node.isText) {
+      nodes.push(node.copy(swapInsertionMarks(node.content, swap)));
+      return;
+    }
+    const mark = node.marks.find((m) => m.type.name === 'insertion');
+    const next = mark ? swap(mark) : null;
+    nodes.push(mark && next ? node.mark(next.addToSet(mark.removeFromSet(node.marks))) : node);
+  });
+  return Fragment.from(nodes);
+}
+
+/**
+ * The paste door (AnA reasoning round 11, GRD-missed). AnA's text enters a
+ * section through the insert, which admits only an answer the governed-write
+ * rule admits (anaInsertGate.ts). A paste or a drop of an AnA suggestion was a
+ * second way in: with track changes off (the database default) it kept her
+ * name and turn, never met that rule, and its accept was filed as hers. A
+ * pasted AnA suggestion now keeps them only when the host admits its turn
+ * (one its insert gate admitted); any other becomes the pasting person's, at
+ * this minute, with no turn, which is what a paste with track changes on
+ * already records. Other authors' suggestions are left as they are.
+ */
+export function reattributePasted(
+  slice: Slice,
+  person: SuggestionAuthor,
+  admitsAnaSource?: (sourceRecord: string | null) => boolean,
+): Slice {
+  const swap = (mark: PMMark): PMMark | null => {
+    if (mark.attrs.authorId !== ANA_SUGGESTION_AUTHOR_ID) return null;
+    if (admitsAnaSource?.((mark.attrs.sourceRecord as string | null) ?? null)) return null;
+    return mark.type.create({ ...mark.attrs, ...suggestionMarkAttrs(person, minuteBucket()) });
+  };
+  return new Slice(swapInsertionMarks(slice.content, swap), slice.openStart, slice.openEnd);
+}
+
 export const TrackChanges = Extension.create<
   {
     author: SuggestionAuthor;
@@ -1483,13 +1523,16 @@ export const TrackChanges = Extension.create<
      *  the record at all. Fire-and-forget by contract: recording a decision
      *  must never block or undo the editor action the reviewer just took. */
     onResolve?: (decision: SuggestionDecision) => void;
+    /** Whether a pasted AnA suggestion from this turn record keeps AnA's name
+     *  (the paste door, reattributePasted). Absent, none does. */
+    admitsAnaSource?: (sourceRecord: string | null) => boolean;
   },
   TrackChangesStorage
 >({
   name: 'c2cTrackChanges',
 
   addOptions() {
-    return { author: { id: 'unknown', name: 'Unknown author' }, enabled: false, onResolve: undefined };
+    return { author: { id: 'unknown', name: 'Unknown author' }, enabled: false, onResolve: undefined, admitsAnaSource: undefined };
   },
 
   addStorage() {
@@ -1625,6 +1668,7 @@ export const TrackChanges = Extension.create<
 
   addProseMirrorPlugins() {
     const storage = this.storage;
+    const options = this.options;
     /** Last delete-key direction, so the caret lands where the next press of
      *  the same key continues the strike instead of re-striking struck text. */
     let deleteDir: 'back' | 'fwd' | null = null;
@@ -1640,6 +1684,10 @@ export const TrackChanges = Extension.create<
             else if (event.key === 'Delete') deleteDir = 'fwd';
             else deleteDir = null;
             return false;
+          },
+          /* A paste or a drop is a second way in for AnA's text (round 11). */
+          transformPasted(slice) {
+            return reattributePasted(slice, storage.author, options.admitsAnaSource);
           },
         },
         appendTransaction(transactions, _oldState, newState) {

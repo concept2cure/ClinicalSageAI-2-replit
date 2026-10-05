@@ -204,6 +204,31 @@ const noRedline = () => {
   expect(document.querySelector('.dcv-workbench ins')).toBeNull();
 };
 
+describe('EditorBridge.insert — AnA\u2019s answer goes in only under the governed-write rule (round 11)', () => {
+  /* The conversation's "Insert into … as tracked suggestion" checks its turn
+     before it calls; the bridge checks again, so no caller can put an answer
+     the rule does not admit into the section by calling it directly. */
+  const SHA = 'a'.repeat(64);
+  const QUALIFIED = { provider: 'anthropic', model: 'claude-opus-5-5', qualified: true, approvedForHighRisk: true, pq: 'pending' as const };
+  const UNQUALIFIED = { provider: 'anthropic', model: 'claude-sonnet-5', qualified: false, approvedForHighRisk: false, pq: 'pending' as const };
+  const TEXT = 'Shelf life is supported for 24 months.';
+
+  it('refuses an AnA answer the rule does not admit, or whose models are not given, and changes nothing', async () => {
+    const bridge = await openBridge();
+    expect(bridge().insert(TEXT, ANA, { status: 'recorded', id: TURN, sha256: SHA, servedBy: [UNQUALIFIED] })).toBe(false);
+    expect(bridge().insert(TEXT, ANA, { status: 'recorded', id: TURN, sha256: SHA })).toBe(false);
+    expect(bridge().insert(TEXT, ANA)).toBe(false);
+    noRedline();
+  });
+
+  it('inserts an AnA answer it admits, and a person\u2019s text is not its business (negative controls)', async () => {
+    const bridge = await openBridge();
+    expect(bridge().insert(TEXT, ANA, { status: 'recorded', id: TURN, sha256: SHA, servedBy: [QUALIFIED] })).toBe(true);
+    await vi.waitFor(() => expect(document.querySelector(`.dcv-workbench ins[data-source-record="${TURN}"]`)).toBeTruthy());
+    expect(bridge().insert('A reviewer note.', { id: 'user-7', name: 'Jordan Medical Writer' })).toBe(true);
+  });
+});
+
 describe('EditorBridge.propose — which section, and which version of it', () => {
   it('redlines the open section when the base hash is the section as loaded', async () => {
     const bridge = await openBridge();

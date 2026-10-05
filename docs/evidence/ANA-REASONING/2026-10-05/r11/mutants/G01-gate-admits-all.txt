@@ -1,0 +1,16 @@
+Mutant G01-gate-admits-all: every answer may go in, whoever wrote it
+
+--- client/src/concept2cure/v2/editor/anaInsertGate.ts
+- return refused ? modelRefusal(refused, served.length > 1) : null;
++ return null;
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses an answer a model not approved for regulatory drafting wrote, naming it and the remedy 5ms
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses when any one of the models that wrote it is not admitted, and says it wrote part 1ms
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses an approved model whose PQ has not passed, without offering a remedy that cannot work 1ms
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses a model the record does not name, even one marked qualified 1ms
+ × client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer a model not approved for regulatory drafting wrote: disabled, and the reason is on screen 5957ms
+      Tests  5 failed | 5 passed (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯

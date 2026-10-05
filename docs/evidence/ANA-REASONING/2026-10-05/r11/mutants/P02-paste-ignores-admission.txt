@@ -1,0 +1,12 @@
+Mutant P02-paste-ignores-admission: a pasted suggestion from an admitted turn loses AnA’s name too
+
+--- client/src/concept2cure/v2/editor/suggestions.ts
+- if (admitsAnaSource?.((mark.attrs.sourceRecord as string | null) ?? null)) return null;
++ 
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes off: one the host admits keeps AnA’s name and turn 47ms
+      Tests  1 failed | 3 passed (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
