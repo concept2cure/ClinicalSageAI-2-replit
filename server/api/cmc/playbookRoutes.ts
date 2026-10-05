@@ -292,7 +292,7 @@ router.get('/guidelines', async (req: Request, res: Response) => {
       },
       {
         id: 'ich-q2-r1',
-        name: 'ICH Q2(R1) Validation',
+        name: 'ICH Q2(R2) Validation',
         category: 'Analytical',
         region: 'Global',
         description: 'Validation of Analytical Procedures: Text and Methodology',
@@ -426,7 +426,7 @@ async function executeAITool(command: string, drugName: string, context: any, or
 
 function generateAIPrompt(command: string, drugName: string, context: any): string {
   const prompts: { [key: string]: string } = {
-    'Generate analytical method summary': `Create a comprehensive analytical method validation summary for ${drugName}. Include method overview, validation parameters (specificity, linearity, accuracy, precision, range, robustness), system suitability criteria, and regulatory compliance notes per ICH Q2(R1).`,
+    'Generate analytical method summary': `Create a comprehensive analytical method validation summary for ${drugName}. Include method overview, validation parameters (specificity, linearity, accuracy, precision, range, robustness), system suitability criteria, and regulatory compliance notes per ICH Q2(R2).`,
 
     'Update stability protocol for biologics': `Design an updated stability protocol for the biologic drug ${drugName} following ICH Q5C guidelines. Include study design, storage conditions, time points, test parameters, and acceptance criteria.`,
 

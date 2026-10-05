@@ -347,7 +347,7 @@ export async function analyzeQbdFromSources(
 
   const unlinkedCqas = cqas.filter(c => !c.methodLinked);
   if (unlinkedCqas.length > 0) {
-    gaps.push(`${unlinkedCqas.length} CQA(s) lack a validated analytical method (ICH Q2(R1) gap).`);
+    gaps.push(`${unlinkedCqas.length} CQA(s) lack a validated analytical method (ICH Q2(R2) gap).`);
   }
 
   const unevaluatedInputs = Object.entries(unavailable)

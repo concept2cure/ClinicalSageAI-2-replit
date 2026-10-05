@@ -38,6 +38,7 @@ import { cmcProjectId, cmcWriteError } from './cmcShared';
 import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
 import { SectionEvidence } from './CmcSectionEvidence';
+import { PlaceIntoSubmission } from './CmcPlaceIntoSubmission';
 
 /* ── The read models ─────────────────────────────────────────────────────── */
 
@@ -83,26 +84,6 @@ interface Module3BuildPayload {
    * artifacts".
    */
   artifactRegistry?: { state: 'linked' | 'unanchored' | 'unaddressable'; detail?: string };
-}
-
-/** GET /api/submissions rows (subset the placement picker reads). */
-interface SubmissionRow {
-  id: number;
-  title: string;
-  applicationType: string;
-  status: string;
-}
-
-/** GET /api/submissions/:id/sequences rows (subset). */
-interface SequenceRow {
-  id: number;
-  sequenceNumber: string;
-  status: string; // draft|assembling|validated|frozen|dispatched
-}
-
-interface PlacementOutcome {
-  placements: Array<{ sectionKey: string; leafSectionCode: string; leafId: number; title: string }>;
-  skipped: Array<{ sectionKey: string; reason: string }>;
 }
 
 export interface Module3Readiness {
@@ -664,159 +645,6 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
         />
       )}
       <C2CToast msg={toast} />
-    </div>
-  );
-}
-
-/* ── Place into submission ───────────────────────────────────────────────── */
-
-/**
- * The CMC → IND seam, from this side. POST /place-into-submission snapshots
- * every approved §3.2 section into the canonical renderable leaf source and
- * places real submission leaves at the m-prefixed section codes — after
- * re-running the same final-export gate this surface's "Check export gate"
- * button reports. The pickers render live org data with honest empty and
- * error states; frozen/dispatched sequences are excluded WITH the reason
- * (their leaves are immutable — the server refuses them too); the server's
- * verdict is shown verbatim either way.
- */
-function PlaceIntoSubmission({ projectId, onPlaced }: { projectId: string; onPlaced: () => void }) {
-  const submissions = useLiveRows<SubmissionRow>('/api/submissions');
-  const [submissionId, setSubmissionId] = React.useState<number | null>(null);
-  const sequences = useLiveRows<SequenceRow>(
-    submissionId != null ? `/api/submissions/${submissionId}/sequences` : null,
-    [submissionId],
-  );
-  const [sequenceId, setSequenceId] = React.useState<number | null>(null);
-  const [busy, setBusy] = React.useState(false);
-  const [verdict, setVerdict] = React.useState<
-    | { ok: true; outcome: PlacementOutcome }
-    | { ok: false; message: string }
-    | null
-  >(null);
-
-  const lockedSeq = (s: SequenceRow) => s.status === 'frozen' || s.status === 'dispatched';
-
-  const place = async () => {
-    if (busy || submissionId == null || sequenceId == null) return;
-    setBusy(true);
-    setVerdict(null);
-    try {
-      const res = await apiRequest(
-        'POST',
-        '/api/cmc/module3-os/place-into-submission/' + encodeURIComponent(projectId),
-        { submissionId, sequenceId },
-      );
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        setVerdict({ ok: false, message: cmcWriteError(json, res.status) });
-        return;
-      }
-      const data = (json as { data?: PlacementOutcome })?.data;
-      setVerdict({ ok: true, outcome: { placements: data?.placements ?? [], skipped: data?.skipped ?? [] } });
-      onPlaced();
-    } catch (e) {
-      setVerdict({ ok: false, message: e instanceof Error ? e.message : String(e) });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div data-testid="m3-place-into-submission">
-      <div className="cm-meta" style={{ marginBottom: 6 }}>
-        Place the approved §3.2 sections into an IND sequence — each becomes a real submission leaf the
-        checklist, package manifest and eCTD assembly read.
-      </div>
-      {submissions.loading ? (
-        <div role="status" className="cm-meta">Loading submissions…</div>
-      ) : submissions.error ? (
-        <div className="cm-meta">Submissions could not be loaded — {submissions.error}</div>
-      ) : submissions.rows.length === 0 ? (
-        <div className="cm-meta">No submissions exist in this workspace yet — create one in the Submission Center first.</div>
-      ) : (
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <select
-            className="c2c-input"
-            aria-label="Target submission"
-            value={submissionId ?? ''}
-            onChange={(e) => {
-              const v = e.target.value ? Number(e.target.value) : null;
-              setSubmissionId(v);
-              setSequenceId(null);
-              setVerdict(null);
-            }}
-          >
-            <option value="">Choose a submission…</option>
-            {submissions.rows.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.title} ({s.applicationType.toUpperCase()})
-              </option>
-            ))}
-          </select>
-          {submissionId != null &&
-            (sequences.loading ? (
-              <span role="status" className="cm-meta">Loading sequences…</span>
-            ) : sequences.error ? (
-              <span className="cm-meta">Sequences could not be loaded — {sequences.error}</span>
-            ) : sequences.rows.length === 0 ? (
-              <span className="cm-meta">This submission has no sequences yet — create one in the Submission Center.</span>
-            ) : (
-              <select
-                className="c2c-input"
-                aria-label="Target sequence"
-                value={sequenceId ?? ''}
-                onChange={(e) => {
-                  setSequenceId(e.target.value ? Number(e.target.value) : null);
-                  setVerdict(null);
-                }}
-              >
-                <option value="">Choose a sequence…</option>
-                {sequences.rows.map((s) => (
-                  <option key={s.id} value={s.id} disabled={lockedSeq(s)}>
-                    {s.sequenceNumber} · {s.status}
-                    {lockedSeq(s) ? ' — leaves are immutable' : ''}
-                  </option>
-                ))}
-              </select>
-            ))}
-          <button
-            className="reg-cta"
-            onClick={() => void place()}
-            disabled={busy || submissionId == null || sequenceId == null}
-          >
-            {I.fileDown} {busy ? 'Placing…' : 'Place into the submission'}
-          </button>
-        </div>
-      )}
-      {verdict &&
-        (verdict.ok ? (
-          <div className="pj-con cm-gate-verdict is-ok" style={{ marginTop: 10 }}>
-            <span className="ico">{I.shieldCheck}</span>
-            <div>
-              <div className="pj-con-t">
-                {verdict.outcome.placements.length}{' '}
-                {verdict.outcome.placements.length === 1 ? 'section' : 'sections'} placed into the submission
-              </div>
-              <div className="pj-con-d">
-                {verdict.outcome.placements.map((p) => p.leafSectionCode).join(', ') || '—'}
-                {verdict.outcome.skipped.length > 0 && (
-                  <>
-                    {' '}· skipped: {verdict.outcome.skipped.map((s) => `§${s.sectionKey} (${s.reason})`).join('; ')}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="pj-con cm-gate-verdict" style={{ marginTop: 10 }}>
-            <span className="ico">{I.alertTriangle}</span>
-            <div>
-              <div className="pj-con-t">Placement refused</div>
-              <div className="pj-con-d">{verdict.message}</div>
-            </div>
-          </div>
-        ))}
     </div>
   );
 }

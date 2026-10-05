@@ -35,6 +35,8 @@ import { refusedWithoutSigningAuthority } from './cmc-signer';
 import { describeDrift, findSectionDrift } from '../../services/cmc/section-drift';
 import { findEvidenceDrift } from '../../services/cmc/source-evidence';
 import { clientIpOf } from '../../utils/client-ip';
+import { requireRole } from '../../middleware/auth';
+import { requireGovernedReason } from '../../routes/governed-reason';
 
 /** The §11.50(a)(3) meanings a signature may carry. */
 type SignatureMeaning = (typeof SIGNATURE_MEANINGS)[number];
@@ -983,7 +985,12 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
  * m-prefixed section code. Refuses outright — before any write — unless the
  * final-export gate passes; the refusal body carries the gate's own verdict.
  */
-router.post('/place-into-submission/:projectId', async (req, res) => {
+/* The same gate and the same reason the Submission Center asks of a leaf
+   placement (routes/submissions.ts PUT /sequences/:seqId/leaves): this route
+   writes leaves into a regulator-facing sequence too, and asked neither, so a
+   viewer could place Module 3 into the IND and the ledger said what changed
+   and never why (discovery map 2026-10-04, placement-second-door). */
+router.post('/place-into-submission/:projectId', requireRole('regulatory-author'), async (req, res) => {
   try {
     const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
@@ -1002,6 +1009,10 @@ router.post('/place-into-submission/:projectId', async (req, res) => {
         error: 'submissionId and sequenceId are required (the target sequence for the Module 3 leaves).',
       });
     }
+    const reason = requireGovernedReason((req.body ?? {}).reason);
+    if (!reason.ok) {
+      return res.status(400).json({ success: false, code: 'REASON_REQUIRED', error: reason.error, field: 'reason' });
+    }
 
     const result = await placeModule3IntoSubmission({
       orgId,
@@ -1009,6 +1020,7 @@ router.post('/place-into-submission/:projectId', async (req, res) => {
       cmcProjectId: projectId,
       submissionId: parsed.data.submissionId,
       sequenceId: parsed.data.sequenceId,
+      reason: reason.reason,
     });
 
     if (!result.placed) {

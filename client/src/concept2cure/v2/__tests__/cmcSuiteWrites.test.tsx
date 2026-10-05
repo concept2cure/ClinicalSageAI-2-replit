@@ -502,9 +502,13 @@ describe('CmModule3Build — the operating system, finally reachable', () => {
       return null;
     });
 
+  /* The shared filing picker (filingTarget.tsx) the Vault and Authoring
+     placements use, and the one placement reason field. */
+  const REASON = 'Initial IND: approved Module 3 for sequence 0002.';
   const pickTargets = async () => {
     fireEvent.change(await screen.findByLabelText('Target submission'), { target: { value: '10' } });
-    fireEvent.change(await screen.findByLabelText('Target sequence'), { target: { value: '20' } });
+    fireEvent.change(await screen.findByLabelText('Sequence'), { target: { value: '20' } });
+    fireEvent.change(screen.getByLabelText(/Reason for this placement/), { target: { value: REASON } });
   };
 
   it('places approved sections into a chosen sequence through the placement endpoint', async () => {
@@ -527,7 +531,7 @@ describe('CmModule3Build — the operating system, finally reachable', () => {
     await pickTargets();
 
     // The dispatched sequence is offered only as a disabled option, with the reason.
-    const locked = screen.getByRole('option', { name: /0001 · dispatched — leaves are immutable/ }) as HTMLOptionElement;
+    const locked = screen.getByRole('option', { name: /0001 · original · Dispatched — leaves immutable/ }) as HTMLOptionElement;
     expect(locked.disabled).toBe(true);
 
     fireEvent.click(screen.getByRole('button', { name: /Place into the submission/i }));
@@ -537,11 +541,34 @@ describe('CmModule3Build — the operating system, finally reachable', () => {
     expect(callsTo('POST', '/api/cmc/module3-os/place-into-submission/' + PROJECT)[0][2]).toEqual({
       submissionId: 10,
       sequenceId: 20,
+      reason: REASON,
     });
     expect(await screen.findByText(/1 section placed into the submission/)).toBeTruthy();
     expect(screen.getByText(/m3\.2\.S\.4/)).toBeTruthy();
     // A skipped section is stated, never silently dropped.
     expect(screen.getByText(/§3\.2\.S\.7 \(No compiled narrative to place\.\)/)).toBeTruthy();
+  });
+
+  it('does not place without a stated reason, and offers only this program’s submissions', async () => {
+    wirePlacement((m, u) =>
+      m === 'GET' && u === '/api/submissions'
+        ? res([
+            { id: 10, title: 'ABC-123 IND', applicationType: 'ind', primaryRegion: 'FDA', status: 'active', programId: PROJECT },
+            { id: 11, title: 'Another program IND', applicationType: 'ind', primaryRegion: 'FDA', status: 'active', programId: '99999999-0000-4000-8000-000000000099' },
+          ])
+        : null,
+    );
+    render(<CmModule3Build ask={() => {}} />);
+    await screen.findByText('Control of Drug Substance');
+    fireEvent.change(await screen.findByLabelText('Target submission'), { target: { value: '10' } });
+    expect(screen.queryByRole('option', { name: /Another program IND/ })).toBeNull();
+    fireEvent.change(await screen.findByLabelText('Sequence'), { target: { value: '20' } });
+    const place = screen.getByRole('button', { name: /Place into the submission/i }) as HTMLButtonElement;
+    expect(place.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText(/Reason for this placement/), { target: { value: 'short' } });
+    expect(place.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText(/Reason for this placement/), { target: { value: REASON } });
+    expect(place.disabled).toBe(false);
   });
 
   it('shows a placement refusal as the gate verdict it is, verbatim', async () => {
