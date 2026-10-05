@@ -32,7 +32,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
-import { markdownToTypesetBlocks, renderTypesetLeafPdf, type TypesetBlock } from './typeset-leaf-pdf';
+import { literalParagraphs, renderTypesetLeafPdf, type TypesetBlock } from './typeset-leaf-pdf';
 import {
   packageEctdSubmission,
   type EctdLeaf,
@@ -101,14 +101,15 @@ export interface RealAssemblyResult {
 }
 
 /**
- * A composed section as typeset blocks: its narrative (markdown, as composers
- * write it) followed by each table under its title. Tables are drawn as ruled
+ * A composed section as typeset blocks: its narrative as literal paragraphs
+ * (recorded text, never reinterpreted as markup) followed by each table under
+ * its title. Tables are drawn as ruled
  * grids; they used to be serialized to "a  |  b" text lines because the text
  * renderer could not draw a table, which is also how the filed Module 3 leaf
  * read until the typeset renderer (hand-off item 17).
  */
 export function composedSectionBlocks(section: ComposedSection): TypesetBlock[] {
-  const blocks = markdownToTypesetBlocks((section.narrativeDraft ?? '').trim());
+  const blocks = literalParagraphs((section.narrativeDraft ?? '').trim());
   for (const t of section.tables ?? []) {
     if (t.title) blocks.push({ kind: 'heading', level: 3, text: t.title });
     blocks.push({ kind: 'table', headers: t.headers ?? [], rows: t.rows ?? [] });

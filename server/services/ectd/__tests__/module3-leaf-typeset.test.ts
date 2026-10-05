@@ -27,8 +27,8 @@ vi.mock('../../../db', () => ({
 
 import { materializeLeafSources } from '../leaf-source-resolver';
 import {
-  markdownToTypesetBlocks,
-  renderMarkdownLeafPdf,
+  composedSectionToBlocks,
+  renderComposedSectionLeafPdf,
   renderTypesetLeafPdf,
 } from '../typeset-leaf-pdf';
 
@@ -124,39 +124,80 @@ describe('a placed Module 3 section, through the leaf resolver', () => {
   });
 });
 
-describe('markdownToTypesetBlocks', () => {
+describe('composedSectionToBlocks reads the composer’s one format exactly', () => {
   it('reads a composed section as a heading, a paragraph, a table title and a table', () => {
-    const blocks = markdownToTypesetBlocks(MARKDOWN);
+    const blocks = composedSectionToBlocks(MARKDOWN);
     expect(blocks.map(b => b.kind)).toEqual(['heading', 'paragraph', 'heading', 'table']);
     const table = blocks[3] as Extract<(typeof blocks)[number], { kind: 'table' }>;
     expect(table.headers).toEqual(SPEC.headers);
     expect(table.rows).toEqual(SPEC.rows);
   });
 
-  it('keeps a value that looks like a tag as the characters it is', () => {
-    const [p] = markdownToTypesetBlocks(
-      'Impurity C was <LOQ in batches> 1 and 2; dissolution &ge; 80% (Q).'
+  /* Recorded text is not markdown. A markdown reading took the asterisks of
+     "1*10^3 CFU/g" as emphasis and filed "110^3 CFU/g" (discovery map,
+     typeset-emphasis-alters-recorded-values); lines starting "1." or "#"
+     became lists and headings. Every character must come back. */
+  const HOSTILE_NARRATIVE = [
+    'Charge 2*3 kg, then wash 4*5 L; TAMC NMT 1*10^3 CFU/g and TYMC NMT 1*10^2 CFU/g.',
+    '1. Dissolve in _ethanol_ at 40 °C.\n3. Filter (0.2 µm) — `pore` [size] ~ nominal.',
+    '# not a heading\n> not a quote\n---\nImpurity B was <LOQ; dissolution &ge; 80% (Q); R&D lot \\ 7.',
+  ].join('\n\n');
+  const HOSTILE_TABLES = [
+    {
+      title: 'Microbial limits | release',
+      headers: ['Test', 'Acceptance criterion', 'Note'],
+      rows: [
+        ['TAMC', 'NMT 1*10^3 CFU/g', '*not* emphasis'],
+        ['Assay', '98.0–102.0% | anhydrous', ''],
+        ['Impurity_A', '≤ 0.15% (C_max)', '1. starts like a list'],
+      ],
+    },
+    { title: 'Empty', headers: ['A'], rows: [] },
+  ];
+
+  it('returns every recorded character of the narrative and every cell, whatever it looks like', () => {
+    const blocks = composedSectionToBlocks(
+      renderComposedSectionMarkdown('3.2.P.5.1 Specifications', HOSTILE_NARRATIVE, HOSTILE_TABLES)
     );
-    expect(p).toEqual({
-      kind: 'paragraph',
-      text: 'Impurity C was <LOQ in batches> 1 and 2; dissolution ≥ 80% (Q).',
-    });
+    expect(blocks[0]).toEqual({ kind: 'heading', level: 2, text: '3.2.P.5.1 Specifications' });
+    const paragraphs = blocks.filter(b => b.kind === 'paragraph').map(b => (b as any).text);
+    expect(paragraphs.join('\n\n')).toBe(HOSTILE_NARRATIVE);
+    const tables = blocks.filter(b => b.kind === 'table') as any[];
+    expect(tables.map(t => ({ headers: t.headers, rows: t.rows }))).toEqual(
+      HOSTILE_TABLES.map(t => ({ headers: t.headers, rows: t.rows }))
+    );
+    const titles = blocks
+      .filter(b => b.kind === 'heading' && (b as any).level === 3)
+      .map(b => (b as any).text);
+    expect(titles).toEqual(HOSTILE_TABLES.map(t => t.title));
   });
 
-  it('keeps a pipe that is part of a cell value inside its cell', () => {
-    const md = renderComposedSectionMarkdown('X', '', [
-      { title: 'T', headers: ['a', 'b'], rows: [['x | y', 'z']] },
+  it('files "1*10^3 CFU/g" with its asterisk, end to end through the PDF', async () => {
+    const pdf = await renderComposedSectionLeafPdf(
+      renderComposedSectionMarkdown('3.2.P.5.1 Specifications', HOSTILE_NARRATIVE, HOSTILE_TABLES),
+      { title: 'Specifications', sectionCode: 'm3.2.P.5.1' }
+    );
+    const text = (await pdfPages(pdf)).join(' ');
+    expect(text).toContain('1*10^3 CFU/g');
+    expect(text).toContain('2*3 kg');
+    expect(text).toContain('# not a heading');
+    expect(text).toContain('98.0–102.0% | anhydrous');
+  });
+
+  it('keeps content that is not in the composer’s format whole, as literal paragraphs', () => {
+    const text = '### Not a table\n\n| a |\nno separator row';
+    expect(composedSectionToBlocks(text)).toEqual([
+      { kind: 'paragraph', text: '### Not a table' },
+      { kind: 'paragraph', text: '| a |\nno separator row' },
     ]);
-    const table = markdownToTypesetBlocks(md).find(b => b.kind === 'table') as any;
-    expect(table.rows).toEqual([['x | y', 'z']]);
   });
 });
 
 describe('renderTypesetLeafPdf — determinism and tables', () => {
   it('is byte-deterministic', async () => {
     const opts = { title: LABEL, sectionCode: 'm3.2.S.4.1' };
-    const a = await renderMarkdownLeafPdf(MARKDOWN, opts);
-    const b = await renderMarkdownLeafPdf(MARKDOWN, opts);
+    const a = await renderComposedSectionLeafPdf(MARKDOWN, opts);
+    const b = await renderComposedSectionLeafPdf(MARKDOWN, opts);
     expect(a.equals(b)).toBe(true);
   });
 
@@ -271,7 +312,10 @@ describe('renderTypesetLeafPdf — orientation and bookmarks', () => {
   });
 
   it('bookmarks each heading under the document, on the page it is drawn', async () => {
-    const pdf = await renderMarkdownLeafPdf(MARKDOWN, { title: LABEL, sectionCode: 'm3.2.S.4.1' });
+    const pdf = await renderComposedSectionLeafPdf(MARKDOWN, {
+      title: LABEL,
+      sectionCode: 'm3.2.S.4.1',
+    });
     const [root] = await outline(pdf);
     expect(String(root.title)).toContain('m3.2.S.4.1');
     expect(root.items.map((n: any) => String(n.title))).toEqual([LABEL]);
