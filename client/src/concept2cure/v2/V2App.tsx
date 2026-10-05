@@ -42,6 +42,7 @@ import {
   readDirectiveProgram,
   validateDriveAction,
 } from './surfaceActions';
+import { waitingForPerson } from './anaWorkModel';
 import { LiveDriveOverlay } from './LiveDriveOverlay';
 import { LiveDriveControlsContext } from './LiveDriveSwitch';
 import { RunPolicyContext } from './RunPolicySwitch';
@@ -1301,6 +1302,19 @@ export function V2App() {
         activity={driveActivity}
         narration={ownsConversation ? driveNarration : undefined}
         onTakeOver={takeOverDrive}
+        /* Held for a person (a Manual hold, an approval): the strip says she is
+           waiting, not driving (row 74, F2). Known for the shell's own chat;
+           when another chat drives, its state is not visible here, so the
+           strip keeps its wording rather than guess. */
+        waiting={
+          driveControlsRef.current
+            ? null
+            : waitingForPerson(
+                [...anaChat.messages].reverse().find((m) => m.role === 'assistant') ?? null,
+                anaChat.runStatus,
+                anaChat.runHold,
+              )
+        }
         /* Stop and steer reach the chat that is DRIVING, which is not always
            the shell's own (the editor dock's, the co-author's). Stop ends the
            drive first: the stopped run keeps streaming until its cancel is

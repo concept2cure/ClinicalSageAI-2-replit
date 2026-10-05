@@ -29,8 +29,15 @@ export function LiveDriveOverlay({
   onTakeOver,
   onStop,
   onSteer,
+  waiting,
 }: {
   state: LiveDriveState;
+  /**
+   * AnA is held for a person (anaWorkModel.waitingForPerson): a Manual hold or
+   * an approval she asked for. She is not driving then, and the strip says so
+   * (row 74, end-to-end finding F2).
+   */
+  waiting?: 'manual' | 'approval' | null;
   /**
    * What AnA is doing RIGHT NOW — the running tool's label (or the turn's
    * status phase) from the live stream. Only ever a label the turn genuinely
@@ -117,7 +124,7 @@ export function LiveDriveOverlay({
     <div className="ana-drive-strip" role="status" aria-live="polite" data-mode={mode}>
       <div className="ana-drive-row">
         <span className="ana-drive-dot" aria-hidden="true" />
-        <span className="ana-drive-title">{demo ? 'AnA is demonstrating' : 'AnA is driving'}</span>
+        <span className="ana-drive-title">{waiting ? 'AnA is waiting for you' : demo ? 'AnA is demonstrating' : 'AnA is driving'}</span>
         {demo && moves > 0 && (
           <span className="ana-drive-count">{moves} {moves === 1 ? 'stop' : 'stops'}</span>
         )}
