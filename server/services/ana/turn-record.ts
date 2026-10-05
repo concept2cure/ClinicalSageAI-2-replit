@@ -61,8 +61,12 @@ import type { TurnPlanStep } from './turn-plan.js';
 import type { ContextUsedEvent } from './turn-context-used.js';
 import type { TurnVerification } from './turn-verification.js';
 
-/** /2 (2026-10-04) adds `verification`. A /1 record has no such section. */
-export const TURN_RECORD_SCHEMA = 'ana-turn-record/2';
+/**
+ * /2 (2026-10-04) adds `verification`. A /1 record has no such section.
+ * /3 (2026-10-05, AnA reasoning round 9) adds `routing`, and on each model
+ * call its gateway `requestId` and what it was `sent`.
+ */
+export const TURN_RECORD_SCHEMA = 'ana-turn-record/3';
 export const TURN_RECORD_AUDIT_ACTION = 'ana.turn.recorded';
 export const TURN_RECORD_RESOURCE = 'ana_turn_record';
 
@@ -171,8 +175,24 @@ export interface TurnRecordBody {
      * results both belong to round 1, so the call number is what orders them.
      * A model the gateway did not report is recorded as null, not omitted.
      */
-    calls: Array<{ call: number; round: number; provider: string | null; model: string | null }>;
+    calls: Array<{
+      call: number;
+      round: number;
+      provider: string | null;
+      model: string | null;
+      /** The gateway request the call was, which joins it to the ledger row (D6). Null when not reported. */
+      requestId: string | null;
+      /** What the call asked for. Null where the door does not say. */
+      sent: CallSent | null;
+    }>;
   };
+  /**
+   * How the kernel routed the turn, and why: the risk tier that decides the
+   * model, the thinking and the effort (rounds 4 and 7). Null where the door
+   * does not hand its routing over, as the loop doors (turn-record-loop.ts)
+   * do not.
+   */
+  routing: { riskTier: string; taskType: string; rationale: string } | null;
   plan: Array<{ round: number; at: string; steps: TurnPlanStep[] }>;
   steps: RecordedStep[];
   /** Pause, steer and stop, as the run row holds them. Null when they could not be read — never an empty list standing in for "none". */
@@ -191,6 +211,29 @@ export interface TurnRecordBody {
    */
   verification: TurnVerification | null;
   warnings: string[];
+}
+
+/**
+ * What one model call asked for: its API effort, its thinking config, the
+ * tools it offered (by name — never their schemas) and its tool choice.
+ */
+export interface CallSent {
+  effort: string | null;
+  thinking: { enabled: boolean; budgetTokens: number | null } | null;
+  tools: string[];
+  toolChoice: string | null;
+}
+
+/** A call's sent facts, read from the request the stream built. */
+export function callSent(req: {
+  apiEffort?: string | null;
+  thinking?: { enabled?: boolean; budgetTokens?: number } | null;
+  tools?: ReadonlyArray<{ name?: string }>;
+  toolChoice?: string | null;
+}): CallSent {
+  const thinking = req.thinking ? { enabled: req.thinking.enabled === true, budgetTokens: req.thinking.budgetTokens ?? null } : null;
+  const tools = (req.tools ?? []).map((t) => t.name).filter((n): n is string => typeof n === 'string');
+  return { effort: req.apiEffort ?? null, thinking, tools, toolChoice: req.toolChoice ?? null };
 }
 
 export function sha256Hex(text: string | Buffer): string {
@@ -239,6 +282,7 @@ export class TurnRecorder {
   private answer: TurnRecordBody['answer'] = { streamed: null, stored: null };
   private outputs: TurnRecordBody['outputs'] = { drafts: [], executedActions: [], executedCommands: [] };
   private verification: TurnVerification | null = null;
+  private routing: TurnRecordBody['routing'] = null;
   private readonly warnings: string[] = [];
   private streamedSoFar = '';
 
@@ -334,9 +378,25 @@ export class TurnRecorder {
     if (m.effort !== undefined) this.model.effort = m.effort ?? null;
   }
 
-  /** A model call returned; recorded in call order. */
-  addServed(round: number, served: { provider?: string | null; model?: string | null }): void {
-    this.model.calls.push({ call: this.model.calls.length + 1, round, provider: served.provider ?? null, model: served.model ?? null });
+  /** A model call returned; recorded in call order, with what it was sent when the door says. */
+  addServed(
+    round: number,
+    served: { provider?: string | null; model?: string | null; requestId?: string | null },
+    sent?: CallSent,
+  ): void {
+    this.model.calls.push({
+      call: this.model.calls.length + 1,
+      round,
+      provider: served.provider ?? null,
+      model: served.model ?? null,
+      requestId: served.requestId ?? null,
+      sent: sent ?? null,
+    });
+  }
+
+  /** How the kernel routed the turn (planKernelExecution's plan). */
+  setRouting(plan: { riskTier: string; taskType: string; decisionRationale: string }): void {
+    this.routing = { riskTier: plan.riskTier, taskType: plan.taskType, rationale: plan.decisionRationale };
   }
 
   addPlan(round: number, steps: TurnPlanStep[]): void {
@@ -479,6 +539,7 @@ export class TurnRecorder {
       answer: this.answer,
       outputs: this.outputs,
       verification: this.verification,
+      routing: this.routing,
       warnings: this.warnings,
     };
     const text = canonicalJson(body);

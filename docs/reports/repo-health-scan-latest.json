@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-05T07:12:34.965Z",
+  "generatedAt": "2026-10-05T11:31:27.600Z",
   "git": {
-    "sha": "76e7528cdaaea0549bf0c5467da71f851dc47738",
+    "sha": "65b92951b1735d9652cd5ae5b1c676ffec01e244",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2085,12 +2085,12 @@
         "bytes": 184207
       },
       {
-        "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 168316
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 168634
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 167906
+        "file": "server/routes/c2c/artifacts.ts",
+        "bytes": 168316
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2312,7 +2312,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3330
+        "lines": 3340
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2636,7 +2636,7 @@
       },
       {
         "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 1660
+        "lines": 1664
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",

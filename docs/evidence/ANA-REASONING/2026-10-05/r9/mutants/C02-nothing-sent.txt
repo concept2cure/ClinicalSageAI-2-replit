@@ -1,0 +1,14 @@
+Mutant C02-nothing-sent: a call no longer says what it was sent, as before MC-RL-8
+
+--- server/services/ana/turn-record.ts
+- sent: sent ?? null,
++ sent: null,
+
+Tests run: server/services/ana/__tests__/turn-record-sent.test.ts server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > is on the record, call by call, with the gateway request that joins it to the ledger 12ms
+ × server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > each call's request, effort, thinking and tools are what the gateway received; the closing call's tool choice too 62ms
+ × server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > a closing call told to call no tool is recorded as told so 11ms
+      Tests  3 failed | 3 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,13 @@
+Mutant R04-closure-drops-sent: the loop's record call drops what was sent
+
+--- server/routes/ana-ri/stream.ts
+- turnRecorder?.addServed(round, served, sent);
++ turnRecorder?.addServed(round, served);
+
+Tests run: server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > each call's request, effort, thinking and tools are what the gateway received; the closing call's tool choice too 50ms
+ × server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > a closing call told to call no tool is recorded as told so 23ms
+      Tests  2 failed | 1 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
