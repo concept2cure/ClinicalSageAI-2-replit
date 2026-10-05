@@ -260,7 +260,7 @@ export const EXTRACT_SUBMISSION_DOCUMENT: AnaTool = {
 export const RUN_SHADOW_REVIEW: AnaTool = {
   name: 'run_shadow_review',
   description:
-    'Run a shadow review on an assembled sequence — a simulated reviewer pass that returns severity-scored Refuse-to-File and Complete-Response-risk findings, each with a regulatory basis and a fix, plus rtf/crl risk scores. You pass the sequence id and an optional reviewer lens; tenant and acting user come from the active context. The run and its findings are persisted and the AI call is audited. Use this before dispatch to surface what a reviewer would reject.',
+    'Run a shadow review on an assembled sequence — a simulated reviewer pass that returns severity-scored Refuse-to-File and Complete-Response-risk findings, each with a regulatory basis and a fix, plus rtf/crl gate scores computed by the server from the severities of those findings (scoreBasis: severity_aggregate; the reviewer model reports no figure). You pass the sequence id and an optional reviewer lens; tenant and acting user come from the active context. The run and its findings are persisted and the AI call is audited. Use this before dispatch to surface what a reviewer would reject.',
   input_schema: {
     type: 'object',
     properties: {

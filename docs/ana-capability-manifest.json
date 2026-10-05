@@ -20,21 +20,21 @@
     "none": "No dedicated rendering (discovery/utility)."
   },
   "totals": {
-    "tools": 762,
+    "tools": 789,
     "byCategory": {
       "Authoring & rendering": 28,
-      "Biostatistics": 11,
-      "Clinical (M5 / M2)": 29,
+      "Biostatistics": 12,
+      "Clinical (M5 / M2)": 30,
       "Clinical pharmacology": 8,
       "CMC / Quality (M3)": 27,
       "Device / IVD": 24,
-      "Evidence & intelligence": 51,
+      "Evidence & intelligence": 52,
       "Governance & data": 13,
       "Nonclinical (M4)": 13,
-      "Other": 503,
+      "Other": 526,
       "Platform control": 2,
       "Quality management": 17,
-      "Submission / eCTD": 36
+      "Submission / eCTD": 37
     }
   },
   "tools": [
@@ -196,7 +196,7 @@
           "name": "template_path",
           "type": "string",
           "required": true,
-          "description": "Path to the uploaded DOCX template file"
+          "description": "The DOCX template, in your organization's AnA workspace (one of your uploads, or a path an earlier document tool returned); other paths are refused"
         },
         {
           "name": "replacements",
@@ -263,7 +263,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -319,7 +319,7 @@
           "name": "input_docx_path",
           "type": "string",
           "required": true,
-          "description": "Absolute path to the source .docx file. Typically the outputPath returned by a prior generate_document / fetch_template_and_fill / assemble_ectd_module_from_artifacts call."
+          "description": "The source .docx, in your organization's AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization's uploads; other paths are refused. Typically the outputPath returned by a prior generate_do"
         },
         {
           "name": "output_pdf_path",
@@ -385,7 +385,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -660,7 +660,7 @@
         "id": "authoring",
         "label": "Authoring & rendering"
       },
-      "description": "Generate a properly formatted regulatory citation for a given source. Supports FDA guidance, ICH guidelines, EU MDR articles, journal articles, and 21 CFR references.",
+      "description": "Format a citation, labelled with what it rests on. A journal article (PMID or DOI, else a title) is looked up in PubMed / Crossref and formatted from the record found — or not formatted at all when it cannot be verified. An ICH guideline takes its title from the ICH corpus. FDA guidance, 21 CFR, EU MDR and ISO citations are formatted from the identifier given and labelled not verified. Journal styles: Vancouver or AMA.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -676,13 +676,13 @@
           "name": "source_identifier",
           "type": "string",
           "required": true,
-          "description": "Source identifier (guidance number, DOI, CFR section, etc.)"
+          "description": "Source identifier (PMID, DOI, ICH code, CFR section, guidance title, article, standard number)"
         },
         {
           "name": "citation_style",
           "type": "string",
           "required": false,
-          "description": "Citation style (default: regulatory)"
+          "description": "Citation style for a journal article (default: Vancouver)"
         }
       ],
       "requiredInputs": [
@@ -737,7 +737,7 @@
           "name": "template_path",
           "type": "string",
           "required": false,
-          "description": "Optional: path to a client-uploaded DOCX template to use as base"
+          "description": "Optional: a DOCX template in your organization's AnA workspace (one of your uploads, or a path an earlier document tool returned) to use as base; other paths are refused"
         },
         {
           "name": "replacements",
@@ -796,7 +796,7 @@
           "name": "input_docx_path",
           "type": "string",
           "required": true,
-          "description": "Absolute path to the source .docx to edit (e.g. a docxPath from author_docx_native, generate_document, fetch_template_and_fill, or an uploaded template)."
+          "description": "The source .docx to edit, in your organization's AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization's uploads; other paths are refused (e.g. a docxPath from author_docx_native, generat"
         },
         {
           "name": "clause",
@@ -885,7 +885,7 @@
         "id": "authoring",
         "label": "Authoring & rendering"
       },
-      "description": "Overlay text, images, or regulatory stamps onto specific coordinates of an existing PDF template. Use for form filling, adding signatures, watermarks, approval stamps, or finalizing templates with positioned content. Supports multi-page overlay.",
+      "description": "Currently unavailable: no PDF overlay engine is connected, so this applies nothing and returns status \"unavailable\". Do not use it to place text or stamps on a PDF; tell the user it cannot be done here yet.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -907,7 +907,7 @@
           "name": "output_path",
           "type": "string",
           "required": false,
-          "description": "Path for the finalized output PDF"
+          "description": "Where an overlaid PDF would be written; nothing is written while this is unavailable"
         }
       ],
       "requiredInputs": [
@@ -958,7 +958,7 @@
         "id": "authoring",
         "label": "Authoring & rendering"
       },
-      "description": "Rasterize (render as image) a specific page of a DOCX or PDF document for visual inspection. Returns a PNG image of the page. Use when the user wants to preview, inspect, or visually verify a generated document page.",
+      "description": "Render one page of a PDF or DOCX in the organization's document workspace (an upload included) to a PNG file. Returns the PNG's path, page count, pixel size, dpi and SHA-256 — or an error naming why no page was rendered. A DOCX is converted to PDF first; a very large page is rendered at a lower dpi. The PNG is a file on the server: it is not shown to the user or to you.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -968,19 +968,19 @@
           "name": "document_path",
           "type": "string",
           "required": true,
-          "description": "Path to the DOCX or PDF document"
+          "description": "Path of the PDF or DOCX in the organization's document workspace"
         },
         {
           "name": "page_number",
           "type": "number",
           "required": false,
-          "description": "Page number to rasterize (1-based)"
+          "description": "Page to render (1-based, default 1)"
         },
         {
           "name": "dpi",
           "type": "number",
           "required": false,
-          "description": "Resolution in DPI (default: 150)"
+          "description": "Resolution, 36–300 (default 150)"
         }
       ],
       "requiredInputs": [
@@ -1022,7 +1022,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -1047,7 +1047,7 @@
           "name": "input_docx_path",
           "type": "string",
           "required": true,
-          "description": "Absolute path to the source .docx to edit (e.g. a docxPath from author_docx_native or an uploaded document)."
+          "description": "The source .docx to edit, in your organization's AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization's uploads; other paths are refused (e.g. a docxPath from author_docx_native or an up"
         },
         {
           "name": "operations",
@@ -1084,7 +1084,7 @@
           "name": "input_docx_path",
           "type": "string",
           "required": true,
-          "description": "Absolute path to the .docx to validate."
+          "description": "The .docx to validate, in your organization's AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization's uploads; other paths are refused."
         }
       ],
       "requiredInputs": [
@@ -1108,7 +1108,7 @@
           "name": "input_docx_path",
           "type": "string",
           "required": true,
-          "description": "Absolute path to the built/edited .docx to verify (e.g. a docxPath returned by author_docx_native, build_from_template, or surgical_docx_xml_edit)."
+          "description": "The built/edited .docx to verify, in your organization's AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization's uploads; other paths are refused (e.g. a docxPath returned by author_docx_"
         },
         {
           "name": "expected_text",
@@ -1691,7 +1691,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Reason for change, in the human's own words, recorded on the 21 CFR Part 11 audit row. Ask for it; do not invent one."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -2395,6 +2395,30 @@
       "derived": true
     },
     {
+      "name": "review_dose_escalation_design",
+      "category": {
+        "id": "biostatistics",
+        "label": "Biostatistics"
+      },
+      "description": "READ-ONLY. Project the dose-escalation rules of the study design bound to a protocol document (projectDoseEscalation; BOIN, Liu & Yuan 2015; FDA dosage-optimization guidance, 2024): target toxicity, dose levels, cohort size, the escalation and de-escalation boundaries, and the per-cohort decision table with its elimination column — every number from the platform's BOIN engine (stats/dose-finding-boin.ts). The engine reads the study design BOUND to the protocol document; if none is bound, the tool returns an explanatory error and no result. That is not a clean result — say the engine did not run and suggest bind_protocol_to_study_design. Report status (rendered / partial / missing / not_applicable), the gaps and the table VERBATIM. A parameter whose source is \"engine default\" was NOT chosen by the sponsor — say so, never present it as the protocol's decision. An escalation-phase design with no rules comes back missing: that is a gap in the protocol, not a clean result. For free-standing what-if calculations use design_dose_finding instead.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "findings-list",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
+      "derived": true
+    },
+    {
       "name": "select_missing_data_strategy",
       "category": {
         "id": "biostatistics",
@@ -3003,7 +3027,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -4063,7 +4087,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -4093,6 +4117,36 @@
       ],
       "requiredInputs": [
         "deviation_id"
+      ],
+      "derived": true
+    },
+    {
+      "name": "review_deviation_trends",
+      "category": {
+        "id": "clinical",
+        "label": "Clinical (M5 / M2)"
+      },
+      "description": "READ-ONLY. Trend a protocol document's recorded deviations over a monthly window (trendDeviations; ICH E6(R3) risk-based quality management; TransCelerate KRI methodology): counts by month, category and severity; the reportable and major-or-critical shares; open-deviation ageing; CAPA closure lag; and any signals the engine's documented rules raise (DEV-CATEGORY-SPIKE, DEV-SEVERITY-RISE, DEV-AGING) with their evidence. Report every number and signal verbatim. A null share means there were no deviations to measure — say \"no deviations recorded\", never \"0%\". Values the replaced writer may have defaulted (byMonth[].legacyDefaults) are kept out of the shares and named; report them. The reportable share means a prompt IRB report is indicated (rates.reportableShareMeaning); every deviation is still reported to the sponsor. A spike the engine declined to declare for lack of prior months is not the absence of a problem; report the reason in the evidence. siteBreakdown.available is false because protocol_deviations carries no site linkage — say a per-site view is not available, and never attribute a deviation to a site.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        },
+        {
+          "name": "window_months",
+          "type": "number",
+          "required": false,
+          "description": "How many calendar months back from today to trend. Default 6. Between 1 and 36."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
       ],
       "derived": true
     },
@@ -5939,34 +5993,13 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Draft the Module 2.3 Quality Overall Summary (ICH M4Q) deterministically — the CMC summary of drug substance (3.2.S) and drug product (3.2.P). Supply the program's CMC source objects as cmcSources[]; the tool composes Module 3 through the platform's convergence engine and then builds the QOS, returning the 2.3.S / 2.3.P narrative, the headline tables, completeness, and the missing-section gaps. This is the deterministic, data-grounded counterpart to the generic generate_document path — parity with draft_nonclinical_overview_m2_4 / draft_clinical_overview_m2_5 / draft_clinical_summary_m2_7. Report completeness and gaps honestly.",
+      "description": "Draft the Module 2.3 Quality Overall Summary (ICH M4Q) of the OPEN program, deterministically, from the CMC data that program has recorded — the same source records and the same composition engine as its Module 3 build. Takes no CMC data: never pass figures, specifications or stability results; a call that does is refused. Returns the 2.3.S / 2.3.P narrative, the headline tables, completeness and the missing-section gaps, or says no program is open or that it has no recorded CMC data. Report completeness and gaps honestly.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
       "example": "",
-      "inputs": [
-        {
-          "name": "cmcSources",
-          "type": "array",
-          "required": true,
-          "description": "CMC source objects feeding Module 3 / the QOS."
-        },
-        {
-          "name": "drugSubstanceName",
-          "type": "string",
-          "required": false,
-          "description": ""
-        },
-        {
-          "name": "drugProductName",
-          "type": "string",
-          "required": false,
-          "description": ""
-        }
-      ],
-      "requiredInputs": [
-        "cmcSources"
-      ],
+      "inputs": [],
+      "requiredInputs": [],
       "derived": true
     },
     {
@@ -7701,7 +7734,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -7760,7 +7793,7 @@
         "id": "evidence",
         "label": "Evidence & intelligence"
       },
-      "description": "Verify that cited guidances in a document are still current by cross-referencing against the curated regulatory currency registry and ICH guideline step-date registry. DETERMINISTIC — pure cross-reference, no LLM, no network. For each cited guidance, reports whether it is current, its latest known date, and any staleness warnings. Use when reviewing a document's regulatory citations for currency.",
+      "description": "Check whether cited guidances are still current against the verified regulatory currency registry and the ICH step-date list. DETERMINISTIC — no LLM, no network. A citation is identified only by its ICH code, by a revision the registry records as superseded, or by an exact registry name; for those it reports current or not, the latest known date, and the registry entry and source it rests on. A citation it cannot identify is reported unverified (current: null) — never current. Use when reviewing a document's regulatory citations for currency.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -7950,7 +7983,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -8103,7 +8136,7 @@
         "id": "evidence",
         "label": "Evidence & intelligence"
       },
-      "description": "Search FDA guidance documents from the live FDA guidance API. Returns matching guidance documents with their title, issue date, topic, URL, and status. Use to check current FDA guidance on a topic before advising. Network-dependent — returns {status: \"unavailable\"} if the API is unreachable rather than guessing.",
+      "description": "List FDA guidance documents. No FDA guidance index is connected yet, so this returns {status: \"unavailable\"} with the reason; it never lists a guidance. Say an FDA guidance needs confirming unless the user supplied it.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -8321,29 +8354,17 @@
         "id": "evidence",
         "label": "Evidence & intelligence"
       },
-      "description": "Look up FDA guidance documents, regulations (21 CFR), and draft/final guidance relevant to a topic. Returns guidance title, document number, key requirements, and citation-ready references.",
+      "description": "Return the dated US regulatory facts the verified currency registry holds for a topic (for example the eSTAR mandates), each with its status, effective date and source. No FDA guidance index is connected, so this does not name guidance documents, docket numbers or their requirements; say an FDA guidance needs confirming unless the user supplied it.",
       "scope": "global",
       "governed": false,
-      "renderer": "document-canvas",
+      "renderer": "result-card",
       "example": "",
       "inputs": [
         {
           "name": "topic",
           "type": "string",
           "required": true,
-          "description": "Regulatory topic to look up (e.g., \"510(k) predicate comparison\", \"biocompatibility testing\")"
-        },
-        {
-          "name": "regulation_type",
-          "type": "string",
-          "required": false,
-          "description": "Type of regulatory document"
-        },
-        {
-          "name": "device_class",
-          "type": "string",
-          "required": false,
-          "description": "FDA device classification"
+          "description": "Regulatory topic to look up (e.g., \"510(k)\", \"eSTAR\", \"De Novo\")"
         }
       ],
       "requiredInputs": [
@@ -8817,6 +8838,42 @@
           "type": "number",
           "required": false,
           "description": "Max hits per store. Default 15, max 50."
+        }
+      ],
+      "requiredInputs": [
+        "query"
+      ],
+      "derived": true
+    },
+    {
+      "name": "search_authoring_sections",
+      "category": {
+        "id": "evidence",
+        "label": "Evidence & intelligence"
+      },
+      "description": "Search the authoring documents of the open project for a word or phrase in section titles, codes and text (case-insensitive and literal: % and _ are ordinary characters). Returns the matching sections in CTD order with their document, section id, code and a short snippet, 5 per page by default and at most 6; totalMatches counts them all, and when nextOffset is a number call again with offset set to it for the next page. Proposed changes in a snippet are labelled as in read_authoring_section. Read a hit in full with read_authoring_section. Read-only, and scoped to the open project. This is the authoring store (documents being written in the editor). Files in the project Vault — uploaded or filed PDFs and Word files — are listed with list_project_documents and read with read_project_document. search_project_documents searches the Vault.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "query",
+          "type": "string",
+          "required": true,
+          "description": "The word or phrase to find (2–200 characters)."
+        },
+        {
+          "name": "limit",
+          "type": "number",
+          "required": false,
+          "description": "Most hits per page (default 5, max 6)."
+        },
+        {
+          "name": "offset",
+          "type": "number",
+          "required": false,
+          "description": "The nextOffset of the previous page. Omit for the first page."
         }
       ],
       "requiredInputs": [
@@ -9468,7 +9525,7 @@
         "id": "evidence",
         "label": "Evidence & intelligence"
       },
-      "description": "Semantic search over the CATALOGED project files — \"which of the client's documents covers X?\". Matches against the comprehension records written by catalog_project_document (kind, purpose, summary, key data after a full read), so every hit is a document that has actually been studied. The response also states how many documents are NOT yet searchable (uncataloged or failed extraction) — absence from these results never means the file does not exist; use list_project_documents for full discovery. If the semantic index is unavailable the tool says so instead of returning an empty result.",
+      "description": "Search the client's Vault documents — \"which of the client's documents covers X?\". Always available: it matches the words of the query against every current document's title, file name and full extracted text (the same search the Vault gives users), ranks documents that match more of the words higher, and returns a snippet for a match in the body. Prefer distinctive terms (study ids, batch numbers, product names, CTD sections). When the organisation's catalog is on and a semantic index is available, documents matching by meaning are added (matchedBy \"meaning\", with the recorded summary and key data). A text match means the words appear, not that the document answers the question: read_project_document before relying on it.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -9669,7 +9726,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -9806,7 +9863,7 @@
         "id": "governance",
         "label": "Governance & data"
       },
-      "description": "Cross-check a claim against other parts of the dossier for consistency along a named dimension (e.g. subject-counts, spec-vs-qos, label-vs-safety), and record each verdict (match or conflict) as a consistency finding. Tenant comes from the active context; the call is audited. Use it to catch contradictions before review.",
+      "description": "Compare the labelled figures in a claim (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value) with the same figures in other parts of the dossier, by deterministic extraction, and record each as a consistency finding: match when they agree, conflict when they do not. A source sharing no labelled figure with the claim is returned as notCompared — not a finding of consistency. Prose claims are not compared. Tenant comes from the active context; the call is audited.",
       "scope": "project",
       "governed": false,
       "renderer": "findings-list",
@@ -9822,7 +9879,7 @@
           "name": "dimension",
           "type": "string",
           "required": true,
-          "description": "What is being checked, e.g. \"subject-counts\"."
+          "description": "What is being checked, recorded with each finding, e.g. \"subject-counts\"."
         },
         {
           "name": "left",
@@ -9851,7 +9908,7 @@
         "id": "governance",
         "label": "Governance & data"
       },
-      "description": "Cross-check a drafted artifact against other artifacts in the same project for factual consistency — sample sizes, p-values, dose levels, NOAEL, shelf life, endpoint definitions, and CTD section cross-references. Surfaces the class of divergences that cause FDA RTFs and EMA IRs: the same labelled quantity stated with different values across Module 2 and Module 5, section references that point to non-existent targets, dose mismatches between nonclinical and clinical sections. Call this AFTER drafting a CTD section or regulatory document but BEFORE recommending it for the dossier. Returns a verdict (clean | minor_issues | needs_review | blocker) with per-divergence severity, the conflicting values, and a pointer to the source artifact — so the author can resolve the inconsistency or justify it explicitly.",
+      "description": "Cross-check a drafted artifact against other artifacts in the same project for factual consistency — sample sizes, p-values, dose levels, NOAEL, shelf life, endpoint definitions, and CTD section cross-references. Surfaces the class of divergences that cause FDA RTFs and EMA IRs: the same labelled quantity stated with different values across Module 2 and Module 5, section references that point to non-existent targets, dose mismatches between nonclinical and clinical sections. Call this AFTER drafting a CTD section or regulatory document but BEFORE recommending it for the dossier. Returns a verdict (clean | minor_issues | needs_review | blocker | not_assessed) with per-divergence severity, the conflicting values, and a pointer to the source artifact — so the author can resolve the inconsistency or justify it explicitly. not_assessed means nothing was compared (notAssessedReason says why); it is not a clean result, so never call such a draft consistent.",
       "scope": "project",
       "governed": false,
       "renderer": "document-canvas",
@@ -9879,7 +9936,7 @@
           "name": "exclude_artifact_id",
           "type": "number",
           "required": false,
-          "description": "Optional numeric artifact id to exclude from comparison — used when re-checking a revision of an existing artifact so it does not compare against its prior version."
+          "description": "Optional numeric artifact id to exclude from comparison — used when re-checking a revision of an existing artifact so it does not compare against its prior version. A project document whose text is exactly the draft's is set aside without i"
         }
       ],
       "requiredInputs": [
@@ -9894,7 +9951,7 @@
         "id": "governance",
         "label": "Governance & data"
       },
-      "description": "Scan a single drafted artifact for same labelled quantity stated with multiple distinct values. Surfaces candidates like: sample size N=648 in the narrative but N=641 in Table 14.1; p<0.001 in text but p<0.01 in the forest plot; 100 mg/kg NOAEL in one paragraph and 200 mg/kg two pages later. This is the classic 'numbers drift between text and table' failure that triggers FDA RTFs. The checker reports CANDIDATES — multi-arm studies legitimately report different N per arm or timepoint — so the author or model must adjudicate whether each candidate is a real inconsistency or documented variance. Call this AFTER drafting a regulatory artifact containing numerical claims and BEFORE finalizing. Returns verdict (clean | review_candidates | likely_inconsistency) with per-candidate severity and context snippets.",
+      "description": "Scan a single drafted artifact for same labelled quantity stated with multiple distinct values. Surfaces candidates like: sample size N=648 in the narrative but N=641 in Table 14.1; p<0.001 in text but p<0.01 in the forest plot; 100 mg/kg NOAEL in one paragraph and 200 mg/kg two pages later. This is the classic 'numbers drift between text and table' failure that triggers FDA RTFs. The checker reports CANDIDATES — multi-arm studies legitimately report different N per arm or timepoint — so the author or model must adjudicate whether each candidate is a real inconsistency or documented variance. Call this AFTER drafting a regulatory artifact containing numerical claims and BEFORE finalizing. Returns verdict (clean | review_candidates | likely_inconsistency | not_assessed) with per-candidate severity and context snippets. not_assessed means no labelled quantity is stated twice, so nothing was compared (notAssessedReason says why); it is not a clean result.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -10051,7 +10108,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -10177,7 +10234,7 @@
         "id": "governance",
         "label": "Governance & data"
       },
-      "description": "Validate cross-references within a document — check that cited sections exist, table/figure numbers are correct, and internal references are consistent.",
+      "description": "Check CTD section references (\"Section 3.2.P.5.1\", \"Module 2.7.3\", \"m2.5\") against the section outlines of one of the organization's documents and the other documents in its project. Each reference is reported found in this document, found in another document of the project (named), present only as a parent section, or not found. Table and figure numbers are not assessed.",
       "scope": "project",
       "governed": false,
       "renderer": "findings-list",
@@ -10187,17 +10244,18 @@
           "name": "document_id",
           "type": "string",
           "required": true,
-          "description": "Internal document ID to validate"
+          "description": "The document the references are in (a governed document id, e.g. 'doc_…')."
         },
         {
           "name": "section_references",
           "type": "array",
-          "required": false,
-          "description": "List of section references to validate (e.g., [\"Section 3.2\", \"Table 4\", \"Figure 1\"])"
+          "required": true,
+          "description": "The references to check (e.g., [\"Section 3.2.P.5.1\", \"Module 2.7.3\"])"
         }
       ],
       "requiredInputs": [
-        "document_id"
+        "document_id",
+        "section_references"
       ],
       "derived": true
     },
@@ -10503,7 +10561,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -10993,7 +11051,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11042,7 +11100,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11093,7 +11151,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11148,7 +11206,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11217,7 +11275,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11347,7 +11405,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11403,7 +11461,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11448,7 +11506,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11504,7 +11562,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11554,7 +11612,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11657,7 +11715,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11719,7 +11777,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11775,7 +11833,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11830,7 +11888,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11885,7 +11943,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11952,7 +12010,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -11995,7 +12053,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -12944,7 +13002,7 @@
           "name": "reason",
           "type": "string",
           "required": true,
-          "description": "Reason for change — REQUIRED. Recorded on the audit trail and the resolution plan. Ask the user for it if not supplied."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         },
         {
           "name": "tolerance",
@@ -12987,7 +13045,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Reason for change, in the human's own words, recorded on the 21 CFR Part 11 audit row. Ask for it; do not invent one."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -13101,7 +13159,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assemble a Pre-IND / End-of-Phase-2 (or other Type A/B/C) regulatory-agency MEETING BRIEFING BOOK from a RegAgencyMeeting and stress-test the sponsor's questions against anticipated FDA pushback. Produces the four mandatory sections (Background, Product Development Objectives, Questions for the Agency, Supporting-Data Summary) as markdown ready for author_docx_native, plus the required_strings (the mandatory section headers AND each enumerated sponsor question, verbatim) to pass to verify_docx_against_source. When run_premortem is set, it also surfaces the anticipated reviewer pushback per sponsor question by folding in simulate_reviewer_challenges + run_submission_premortem — labelled ANTICIPATED, never an actual agency position. Honest by construction: a book assembled from sample/fixture meeting data (no live meeting id supplied) is marked not_assessed and is NOT sealable or exportable. Tenant context is injected from the request.",
+      "description": "Assemble a Pre-IND / End-of-Phase-2 (or other Type A/B/C) regulatory-agency MEETING BRIEFING BOOK from a RegAgencyMeeting and stress-test the sponsor's questions against anticipated FDA pushback. Produces the four mandatory sections (Background, Product Development Objectives, Questions for the Agency, Supporting-Data Summary) as markdown ready for author_docx_native, plus the required_strings (the mandatory section headers AND each enumerated sponsor question, verbatim) to pass to verify_docx_against_source. When run_premortem is set, it also surfaces the anticipated reviewer pushback per sponsor question by folding in simulate_reviewer_challenges + run_submission_premortem — labelled ANTICIPATED, never an actual agency position. The book is built ONLY from what you supply: meeting_type and key_questions are required, and background, objectives and supporting data come from the sponsor or are stated as not yet supplied — no sample meeting, sponsor or clinical history is ever substituted. Tenant context is injected from the request.",
       "scope": "project",
       "governed": false,
       "renderer": "document-canvas",
@@ -13111,18 +13169,18 @@
           "name": "meeting_id",
           "type": "string",
           "required": false,
-          "description": "Optional id of a live RegAgencyMeeting to build from. When omitted, a labelled fixture EOP2 meeting is used and the resulting book is marked sample / not_assessed."
+          "description": "Optional identifier of the meeting this book is for. It is carried as an identifier; meeting content is not loaded from it."
         },
         {
           "name": "meeting_type",
           "type": "string",
-          "required": false,
-          "description": "Meeting type. Defaults to the fixture meeting type (eop2) when no live meeting is supplied."
+          "required": true,
+          "description": "Meeting type. Required."
         },
         {
           "name": "key_questions",
           "type": "array",
-          "required": false,
+          "required": true,
           "description": "The sponsor's enumerated questions for the agency. Each becomes a required_string and a pre-mortem row."
         },
         {
@@ -13144,6 +13202,36 @@
           "description": "Sponsor name."
         },
         {
+          "name": "division",
+          "type": "string",
+          "required": false,
+          "description": "FDA review division, if known."
+        },
+        {
+          "name": "meeting_date",
+          "type": "string",
+          "required": false,
+          "description": "Requested or scheduled meeting date, if known."
+        },
+        {
+          "name": "background",
+          "type": "array",
+          "required": false,
+          "description": "Background paragraphs, in the sponsor's words. Omit rather than invent."
+        },
+        {
+          "name": "objectives",
+          "type": "array",
+          "required": false,
+          "description": "Development objectives for the meeting."
+        },
+        {
+          "name": "supporting_data",
+          "type": "array",
+          "required": false,
+          "description": "Supporting-data summary bullets, from the sponsor's actual data. Omit rather than invent."
+        },
+        {
           "name": "run_premortem",
           "type": "boolean",
           "required": false,
@@ -13162,7 +13250,10 @@
           "description": "Submission-twin assessment id for simulate_reviewer_challenges (optional)."
         }
       ],
-      "requiredInputs": [],
+      "requiredInputs": [
+        "meeting_type",
+        "key_questions"
+      ],
       "derived": true
     },
     {
@@ -17226,7 +17317,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -17686,7 +17777,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -17702,7 +17793,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Record durable comprehension of a vault document you have just read IN FULL: what kind of document it is, what it is for, a faithful summary, and the key data inside it (study IDs, dates, doses, endpoints, sample sizes, batch numbers — whatever the document actually carries). This is what makes the file remembered: the record is embedded for semantic recall and surfaced at the start of future sessions alongside the document's filed location. The write is REFUSED unless your read receipts cover the entire extracted text — if refused, the response lists the exact unread ranges; go read them with read_project_document and try again. Never invent content to fill key_data: record only what the text states.",
+      "description": "Record durable comprehension of a vault document you have just read IN FULL: what kind of document it is, what it is for, a faithful summary, and the key data inside it (study IDs, dates, doses, endpoints, sample sizes, batch numbers — whatever the document actually carries). This is what makes the file remembered: the record is embedded for semantic recall and surfaced at the start of future sessions alongside the document's filed location. The write is REFUSED unless your read receipts cover the entire extracted text — if refused, the response lists the exact unread ranges; go read them with read_project_document and try again. Every key_data value is then VERIFIED against the extracted text before anything is stored: each string or number must appear in the document as a whole token, so copy it exactly as the document writes it (identifiers, figures, units — differences of dash, space and letter case are tolerated, a different digit is not). A figure you computed, converted, corrected or inferred is not in the text and is refused; true/false/null are judgements, not transcriptions, and are refused — say those in the summary. One unverifiable value refuses the whole write, and the response names each one by path in unverifiedKeyData; correct or drop exactly those and catalog again.",
       "scope": "project",
       "governed": false,
       "renderer": "document-canvas",
@@ -17736,7 +17827,7 @@
           "name": "key_data",
           "type": "object",
           "required": false,
-          "description": "Structured facts extracted from the text: identifiers, dates, quantities, endpoints, results. Keys of your choosing; values exactly as stated in the document."
+          "description": "Structured facts transcribed from the text: identifiers, dates, quantities, endpoints, results. Keys of your choosing (they are not checked); every value a string or number copied exactly as the document writes it, and verified against the "
         }
       ],
       "requiredInputs": [
@@ -17854,7 +17945,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Check a document section against specific regulatory requirements. Returns compliance status, gaps, and recommended remediation for each requirement.",
+      "description": "Keyword scan of a document section: reports which expected topics the text MENTIONS for fda_510k or eu_mdr. It does not determine compliance — mentioning a topic is not meeting the requirement — and it returns not_assessed for frameworks it has no scan for (fda_pma, ich_e6, ich_e8, ich_e9, 21cfr_part11). Never present its output as a compliance verdict.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -18219,7 +18310,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -18840,7 +18931,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -18980,7 +19071,7 @@
           "name": "reason_for_change",
           "type": "string",
           "required": false,
-          "description": "Reason-for-change recorded on the version and the audit event (Part 11 E6b)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         },
         {
           "name": "ctd_section",
@@ -19335,10 +19426,10 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Compute the eCTD lifecycle operator (new, replace, append, or delete) for each leaf of a new sequence by diffing it against the prior sequence. You get every leaf with its computed operation plus a summary count (new, replace, append, delete, unchanged), and every replace/append/delete carries an ICH modified-file pointer at the prior leaf it acts on. Two ways to supply the prior state: (a) list prior_leaves by hand, each with its published href, plus prior_sequence_prefix; or (b) give application_number + prior_sequence_number and the prior sequence's stored leaf manifest is loaded automatically from your organization's compilation history (the prefix is derived for you). Nothing is written. Use it when planning a sequence so the user sees exactly which leaves change.",
+      "description": "Compute the eCTD lifecycle operator (new, replace, append, or delete) for each leaf of a new sequence by diffing it against the prior sequence. You get every leaf with its computed operation plus a summary count (new, replace, append, delete, unchanged), and every replace/append/delete carries an ICH modified-file pointer at the prior leaf it acts on, naming that leaf by its sequence's backbone and its leaf ID (e.g. ../0000/index.xml#leaf-3-2-S-1-general). Two ways to supply the prior state: (a) list prior_leaves by hand, each with the leaf_id and backbone its sequence recorded, plus prior_sequence_prefix — a prior leaf listed without them gets no pointer, because a leaf is never named by its file path; or (b) give application_number + prior_sequence_number and the prior sequence's stored leaf manifest is loaded automatically from your organization's compilation history (the prefix is derived for you). Nothing is written. Use it when planning a sequence so the user sees exactly which leaves change.",
       "scope": "global",
       "governed": false,
-      "renderer": "document-canvas",
+      "renderer": "artifact-xml",
       "example": "",
       "inputs": [
         {
@@ -19351,7 +19442,7 @@
           "name": "prior_sequence_prefix",
           "type": "string",
           "required": false,
-          "description": "Relative traversal from the NEW sequence's backbone to the prior sequence root, e.g. \"../0000/\" when sequences are sibling folders under the application. Prepended to each prior leaf's href to form the cross-sequence modified-file value. Om"
+          "description": "Relative traversal from the NEW sequence's backbone to the prior sequence root, e.g. \"../0000/\" when sequences are sibling folders under the application. Prepended to each prior leaf's backbone#leaf_id to form the cross-sequence modified-fi"
         },
         {
           "name": "application_number",
@@ -19493,7 +19584,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -19635,7 +19726,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -19738,7 +19829,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -19900,7 +19991,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -19954,7 +20045,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -19996,7 +20087,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -20038,7 +20129,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -20124,7 +20215,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -20178,7 +20269,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -20233,7 +20324,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -20287,7 +20378,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -20361,7 +20452,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -20429,7 +20520,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -20479,7 +20570,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -20547,7 +20638,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -20631,7 +20722,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -20754,7 +20845,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -20911,7 +21002,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -20984,7 +21075,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -21045,7 +21136,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -21094,7 +21185,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -21130,11 +21221,83 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
         "title"
+      ],
+      "derived": true
+    },
+    {
+      "name": "critique_document",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Critique a whole multi-section document for precision AND cross-section coherence — the document-level gate for long-form writing. Runs the precision gate on each section (for located, per-section findings) and, critically, also checks CONSISTENCY across the whole document so a value stated one way in one section and differently in another — invisible to any single-section check — is caught. Returns a per-section breakdown, the cross-section findings, and a document score/verdict. Use for a full CSR / CER / Clinical Overview before finalizing. DETERMINISTIC.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "ranked-cards",
+      "example": "",
+      "inputs": [
+        {
+          "name": "sections",
+          "type": "array",
+          "required": true,
+          "description": "The document sections in order."
+        },
+        {
+          "name": "audience",
+          "type": "string",
+          "required": false,
+          "description": "Readability register (default 'regulator')."
+        },
+        {
+          "name": "documentType",
+          "type": "string",
+          "required": false,
+          "description": "Optional document type for required-section coverage."
+        }
+      ],
+      "requiredInputs": [
+        "sections"
+      ],
+      "derived": true
+    },
+    {
+      "name": "critique_draft",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Critique a draft for scientific-writing precision and return an actionable revision brief — the deterministic quality gate behind long-form medical writing. Runs, in one pass: quantitative-claim GROUNDING (every number needs a nearby citation), in-document CONSISTENCY (the same value or abbreviation must not be stated two ways), READABILITY against the audience register, abbreviation-definition-at-first-use, over-claim / promotional CLAIMS language, and STRUCTURE coverage against the document type's governing standard. Returns a 0–100 precision score, a pass/revise verdict, per-finding detail, and an ordered revision brief. Use it after drafting any section/document, then REVISE against the brief and re-run until it passes. DETERMINISTIC — the findings are machine-computed; fix each one rather than arguing with it.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "text",
+          "type": "string",
+          "required": true,
+          "description": "The draft prose to critique."
+        },
+        {
+          "name": "audience",
+          "type": "string",
+          "required": false,
+          "description": "Target audience for the readability register (default 'regulator')."
+        },
+        {
+          "name": "documentType",
+          "type": "string",
+          "required": false,
+          "description": "Optional document type (e.g. 'clinical_overview', 'csr', 'cer') to also check required-section coverage against its standard."
+        }
+      ],
+      "requiredInputs": [
+        "text"
       ],
       "derived": true
     },
@@ -21334,6 +21497,30 @@
       "requiredInputs": [
         "programId",
         "name"
+      ],
+      "derived": true
+    },
+    {
+      "name": "derive_ctq_factors",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Derive study-specific critical-to-quality factors (ICH E6(R3) §3.10; TransCelerate RACT) from the study design bound to a protocol document (deriveCtqFactors): one factor per triggering design element — primary and key-secondary endpoints, numeric eligibility thresholds, PK and biomarker sampling, IMP administration, dose-modification rules, blinding, stopping rules and DMC, interim analyses, DLT definitions — each with derivedFrom provenance naming the element. The engine reads the study design BOUND to the protocol document; if none is bound, the tool returns an explanatory error and no result. That is not a clean result — say the engine did not run and suggest bind_protocol_to_study_design. Every likelihood and impact is a DEFAULT SEED (ratingSource: \"default_seed\"), not an assessment — taken from the RBM catalogue row for the same factor where one exists, otherwise from the documented category table; each row's ratingFrom names which. Report them as starting values a sponsor rates, never as the study's assessed risk. Report notAssessed — the design areas the engine could not read — verbatim. The output drops into the RBM module's risk assessment as seeds; this tool does not write it there.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
       ],
       "derived": true
     },
@@ -24029,7 +24216,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Optional note recorded on the audit trail."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -24334,12 +24521,36 @@
       "derived": true
     },
     {
+      "name": "export_usdm_projection",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Project the study design bound to a protocol document as an object graph shaped to CDISC USDM v4.0.0 (projectUsdm) — Study, StudyVersion, InterventionalStudyDesign, arms, epochs, cells, activities, encounters, the main schedule timeline, eligibility criteria, objectives, endpoints, estimands, interventions — with deterministic identifiers. The engine reads the study design BOUND to the protocol document; if none is bound, the tool returns an explanatory error and no result. That is not a clean result — say the engine did not run and suggest bind_protocol_to_study_design. CONFORMANCE IS UNVERIFIED and the engine says so: the CDISC USDM JSON schema is not vendored, so the graph follows USDM entity naming and has NOT been validated against the standard. Report conformance.status and its reason verbatim; never call the export \"valid\", \"conformant\" or \"USDM-compliant\". Report unmappedDesignFields and unfilledUsdmEntities in full — they are the honest boundary of what was exported; a required attribute the design lacks is exported null and named there, so the graph is deliberately not schema-valid until the design is complete. When the arm-to-epoch assignment is undetermined (crossover, a second treatment epoch, dose-ranging, adaptive or master-protocol designs) no StudyElement is exported and the ledger says why — never describe the arms' interventions as given together. The engine invents no sponsor, registry identifier, date or timing the design does not carry.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "findings-list",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
+      "derived": true
+    },
+    {
       "name": "fetch_ich_guideline_updates",
       "category": {
         "id": "other",
         "label": "Other"
       },
-      "description": "Check for ICH guideline updates from a curated registry of known ICH guidelines with their step dates. Covers E6(R3), M11, Q12, Q14, E8(R1), M4(R4). Filter by category (Q/S/E/M) and/or a since-date to find guidelines that reached a milestone after a given point. Deterministic — no network call; returns from a curated, freshness-stamped registry.",
+      "description": "Check for ICH guideline updates in a curated list of ICH guidelines with their step dates. Covers E6(R3), M11, Q12, Q14, E8(R1) only. Filter by category (Q/S/E/M) and/or a since-date to find guidelines that reached a milestone after a given point. Deterministic — no network call; a guideline not in the list is not covered, not absent.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -24727,7 +24938,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -25456,6 +25667,36 @@
         }
       ],
       "requiredInputs": [],
+      "derived": true
+    },
+    {
+      "name": "get_document_section_requirements",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "What a regulatory document or section must contain, from the platform’s canonical guidance: the content a complete section carries, the tables and data reviewers expect, where the data usually come from, the common deficiencies that draw information requests or refuse-to-file, what to read it with, and the basis of each statement (a checked FDA/ICH text, ICH recall, or platform practice). Pass a CTD section code (\"2.7.3\", \"2.5\", \"3.2.P.5\", \"1.14.4.1\", \"5.3.5.3\"), a document type (\"nda\", \"bla\", \"iss\", \"ise\", \"ind_initial\", \"dsur\", \"pre_nda_meeting\", \"nda_bla_annual_report\"), or \"csr\" with an ICH E3 heading in `section` (\"12.2\", \"16.1.9\"; omit for the outline). Call it before drafting or reviewing a CSR, a Module 2 summary or overview, a Module 3 section or an application component, and state its requirements rather than recalling them.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document",
+          "type": "string",
+          "required": true,
+          "description": "A CTD section code, a document type id, or \"csr\"."
+        },
+        {
+          "name": "section",
+          "type": "string",
+          "required": false,
+          "description": "With document \"csr\": the ICH E3 heading number. Omit for the outline."
+        }
+      ],
+      "requiredInputs": [
+        "document"
+      ],
       "derived": true
     },
     {
@@ -26697,7 +26938,7 @@
           "name": "input_docx_path",
           "type": "string",
           "required": true,
-          "description": "Absolute path to the source .docx to edit (typically the docxPath returned by author_docx_native, generate_document, or fetch_template_and_fill)."
+          "description": "The source .docx to edit, in your organization's AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization's uploads; other paths are refused (typically the docxPath returned by author_docx_n"
         },
         {
           "name": "insertions",
@@ -26803,6 +27044,40 @@
       "derived": false
     },
     {
+      "name": "list_authoring_outline",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "List the authoring documents of the open project and their sections in CTD order, as one walk: each document, then its sections. For each section its id, code, title, depth, last update, stored length, whether it is drafted, whether tracked changes are pending, and a sha256 of its stored text. No section text — read a section with read_authoring_section. Read-only, and scoped to the open project; another project's documents are never listed. Paged: when nextCursor is not null, call again with cursor set to it to continue; documentsNotYetListed says how many documents later pages hold. Pass document_id to walk one document. This is the authoring store (documents being written in the editor). Files in the project Vault — uploaded or filed PDFs and Word files — are listed with list_project_documents and read with read_project_document.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "string",
+          "required": false,
+          "description": "Optional: an authoring document id from a previous outline, to list only it and its sections."
+        },
+        {
+          "name": "cursor",
+          "type": "string",
+          "required": false,
+          "description": "The nextCursor of the previous page. Omit for the first page."
+        },
+        {
+          "name": "limit",
+          "type": "number",
+          "required": false,
+          "description": "Entries (documents and sections) per page (default 15, max 40); a page is also cut to fit the result size."
+        }
+      ],
+      "requiredInputs": [],
+      "derived": true
+    },
+    {
       "name": "list_demo_scripts",
       "category": {
         "id": "other",
@@ -26819,6 +27094,28 @@
           "type": "string",
           "required": false,
           "description": "Optional filter: training walkthroughs or sales demonstrations."
+        }
+      ],
+      "requiredInputs": [],
+      "derived": true
+    },
+    {
+      "name": "list_fda_technical_rules",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "FDA’s published technical rules for what a reviewer receives — PDF (version, no security, embedded fonts, bookmarks and hyperlinked table of contents, text searchable rather than scanned images), eCTD (relative hyperlinks, file and path naming, granularity), study data (TS dataset, DM, ADSL and define.xml, XPORT v5, reviewer’s guides — the technical rejection criteria), and content (ISS/ISE placement, CRFs for deaths and adverse-event withdrawals, Module 2 length, refuse-to-file) — each with what missing it costs, its source, and whether this platform checks it today. Also what FDA has said about Elsa, its AI review assistant. Use it for \"will this pass FDA technical validation\", \"is our dossier ready for Elsa\", \"what are FDA’s PDF requirements\", or \"why would the gateway reject this\". Pass `area` (pdf, ectd, study-data, content, labeling) for one area in full; labeling holds the PLR format rules for a US Prescribing Information.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "artifact-xml",
+      "example": "",
+      "inputs": [
+        {
+          "name": "area",
+          "type": "string",
+          "required": false,
+          "description": "One area in full. Omit for every rule in brief."
         }
       ],
       "requiredInputs": [],
@@ -27041,9 +27338,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "List documents in the organization's vault (concept2cure_artifacts) — every program artifact with title, type, CTD section, status, version, and last update. Filter by a title query, lifecycle status, or CTD section prefix. Use this to see what documents exist before reading one with read_vault_document. Tenant-scoped, read-only.",
+      "description": "List the organization's Artifacts Center documents (concept2cure_artifacts) — governed program artifacts with title, type, CTD section, status, version, and last update. This is not the files uploaded to the Vault: those are a different store, read with list_project_documents when that tool is offered. An empty result here says nothing about the Vault. Filter by a title query, lifecycle status, or CTD section prefix. Use this to see which artifacts exist before reading one with read_vault_document. Tenant-scoped, read-only.",
       "scope": "project",
-      "governed": false,
+      "governed": true,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -27127,7 +27424,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -27177,7 +27474,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -27745,7 +28042,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -27839,9 +28136,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "File a project-vault document into its dossier folder — the act that turns \"we have this\" into \"it is where it belongs\". At upload a classifier PROPOSES a placement from the file name and a sample of the text; a document it could not place sits in the Unfiled queue and one it guessed wrong sits under \"suggested\", and nothing revisits either. Use this once you have READ the document and recorded what it is: the placement then rests on comprehension instead of a filename. It is a governed, 21 CFR Part 11 audited move (the prior and new locations are both recorded), so say what you moved and where. Refused for a document you have not cataloged — read it with read_project_document and record it with catalog_project_document first. If you genuinely cannot tell where it belongs, pass unfile:true: the visible Unfiled queue is the honest answer, and a guessed folder is worse than an admitted gap.",
+      "description": "Suggest the dossier folder a project-vault document belongs in — a proposal a person confirms in the Vault, not a filing. At upload a classifier PROPOSES a placement from the file name and a sample of the text; a document it could not place sits in the Unfiled queue and one it guessed wrong sits under \"suggested\", and nothing revisits either. Use this once you have READ the document and recorded what it is: your suggestion then rests on comprehension instead of a filename, and replaces the classifier's. It is recorded as YOUR suggestion, never as the person's decision: the 21 CFR Part 11 audit trail records the prior and new locations, you as the agent who proposed it, and the person you acted for, and the Vault asks a person to confirm it. So tell the user where you suggested it and that it awaits their confirmation — never that it is filed. You cannot confirm a suggestion, yours or the classifier's: confirm_suggested is refused. Refused for a document you have not cataloged — read it with read_project_document and record it with catalog_project_document first. If you genuinely cannot tell where it belongs, pass unfile:true: the visible Unfiled queue is where a person decides, and a guessed folder is worse than an admitted gap.",
       "scope": "project",
-      "governed": true,
+      "governed": false,
       "renderer": "findings-list",
       "example": "",
       "inputs": [
@@ -27855,13 +28152,13 @@
           "name": "folder_id",
           "type": "string",
           "required": false,
-          "description": "The taxonomy folder to file it into (e.g. \"module-4\"). It must exist in this program's vault view; a folder from another modality's tree is refused rather than stored."
+          "description": "The taxonomy folder to suggest (e.g. \"module-4\"); a person confirms it in the Vault. It must exist in this program's vault view; a folder from another modality's tree is refused rather than stored."
         },
         {
           "name": "confirm_suggested",
           "type": "boolean",
           "required": false,
-          "description": "Confirm the classifier's existing suggestion in place, without naming a folder. Refused when there is no suggestion to confirm."
+          "description": "Always refused: confirming a filing is a person's decision, made in the Vault, not yours. To agree with the existing suggestion, tell the user it awaits their confirmation there."
         },
         {
           "name": "unfile",
@@ -29143,6 +29440,42 @@
       "derived": true
     },
     {
+      "name": "read_authoring_section",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Read one section of an authoring document in the open project as plain text, by section_id from list_authoring_outline or search_authoring_sections. Headings, lists and table rows are kept. Tracked changes nobody has accepted or rejected are labelled ⟦proposed insertion by <author>: …⟧ and ⟦proposed deletion by <author>: …⟧; the characters ⟦ and ⟧ never occur in document text, so everything between them is part of the proposal. A proposed insertion is NOT yet in the document: never quote it as what the document says. A proposed deletion is text still in the current document, which someone has proposed removing. A window that starts or stops inside a proposal re-opens it as ⟦(continued) proposed … and closes it with …(continues)⟧. Windowed: up to 4000 characters from offset, fewer when the text needs escaping; when nextOffset is a number, call again with that offset to read on — it is exactly where this text stopped. Returns updatedAt and sha256 of the stored content — the version you read. Read-only, and scoped to the open project; another project's section is not found. This is the authoring store (documents being written in the editor). Files in the project Vault — uploaded or filed PDFs and Word files — are listed with list_project_documents and read with read_project_document.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "section_id",
+          "type": "string",
+          "required": true,
+          "description": "The section id (UUID) from list_authoring_outline or search_authoring_sections."
+        },
+        {
+          "name": "offset",
+          "type": "number",
+          "required": false,
+          "description": "Character offset into the section's text (default 0); use the previous nextOffset to read on."
+        },
+        {
+          "name": "max_chars",
+          "type": "number",
+          "required": false,
+          "description": "Characters to return (default and max 4000)."
+        }
+      ],
+      "requiredInputs": [
+        "section_id"
+      ],
+      "derived": true
+    },
+    {
       "name": "read_governed_document",
       "category": {
         "id": "other",
@@ -29220,7 +29553,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Structured, cell-level read of an uploaded Excel (.xlsx) or CSV file: returns the sheet inventory plus the requested sheet's rows as a table — display values with row numbers, and formulas preserved alongside their cached results. Page through big sheets with start_row/max_rows. Use this (not read_uploaded_document) whenever you need to study specific cells, formulas, or a particular sheet; use edit_spreadsheet to change cells afterwards.",
+      "description": "Structured, cell-level read of an uploaded Excel (.xlsx) or CSV file: returns the sheet inventory plus the requested sheet's rows as a table — display values with row numbers, and formulas preserved alongside their cached results. Page through big sheets with start_row/max_rows, and keep paging while `truncated` is true: `lastRow` is where the sheet ends, while `totalRows` only counts rows that hold values, so a sheet with blank rows ends after totalRows. Use this (not read_uploaded_document) whenever you need to study specific cells, formulas, or a particular sheet; use edit_spreadsheet to change cells afterwards.",
       "scope": "global",
       "governed": false,
       "renderer": "table-csv",
@@ -29334,9 +29667,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Read a vault document's metadata AND content by its id (numeric id or 'artifact_…' external id). Returns title, type, category, CTD section, status, version, content hash, timestamps, and the document text (truncated to max_chars with the full length reported — raise max_chars or read again for more). Use list_vault_documents first to find the id. Tenant-scoped, read-only.",
+      "description": "Read an Artifacts Center document's metadata AND content by its id (numeric id or 'artifact_…' external id). Returns title, type, category, CTD section, status, version, content hash, timestamps, and the document text (truncated to max_chars with the full length reported — raise max_chars or read again for more). This reads governed artifacts, not the files uploaded to the Vault (those carry UUID ids and are read with read_project_document when offered). Use list_vault_documents first to find the id. Tenant-scoped, read-only.",
       "scope": "project",
-      "governed": false,
+      "governed": true,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -29456,7 +29789,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Reconcile the numeric governed quantities ACROSS a device/IVD program's post-market documents in one pass — the cross-document inconsistency check for device programs. Finds where the same quantity (clinical sensitivity, specificity, LoD, precision CV, RPN, …) is restated with DIFFERENT values in different documents (e.g. a sensitivity in the PMS report ≠ the PSUR ≠ the SSCP), returning each conflict's distinct values, their source documents, a plurality consensus, and a severity. Deterministic. This is the device analogue of the pharma dossier reconciliation. DETERMINISTIC: report the returned values, counts, and citations verbatim — do not recompute or estimate. These come straight from the governed fact store.",
+      "description": "Reconcile the numeric governed quantities ACROSS a device/IVD program's post-market documents in one pass — the cross-document inconsistency check for device programs. Finds where the same quantity (clinical sensitivity, specificity, LoD, precision CV, RPN, …) is restated with DIFFERENT values in different documents (e.g. a sensitivity in the PMS report ≠ the PSUR ≠ the SSCP), returning each conflict's distinct values, source documents, plurality consensus and severity. Deterministic; the device analogue of the pharma dossier reconciliation. Superseded or withdrawn versions are set aside. Returns verdict clean | minor_issues | needs_review | blocker | not_assessed. not_assessed means no quantity is stated in two current documents, so nothing was compared (notAssessedReason says why); it is not a clean result, so never call such documents consistent. DETERMINISTIC: report the returned values, counts, and citations verbatim — do not recompute or estimate. These come straight from the governed fact store.",
       "scope": "global",
       "governed": true,
       "renderer": "result-card",
@@ -29510,7 +29843,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Reconcile already-EXTRACTED, structured numbers ACROSS a submission's documents to flag figures that disagree between modules — the recurring reviewer finding where the same quantity (e.g. enrolled N) differs between Module 2.5, Module 2.7.3, and the CSR. DETERMINISTIC: groups figures by quantityKey, detects values that diverge beyond a configurable absolute/relative tolerance, and returns, per quantityKey, the distinct values with their sources, a consensus (plurality) value when one exists, and a severity. This is the CROSS-MODULE reconciliation that check_numerical_integrity (within one document) and check_dossier_consistency (pairwise draft vs artifact) lack. Unlike reconcile_dossier_numbers (which mines labeled figures from raw document TEXT), this takes figures ALREADY extracted upstream (by OCR / table parsing / data-lineage citations) with explicit provenance spans, and applies a configurable agreement tolerance. Report the returned conflicts and values verbatim. Do NOT recompute or estimate — a missed cross-document number mismatch is a recurring reviewer finding (an RTF trigger when it is enrolment N or dose). If the engine reports a validation error, relay exactly which figure field is missing or invalid and ask the user for it.",
+      "description": "Reconcile already-EXTRACTED, structured numbers ACROSS a submission's documents to flag figures that disagree between modules — the recurring reviewer finding where the same quantity (e.g. enrolled N) differs between Module 2.5, Module 2.7.3, and the CSR. DETERMINISTIC: groups figures by quantityKey, detects values that diverge beyond a configurable absolute/relative tolerance, and returns, per quantityKey, the distinct values with their sources, a consensus (plurality) value when one exists, and a severity. Verdict: clean | minor_issues | needs_review | blocker | not_assessed. not_assessed means no quantity is stated in two documents, or two modules of one document, so nothing was compared (notAssessedReason says why); it is not a clean result, so never call such figures consistent. This is the CROSS-MODULE reconciliation that check_numerical_integrity (within one document) and check_dossier_consistency (pairwise draft vs artifact) lack. Unlike reconcile_dossier_numbers (which mines labeled figures from raw document TEXT), this takes figures ALREADY extracted upstream (by OCR / table parsing / data-lineage citations) with explicit provenance spans, and applies a configurable agreement tolerance. Report the returned conflicts and values verbatim. Do NOT recompute or estimate — a missed cross-document number mismatch is a recurring reviewer finding (an RTF trigger when it is enrolment N or dose). If the engine reports a validation error, relay exactly which figure field is missing or invalid and ask the user for it.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -29580,7 +29913,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -29648,7 +29981,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -29703,7 +30036,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -29771,7 +30104,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -29900,7 +30233,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -29961,7 +30294,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -30012,7 +30345,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -30067,7 +30400,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -30187,7 +30520,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -30331,6 +30664,30 @@
       "derived": true
     },
     {
+      "name": "review_biospecimen_profile",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Profile what the Schedule of Activities bound to a protocol document collects (profileBiospecimens): each specimen with what the lab manual still needs (type, volume, processing, storage), and the blood a participant gives — per visit, in total, over the worst 8-week window and the busiest week — summed from the recorded volumes. The engine reads the study design BOUND to the protocol document; if none is bound, the tool returns an explanatory error and no result. That is not a clean result — say the engine did not run and suggest bind_protocol_to_study_design. Report every figure and gap VERBATIM. A draw with no volume makes totals LOWER BOUNDS (scheduledIsLowerBound, totalsAreLowerBounds): say so. Draws at unscheduled visits are in the upper bound only and in no 8-week or weekly figure. Each activity × visit cell counts as ONE collection (countingRule): serial samples within a visit are not counted unless each is its own activity — say so rather than presenting a PK-heavy total as complete. The 50 mL / 3 mL/kg reference can only be shown EXCEEDED without a recorded weight (withinUnknownBecause). The OHRP expedited-review figures (550 mL; 50 mL) are reference points for minimal-risk research, NOT safety limits and not a bar a drug trial must clear — never call a protocol unsafe or non-compliant for exceeding them, and never assume a volume for a sampling activity with no specimen recorded.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "findings-list",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
+      "derived": true
+    },
+    {
       "name": "review_commitment_portfolio",
       "category": {
         "id": "other",
@@ -30440,6 +30797,30 @@
       "derived": true
     },
     {
+      "name": "review_dct_profile",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Profile the decentralised elements of the Schedule of Activities bound to a protocol document (profileDecentralization; FDA guidance on decentralized elements, 2024; EMA/HMA recommendation paper, 2022): where each activity happens, the share of activities with a stated off-site location, the visits every performed activity of which is off-site capable, and findings on off-site IMP administration, remote-only safety assessments, off-site PK or biomarker sampling and remote consent. A duplicated activity id or a cell naming an undefined visit is reported as a structural defect and those rows come back unstated — never resolved to a guessed location. The engine reads the study design BOUND to the protocol document; if none is bound, the tool returns an explanatory error and no result. That is not a clean result — say the engine did not run and suggest bind_protocol_to_study_design. An activity with NO stated location is \"unstated\" — it is not at the site, it is not decentralised, and it is excluded from the off-site share. When nothing has a stated location the share is null and notAssessed says why; report null as \"not assessed\", never as 0% or as \"conducted at site\". Report each finding's code, message and activity ids verbatim.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
+      "derived": true
+    },
+    {
       "name": "review_dms_plan_completeness",
       "category": {
         "id": "other",
@@ -30464,6 +30845,30 @@
       "derived": true
     },
     {
+      "name": "review_enrollment_forecast",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Forecast when the study design bound to a protocol document reaches its planned sample size from the sponsor's site accrual plan (projectEnrollment; Poisson–Gamma accrual, Anisimov & Fedorov 2007): the median time and 80% interval from the platform's seeded Monte Carlo engine, the probability of reaching the target at all, the closed-form expectation, and the sites by country. The engine reads the study design BOUND to the protocol document; if none is bound, the tool returns an explanatory error and no result. That is not a clean result — say the engine did not run and suggest bind_protocol_to_study_design. Report every figure VERBATIM with its time unit. Site recruitment rates are SPONSOR INPUTS: with no accrual plan the engine returns missing — say the forecast needs site feasibility rates, and never supply or assume a rate. A site with no rate variability or activation time recorded is a gap, never read as zero. The median and 80% interval are reported only when every simulation reached the target: null times with probReached above 0 mean some simulations never reached it — say the times are not reported, never quote one; probReached 0 means the target is not reached. Report forecast.seedSource: a seed derived from the inputs is not the sponsor's.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "findings-list",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
+      "derived": true
+    },
+    {
       "name": "review_export_control",
       "category": {
         "id": "other",
@@ -30484,6 +30889,30 @@
       ],
       "requiredInputs": [
         "review_id"
+      ],
+      "derived": true
+    },
+    {
+      "name": "review_external_control_plan",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Review the external-control borrowing plan of the study design bound to a protocol document (projectExternalControlPlan; FDA draft guidance on externally controlled trials, 2023; ICH E10 §2.5): ten elements the guidance discusses (not its full list) — among them the source and its fitness, the borrowing method and strength, prior-data conflict handling, covariate comparability and tipping-point sensitivity — each stated or not (several have no field on the design yet and say so), and the borrowing strength at the planned concurrent-control size (effective historical N, share of control precision borrowed) from the platform's engine (stats/external-control.ts). The engine reads the study design BOUND to the protocol document; if none is bound, the tool returns an explanatory error and no result. That is not a clean result — say the engine did not run and suggest bind_protocol_to_study_design. Report every element and figure VERBATIM. No posterior or treatment effect is computed at protocol stage — never quote one. A fixed power-prior discount does not handle prior-data conflict, and neither does a FIXED commensurate τ² (it equals a power prior with a0 = seH²/(seH²+τ²)); say so rather than calling the plan conflict-robust. A plan is at best partial until every element can be stated.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
       ],
       "derived": true
     },
@@ -30678,6 +31107,30 @@
       "derived": true
     },
     {
+      "name": "review_interim_operating_characteristics",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Compute what the interim-analysis plan of the study design bound to a protocol document does (projectInterimOperatingCharacteristics; ICH E9 §4.5; exact group-sequential computation): the spending function's solved efficacy boundaries, the type I error, the power at the alternative the fixed design was powered for, expected information fraction and sample size, and per-look stopping probabilities — every figure from the platform's exact engine (stats/group-sequential-oc.ts). The engine reads the study design BOUND to the protocol document; if none is bound, the tool returns an explanatory error and no result. That is not a clean result — say the engine did not run and suggest bind_protocol_to_study_design. The characteristics are OF the boundaries the protocol records when it records them; a recorded boundary that departs from the named spending function is a DISCREPANCY — report it verbatim, never quietly substitute the solved value. The type I error is ONE-SIDED and computed with futility NON-BINDING; the binding figure (typeIErrorIfFutilityBinding) is reported separately and is never the type I error. A type I error above the design's alpha is a gap. Report every gap verbatim, including an assumed sidedness; a null power or expected sample size is explained by a gap — never supply alpha, power or N.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "findings-list",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
+      "derived": true
+    },
+    {
       "name": "review_invention_disclosure",
       "category": {
         "id": "other",
@@ -30744,6 +31197,78 @@
       "example": "",
       "inputs": [],
       "requiredInputs": [],
+      "derived": true
+    },
+    {
+      "name": "review_master_protocol",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Check the master-protocol plan of a platform, basket, umbrella or MAMS study design bound to a protocol document (checkMasterProtocol; FDA master-protocol guidances, 2022 and 2023 draft): per sub-study the population, arms, decision rule and — for basket and umbrella — the biomarker and its assay; across sub-studies the shared control, use of non-concurrent controls, arm addition and dropping, type I error handling and the DMC; and whether every arm a sub-study names exists. The engine reads the study design BOUND to the protocol document; if none is bound, the tool returns an explanatory error and no result. That is not a clean result — say the engine did not run and suggest bind_protocol_to_study_design. Report each element as stated or not stated and each integrity defect VERBATIM. This is a structural check; it computes no statistic and does not judge whether a stated rule is adequate — never describe the design as sound or compliant on the strength of it.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
+      "derived": true
+    },
+    {
+      "name": "review_mmrm_sizing",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Size the MMRM-analysed continuous endpoint of the study design bound to a protocol document from the sponsor's recorded assumptions (projectMmrmSizing; ICH E9(R1); exact GLS information under monotone dropout): per-arm and total N, the variance factor, MMRM's efficiency over a completers-only analysis, the achieved power, and whether the planned sample size covers the requirement — every figure from the platform's engine (stats/mmrm-design.ts). The engine reads the study design BOUND to the protocol document; if none is bound, the tool returns an explanatory error and no result. That is not a clean result — say the engine did not run and suggest bind_protocol_to_study_design. Report every figure and gap VERBATIM. The assumptions (covariance, correlation, SD, effect, per-visit retention, power) are the SPONSOR'S: when one is not recorded nothing is sized — say which assumption is missing, and never supply one or fall back to complete data. The allocation (sizing.allocationRatio, sizing.allocationSource) is the design's, never an assumed 1:1: nPerArm is the first arm's n and nSecondArm the second's. A non-inferiority, equivalence or unrecorded inferential frame is not sized as a superiority test — report the gap.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "findings-list",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
+      "derived": true
+    },
+    {
+      "name": "review_multiplicity_control",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Check whether the multiplicity procedure of the study design bound to a protocol document holds the family-wise type I error at alpha over its confirmatory endpoints (checkMultiplicity; ICH E9 §5.6; FDA Multiple Endpoints guidance, 2022): the procedure's simulated family-wise error and its Monte Carlo SE, the unadjusted rate for contrast, and whether the alpha allocation covers the family — every rate from the platform's engine (stats/multiplicity.ts). The engine reads the study design BOUND to the protocol document; if none is bound, the tool returns an explanatory error and no result. That is not a clean result — say the engine did not run and suggest bind_protocol_to_study_design. Report every rate, verdict, note and gap VERBATIM. The simulation assumes independent p-values: say so, and never present it as proof of control under the trial's actual dependence. The alpha allocation is each hypothesis's initial significance level (Bretz et al. 2009), totalling at most alpha, and the RECORDED allocation is what is simulated (procedure.simulated says whether a textbook split was used instead); Hochberg is valid only under positive dependence. A procedure the engine cannot check (graphical without weights, gatekeeping, weighted Hochberg) is a gap — never substitute another.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "findings-list",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
       "derived": true
     },
     {
@@ -30894,6 +31419,44 @@
       "example": "",
       "inputs": [],
       "requiredInputs": [],
+      "derived": true
+    },
+    {
+      "name": "review_protocol_redline",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Compare two recorded versions of a protocol document section by section (redlineVersions): each section unchanged, modified, added, removed, reordered or retitled, with a line-level diff for modified sections and the summary counts. EU CTR 536/2014 Annex II asks for the previous and new wording in track changes for a substantial modification; a 21 CFR 312.30 amendment must describe the change, which a redline supports. Report the summary and the per-section changes verbatim; quote the diff ops rather than paraphrasing what changed. If either version label is not recorded for this document, or is recorded twice, the tool returns an error and no comparison — say the redline did not run. Report every section note: it explains an absent diff or absent counts (the engine's line cap or edit budget), or that a position rests on row order. A non-empty summary.positionsFromRowOrder means a moved or reordered verdict may reflect row order rather than an edit; say so. A null line total means a section could not be counted: say unknown, never 0. This compares the DOCUMENT's versions; the study DESIGN's changes come from the amendment substantiality engine.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        },
+        {
+          "name": "from_version",
+          "type": "string",
+          "required": true,
+          "description": "The earlier protocol version label as recorded in protocol_versions.version (e.g. \"0.3\"). Both versions must belong to the same protocol document."
+        },
+        {
+          "name": "to_version",
+          "type": "string",
+          "required": true,
+          "description": "The later protocol version label as recorded in protocol_versions.version (e.g. \"0.3\"). Both versions must belong to the same protocol document. Pass \"current\" to compare against the working copy — the unsnapshotted sections an amendment is"
+        }
+      ],
+      "requiredInputs": [
+        "document_id",
+        "from_version",
+        "to_version"
+      ],
       "derived": true
     },
     {
@@ -31063,6 +31626,30 @@
       "derived": true
     },
     {
+      "name": "review_spirit_conformance",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Assess a protocol against the 33 items of the SPIRIT 2013 checklist (assessSpiritConformance), reading the bound study design for the design-evidenced items and the protocol document's own sections for the document-evidenced ones. Report each item's status — met, partial, missing, not_assessable — with its evidence and gap VERBATIM, and the summary counts exactly as returned. NOT_ASSESSABLE means the item can only be judged from a protocol section the engine was not given: it is not missing and it is not met. Never total the counts yourself, never compute a conformance percentage, and never say the protocol \"meets SPIRIT\" — the engine returns per-item statuses, not a verdict. SPIRIT 2013 HAS BEEN SUPERSEDED by the SPIRIT 2025 statement: report the output's supersededBy verbatim, and never present 2013 conformance as conformance to the current guideline. If no design is bound, the tool returns an error and no checklist; say so.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
+      "derived": true
+    },
+    {
       "name": "review_tmf_completeness",
       "category": {
         "id": "other",
@@ -31083,6 +31670,54 @@
       ],
       "requiredInputs": [
         "tmf_file_id"
+      ],
+      "derived": true
+    },
+    {
+      "name": "review_trial_schema",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Project the ICH M11 §1.2 Trial Schema from the study design bound to a protocol document (projectTrialSchema): the ordered epochs with their visit milestones, the randomisation point, the arms with their interventions, and a deterministic SVG of the schematic. The engine reads the study design BOUND to the protocol document; if none is bound, the tool returns an explanatory error and no result. That is not a clean result — say the engine did not run and suggest bind_protocol_to_study_design. Report status (rendered / partial / missing) and every gap VERBATIM. When the design carries no Schedule of Activities the engine cannot draw epochs, days or windows and says so — do not describe a schema the engine did not render, and never invent an epoch, a study day or a visit window. An arm the engine labels \"(no intervention recorded)\" is reported exactly that way.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "findings-list",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
+      "derived": true
+    },
+    {
+      "name": "review_who_ictrp_record",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Project the study design bound to a protocol document as the WHO Trial Registration Data Set (projectWhoIctrp; 24 items, v1.3.1) that every WHO primary registry and the ICMJE policy require — the sibling of the ClinicalTrials.gov and EU CTIS projections. The engine reads the study design BOUND to the protocol document; if none is bound, the tool returns an explanatory error and no result. That is not a clean result — say the engine did not run and suggest bind_protocol_to_study_design. Report all 24 items in order with status rendered / partial / missing and each gap sentence verbatim. Sponsor, funder, contacts, dates, ethics review, results and the IPD statement are NOT on the design object and always come back missing with the reason \"not carried by the study design; supplied at registration\": say exactly that, and never supply one. This is a projection, not a registration; nothing is submitted to any registry.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "findings-list",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
       ],
       "derived": true
     },
@@ -31439,7 +32074,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Run a shadow review on an assembled sequence — a simulated reviewer pass that returns severity-scored Refuse-to-File and Complete-Response-risk findings, each with a regulatory basis and a fix, plus rtf/crl risk scores. You pass the sequence id and an optional reviewer lens; tenant and acting user come from the active context. The run and its findings are persisted and the AI call is audited. Use this before dispatch to surface what a reviewer would reject.",
+      "description": "Run a shadow review on an assembled sequence — a simulated reviewer pass that returns severity-scored Refuse-to-File and Complete-Response-risk findings, each with a regulatory basis and a fix, plus rtf/crl gate scores computed by the server from the severities of those findings (scoreBasis: severity_aggregate; the reviewer model reports no figure). You pass the sequence id and an optional reviewer lens; tenant and acting user come from the active context. The run and its findings are persisted and the AI call is audited. Use this before dispatch to surface what a reviewer would reject.",
       "scope": "project",
       "governed": false,
       "renderer": "ranked-cards",
@@ -31503,7 +32138,7 @@
           "name": "reason",
           "type": "string",
           "required": true,
-          "description": "Reason-for-change (min 8 chars) — recorded in the audit trail."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -31968,7 +32603,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -32005,7 +32640,7 @@
           "name": "reason",
           "type": "string",
           "required": true,
-          "description": "Reason-for-change (min 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -32756,7 +33391,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -32819,7 +33454,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [],
@@ -32859,7 +33494,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -32908,7 +33543,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -32950,7 +33585,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -33072,7 +33707,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -33121,7 +33756,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -33573,7 +34208,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -33771,7 +34406,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [],
@@ -33853,7 +34488,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         },
         {
           "name": "sources",
@@ -33901,7 +34536,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         },
         {
           "name": "sources",
@@ -33949,7 +34584,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         },
         {
           "name": "sources",
@@ -34039,7 +34674,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -34105,7 +34740,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -34183,7 +34818,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -34246,6 +34881,30 @@
       "derived": true
     },
     {
+      "name": "update_plan",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Declare, then keep current, the short plan you are following for this turn. The person watching sees it as 'Step 2 of 5' beside your work, so it must be the plan you actually follow. Call it FIRST whenever the request needs three or more distinct pieces of work — drafting a document or several sections, research across several sources, a review that checks more than one document, an analysis with separate stages. Do NOT call it for a question you can answer directly or with one or two tool calls. Send the WHOLE list every time, 3 to 8 steps, each a short imperative title (e.g. \"Read the protocol synopsis\", \"Check the ICH E9 estimand guidance\", \"Draft section 2.7.3\"), with the SAME titles on every call so progress can be followed. Set a step in_progress when you start it and completed only when its work is actually done in this turn; leave steps you do not reach as pending — never mark unfinished work completed. Update the plan in the same response as the tool calls that do the work; never spend a round on the plan alone. The call has no side effect and returns the plan as recorded.",
+      "scope": "global",
+      "governed": true,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "steps",
+          "type": "array",
+          "required": true,
+          "description": "The whole plan, in order: 1 to 8 steps."
+        }
+      ],
+      "requiredInputs": [
+        "steps"
+      ],
+      "derived": true
+    },
+    {
       "name": "update_protocol_section",
       "category": {
         "id": "other",
@@ -34285,7 +34944,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -34327,7 +34986,7 @@
           "name": "reason",
           "type": "string",
           "required": true,
-          "description": "Reason-for-change (min 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -34365,7 +35024,7 @@
           "name": "reason",
           "type": "string",
           "required": true,
-          "description": "Reason-for-change (min 8 chars) — becomes the version change description."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -34562,12 +35221,79 @@
       "derived": true
     },
     {
+      "name": "verify_citations",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Check that each reference in a list exists, against PubMed (by PMID) and Crossref (by DOI), else by title search — with retraction status and any field that disagrees with the record. Returns each reference's verdict (verified, not_found, unverifiable, error) and the counts. Use it to audit a draft's reference list; report its verdicts, do not decide them. With the organization's public-source lookups off, every reference is unverifiable.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "citations",
+          "type": "array",
+          "required": true,
+          "description": "The references to check (at most 50). Each needs at least one of raw, title, doi or pmid."
+        }
+      ],
+      "requiredInputs": [
+        "citations"
+      ],
+      "derived": true
+    },
+    {
+      "name": "verify_revision",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Verify that a revised draft actually improved on the original — the deterministic loop-closer for draft→critique→revise. Runs the precision gate on both the before and after text and reports whether the score rose, how many findings were resolved, whether any NEW findings were introduced (regressions), and whether the revision now passes. Use after revising against a critique_draft brief to confirm the rewrite worked before moving on. DETERMINISTIC.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "originalText",
+          "type": "string",
+          "required": true,
+          "description": "The draft before revision."
+        },
+        {
+          "name": "revisedText",
+          "type": "string",
+          "required": true,
+          "description": "The draft after revision."
+        },
+        {
+          "name": "audience",
+          "type": "string",
+          "required": false,
+          "description": "Readability register (default 'regulator')."
+        },
+        {
+          "name": "documentType",
+          "type": "string",
+          "required": false,
+          "description": "Optional document type for section-coverage checks (applied to both)."
+        }
+      ],
+      "requiredInputs": [
+        "originalText",
+        "revisedText"
+      ],
+      "derived": true
+    },
+    {
       "name": "execute_platform_command",
       "category": {
         "id": "platform",
         "label": "Platform control"
       },
-      "description": "Execute any governed platform command — ANA's full operational control beyond the typed tools (see list_platform_commands for the catalog). Pass `command` (a command name) and `params`. Runs through the platform's governed command executor: reads are open; governed mutations require params.confirm = true and a params.reason string, and are written to the audit trail. The organization, user, and active project are taken from the session context, never from params, and per-tenant tool policy is enforced. If a result asks for confirmation, re-issue with params.confirm = true and params.reason set. Report the result message verbatim.",
+      "description": "Run a platform command beyond the typed tools (see list_platform_commands for the catalog). Pass `command` (a command name) and `params`. Runs through the platform's governed command executor: reads run; a write never runs on your call. It comes back as a proposal (HUMAN_CONFIRMATION_REQUIRED or PART11_SIGNATURE_REQUIRED) that only the person's confirmation in the platform runs, and that confirmation is what the audit trail records. Tell the person what you proposed and that it has not been done; do not re-issue it, because calling again with any params only proposes it again. The organization, user, and active project are taken from the session context, never from params, and per-tenant tool policy is enforced. Report the result message verbatim.",
       "scope": "project",
       "governed": true,
       "renderer": "result-card",
@@ -34583,7 +35309,7 @@
           "name": "params",
           "type": "object",
           "required": false,
-          "description": "Command parameters. For governed mutations include confirm: true and reason: \"…\"."
+          "description": "Command parameters, as list_platform_commands lists them. A confirm flag here does nothing: only the person confirms a write."
         }
       ],
       "requiredInputs": [
@@ -34689,7 +35415,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -34865,6 +35591,12 @@
           "type": "string",
           "required": false,
           "description": ""
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "required": false,
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -35062,7 +35794,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Reason for the change (captured for 21 CFR Part 11)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         },
         {
           "name": "impact_assessment",
@@ -35157,7 +35889,7 @@
         "id": "qms",
         "label": "Quality management"
       },
-      "description": "Advance a change through its controlled lifecycle (proposed → under_assessment → approved → in_implementation → verification → closed; or rejected/cancelled). Approval enforces segregation of duties — the approver must differ from the person who proposed the change. A reason-for-change is required (21 CFR Part 11); pass effectiveness_review when closing.",
+      "description": "Advance a change through its controlled lifecycle (proposed → under_assessment → [approval] → in_implementation → verification → closed; or rejected/cancelled). This tool cannot approve a change: approval is an electronic signature (21 CFR 11.50) that needs the approver's password and second factor, which a chat turn cannot collect. When a change under assessment is ready for approval, tell the user to approve it with the Approve button on the change in the Quality register, which takes their signature; someone other than the person who proposed it must approve. A reason-for-change is required (21 CFR Part 11); pass effectiveness_review when closing.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -35179,7 +35911,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Reason-for-change for this governed transition."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         },
         {
           "name": "effectiveness_review",
@@ -35249,7 +35981,7 @@
         "id": "qms",
         "label": "Quality management"
       },
-      "description": "Retire a controlled QMS document — the terminal lifecycle state. Captures an optional reason in the audit trail. Use when the user wants to retire / withdraw a procedure that is no longer in use.",
+      "description": "AnA cannot sign. Retiring a QMS controlled document ends its effective status and is an electronic signature (21 CFR 11.50): it needs the person's password and second factor, which a chat turn cannot collect. This tool writes nothing; it tells the user to retire on the document in the Quality register. Use it only to explain that.",
       "scope": "project",
       "governed": false,
       "renderer": "result-card",
@@ -35264,12 +35996,13 @@
         {
           "name": "reason",
           "type": "string",
-          "required": false,
+          "required": true,
           "description": ""
         }
       ],
       "requiredInputs": [
-        "document_id"
+        "document_id",
+        "reason"
       ],
       "derived": true
     },
@@ -35392,7 +36125,7 @@
           "name": "reason",
           "type": "string",
           "required": true,
-          "description": "Reason for change (required)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -35712,10 +36445,10 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "Classify a submission document to its CTD section through the ingestion pipeline, and optionally draft a leaf placement in a target sequence. The document, tenant, and acting user come from the active context — you pass only the document id and an optional sequence id. The proposal is persisted onto the document and the AI call is audited. Use this when a user uploads a document and asks where it belongs.",
+      "description": "Classify a submission document to its CTD section through the ingestion pipeline. It PROPOSES and changes nothing: the document keeps its section and nothing is placed. With a sequence id the result also carries proposedLeaf, the leaf a person would place there; to place it, call place_into_sequence with that section, a separate step the person confirms with the section in view. The document, tenant, and acting user come from the active context. The AI call is audited. Use this when a user uploads a document and asks where it belongs.",
       "scope": "project",
       "governed": false,
-      "renderer": "document-canvas",
+      "renderer": "result-card",
       "example": "",
       "inputs": [
         {
@@ -35728,7 +36461,7 @@
           "name": "sequence_id",
           "type": "number",
           "required": false,
-          "description": "Optional target sequence; when set and owned, a draft leaf is placed."
+          "description": "Optional target sequence; the result then carries the leaf to place there. Nothing is placed."
         }
       ],
       "requiredInputs": [
@@ -35922,7 +36655,7 @@
           "name": "reason",
           "type": "string",
           "required": false,
-          "description": "Audit reason (>= 8 chars)."
+          "description": "The person's reason for this change, in their words (at least 8 characters). It is recorded as the reason for change on the audit trail. If they have not given one, ask them; never write one yourself."
         }
       ],
       "requiredInputs": [
@@ -36031,7 +36764,7 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "Extract a submission document's structure, claims, and referenced sources through the ingestion pipeline, and record a provenance link from the target section to the document. You pass the document id, the CTD section it maps to, and the submission id; tenant and acting user come from the active context. The result is persisted and audited. Use this after classification to capture what a document supports.",
+      "description": "Extract a submission document's structure, claims, and referenced sources through the ingestion pipeline, and record a provenance link from the target section to the document. You pass the document id, the CTD section it maps to, and the submission id; tenant and acting user come from the active context. The result is returned and audited, and the provenance link is recorded; the document itself is not changed. Use this after classification to capture what a document supports.",
       "scope": "project",
       "governed": false,
       "renderer": "result-card",
@@ -36319,7 +37052,7 @@
           "name": "output_dir",
           "type": "string",
           "required": false,
-          "description": "Where to write the zip. Defaults to tmp/submissions."
+          "description": "Where to write the zip: a directory in your organization's AnA workspace. Omit it to use a fresh one."
         }
       ],
       "requiredInputs": [
@@ -36466,6 +37199,28 @@
         "client_type",
         "regions"
       ],
+      "derived": true
+    },
+    {
+      "name": "plan_submission_from_database_lock",
+      "category": {
+        "id": "submission",
+        "label": "Submission / eCTD"
+      },
+      "description": "The sequence from study close-out and database lock to a filed NDA or BLA, and where the open project stands on it: SAP final → database lock → SDTM (TS, DM, define.xml, reviewer’s guide) → ADaM (ADSL) → tables, listings and figures → clinical study reports → integrated datasets → ISS and ISE (5.3.5.3) → 2.7.x summaries → 2.5 Clinical Overview → labeling → eCTD assembly → technical validation → transmission. Each step names what it produces, what it is written from, where it is filed, the check it must pass, and what FDA checks on receipt. With a project open, each step’s state is read from the project’s Vault (filed, proposed, not found, or not visible to the platform), with what is next, what is blocked and on what, and anything filed ahead of its sources. Pass `step` (for example \"csr\", \"ise\", \"m2_7_3\") for one step in full. Use it for \"what happens after database lock\", \"what is next for the submission\", \"what is blocking 2.7.3\", or organising the data room.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "artifact-xml",
+      "example": "",
+      "inputs": [
+        {
+          "name": "step",
+          "type": "string",
+          "required": false,
+          "description": "A step id from the plan, for its full detail. Omit for the whole plan."
+        }
+      ],
+      "requiredInputs": [],
       "derived": true
     },
     {
@@ -36781,7 +37536,7 @@
           "name": "source_path",
           "type": "string",
           "required": true,
-          "description": "Absolute path to the uploaded zip / folder."
+          "description": "The uploaded zip or folder, in your organization's AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization's uploads; other paths are refused."
         },
         {
           "name": "source_kind",

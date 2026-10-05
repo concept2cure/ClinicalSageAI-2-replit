@@ -1238,6 +1238,10 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
       "critical" severities are counted by the dispatch gate. **Fix:** report
       only the deterministic aggregate, labelled as derived from model-assigned
       severities.
+      **Done 2026-10-05 by `…01YZFCXR`** (`docs/evidence/RULE2/2026-10-05-shadow-review-score/`):
+      the run records `aggregateRisk` only, an empty sequence is a server-side
+      critical finding (a model answering 0 had recorded it fileable), prompt
+      v1.1 asks for no figure, and every run says its `scoreBasis`.
     - `plan_submission` returns the model's narration (timeline offsets keyed
       to PDUFA, 210-day or PMDA clocks, forms, module map) beside the reasoning
       engine's own structure and clock, and the two can disagree. **Fix:** the
