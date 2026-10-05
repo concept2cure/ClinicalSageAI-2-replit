@@ -244,7 +244,7 @@ Document DSMB/DMC recommendation if safety-driven.`,
 Manufacturing process: flow diagram + narrative. Identify critical process parameters and in-process controls.
 Impurity profiling per ICH Q3A/Q3B: identify, qualify, specify. Report all impurities >0.10%.
 Stability: ICH Q1A conditions (25°C/60%RH, 40°C/75%RH). Include photostability (Q1B).
-Analytical methods: validated per ICH Q2(R1). Include specificity, linearity, accuracy, precision, robustness.
+Analytical methods: validated per ICH Q2(R2) and developed per ICH Q14 (phase-appropriate: shown suitable at phase 1). Include specificity, linearity, accuracy, precision, robustness.
 Specifications must be justified with batch data (≥3 batches, ≥pilot scale).
 Polymorphism: characterize if relevant to bioavailability.
 Genotoxic impurities per ICH M7: control to TTC limits.`,

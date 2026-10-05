@@ -95,6 +95,26 @@ export function sanitizeAuthoringSectionHtml(html: string): string {
   }
 }
 
+/**
+ * Sanitize one section of a MACHINE draft (`provenance.source = 'ana'` on
+ * POST /docs/from-draft) for storage: the same allowlist with no `<img>` at all,
+ * because an image a model wrote is never an uploaded figure — not an inline
+ * PNG, and not a governed reference to someone's existing upload, which a model
+ * can name but did not place (refute-review of the figure rule, round 3: O2;
+ * work-orders item 18, 2026-10-05). A section left with no letter and no digit
+ * is stored as "": an empty draft, which the eCTD leaf resolver reports as a
+ * gap, where "<p></p>" passed its emptiness check and would be filed blank (the
+ * generation door's rule, D4).
+ */
+export function sanitizeMachineDraftSectionHtml(html: string): string {
+  if (!html) return '';
+  const stored = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: AUTHORING_SANITIZE_CONFIG.ALLOWED_TAGS.filter((t) => t !== 'img'),
+    ALLOWED_ATTR: [...AUTHORING_SANITIZE_CONFIG.ALLOWED_ATTR],
+  });
+  return /[\p{L}\p{N}]/u.test(parseSectionHtml(stored).text) ? stored : '';
+}
+
 /* ── What the section save refuses ────────────────────────────────────────── */
 
 /** An `<img>` whose src is not a figure: its place among the section's images

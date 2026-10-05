@@ -1,0 +1,8 @@
+ × server/api/cmc/__tests__/module3PlacementGovernance.test.ts > placing Module 3 into the IND is a governed act > refuses a viewer before anything is placed 36ms
+   → expected 200 to be 403 // Object.is equality
+ × server/api/cmc/__tests__/module3PlacementGovernance.test.ts > placing Module 3 into the IND is a governed act > refuses a placement with no stated reason, naming the field 6ms
+   → undefined: expected 200 to be 400 // Object.is equality
+ × server/api/cmc/__tests__/module3PlacementGovernance.test.ts > placing Module 3 into the IND is a governed act > places for an author with a reason, and carries the reason to every leaf 11ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed (3)
