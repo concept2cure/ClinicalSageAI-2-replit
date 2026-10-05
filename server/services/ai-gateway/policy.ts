@@ -68,6 +68,17 @@ export interface PolicyResult {
    * in the audit trail.
    */
   findings?: PolicyFinding[];
+  /** Present when the denial is a rate limit: what the gateway's ledger row records. */
+  rateLimit?: RateLimitDenial;
+}
+
+/** Which rate limit refused a request, and by how much. Content-free. */
+export interface RateLimitDenial {
+  scope: 'organization' | 'user';
+  /** Requests counted in this window, the refused one included. */
+  count: number;
+  limit: number;
+  windowMs: number;
 }
 
 /** Structured verdict from the async PII/PHI content pass. */
@@ -89,6 +100,35 @@ export interface ContentPolicyVerdict {
 interface RateBucket {
   count: number;
   windowStart: number;
+}
+
+const RATE_WINDOW_MS = 60_000;
+
+/**
+ * The bucket a request is charged to: the tenant the gateway bound it to —
+ * its explicit organizationId when that is a well-formed id, else the
+ * organization of the ambient tenant scope (gateway.ts bindTenant, recorded on
+ * `sensitiveTenantPolicy`). A request that never went through binding (this
+ * engine used on its own) is keyed on its explicit organizationId.
+ *
+ * Until 2026-09-28 this read `organizationId` alone, so every ambient-bound
+ * call of every tenant shared one '__global__' bucket, and one tenant's burst
+ * refused another's calls (ADR-0015 §5); and a malformed id ('', 0,
+ * 'undefined') was a bucket of its own, shared by every such call (track GW
+ * review [13]). '__global__' now holds only calls with no tenant: platform
+ * work in an explicit system scope, and — outside production only — calls
+ * with no binding at all, which production refuses before this point
+ * (gateway.ts refuseUnboundInProduction).
+ *
+ * A tenant's explicit and ambient calls now share its one bucket. At the
+ * default 100 a minute per process, an Auto turn at its 20-round ceiling
+ * leaves 80 calls that minute for the tools it runs; the 101st call is
+ * refused (governance-review.test.ts [3]).
+ */
+function rateBucketKey(request: GatewayRequest): string {
+  const bound = request.sensitiveTenantPolicy;
+  const tenant = bound ? bound.organizationId : request.organizationId;
+  return tenant?.toString() || '__global__';
 }
 
 const DEFAULT_POLICY: PolicyConfig = {
@@ -215,11 +255,8 @@ function redactMessagesCopy(messages: GatewayMessage[]): GatewayMessage[] {
 export class GatewayPolicyEngine {
   private config: PolicyConfig;
 
-  // Rate limit: Map<org/global key, bucket>
+  // Rate limit: Map<tenant key (or '__global__', see rateBucketKey), bucket>
   private rateBuckets: Map<string, RateBucket> = new Map();
-
-  // Daily cost accumulator: Map<org/global key, {date: string, totalCost: number}>
-  private dailyCost: Map<string, { date: string; total: number }> = new Map();
 
   constructor(config?: Partial<PolicyConfig>) {
     this.config = { ...DEFAULT_POLICY, ...config };
@@ -363,20 +400,6 @@ export class GatewayPolicyEngine {
   }
 
   /**
-   * Record cost for daily budget tracking.
-   */
-  recordCost(orgId: string | undefined, cost: number): void {
-    const key = orgId || '__global__';
-    const today = new Date().toISOString().slice(0, 10);
-    const bucket = this.dailyCost.get(key);
-    if (bucket && bucket.date === today) {
-      bucket.total += cost;
-    } else {
-      this.dailyCost.set(key, { date: today, total: cost });
-    }
-  }
-
-  /**
    * Update policy configuration.
    */
   updateConfig(patch: Partial<PolicyConfig>): void {
@@ -514,10 +537,10 @@ export class GatewayPolicyEngine {
 
   private checkRateLimit(request: GatewayRequest): PolicyResult {
     const now = Date.now();
-    const windowMs = 60_000; // 1 minute
+    const windowMs = RATE_WINDOW_MS;
 
     // --- Organization-level rate limit ---
-    const orgKey = request.organizationId?.toString() || '__global__';
+    const orgKey = rateBucketKey(request);
     let orgBucket = this.rateBuckets.get(orgKey);
     if (!orgBucket || now - orgBucket.windowStart > windowMs) {
       orgBucket = { count: 0, windowStart: now };
@@ -529,6 +552,7 @@ export class GatewayPolicyEngine {
       return {
         allowed: false,
         reason: `Organization rate limit exceeded: ${orgBucket.count}/${this.config.maxRequestsPerMinutePerOrg} requests per minute`,
+        rateLimit: { scope: 'organization', count: orgBucket.count, limit: this.config.maxRequestsPerMinutePerOrg, windowMs },
       };
     }
 
@@ -548,6 +572,7 @@ export class GatewayPolicyEngine {
         return {
           allowed: false,
           reason: `User rate limit exceeded: ${userBucket.count}/${perUserLimit} requests per minute`,
+          rateLimit: { scope: 'user', count: userBucket.count, limit: perUserLimit, windowMs },
         };
       }
     }

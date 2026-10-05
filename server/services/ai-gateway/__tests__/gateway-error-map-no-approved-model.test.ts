@@ -23,7 +23,9 @@ describe('classifyGatewayError — ModelNotApprovedError', () => {
       new ModelNotApprovedError('document_drafting', ['gpt-4o'], 'no-approved-model')
     );
 
-    expect(c.code).toBe('PROVIDER_UNAVAILABLE');
+    // A governance refusal, not an outage: its own code at 403 (ADR-0015, H3),
+    // so nothing reads it as "the provider is down, retry".
+    expect(c.code).toBe('MODEL_NOT_QUALIFIED');
     expect(c.message).not.toMatch(/try again shortly/i);
     expect(c.message).toMatch(/No model approved for regulatory drafting/);
     expect(c.message).toMatch(/configured on this deployment/);

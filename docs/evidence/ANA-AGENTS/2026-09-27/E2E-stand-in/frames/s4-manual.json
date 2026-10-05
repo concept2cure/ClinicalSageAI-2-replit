@@ -1,0 +1,324 @@
+[
+ {
+  "t0": 1790620430610,
+  "body": {
+   "message": "Check three readiness sources for BX-512, one at a time.",
+   "language": "en",
+   "context": {
+    "screen": "conversation-thread",
+    "screenName": "conversation-thread"
+   },
+   "conversation_history": [],
+   "effort_level": "balanced",
+   "run_policy": "manual",
+   "live_drive": true,
+   "drive_acks": true
+  },
+  "frames": [
+   {
+    "ms": 1,
+    "type": "run_started",
+    "runId": "run_60207743-31c3-4de6-81d1-0a546cacf052"
+   },
+   {
+    "ms": 1,
+    "type": "status",
+    "phase": "orchestrating",
+    "message": "Planning response…"
+   },
+   {
+    "ms": 17,
+    "type": "status",
+    "phase": "loading_context",
+    "message": "Loading project memory…"
+   },
+   {
+    "ms": 17,
+    "type": "drive_state",
+    "enabled": true,
+    "mode": "assist"
+   },
+   {
+    "ms": 43,
+    "type": "context_used",
+    "uploads": [],
+    "unresolvedUploads": 0,
+    "memory": [],
+    "memoryStatus": "unavailable"
+   },
+   {
+    "ms": 43,
+    "type": "status",
+    "phase": "generating",
+    "message": "Generating response…"
+   },
+   {
+    "ms": 43,
+    "type": "thread_id",
+    "thread_id": "ana-ri_1790620430623_sofq2gogg"
+   },
+   {
+    "ms": 43,
+    "type": "orchestration",
+    "orchestration": {
+     "detectedIntent": {
+      "lens": "audit",
+      "confidence": 0.2,
+      "signals": [
+       "Check"
+      ]
+     },
+     "detectedSubmissionType": null,
+     "detectedDocumentTemplate": null,
+     "appliedRole": "general",
+     "activeWorkstream": {
+      "stream": "evidence_development",
+      "phase": "triage",
+      "objective": "Check three readiness sources for BX-512, one at a time.",
+      "currentFocus": "Evidence chain and support gaps",
+      "blockers": [],
+      "nextStep": "Build an evidence inventory, mark critical gaps, and decide what can be defended now versus what needs new support.",
+      "collaborationMode": "advise"
+     },
+     "workstreamHandoff": null,
+     "suggestedActions": [
+      "Create Evidence Memo",
+      "Create Deficiency Preemption Memo",
+      "Create Risk Memo",
+      "Create Reviewer Question Brief"
+     ]
+    }
+   },
+   {
+    "ms": 198,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Running 1 step…"
+   },
+   {
+    "ms": 198,
+    "type": "step",
+    "round": 1,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 198,
+    "type": "tool_use",
+    "round": 1,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_23",
+    "label": "Global search",
+    "input": {
+     "q": "readiness source 1 of 3"
+    }
+   },
+   {
+    "ms": 198,
+    "type": "tool_result",
+    "round": 1,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_23",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"readiness source 1 of 3\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 198,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 317,
+    "type": "paused",
+    "round": 2,
+    "reason": "manual",
+    "next": [
+     "Global search"
+    ]
+   },
+   {
+    "ms": 1648,
+    "type": "resumed",
+    "round": 2
+   },
+   {
+    "ms": 1674,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 2 — running 1 more step…"
+   },
+   {
+    "ms": 1674,
+    "type": "step",
+    "round": 2,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1674,
+    "type": "tool_use",
+    "round": 2,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_24",
+    "label": "Global search",
+    "input": {
+     "q": "readiness source 2 of 3"
+    }
+   },
+   {
+    "ms": 1674,
+    "type": "tool_result",
+    "round": 2,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_24",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"readiness source 2 of 3\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1674,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1800,
+    "type": "paused",
+    "round": 3,
+    "reason": "manual",
+    "next": [
+     "Global search"
+    ]
+   },
+   {
+    "ms": 3128,
+    "type": "resumed",
+    "round": 3
+   },
+   {
+    "ms": 3128,
+    "type": "interjected",
+    "round": 3,
+    "message": "Skip that source; summarise what the first two found instead.",
+    "replaced": [
+     "Global search"
+    ]
+   },
+   {
+    "ms": 3282,
+    "type": "done",
+    "model": "claude-opus-5-5",
+    "provider": "anthropic",
+    "modelTier": "flagship",
+    "effortUsed": "balanced",
+    "usage": {
+     "inputTokens": 100,
+     "outputTokens": 20,
+     "totalTokens": 120,
+     "estimatedCostUsd": 0.0008
+    },
+    "latencyMs": 128,
+    "response": "Readiness source 1.Readiness source 2.Readiness source 3.Stand-in answer: I did not run that step (global_search); I am following your instruction instead.",
+    "telemetry": {
+     "phases": {
+      "orchestrationMs": 10,
+      "contextMs": 14,
+      "gatewayMs": 139,
+      "firstTokenMs": 173
+     },
+     "memory": {
+      "layerOutcomes": {
+       "workingMemory": "empty",
+       "clientMemory": "error",
+       "projectMemory": "skipped"
+      },
+      "workingMemoryMode": "none",
+      "semanticSearchMs": 13
+     }
+    },
+    "stoppedReason": "no_more_tools",
+    "rounds": 3,
+    "runPolicy": "manual"
+   },
+   {
+    "ms": 3304,
+    "type": "grounding_strip",
+    "evidence": {
+     "attempted": false,
+     "validated": false,
+     "source_count": 0,
+     "source_types": [],
+     "grounded_claim_count": 0,
+     "weak_or_ungrounded_claim_count": 0,
+     "missing_support_count": 0,
+     "provider": "ana-ri"
+    },
+    "trust_summary": "Evidence check not run for this response — verify any regulatory claims before relying on them."
+   },
+   {
+    "ms": 3304,
+    "type": "post_done",
+    "cleanedResponse": "Readiness source 1.Readiness source 2.Readiness source 3.Stand-in answer: I did not run that step (global_search); I am following your instruction instead.",
+    "enrichmentMeta": {
+     "sourcesAttempted": 0,
+     "sourcesSucceeded": [],
+     "sourcesFailed": [],
+     "triggerType": "none",
+     "hasProjectContext": false
+    },
+    "evidence": {
+     "attempted": false,
+     "validated": false,
+     "source_count": 0,
+     "source_types": [],
+     "grounded_claim_count": 0,
+     "weak_or_ungrounded_claim_count": 0,
+     "missing_support_count": 0,
+     "provider": "ana-ri"
+    },
+    "evidenceDiscipline": {
+     "compliant": true,
+     "labels": 0,
+     "hasOverclaims": false
+    },
+    "structure": {
+     "valid": false,
+     "score": 0,
+     "maxScore": 6
+    },
+    "queueMeta": {
+     "thread_id": "ana-ri_1790620430623_sofq2gogg",
+     "handoff_ready": true,
+     "turn_status": "completed",
+     "can_process_next": true,
+     "blocked_reason": null
+    },
+    "turnRecord": {
+     "status": "recorded",
+     "id": "ff4f321f-e186-4c36-a4bc-f45c45c15de2",
+     "sha256": "05d432f32a871770dd8a030ca2f62b5e3450fd5f22edcbef5281f4dad1e156a4"
+    }
+   }
+  ],
+  "deltas": 9,
+  "ended": 3304
+ }
+]

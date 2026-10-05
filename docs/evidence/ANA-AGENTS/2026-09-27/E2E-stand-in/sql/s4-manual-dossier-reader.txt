@@ -1,0 +1,31 @@
+# SUPPLEMENTARY, not end to end: the lineage dossier's own reader (lineage-dossier-holds.ts policyHoldsOf, from the snapshot) applied to the assistant row the Manual turn saved (thread ana-ri_1790620430623_sofq2gogg, database ana_e2e_2). The dossier itself is document-scoped and this conversation made no document, so it was not rendered.
+# Re-run 2026-09-28 (review correction) with the filed script, reading the row from the database; output identical to the capture-time run, whose ad-hoc script (.e2e-holds.mts) was not kept.
+$ cd $SNAP && SNAP=$SNAP DATABASE_URL=postgresql://postgres@127.0.0.1:5432/ana_e2e_2 npx tsx <this folder>/harness/dossier-holds.mts ana-ri_1790620430623_sofq2gogg
+# chat_messages.id 6 (thread ana-ri_1790620430623_sofq2gogg)
+{
+ "holds": [
+  {
+   "turn": 1,
+   "round": 2,
+   "reason": "manual",
+   "next": [
+    "Global search"
+   ],
+   "outcome": "continued",
+   "at": "2026-09-28T18:33:52.260Z",
+   "runPolicy": "manual"
+  },
+  {
+   "turn": 1,
+   "round": 3,
+   "reason": "manual",
+   "next": [
+    "Global search"
+   ],
+   "outcome": "redirected",
+   "at": "2026-09-28T18:33:53.711Z",
+   "runPolicy": "manual"
+  }
+ ],
+ "unreadable": 0
+}

@@ -134,7 +134,7 @@ export function RbmWriteNote({ note }: { note: string | null }) {
 }
 
 /** An assignable org member (GET /api/task-management/assignees). */
-interface OwnerOption { id: string; name: string }
+interface OwnerOption { id: string; name: string; label?: string }
 
 /**
  * The org's assignable members, shaped for an RbmFormModal select. Monitoring
@@ -146,7 +146,7 @@ export function useRbmOwners(): { options: string[]; labels: Record<string, stri
   const roster = useLiveRows<OwnerOption>('/api/task-management/assignees');
   const options = ['', ...roster.rows.map(r => String(r.id))];
   const labels: Record<string, string> = { '': 'Unassigned' };
-  for (const r of roster.rows) labels[String(r.id)] = r.name;
+  for (const r of roster.rows) labels[String(r.id)] = r.label ?? r.name;
   return { options, labels };
 }
 

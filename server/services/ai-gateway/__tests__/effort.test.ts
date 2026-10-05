@@ -17,7 +17,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { EFFORT_TO_STRATEGY, type ModelConfig } from '../types';
-import { APPROVED_MODELS, isApprovedForHighRisk, type ApprovedModel } from '../../ai-governance/approved-models';
+import { APPROVED_MODELS, isApprovedForHighRisk } from '../../ai-governance/approved-models';
 import { DEFAULT_MODELS } from '../gateway';
 import {
   DEFAULT_EFFORT,
@@ -34,40 +34,15 @@ import {
   claudeModelLabel,
   EFFORT_TO_API_EFFORT,
 } from '../effort';
-
-function model(overrides: Partial<ModelConfig>): ModelConfig {
-  return {
-    id: 'm',
-    provider: 'anthropic',
-    model: 'm-wire',
-    contextWindow: 200000,
-    qualityScore: 90,
-    costPer1kInput: 0.003,
-    costPer1kOutput: 0.015,
-    capabilities: ['chat', 'general'],
-    enabled: true,
-    thinkingMode: 'adaptive',
-    supportsSamplingParams: false,
-    ...overrides,
-  };
-}
-
-/** A real approved-models entry, by id. Throws rather than guess. */
-function entry(id: string): ApprovedModel {
-  const e = APPROVED_MODELS.find((m) => m.id === id);
-  if (!e) throw new Error(`APPROVED_MODELS has no '${id}'`);
-  return e;
-}
-
-/**
- * A registry entry for a governed model: its id, provider and PINNED wire
- * version come from the approved-models entry, so the fixture is the model the
- * gateway would actually serve rather than a string that merely looks like it.
- */
-function approvedModel(id: string, overrides: Partial<ModelConfig> = {}): ModelConfig {
-  const e = entry(id);
-  return model({ id: e.id, provider: e.provider, model: e.pinnedVersion, ...overrides });
-}
+// One copy of the entry lookup and "the row that IS this entry", shared with
+// reasoning.test.ts and tier-model-approval.test.ts. Aliased to the names the
+// cases below were written with.
+import {
+  approvedRow as approvedModel,
+  entry,
+  hasNoEntry,
+  registryRow as model,
+} from './support/approved-rows';
 
 /**
  * The high-risk answer every call has to give. `highRisk` has no default: a
@@ -256,12 +231,27 @@ describe('resolveModelOverride — gated on approved-models', () => {
     expect(OPUS.approvedForHighRisk).toBe(true);
     expect(SONNET.approvedForHighRisk).toBe(false);
     expect(GPT.approvedForHighRisk).toBe(false);
-    expect(APPROVED_MODELS.some((e) => e.id === UNAPPROVED.id || e.pinnedVersion === UNAPPROVED.model)).toBe(false);
+    expect(hasNoEntry(UNAPPROVED)).toBe(true);
   });
 
   it('refuses an enabled model with no approved entry — by id and by wire model', () => {
     expect(resolveModelOverride(UNAPPROVED.id, registry, NORMAL)).toBeNull();
     expect(resolveModelOverride(UNAPPROVED.model, registry, NORMAL)).toBeNull();
+  });
+
+  it('passes over a matching row that is not its entry to the next one that is, as the tier resolver does', () => {
+    // A row whose wire model is the alias id matches 'claude-opus-4' ahead of
+    // the entry's own row. The pin judged only that first match and was refused,
+    // while a tier remap of the same value served the entry's row (review
+    // objections 3 and 8). Both now select by governedMatch.
+    const aliasOnWire = model({ id: 'claude-opus-house', provider: OPUS.provider, model: OPUS.id });
+    const want = { id: OPUS.id, provider: OPUS.provider, model: OPUS.pinnedVersion };
+    expect(hasNoEntry(aliasOnWire)).toBe(true);
+    expect(resolveModelOverride(OPUS.id, [aliasOnWire, approvedModel('claude-opus-4')], NORMAL)).toEqual(want);
+    expect(resolveModelOverride(OPUS.id, [aliasOnWire, approvedModel('claude-opus-4')], { highRisk: true })).toEqual(want);
+    // Nothing that is an entry after it: still refused.
+    expect(resolveModelOverride(OPUS.id, [aliasOnWire], NORMAL)).toBeNull();
+    expect(resolveModelOverride(UNAPPROVED.id, [UNAPPROVED, approvedModel('claude-opus-4')], NORMAL)).toBeNull();
   });
 
   it('refuses an approved alias whose wire model is not the pinned version', () => {

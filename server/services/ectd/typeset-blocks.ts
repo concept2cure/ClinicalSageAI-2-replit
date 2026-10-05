@@ -1,133 +1,94 @@
 /**
  * Typeset blocks: the document model typeset-leaf-pdf.ts lays out, and the
- * reading of stored markdown into it. Split from the layout so each half stays
- * readable; see typeset-leaf-pdf.ts for why a Module 3 leaf is typeset at all.
+ * exact reading of a composed Module 3 section into it.
+ *
+ * ── Why not a markdown parser ────────────────────────────────────────────────
+ * A composed section is stored in ONE format, written by ONE function,
+ * module3Composer.renderComposedSectionMarkdown:
+ *
+ *     ## <label>\n\n<narrative>[\n\n### <table title>\n\n| h | h |\n| --- | --- |\n| c | c |]*
+ *
+ * The narrative and every cell are RECORDED TEXT, not markdown: a specification
+ * limit "TAMC NMT 1*10^3 CFU/g", a process step "Charge 2*3 kg", a line that
+ * starts "1." or "#". The first version of this module read the content with a
+ * general markdown lexer, and emphasis took the asterisks: "1*10^3 CFU/g" was
+ * filed as "110^3 CFU/g" (found by the 2026-10-04 discovery map,
+ * typeset-emphasis-alters-recorded-values). Escaping the recorded text on the
+ * way in would change the stored bytes — and with them every signed snapshot.
+ * So the reading is the exact inverse of the one writer instead: the heading,
+ * the table blocks the writer appends, and everything else literal. Only the
+ * one escape the writer makes (`\|` inside a cell) is undone.
  */
-
-import { marked, type Token, type Tokens } from 'marked';
-import { decodeHtmlEntities } from '../../export/decode-html-entities.js';
 
 export type TypesetBlock =
   | { kind: 'heading'; level: number; text: string }
   | { kind: 'paragraph'; text: string }
-  | { kind: 'list'; ordered: boolean; start: number; items: string[] }
-  | { kind: 'table'; headers: string[]; rows: string[][] }
-  | { kind: 'preformatted'; text: string };
+  | { kind: 'table'; headers: string[]; rows: string[][] };
 
-// ── Markdown → blocks ─────────────────────────────────────────────────────────
+const HEADING = /^## ([^\n]*)(\n\n|$)/;
+const SEPARATOR = /^\|( --- \|)+$/;
+
+/** One table row as the writer emits it: "| a | b \| c |" → ["a", "b | c"]. */
+function cells(line: string): string[] {
+  const inner = line.replace(/^\| ?/, '').replace(/ ?\|$/, '');
+  // The writer joins cells with ' | ' and escapes a pipe inside a value as
+  // '\\|', so a delimiter is always space-pipe-space and an escaped pipe never is.
+  return inner.split(' | ').map(c => c.replace(/\\\|/g, '|').trim());
+}
 
 /**
- * The text a run of inline tokens reads as. Emphasis keeps its words; inline
- * HTML keeps its raw characters, because in CMC prose "<LOQ" and "<0.05%" are
- * values, not tags; entities are decoded once, as a browser would.
+ * The table blocks a composed section ends with, or null when `tail` is not
+ * exactly a sequence of them. `tail` starts at a "\n\n### " the writer put
+ * there.
  */
-function inlineText(tokens: Token[] | undefined, fallback: string): string {
-  if (!tokens || tokens.length === 0) return decodeHtmlEntities(fallback);
-  return tokens
-    .map(t => {
-      switch (t.type) {
-        case 'html':
-          return (t as Tokens.HTML).raw;
-        case 'br':
-          return '\n';
-        case 'escape':
-          return (t as Tokens.Escape).text;
-        case 'codespan':
-          return (t as Tokens.Codespan).text;
-        case 'image': {
-          const img = t as Tokens.Image;
-          return `[Figure: ${img.text || img.href}]`;
-        }
-        default: {
-          const nested = (t as { tokens?: Token[] }).tokens;
-          const text = (t as { text?: string }).text ?? (t as { raw: string }).raw;
-          return nested && nested.length ? inlineText(nested, text) : decodeHtmlEntities(text);
-        }
-      }
-    })
-    .join('');
-}
-
-function listItemLines(item: Tokens.ListItem, depth: number): string[] {
-  const lines: string[] = [];
-  const own: string[] = [];
-  for (const t of item.tokens ?? []) {
-    if (t.type === 'list') {
-      const nested = t as Tokens.List;
-      nested.items.forEach((child, i) => {
-        const marker = nested.ordered ? `${(Number(nested.start) || 1) + i}.` : '-';
-        const [first, ...rest] = listItemLines(child, depth + 1);
-        lines.push(`${'  '.repeat(depth + 1)}${marker} ${first ?? ''}`, ...rest);
-      });
-    } else {
-      own.push(
-        inlineText((t as { tokens?: Token[] }).tokens, (t as { text?: string }).text ?? t.raw)
-      );
-    }
-  }
-  return [own.join(' ').trim(), ...lines];
-}
-
-function tokensToBlocks(tokens: Token[]): TypesetBlock[] {
+function readTables(tail: string): TypesetBlock[] | null {
   const blocks: TypesetBlock[] = [];
-  for (const t of tokens) {
-    switch (t.type) {
-      case 'space':
-      case 'def':
-      case 'hr':
-        break;
-      case 'heading': {
-        const h = t as Tokens.Heading;
-        blocks.push({ kind: 'heading', level: h.depth, text: inlineText(h.tokens, h.text) });
-        break;
-      }
-      case 'paragraph': {
-        const p = t as Tokens.Paragraph;
-        blocks.push({ kind: 'paragraph', text: inlineText(p.tokens, p.text) });
-        break;
-      }
-      case 'text': {
-        const x = t as Tokens.Text;
-        blocks.push({ kind: 'paragraph', text: inlineText(x.tokens, x.text) });
-        break;
-      }
-      case 'list': {
-        const l = t as Tokens.List;
-        blocks.push({
-          kind: 'list',
-          ordered: l.ordered,
-          start: Number(l.start) || 1,
-          items: l.items.map(item => listItemLines(item, 0).join('\n')),
-        });
-        break;
-      }
-      case 'table': {
-        const tb = t as Tokens.Table;
-        blocks.push({
-          kind: 'table',
-          headers: tb.header.map(c => inlineText(c.tokens, c.text)),
-          rows: tb.rows.map(r => r.map(c => inlineText(c.tokens, c.text))),
-        });
-        break;
-      }
-      case 'blockquote':
-        blocks.push(...tokensToBlocks((t as Tokens.Blockquote).tokens));
-        break;
-      case 'code':
-        blocks.push({ kind: 'preformatted', text: (t as Tokens.Code).text });
-        break;
-      case 'html':
-        // A block of raw HTML is kept as the characters it is, never dropped.
-        blocks.push({ kind: 'paragraph', text: (t as Tokens.HTML).raw.trim() });
-        break;
-      default:
-        blocks.push({ kind: 'paragraph', text: decodeHtmlEntities(t.raw.trim()) });
-    }
+  let rest = tail;
+  while (rest.length > 0) {
+    const m = /^\n\n### ([^\n]*)\n\n(\|[^\n]*)\n(\|[^\n]*)((?:\n\|[^\n]*)*)/.exec(rest);
+    if (!m || !SEPARATOR.test(m[3])) return null;
+    const headers = cells(m[2]);
+    const rows = m[4] ? m[4].slice(1).split('\n').map(cells) : [];
+    if (rows.some(r => r.length !== headers.length)) return null;
+    blocks.push({ kind: 'heading', level: 3, text: m[1].replace(/\\\|/g, '|') });
+    blocks.push({ kind: 'table', headers, rows });
+    rest = rest.slice(m[0].length);
+    // The writer emits `${header}\n${separator}\n${rows}`, so a table with no
+    // rows leaves one newline after its separator.
+    if (rows.length === 0 && rest.startsWith('\n')) rest = rest.slice(1);
   }
-  return blocks.filter(b => b.kind !== 'paragraph' || b.text.trim().length > 0);
+  return blocks;
 }
 
-/** Markdown (GFM tables) to typeset blocks. Pure and deterministic. */
-export function markdownToTypesetBlocks(markdown: string): TypesetBlock[] {
-  return tokensToBlocks(marked.lexer(markdown ?? '', { gfm: true }));
+/** Recorded text as paragraphs: blank lines separate them, every character kept. */
+export function literalParagraphs(text: string): TypesetBlock[] {
+  return String(text ?? '')
+    .split(/\n{2,}/)
+    .map(p => p.replace(/^\n+|\n+$/g, ''))
+    .filter(p => p.trim().length > 0)
+    .map(p => ({ kind: 'paragraph' as const, text: p }));
+}
+
+/**
+ * A composed section, as stored, to typeset blocks: its heading, its narrative
+ * as literal paragraphs, then each appended table under its title. Content not
+ * in the writer's format is returned whole as literal paragraphs — never
+ * reinterpreted.
+ */
+export function composedSectionToBlocks(content: string): TypesetBlock[] {
+  const text = String(content ?? '');
+  const blocks: TypesetBlock[] = [];
+  let body = text;
+  const head = HEADING.exec(text);
+  if (head) {
+    blocks.push({ kind: 'heading', level: 2, text: head[1] });
+    body = text.slice(head[0].length);
+  }
+  // The narrative ends where the writer's table blocks begin: the first
+  // "\n\n### " from which the rest reads exactly as tables to the end.
+  for (let at = body.indexOf('\n\n### '); at !== -1; at = body.indexOf('\n\n### ', at + 1)) {
+    const tables = readTables(body.slice(at));
+    if (tables) return [...blocks, ...literalParagraphs(body.slice(0, at)), ...tables];
+  }
+  return [...blocks, ...literalParagraphs(body)];
 }

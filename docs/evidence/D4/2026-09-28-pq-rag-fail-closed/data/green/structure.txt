@@ -1,0 +1,15 @@
+# node docs/evidence/D4/2026-09-28-pq-rag-fail-closed/data/check-gold-manifest.mjs server/eval/rag/gold-dataset.json server/eval/rag/guidance-corpus-manifest.json /tmp/gold-at-base.json
+{
+ "mode": "structure",
+ "items": 20,
+ "positives": 18,
+ "negatives": 2,
+ "newItems": 0,
+ "manifestEntries": 24,
+ "verifiedEntries": 0,
+ "distinctKeysUsed": 18,
+ "keysProvisional": true,
+ "itemsWithOpenChecks": 5,
+ "structuralErrors": []
+}
+exit=0

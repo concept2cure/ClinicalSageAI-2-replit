@@ -67,8 +67,9 @@ export const FREEZE_GATE_SEED_SQL = `
 export function freezeGateHelpers(db: () => IndPgliteDb) {
   let sigN = 0;
 
-  /** A governed `sign` action bound to the sequence's CURRENT leaf-manifest digest. */
-  async function sign(seqId: number, intent: string): Promise<string> {
+  /** A governed `sign` action bound to the sequence's CURRENT leaf-manifest digest.
+   *  `meaning` is the §11.50 meaning the signer chose; omitted, none is recorded. */
+  async function sign(seqId: number, intent: string, meaning?: string): Promise<string> {
     const h = db();
     const id = `sig-${++sigN}`;
     const binding = await deriveGovernedTargetBinding(
@@ -78,7 +79,7 @@ export function freezeGateHelpers(db: () => IndPgliteDb) {
     );
     await h.pglite.query(
       `INSERT INTO c2c_ana_actions (id, org_id, command, target, state, proposed_by, payload) VALUES ($1,$2,'sign',$3,'executed',$4,$5)`,
-      [id, ORG, `ectd-sequence:${seqId}`, USER, JSON.stringify({ intent })],
+      [id, ORG, `ectd-sequence:${seqId}`, USER, JSON.stringify(meaning === undefined ? { intent } : { intent, meaning })],
     );
     await h.pglite.query(
       `INSERT INTO electronic_signatures (organization_id, signed_target, signature_manifest, bound_payload_digest, binding_basis, is_valid, verification_status)

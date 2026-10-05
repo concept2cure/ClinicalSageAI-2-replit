@@ -20,7 +20,7 @@ import {
   type ModelConfig,
   type RoutingStrategy,
 } from './types';
-import { approvedEntryFor, type ApprovedModel, type PqStatus } from '../ai-governance/approved-models';
+import { governedMatch, selectableEntry, type PqStatus } from '../ai-governance/approved-models';
 
 /** The picker's three effort options, in display order. */
 export const EFFORT_LEVELS: readonly EffortLevel[] = ['fast', 'balanced', 'thorough'] as const;
@@ -92,27 +92,6 @@ export function resolveStrategyWithPrecedence(input: {
 }
 
 /**
- * The approved-models entry a registry row IS, or undefined. Found the way the
- * served-model gate finds one ({@link approvedEntryFor}: provider plus wire
- * model), then held to identity: the entry's own id, and its pinned version on
- * the wire. The lookup alone is looser than a pin in two ways, both closed here:
- *
- *   - it also accepts a wire model EQUAL TO an entry's alias id (e.g. wire
- *     'claude-opus-4'), which names no pinned version at all;
- *   - it keys on the wire model, where the gateway's high-risk check keys on the
- *     registry id (`isApprovedForHighRisk(model.id)`), so a row carrying an
- *     approved version under another id would pass here and be refused there.
- *
- * The drift gate (detectModelDrift) already holds the registry to the same id
- * and pinned version, so every model in today's registry is its own entry and
- * this refuses none of them.
- */
-function governingEntry(m: ModelConfig): ApprovedModel | undefined {
-  const entry = approvedEntryFor({ provider: m.provider, model: m.model });
-  return entry && entry.id === m.id && entry.pinnedVersion === m.model ? entry : undefined;
-}
-
-/**
  * Validate a client-supplied `model_override`. It is pinned only when all of
  * these hold, in order:
  *
@@ -128,11 +107,22 @@ function governingEntry(m: ModelConfig): ApprovedModel | undefined {
  *      with no governance entry could be pinned by any authenticated caller.
  *      An approved alias moved to any wire model its entry does not pin —
  *      including the alias id itself — fails here too.
+ *
+ *      Steps 1 and 2 are {@link governedMatch}, the rule the cost-tier default
+ *      (reasoning.ts resolveTierModel) selects by too: a matching row that
+ *      fails either is passed over, and the first that passes both is the one
+ *      judged below. Until H1 (2026-09-28) only the first match was judged, so
+ *      the same value against the same registry was refused here and served as
+ *      a tier.
  *   3. High-risk — when `opts.highRisk`, the entry is `approvedForHighRisk`. The
  *      gateway would refuse such a pin on high-risk work outright; refusing it
  *      here lets the caller fall back to its default instead. Because step 2
  *      holds the row to the entry's id, this is the same answer the gateway's
- *      id-keyed check gives for the row matched here.
+ *      id-keyed check gives for the row matched here. This step judges the
+ *      row steps 1–2 selected and does not pass over to a later one. Only rows
+ *      of two entries sharing a pinned version could differ here, and the one
+ *      such pair in the lockfile (gpt-4o on openai, gpt-4o-azure on azure) is
+ *      approved for high risk on neither.
  *
  * `opts.highRisk` has no default. A default of "not high-risk" let any caller
  * that forgot the question skip step 3; the type now makes every caller answer
@@ -157,16 +147,13 @@ export function resolveModelOverride(
   opts: { highRisk: boolean },
 ): { id: string; provider: ModelConfig['provider']; model: string } | null {
   if (typeof value !== 'string' || value.length === 0) return null;
-  const match = enabledModels.find(
-    (m) => m.enabled && (m.id === value || m.model === value),
-  );
-  if (!match) return null;
-  const entry = governingEntry(match);
-  if (!entry) return null;
+  const { served } = governedMatch(value, enabledModels);
+  if (!served) return null;
   // Only an explicit `false` is normal-risk work; missing is the strict case.
   const highRisk = opts?.highRisk !== false;
-  if (highRisk && entry.approvedForHighRisk !== true) return null;
-  return { id: match.id, provider: match.provider, model: match.model };
+  if (highRisk && served.entry.approvedForHighRisk !== true) return null;
+  const { row } = served;
+  return { id: row.id, provider: row.provider, model: row.model };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -273,9 +260,11 @@ export function deriveRecommendedEffort(m: ModelConfig): EffortLevel {
 
 /**
  * Project the gateway's model registry into the picker's option list. Filters
- * to enabled models that are an approved-models entry ({@link governingEntry})
- * — the set {@link resolveModelOverride} will pin on normal-risk work, so the
- * picker never offers a model the route would refuse on every turn — and
+ * to enabled models that are an approved-models entry and may be selected here
+ * ({@link selectableEntry}: in production, not a placeholder pin such as
+ * `local-default`) — the set {@link resolveModelOverride} will pin on
+ * normal-risk work, so the picker never offers a model the route would refuse
+ * on every turn — and
  * derives `label` + `recommendedEffort`
  * (neither exists on {@link ModelConfig}). Each option carries its entry's
  * `approvedForHighRisk` and PQ status, so an option cannot read as more
@@ -286,7 +275,7 @@ export function projectModelsForPicker(models: ModelConfig[]): PickerModel[] {
   return models
     .flatMap((m): PickerModel[] => {
       if (!m.enabled) return [];
-      const entry = governingEntry(m);
+      const entry = selectableEntry(m);
       if (!entry) return [];
       return [
         {

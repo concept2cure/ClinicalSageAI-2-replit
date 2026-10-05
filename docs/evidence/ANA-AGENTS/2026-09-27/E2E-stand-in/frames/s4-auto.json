@@ -1,0 +1,765 @@
+[
+ {
+  "t0": 1790620448950,
+  "body": {
+   "message": "Work through twelve checks on the Vorelinib program.",
+   "language": "en",
+   "context": {
+    "screen": "conversation-thread",
+    "screenName": "conversation-thread"
+   },
+   "conversation_history": [],
+   "effort_level": "balanced",
+   "run_policy": "auto",
+   "live_drive": true,
+   "drive_acks": true
+  },
+  "frames": [
+   {
+    "ms": 11,
+    "type": "run_started",
+    "runId": "run_423fe007-e421-4379-9227-c414d1c298a5"
+   },
+   {
+    "ms": 11,
+    "type": "status",
+    "phase": "orchestrating",
+    "message": "Planning response…"
+   },
+   {
+    "ms": 11,
+    "type": "status",
+    "phase": "loading_context",
+    "message": "Loading project memory…"
+   },
+   {
+    "ms": 29,
+    "type": "drive_state",
+    "enabled": true,
+    "mode": "assist"
+   },
+   {
+    "ms": 56,
+    "type": "context_used",
+    "uploads": [],
+    "unresolvedUploads": 0,
+    "memory": [],
+    "memoryStatus": "unavailable"
+   },
+   {
+    "ms": 56,
+    "type": "status",
+    "phase": "generating",
+    "message": "Generating response…"
+   },
+   {
+    "ms": 56,
+    "type": "thread_id",
+    "thread_id": "ana-ri_1790620448962_qpto87oa1"
+   },
+   {
+    "ms": 56,
+    "type": "orchestration",
+    "orchestration": {
+     "detectedIntent": {
+      "lens": "auto",
+      "confidence": 0,
+      "signals": []
+     },
+     "detectedSubmissionType": null,
+     "detectedDocumentTemplate": null,
+     "appliedRole": "general",
+     "activeWorkstream": {
+      "stream": "general",
+      "phase": "triage",
+      "objective": "Work through twelve checks on the Vorelinib program.",
+      "blockers": [],
+      "nextStep": "Clarify the blocking issue and convert it into the next concrete regulatory action.",
+      "collaborationMode": "advise"
+     },
+     "workstreamHandoff": null,
+     "suggestedActions": [
+      "Create Risk Memo",
+      "Rewrite Section",
+      "Create Strategy Note"
+     ]
+    }
+   },
+   {
+    "ms": 210,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Running 1 step…"
+   },
+   {
+    "ms": 210,
+    "type": "step",
+    "round": 1,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 210,
+    "type": "tool_use",
+    "round": 1,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_30",
+    "label": "Global search",
+    "input": {
+     "q": "readiness check 1 of 12"
+    }
+   },
+   {
+    "ms": 210,
+    "type": "tool_result",
+    "round": 1,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_30",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"readiness check 1 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 210,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 347,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 2 — running 1 more step…"
+   },
+   {
+    "ms": 347,
+    "type": "step",
+    "round": 2,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 347,
+    "type": "tool_use",
+    "round": 2,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_31",
+    "label": "Global search",
+    "input": {
+     "q": "readiness check 2 of 12"
+    }
+   },
+   {
+    "ms": 347,
+    "type": "tool_result",
+    "round": 2,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_31",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"readiness check 2 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 347,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 512,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 3 — running 1 more step…"
+   },
+   {
+    "ms": 512,
+    "type": "step",
+    "round": 3,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 512,
+    "type": "tool_use",
+    "round": 3,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_32",
+    "label": "Global search",
+    "input": {
+     "q": "readiness check 3 of 12"
+    }
+   },
+   {
+    "ms": 512,
+    "type": "tool_result",
+    "round": 3,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_32",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 3,
+    "result": "{\"ok\":true,\"query\":\"readiness check 3 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 512,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 642,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 4 — running 1 more step…"
+   },
+   {
+    "ms": 642,
+    "type": "step",
+    "round": 4,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 642,
+    "type": "tool_use",
+    "round": 4,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_33",
+    "label": "Global search",
+    "input": {
+     "q": "readiness check 4 of 12"
+    }
+   },
+   {
+    "ms": 674,
+    "type": "tool_result",
+    "round": 4,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_33",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"readiness check 4 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 674,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 801,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 5 — running 1 more step…"
+   },
+   {
+    "ms": 801,
+    "type": "step",
+    "round": 5,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 801,
+    "type": "tool_use",
+    "round": 5,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_34",
+    "label": "Global search",
+    "input": {
+     "q": "readiness check 5 of 12"
+    }
+   },
+   {
+    "ms": 801,
+    "type": "tool_result",
+    "round": 5,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_34",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"readiness check 5 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 801,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 945,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 6 — running 1 more step…"
+   },
+   {
+    "ms": 945,
+    "type": "step",
+    "round": 6,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 945,
+    "type": "tool_use",
+    "round": 6,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_35",
+    "label": "Global search",
+    "input": {
+     "q": "readiness check 6 of 12"
+    }
+   },
+   {
+    "ms": 945,
+    "type": "tool_result",
+    "round": 6,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_35",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"readiness check 6 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 945,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1078,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 7 — running 1 more step…"
+   },
+   {
+    "ms": 1078,
+    "type": "step",
+    "round": 7,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1078,
+    "type": "tool_use",
+    "round": 7,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_36",
+    "label": "Global search",
+    "input": {
+     "q": "readiness check 7 of 12"
+    }
+   },
+   {
+    "ms": 1091,
+    "type": "tool_result",
+    "round": 7,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_36",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"readiness check 7 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1091,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1216,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 8 — running 1 more step…"
+   },
+   {
+    "ms": 1216,
+    "type": "step",
+    "round": 8,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1216,
+    "type": "tool_use",
+    "round": 8,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_37",
+    "label": "Global search",
+    "input": {
+     "q": "readiness check 8 of 12"
+    }
+   },
+   {
+    "ms": 1226,
+    "type": "tool_result",
+    "round": 8,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_37",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"readiness check 8 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1226,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1360,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 9 — running 1 more step…"
+   },
+   {
+    "ms": 1360,
+    "type": "step",
+    "round": 9,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1360,
+    "type": "tool_use",
+    "round": 9,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_38",
+    "label": "Global search",
+    "input": {
+     "q": "readiness check 9 of 12"
+    }
+   },
+   {
+    "ms": 1375,
+    "type": "tool_result",
+    "round": 9,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_38",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"readiness check 9 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1375,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1507,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 10 — running 1 more step…"
+   },
+   {
+    "ms": 1507,
+    "type": "step",
+    "round": 10,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1507,
+    "type": "tool_use",
+    "round": 10,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_39",
+    "label": "Global search",
+    "input": {
+     "q": "readiness check 10 of 12"
+    }
+   },
+   {
+    "ms": 1521,
+    "type": "tool_result",
+    "round": 10,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_39",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"readiness check 10 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1521,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1676,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 11 — running 1 more step…"
+   },
+   {
+    "ms": 1676,
+    "type": "step",
+    "round": 11,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1676,
+    "type": "tool_use",
+    "round": 11,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_40",
+    "label": "Global search",
+    "input": {
+     "q": "readiness check 11 of 12"
+    }
+   },
+   {
+    "ms": 1676,
+    "type": "tool_result",
+    "round": 11,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_40",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"readiness check 11 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1676,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1806,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 12 — running 1 more step…"
+   },
+   {
+    "ms": 1806,
+    "type": "step",
+    "round": 12,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1806,
+    "type": "tool_use",
+    "round": 12,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_41",
+    "label": "Global search",
+    "input": {
+     "q": "readiness check 12 of 12"
+    }
+   },
+   {
+    "ms": 1806,
+    "type": "tool_result",
+    "round": 12,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_41",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"readiness check 12 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1806,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1950,
+    "type": "done",
+    "model": "claude-sonnet-5",
+    "provider": "anthropic",
+    "modelTier": "standard",
+    "effortUsed": "balanced",
+    "usage": {
+     "inputTokens": 100,
+     "outputTokens": 20,
+     "totalTokens": 120,
+     "estimatedCostUsd": 0.0004
+    },
+    "latencyMs": 140,
+    "response": "Check 1 of 12.Check 2 of 12.Check 3 of 12.Check 4 of 12.Check 5 of 12.Check 6 of 12.Check 7 of 12.Check 8 of 12.Check 9 of 12.Check 10 of 12.Check 11 of 12.Check 12 of 12.Stand-in answer: all 12 checks are done.",
+    "telemetry": {
+     "phases": {
+      "orchestrationMs": 11,
+      "contextMs": 12,
+      "gatewayMs": 150,
+      "firstTokenMs": 174
+     },
+     "memory": {
+      "layerOutcomes": {
+       "workingMemory": "empty",
+       "clientMemory": "error",
+       "projectMemory": "skipped"
+      },
+      "workingMemoryMode": "none",
+      "semanticSearchMs": 11
+     }
+    },
+    "stoppedReason": "no_more_tools",
+    "rounds": 12,
+    "runPolicy": "auto"
+   },
+   {
+    "ms": 1998,
+    "type": "grounding_strip",
+    "evidence": {
+     "attempted": true,
+     "validated": true,
+     "source_count": 0,
+     "source_types": [],
+     "grounded_claim_count": 0,
+     "weak_or_ungrounded_claim_count": 0,
+     "missing_support_count": 0,
+     "provider": "ana-ri",
+     "reviewer_risk_summary": "No substantive regulatory claims detected."
+    },
+    "trust_summary": "Verified · 0 grounded · 0 inferred/weak · 0 missing · 0 sources. No substantive regulatory claims detected."
+   },
+   {
+    "ms": 1998,
+    "type": "post_done",
+    "cleanedResponse": "Check 1 of 12.Check 2 of 12.Check 3 of 12.Check 4 of 12.Check 5 of 12.Check 6 of 12.Check 7 of 12.Check 8 of 12.Check 9 of 12.Check 10 of 12.Check 11 of 12.Check 12 of 12.Stand-in answer: all 12 checks are done.",
+    "enrichmentMeta": {
+     "sourcesAttempted": 0,
+     "sourcesSucceeded": [],
+     "sourcesFailed": [],
+     "triggerType": "none",
+     "hasProjectContext": false
+    },
+    "evidence": {
+     "attempted": true,
+     "validated": true,
+     "source_count": 0,
+     "source_types": [],
+     "grounded_claim_count": 0,
+     "weak_or_ungrounded_claim_count": 0,
+     "missing_support_count": 0,
+     "provider": "ana-ri",
+     "reviewer_risk_summary": "No substantive regulatory claims detected."
+    },
+    "evidenceDiscipline": {
+     "compliant": true,
+     "labels": 0,
+     "hasOverclaims": false
+    },
+    "structure": {
+     "valid": false,
+     "score": 0,
+     "maxScore": 6
+    },
+    "queueMeta": {
+     "thread_id": "ana-ri_1790620448962_qpto87oa1",
+     "handoff_ready": true,
+     "turn_status": "completed",
+     "can_process_next": true,
+     "blocked_reason": null
+    },
+    "turnRecord": {
+     "status": "recorded",
+     "id": "32f7a4c0-f645-434a-8041-59835c41e8d4",
+     "sha256": "3c21c9c518fafba2215fdd5e27c81923abd94b4f1df14658bfcb58c22d46a335"
+    }
+   }
+  ],
+  "deltas": 27,
+  "ended": 1998
+ }
+]

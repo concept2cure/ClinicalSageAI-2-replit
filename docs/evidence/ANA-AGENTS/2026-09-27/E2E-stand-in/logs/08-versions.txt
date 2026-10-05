@@ -1,0 +1,42 @@
+# Versions and identities for this capture (2026-09-28)
+snapshot: exported tree of commit 640937815cbe314a78a1cb56cb583d6cf03f452f (git tree 739c5aa6ee4bf5f0fe3c67eb719c942bc9a0fc07); node_modules symlinked to the repo's
+snapshot commit subject: 640937815 Merge origin/concept2cure-v2 into concept2cure-v2
+snapshot first parent: 07ab29870 Merge origin/concept2cure-v2 into concept2cure-v2: S4 run-policy stops and D2's answer_cut_off, together
+snapshot second parent: a7848edf8 Coverage-gap sweep: GP-P-2 signature residual fixed; record the two follow-ups found
+database: ana_e2e_2 on the local cluster (/var/lib/postgresql/c2c-local, 127.0.0.1:5432); trial runs used ana_e2e_1
+postgres: 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)   pgvector: not installed on this cluster
+node: v22.22.2
+tsx: 4.22.4
+playwright-core: 1.56.1
+chromium: Chromium 141.0.7390.37  (headless, --no-sandbox, 1440x1000)
+app: NODE_ENV=development PORT=5077 ALLOWED_ORIGINS=http://localhost:5077 ANTHROPIC_BASE_URL=http://127.0.0.1:8797 ANTHROPIC_API_KEY=local-stand-in; ANA_MODEL_TIERING default (on); JWT/SESSION secret: throwaway random, not recorded
+
+# sha256 of the harness files used
+116cc5d2105a3ca84982e70ea1915d2f8cfd41563c19f350bb53a6c7185a1ae9  W1/2026-09-28-ana-drive/harness/api-contract.mjs
+27c19a6722db134cf1d70101e8c177a9f36900dda8ff28110989056d62bc3d8b  W1/2026-09-28-ana-drive/harness/stand-in-model.mjs
+11ec6f093f42c836011358791e34838fccd4ee7d32ed93ee75b1b6b575a88d5e  W1/2026-09-28-ana-drive/harness/selftest.mjs
+(W1 files: byte-identical to origin/concept2cure-v2: 116cc5d2105a3ca8… for api-contract.mjs)
+58e0b421ad328c80d16aba054cf6cd7bb82d8c1db1e9c550aab817551a45d49a  E2E-stand-in/harness/capture-sql.mjs
+e08d12709c832ed40d4890da29abca5d4498451fa87b9ae4ae0e9b65e0c91910  E2E-stand-in/harness/drive-e2e.mjs
+    ^ Also edited at 18:38:02: this hash is the driver as it ran at 18:38 (final approval run and control).
+      The 18:33 run counted task rows by `title` only (disclosed in the README); the 18:36 re-run already had the
+      project_tasks.name check (logs/05). Earlier versions were not kept, so what else changed at 18:38:02 (the
+      s4-approval-control scenario was first invoked at 18:38) cannot be shown.
+6c4ef60feaf651a52fdae0da39c7ca22b5c76d5953e29eaebaab69703b649148  E2E-stand-in/harness/request-excerpts.mjs
+c35d7072c661eb610681f9182a6b066d3a9c670330ab82c393e85bb3ecab9ac2  E2E-stand-in/harness/stand-in-e2e.mjs
+    ^ THIS HASH IS THE FILE AS IT RAN FROM 18:38:15 ONLY (requests #49-#52: the final approval run and its control).
+      Requests #1-#48 (scenarios 1, 2, 3, 4 and 6, and the first two approval runs) ran on an earlier version of
+      stand-in-e2e.mjs, edited at 18:38:02 and restarted at 18:38:15 (second 'up' line in logs/09). That earlier
+      file was not kept, so its hash cannot be recorded and its exact diff cannot be shown.
+      What can be shown: logs/12-stand-in-replay-check.txt replays all 52 saved request bodies through THIS file.
+      Its scripted decision and everything it logged match the capture's log line for 50 of 52 requests; the two
+      that differ are #43 and #46 (the first two approval runs), where this file adds projectId: 1 to the
+      create_task proposal. That is the one behavioural difference; the SSE wire half is not compared.
+7f9f01d722fd77f27706dac84322b530319ce9c23fd8560ce5de23b57df4f376  E2E-stand-in/harness/wrapper-contract-check.mjs
+4047e03b6b4fcdc14c252441a2ff12eb63d7bb3e33926197b7dc51d6be85d325  E2E-stand-in/harness/run-app.sh
+
+# Added 2026-09-28 in response to review (after the capture; not used to drive it)
+a866c94a0c4f00a479544f4c209f2000124c3896669dc1eed211fa29990a5bd0  E2E-stand-in/harness/round-budget.mts        (replaces the unkept .e2e-budget.mts; logs/07)
+b9bd68c8640abca6c0f9538b4bad926e9cab936c26c7a898b6a520ca781e4430  E2E-stand-in/harness/dossier-holds.mts       (replaces the unkept .e2e-holds.mts; sql/s4-manual-dossier-reader.txt)
+5ff807b35a7a2f4fb546b2848789b142433ac7c72acfc976b97f79512837f7ec  E2E-stand-in/harness/replay-log-check.mjs    (logs/12)
+7e4992bcf7ab368d49fb0f5fe3c07264a02aac7f52aa600339f47b21cf96a9b7  E2E-stand-in/harness/caption-screens.mjs     (screens/captioned/, from screens/CAPTIONS.txt)

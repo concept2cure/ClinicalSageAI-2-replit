@@ -55,6 +55,7 @@ import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichS
 import { useAnaChat } from '../../components/ana/useAnaChat';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { AnaActivity, activityPropsFor } from '../AnaActivity';
+import { RunPolicyDockNote } from '../RunPolicySwitch';
 import { AnaMarkdown } from '../AnaMarkdown';
 import { AnaOutputCards } from '../AnaOutputs';
 import { useAgentActivity } from '../useAgentActivity';
@@ -915,6 +916,8 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
               </button>
             </div>
             <span className="sr-only" aria-live="polite">{ecStatusMessage}</span>
+            {/* This chat sends no run policy: Manual does not reach it (row 74). */}
+            <RunPolicyDockNote />
           </div>
         </div>
       </section>

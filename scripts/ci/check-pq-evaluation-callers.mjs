@@ -33,7 +33,11 @@ import { stripComments } from './lib/strip-comments.mjs';
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SCAN_DIRS = ['server', 'client', 'shared', 'scripts'];
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'build', 'coverage', '.git']);
-const CALL = /\.evaluateModel\s*\(/;
+// Any reference to the identifier in code, not only `.evaluateModel(`: bracket
+// access (`gw['evaluateModel']`), destructuring and `.bind` reach the same door
+// (track GW review [14], 2026-09-28). Assembling the name from pieces at
+// runtime is not caught; that is a deliberate evasion a review should see.
+const CALL = /\bevaluateModel\b/;
 
 function isAllowed(rel) {
   const p = rel.split(path.sep).join('/');
@@ -85,8 +89,9 @@ function checkRepo() {
   console.error(`✗ pq-evaluation-callers: ${callers.length} call(s) outside server/eval/pq/\n`);
   for (const c of callers) console.error(`  ${c}`);
   console.error(
-    '\nevaluateModel skips routing, fallback and the high-risk approval check. Outside the PQ\n' +
-      'runner it is a way to have an unapproved model draft regulated content. Use route().',
+    '\nevaluateModel skips routing, fallback, every model-governance rule (approved entry, high-risk\n' +
+      'approval, the production PQ gate) and the rate limit. Outside the PQ runner it is a way to have\n' +
+      'an unapproved model draft regulated content. Use route().',
   );
   return 1;
 }
@@ -103,6 +108,9 @@ function selfTest() {
     ['control — a doc comment names it', () => put('server/services/ana/doc.ts', '/** see gateway.evaluateModel(...) */\n// never call .evaluateModel( here\nconst a = 1;\n'), 0],
     ['a route handler calls it', () => put('server/routes/authoring.ts', 'const r = await getGateway().evaluateModel("gpt-4o", req);\n'), 1],
     ['a service calls it across a line break', () => put('server/services/drafting.ts', 'const r = await gw\n  .evaluateModel ("gpt-4o", req);\n'), 1],
+    ['a service reaches it by bracket access', () => put('server/services/drafting.ts', "const r = await gw['evaluateModel']('gpt-4o', req);\n"), 1],
+    ['a service destructures it', () => put('server/services/drafting.ts', 'const { evaluateModel } = getGateway();\n'), 1],
+    ['a service binds it', () => put('server/services/drafting.ts', 'const run = gw.evaluateModel.bind(gw);\n'), 1],
     // A string holding `/*` is not a comment opener. The old regex blanked from
     // the route glob to the JSDoc closer below, the call between them included.
     ['a call below a route glob holding /*, above a JSDoc', () => put('server/routes/eval.ts', "router.use('/api/eval/*', requireAuth);\nconst r = await gw.evaluateModel('gpt-4o', req);\n/** next handler */\n"), ['server/routes/eval.ts:2']],

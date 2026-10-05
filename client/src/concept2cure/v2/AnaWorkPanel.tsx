@@ -43,7 +43,7 @@ import React from 'react';
 
 import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
-import type { AnaChatMessage, RunControlStatus } from '../components/ana/useAnaChat';
+import type { AnaChatMessage, AnaRunHold, RunControlStatus } from '../components/ana/useAnaChat';
 import type { AgentActivityView } from './useAgentActivity';
 import { useNow } from './useNow';
 import {
@@ -62,6 +62,8 @@ export interface AnaWorkPanelProps {
   messages: AnaChatMessage[];
   streaming: boolean;
   runStatus?: RunControlStatus;
+  /** Why the run is held, when it is: under Manual the state line says she is waiting for you. */
+  runHold?: AnaRunHold | null;
   /** Steers accepted by the server and not yet spliced into a round. */
   pendingSteers?: string[];
   context?: AnaWorkContext;
@@ -107,6 +109,7 @@ export function AnaWorkPanel({
   messages,
   streaming,
   runStatus = null,
+  runHold = null,
   pendingSteers = [],
   context,
   queue,
@@ -124,7 +127,7 @@ export function AnaWorkPanel({
   const { turn, used } = derived;
   const live = Boolean(streaming && turn?.streaming);
   const now = useNow(live);
-  const stateLine = stateLineFor(turn, live, runStatus, elapsedFor(turn, now));
+  const stateLine = stateLineFor(turn, live, runStatus, elapsedFor(turn, now), runHold);
   const spoken = spokenLine(turn?.progress ?? [], live, stateLine, turn?.statusPhase);
 
   return (
@@ -163,11 +166,20 @@ export function AnaWorkPanel({
  */
 export const AnaProgressChip = React.forwardRef<
   HTMLButtonElement,
-  { messages: AnaChatMessage[]; streaming: boolean; open: boolean; onToggle: () => void; controls?: string }
->(function AnaProgressChip({ messages, streaming, open, onToggle, controls }, ref) {
+  {
+    messages: AnaChatMessage[];
+    streaming: boolean;
+    open: boolean;
+    onToggle: () => void;
+    controls?: string;
+    /** The run's hold, when the host has one: the chip then says she is waiting, or paused. */
+    runStatus?: RunControlStatus;
+    runHold?: AnaRunHold | null;
+  }
+>(function AnaProgressChip({ messages, streaming, open, onToggle, controls, runStatus = null, runHold = null }, ref) {
   const { turn } = latestTurns(messages);
   const live = Boolean(streaming && turn?.streaming);
-  const chip = progressChip(turn, live);
+  const chip = progressChip(turn, live, runStatus, runHold);
   return (
     <button
       ref={ref}

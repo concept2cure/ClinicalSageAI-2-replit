@@ -1,0 +1,41 @@
+## eslint --max-warnings=0 on the 7 files inside lint scope (config as shipped)
+exit=0
+
+## scripts/verify-rag-corpus.mjs is outside lint scope (eslint.config.js ignores scripts/**):
+File ignored because of a matching ignore pattern
+
+## --no-ignore delta, scripts/verify-rag-corpus.mjs
+# NOW:
+total 15 {"warn no-console":15}
+  289:5 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  295:5 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  310:3 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  318:3 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  319:3 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  321:3 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  334:5 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  341:7 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  343:31 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  349:5 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  356:7 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  358:7 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  360:33 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  364:3 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  365:3 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+# HEAD (git show HEAD:scripts/verify-rag-corpus.mjs | eslint --stdin):
+total 15 {"warn no-console":15}
+  56:5 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  62:5 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  77:3 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  85:3 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  86:3 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  88:3 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  101:5 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  108:7 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  110:31 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  116:5 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  123:7 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  125:7 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  127:33 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  131:3 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  132:3 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.

@@ -30,6 +30,8 @@ import { AUTHORING_TASK_ENTITY, AUTHORING_TASK_MODULE } from './ReviewTasksPanel
 interface Assignee {
   id: string;
   name: string;
+  /** The name, with the address where two members share one (shared/utils/member-labels.ts). */
+  label?: string;
 }
 
 export interface AssignReviewDialogProps {
@@ -202,7 +204,7 @@ function ReviewerSelect({ roster, rosterState, value, onChange }: {
         >
           <option value="">{placeholder}</option>
           {roster.map(a => (
-            <option key={a.id} value={a.id}>{a.name}</option>
+            <option key={a.id} value={a.id}>{a.label ?? a.name}</option>
           ))}
         </select>
       )}

@@ -1,0 +1,91 @@
+$ cd <snapshot 640937815> && DATABASE_URL=postgresql://postgres@127.0.0.1:5432/ana_e2e_2 node scripts/db/install-fresh.mjs
+◇ injected env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+▶ 1/8 Prerequisites — schemas + extensions
+  ✓ schemas (vault, precedent, audit, extensions) + extensions (pgcrypto, uuid-ossp, pg_trgm)
+  ⚠ pgvector NOT available: extension "vector" is not available
+    To get the skipped objects, install it and provision again into an
+    EMPTY database — re-running over a partly-installed one cannot repair
+    step 2 (see the header note on what a re-run does):
+      apt-get install -y postgresql-16-pgvector    # Debian/Ubuntu
+    Continuing WITHOUT it. Every object whose definition needs the `vector`
+    type is SKIPPED and named below — nothing is faked, and no stub type is
+    created. Embedding storage and similarity search backed by those objects
+    are UNAVAILABLE in this database.
+
+▶ 2/8 Tables — drizzle-kit push
+  • schema source: drizzle-kit push from ./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts (drizzle.config.ts)
+  • pgvector absent — applying push statements individually so the
+    non-vector schema still lands (push itself stops at the first error).
+  ✓ push applied statement-by-statement: 2823 applied, 0 already present, 134 skipped for pgvector, 0 failed
+
+▶ 3/8 Complete schema — raw migration overlay
+  ✓ pre-overlay creator: db/migrations/20260401_cmc_convergence_os.sql
+  ✓ pre-overlay creator: db/migrations/20260224_ai_trace_chain.sql
+  ✓ pre-overlay creator: db/migrations/20260730_cmc_projects_reconstruction.sql
+  ✓ pre-overlay creator: db/migrations/20260730_manufacturing_processes_reconstruction.sql
+  ✓ pre-overlay creator: db/migrations/20260730_fk_delete_policies_port.sql
+  pass 1: applied=254 already-present=2 deferred=12 hard=0 needs-pgvector=2
+  pass 2: applied=11 already-present=0 deferred=1 hard=0
+  pass 3: applied=0 already-present=0 deferred=1 hard=0
+  ◦ 1 file(s) skipped-classified (expected on a fresh install; each names its tracked resolution — NOT counted as incomplete):
+      0008_critical_fk_delete_policies.sql — superseded by db/migrations/20260730_fk_delete_policies_port.sql (guarded port applied pre-overlay); the original aborts on retired user_sessions
+        last error: relation "user_sessions" does not exist
+  ✓ overlay: 265 applied, 2 already-present from push
+
+▶ 4/8 Authoring subsystem (Part-11 unit)
+  ✓ authoring subsystem provisioned as a unit (9 files, 23 tables, tenant-isolated)
+
+▶ 5/8 Row-Level Security policies (raw migrations)
+  ✓ coerced residual text tenant columns to integer (fresh-DB safe)
+  ⚠ 0005_csr_knowledge_database.sql — skipped, needs pgvector
+  ✓ applied 0019_tenant_column_audit.sql
+  ✓ applied 0020_coerce_text_tenant_columns.sql
+  ✓ applied 0021_enable_rls_everywhere.sql
+  ✓ applied 20260608_ai_placement_policies.sql
+  ✓ applied 20260612_rls_research_admin.sql
+
+▶ 6/8 Governed content — Part 11 audit tree (*_gcc_*.sql)
+  ⚠ 001_gcc_core.sql: skipped, needs pgvector
+  ⚠ 002_gcc_audit_immutability.sql: psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/383f833d-60b2-5c10-aaf3-278635215f13/scratchpad/mergesnap2/db/migrations/002_gcc_audit_immutability.sql:43
+  ⚠ 003_gcc_prose_versioning.sql: psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/383f833d-60b2-5c10-aaf3-278635215f13/scratchpad/mergesnap2/db/migrations/003_gcc_prose_versioning.sql:87: 
+  ⚠ 004_gcc_enhanced_citations.sql: PL/pgSQL function inline_code_block line 9 at SQL statement
+  ⚠ 005_gcc_database_roles.sql: psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/383f833d-60b2-5c10-aaf3-278635215f13/scratchpad/mergesnap2/db/migrations/005_gcc_database_roles.sql:60: ER
+  ⚠ 006_gcc_dashboard_views.sql:               ^
+  ⚠ 017_gcc_shadow_agent_rbac.sql: PL/pgSQL function inline_code_block line 8 at SQL statement
+  ⚠ 059_gcc_vector_embeddings.sql: skipped, needs pgvector
+  ⚠ 067_gcc_federated_learning_intelligence.sql:                                    ^
+  ⚠ 072_gcc_innovation_platform_core.sql: skipped, needs pgvector
+  ⚠ 074_gcc_regulatory_intuition_engine.sql: skipped, needs pgvector
+  ⚠ 075_gcc_epistemic_intelligence.sql:                                    ^
+  ⚠ 076_gcc_causal_inference_engine.sql:                                    ^
+  ⚠ 077_gcc_self_evolving_intelligence.sql:                                    ^
+  ⚠ 078_gcc_cross_domain_transfer.sql:                                    ^
+  ⚠ governed content: 27/42 applied, 4 blocked by missing pgvector
+  ✓ re-applied 13/13 root file(s) guarded on a named schema (their dependency exists only after this tree)
+  ✓ tenant-isolation sweep re-run over the tables this tree created
+  ✓ non-public uuid-tenant tables policied
+  ✓ child tables scoped to their tenant-keyed parents
+
+▶ 7/8 Runtime role — non-superuser grants
+  • single-role posture: no runtime role distinct from the owner (postgres) is identifiable (RUNTIME_DB_ROLE / APP_SERVICE_DB_PASSWORD / APP_DATABASE_URL / DATABASE_URL). Nothing to grant.
+  • no runtime role distinct from the owner (postgres). Production boot will FAIL CLOSED under RLS_ENFORCE=on — not only for a superuser, but for ANY role that owns the tables. Postgres exempts a table owner from its own policies unless FORCE ROW LEVEL SECURITY is set, so on this database the policies on every RLS-enabled, non-FORCE table are inert and its rows are readable across tenants. Set APP_SERVICE_DB_PASSWORD here and APP_DATABASE_URL for the runtime before going live. (The narrower "superuser" wording this line used to carry was true but incomplete, and the boot gate it described could not see the owner case at all until server/db/rlsEnforcement.ts learned to.)
+
+▶ 8/8 Verify
+  tables (public): 780
+  RLS policies:    873
+  named-schema tables: 6/6 present
+  core route tables: 5/5 present
+  authoring subsystem: 19/19 tables present
+  required objects: 8/8 capabilities complete
+    ✓ stability_studies — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ project_intelligence_profiles — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ immutable_report_records — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ evidence_claims — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ conversation_working_memory — from raw migrations/ overlay · RLS on organization_id
+    ✓ ana_capability_registry — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · global (no tenant scope, no policy expected)
+    ✓ report_type_registry — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · global (no tenant scope, no policy expected)
+    ✓ doc_permissions — from authoring subsystem (db/migrations/20260725_authoring_*) · RLS on tenant_id
+
+❌ Install failed: 1 tenant-keyed table(s) carry no RLS policy — rows are readable across tenants once anything reads them: public.ctd_module_sections (child of public.ctd_submissions, row security off)
+exit=1
