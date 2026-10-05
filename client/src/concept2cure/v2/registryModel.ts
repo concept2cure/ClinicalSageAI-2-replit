@@ -380,22 +380,23 @@ export const READINESS_META = {
 export const ANA_MODES: Array<{
   id: string;
   label: string;
-  model: string;
+  /** The effort the mode buys, in the server's own words (row 74, ADR-0015 §9). Not a model: the gateway picks that. */
+  effortLabel: string;
   desc: string;
   effort: 'fast' | 'balanced' | 'thorough';
 }> = [
-  { id: 'standard', label: 'Standard', model: 'Balanced', desc: 'Chat, reasoning, quick answers', effort: 'balanced' },
+  { id: 'standard', label: 'Standard', effortLabel: 'Balanced', desc: 'Chat, reasoning, quick answers', effort: 'balanced' },
   {
     id: 'deep-research',
     label: 'Deep research',
-    model: 'Maximum',
+    effortLabel: 'Thorough',
     desc: 'Drafting, multi-step analysis, long-form',
     effort: 'thorough',
   },
   {
     id: 'quick-ask',
     label: 'Quick ask',
-    model: 'Instant',
+    effortLabel: 'Light',
     desc: `Autocomplete, inline, classification · with Auto, up to ${AUTO_MAX_ROUNDS} rounds`,
     effort: 'fast',
   },

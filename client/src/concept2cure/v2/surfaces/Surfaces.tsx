@@ -361,7 +361,7 @@ export function Home({
               <button type="button" className="landing-engine" aria-haspopup="true" aria-expanded={modeOpen}
                 onClick={() => setModeOpen((o) => !o)}>
                 <span className="landing-eng-ana">AnA</span>
-                <span>{engine.model}</span>
+                <span>{engine.effortLabel}</span>
                 <span className="landing-eng-mode">{engine.label}</span>
                 <span className="landing-eng-chev">{I.down}</span>
               </button>
@@ -377,7 +377,7 @@ export function Home({
                         setModeOpen(false);
                       }}
                     >
-                      <span className="lm-label">{m.model}</span>
+                      <span className="lm-label">{m.effortLabel}</span>
                       <span className="lm-desc">{m.desc}</span>
                     </button>
                   ))}
