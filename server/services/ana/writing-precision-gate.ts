@@ -118,8 +118,13 @@ function groundingDimension(text: string, findings: PrecisionFinding[]) {
 function consistencyDimension(text: string, findings: PrecisionFinding[]) {
   const consistency = checkTerminologyConsistency(text);
   for (const f of consistency.findings) {
+    // An 'arithmetic' finding's variants are [stated, recomputed] (terminology-consistency.ts).
     const message =
-      f.kind === 'value_inconsistency'
+      f.kind === 'arithmetic'
+        ? f.label === 'arm_sum'
+          ? `Reconcile the arm counts with the total they follow — they sum to ${f.variants[1]}, but the text states a total of ${f.variants[0]}. Correct the total or the arm counts.`
+          : `Recompute the percentage — ${f.variants[0]} is stated, but its own n/N gives ${f.variants[1]}. Correct the percentage or the counts.`
+        : f.kind === 'value_inconsistency'
         ? `Reconcile "${f.label}" — it is stated as ${f.variants.join(' and ')} in the same document. Use one value.`
         : f.kind === 'abbreviation_conflict'
           ? `Use one expansion for "${f.label}" — it is expanded as ${f.variants.map(v => `"${v}"`).join(' and ')}.`
