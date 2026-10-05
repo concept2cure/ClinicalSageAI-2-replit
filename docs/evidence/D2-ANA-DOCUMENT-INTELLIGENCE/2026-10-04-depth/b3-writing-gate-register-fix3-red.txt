@@ -1,0 +1,24 @@
+# b3-writing-gate-register — review round 3, red on the round-3 code (2026-10-05)
+# npx vitest run server/services/ana/__tests__/writing-gate-regulatory-register.test.ts (failing lines + summary)
+# Expected: 5 approval predictions dropped because the text after a governance body was not a recognised coordinator
+# (', then by FDA', "'s target date", '-requested', ' (FDA)'), 4 census sentences whose outcome word was not on
+# NO_OUTCOME_LATER, and 5 transitive 'completely resolved <object>' efficacy claims exempted as an AE outcome term.
+# The 2 new AE-outcome terms of art ('completely resolved by Day 10', '... had completely resolved.') already pass.
+
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the IRB, then by FDA. 10ms
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the Steering Committee and then by FDA. 1ms
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the sponsor's target date of 2027. 1ms
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the sponsor-requested action date. 1ms
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the sponsor (FDA) next year. 1ms
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients completed treatment with no relapse. keeps a high claims finding 1ms
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients received drug X and improved. keeps a high claims finding 1ms
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients received drug X and benefited. keeps a high claims finding 1ms
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients received drug X and none relapsed. keeps a high claims finding 1ms
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X completely resolved the disease. keeps a high claims finding 1ms
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Treatment with drug X completely resolved the infection. keeps a high claims finding 0ms
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X resolved completely the symptoms of psoriasis. keeps a high claims finding 0ms
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X completely resolved psoriasis in the majority of patients. keeps a high claims finding 0ms
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: The infection was completely resolved by drug X. keeps a high claims finding 0ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  14 failed | 99 passed (113)
