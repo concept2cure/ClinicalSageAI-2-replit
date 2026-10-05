@@ -1,0 +1,85 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > rewritten_section with sectionCode 2.5 sends the canonical 2.5 brief as its own user message 12ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > revised_artifact with sectionCode 2.5 sends the canonical 2.5 brief as its own user message 3ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > attach_to_dossier with sectionCode 2.5 sends the canonical 2.5 brief as its own user message 1ms
+   → expected [] to have a length of 1 but got +0
+ ✓ server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > risk_memo with sectionCode 2.5 gets no section brief (control) 2ms
+ ✓ server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > strategy_note with sectionCode 2.5 gets no section brief (control) 1ms
+ ✓ server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > reviewer_question_brief with sectionCode 2.5 gets no section brief (control) 1ms
+ ✓ server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > deficiency_preemption_memo with sectionCode 2.5 gets no section brief (control) 1ms
+ ✓ server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > evidence_memo with sectionCode 2.5 gets no section brief (control) 1ms
+ × server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > an unrecognised section code is told no canonical requirements are indexed, never given another entry 4ms
+   → expected 'assistant' to be 'user' // Object.is equality
+ ✓ server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > a section rewrite with no sectionCode is unchanged: system, context, instruction 1ms
+ × server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > records which record answered in the artifact provenance 1ms
+   → expected undefined to be 'ctd-section:2.7.3' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > rewritten_section with sectionCode 2.5 sends the canonical 2.5 brief as its own user message
+ FAIL  server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > revised_artifact with sectionCode 2.5 sends the canonical 2.5 brief as its own user message
+ FAIL  server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > attach_to_dossier with sectionCode 2.5 sends the canonical 2.5 brief as its own user message
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/__tests__/artifact-generator-brief.test.ts:100:20
+     98|     const messages = await run(actionType, '2.5');
+     99|     const briefs = messages.filter((m) => m.content.includes('## Draft…
+    100|     expect(briefs).toHaveLength(1);
+       |                    ^
+    101|     const brief = briefs[0];
+    102|     expect(brief.role).toBe('user');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > an unrecognised section code is told no canonical requirements are indexed, never given another entry
+AssertionError: expected 'assistant' to be 'user' // Object.is equality
+
+Expected: "user"
+Received: "assistant"
+
+ ❯ server/services/__tests__/artifact-generator-brief.test.ts:124:25
+    122|     const messages = await run('rewritten_section', '9.9.9');
+    123|     const notice = messages[messages.length - 2];
+    124|     expect(notice.role).toBe('user');
+       |                         ^
+    125|     expect(notice.content).toContain('no canonical requirements indexe…
+    126|     expect(notice.content).toContain('9.9.9');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/__tests__/artifact-generator-brief.test.ts > artifact-generator: a section rewrite carries the section brief > records which record answered in the artifact provenance
+AssertionError: expected undefined to be 'ctd-section:2.7.3' // Object.is equality
+
+- Expected:
+"ctd-section:2.7.3"
+
++ Received:
+undefined
+
+ ❯ server/services/__tests__/artifact-generator-brief.test.ts:141:45
+    139|   it('records which record answered in the artifact provenance', async…
+    140|     await run('rewritten_section', '2.7.3');
+    141|     expect(provenance().requirementsSource).toBe('ctd-section:2.7.3');
+       |                                             ^
+    142|     const messages = mocks.route.mock.calls[0][0].messages as Msg[];
+    143|     expect(messages.some((m) => m.content.includes('## Drafting: Modul…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 6 passed (11)
+   Start at  11:35:20
+   Duration  2.16s (transform 1.21s, setup 175ms, import 1.14s, tests 32ms, environment 0ms)
+

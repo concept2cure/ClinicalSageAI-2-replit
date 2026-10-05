@@ -21,6 +21,7 @@ import {
   logGeneration
 } from './enforcement.js';
 import { executeGovernedAnaOperation } from '../governed-ana-execution.js';
+import { resolveRequirements, type RequirementSource } from '../ind/ctd/requirements-resolver.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -372,6 +373,80 @@ const ARTIFACT_TYPE_MAP: Record<DocumentActionType, string> = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Section requirements
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The action types that produce a section's text. Only these are told what the
+ * section must contain; a memo that merely mentions a section is not a draft of
+ * it, and a "must contain" brief would push it toward one.
+ */
+const SECTION_DRAFTING_ACTIONS: ReadonlySet<DocumentActionType> = new Set<DocumentActionType>([
+  'rewritten_section',
+  'revised_artifact',
+  'attach_to_dossier',
+]);
+
+function describeSource(source: RequirementSource): { label: string; key: string } {
+  switch (source.kind) {
+    case 'ctd-section':
+      return { label: `CTD section ${source.code}`, key: `ctd-section:${source.code}` };
+    case 'lifecycle':
+      return { label: `lifecycle document type ${source.id}`, key: `lifecycle:${source.id}` };
+    case 'outline':
+      return source.section
+        ? { label: `ICH E3 heading ${source.section}`, key: `outline:${source.outlineId}:${source.section}` }
+        : { label: 'ICH E3 outline', key: `outline:${source.outlineId}` };
+  }
+}
+
+/**
+ * What `sectionCode` must contain, as a user message, from the one resolver
+ * (server/services/ind/ctd/requirements-resolver.ts). `null` when the action
+ * is not a section draft or names no section. A code the record does not
+ * index gets an explicit "no canonical requirements indexed" notice, never
+ * another entry's brief and never an invitation to recall one.
+ */
+function sectionRequirementsMessage(
+  actionType: DocumentActionType,
+  sectionCode: string | undefined,
+): { message: GatewayMessage; source: string } | null {
+  const code = String(sectionCode ?? '').trim();
+  if (!code || !SECTION_DRAFTING_ACTIONS.has(actionType)) return null;
+
+  const answer = resolveRequirements({ document: code });
+  if (answer.kind === 'answer') {
+    const { label, key } = describeSource(answer.source);
+    return {
+      source: key,
+      message: {
+        role: 'user',
+        content:
+          `Canonical requirements for section "${code}", from the platform's regulatory record ` +
+          `(${label} — ${answer.title}). The text you write for this section must cover what this states. ` +
+          'Where the conversation gives no evidence for a required element, mark it [MISSING]; ' +
+          'do not add requirements from memory.\n\n' +
+          answer.requirements,
+      },
+    };
+  }
+
+  const detail =
+    answer.kind === 'not_indexed'
+      ? answer.reason
+      : `It matches more than one entry (${answer.candidates.map((c) => c.title).join('; ')}), and none is chosen for you.`;
+  return {
+    source: 'not_indexed',
+    message: {
+      role: 'user',
+      content:
+        `The platform has no canonical requirements indexed for section "${code}". ${detail} ` +
+        "Say in the artifact that this section's required content was not checked against a canonical source.",
+    },
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Generator
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -419,6 +494,11 @@ export async function generateArtifact(
   for (const msg of usedContext) {
     messages.push({ role: msg.role, content: msg.content });
   }
+
+  // A section draft is told what that section must contain, as its own
+  // message after the conversation and before the instruction.
+  const sectionRequirements = sectionRequirementsMessage(actionType, sectionCode);
+  if (sectionRequirements) messages.push(sectionRequirements.message);
 
   // Add the generation instruction as a user message
   messages.push({
@@ -543,6 +623,7 @@ export async function generateArtifact(
         generatedAt: new Date().toISOString(),
         aiProvider: response.provider || 'unknown',
         aiModel: response.model || 'unknown',
+        ...(sectionRequirements ? { requirementsSource: sectionRequirements.source } : {}),
       },
       structureSections: structureResult.present,
       qualityGate: {
