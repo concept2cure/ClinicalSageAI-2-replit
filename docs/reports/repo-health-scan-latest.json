@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-05T01:12:49.787Z",
+  "generatedAt": "2026-10-05T01:18:31.120Z",
   "git": {
-    "sha": "c940af4e62c162c25145b02475538084c252cdec",
+    "sha": "b165d63ac1ed0be0c53770b8391815e98b423688",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2054,7 +2054,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 860881
+        "bytes": 862219
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2201,6 +2201,10 @@
         "bytes": 112204
       },
       {
+        "file": "server/api/cmc/routes.ts",
+        "bytes": 111429
+      },
+      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 109447
       },
@@ -2215,10 +2219,6 @@
       {
         "file": "shared/regulatory/project-bootstrap.ts",
         "bytes": 109047
-      },
-      {
-        "file": "server/api/cmc/routes.ts",
-        "bytes": 108981
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
@@ -2256,7 +2256,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "lines": 20219
+        "lines": 20237
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2387,16 +2387,16 @@
         "lines": 2430
       },
       {
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2400
+      },
+      {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
         "lines": 2386
       },
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "lines": 2379
-      },
-      {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2378
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
@@ -2496,7 +2496,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
-        "lines": 1990
+        "lines": 1982
       },
       {
         "file": "server/routes/c2c/projects.ts",
