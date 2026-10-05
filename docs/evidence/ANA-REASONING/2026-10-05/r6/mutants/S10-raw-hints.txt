@@ -1,0 +1,12 @@
+Mutant S10-raw-hints: hints that are not a list throw, and a list's objects read "[object Object]", as before
+
+--- server/services/ana/tool-selection.ts
+- const hints = Array.isArray(ctx?.hints) ? ctx.hints.map(asText) : [];
++ const hints = [...((ctx?.hints ?? []) as string[])];
+
+Tests run: server/services/ana/__tests__/tool-selection-carry-over.test.ts server/services/ana/__tests__/tool-selection-context.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/tool-selection-context.test.ts > the selector reads a context field only as the string it is declared to be > hints that are not a list do not throw, and a list keeps only its strings 11ms
+      Tests  1 failed | 43 passed (44)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

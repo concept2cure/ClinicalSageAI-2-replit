@@ -52,10 +52,36 @@ const STOP_LINES: ReadonlyMap<string, string> = new Map<AnaStoppedReason, string
 ]);
 
 /** A live turn's state line: working, paused, waiting for you, or stopping. */
-function liveStateLine(runStatus: RunControlStatus, runHold: AnaRunHold | null | undefined, elapsed: string): string {
+/**
+ * Whether a live turn is held for a person, and why: 'manual' when the run
+ * policy stopped before her next step, 'approval' when an action she asked for
+ * waits on someone's decision, null otherwise. The one rule every surface that
+ * says what AnA is doing reads (row 74, end-to-end finding F2): the run is
+ * held and the person is the one who has to act, so nothing may say "working"
+ * or "driving" then.
+ */
+export function waitingForPerson(
+  turn: AnaChatMessage | null | undefined,
+  runStatus: RunControlStatus,
+  runHold: AnaRunHold | null | undefined,
+): 'manual' | 'approval' | null {
+  if (!turn?.streaming) return null;
+  if (runStatus === 'paused' && runHold?.reason === 'manual') return 'manual';
+  return (turn.pendingSignoffs?.length ?? 0) > 0 ? 'approval' : null;
+}
+
+function liveStateLine(
+  turn: AnaChatMessage,
+  runStatus: RunControlStatus,
+  runHold: AnaRunHold | null | undefined,
+  elapsed: string,
+): string {
+  const waiting = waitingForPerson(turn, runStatus, runHold);
   // Under Manual AnA stopped herself: nobody pressed Pause, so it is not
   // "Paused" — she is waiting for the person to say what comes next.
-  if (runStatus === 'paused' && runHold?.reason === 'manual') return `Waiting for you · ${elapsed}`;
+  if (waiting === 'manual') return `Waiting for you · ${elapsed}`;
+  // An action she asked for waits on a person's decision: she is not working.
+  if (waiting === 'approval') return `Waiting for your approval · ${elapsed}`;
   if (runStatus === 'paused') return `Paused · ${elapsed}`;
   // Between hold_expired and the stream's close: the turn has ended.
   if (runHold?.reason === 'expired') return `Stopped waiting for you · ${elapsed}`;
@@ -72,7 +98,7 @@ export function stateLineFor(
   runHold?: AnaRunHold | null,
 ): string {
   if (!turn) return '';
-  if (live) return liveStateLine(runStatus, runHold, elapsed);
+  if (live) return liveStateLine(turn, runStatus, runHold, elapsed);
   if (turn.stopped) return `Stopped after ${elapsed}`;
   // A timeout or a lost connection never sets `stopped` (that flag is the
   // person's own stop). Both are turns that did not finish, and neither may

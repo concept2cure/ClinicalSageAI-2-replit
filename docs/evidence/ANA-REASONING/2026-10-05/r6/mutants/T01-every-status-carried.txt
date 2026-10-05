@@ -1,0 +1,14 @@
+Mutant T01-every-status-carried: a step the person declined, or one that failed, is carried
+
+--- server/services/ana/tool-trace.ts
+- if (e.status === 'success' && e.tool && !names.includes(e.tool)) names.push(e.tool);
++ if (e.tool && !names.includes(e.tool)) names.push(e.tool);
+
+Tests run: server/services/ana/__tests__/tool-selection-carry-over.test.ts server/services/ana/__tests__/tool-selection-context.test.ts server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/tool-selection-context.test.ts > what a conversation carries into the next turn > the tools that succeeded, most recent first, each once 7ms
+ × server/services/ana/__tests__/tool-selection-context.test.ts > what a conversation carries into the next turn > never a step a person declined (recorded as an error), and nothing from no steps 2ms
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 14ms
+      Tests  3 failed | 43 passed (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

@@ -127,16 +127,22 @@ interface DocumentRow {
 }
 
 /** A live version of this program, locked for the transaction; null when there is none. */
-async function lockDocument(client: PoolClient, programId: string, documentId: string): Promise<DocumentRow | null> {
+async function lockDocument(
+  client: PoolClient,
+  organizationId: number,
+  programId: string,
+  documentId: string,
+): Promise<DocumentRow | null> {
   const { rows } = await client.query(
     `SELECT d.id::text AS id, btrim(d.content_hash) AS content_hash, d.version,
             COALESCE(d.document_title, d.title, d.file_name, d.filename) AS title,
             ${supersededSql('d')} AS superseded, cv.current_version
        FROM vault.documents d
+       JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $3
        ${currentVersionLateral('d')}
       WHERE d.id = $1 AND d.program_id = $2 AND d.deleted_at IS NULL
       FOR SHARE OF d`,
-    [documentId, programId],
+    [documentId, programId, organizationId],
   );
   return (rows[0] as DocumentRow | undefined) ?? null;
 }
@@ -218,7 +224,7 @@ export async function linkSourceEvidence(
     );
     if (src.rows.length === 0) return refuse(404, 'SOURCE_NOT_FOUND', 'No such CMC record in this program.');
     const sourceType = String(src.rows[0].source_type);
-    const doc = await lockDocument(client, a.programId, documentId);
+    const doc = await lockDocument(client, a.organizationId, a.programId, documentId);
     if (!doc) return refuse(404, 'DOCUMENT_NOT_FOUND', 'That document is not in this program’s Vault.');
     if (doc.superseded) {
       return refuse(
@@ -377,12 +383,13 @@ export async function listLinkableDocuments(
             d.version, d.ctd_section, d.document_type, c.document_kind, btrim(d.content_hash) AS content_hash,
             d.created_at
        FROM vault.documents d
+       JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $2
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
       WHERE d.program_id = $1 AND d.deleted_at IS NULL AND NOT ${supersededSql('d')}
       ORDER BY (d.ctd_section LIKE '3.%' OR d.ctd_section LIKE 'm3%') DESC NULLS LAST, d.ctd_section NULLS LAST,
                d.created_at DESC
       LIMIT 500`,
-    [p.programId],
+    [p.programId, p.organizationId],
   );
   return {
     ok: true,
