@@ -63,6 +63,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SCAN = path.join(ROOT, 'client', 'src', 'concept2cure');
@@ -172,29 +173,6 @@ function walk(dir, out = []) {
   return out;
 }
 
-/**
- * Blank out comments so prose ABOUT the pattern is not reported as the pattern.
- *
- * This was a line test — skip a line that STARTS with `*`, `//` or `/*` — and it
- * missed the comment style this codebase actually uses, where a block comment's
- * continuation lines are indented with no leading asterisk:
- *
- *     /* ...
- *        `ci:fixture-fallback` keys on `live ?\u003F FIXTURE` ...   <- not skipped
- *      *\/
- *
- * So the file that explains why a fallback was removed fails the check for the
- * fallback it removed. Blanking preserves line numbers, so the offsets a real
- * finding reports still point at the right line.
- */
-function stripComments(text) {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
-    .split('\n')
-    .map((l) => l.replace(/\/\/.*$/, ''))
-    .join('\n');
-}
-
 function main() {
   const findings = [];
 
@@ -207,7 +185,27 @@ function main() {
     }
     const rel = path.relative(ROOT, file);
 
-    stripComments(src).split('\n').forEach((line, i) => {
+    /*
+     * Comments are blanked so prose ABOUT the pattern is not reported as the
+     * pattern, and blanked rather than skipped so a finding's line is its
+     * source line.
+     *
+     * This was first a line test (skip a line that STARTS with `*`, `//` or
+     * a block opener), which missed this codebase's block comments, whose
+     * continuation lines are indented with no leading asterisk: the file that
+     * explained why a fallback was removed failed the check for the fallback
+     * it removed. Then it was a regex pair that did not know about strings: a
+     * literal holding `/*` (a glob such as '/api/regulatory/*') opened a
+     * "comment" that ran to the next real `*` `/`, and an 'https://…' literal
+     * cut the rest of its own line, so a `?? FIXTURE_*` or a fixture ternary
+     * in either place was never read. The shared stripper is quote-,
+     * template- and escape-aware. Line comments are dropped rather than
+     * blanked, so the 200-character then-branch and 220-character
+     * SAMPLE_GATED windows are spent on code, as they were before.
+     */
+    const code = stripComments(src, { lineComments: 'drop' });
+
+    code.split('\n').forEach((line, i) => {
       for (const m of line.matchAll(/\?\?\s*([A-Z][A-Za-z0-9_]{2,})\s*(\[|\.)?/g)) {
         const id = m[1];
         if (!CONTENT_NAME.test(id)) continue;
@@ -219,7 +217,7 @@ function main() {
       }
     });
 
-    findings.push(...ternaryFallbacks(stripComments(src), rel));
+    findings.push(...ternaryFallbacks(code, rel));
   }
 
   findings.sort((a, b) => a.where.localeCompare(b.where));

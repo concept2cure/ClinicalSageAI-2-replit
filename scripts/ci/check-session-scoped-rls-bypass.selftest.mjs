@@ -61,16 +61,12 @@
  * one, this selftest FAILS and says to promote it to a RED case and delete its
  * entry here. If the gate's output on one changes any other way, it fails too.
  *
- *   1. A `/*` inside a string literal hides a real SET. stripComments() runs
- *      its block-comment regex over raw text, strings included, so an Express
- *      glob such as '/api/reports/*' opens a phantom comment that runs to the
- *      next comment closer (typically the next JSDoc), and everything between
- *      is deleted before matching. Common: about a hundred code lines under
- *      server|scripts|shared have one, e.g. server/startup/services.ts
- *      ('/api/* routes'). Fix: stripComments skips '…', "…" and `…` while it
- *      removes comments. The RED cases' "not hidden by a // inside a string,
- *      or by a block comment closed on the same line" holds for those two
- *      shapes only.
+ *   1. CLOSED 2026-10-05. A `/*` inside a string literal (an Express glob such
+ *      as '/api/reports/*') used to open a phantom comment that ran to the
+ *      next JSDoc, hiding every SET in between. The gate now strips comments
+ *      with the shared, string-aware scripts/ci/lib/strip-comments.mjs; the
+ *      former probe is the RED case "a '/api/reports/*' glob earlier in the
+ *      file does not hide …". Numbering of 2–5 is kept so references hold.
  *   2. `await client.release()` in a baselined file is not counted as bare:
  *      the bare-release regex has a (?<!await\s) lookbehind, so one path of a
  *      baselined service can go back to returning the connection with the
@@ -111,6 +107,8 @@ const SELF = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(SELF), '..', '..');
 const TAG = '[ci:session-scoped-rls-bypass:selftest]';
 const GATE_REL = path.join('scripts', 'ci', 'check-session-scoped-rls-bypass.mjs');
+/** The shared comment stripper the gate imports; copied beside the gate copy. */
+const LIB_REL = path.join('scripts', 'ci', 'lib', 'strip-comments.mjs');
 const SELF_REL = path.join('scripts', 'ci', 'check-session-scoped-rls-bypass.selftest.mjs');
 const GATE = process.env.SELFTEST_GATE_PATH
   ? path.resolve(process.env.SELFTEST_GATE_PATH)
@@ -245,7 +243,8 @@ const PREFLIGHT = `export async function preflight(client) {
 /**
  * Prose about the hazard, in every comment form the gate strips — with the
  * apostrophes and backticks real prose has, so that a string-aware stripper
- * (the fix for KNOWN GAP 1) that opens a string inside a comment is caught.
+ * (the one that closed KNOWN GAP 1) that opens a string inside a comment is
+ * caught.
  */
 const PROSE = `/* Historical note: the innovation services didn't clear it — they ran
    SET ${BYPASS} = 'true' on a pooled client and never reset it. */
@@ -290,7 +289,7 @@ router.get('/api/reports/cross-program-summary', async (_req, res) => {
 });
 `;
 
-/** NEW_ROUTE behind an Express glob, followed by the next handler's JSDoc — KNOWN GAP 1. */
+/** NEW_ROUTE behind an Express glob, followed by the next handler's JSDoc — formerly KNOWN GAP 1. */
 const GLOB_ROUTE = NEW_ROUTE.replace(
   'export const router = Router();\n',
   "export const router = Router();\n\nrouter.use('/api/reports/*', requireAuth);\n",
@@ -358,7 +357,7 @@ const cases = [
     expectIn: ['scripts/db/backfill-cross-tenant.mjs: 2 session-scoped bypass set(s)'],
   },
   {
-    name: 'RED — a real call is not hidden by a // inside a string, or by a block comment that closes on the same line (a /* inside a string: KNOWN GAP 1)',
+    name: 'RED — a real call is not hidden by a // inside a string, or by a block comment that closes on the same line',
     files: {
       'server/services/export/ectd-export-sweep.ts': `export async function sweep(client) {
   const runbook = 'https://wiki.internal/rls'; await client.query("SET ${BYPASS} = 'true'");
@@ -368,6 +367,12 @@ const cases = [
     },
     expectExit: 1,
     expectIn: ['server/services/export/ectd-export-sweep.ts: 2 session-scoped bypass set(s)'],
+  },
+  {
+    name: "RED — a '/api/reports/*' glob earlier in the file does not hide the session-scoped SETs below it (formerly KNOWN GAP 1)",
+    files: { 'server/routes/report-routes.ts': GLOB_ROUTE },
+    expectExit: 1,
+    expectIn: ['server/routes/report-routes.ts: 2 session-scoped bypass set(s) — this file is not in the baseline'],
   },
 
   // ── RED: baselined files must release through the guard ─────────────────
@@ -504,14 +509,6 @@ const cases = [
   // `today` is the gate's current, blind output; `caught` is what it must
   // print once fixed. Neither counts as a pass.
   {
-    name: "KNOWN GAP 1 — a '/api/reports/*' glob earlier in the file hides a session-scoped SET until the next JSDoc",
-    files: { 'server/routes/report-routes.ts': GLOB_ROUTE },
-    knownGap: {
-      today: { exit: 0, in: ['OK — no new session-scoped RLS bypass. 0 baselined occurrence(s)'] },
-      caught: { exit: 1, in: ['server/routes/report-routes.ts: 2 session-scoped bypass set(s) — this file is not in the baseline'] },
-    },
-  },
-  {
     name: 'KNOWN GAP 2 — a baselined service, one path back to returning the connection with `await client.release()`',
     files: {
       [RADAR]: service('RegulatoryDeltaRadarService', ['guard', 'guard', 'awaited']),
@@ -588,6 +585,9 @@ function runGate({ files, baseline = [] }) {
     const gatePath = path.join(root, GATE_REL);
     fs.mkdirSync(path.dirname(gatePath), { recursive: true });
     fs.writeFileSync(gatePath, src);
+    // The gate imports ./lib/strip-comments.mjs relative to itself.
+    fs.mkdirSync(path.dirname(path.join(root, LIB_REL)), { recursive: true });
+    fs.copyFileSync(path.join(repoRoot, LIB_REL), path.join(root, LIB_REL));
     const res = spawnSync(process.execPath, [gatePath], { cwd: root, encoding: 'utf8', timeout: 20_000 });
     if (res.error) return { code: -1, out: String(res.error) };
     return { code: res.status, out: `${res.stdout}${res.stderr}` };

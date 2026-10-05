@@ -48,6 +48,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const TAG = '[ci:session-scoped-rls-bypass]';
@@ -88,24 +89,19 @@ function walk(dir, acc = []) {
   return acc;
 }
 
-/**
- * Strip comments before matching. Prose ABOUT the hazard is not the hazard —
- * this file's own header and the note in innovation-routes.ts both quote the
- * offending form, and flagging them would make the gate cry wolf on its own
- * documentation. Block comments go first, then whole-line `//` and `*`
- * continuations; code lines are left untouched, so a real call is never hidden
- * by a `//` appearing inside a string on that same line.
+/*
+ * Comments are stripped before matching. Prose ABOUT the hazard is not the
+ * hazard — this file's own header and the note in innovation-routes.ts both
+ * quote the offending form, and flagging them would make the gate cry wolf on
+ * its own documentation.
+ *
+ * The stripper is the shared, string-aware one (lib/strip-comments.mjs). This
+ * gate used to carry its own, which ran /\/\*[\s\S]*?\*\//g over raw text: an
+ * Express glob such as '/api/reports/*' opened a phantom comment that ran to
+ * the next real comment closer, and every SET in between was deleted before
+ * matching (the selftest's former KNOWN GAP 1). Counts are per file, so the
+ * blanked-not-deleted output changes no number this gate reports.
  */
-function stripComments(text) {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .split('\n')
-    .filter((line) => {
-      const t = line.trimStart();
-      return !t.startsWith('//') && !t.startsWith('*');
-    })
-    .join('\n');
-}
 
 /** This file quotes the offending form in its own failure message. */
 const SELF = path.relative(repoRoot, fileURLToPath(import.meta.url));

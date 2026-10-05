@@ -52,6 +52,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const ROOT = path.resolve(new URL('../..', import.meta.url).pathname);
 const BASELINE = path.join(ROOT, 'scripts/ci/commonjs-require-baseline.json');
@@ -89,12 +90,15 @@ function findings() {
     /* Strip comments before matching. Prose ABOUT this defect — including the
        explanation sitting above the fixed docx import — otherwise reports as the
        defect, and a gate that flags its own documentation trains people to
-       ignore it. Block comments are stripped across lines first, then line
-       comments; string contents are left alone, since a `require(` inside a
-       string literal in server source is worth a look either way. */
-    const stripped = text.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
-    stripped.split('\n').forEach((line, i) => {
-      const code = line.replace(/\/\/.*$/, '');
+       ignore it. The shared stripper (lib/strip-comments.mjs) is string-aware
+       and blanks comments in place, so line i of `stripped` is line i of the
+       source. String contents are left alone, since a `require(` inside a
+       string literal in server source is worth a look either way. This gate's
+       former regex stripper was not string-aware: a '/api/x/*' literal hid
+       every line up to the next real comment closer, and an 'https://…'
+       literal hid the rest of its own line. */
+    const stripped = stripComments(text);
+    stripped.split('\n').forEach((code, i) => {
       if (!REQUIRE_CALL.test(code)) return;
       if (ALLOWED.some((re) => re.test(code))) return;
       hits.push({ file, line: i + 1, text: text.split('\n')[i].trim().slice(0, 120) });

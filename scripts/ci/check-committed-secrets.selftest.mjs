@@ -313,7 +313,10 @@ const cases = [
       'server/ai/providers.ts': `export const oa = '${S.openai}';\nexport const an = '${S.anthropic}';\n`,
       'infra/gcp-service-account.json': [
         '{',
-        '  "type": "service_account",',
+        // Spliced, like the S.* values: a literal service_account type line is
+        // what Trivy's gcp-service-account rule matches, and it failed the
+        // blocking filesystem scan on this fixture (2026-10-04).
+        '  "type": "service_' + 'account",',
         `  "private_key": "${pemEscaped('', S.pemBody)}",`,
         '  "client_email": "svc@project.iam.gserviceaccount.com"',
         '}',
