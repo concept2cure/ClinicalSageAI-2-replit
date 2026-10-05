@@ -1,0 +1,6 @@
+ × client/src/concept2cure/v2/__tests__/anaMessageWarnings.test.tsx > the conversation screen > shows a turn's warnings, as a note, under the answer 87ms
+   → expected [] to deeply equal [ Array(1) ]
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageWarnings.test.tsx > the conversation screen > shows nothing when the turn has no warning 34ms
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageWarnings.test.tsx > the rail (control: it already showed them; one component now draws both) > shows an AnA message's warnings 31ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)

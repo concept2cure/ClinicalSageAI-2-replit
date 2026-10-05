@@ -23,6 +23,7 @@ import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import { AnaMarkdown } from '../AnaMarkdown';
+import { AnaMessageWarnings } from '../AnaMessageWarnings';
 import { AnaGrounding } from '../AnaGrounding';
 import { DocumentCanvas } from '../editor/DocumentCanvas';
 import type { EditorBridge } from '../editor/DocumentWorkbench';
@@ -54,6 +55,9 @@ const STARTER_ASKS = [
    there, what was checked about it, and the context layers she was given.
    Never a fabricated tool trace or a Math.random()-"audited" artifact;
    unpopulated fields are simply omitted. */
+/** A list a turn carries, or undefined when it is empty (the turn shows nothing for it). */
+const nonEmpty = <T,>(list: T[] | undefined): T[] | undefined => (list?.length ? list : undefined);
+
 function toTurn(m: AnaChatMessage): CtTurn {
   if (m.role === 'user') return { role: 'user', text: m.text };
   const contextUsed = m.groundingSources || [];
@@ -88,8 +92,9 @@ function toTurn(m: AnaChatMessage): CtTurn {
      * destination for asks that can carry governed actions — and the rail, the
      * other place the prompt is drawn, is by definition not on screen.
      */
-    executedActions: m.executedActions?.length ? m.executedActions : undefined,
-    pendingSignoffs: m.pendingSignoffs?.length ? m.pendingSignoffs : undefined,
+    warnings: nonEmpty(m.warnings),
+    executedActions: nonEmpty(m.executedActions),
+    pendingSignoffs: nonEmpty(m.pendingSignoffs),
     /* The authoring document this turn drafted, when it drafted one — the
        canvas beneath the turn is rendered from THIS, not from the draft's
        inline content (docs/design/ANA_DOCUMENT_CANVAS.md). */
@@ -301,6 +306,9 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, inser
             markdown renderer (marked → DOMPurify → React elements, no
             innerHTML); the person's own turn above stays as typed. */}
         {turn.answer && <AnaMarkdown text={turn.answer} className="ct-ana-text ana-md" />}
+        {/* What went wrong around the answer (a failed save, a timeout), as
+            the rail shows it: this screen showed none (row 74, ADR-0015 §9). */}
+        <AnaMessageWarnings warnings={turn.warnings} />
         {/* What was checked about the answer, directly under it: the engine's
             check of its specific claims against this turn's sources, then
             AnA's labels, the same strip as the rail and the editor. Never under
