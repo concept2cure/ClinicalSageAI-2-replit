@@ -161,6 +161,11 @@ export const DETERMINISTIC_REGISTRY_EXTRA: string[] = [
   // lifecycle document types, the ICH E3 overlay and FDA's technical rules.
   'get_document_section_requirements',
   'list_fda_technical_rules',
+  // The cited CMC regulatory record (cmc-knowledge-tools.ts): pure reads of
+  // server/services/cmc/knowledge — sources, requirements, pathways, notes.
+  'find_cmc_guidance',
+  'get_cmc_requirements',
+  'explain_cmc_topic',
 ];
 
 const REGISTRY_NAME_SET: ReadonlySet<string> = new Set<string>([

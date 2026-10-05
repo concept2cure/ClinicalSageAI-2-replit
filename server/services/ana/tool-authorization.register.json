@@ -1867,6 +1867,11 @@
    "refusedBy": "handler",
    "why": "Executing a subaward is a signed act a person performs on the subaward."
   },
+  "explain_cmc_topic": {
+   "class": "read",
+   "writes": "none",
+   "site": "cmc-knowledge-tools.ts:260"
+  },
   "explain_design_risk": {
    "class": "read",
    "writes": "none",
@@ -1968,6 +1973,11 @@
    "site": "AnaToolExecutor.ts:11572",
    "refusedBy": "handler",
    "why": "Finalizing is a signed act the person performs on its own surface."
+  },
+  "find_cmc_guidance": {
+   "class": "read",
+   "writes": "none",
+   "site": "cmc-knowledge-tools.ts:258"
   },
   "find_grant_opportunities": {
    "class": "read",
@@ -2104,6 +2114,11 @@
    "class": "read",
    "writes": "none",
    "site": "agentic-workflow-tools.ts:206"
+  },
+  "get_cmc_requirements": {
+   "class": "read",
+   "writes": "none",
+   "site": "cmc-knowledge-tools.ts:259"
   },
   "get_csr_template": {
    "class": "read",
