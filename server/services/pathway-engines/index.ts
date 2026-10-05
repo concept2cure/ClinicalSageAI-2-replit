@@ -70,6 +70,13 @@ export interface AssessPathwayInput {
   leaves: PathwayLeaf[];
   /** CTIS only: concerned EU member states. */
   memberStates?: string[];
+  /**
+   * CTIS only: Annex I rows the sponsor recorded as not applicable, as
+   * `I:<slot-id>` or `II:<MS>:<slot-id>`. Without it, "if applicable" rows
+   * (GMP for an unmodified authorised IMP, recruitment, insurance, fee) stay
+   * undetermined and the application is not ready.
+   */
+  ctisNotApplicable?: string[];
   /** PMA only: application/supplement type (defaults to 'original'). */
   pmaSubmissionType?: PmaSubmissionType;
   /** PreSTAR Q-Sub only: sub-type (defaults to 'pre_submission'). */
@@ -87,10 +94,19 @@ export function assessPathwayReadiness(input: AssessPathwayInput): PathwayReadin
   const leaves = Array.isArray(input.leaves) ? input.leaves : [];
   switch (input.pathway) {
     case 'ctis': {
-      const d = mapToCtis({ leaves: leaves as CtisInputLeaf[], memberStates: input.memberStates ?? [] });
+      const d = mapToCtis({
+        leaves: leaves as CtisInputLeaf[],
+        memberStates: input.memberStates ?? [],
+        notApplicable: input.ctisNotApplicable,
+      });
+      // Undetermined slots are gaps, as in the eSTAR branch below: an "if
+      // applicable" row nobody answered, or a Part II document with no Member
+      // State, is not a slot the application can go without.
       const missing = [
         ...d.summary.partIMissingRequired.map((m) => `I:${m}`),
+        ...d.summary.partIUndetermined.map((m) => `I:${m}`),
         ...Object.entries(d.summary.partIIMissingByState).flatMap(([ms, ids]) => ids.map((m) => `II:${ms}:${m}`)),
+        ...Object.entries(d.summary.partIIUndeterminedByState).flatMap(([ms, ids]) => ids.map((m) => `II:${ms}:${m}`)),
       ];
       return { pathway: 'ctis', ready: d.summary.ready, missingRequired: missing, detail: d };
     }

@@ -42,6 +42,14 @@ export {
   type SectionBriefKind,
   type SectionBriefSource,
 } from './section-brief.js';
+export {
+  resolveRequirements,
+  REQUIREMENTS_BRIEF_CHARS,
+  type RequirementQuery,
+  type RequirementAnswer,
+  type RequirementSource,
+  type RequirementMatch,
+} from './requirements-resolver.js';
 export type { E3Section, E3Basis, E3Confidence, E3Applicability } from './types.js';
 export {
   ICH_E3_GUIDANCE,

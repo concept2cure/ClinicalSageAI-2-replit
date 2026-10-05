@@ -19,6 +19,7 @@
  */
 
 import { PLR_FORMAT_RULES } from '../ind/ctd/fda-technical-rules.js';
+import { SMPC_QRD_SECTIONS } from './smpc-qrd-catalog';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared Types
@@ -960,83 +961,58 @@ const FORMER_PREGNANCY_CATEGORIES: FormerCategoryMapping[] = [
   },
 ];
 
-/** EU SmPC Complete Section Structure (QRD Template) */
-const SMPC_SECTION_STRUCTURE: SmPCSectionDescriptor[] = [
-  {
-    sectionNumber: '1',
-    sectionTitle: 'Name of the Medicinal Product',
-    contentGuidance: 'Name of the medicinal product followed by strength and pharmaceutical form. Use INN (International Nonproprietary Name). Include qualifier for products subject to additional monitoring.',
-  },
-  {
-    sectionNumber: '2',
-    sectionTitle: 'Qualitative and Quantitative Composition',
-    contentGuidance: 'List all active substances using INN with quantitative composition per dosage unit. State excipients with known effect (e.g., lactose, sodium). Include full list reference to Section 6.1.',
-  },
-  {
-    sectionNumber: '3',
-    sectionTitle: 'Pharmaceutical Form',
-    contentGuidance: 'Pharmaceutical form using Standard Terms. Physical description including color, shape, markings, dimensions, scoring.',
-  },
-  {
-    sectionNumber: '4',
-    sectionTitle: 'Clinical Particulars',
-    subsections: [
-      { number: '4.1', title: 'Therapeutic Indications', guidance: 'Precise and complete statement of therapeutic indications. Specify target population (adults, children with age range). State clearly if orphan designation exists.' },
-      { number: '4.2', title: 'Posology and Method of Administration', guidance: 'Dosage for each indication and each relevant population. Includes dose adjustments for renal/hepatic impairment, elderly, paediatric. Method of administration with any special instructions.' },
-      { number: '4.3', title: 'Contraindications', guidance: 'Situations where the product must not be used. Absolute contraindications only.' },
-      { number: '4.4', title: 'Special Warnings and Precautions for Use', guidance: 'Warnings and precautions for safe and effective use. Includes excipient warnings per EMA excipient guideline. Traceability statement for biologicals.' },
-      { number: '4.5', title: 'Interaction with Other Medicinal Products and Other Forms of Interaction', guidance: 'Pharmacokinetic and pharmacodynamic interactions. Based on in vitro and in vivo data. Include recommendation on co-administration.' },
-      { number: '4.6', title: 'Fertility, Pregnancy and Lactation', guidance: 'Structured as: Pregnancy, Breast-feeding, Fertility. Include human data, animal data, and recommendation. State whether contraception is needed.' },
-      { number: '4.7', title: 'Effects on Ability to Drive and Use Machines', guidance: 'Influence on driving and machine operation. Use standardized statements: no influence / minor influence / moderate influence / major influence.' },
-      { number: '4.8', title: 'Undesirable Effects', guidance: 'Tabulated summary of adverse reactions by frequency (very common, common, uncommon, rare, very rare, not known) and MedDRA System Organ Class. Description of selected reactions. Post-marketing data included separately.' },
-      { number: '4.9', title: 'Overdose', guidance: 'Symptoms and signs of overdose. Immediate management including antidotes. Expected complications of overdose.' },
-    ],
-    contentGuidance: 'Section 4 is the primary clinical information section of the SmPC. Subsections 4.1-4.9 cover all clinical aspects of the product.',
-  },
-  {
-    sectionNumber: '5',
-    sectionTitle: 'Pharmacological Properties',
-    subsections: [
-      { number: '5.1', title: 'Pharmacodynamic Properties', guidance: 'ATC code. Mechanism of action. Clinical efficacy and safety data from clinical trials. Paediatric population data.' },
-      { number: '5.2', title: 'Pharmacokinetic Properties', guidance: 'Absorption (Cmax, Tmax, bioavailability). Distribution (Vd, protein binding). Biotransformation (metabolic pathways, CYP involvement). Elimination (t1/2, clearance, route). Special populations (renal/hepatic impairment, elderly, paediatric).' },
-      { number: '5.3', title: 'Preclinical Safety Data', guidance: 'Non-clinical safety findings relevant to the prescriber. Includes carcinogenicity, mutagenicity, reproductive toxicity. Only findings not already in Sections 4.6 or 4.8.' },
-    ],
-    contentGuidance: 'Pharmacological data covering pharmacodynamics, pharmacokinetics, and preclinical safety. Focus on clinically relevant information.',
-  },
-  {
-    sectionNumber: '6',
-    sectionTitle: 'Pharmaceutical Particulars',
-    subsections: [
-      { number: '6.1', title: 'List of Excipients', guidance: 'Complete list of excipients by INN or usual name.' },
-      { number: '6.2', title: 'Incompatibilities', guidance: 'Known incompatibilities with other products, diluents, devices.' },
-      { number: '6.3', title: 'Shelf Life', guidance: 'Shelf life as packaged for sale. Shelf life after reconstitution/dilution/first opening.' },
-      { number: '6.4', title: 'Special Precautions for Storage', guidance: 'Storage conditions using standard phrases. Temperature, light, moisture requirements.' },
-      { number: '6.5', title: 'Nature and Contents of Container', guidance: 'Container type and material. Pack sizes authorized.' },
-      { number: '6.6', title: 'Special Precautions for Disposal and Other Handling', guidance: 'Instructions for safe handling, preparation, and disposal. Reconstitution/dilution instructions for parenteral products.' },
-    ],
-    contentGuidance: 'Pharmaceutical quality information including excipients, stability, storage, and handling instructions.',
-  },
-  {
-    sectionNumber: '7',
-    sectionTitle: 'Marketing Authorisation Holder',
-    contentGuidance: 'Name and address of the marketing authorisation holder.',
-  },
-  {
-    sectionNumber: '8',
-    sectionTitle: 'Marketing Authorisation Number(s)',
-    contentGuidance: 'Marketing authorisation number(s) for each presentation.',
-  },
-  {
-    sectionNumber: '9',
-    sectionTitle: 'Date of First Authorisation/Renewal of the Authorisation',
-    contentGuidance: 'Date of the first authorisation and date of the latest renewal.',
-  },
-  {
-    sectionNumber: '10',
-    sectionTitle: 'Date of Revision of the Text',
-    contentGuidance: 'Date of the last revision of the SmPC text.',
-  },
-];
+/**
+ * What each SmPC section carries, keyed by QRD section number. Platform
+ * guidance, not regulator text. The numbers and headings come from the one
+ * SmPC record (`server/services/labeling/smpc-qrd-catalog.ts`).
+ */
+const SMPC_CONTENT_GUIDANCE: Record<string, string> = {
+  '1': 'Name of the medicinal product followed by strength and pharmaceutical form. Use INN (International Nonproprietary Name). Include qualifier for products subject to additional monitoring.',
+  '2': 'List all active substances using INN with quantitative composition per dosage unit. State excipients with known effect (e.g., lactose, sodium). Include full list reference to Section 6.1.',
+  '3': 'Pharmaceutical form using Standard Terms. Physical description including color, shape, markings, dimensions, scoring.',
+  '4': 'Section 4 is the primary clinical information section of the SmPC. Subsections 4.1-4.9 cover all clinical aspects of the product.',
+  '4.1': 'Precise and complete statement of therapeutic indications. Specify target population (adults, children with age range). State clearly if orphan designation exists.',
+  '4.2': 'Dosage for each indication and each relevant population. Includes dose adjustments for renal/hepatic impairment, elderly, paediatric. Method of administration with any special instructions.',
+  '4.3': 'Situations where the product must not be used. Absolute contraindications only.',
+  '4.4': 'Warnings and precautions for safe and effective use. Includes excipient warnings per EMA excipient guideline. Traceability statement for biologicals.',
+  '4.5': 'Pharmacokinetic and pharmacodynamic interactions. Based on in vitro and in vivo data. Include recommendation on co-administration.',
+  '4.6': 'Structured as: Pregnancy, Breast-feeding, Fertility. Include human data, animal data, and recommendation. State whether contraception is needed.',
+  '4.7': 'Influence on driving and machine operation. Use standardized statements: no influence / minor influence / moderate influence / major influence.',
+  '4.8': 'Tabulated summary of adverse reactions by frequency (very common, common, uncommon, rare, very rare, not known) and MedDRA System Organ Class. Description of selected reactions. Post-marketing data included separately.',
+  '4.9': 'Symptoms and signs of overdose. Immediate management including antidotes. Expected complications of overdose.',
+  '5': 'Pharmacological data covering pharmacodynamics, pharmacokinetics, and preclinical safety. Focus on clinically relevant information.',
+  '5.1': 'ATC code. Mechanism of action. Clinical efficacy and safety data from clinical trials. Paediatric population data.',
+  '5.2': 'Absorption (Cmax, Tmax, bioavailability). Distribution (Vd, protein binding). Biotransformation (metabolic pathways, CYP involvement). Elimination (t1/2, clearance, route). Special populations (renal/hepatic impairment, elderly, paediatric).',
+  '5.3': 'Non-clinical safety findings relevant to the prescriber. Includes carcinogenicity, mutagenicity, reproductive toxicity. Only findings not already in Sections 4.6 or 4.8.',
+  '6': 'Pharmaceutical quality information including excipients, stability, storage, and handling instructions.',
+  '6.1': 'Complete list of excipients by INN or usual name.',
+  '6.2': 'Known incompatibilities with other products, diluents, devices.',
+  '6.3': 'Shelf life as packaged for sale. Shelf life after reconstitution/dilution/first opening.',
+  '6.4': 'Storage conditions using standard phrases. Temperature, light, moisture requirements.',
+  '6.5': 'Container type and material. Pack sizes authorized.',
+  '6.6': 'Instructions for safe handling, preparation, and disposal. Reconstitution/dilution instructions for parenteral products. The QRD heading carries "and other handling" as optional text (QRD v10.4, recall — not checked against the EMA text).',
+  '7': 'Name and address of the marketing authorisation holder.',
+  '8': 'Marketing authorisation number(s) for each presentation.',
+  '9': 'Date of the first authorisation and date of the latest renewal.',
+  '10': 'Date of the last revision of the SmPC text.',
+};
+
+/**
+ * EU SmPC section structure, sections 1-10 (QRD template): each top-level
+ * section with its sub-sections, read from the catalog. Sections 11 and 12
+ * apply to radiopharmaceuticals only and are not listed.
+ */
+const SMPC_SECTION_STRUCTURE: SmPCSectionDescriptor[] = SMPC_QRD_SECTIONS.filter((s) => s.depth === 0).map((top) => {
+  const subs = SMPC_QRD_SECTIONS.filter((s) => s.depth === 1 && s.number.split('.')[0] === top.number);
+  return {
+    sectionNumber: top.number,
+    sectionTitle: top.title,
+    ...(subs.length
+      ? { subsections: subs.map((s) => ({ number: s.number, title: s.title, guidance: SMPC_CONTENT_GUIDANCE[s.number] ?? '' })) }
+      : {}),
+    contentGuidance: SMPC_CONTENT_GUIDANCE[top.number] ?? '',
+  };
+});
 
 /** FDA PLR vs EU SmPC Comparison Table */
 const FDA_EMA_DIFFERENCES: FDAvsEMAComparison[] = [

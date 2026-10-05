@@ -41,18 +41,15 @@ import type { ToolContext } from './AnaToolExecutor.js';
 import type { RegisterFn } from './document-tools-shared.js';
 import { resolveOpenProgram } from '../c2c/program-access';
 import { createScopedLogger } from '../../utils/logger';
-import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import {
   ELSA_NOTE,
   SUBMISSION_CHAIN,
   evaluateChain,
   getChainNode,
-  listLifecycleIds,
-  renderE3Brief,
-  renderLifecycleBrief,
-  renderSectionBrief,
+  resolveRequirements,
   rulesByArea,
   type ChainVerdict,
+  type RequirementSource,
   type VaultSectionFact,
 } from '../ind/ctd/index.js';
 
@@ -62,9 +59,6 @@ const logger = createScopedLogger('regulatory-knowledge-tools');
 export const RESULT_BUDGET = 5000;
 /** Vault rows read for a standing; one more than this means the read was cut short. */
 export const VAULT_FACTS_MAX = 5000;
-
-const BRIEF_CHARS = 4200;
-const CSR_ALIASES = new Set(['csr', 'clinical study report', 'clinical_study_report', 'e3', 'ich e3']);
 
 export const GET_DOCUMENT_SECTION_REQUIREMENTS: AnaTool = {
   name: 'get_document_section_requirements',
@@ -138,38 +132,42 @@ export const REGULATORY_KNOWLEDGE_TOOLS: AnaTool[] = [
 
 const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
 
+/** The tool's name for the record that answered. */
+const KIND_LABEL: Record<RequirementSource['kind'], string> = {
+  outline: 'ICH E3 clinical study report',
+  'ctd-section': 'CTD section',
+  lifecycle: 'document type',
+};
+
+/**
+ * The tool's answer: a thin wrapper over resolveRequirements
+ * (server/services/ind/ctd/requirements-resolver.ts), which holds the routing.
+ * This function only checks the input and shapes the JSON.
+ */
 export function documentSectionRequirements(input: Record<string, unknown>): string {
   const document = str(input.document);
-  const section = str(input.section);
   if (!document) {
     return JSON.stringify({ error: 'get_document_section_requirements needs `document`: a CTD section code, a document type id, or "csr".' });
   }
-  const key = document.toLowerCase();
-  let requirements: string | null;
-  let kind: string;
-  if (CSR_ALIASES.has(key)) {
-    requirements = renderE3Brief(section || null, BRIEF_CHARS);
-    kind = 'ICH E3 clinical study report';
-    if (!requirements) {
-      return JSON.stringify({ not_indexed: true, message: `ICH E3 has no heading "${section}". Omit \`section\` for the outline of §1–§16.` });
-    }
-  } else if (normalizeCtdCode(document)) {
-    requirements = renderSectionBrief(document, BRIEF_CHARS);
-    kind = 'CTD section';
-  } else {
-    requirements = renderLifecycleBrief(key, BRIEF_CHARS);
-    kind = 'document type';
-  }
-  if (!requirements) {
+  const answer = resolveRequirements({ document, section: str(input.section) });
+  if (answer.kind === 'not_indexed') {
     return JSON.stringify({
       not_indexed: true,
-      message: `The platform's guidance has no entry for "${document}". It is not stated here; do not supply requirements from memory as if it were.`,
-      document_types: [...listLifecycleIds(), 'csr'],
+      message: answer.reason,
+      ...(answer.indexedDocuments ? { document_types: answer.indexedDocuments } : {}),
+    });
+  }
+  if (answer.kind === 'candidates') {
+    // No route returns candidates yet. Every reading is listed; none is picked.
+    return JSON.stringify({
+      not_indexed: true,
+      message: `"${document}" matches more than one entry; name the one meant.`,
+      candidates: answer.candidates.map((c) => c.title),
     });
   }
   return JSON.stringify({
-    kind,
-    requirements,
+    kind: KIND_LABEL[answer.source.kind],
+    requirements: answer.requirements,
     note: 'Reference structure from the platform’s canonical guidance; the sponsor owns every conclusion. Statements marked as recall or platform practice are not a regulator’s text.',
   });
 }

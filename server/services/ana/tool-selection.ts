@@ -40,6 +40,21 @@ export const ALWAYS_ON_TOOLS: ReadonlySet<string> = new Set([
   // whether it has several steps, so relevance scoring would drop it on
   // exactly the long turns where a person most needs to see the plan.
   'update_plan',
+  // The regulatory record (regulatory-knowledge-tools.ts). The persona
+  // (server/services/ana-ri/persona.ts, "From Database Lock to a Filed
+  // Application" and "How to Draft"/review) ORDERS her to call these before
+  // drafting or reviewing any section, on acceptance questions, and after
+  // database lock. Relevance scoring cannot be trusted to keep them: the
+  // tokenizer drops dotted section codes ("2.7.4"), "iss" substring-matches
+  // "submission", and "rejected" does not match "rejection" — so for "what goes
+  // in the ISS" or "will my submission be rejected" the tool was cut and she
+  // answered from memory. All three are deterministic and read-only; the
+  // database-lock plan returns standing:null without an org/project, so it is
+  // safe on voice and deep-investigation turns too.
+  // tool-selection-routing.test.ts ("production composition") pins this.
+  'get_document_section_requirements',
+  'plan_submission_from_database_lock',
+  'list_fda_technical_rules',
 ]);
 
 /**

@@ -15,11 +15,22 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { indexedDocumentTypes } from './writing-precision-gate';
+
+/**
+ * What documentType does, said once for all three tools. The indexed types are
+ * read from medical-writing.ts so the contract cannot drift from the checker.
+ * Until 2026-10-05 an unindexed type passed silently (g-structure-check-fails-closed).
+ */
+const DOCUMENT_TYPE_CONTRACT =
+  `It names a WHOLE document and is checked as one: the text must be the complete document, so omit it for a single section. ` +
+  `Indexed types: ${indexedDocumentTypes().join(', ')}. ` +
+  `Any other value is reported 'structure not checked' as a high finding (verdict revise), never a silent pass; the result's structure / metrics.structureChecked say whether it ran.`;
 
 export const CRITIQUE_DRAFT: AnaTool = {
   name: 'critique_draft',
   description:
-    "Critique a draft for scientific-writing precision and return an actionable revision brief — the deterministic quality gate behind long-form medical writing. Runs, in one pass: quantitative-claim GROUNDING (every number needs a nearby citation), in-document CONSISTENCY (the same value or abbreviation must not be stated two ways), READABILITY against the audience register, abbreviation-definition-at-first-use, over-claim / promotional CLAIMS language, and STRUCTURE coverage against the document type's governing standard. Returns a 0–100 precision score, a pass/revise verdict, per-finding detail, and an ordered revision brief. Use it after drafting any section/document, then REVISE against the brief and re-run until it passes. DETERMINISTIC — the findings are machine-computed; fix each one rather than arguing with it. The default 'submission' register already exempts named regulatory terms of art (e.g. the ICH E3 §5.3 consent statement, Breakthrough Therapy designation, clinical cure at the test-of-cure visit), each listed with its basis in claimExemptions, and also flags predicted approvals or 'the study was successful' as regulatory_outcome.",
+    "Critique a draft for scientific-writing precision and return an actionable revision brief — the deterministic quality gate behind long-form medical writing. Runs, in one pass: quantitative-claim GROUNDING (every number needs a nearby citation), in-document CONSISTENCY (the same value or abbreviation must not be stated two ways), READABILITY against the audience register, abbreviation-definition-at-first-use, over-claim / promotional CLAIMS language, and, when documentType names a whole document, STRUCTURE coverage against its governing standard (an unindexed type is reported 'structure not checked', never passed). Returns a 0–100 precision score, a pass/revise verdict, per-finding detail, and an ordered revision brief. Use it after drafting any section/document, then REVISE against the brief and re-run until it passes. DETERMINISTIC — the findings are machine-computed; fix each one rather than arguing with it. The default 'submission' register already exempts named regulatory terms of art (e.g. the ICH E3 §5.3 consent statement, Breakthrough Therapy designation, clinical cure at the test-of-cure visit), each listed with its basis in claimExemptions, and also flags predicted approvals or 'the study was successful' as regulatory_outcome.",
   input_schema: {
     type: 'object',
     properties: {
@@ -31,7 +42,7 @@ export const CRITIQUE_DRAFT: AnaTool = {
       },
       documentType: {
         type: 'string',
-        description: "Optional document type (e.g. 'clinical_overview', 'csr', 'cer') to also check required-section coverage against its standard.",
+        description: `Optional whole-document type for required-section coverage against its standard. ${DOCUMENT_TYPE_CONTRACT}`,
       },
       register: {
         type: 'string',
@@ -53,7 +64,7 @@ export const VERIFY_REVISION: AnaTool = {
       originalText: { type: 'string', description: 'The draft before revision.' },
       revisedText: { type: 'string', description: 'The draft after revision.' },
       audience: { type: 'string', enum: ['patient', 'clinician', 'regulator', 'general'], description: "Readability register (default 'regulator')." },
-      documentType: { type: 'string', description: 'Optional document type for section-coverage checks (applied to both).' },
+      documentType: { type: 'string', description: `Optional whole-document type for section coverage, applied to both texts. ${DOCUMENT_TYPE_CONTRACT}` },
       register: { type: 'string', enum: ['submission', 'promotional'], description: "Claims register (default 'submission'; applied to both)." },
     },
     required: ['originalText', 'revisedText'],
@@ -81,7 +92,10 @@ export const CRITIQUE_DOCUMENT: AnaTool = {
         },
       },
       audience: { type: 'string', enum: ['patient', 'clinician', 'regulator', 'general'], description: "Readability register (default 'regulator')." },
-      documentType: { type: 'string', description: 'Optional document type for required-section coverage.' },
+      documentType: {
+        type: 'string',
+        description: `Optional whole-document type for required-section coverage, judged once on the sections joined in order. ${DOCUMENT_TYPE_CONTRACT}`,
+      },
       register: { type: 'string', enum: ['submission', 'promotional'], description: "Claims register (default 'submission')." },
     },
     required: ['sections'],

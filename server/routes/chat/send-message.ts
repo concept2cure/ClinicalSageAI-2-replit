@@ -610,31 +610,19 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         if (block) sessionBootstrapBlock = `\n\n${block}\n`;
       }
 
-      // ── IND Context Injection ──────────────────────────────────────────────────
-      // When the project is an IND submission, inject the complete CTD structure
-      // so AnA knows every section needed and can guide the user through it.
-      let indContextBlock = '';
+      // ── Submission context (IND / NDA / BLA) ────────────────────────────────────
+      // One block for both chat doors, built from the canonical lifecycle brief;
+      // the helper owns the type mapping and fails closed for anything else.
+      const { submissionContextBlockFor } = await import(
+        '../../services/ana/submission-context-block.js'
+      );
+      const submissionContextBlock = submissionContextBlockFor({
+        submissionType: typeof req.body.submission_type === 'string' ? req.body.submission_type : null,
+        projectContext: clientCtx,
+      });
+      // Read by the device block below.
       const detectedType = (orchestratorResult.detectedSubmissionType || '').toUpperCase();
       const contextType = (req.body.context?.productType || '').toUpperCase();
-      if (detectedType === 'IND' || contextType === 'IND' || contextType === 'NDA' || contextType === 'BLA') {
-        try {
-          const { IND_SECTIONS, getModuleStatus } = await import('../../services/ind/ind-section-registry.js');
-          const sectionList = IND_SECTIONS.map(s =>
-            `- ${s.code} ${s.title} (Module ${s.module}, ${s.required ? 'required' : 'optional'}) — ${s.guidance}`
-          ).join('\n');
-          // Include project context for generation prompts
-          const projectContext = req.body.context || {};
-          const projectCtx = [
-            projectContext.activeProject ? `Project: ${projectContext.activeProject}` : '',
-            projectContext.productType ? `Submission type: ${projectContext.productType}` : '',
-            projectContext.projectId ? `Project ID: ${projectContext.projectId}` : '',
-          ].filter(Boolean).join('\n');
-
-          indContextBlock = `\n\n## IND Submission Context\nThis is an IND (Investigational New Drug) project. You have AnA tools to generate any CTD section.\n${projectCtx}\n\nComplete IND structure (19 sections across 5 modules):\n${sectionList}\n\nWhen the user asks to draft or generate a section:\n1. Use ind_generate_section tool with the section code and project context\n2. The tool will generate regulatory-quality content and save it as a governed artifact\n3. Show the user a summary of what was generated\n\nUse ind_get_status to check which sections are done and which need work.\nGuide the user through the submission systematically — Module 1 first, then 2-5.\n`;
-        } catch {
-          // IND registry not available — skip
-        }
-      }
 
       // ── Device Context Injection ────────────────────────────────────────────────
       let deviceContextBlock = '';
@@ -719,7 +707,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         intelligencePrefix +
         projectInstructionsBlock +
         basePrompt +
-        indContextBlock +
+        submissionContextBlock +
         deviceContextBlock +
         projectKnowledgeCorpusBlock +
         sessionBootstrapBlock +

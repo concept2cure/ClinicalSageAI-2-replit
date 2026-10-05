@@ -16,6 +16,7 @@
 import {
   e3TopLevel,
   e3Children,
+  renderE3Brief,
   LIFECYCLE_DOCUMENT_TYPES,
   type E3Section,
   type LifecycleComponent,
@@ -66,6 +67,21 @@ export interface RegulatoryDocumentTemplate {
   draftingInstructions: string;
   /** Key regulatory references the AI should surface inline */
   regulatoryReferences?: string[];
+}
+
+/**
+ * What ICH E3 §12.3.2 asks every narrative of a death, other serious adverse
+ * event or other significant adverse event to carry, read from the E3 tree
+ * (ind/ctd/csr-e3-sections-results.ts) and rendered by its own brief, with the
+ * brief's headings set below the block's "### DRAFTING INSTRUCTIONS". Until
+ * 2026-10-05 the safety-narrative template kept its own outline, which left out
+ * post-mortem findings, countermeasures, the sponsor's causality opinion and the
+ * disease's duration. With no §12.3.2 node it says so rather than supplying one.
+ */
+function e3NarrativeElements(): string {
+  const brief = renderE3Brief('12.3.2');
+  if (!brief) return 'ICH E3 §12.3.2 (narratives): content not encoded — do not supply from memory.';
+  return brief.replace(/^(#{2,3}) /gm, (_m, hashes: string) => `${hashes}## `);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -649,26 +665,33 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     id: 'safety_narrative',
     displayName: 'Serious Adverse Event Safety Narrative',
     chipLabel: 'SAE Narrative',
+    primaryCode: 'E3 12.3.2',
     authority: 'ICH',
     submissionFamily: 'IND/NDA/BLA',
     detectionPatterns: [
       /\bsafety\s+narrative\b/i,
       /\bsae\s+narrative\b/i,
       /\badverse\s+event\s+narrative\b/i,
-      /\bcasual\s+(?:assessment|narrative)\b/i,
+      // "causal": spelled "casual" until 2026-10-05, so this never matched.
+      /\bcausal\s+(?:assessment|narrative)\b/i,
       /\bindividual\s+patient\s+narrative\b/i,
       /\bwrite\s+(?:a\s+)?(?:patient|case)\s+narrative\b/i,
     ],
     minConfidence: 0.65,
-    draftingInstructions: 'Draft a patient-level safety narrative for a serious adverse event (SAE) per ICH E3 and standard regulatory medical writing conventions. The narrative must be a complete, stand-alone account enabling a reviewer to independently assess causality and medical significance. Write in past tense, third person. Include all clinical facts; do not interpret beyond what the data shows.',
-    regulatoryReferences: ['ICH E3 (Section 12, individual patient data)', 'ICH E2A (SAE reporting)', 'MedDRA coding conventions'],
+    // The elements a narrative carries come from the E3 §12.3.2 node; the
+    // sections below are the order they are written in.
+    draftingInstructions: [
+      'Draft a patient-level narrative of a death, other serious adverse event or other significant adverse event, as ICH E3 §12.3.2 describes it. The narrative must be a complete, stand-alone account enabling a reviewer to independently assess causality and medical significance. Write in past tense, third person. Include all clinical facts; do not interpret beyond what the data shows. Every element below belongs in the narrative; where the case record does not supply one, leave a placeholder for it.',
+      e3NarrativeElements(),
+    ].join('\n\n'),
+    regulatoryReferences: ['ICH E3 §12.3.2 (narratives; long narratives in §14.3.3)', 'ICH E2A (SAE reporting)', 'MedDRA coding conventions'],
     sections: [
-      { heading: 'Patient Identification and Demographics', required: true, targetWords: [80, 150], guidance: 'Patient number, age, sex, race, weight. Relevant medical history and concomitant medications at time of event.' },
-      { heading: 'Study Drug Exposure', required: true, targetWords: [80, 150], guidance: 'Study drug, dose, start date, cumulative exposure, and any dose modifications prior to the event.' },
-      { heading: 'Event Description', required: true, targetWords: [200, 400], guidance: 'Onset date, MedDRA-coded event term, description of clinical presentation, severity (NCI CTCAE grade if oncology), and action taken with study drug (dose not changed / dose reduced / drug withdrawn).' },
-      { heading: 'Clinical Course and Investigations', required: true, targetWords: [200, 400], guidance: 'Chronological description of the event from onset to resolution or death. Include relevant laboratory values, imaging, ECG findings, and clinical management. State outcome (resolved, resolving, not resolved, fatal) and time to resolution if resolved.' },
-      { heading: 'Causality Assessment', required: true, targetWords: [100, 200], guidance: 'Investigator assessment of relationship to study drug (not related / unlikely related / possibly related / probably related / definitely related) with brief clinical rationale. Include de-challenge and re-challenge data if applicable.' },
-      { heading: 'Conclusion', required: true, targetWords: [80, 150], guidance: 'One-paragraph synthesis: the event, its relationship to study drug, and the outcome. What action was taken and what follow-up is planned.' },
+      { heading: 'Patient Identification and Background', required: true, targetWords: [80, 150], guidance: 'The patient before the event: the identification, general clinical condition, disease (with its duration), and previous and concomitant illness and medication elements ICH E3 §12.3.2 lists above.' },
+      { heading: 'Study Drug Exposure', required: true, targetWords: [80, 150], guidance: 'Test drug, dose, start date and duration up to the event, and any dose modifications before it.' },
+      { heading: 'Event Description', required: true, targetWords: [200, 400], guidance: 'The event as recorded: its nature and intensity (NCI CTCAE grade if oncology), the MedDRA term as coded in the study, onset and timing relative to the test drug, and the seriousness criterion met.' },
+      { heading: 'Clinical Course and Investigations', required: true, targetWords: [200, 400], guidance: 'Chronological course from onset to outcome: relevant laboratory measurements, imaging and ECG findings; whether and when the test drug was stopped; countermeasures and clinical management; post-mortem findings for a death. State the outcome as recorded (resolved, resolving, not resolved, fatal) and time to resolution if resolved.' },
+      { heading: 'Causality Assessment', required: true, targetWords: [100, 200], guidance: 'The investigator\'s opinion on causality and, where one was made, the sponsor\'s, each stated as recorded, in the causality categories the protocol defines, with the rationale each gives. Where they differ, give both. Do not restate an assessment on a scale the study did not use. Include de-challenge and re-challenge where recorded.' },
+      { heading: 'Conclusion', required: true, targetWords: [80, 150], guidance: 'One-paragraph synthesis: the event, its relationship to the test drug as the investigator and the sponsor assessed it, and the outcome. What action was taken and what follow-up is planned.' },
     ],
   },
 

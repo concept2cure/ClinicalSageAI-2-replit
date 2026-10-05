@@ -1,0 +1,164 @@
+g-smpc-qrd-one-record — green after fix round 1 (2026-10-05)
+10 targeted files:
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/labeling-smpc-read.test.ts > GET /api/labeling-smpc > 403 without org context 31ms
+ ✓ server/routes/__tests__/labeling-smpc-read.test.ts > GET /api/labeling-smpc > returns the QRD tree with live readiness from persisted statuses (only final counts) 5ms
+ ✓ server/routes/__tests__/labeling-smpc-read.test.ts > GET /api/labeling-smpc > fails closed to the all-missing skeleton on a missing store (42P01) 3ms
+ ✓ server/routes/__tests__/labeling-smpc-read.test.ts > POST /api/labeling-smpc > rejects an unknown section or status 12ms
+ ✓ server/routes/__tests__/labeling-smpc-read.test.ts > POST /api/labeling-smpc > sets a section status and returns refreshed readiness 3ms
+ ✓ server/routes/__tests__/labeling-smpc-read.test.ts > POST /api/labeling-smpc > 503 PENDING_STORE when the store is missing (42P01) 3ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > does not report an SmPC with no shelf life, container or date of revision as complete 11ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > takes its headers from the QRD catalog, sections 1-10 only 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > keeps radiopharmaceutical sections 11 and 12 in the catalog, flagged and excluded by default 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > writes top-level headings as "N. UPPER CASE" and subsections as "N.N Sentence case" 3ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > accepts the QRD forms of 6.6 (optional "<and other handling>") and 9 (no spaces around the slash) 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > prints the full QRD heading in the scaffold while the guard accepts the short 6.6 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > carries a basis for the headings: QRD v10.4 on an EMA URL, wording labelled recall 4ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > structure_smpc says sections 1-10, with 11 and 12 for radiopharmaceuticals only > no longer promises "12 numbered SmPC sections" 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > structure_smpc says sections 1-10, with 11 and 12 for radiopharmaceuticals only > labels its statements about the QRD template text as recall 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/ana/labeling-authoring.ts holds no SmPC section title of its own 8ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/ana/labeling-structure.ts holds no SmPC section title of its own 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/labeling/labeling-intelligence-knowledge.ts holds no SmPC section title of its own 19ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/market-specs/document-template-library.ts holds no SmPC section title of its own 1ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > drops the wrong type size, paragraph citations and conditions 2ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > states the 20-line boxed-warning limit, (d)(6) type size and (d)(8) length 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > Recent Major Changes is conditional, listed for at least 1 year 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > the Highlights boxed warning carries the 20-line limit 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > lists the 201.57 format rules, each sourced to eCFR 1ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > limits Recent Major Changes to the five sections (a)(5) names 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > puts the omitted-sections asterisk on the Contents heading, not on an omitted heading (b) 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > keeps the unfiltered brief and the labeling area within the result budget 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > US section guard requires Highlights and Contents > requires the Highlights heading, its verbatim statements and Contents 1ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > US section guard requires Highlights and Contents > fails a PI that has every FPI section but no Highlights or Contents 1ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > records Elsa 4.0 and HALO from FDA’s May 2026 announcement 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > records FDA’s use of Elsa for protocol reviews and inspection targets 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > rests the image-only PDF consequence on the specification, not a tool limit 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > still says FDA has published no acceptance criteria for Elsa 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > has unique types, required fields, and at least one required document each 18ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > every referenced templateId resolves in the document template library 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > covers the major submission types 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > reports ready when all required documents and forms are present 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > reports the specific missing required documents and forms 5ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > does not let not-applicable documents block readiness once every deciding fact is known 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > returns undefined for an unknown submission type 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a 510(k) with no labeling, IFU, T&A statement, biocompatibility or user fee is not ready 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > the same gaps hold for a De Novo request 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > every always-slot of the 510k eSTAR registry is a required row, and nothing else is 8ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > every always-slot of the de_novo eSTAR registry is a required row, and nothing else is 3ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > 510k is filed as an eSTAR through the CDRH Portal, with the FDA 3601 user fee 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > de_novo is filed as an eSTAR through the CDRH Portal, with the FDA 3601 user fee 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a 510(k) Statement satisfies the summary-or-statement requirement, and so does the summary template 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > an unanswered device flag is undetermined and keeps ready false 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a conditional section becomes required when its flag is set 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > an IVD 510(k) is held to the IVD registry: no analytical performance, not ready 4ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > has unique ids and at least one section per template 35ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > every template requires at least one section 27ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > Clinical Overview matches the ICH M4E 2.5.1–2.5.6 spine 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > 510(k) Summary carries the 21 CFR 807.92 elements incl. substantial equivalence 4ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > SmPC has the 10 top-level sections 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > GSPR checklist maps to MDR Annex I chapters I–III 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > filters by family 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > resolves a template by CTD section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > returns undefined for an unknown id 7ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > labeling-authoring mode specs > maps US → uspi/PLR and EU → smpc/QRD 2ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > labeling-authoring mode specs > cites the FDA PLR and EMA QRD bases 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > required section headers (PLR vs QRD checklists) > US PLR carries the mandatory numbered full-text sections 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > required section headers (PLR vs QRD checklists) > EU QRD carries the full fixed section set including driving + MAH 17ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > required section headers (PLR vs QRD checklists) > the two checklists differ (mode-specific completeness) 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > required_strings derivation per mode > derives required_strings identical to the mode section guard 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > section guard (completeness) > reports complete when every US header is present (case/space tolerant) 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > section guard (completeness) > flags a missing US section (e.g. dropped Warnings and Precautions) 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > section guard (completeness) > flags a US draft with every FPI section but no Highlights or Contents (21 CFR 201.57(a), (b)) 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > section guard (completeness) > flags a missing EU QRD section (e.g. dropped 4.8 Undesirable effects) 13ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > build_from_template replacements > seeds product name, title, basis and a placeholder per section 0ms
+ ✓ server/services/labeling/__tests__/smpc-qrd-catalog.test.ts > SmPC QRD catalog > encodes the full QRD section tree with the section-4 clinical sub-sections 13ms
+ ✓ server/services/labeling/__tests__/smpc-qrd-catalog.test.ts > SmPC QRD catalog > validates section numbers and statuses 0ms
+ ✓ server/services/labeling/__tests__/smpc-qrd-catalog.test.ts > buildSmpcReadiness > reports an empty label as all-missing and not ready 1ms
+ ✓ server/services/labeling/__tests__/smpc-qrd-catalog.test.ts > buildSmpcReadiness > counts only FINAL required sections toward readiness (draft/review do not count) 0ms
+ ✓ server/services/labeling/__tests__/smpc-qrd-catalog.test.ts > buildSmpcReadiness > is ready only when every required section is final 17ms
+ ✓ server/services/labeling/__tests__/smpc-qrd-catalog.test.ts > buildSmpcReadiness > non-required sections (8/9/10) do not block readiness 0ms
+ ✓ server/services/ana/__tests__/tool-plan-labels.test.ts > describeToolPlan > gives friendly, calm labels to the proactive / evidence tools 5ms
+ ✓ server/services/ana/__tests__/tool-plan-labels.test.ts > describeToolPlan > interpolates input into parameterized labels 0ms
+ ✓ server/services/ana/__tests__/tool-plan-labels.test.ts > describeToolPlan > falls back to a humanized name for unlabeled tools (never raw snake_case) 0ms
+ ✓ server/services/ana/__tests__/tool-plan-labels.test.ts > describeToolPlan > gives calm labels to the document-lifecycle + eTMF + reporting tools 0ms
+ ✓ server/services/ana/__tests__/tool-plan-labels.test.ts > describeToolPlan > reports the batch draft count in the human label 0ms
+ ✓ server/services/ana/__tests__/tool-plan-labels.test.ts > describeToolPlan > labels the connected-repository search with the query 0ms
+ ✓ server/services/ana/__tests__/tool-plan-labels.test.ts > describeToolPlan > interpolates the report type into the generate_report label 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > numbers and titles equal e3TopLevel() §1–§16 2ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > every section says what it is for, and §14 is the displays NOT in the text 1ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — PBRER outline is ICH E2C(R2) §1–§19 > carries every numbered section in order 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — PBRER outline is ICH E2C(R2) §1–§19 > §12–§19 carry the E2C(R2) headings 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > is not served for CTD 1.1 (FDA Forms) 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > carries no single CTD code, and its basis names FDA 1.2 and EU 1.0 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — unaffected lookups (guard) > Clinical Overview stays at 2.5 and the QOS still resolves by 2.3 0ms
+ ✓ server/services/ana/__tests__/labeling-structure.test.ts > adviseLabelingStructure > lists the USPI section architecture 2ms
+ ✓ server/services/ana/__tests__/labeling-structure.test.ts > adviseLabelingStructure > resolves the SmPC via alias (spc) 0ms
+ ✓ server/services/ana/__tests__/labeling-structure.test.ts > adviseLabelingStructure > places interaction content into USPI §7 with cross-map to SmPC 4.5 0ms
+ ✓ server/services/ana/__tests__/labeling-structure.test.ts > adviseLabelingStructure > places pregnancy content into SmPC 4.6 0ms
+ ✓ server/services/ana/__tests__/labeling-structure.test.ts > adviseLabelingStructure > lists both label templates 1ms
+
+ Test Files  10 passed (10)
+      Tests  95 passed (95)
+   Start at  02:58:52
+   Duration  4.47s (transform 3.77s, setup 967ms, import 4.57s, tests 435ms, environment 1ms)
+
+
+Other importers of the changed modules (requirements-resolver, rim-logic, concept2cure-project-bootstrap):
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/rim/__tests__/rim-logic.test.ts > expectedLabelType > maps US→USPI, EU→SmPC, other→CCDS 3ms
+ ✓ server/services/rim/__tests__/rim-logic.test.ts > renewalUrgency > only applies to approved registrations 0ms
+ ✓ server/services/rim/__tests__/rim-logic.test.ts > renewalUrgency > buckets approved renewals 0ms
+ ✓ server/services/rim/__tests__/rim-logic.test.ts > summarizeGrid > counts statuses and renewal urgency 0ms
+ ✓ server/services/rim/__tests__/rim-logic.test.ts > evaluateLabelCurrency > passes when every approved market has its label 0ms
+ ✓ server/services/rim/__tests__/rim-logic.test.ts > evaluateLabelCurrency > flags an approved market missing its label 0ms
+ ✓ server/services/rim/__tests__/rim-logic.test.ts > evaluateLabelCurrency > accepts a core data sheet as fallback for non-US/EU markets 0ms
+ ✓ server/services/rim/__tests__/rim-logic.test.ts > evaluateLabelCurrency > ignores non-approved markets 6ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps IND without error 63ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps NDA without error 1ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps BLA without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps 510K without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps PMA without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps DE_NOVO without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps EUA without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all legacy types produce valid bootstrap > bootstraps MAA without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all new registry types produce valid bootstrap > bootstraps EU_CTA without error 1ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all new registry types produce valid bootstrap > bootstraps CA_NDS without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all new registry types produce valid bootstrap > bootstraps JP_MKT_APPROVAL without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all new registry types produce valid bootstrap > bootstraps CN_CTA without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all new registry types produce valid bootstrap > bootstraps AU_CTN without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all new registry types produce valid bootstrap > bootstraps BR_DDCM without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > all new registry types produce valid bootstrap > bootstraps IN_CT04 without error 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > normalizeProjectMetadata > normalizes IND input 5ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > normalizeProjectMetadata > normalizes registryId input 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > normalizeProjectMetadata > handles unknown type gracefully 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > normalizeProjectMetadata > preserves user-supplied region over registry default 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > buildDefaultInstructions > generates specialized instructions for US_IND 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > buildDefaultInstructions > generates specialized instructions for EU_MAA 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > buildDefaultInstructions > generates generic instructions for types without specialized template 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > buildInstructionsFromLegacyType > resolves legacy IND to instructions 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > buildInstructionsFromLegacyType > falls back gracefully for unknown types 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > getSuggestedActions > returns actions for IND 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > getSuggestedActions > returns device-specific actions for 510K 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > getSuggestedActions > returns EU-specific actions for EU_MAA 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > getSuggestedActions > returns actions sorted by priority 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > getTemplatesForType > returns CTD templates for IND 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > getTemplatesForType > returns device templates for 510K 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > getTemplatesForType > returns EU-specific templates for EU_MAA 0ms
+ ✓ tests/routes/concept2cure-project-bootstrap.test.ts > Project Bootstrap Integration > governed project assignment > requires projectId for governed documents 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted 52ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CTD code from the section brief, naming the entry and how it matched 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CSR alias from the ICH E3 outline, with the basis the outline carries 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a lifecycle document type by id, case-insensitively 0ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > says what it does not index, and never answers from another entry 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > is the only dispatch: the tool delegates and keeps no copy of the rule 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > imports the brief renderers and is imported by none of them 0ms
+
+ Test Files  3 passed (3)
+      Tests  47 passed (47)
+   Start at  02:59:02
+   Duration  1.99s (transform 2.07s, setup 477ms, import 2.14s, tests 180ms, environment 0ms)
+

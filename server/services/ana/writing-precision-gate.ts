@@ -20,6 +20,13 @@
  * overreach — the same four categories), so the claims dimension composes the
  * existing screener instead of duplicating it.
  *
+ * Structure: documentType names a WHOLE document (medical-writing.ts
+ * DOCUMENT_TYPES). The report always says whether structure was checked
+ * (`structure.status`, `metrics.structureChecked`). An unindexed type, or an
+ * indexed type with no text, is a high 'structure not checked' finding — never a
+ * silent pass. Until 2026-10-05 an unindexed type ('clinical_study_report',
+ * '2.7.4', 'iss') scored 0 missing and passed (g-structure-check-fails-closed).
+ *
  * Claims register: the gate defaults to the screener's 'submission' register,
  * which exempts named regulatory terms of art (the ICH E3 §5.3 consent
  * statement, the Breakthrough Therapy designation, test-of-cure endpoints) and
@@ -32,6 +39,7 @@
 import { assessGrounding } from './grounding-core';
 import { assessReadability, buildAbbreviationList, type ReadabilityAudience } from './medical-writing-qc';
 import { reviewMedicalWriting } from './medical-writing-review';
+import { listMedicalWritingCatalog } from './medical-writing';
 import { checkTerminologyConsistency } from './terminology-consistency';
 import {
   screenPromotionalLanguage,
@@ -60,6 +68,18 @@ export interface PrecisionFinding {
   evidence: string[];
 }
 
+/**
+ * Whether the structure dimension ran: 'checked' (an indexed documentType over
+ * non-empty text), 'not-checked' (asked for, but it could not run — a finding
+ * says why), 'not-applicable' (no documentType was asked for).
+ */
+export type StructureStatus = 'checked' | 'not-checked' | 'not-applicable';
+
+export interface StructureCheck {
+  status: StructureStatus;
+  reason: string;
+}
+
 export interface PrecisionReport {
   /** 0–100; 100 = every deterministic check passed. */
   score: number;
@@ -70,6 +90,8 @@ export interface PrecisionReport {
   register: ClaimRegister;
   /** Lexicon hits the submission register dropped as terms of art, each with its basis. */
   claimExemptions: ExemptedTerm[];
+  /** Whether section coverage was checked, and why not when it was not. */
+  structure: StructureCheck;
   metrics: {
     groundingScore: number;
     ungroundedClaims: number;
@@ -79,7 +101,9 @@ export interface PrecisionReport {
     undefinedAbbreviations: number;
     valueInconsistencies: number;
     abbreviationConflicts: number;
-    missingSections: number;
+    /** Missing required sections; null when structure was not checked. */
+    missingSections: number | null;
+    structureChecked: boolean;
   };
 }
 
@@ -96,7 +120,10 @@ export interface CritiqueInput {
   text: string;
   /** Tunes the readability target; defaults to 'regulator'. */
   audience?: ReadabilityAudience;
-  /** When set, section coverage is checked against this document type's standard. */
+  /**
+   * A WHOLE-document type indexed in medical-writing.ts; section coverage is
+   * checked against its standard. An unindexed type is reported 'not-checked'.
+   */
   documentType?: string;
   /** Claims register; defaults to 'submission' (regulatory prose). */
   register?: ClaimRegister;
@@ -118,8 +145,13 @@ function groundingDimension(text: string, findings: PrecisionFinding[]) {
 function consistencyDimension(text: string, findings: PrecisionFinding[]) {
   const consistency = checkTerminologyConsistency(text);
   for (const f of consistency.findings) {
+    // An 'arithmetic' finding's variants are [stated, recomputed] (terminology-consistency.ts).
     const message =
-      f.kind === 'value_inconsistency'
+      f.kind === 'arithmetic'
+        ? f.label === 'arm_sum'
+          ? `Reconcile the arm counts with the total they follow — they sum to ${f.variants[1]}, but the text states a total of ${f.variants[0]}. Correct the total or the arm counts.`
+          : `Recompute the percentage — ${f.variants[0]} is stated, but its own n/N gives ${f.variants[1]}. Correct the percentage or the counts.`
+        : f.kind === 'value_inconsistency'
         ? `Reconcile "${f.label}" — it is stated as ${f.variants.join(' and ')} in the same document. Use one value.`
         : f.kind === 'abbreviation_conflict'
           ? `Use one expansion for "${f.label}" — it is expanded as ${f.variants.map(v => `"${v}"`).join(' and ')}.`
@@ -246,10 +278,46 @@ function claimsDimension(text: string, register: ClaimRegister, findings: Precis
   return screen;
 }
 
-function structureDimension(text: string, documentType: string | undefined, findings: PrecisionFinding[]): number {
-  if (!documentType) return 0;
+/** The whole-document types the structure check indexes (medical-writing.ts DOCUMENT_TYPES). */
+export function indexedDocumentTypes(): string[] {
+  return listMedicalWritingCatalog().documentTypes.map(d => d.id);
+}
+
+function structureDimension(
+  text: string,
+  documentType: string | undefined,
+  findings: PrecisionFinding[],
+): { check: StructureCheck; missing: number | null } {
+  if (documentType === undefined || !documentType.trim()) {
+    return {
+      check: { status: 'not-applicable', reason: 'No documentType was given, so section coverage was not asked for.' },
+      missing: null,
+    };
+  }
+  const notChecked = (reason: string, instruction: string) => {
+    findings.push({
+      category: 'structure',
+      // Fail closed: no pass verdict over a structure nobody checked.
+      severity: 'high',
+      message: `${reason} ${instruction}`,
+      evidence: [documentType],
+    });
+    return { check: { status: 'not-checked' as const, reason }, missing: null };
+  };
   const review = reviewMedicalWriting(documentType, text);
-  const missing = review.missingSections ?? [];
+  if (!review.documentType) {
+    return notChecked(
+      `Structure not checked: '${documentType}' is not an indexed document type.`,
+      `Re-run with one of the indexed whole-document types (${indexedDocumentTypes().join(', ')}), or without documentType for a single section; no verdict here covers this document's structure.`,
+    );
+  }
+  if (!review.missingSections) {
+    return notChecked(
+      `Structure not checked: there is no text to check against ${review.label ?? documentType}.`,
+      'Supply the complete document text.',
+    );
+  }
+  const missing = review.missingSections;
   if (missing.length > 0) {
     findings.push({
       category: 'structure',
@@ -258,7 +326,10 @@ function structureDimension(text: string, documentType: string | undefined, find
       evidence: missing,
     });
   }
-  return missing.length;
+  return {
+    check: { status: 'checked', reason: `Section coverage checked against ${review.label ?? documentType}.` },
+    missing: missing.length,
+  };
 }
 
 /**
@@ -277,7 +348,7 @@ export function critiqueDraft(input: CritiqueInput): PrecisionReport {
   const readability = readabilityDimension(text, audience, findings);
   const abbr = abbreviationDimension(text, findings);
   const claims = claimsDimension(text, register, findings);
-  const missingSections = structureDimension(text, input.documentType, findings);
+  const structure = structureDimension(text, input.documentType, findings);
 
   findings.sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity));
   const penalty = findings.reduce((sum, f) => sum + SEVERITY_WEIGHT[f.severity], 0);
@@ -291,6 +362,7 @@ export function critiqueDraft(input: CritiqueInput): PrecisionReport {
     findings,
     register,
     claimExemptions: claims.exempted,
+    structure: structure.check,
     metrics: {
       groundingScore: grounding.groundingScore,
       ungroundedClaims: grounding.ungroundedClaims.length,
@@ -300,7 +372,8 @@ export function critiqueDraft(input: CritiqueInput): PrecisionReport {
       undefinedAbbreviations: abbr.undefinedAbbreviations.length,
       valueInconsistencies: consistency.valueInconsistencies,
       abbreviationConflicts: consistency.abbreviationConflicts,
-      missingSections,
+      missingSections: structure.missing,
+      structureChecked: structure.check.status === 'checked',
     },
   };
 }
@@ -320,6 +393,8 @@ export interface RevisionVerdict {
   regressions: PrecisionFinding[];
   /** Claims register both texts were judged in. */
   register: ClaimRegister;
+  /** Structure status of the revised text; 'not-checked' never passes. */
+  structure: StructureCheck;
 }
 
 export function verifyRevision(
@@ -345,6 +420,7 @@ export function verifyRevision(
     remainingCriticalHigh,
     regressions,
     register: a.register,
+    structure: a.structure,
   };
 }
 
@@ -378,6 +454,8 @@ export interface DocumentCritique {
   crossSectionFindings: PrecisionFinding[];
   /** Claims register applied to every section and the whole document. */
   register: ClaimRegister;
+  /** Structure status of the whole document; a 'not-checked' finding is in crossSectionFindings. */
+  structure: StructureCheck;
 }
 
 /**
@@ -433,7 +511,14 @@ export function critiqueDocument(
       ? 'revise'
       : 'pass';
 
-  return { documentScore, verdict, sections: sectionCritiques, crossSectionFindings, register: whole.register };
+  return {
+    documentScore,
+    verdict,
+    sections: sectionCritiques,
+    crossSectionFindings,
+    register: whole.register,
+    structure: whole.structure,
+  };
 }
 
 /**

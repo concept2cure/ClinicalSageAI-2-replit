@@ -280,9 +280,12 @@ export const STRUCTURE_SMPC: AnaTool = {
   description:
     'Generate the required section structure for an EU Summary of Product ' +
     'Characteristics (SmPC) per the EMA Quality Review of Documents (QRD) ' +
-    'template (current revision). Returns all 12 numbered SmPC sections ' +
-    '(1. Name of the medicinal product through 12. Instructions for use) with ' +
-    'required subsections, mandatory language blocks (e.g., black triangle ' +
+    'template (v10.4; heading wording from recall, not checked against the ' +
+    'EMA text). Returns SmPC sections 1-10 (1. Name of the medicinal ' +
+    'product through 10. Date of revision of the text) with their ' +
+    'subsections; sections 11 (Dosimetry) and 12 (Instructions for preparation ' +
+    'of radiopharmaceuticals) apply to radiopharmaceuticals only and are not ' +
+    'returned. Also returns mandatory language blocks (e.g., black triangle ' +
     'statement for additional monitoring products, reporting statement for ' +
     'suspected adverse reactions), and procedure-specific requirements for ' +
     'centralized (CP), mutual recognition (MRP), decentralized (DCP), and ' +
