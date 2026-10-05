@@ -19,7 +19,7 @@
 import { createHash } from 'crypto';
 import jwt from 'jsonwebtoken';
 import { createScopedLogger } from '../utils/logger';
-import { runWithPreAuthScope } from '../db/tenantStore';
+import { bindPreAuthAccount, inPreAuthScope, runWithPreAuthScope } from '../db/tenantStore';
 import {
   ACCOUNT_INACTIVE_MESSAGE,
   accountIdOfClaims,
@@ -304,6 +304,11 @@ export async function verifyLiveToken<T = unknown>(
     await revokeToken(token, inactivity);
     throw new SessionEndedError(inactivity);
   }
+  // A live token establishes its account. On a pre-auth mount the request is
+  // bound to it, and from here reaches that account's users row and no other
+  // (D3, 2026-10-04; tenantStore.bindPreAuthAccount). In a tenant scope the
+  // scope already decides, so nothing is bound.
+  if (accountId !== null && inPreAuthScope()) bindPreAuthAccount(accountId);
   return decoded;
 }
 

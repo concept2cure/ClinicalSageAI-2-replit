@@ -105,10 +105,25 @@ const dbDouble = vi.hoisted(() => {
       },
     }),
   });
+  // The pre-auth account lookups (services/auth/pre-auth-account.ts, D3
+  // 2026-10-04): the definer functions answer an id, the sequence the next one.
+  const execute = async (statement: unknown) => {
+    const q = toQuery(statement);
+    const users = state.rows.users ?? [];
+    if (/user_id_for_email/.test(q.sql)) {
+      return { rows: [{ id: users.find(u => u.email === q.params[0])?.id ?? null }] };
+    }
+    if (/user_id_for_reset_token/.test(q.sql)) {
+      return { rows: [{ id: users.find(u => u.resetToken === q.params[0])?.id ?? null }] };
+    }
+    if (/nextval/.test(q.sql)) return { rows: [{ id: state.nextId++ }] };
+    return { rows: [] };
+  };
   const db = {
     select,
     insert,
     update,
+    execute,
     transaction: async (fn: (tx: unknown) => Promise<unknown>) => fn({ select, insert, update }),
   };
   return { db, pool, getPool: () => pool, getDb: () => db };
@@ -169,6 +184,10 @@ vi.mock('../../db/tenantStore', () => ({
   runWithTenantScope: (_scope: unknown, fn: () => Promise<unknown>) => fn(),
   runWithPreAuthScope: (fn: () => Promise<unknown>) => fn(),
   getTenantScope: () => null,
+  // No scope here, so binding narrows nothing (tenantStore.bindPreAuthAccount).
+  bindPreAuthAccount: () => undefined,
+  inPreAuthScope: () => false,
+  runAsAccount: (_id: number, _caller: string, fn: () => Promise<unknown>) => fn(),
 }));
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';

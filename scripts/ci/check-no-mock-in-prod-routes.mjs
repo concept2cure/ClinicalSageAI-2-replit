@@ -14,10 +14,9 @@ const writeBaseline = process.argv.includes('--write-baseline');
 const strictBetaPath = process.argv.includes('--strict-beta-path');
 const reportOnly = process.argv.includes('--report-only');
 
-const allowedFiles = new Set([
-  // Route intentionally supports dev-only mock pathways with explicit prod gates.
-  'notification_routes.ts',
-]);
+// Empty since 2026-10-04: its one entry, notification_routes.ts, was removed
+// (D3; docs/evidence/D3/2026-10-04-digest-routes/).
+const allowedFiles = new Set([]);
 
 /**
  * Identifier forms, not just the bare word.

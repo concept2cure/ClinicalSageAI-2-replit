@@ -19,6 +19,23 @@
 --   - Row D3, 2026-09-28. Evidence: docs/evidence/D3/2026-09-28-users-rls/.
 -- =============================================================================
 --
+-- AMENDED IN PLACE 2026-10-04 (Rule 1; D3, the pre-auth narrowing; evidence
+-- docs/evidence/D3/2026-10-04-pre-auth-narrowing/). REMOVED: the "tenant-less
+-- scopes" arm (app.current_tenant_id = '0'), which admitted the pre-auth scope
+-- to every row of the table. The system scope never needed it — it carries the
+-- platform role, and the platform-role arm admits it. In its place: the
+-- ACCOUNT arm, users.id = app.current_account_id, which the server sets only for
+-- the one account a pre-auth request has established (a verified token, a
+-- signed challenge, or the account found for this sign-in;
+-- server/db/tenantStore.ts bindPreAuthAccount / runAsAccount). ADDED:
+-- public.user_id_for_reset_token(text), so a password reset finds its account
+-- by the token's hash without reading the table. A pre-auth request reaches at
+-- most one account's row, and a handler steered to another id reads nothing.
+-- The variable is app.current_account_id, not app.current_user_id: the latter
+-- is already a uuid in the gcc identity layer (db/migrations/051-081, function
+-- current_user_id()), and an integer in it raised 22P02 there.
+-- The description below is updated to match.
+--
 -- public.users carried no row-level security. Measured as app_service with RLS
 -- enforcing, in tenant A's request scope: tenant B's user row was read by id, by
 -- email and by scanning on mfa_secret — password_hash, mfa_secret,
@@ -32,18 +49,19 @@
 -- nor is narrowed.
 --
 --   - SELECT, UPDATE, DELETE: enforcement off (owner connections: migrations, the
---     boot seed), OR the tenant-less scopes (app.current_tenant_id = '0': the
---     pre-auth scope — sign-in by email, password reset, email OTP, token refresh,
---     signup — and the system scope — SCIM, SAML just-in-time provisioning,
---     platform user administration, both server/db/tenantStore.ts), OR the
---     platform role, OR a membership of the row's user in the scope's organization.
---     The caller's own row is covered by the last arm: a tenant scope exists only
---     for a token its membership admitted. There is no session variable carrying
---     the user id to express "own row" separately.
+--     boot seed), OR the platform role (the system scope — SCIM, SAML just-in-time
+--     provisioning, platform user administration, server/db/tenantStore.ts), OR a
+--     membership of the row's user in the scope's organization, OR the row is the
+--     account the scope is bound to (app.current_account_id: the pre-auth scope once
+--     the server has established which account the request is — sign-in, signup,
+--     password reset, email OTP, token refresh, and every request holding a
+--     verified access token on the pre-auth mounts).
 --   - INSERT: from any scope. A new row reaches no existing account, and
 --     tenant-users creates a member in the tenant scope before its membership
 --     exists (server/services/atomicQuotaService.js, which takes the id from the
 --     sequence first because RETURNING is held to the SELECT policy).
+--   - public.user_id_for_reset_token(text): the pre-auth scope's question for a
+--     password reset — which account holds this (hashed) reset token. The id only.
 --   - public.user_id_for_email(text): the one question a tenant scope must ask
 --     about an account outside it — "does this address already have an account"
 --     — when an administrator adds a member (an existing account in another
@@ -81,13 +99,32 @@ BEGIN
     $body$
   $fn$;
   REVOKE ALL ON FUNCTION public.user_id_for_email(text) FROM PUBLIC;
+
+  -- Added 2026-10-04 (see the amendment note above). Guarded on the column:
+  -- a LANGUAGE sql body is validated at creation.
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+              WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'reset_token') THEN
+    EXECUTE $fn$
+      CREATE OR REPLACE FUNCTION public.user_id_for_reset_token(p_token_hash text)
+      RETURNS integer
+      LANGUAGE sql
+      STABLE
+      SECURITY DEFINER
+      SET search_path = pg_catalog, public
+      SET app.current_user_role = 'app_super_admin'
+      AS $body$
+        SELECT id FROM public.users WHERE reset_token = p_token_hash AND p_token_hash IS NOT NULL
+      $body$
+    $fn$;
+    REVOKE ALL ON FUNCTION public.user_id_for_reset_token(text) FROM PUBLIC;
+  END IF;
 END
 $do$;
 
 DO $$
 DECLARE
   off        CONSTANT text := $e$(NULLIF(current_setting('app.rls_enforce', true), '') IS DISTINCT FROM 'on')$e$;
-  tenantless CONSTANT text := $e$(NULLIF(current_setting('app.current_tenant_id', true), '') = '0')$e$;
+  account    CONSTANT text := $e$(users.id = (substring(current_setting('app.current_account_id', true) from '^[0-9]+$'))::integer)$e$;
   super      CONSTANT text := $e$(current_setting('app.current_user_role', true) = 'app_super_admin')$e$;
   member     CONSTANT text := $e$(EXISTS (
     SELECT 1 FROM public.organization_users ou
@@ -103,7 +140,7 @@ BEGIN
     RETURN;
   END IF;
 
-  may_reach := format('(%s OR %s OR %s OR %s)', off, tenantless, super, member);
+  may_reach := format('(%s OR %s OR %s OR %s)', off, super, member, account);
 
   ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
   ALTER TABLE public.users FORCE ROW LEVEL SECURITY;
@@ -132,8 +169,11 @@ BEGIN
 
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_service') THEN
     GRANT EXECUTE ON FUNCTION public.user_id_for_email(text) TO app_service;
+    IF to_regprocedure('public.user_id_for_reset_token(text)') IS NOT NULL THEN
+      GRANT EXECUTE ON FUNCTION public.user_id_for_reset_token(text) TO app_service;
+    END IF;
   END IF;
 
-  RAISE NOTICE '[users-membership-rls] tenant scopes reach their own members; pre-auth and system scopes the whole table';
+  RAISE NOTICE '[users-membership-rls] tenant scopes reach their own members, a pre-auth scope its one bound account, the system scope the whole table';
 END
 $$;
