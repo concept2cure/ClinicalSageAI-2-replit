@@ -735,10 +735,17 @@ registerToolHandler('simulate_study_design', async (input, ctx) => {
 // tenant come from the active ToolContext, never from model input, so the model
 // cannot read another project's corpus. Graceful: returns a plain message when
 // there is no active project or the retrieval fails.
-registerToolHandler('project_knowledge_search', async (input, ctx) => {
+registerToolHandler('project_knowledge_search', async (input, rawCtx) => {
   const query = typeof input.query === 'string' ? input.query.trim() : '';
   if (!query) return 'No query provided for project_knowledge_search.';
-  const projectId = ctx?.projectId;
+  // The chat stream's context carries neither the integer project of a v2
+  // (program UUID) project nor the tenant uuid, so with a project open this
+  // answered "no active project" (row 74, ADR-0015 §6; PF-10 F6). Both now
+  // come from their one source: the uuid from the request's own tenant scope
+  // (same tenant only), the project from the canonical resolver, for this
+  // organization only.
+  const ctx = withScopeOrganizationUuid(rawCtx);
+  const projectId = ctx?.projectId ?? (await openProjectIdOf(ctx));
   const organizationUuid = ctx?.organizationUuid;
   if (!projectId || !organizationUuid) {
     return 'No active project is in context, so project knowledge cannot be searched. Ask the user to open a project first.';
@@ -15913,6 +15920,22 @@ function withLoopOutcome(
  * auth boundary resolved. Only that scope is trusted, and only for its own
  * tenant — never another tenant's uuid, and nothing invented outside a scope.
  */
+/**
+ * The integer project of the program a turn has open (ctx.projectRef), by the
+ * one canonical resolver (c2c/project-ref.ts, PF-10 S6a), for the caller's own
+ * organization; null when there is none or it is not this organization's.
+ */
+async function openProjectIdOf(ctx: ToolContext | undefined): Promise<number | null> {
+  if (!ctx?.projectRef || ctx.organizationId == null) return null;
+  const { integerProjectForRef } = await import('../c2c/project-ref.js');
+  // The same handle the intelligence prefix resolves with (lumen-context/intelligence-prefix.ts).
+  return integerProjectForRef(async () => (await import('../../db.js')).db, {
+    ref: ctx.projectRef,
+    orgId: Number(ctx.organizationId),
+    context: 'project_knowledge_search',
+  }).catch(() => null);
+}
+
 function withScopeOrganizationUuid(ctx: ToolContext | undefined): ToolContext | undefined {
   if (!ctx || ctx.organizationUuid || ctx.organizationId == null) return ctx;
   const scope = getTenantScope();

@@ -110,6 +110,19 @@ function answerAnchorStatements(sql: string, params: unknown[] = []) {
   return null;
 }
 
+/**
+ * requirePlatformAdmin.ts resolvePlatformAdmin's grant lookup. Platform standing
+ * is an active platform_role_grants row, as in production — never the request
+ * role, which behind server/auth.ts is the TENANT membership role (D6,
+ * 2026-10-05, docs/evidence/D6/2026-10-05-platform-standing/). Only
+ * PLATFORM_ADMIN (user 3) holds one, a platform_admin grant.
+ */
+const PLATFORM_GRANT_HOLDER = 3;
+function platformGrantRows(params: unknown[] = []) {
+  const asked = Array.isArray(params[1]) ? (params[1] as string[]) : [];
+  return { rows: params[0] === PLATFORM_GRANT_HOLDER && asked.includes('platform_admin') ? [{ '?column?': 1 }] : [] };
+}
+
 const walkOk = { ok: true, rowsChecked: 4, tenants: 2, legacyRows: 0, sequencedRows: 4 };
 const originalEnv = { ...process.env };
 
@@ -125,8 +138,8 @@ beforeEach(() => {
   h.dbQuery.mockReset().mockImplementation(async (sql: string, params?: unknown[]) => {
     const anchor = answerAnchorStatements(sql, params);
     if (anchor) return anchor;
-    // requirePlatformAdmin.ts resolvePlatformAdmin: no platform grant for anyone here.
-    if (sql.includes('FROM platform_role_grants')) return { rows: [] };
+    // requirePlatformAdmin.ts resolvePlatformAdmin: a grant row for PLATFORM_ADMIN only.
+    if (sql.includes('FROM platform_role_grants')) return platformGrantRows(params);
     throw new Error(`unexpected statement: ${sql.slice(0, 80)}`);
   });
   process.env.AUDIT_ANCHOR_BUCKET = BUCKET;
@@ -151,7 +164,11 @@ function actionsApp(identity: Record<string, unknown> = { userId: 1, organizatio
 }
 
 const ORG_8_ADMIN = { userId: 2, organizationId: 8, user: { id: 2, organizationId: 8, role: 'admin', roles: ['admin'] } };
-const PLATFORM_ADMIN = { userId: 1, organizationId: 8, user: { id: 1, organizationId: 8, role: 'super_admin', roles: ['super_admin'] } };
+// Admitted by its platform_role_grants row (platformGrantRows), not by a role:
+// its own id, so the default member of organisation 7 (user 1) holds no grant.
+const PLATFORM_ADMIN = { userId: PLATFORM_GRANT_HOLDER, organizationId: 8, user: { id: PLATFORM_GRANT_HOLDER, organizationId: 8, role: 'member', roles: ['member'] } };
+// A tenant membership row naming super_admin, and no platform grant.
+const MEMBERSHIP_SUPER_ADMIN = { userId: 4, organizationId: 8, userRole: 'super_admin', user: { id: 4, organizationId: 8, role: 'super_admin', roles: ['super_admin'] } };
 
 function part11App() {
   const app = express();
@@ -330,6 +347,14 @@ describe('IAM-26: verify-chain gives a caller who is not a platform administrato
     for (const secret of ['their-row', 'their-prev', 'x'.repeat(64), 'y'.repeat(64)]) {
       expect(JSON.stringify(res.body)).not.toContain(secret);
     }
+  });
+
+  it("a tenant membership role of super_admin with no platform grant gets its own organisation only", async () => {
+    const res = await request(actionsApp(MEMBERSHIP_SUPER_ADMIN)).get('/api/c2c/actions/verify-chain');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ ok: true, scope: 'organization' });
+    expect(h.verifyAuditChain.mock.calls[0][1]).toEqual({ tenantId: 8 });
+    expect(JSON.stringify(res.body)).not.toContain(HEAD_7.rowId);
   });
 
   it('a platform administrator still gets the estate-wide verdict, every organisation\'s break included', async () => {
