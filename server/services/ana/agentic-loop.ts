@@ -678,6 +678,10 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   plan_submission_from_database_lock: i =>
     i.step ? `Reading the submission step ${quoteArg(i.step)}` : 'Checking where the submission stands, from database lock to filing',
   list_fda_technical_rules: i => (i.area ? `Reading FDA's ${String(i.area)} rules` : "Reading FDA's technical submission rules"),
+  find_cmc_guidance: i => `Looking up the CMC guidance on ${quoteArg(i.query)}`,
+  get_cmc_requirements: i =>
+    i.authority ? `Reading what ${String(i.authority)} requires of the CMC dossier` : 'Reading the CMC requirements that apply',
+  explain_cmc_topic: i => `Reading the CMC science behind ${quoteArg(i.query)}`,
   extract_document_structure: () => 'Analyzing the document structure',
   search_document: i => `Searching the document for ${quoteArg(i.query)}`,
   compare_document_versions: () => 'Comparing the two document versions',

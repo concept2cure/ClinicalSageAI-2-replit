@@ -11,7 +11,7 @@ import { compiledRecordOf, composeProjectModule3, persistComposedSection } from 
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { readContradictionRegisters } from '../../services/cmc/contradiction-registers';
-import { evaluateFinalExportGate, evaluateModule3GovernedState } from '../../services/cmc/final-export-gate';
+import { evaluateFinalExportGate } from '../../services/cmc/final-export-gate';
 import {
   parsedDeterministicJson,
   readCompiledRecord,
@@ -33,6 +33,7 @@ import { guardModule3Project, module3OrgId } from './module3-project-guard';
 import { createScopedLogger } from '../../utils/logger';
 import { refusedWithoutSigningAuthority } from './cmc-signer';
 import { describeDrift, findSectionDrift } from '../../services/cmc/section-drift';
+import { findEvidenceDrift } from '../../services/cmc/source-evidence';
 import { clientIpOf } from '../../utils/client-ip';
 
 /** The §11.50(a)(3) meanings a signature may carry. */
@@ -408,27 +409,20 @@ router.get('/readiness/:projectId', async (req, res) => {
     const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
 
-    // The same evaluation the final-export gate runs, so this read cannot be
-    // more optimistic than the gate it previews. It used to compute
-    // `exportReady` from approvals alone and stamp a degraded governed state
-    // beside it — reporting "export ready" in the exact state where the gate
-    // fails closed and refuses.
-    const { state } = await evaluateModule3GovernedState({
+    /* The final-export gate's own verdict, so this read cannot be more
+       optimistic than the gate it previews. It used to compute `exportReady`
+       from approvals alone and stamp a degraded governed state beside it, then
+       from a hand-kept list of the gate's conditions that missed the lineage
+       drift and table checks: the board offered placement for a project the
+       gate then refused (discovery map 2026-10-04,
+       readiness-ready-while-gate-refuses). */
+    const verdict = await evaluateFinalExportGate({
       orgId,
       projectId,
       actorId: (req as any).user?.id || 'system',
     });
-
-    const exportReady =
-      state.totalSections > 0 &&
-      state.approvedSections === state.totalSections &&
-      state.staleSections === 0 &&
-      state.openCriticalContradictions === 0 &&
-      state.sectionsWithoutProvenance === 0 &&
-      state.incompleteApprovedSections.length === 0 &&
-      state.governedStateEvaluated &&
-      !state.fabricBlocks &&
-      !state.governedDecisionsBlock;
+    const state = verdict.data;
+    const exportReady = verdict.allowed;
 
     return res.json({
       success: true,
@@ -441,10 +435,15 @@ router.get('/readiness/:projectId', async (req, res) => {
         // Approved sections whose own compiled record says they are not
         // complete. An approval is not evidence the content exists.
         incompleteApprovedSections: state.incompleteApprovedSections,
+        unplaceableApprovedSections: state.unplaceableApprovedSections,
+        driftedApprovedSections: state.driftedApprovedSections,
+        supersededEvidenceSections: state.supersededEvidenceSections,
         // False means the governed-decision fabric did not return a verdict —
         // NOT that it looked and cleared the project.
         governedStateEvaluated: state.governedStateEvaluated,
         exportReady,
+        // The gate's sentence when it would refuse, so the board says why.
+        blockedBecause: verdict.allowed ? null : (verdict.error ?? null),
         canonicalGovernedState: state.canonicalGovernedState,
       },
     });
@@ -718,6 +717,20 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
           success: false,
           error: 'SECTION_DRIFTED',
           detail: `${describeDrift(drift)}. Recompile it, review the result, then approve. Nothing was signed.`,
+        });
+      }
+      /* A record it read was taken from a Vault document that has since been
+         superseded or withdrawn: the record may no longer say what the current
+         document says, and only a person can tell (source-evidence.ts). */
+      const evidenceDrift = await findEvidenceDrift(client, orgId, projectId, { sectionKey });
+      if (evidenceDrift.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          success: false,
+          error: 'EVIDENCE_SUPERSEDED',
+          detail:
+            `${describeDrift(evidenceDrift)}. Verify each record against the current version and move its evidence ` +
+            'link, or correct the record and recompile, then approve. Nothing was signed.',
         });
       }
 

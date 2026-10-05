@@ -2988,6 +2988,17 @@ export const C2C_MIGRATION_FILES = [
   // tenant policy. Evidence docs/evidence/CMC-M3-GA/2026-10-05/05-registers-carry-their-program/.
   'migrations/20261005_cmc_core_registers_project.sql',
 
+  // ── CMC source evidence (2026-10-05, row D2) ──────────────────────────────
+  // The Vault document a CMC record was taken from: one append-only link from
+  // a cmc_source_objects key to a Vault version of the same program, with the
+  // version's content hash at link and the person's reason. Removal is
+  // one-way and needs a reason; DELETE only by the purge's cascade. A
+  // superseded or withdrawn linked version holds the sections that read the
+  // record at approval and at the export gate. public + organization_id
+  // INTEGER NOT NULL, so the sweep below gives it row security. CREATE IF NOT
+  // EXISTS, no DROP. Evidence docs/evidence/CMC-M3-GA/2026-10-05/08-cmc-evidence-from-the-vault/.
+  'migrations/20261005b_cmc_source_evidence.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

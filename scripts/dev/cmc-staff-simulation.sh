@@ -787,6 +787,39 @@ UPBRANCH=$(cat "$OUT/vault.json" | jq -r '[.data.tree[] | select(.id=="vault-upl
 [ -n "$M3BRANCH" ] && [ "${M3BRANCH:-0}" -gt 0 ] && ok "Module 3 (CMC) branch lists $M3BRANCH artifacts" || bad "Module 3 branch missing: unavailable=$(cat "$OUT/vault.json" | JQ '.data.unavailable')"
 [ "$UPCODE" = 200 -o "$UPCODE" = 201 ] && [ -n "$UPBRANCH" ] && [ "${UPBRANCH:-0}" -gt 0 ] && ok "upload ($UPCODE) appears in Uploaded files branch ($UPBRANCH)" || bad "upload branch: ingest=$UPCODE listed=$UPBRANCH $(head -c200 "$OUT/upload.json")"
 
+step "21b. A batch record cites the Vault certificate it was taken from; a reissued certificate holds the sections that read it until a person re-verifies"
+CODE=$(req evsrc GET "/api/cmc/module3-os/source-evidence/$PROGRAM")
+BATCHKEY=$(cat "$OUT/evsrc.json" | jq -r '[.data[]? | select(.sourceType=="batch")][0].sourceKey // empty' 2>/dev/null)
+[ "$CODE" = 200 ] && [ -n "$BATCHKEY" ] && ok "the program's records list, batch record $BATCHKEY among them" || bad "records read ($CODE): $(head -c200 "$OUT/evsrc.json")"
+printf 'Certificate of analysis\nRelease results as issued by the CDMO.\n' > /tmp/coa-v1.txt
+curl -sS -X POST "$BASE/api/vault/ingest" -H "Authorization: Bearer $TOKEN" \
+  -F "file=@/tmp/coa-v1.txt" -F "programId=$PROGRAM" -F "documentCode=COA-BATCH" \
+  -F "documentTitle=Certificate of analysis" -F "documentType=MODULE_3" -o "$OUT/coa1.json" -w '%{http_code}' > /dev/null
+COA1=$(cat "$OUT/coa1.json" | JQ '.document.id // empty')
+CODE=$(req evlink1 POST "/api/cmc/module3-os/source-evidence/$PROGRAM" "{\"sourceKey\":\"$BATCHKEY\",\"documentId\":\"$COA1\",\"reason\":\"Release results transcribed from the CDMO certificate of analysis.\"}")
+[ "$CODE" = 201 ] && ok "$BATCHKEY linked to the certificate it was taken from" || bad "link failed ($CODE): $(head -c300 "$OUT/evlink1.json")"
+CODE=$(req coa1ver GET "/api/c2c/project-vault/$PROGRAM/documents/$COA1/versions")
+USEDIN=$(cat "$OUT/coa1ver.json" | jq -r '.data.versions[0].cmcEvidence[0].sections // [] | join(", ")' 2>/dev/null)
+[ -n "$USEDIN" ] && ok "the Vault names the use: evidence for $BATCHKEY, read by Module 3 §$USEDIN" || bad "Vault where-used shows no CMC use ($CODE): $(head -c300 "$OUT/coa1ver.json")"
+printf 'Certificate of analysis (reissued)\nRelease results as issued by the CDMO, corrected header.\n' > /tmp/coa-v2.txt
+curl -sS -X POST "$BASE/api/vault/ingest" -H "Authorization: Bearer $TOKEN" \
+  -F "file=@/tmp/coa-v2.txt" -F "programId=$PROGRAM" -F "supersedesDocumentId=$COA1" \
+  -F "documentTitle=Certificate of analysis" -F "documentType=MODULE_3" -o "$OUT/coa2.json" -w '%{http_code}' > /dev/null
+COA2=$(cat "$OUT/coa2.json" | JQ '.document.id // empty')
+CODE=$(req readyev1 GET "/api/cmc/module3-os/readiness/$PROGRAM")
+HELD=$(cat "$OUT/readyev1.json" | JQ '.data.supersededEvidenceSections | length')
+READY=$(cat "$OUT/readyev1.json" | JQ '.data.exportReady')
+[ -n "$COA2" ] && [ "${HELD:-0}" -gt 0 ] && [ "$READY" = false ] \
+  && ok "the reissued certificate holds $HELD approved section(s): $(cat "$OUT/readyev1.json" | JQ '.data.blockedBecause' | head -c140)" \
+  || bad "reissue did not hold: v2=$COA2 held=$HELD exportReady=$READY"
+CODE=$(req evlink2 POST "/api/cmc/module3-os/source-evidence/$PROGRAM" "{\"sourceKey\":\"$BATCHKEY\",\"documentId\":\"$COA2\",\"reason\":\"Re-verified against the reissued certificate: values unchanged.\"}")
+MOVED=$(cat "$OUT/evlink2.json" | JQ '.data.moved | length')
+CODE2=$(req readyev2 GET "/api/cmc/module3-os/readiness/$PROGRAM")
+HELD2=$(cat "$OUT/readyev2.json" | JQ '.data.supersededEvidenceSections | length')
+[ "$CODE" = 201 ] && [ "$MOVED" = 1 ] && [ "$HELD2" = 0 ] \
+  && ok "re-verified: the link moved to the reissued certificate with the person's reason, and the hold lifted" \
+  || bad "re-verification: link=$CODE moved=$MOVED still held=$HELD2"
+
 step "22. Governed change marked sections stale → gate refuses again (fail closed end-to-end)"
 CODE=$(req change2 POST /api/cmc-changes "{\"title\":\"Filter membrane change\",\"dosageFormFamily\":\"biologic\",\"changeCategory\":\"manufacturing_process\",\"processChangeKind\":\"minor_adjustment\",\"cmcProjectId\":\"$PROGRAM\"}")
 WT2=$(cat "$OUT/change2.json" | JQ '.meta.module3WriteThrough // empty')
