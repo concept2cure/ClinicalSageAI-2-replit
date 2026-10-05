@@ -44,56 +44,134 @@ export interface FdaMeetingTimeline {
   scheduleDays: number;
   /** The meeting package goes with the request, or no later than this many calendar days before the meeting. */
   packageDue: 'with-request' | number;
+  /** How packageDue was checked. Also listed in basis. A recall deadline is said to be recall wherever it is stated. */
+  packageDueBasis: E3Basis;
   /** Which meetings take this type. */
   eligibility: string;
   /** One entry per figure or statement, each labelled by how it was checked. */
   basis: E3Basis[];
 }
 
+// Follow-up F18 (2026-10-05): Type C's 47 days is still recall. Searches on
+// fda.gov/media/172311 (and the Dec 2017 draft, media/109951) return it, with
+// the surrogate-endpoint exception, but only in a search engine's synthesis;
+// the text itself is unread (regulator hosts are blocked here). So the row
+// keeps 47 and every sentence that states it says it is recall.
+// (docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-meeting-template-followups-facts.md)
+const PACKAGE_A = draftText('Type A meeting package submitted with the meeting request');
+const PACKAGE_B = draftText('Type B meeting package no later than 30 days before the meeting');
+const PACKAGE_B_EOP = draftText('Type B(EOP) meeting package no later than 50 days before the meeting; Type B(EOP) eligibility');
+const PACKAGE_C = recall('Type C meeting package no later than 47 days before the meeting (or the written-response date); a Type C meeting on a new surrogate endpoint takes its package with the request. Returned for fda.gov/media/172311 and media/109951 only in search-engine syntheses, checked 2026-10-05; the guidance text is unread');
+const PACKAGE_D = draftText('Type D request response in 14 days; meeting package with the request; two topics, three disciplines');
+const PACKAGE_INTERACT = draftText('INTERACT meeting package with the request');
+
 export const FDA_FORMAL_MEETING_TIMELINES: Record<FdaMeetingType, FdaMeetingTimeline> = {
   A: {
-    type: 'A', requestResponseDays: 14, scheduleDays: 30, packageDue: 'with-request',
+    type: 'A', requestResponseDays: 14, scheduleDays: 30, packageDue: 'with-request', packageDueBasis: PACKAGE_A,
     eligibility: 'Needed for an otherwise stalled development program to proceed, or to address an important safety issue (e.g., dispute resolution, clinical-hold response, post-action meetings).',
-    basis: [pdufa('Type A scheduled within 30 days'), draftText('Type A meeting package submitted with the meeting request'), recall('Type A request response in 14 days; eligibility wording')],
+    basis: [pdufa('Type A scheduled within 30 days'), PACKAGE_A, recall('Type A request response in 14 days; eligibility wording')],
   },
   B: {
-    type: 'B', requestResponseDays: 21, scheduleDays: 60, packageDue: 30,
+    type: 'B', requestResponseDays: 21, scheduleDays: 60, packageDue: 30, packageDueBasis: PACKAGE_B,
     eligibility: 'Milestone meetings such as pre-IND, pre-NDA and pre-BLA, and End-of-Phase 1 meetings not taken as Type B(EOP).',
-    basis: [pdufa('Type B scheduled within 60 days'), draftText('Type B meeting package no later than 30 days before the meeting'), recall('Type B request response in 21 days; eligibility wording')],
+    basis: [pdufa('Type B scheduled within 60 days'), PACKAGE_B, recall('Type B request response in 21 days; eligibility wording')],
   },
   'B(EOP)': {
-    type: 'B(EOP)', requestResponseDays: 14, scheduleDays: 70, packageDue: 50,
+    type: 'B(EOP)', requestResponseDays: 14, scheduleDays: 70, packageDue: 50, packageDueBasis: PACKAGE_B_EOP,
     eligibility: 'End-of-Phase 2 / pre-Phase 3 meetings, and End-of-Phase 1 meetings for products under 21 CFR 312 subpart E or 21 CFR 314 subpart H (or similar).',
-    basis: [pdufa('Type B(EOP) scheduled within 70 days'), draftText('Type B(EOP) meeting package no later than 50 days before the meeting; Type B(EOP) eligibility'), recall('Type B(EOP) request response in 14 days')],
+    basis: [pdufa('Type B(EOP) scheduled within 70 days'), PACKAGE_B_EOP, recall('Type B(EOP) request response in 14 days')],
   },
   C: {
-    type: 'C', requestResponseDays: 21, scheduleDays: 75, packageDue: 47,
+    type: 'C', requestResponseDays: 21, scheduleDays: 75, packageDue: 47, packageDueBasis: PACKAGE_C,
     eligibility: 'Any meeting other than Type A, B, B(EOP), D or INTERACT on the development or review of a product. A Type C meeting on a novel surrogate endpoint takes its package with the request.',
-    basis: [pdufa('Type C scheduled within 75 days'), recall('Type C meeting package 47 days before the meeting (seen only in a search summary); request response in 21 days; eligibility wording; surrogate-endpoint package with the request')],
+    basis: [pdufa('Type C scheduled within 75 days'), PACKAGE_C, recall('Type C request response in 21 days; eligibility wording')],
   },
   D: {
-    type: 'D', requestResponseDays: 14, scheduleDays: 50, packageDue: 'with-request',
+    type: 'D', requestResponseDays: 14, scheduleDays: 50, packageDue: 'with-request', packageDueBasis: PACKAGE_D,
     eligibility: 'A narrow set of issues: no more than two focused topics, needing input from no more than three disciplines or divisions.',
-    basis: [pdufa('Type D scheduled within 50 days'), draftText('Type D request response in 14 days; meeting package with the request; two topics, three disciplines')],
+    basis: [pdufa('Type D scheduled within 50 days'), PACKAGE_D],
   },
   INTERACT: {
-    type: 'INTERACT', requestResponseDays: 21, scheduleDays: 75, packageDue: 'with-request',
+    type: 'INTERACT', requestResponseDays: 21, scheduleDays: 75, packageDue: 'with-request', packageDueBasis: PACKAGE_INTERACT,
     eligibility: 'Novel questions early in development, before a pre-IND meeting. Not appropriate once a pre-IND meeting has been held or an IND filed.',
-    basis: [pdufa('INTERACT scheduled within 75 days'), draftText('INTERACT meeting package with the request'), recall('INTERACT request response in 21 days; not appropriate after a pre-IND meeting or IND (final guidance, trade-press report)')],
+    basis: [pdufa('INTERACT scheduled within 75 days'), PACKAGE_INTERACT, recall('INTERACT request response in 21 days; not appropriate after a pre-IND meeting or IND (final guidance, trade-press report)')],
   },
 };
 
-/** "no later than 50 calendar days before the meeting" / "with the meeting request". */
+/** "Type B(EOP)", but "INTERACT": FDA does not call INTERACT a Type. */
+export function meetingTypeName(type: FdaMeetingType): string {
+  return type === 'INTERACT' ? type : `Type ${type}`;
+}
+
+/** "no later than 50 calendar days before the meeting" / "with the meeting request", marked when the deadline is recall. */
 export function meetingPackageDeadline(type: FdaMeetingType): string {
-  const due = FDA_FORMAL_MEETING_TIMELINES[type].packageDue;
-  return due === 'with-request' ? 'with the meeting request' : `no later than ${due} calendar days before the meeting`;
+  const row = FDA_FORMAL_MEETING_TIMELINES[type];
+  const due = row.packageDue === 'with-request' ? 'with the meeting request' : `no later than ${row.packageDue} calendar days before the meeting`;
+  return row.packageDueBasis.confidence === 'recall' ? `${due} (recall: not yet read in FDA's guidance text; confirm before relying on it)` : due;
 }
 
 /** A meeting entry's timing line: when it is requested, then FDA's schedule and package deadline from the table. */
 function meetingTiming(type: FdaMeetingType, when: string): string {
   const row = FDA_FORMAL_MEETING_TIMELINES[type];
-  return `${when}; FDA schedules a Type ${type} meeting within ${row.scheduleDays} days of receipt of the meeting request, with the briefing document (meeting package) due ${meetingPackageDeadline(type)}.`;
+  return `${when}; FDA schedules a ${meetingTypeName(type)} meeting within ${row.scheduleDays} days of receipt of the meeting request, with the briefing document (meeting package) due ${meetingPackageDeadline(type)}.`;
 }
+
+// ── The core every FDA formal-meeting package carries ───────────────────────
+// For a meeting with no lifecycle entry of its own (End-of-Phase 1, Type A,
+// C, D, INTERACT), ana-ri's fda_formal_meeting_package drafts from this core.
+// Until 2026-10-05 (follow-up F17) it took these sections from the pre-IND
+// entry, so it called every request a "Formal Type B meeting request" and
+// headed the background "Development Rationale". Each code is one every
+// lifecycle meeting entry also carries in its own words (pinned by
+// tests/regulatory/meetings-and-dsur-truth.test.ts).
+
+export interface MeetingPackageCoreComponent {
+  /** The code the lifecycle meeting entries give the same component. */
+  code: string;
+  title: string;
+  required: boolean;
+  /** What the component carries, for any meeting type. */
+  guidance: string;
+  basis: E3Basis[];
+}
+
+const MEETING_CONTENTS_RECALL = recall(`${FDA_FORMAL_MEETINGS_GUIDANCE}: contents of a meeting request and a meeting package; not re-read in the guidance text on 2026-10-05`);
+
+const WITH_REQUEST_TYPES = Object.values(FDA_FORMAL_MEETING_TIMELINES)
+  .filter((r) => r.packageDue === 'with-request')
+  .map((r) => meetingTypeName(r.type));
+const SEPARATE_PACKAGE_TYPES = Object.values(FDA_FORMAL_MEETING_TIMELINES)
+  .filter((r) => r.packageDue !== 'with-request')
+  .map((r) => meetingTypeName(r.type));
+const inWords = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs.join(''));
+
+export const FDA_MEETING_PACKAGE_CORE: MeetingPackageCoreComponent[] = [
+  {
+    code: 'MTG-REQ-CL', title: 'Meeting Request Letter and Cover Letter', required: true,
+    guidance: `The meeting request that starts FDA's scheduling clock. It names the meeting type requested and why, the product and its application number (if one is assigned), the proposed indication, the purpose and objectives, the preliminary questions grouped by discipline, the requested format and suggested dates. For ${inWords(WITH_REQUEST_TYPES)} meetings the meeting package goes with the request; for ${inWords(SEPARATE_PACKAGE_TYPES)} meetings it is a separate, later submission (except a Type C meeting on a new surrogate endpoint, whose package goes with the request; recall).`,
+    basis: [...Object.values(FDA_FORMAL_MEETING_TIMELINES).map((r) => r.packageDueBasis), MEETING_CONTENTS_RECALL],
+  },
+  {
+    code: 'MTG-AGENDA', title: 'Proposed Agenda', required: true,
+    guidance: 'Time-boxed agenda listing the topics and the numbered questions to be discussed, with the sponsor speaker for each item.',
+    basis: [MEETING_CONTENTS_RECALL],
+  },
+  {
+    code: 'MTG-ATTEND', title: 'Sponsor Attendee List', required: true,
+    guidance: 'Table of sponsor and consultant attendees with names, titles, roles and affiliations, plus the FDA disciplines or attendees requested.',
+    basis: [MEETING_CONTENTS_RECALL],
+  },
+  {
+    code: 'MTG-BKGD', title: 'Product Background and Development History', required: true,
+    guidance: 'Overview of the product, the proposed indication, the regulatory history to date including any prior FDA agreements, and the development status that sets the context for the questions.',
+    basis: [MEETING_CONTENTS_RECALL],
+  },
+  {
+    code: 'MTG-QUES', title: 'Numbered Questions for FDA with Sponsor Positions', required: true,
+    guidance: "Numbered questions grouped by discipline, each stating the sponsor's position and the supporting rationale, on which FDA's agreement or advice is sought.",
+    basis: [MEETING_CONTENTS_RECALL],
+  },
+];
 
 // ── ICH E2F DSUR outline ─────────────────────────────────────────────────────
 // The headings of ICH E2F (Step 5), once. ana-ri's dsur template reads them.

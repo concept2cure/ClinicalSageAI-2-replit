@@ -20,6 +20,21 @@
  *   - ana-ri's dsur template forced 14 mis-numbered headings ("14.
  *     Conclusions") as "the ICH E2F structure exactly", and one of its
  *     detection patterns held a form feed (\f) and could never match.
+ *
+ * Follow-ups F17-F20 (2026-10-05,
+ * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-meeting-template-followups-facts.md):
+ *   - F17 the generic fda_formal_meeting_package (EOP1, Type A, C, D,
+ *     INTERACT) took its shared sections from the pre-IND entry, so it told a
+ *     sponsor every meeting request is a "Formal Type B meeting request", and
+ *     it never stated a Type C deadline.
+ *   - F18 Type C's 47-day package deadline is recall; AnA stated it with no
+ *     label. A recall deadline is now said to be recall wherever it is stated.
+ *   - F19 "an IND annual report request is not served the DSUR template" never
+ *     failed on the code it was written against (the \f pattern matched
+ *     nothing either way). Replaced by a liveness check that the \f pattern
+ *     fails.
+ *   - F20 no per-section word target is restored: neither FDA's formal-meetings
+ *     guidance nor ICH E2F gives one.
  */
 import { describe, it, expect } from 'vitest';
 import { LIFECYCLE_DOCUMENT_TYPES } from '../../server/services/ind/ctd/index';
@@ -32,6 +47,8 @@ import {
 
 const byId = (id: string) => LIFECYCLE_DOCUMENT_TYPES.find((t) => t.id === id)!;
 const meetings = LIFECYCLE_DOCUMENT_TYPES.filter((t) => t.meetingPackage);
+/** "Type B(EOP)", but "INTERACT": FDA does not call it a Type. */
+const typeName = (t: string) => (t === 'INTERACT' ? t : `Type ${t}`);
 
 /** Every string a lifecycle entry carries, for prose assertions. */
 const entryText = (id: string) => JSON.stringify(byId(id));
@@ -43,6 +60,22 @@ const blockFor = (message: string) => {
   expect(detected, `no template for "${message}"`).not.toBeNull();
   return buildDocumentTemplateBlock(detected!);
 };
+
+/** Requests each DSUR and meeting detection pattern is written for. A pattern none of them matches can never fire. */
+const LIVE_REQUESTS: Record<string, string[]> = {
+  dsur: ['draft our DSUR', 'development safety update report for the 2026 period', 'annual safety report to FDA'],
+  fda_pre_ind_meeting_package: ['pre-IND meeting', 'pre-IND package'],
+  fda_eop_meeting_package: ['end of phase 2 meeting', 'EOP2 meeting', 'Type B(EOP) request', 'end-of-phase II briefing document', 'pre-phase 3 meeting'],
+  fda_pre_nda_meeting_package: ['pre-NDA meeting', 'pre-NDA package'],
+  fda_pre_bla_meeting_package: ['pre-BLA meeting', 'pre-BLA briefing'],
+  fda_formal_meeting_package: ['Type B meeting request', 'FDA meeting package', 'formal meeting briefing', 'end of phase 1 meeting', 'EOP1 meeting'],
+};
+
+/** "<template id>: <pattern>" for every listed template's pattern that matches none of its requests (lower-cased, as detection does). */
+function deadPatterns(requests: Record<string, string[]>): string[] {
+  return Object.entries(requests).flatMap(([id, msgs]) =>
+    DOCUMENT_TEMPLATES[id].detectionPatterns.filter((p) => !msgs.some((m) => p.test(m.toLowerCase()))).map((p) => `${id}: ${p}`));
+}
 
 describe('FDA formal-meeting timelines come from one table', () => {
   const table = (lifecycle as Record<string, unknown>).FDA_FORMAL_MEETING_TIMELINES as
@@ -66,6 +99,24 @@ describe('FDA formal-meeting timelines come from one table', () => {
     const c = table!.C as unknown as { packageDue: number; basis: Array<{ ref: string; confidence: string }> };
     const packageBasis = c.basis.find((b) => /package/i.test(b.ref));
     expect(packageBasis?.confidence).toBe('recall');
+  });
+
+  it('every row names the basis of its package deadline, and that basis is one of its cited sources', () => {
+    for (const [type, row] of Object.entries(lifecycle.FDA_FORMAL_MEETING_TIMELINES)) {
+      expect(row.packageDueBasis, `${type}: packageDueBasis`).toBeDefined();
+      expect(row.basis, `${type}: packageDueBasis listed in basis`).toContain(row.packageDueBasis);
+    }
+    expect(lifecycle.FDA_FORMAL_MEETING_TIMELINES.C.packageDueBasis.confidence).toBe('recall');
+    expect(lifecycle.FDA_FORMAL_MEETING_TIMELINES.B.packageDueBasis.confidence).toBe('regulator-text');
+    expect(lifecycle.FDA_FORMAL_MEETING_TIMELINES['B(EOP)'].packageDueBasis.confidence).toBe('regulator-text');
+  });
+
+  it('a deadline read only from recall is said to be recall where it is stated (F18)', () => {
+    expect(lifecycle.meetingPackageDeadline('C')).toMatch(/\b47\b/);
+    expect(lifecycle.meetingPackageDeadline('C')).toMatch(/recall/i);
+    for (const type of ['A', 'B', 'B(EOP)', 'D', 'INTERACT'] as const) {
+      expect(lifecycle.meetingPackageDeadline(type), type).not.toMatch(/recall/i);
+    }
   });
 });
 
@@ -135,11 +186,68 @@ describe("ana-ri's meeting templates are derived from the lifecycle record", () 
   });
 
   it('no meeting template is a hand-kept heading list', () => {
+    const titles = new Set([
+      ...meetings.flatMap((m) => m.components.map((c) => c.title)),
+      ...lifecycle.FDA_MEETING_PACKAGE_CORE.map((c) => c.title),
+    ]);
     for (const t of Object.values(DOCUMENT_TEMPLATES).filter((x) => /meeting/.test(x.id))) {
-      const titles = new Set(meetings.flatMap((m) => m.components.map((c) => c.title)));
       for (const s of t.sections) expect(titles.has(s.heading), `${t.id}: ${s.heading}`).toBe(true);
     }
   });
+});
+
+describe('the generic FDA formal-meeting package is meeting-type neutral (F17)', () => {
+  const generic = () => DOCUMENT_TEMPLATES.fda_formal_meeting_package;
+
+  it('its sections are the meeting-package core, not one lifecycle entry\'s wording', () => {
+    const core = lifecycle.FDA_MEETING_PACKAGE_CORE;
+    expect(generic().sections.map((s) => [s.heading, s.guidance])).toEqual(core.map((c) => [c.title, c.guidance]));
+    for (const c of core) {
+      for (const m of meetings) {
+        expect(m.components.some((o) => o.code === c.code), `${m.id} has no ${c.code}`).toBe(true);
+      }
+      expect(c.basis.length, `${c.code}: basis`).toBeGreaterThan(0);
+    }
+  });
+
+  it('no section guidance names one meeting type or one meeting', () => {
+    for (const s of generic().sections) {
+      expect(s.guidance, s.heading).not.toMatch(/pre-?IND|Phase 2|Phase 3|pre-?NDA|pre-?BLA/i);
+    }
+    expect(generic().sections.map((s) => s.heading)).not.toContain('Product Background and Development Rationale');
+  });
+
+  it('the request-letter section says which meeting types take the package with the request, from the table', () => {
+    const req = generic().sections.find((s) => s.heading === 'Meeting Request Letter and Cover Letter')!;
+    const withRequest = Object.values(lifecycle.FDA_FORMAL_MEETING_TIMELINES)
+      .filter((r) => r.packageDue === 'with-request').map((r) => r.type);
+    for (const t of withRequest) expect(req.guidance).toContain(typeName(t));
+    expect(req.guidance).not.toMatch(/Formal Type B meeting request/);
+  });
+
+  it('its instructions state every meeting type\'s schedule and package deadline from the table', () => {
+    const text = generic().draftingInstructions;
+    for (const row of Object.values(lifecycle.FDA_FORMAL_MEETING_TIMELINES)) {
+      expect(text, row.type).toContain(`${typeName(row.type)}: scheduled within ${row.scheduleDays} days`);
+      expect(text, row.type).toContain(lifecycle.meetingPackageDeadline(row.type));
+    }
+    expect(text).not.toMatch(/every pre-IND, EOP, pre-NDA and pre-BLA package carries/);
+  });
+
+  it('an EOP1 request is told its package deadline is 30 or 50 days by product, not given the pre-IND wording', () => {
+    const block = blockFor('EOP1 meeting package');
+    expect(block).not.toContain('Formal Type B meeting request');
+    expect(block).toContain('Type B(EOP): scheduled within 70 days');
+  });
+});
+
+describe('no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20)', () => {
+  it.each(['dsur', 'fda_pre_ind_meeting_package', 'fda_eop_meeting_package', 'fda_pre_nda_meeting_package', 'fda_pre_bla_meeting_package', 'fda_formal_meeting_package'])(
+    '%s sections have no targetWords',
+    (id) => {
+      for (const s of DOCUMENT_TEMPLATES[id].sections) expect(s.targetWords, `${id}: ${s.heading}`).toBeUndefined();
+    },
+  );
 });
 
 describe('the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions', () => {
@@ -212,7 +320,14 @@ describe("ana-ri's DSUR template is the E2F outline", () => {
     for (const p of DOCUMENT_TEMPLATES.dsur.detectionPatterns) expect(p.source).not.toContain('\\f');
   });
 
-  it('an IND annual report request is not served the DSUR template', () => {
-    expect(detectDocumentTemplate('prepare the IND annual report')?.template.id).not.toBe('dsur');
+  // F19: this replaced "an IND annual report request is not served the DSUR
+  // template", which passed on the code it was written against, since the \f
+  // pattern matched nothing either way. The defect was a dead pattern, so the
+  // check is that every pattern is live. Applied to the patterns before
+  // 2026-10-04 it fails on /\find\s+annual\s+report\b/i
+  // (docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-meeting-template-followups-red.txt).
+  // Which template an IND annual report request gets is g-periodic-chat-copies'.
+  it('every DSUR and meeting detection pattern matches a request it is written for', () => {
+    expect(deadPatterns(LIVE_REQUESTS)).toEqual([]);
   });
 });
