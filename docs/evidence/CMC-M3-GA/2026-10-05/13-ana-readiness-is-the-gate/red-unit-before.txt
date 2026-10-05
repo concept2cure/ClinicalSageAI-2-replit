@@ -1,0 +1,109 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ana-ri/__tests__/module3-readiness-gate.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/module3-readiness-gate.test.ts
+{
+  "timestamp": "2026-10-05T04:21:11.261Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/module3-readiness-gate.test.ts
+{
+  "timestamp": "2026-10-05T04:21:11.889Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T04:21:11.890Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/module3-readiness-gate.test.ts
+{
+  "timestamp": "2026-10-05T04:21:11.890Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/services/ana-ri/__tests__/module3-readiness-gate.test.ts > AnA Module 3 readiness is the export gate > module3_readiness: counts clear but the gate refuses on drift → BLOCKED, with the gate sentence 10ms
+   → expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/module3-readiness-gate.test.ts > AnA Module 3 readiness is the export gate > cmc_status: counts clear but the gate refuses on superseded evidence → BLOCKED, with the gate sentence 2ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ana-ri/__tests__/module3-readiness-gate.test.ts > AnA Module 3 readiness is the export gate > both say READY only when the gate allows 1ms
+ × server/services/ana-ri/__tests__/module3-readiness-gate.test.ts > AnA Module 3 readiness is the export gate > the counts shown are the gate’s, not a second read 3ms
+   → expected '**Module 3 Readiness:** 3/3 sections …' to contain '2/4 sections approved, 1 stale, 1 cri…'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/module3-readiness-gate.test.ts > AnA Module 3 readiness is the export gate > module3_readiness: counts clear but the gate refuses on drift → BLOCKED, with the gate sentence
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/module3-readiness-gate.test.ts:71:41
+     69|     const r = await module3Readiness(ctx, { projectId: PROJECT });
+     70|     expect(r.success).toBe(true);
+     71|     expect((r.data as any).exportReady).toBe(false);
+       |                                         ^
+     72|     expect(r.message).toContain('**BLOCKED**');
+     73|     expect(r.message).not.toContain('**READY**');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/ana-ri/__tests__/module3-readiness-gate.test.ts > AnA Module 3 readiness is the export gate > cmc_status: counts clear but the gate refuses on superseded evidence → BLOCKED, with the gate sentence
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/module3-readiness-gate.test.ts:82:41
+     80|     gate(false, EVIDENCE);
+     81|     const r = await cmcStatus(ctx, { projectId: PROJECT });
+     82|     expect((r.data as any).exportReady).toBe(false);
+       |                                         ^
+     83|     expect(r.message).toContain('Module 3 export: **BLOCKED**');
+     84|     expect(r.message).toContain(EVIDENCE);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/ana-ri/__tests__/module3-readiness-gate.test.ts > AnA Module 3 readiness is the export gate > the counts shown are the gate’s, not a second read
+AssertionError: expected '**Module 3 Readiness:** 3/3 sections …' to contain '2/4 sections approved, 1 stale, 1 cri…'
+
+Expected: "2/4 sections approved, 1 stale, 1 critical contradictions"
+Received: "**Module 3 Readiness:** 3/3 sections approved, 0 stale, 0 critical contradictions. Export **READY**."
+
+ ❯ server/services/ana-ri/__tests__/module3-readiness-gate.test.ts:106:23
+    104|     };
+    105|     const r = await module3Readiness(ctx, { projectId: PROJECT });
+    106|     expect(r.message).toContain('2/4 sections approved, 1 stale, 1 cri…
+       |                       ^
+    107|     expect(r.message).toContain('/m3 refresh');
+    108|     expect(r.message).toContain('2 sections not yet approved');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  04:21:09
+   Duration  2.59s (transform 1.42s, setup 76ms, import 2.22s, tests 22ms, environment 0ms)
+
