@@ -39,7 +39,11 @@
  * cross-service import is the eSTAR slot registry
  * (`pathway-engines/estar/estar-mapper.ts`, equally pure): the 510(k) and De
  * Novo content list belongs to that registry, which the readiness engine scores
- * against, and is read from it rather than restated here.
+ * against, and is read from it rather than restated here. Two more pure
+ * registries are read, not restated: the eSTAR catalog
+ * (`pathway-engines/estar/estar-catalog.ts`) for the MDUFA V review-goal days,
+ * and the regulatory currency registry
+ * (`regulatory-currency/currency-registry.ts`) for the dated eSTAR mandates.
  *
  * @module server/services/medical-device/medical-device-knowledge
  */
@@ -68,6 +72,12 @@ import {
   type EstarType,
 } from '../pathway-engines/estar/estar-mapper.js';
 import { DEVICE_FLAGS } from '../../../shared/constants/domain/device-classification';
+import { getCatalogEntry, type EstarCatalogKey } from '../pathway-engines/estar/estar-catalog.js';
+import {
+  REGULATORY_FACTS,
+  statusAsOf,
+  type RegulatoryFact,
+} from '../regulatory-currency/currency-registry.js';
 
 export type { Citation } from './medical-device-knowledge-data.js';
 
@@ -608,11 +618,11 @@ export interface SelectDevicePathwayParams {
   predicateExists: boolean;
   /** Whether the device is a novel low-to-moderate risk type with no predicate (De Novo candidate). */
   novelLowModerateRisk?: boolean;
-  /** Whether the device is intended to benefit patients in a rare condition (HDE: <8,000/yr in US). */
+  /** Whether the device is intended to benefit patients in a rare condition (HUD: not more than 8,000/yr in the US). Not a designation. */
   humanitarianUseDevice?: boolean;
   /** Estimated US patient population per year (for HUD/HDE eligibility). */
   estimatedAnnualUSPopulation?: number;
-  /** Whether the device/product code is 510(k)-exempt. */
+  /** Whether the product code's classification regulation exempts it from 510(k) (and no .9 limitation applies). */
   exempt?: boolean;
   /** Whether the device incorporates a biologic regulated under a BLA. */
   isBiologic?: boolean;
@@ -641,6 +651,29 @@ export interface SelectDevicePathwayResult {
   citations: Citation[];
 }
 
+/** HUD population ceiling, FD&C Act §520(m) as amended by the 21st Century Cures Act: "not more than 8,000 individuals". */
+const HUD_MAX_ANNUAL_US_POPULATION = 8000;
+
+/**
+ * MDUFA V (FY2023-2027) review-goal days, read from the eSTAR catalog — the
+ * one place they are kept. A key the catalog carries no figure for says so
+ * rather than borrowing one.
+ */
+function mdufaGoalDays(key: EstarCatalogKey): number | undefined {
+  return getCatalogEntry(key)?.reviewGoalDays;
+}
+
+/**
+ * "<label>: MDUFA V goal <n> FDA days", or an honest "no goal encoded". The
+ * Pre-Submission goal is counted in calendar days, not FDA days.
+ */
+function mdufaClock(key: EstarCatalogKey, label: string, unit: 'FDA days' | 'calendar days' = 'FDA days'): string {
+  const days = mdufaGoalDays(key);
+  return days === undefined
+    ? label + ': no MDUFA goal encoded for this submission type.'
+    : label + ': MDUFA V goal ' + days + ' ' + unit;
+}
+
 /**
  * Select the US premarket pathway (510(k) / De Novo / PMA / HDE / exempt /
  * IDE-then-PMA / BLA) and the EU conformity-assessment route, with rationale.
@@ -657,8 +690,8 @@ export function selectDevicePathway(params: SelectDevicePathwayParams): SelectDe
   let approximateUSReviewClock: string;
 
   const annualPop = params.estimatedAnnualUSPopulation;
-  const hudEligible =
-    params.humanitarianUseDevice === true && (annualPop === undefined || annualPop < 8000);
+  const hudClaimed = params.humanitarianUseDevice === true;
+  const novelNoPredicate = params.predicateExists === false && params.novelLowModerateRisk === true;
 
   if (params.isBiologic) {
     usPathway = 'BLA';
@@ -666,21 +699,92 @@ export function selectDevicePathway(params: SelectDevicePathwayParams): SelectDe
       'The product is regulated as a biologic; a Biologics License Application (BLA) under PHS Act §351 ' +
       'applies (a device-led combination may instead be reviewed by CDRH with CBER consult).';
     approximateUSReviewClock = 'BLA standard review ~10-12 months (varies).';
-  } else if (params.exempt || (params.usClass === 'I' && params.predicateExists === false && params.novelLowModerateRisk !== true)) {
+  } else if (params.exempt === true && params.usClass === 'III') {
+    // A 510(k) exemption does not take a class III device out of premarket
+    // review, so one of the two inputs is wrong. Do not guess which.
+    usPathway = 'undetermined';
+    usPathwayRationale =
+      'The inputs conflict: the device is stated to be class III and its product code 510(k)-exempt. A class III ' +
+      'device needs premarket approval (PMA, or HDE / De Novo where they apply), which a 510(k) exemption does ' +
+      'not remove. Confirm the class and the exemption from the product code\'s classification regulation.';
+    approximateUSReviewClock = 'No review clock until the pathway is determined.';
+    usAlternatives.push({ pathway: 'exempt', whenApplicable: 'If the device is in fact class I or II and its classification regulation exempts it.' });
+    usAlternatives.push({ pathway: 'IDE-then-PMA', whenApplicable: 'If the device is class III.' });
+    findings.push({
+      id: 'NEEDS-INPUT-CLASS-III-EXEMPT',
+      severity: 'requirement',
+      statement:
+        'A device cannot be both class III and 510(k)-exempt in a way that removes premarket review. Confirm ' +
+        '`usClass` and `exempt` from the product code\'s classification regulation.',
+      citation: { source: 'FD&C Act §513(a)(1)(C), §515', note: 'Class III devices require premarket approval.' },
+    });
+  } else if (params.exempt === true) {
     usPathway = 'exempt';
     usPathwayRationale =
-      'Device appears 510(k)-exempt (typical for many Class I and a subset of Class II product codes under ' +
-      '21 CFR 862-892). Manufacturer must still satisfy general controls: establishment registration & device ' +
-      'listing, Quality System Regulation (21 CFR 820 / QMSR), labeling, and MDR reporting. Confirm exemption ' +
-      'and any limitations (e.g., 21 CFR 8xx.9) for the specific product code.';
+      'The product code is stated to be 510(k)-exempt. Exemption is set by the classification regulation ' +
+      '(21 CFR 862-892) and is lost when a limitation in that panel\'s .9 section applies, so confirm both for ' +
+      'the product code. The manufacturer must still satisfy general controls: establishment registration & ' +
+      'device listing, Quality System Regulation (21 CFR 820 / QMSR), labeling, and MDR reporting.';
     approximateUSReviewClock = 'No premarket review clock (exempt) — registration & listing only.';
+    usAlternatives.push({ pathway: '510(k)', whenApplicable: 'If a .9 limitation of exemption applies to the device.' });
+  } else if (novelNoPredicate) {
+    // Evaluated before the class-III branch: a device of a new type is class III
+    // by operation of 513(f)(1) whatever its risk, and De Novo is how it leaves.
+    usPathway = 'De Novo';
+    usPathwayRationale =
+      'Novel device of low-to-moderate risk with NO legally marketed predicate. A device of a new type is ' +
+      'class III by operation of FD&C Act §513(f)(1); a De Novo classification request under §513(f)(2) and ' +
+      '21 CFR 860 Subpart D (860.200-860.260; content 860.220) asks FDA to classify it into class I or II. Once ' +
+      'granted it creates a predicate for future 510(k)s; special controls are defined as part of the grant.';
+    clinicalEvidenceLikelyRequired = params.usClass !== 'I';
+    approximateUSReviewClock = mdufaClock('de_novo', 'De Novo');
+    usAlternatives.push({ pathway: 'PMA', whenApplicable: 'If FDA finds general and special controls cannot assure safety and effectiveness (the device stays class III).' });
+    usAlternatives.push({ pathway: '510(k)', whenApplicable: 'If a suitable predicate is later identified.' });
+  } else if (params.usClass === 'I') {
+    usPathway = 'undetermined';
+    usPathwayRationale =
+      'Class I alone does not decide the pathway. Most class I device types are 510(k)-exempt, but exemption ' +
+      'is set per classification regulation, a .9 limitation can remove it, and reserved class I devices ' +
+      'require a 510(k). Supply `exempt` from the product code.';
+    approximateUSReviewClock = 'No review clock until the pathway is determined.';
+    usAlternatives.push({ pathway: 'exempt', whenApplicable: 'If the product code\'s classification regulation exempts it and no .9 limitation applies.' });
+    usAlternatives.push({ pathway: '510(k)', whenApplicable: 'If the device type is reserved, or a .9 limitation of exemption applies.' });
+    findings.push({
+      id: 'NEEDS-INPUT-EXEMPTION',
+      severity: 'requirement',
+      statement:
+        '510(k) exemption is decided by the product code\'s classification regulation and its .9 limitations ' +
+        '(21 CFR 862.9-892.9), and reserved class I devices require a 510(k). Supply `exempt` from the product code.',
+      citation: { source: '21 CFR 862.9-892.9; FD&C Act §510(l)', note: 'Limitations of exemption; reserved class I devices.' },
+    });
+  } else if (params.usClass === 'III' && hudClaimed && annualPop === undefined) {
+    usPathway = 'undetermined';
+    usPathwayRationale =
+      'A Humanitarian Device Exemption needs a Humanitarian Use Device (HUD) designation from FDA\'s Office of ' +
+      'Orphan Products Development first, and the designation needs a documented US population. No population ' +
+      'was supplied, so HDE eligibility is not established.';
+    approximateUSReviewClock = 'No review clock until the pathway is determined.';
+    usAlternatives.push({ pathway: 'HDE', whenApplicable: 'If OOPD designates the device a HUD (condition affecting not more than 8,000 individuals in the US per year).' });
+    usAlternatives.push({ pathway: 'IDE-then-PMA', whenApplicable: 'If the device does not qualify as a HUD.' });
+    if (params.predicateExists) {
+      usAlternatives.push({ pathway: '510(k)', whenApplicable: 'If the stated predicate is a legally marketed device the device is substantially equivalent to.' });
+    }
+    findings.push({
+      id: 'NEEDS-INPUT-HUD',
+      severity: 'requirement',
+      statement:
+        'HDE requires an OOPD HUD designation: the disease or condition must affect or be manifested in not more ' +
+        'than 8,000 individuals in the United States per year, documented with authoritative references. Supply ' +
+        '`estimatedAnnualUSPopulation`.',
+      citation: { source: 'FD&C Act §520(m); 21 CFR 814 Subpart H', note: 'HUD designation precedes the HDE application.' },
+    });
   } else if (params.usClass === 'III') {
-    if (hudEligible) {
+    if (hudClaimed && annualPop !== undefined && annualPop <= HUD_MAX_ANNUAL_US_POPULATION) {
       usPathway = 'HDE';
       usPathwayRationale =
-        'Class III device for a rare condition (<8,000 US patients/year) with Humanitarian Use Device (HUD) ' +
-        'designation: a Humanitarian Device Exemption (HDE) requires a showing of safety and probable benefit ' +
-        '(not a full effectiveness demonstration) per 21 CFR 814 Subpart H.';
+        'Class III device for a condition affecting not more than 8,000 individuals in the US per year: with a ' +
+        'Humanitarian Use Device (HUD) designation from OOPD, a Humanitarian Device Exemption (HDE) requires a ' +
+        'showing of safety and probable benefit (not a full effectiveness demonstration) per 21 CFR 814 Subpart H.';
       clinicalEvidenceLikelyRequired = true;
       approximateUSReviewClock = 'HDE review clock 75 FDA-days; HUD designation request precedes it.';
       usAlternatives.push({ pathway: 'PMA', whenApplicable: 'If full effectiveness data are available and broader labeling is sought.' });
@@ -691,7 +795,7 @@ export function selectDevicePathway(params: SelectDevicePathwayParams): SelectDe
         'product code remains in a 510(k) pathway (pre-amendments Class III not yet called for PMA). Demonstrate ' +
         'substantial equivalence; FDA may still call for a PMA under §515(b).';
       clinicalEvidenceLikelyRequired = true;
-      approximateUSReviewClock = '510(k) MDUFA goal ~90 FDA-days (Traditional).';
+      approximateUSReviewClock = mdufaClock('510k', '510(k)');
       usAlternatives.push({ pathway: 'PMA', whenApplicable: 'If FDA calls for PMA or no acceptable predicate is found.' });
     } else {
       usPathway = 'IDE-then-PMA';
@@ -700,35 +804,38 @@ export function selectDevicePathway(params: SelectDevicePathwayParams): SelectDe
         'valid scientific evidence (typically a pivotal clinical study). If the study is a significant-risk ' +
         'investigation, an approved Investigational Device Exemption (IDE) under 21 CFR 812 is needed first.';
       clinicalEvidenceLikelyRequired = true;
-      approximateUSReviewClock = 'PMA MDUFA goal ~180 FDA-days (substantive review); plus IDE/clinical study time.';
-      usAlternatives.push({ pathway: 'HDE', whenApplicable: 'If the indication is a rare disease/condition with <8,000 US patients/year.' });
+      approximateUSReviewClock = mdufaClock('pma_original', 'PMA') + '; plus IDE/clinical study time.';
+      usAlternatives.push({ pathway: 'De Novo', whenApplicable: 'If the device is of low-to-moderate risk and general/special controls can assure safety and effectiveness (FD&C Act §513(f)(2)).' });
+      usAlternatives.push({ pathway: 'HDE', whenApplicable: 'If OOPD designates it a HUD (condition affecting not more than 8,000 individuals in the US per year).' });
     }
-  } else if (params.novelLowModerateRisk === true && params.predicateExists === false) {
-    usPathway = 'De Novo';
-    usPathwayRationale =
-      'Novel device of low-to-moderate risk with NO legally marketed predicate: a De Novo classification request ' +
-      'under FD&C Act §513(f)(2) / 21 CFR 860.93 establishes a new Class I or II classification and, once granted, ' +
-      'creates a predicate for future 510(k)s. Special controls are defined as part of the grant.';
-    clinicalEvidenceLikelyRequired = params.usClass === 'II';
-    approximateUSReviewClock = 'De Novo MDUFA goal ~150 FDA-days.';
-    usAlternatives.push({ pathway: '510(k)', whenApplicable: 'If a suitable predicate is later identified.' });
-    usAlternatives.push({ pathway: 'PMA', whenApplicable: 'If FDA determines the risk profile is high (Class III).' });
-  } else if (params.usClass === 'II' || params.predicateExists) {
+  } else if (params.predicateExists) {
     usPathway = '510(k)';
     usPathwayRationale =
-      'Class II (or predicate-backed) device: a 510(k) premarket notification demonstrating substantial ' +
-      'equivalence to a legally marketed predicate is the standard pathway (21 CFR 807 Subpart E). Choose ' +
-      'Traditional, Special (design change to own cleared device), or Abbreviated (reliance on recognized ' +
-      'standards/guidance) 510(k) format.';
+      'Class II (or unclassified) device with a legally marketed predicate: a 510(k) premarket notification ' +
+      'demonstrating substantial equivalence to that predicate is the standard pathway (21 CFR 807 Subpart E). ' +
+      'Choose Traditional, Special (design change to own cleared device), or Abbreviated (reliance on ' +
+      'recognized standards/guidance) 510(k) format.';
     clinicalEvidenceLikelyRequired = false;
-    approximateUSReviewClock = '510(k) MDUFA goal ~90 FDA-days (Traditional/Abbreviated); Special ~30 FDA-days.';
+    approximateUSReviewClock = mdufaClock('510k', '510(k)');
     usAlternatives.push({ pathway: 'De Novo', whenApplicable: 'If no acceptable predicate exists and risk is low/moderate.' });
   } else {
-    usPathway = '510(k)';
+    // Class II / unclassified, no predicate, no novel-low/moderate-risk claim.
+    usPathway = 'undetermined';
     usPathwayRationale =
-      'Default to 510(k) premarket notification where a predicate is expected; confirm the product code and ' +
-      'regulation number to verify class and any exemption.';
-    approximateUSReviewClock = '510(k) MDUFA goal ~90 FDA-days.';
+      'No legally marketed predicate was identified, so a 510(k) (which shows substantial equivalence to one) ' +
+      'is not available on these facts, and nothing establishes De Novo eligibility.';
+    approximateUSReviewClock = 'No review clock until the pathway is determined.';
+    usAlternatives.push({ pathway: 'De Novo', whenApplicable: 'If the device is novel and of low-to-moderate risk.' });
+    usAlternatives.push({ pathway: '510(k)', whenApplicable: 'If a legally marketed predicate is identified.' });
+    findings.push({
+      id: 'NEEDS-INPUT-PREDICATE',
+      severity: 'requirement',
+      statement:
+        'With no predicate the options are: identify a legally marketed predicate (510(k)); request De Novo ' +
+        'classification under §513(f)(2) if the device is of low-to-moderate risk; or ask FDA for its view of ' +
+        'the classification through a 513(g) request for information.',
+      citation: { source: 'FD&C Act §513(f)(2) / §513(g)', note: 'De Novo request; request for classification information.' },
+    });
   }
 
   // ── EU conformity route ──────────────────────────────────────────────────
@@ -1639,8 +1746,12 @@ export interface PlanDeviceSubmissionParams {
   euIvdrClass?: EUIVDRClass;
   /** Whether a Pre-Submission (Q-Sub) has already occurred. */
   preSubmissionDone?: boolean;
-  /** Whether the submission will use the FDA eSTAR template. */
-  useEStar?: boolean;
+  /**
+   * ISO date (YYYY-MM-DD) the plan is made as of; decides whether an eSTAR
+   * mandate in the currency registry is in force. Defaults to today (UTC).
+   * There is no `useEStar` input: where eSTAR is mandatory it is not a choice.
+   */
+  asOf?: string;
 }
 
 export interface SubmissionSection {
@@ -1673,9 +1784,9 @@ export interface PlanDeviceSubmissionResult {
  * This used to hand every US pathway one administrative section asking for
  * "Form FDA 3514 ... and (if used) eCopy/eSTAR packaging". For 510(k) and De
  * Novo that is wrong twice: eSTAR is mandatory (510(k) from 2023-10-01, De Novo
- * from 2025-10-01), it is filed through the CDRH Portal rather than as an
- * eCopy, and FDA's eSTAR page says no separate 3514 is needed because the
- * template carries the cover-sheet data. estar-mapper.ts had already struck the
+ * from 2025-10-01), the eSTAR file replaces the free-form eCopy (it is sent
+ * through the CDRH Portal or to the Document Control Center), and FDA's eSTAR
+ * page says no separate 3514 is needed because the template carries the cover-sheet data. estar-mapper.ts had already struck the
  * 3514 slot (see "WHY THERE IS NO cdrh-cover-sheet SLOT" there); this plan had
  * not, so AnA's plan and the readiness verdict disagreed about what a filing
  * needs. The plan also omitted the truthful-and-accurate statement, which the
@@ -1845,6 +1956,68 @@ function nonEstarUSSections(params: PlanDeviceSubmissionParams): SubmissionSecti
   return sections;
 }
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** The currency-registry fact that records the eSTAR mandate for each eSTAR pathway. */
+const ESTAR_MANDATE_FACT: Partial<Record<USPathway, string>> = {
+  '510(k)': 'fda-estar-510k-mandatory',
+  'De Novo': 'fda-estar-denovo-mandatory',
+};
+
+interface EstarMandate {
+  fact: RegulatoryFact;
+  mandatory: boolean;
+}
+
+/**
+ * Whether eSTAR is mandatory for `pathway` on `asOf`, read from the currency
+ * registry by fact id. `statusAsOf` only promotes a `mandatory_upcoming` fact;
+ * these two are stored `in_force` with their effective date, so a date before
+ * that is checked here too. A pathway with no mandate fact returns undefined.
+ */
+function estarMandate(pathway: USPathway, asOf: string): EstarMandate | undefined {
+  const id = ESTAR_MANDATE_FACT[pathway];
+  if (!id) return undefined;
+  const fact = REGULATORY_FACTS.find((f) => f.id === id);
+  if (!fact) throw new Error('planDeviceSubmission: currency fact ' + id + ' is missing from the registry');
+  const mandatory = statusAsOf(fact, asOf) === 'in_force' && asOf >= fact.effectiveDate;
+  return { fact, mandatory };
+}
+
+/** The ESTAR finding: a requirement when the registry says the mandate is in force. */
+function estarFinding(pathway: USPathway, asOf: string, estar: EstarMandate | undefined): Finding {
+  if (!estar) {
+    return {
+      id: 'ESTAR',
+      severity: 'info',
+      statement:
+        'The eSTAR mandates recorded in the regulatory currency registry cover 510(k) and De Novo; this plan ' +
+        'is for ' + pathway + ', whose format is stated above.',
+      citation: { source: 'FDA eSTAR Program', note: 'Electronic submission template.' },
+    };
+  }
+  const { fact, mandatory } = estar;
+  const citation: Citation = { source: 'FDA eSTAR Program', note: fact.topic, url: fact.sourceUrl, factId: fact.id };
+  return mandatory
+    ? {
+        id: 'ESTAR',
+        severity: 'requirement',
+        statement:
+          pathway + ' submissions must be made with the FDA eSTAR template, unless exempted, from ' +
+          fact.effectiveDate + ' (in force as of ' + asOf + '). eSTAR is sent through the CDRH Portal (FDA\'s recommended route) or, for files over the Portal\'s size limits, ' +
+          'mailed on electronic media to the CDRH Document Control Center.',
+        citation,
+      }
+    : {
+        id: 'ESTAR',
+        severity: 'recommendation',
+        statement:
+          'As of ' + asOf + ' eSTAR is not yet mandatory for ' + pathway + '; it becomes mandatory on ' +
+          fact.effectiveDate + '. Using it now avoids a reformat.',
+        citation,
+      };
+}
+
 /** The US content sections for a pathway that uses them (not PMA, not exempt). */
 function commonUSSections(params: PlanDeviceSubmissionParams): SubmissionSection[] {
   const estarType = ESTAR_TYPE[params.usPathway];
@@ -1866,15 +2039,23 @@ export function planDeviceSubmission(params: PlanDeviceSubmissionParams): PlanDe
   const pathway = params.usPathway;
   let submissionFormat: string;
 
+  const asOf = params.asOf ?? new Date().toISOString().slice(0, 10);
+  if (!ISO_DATE.test(asOf)) {
+    throw new Error('planDeviceSubmission: asOf must be an ISO date (YYYY-MM-DD), got ' + JSON.stringify(asOf));
+  }
+  const estar = estarMandate(pathway, asOf);
+
   if (pathway === '510(k)') {
-    submissionFormat = params.useEStar
-      ? 'FDA eSTAR-formatted 510(k) (Traditional / Special / Abbreviated)'
-      : '510(k) premarket notification (Traditional / Special / Abbreviated)';
+    submissionFormat = estar?.mandatory
+      ? 'FDA eSTAR 510(k) (Traditional / Special / Abbreviated), sent through the CDRH Portal or to the CDRH Document Control Center'
+      : '510(k) premarket notification (Traditional / Special / Abbreviated); eSTAR not mandatory as of ' + asOf;
     // The eSTAR registry carries the 510(k) Summary/Statement, the SE comparison
     // and performance testing (bench / animal / clinical) as slots.
     usSections.push(...commonUSSections(params));
   } else if (pathway === 'De Novo') {
-    submissionFormat = params.useEStar ? 'FDA eSTAR-formatted De Novo request' : 'De Novo classification request';
+    submissionFormat = estar?.mandatory
+      ? 'FDA eSTAR De Novo request, sent through the CDRH Portal or to the CDRH Document Control Center'
+      : 'De Novo classification request; eSTAR not mandatory as of ' + asOf;
     // The eSTAR registry carries the classification request with its
     // risk-to-benefit analysis and the proposed special controls as slots.
     usSections.push(...commonUSSections(params));
@@ -1931,7 +2112,8 @@ export function planDeviceSubmission(params: PlanDeviceSubmissionParams): PlanDe
       sectionId: 'hud',
       title: 'HUD Designation & Probable Benefit',
       contents:
-        'Humanitarian Use Device designation (rare condition <8,000 US/yr) and a demonstration of safety and ' +
+        'Humanitarian Use Device designation from OOPD (condition affecting not more than 8,000 individuals in the ' +
+        'US per year) and a demonstration of safety and ' +
         'probable benefit (not full effectiveness).',
       citation: { source: '21 CFR 814.104', note: 'HDE application content.' },
     });
@@ -2025,7 +2207,9 @@ export function planDeviceSubmission(params: PlanDeviceSubmissionParams): PlanDe
   if (!params.preSubmissionDone && pathway !== 'exempt') {
     timeline.push({
       phase: 'Pre-Submission (Q-Sub)',
-      durationEstimate: '~75-90 days to FDA written feedback / meeting',
+      durationEstimate:
+        mdufaClock('qsub_pre_submission', 'Written feedback', 'calendar days') +
+        ' (or 5 days before a scheduled meeting, whichever is sooner)',
       description: 'Align with FDA on predicate/classification, test plan, endpoints, and acceptance criteria.',
     });
   }
@@ -2040,11 +2224,11 @@ export function planDeviceSubmission(params: PlanDeviceSubmissionParams): PlanDe
     description: 'Assemble the submission (' + submissionFormat + ') and internal QA review.',
   });
   if (pathway === '510(k)') {
-    timeline.push({ phase: 'FDA Review (510(k))', durationEstimate: '~90 FDA-days (MDUFA goal; clock pauses on Additional Information requests)', description: 'Acceptance review, substantive review, SE/NSE decision.' });
+    timeline.push({ phase: 'FDA Review (510(k))', durationEstimate: mdufaClock('510k', '510(k)') + ' (the clock pauses on Additional Information requests)', description: 'Acceptance review, substantive review, SE/NSE decision.' });
   } else if (pathway === 'De Novo') {
-    timeline.push({ phase: 'FDA Review (De Novo)', durationEstimate: '~150 FDA-days (MDUFA goal)', description: 'Classification review and grant with special controls.' });
+    timeline.push({ phase: 'FDA Review (De Novo)', durationEstimate: mdufaClock('de_novo', 'De Novo'), description: 'Classification review and grant with special controls.' });
   } else if (pathway === 'PMA' || pathway === 'IDE-then-PMA') {
-    timeline.push({ phase: 'FDA Review (PMA)', durationEstimate: '~180 FDA-days substantive review; advisory-panel and preapproval inspection may extend it', description: 'Filing review, substantive review, panel (if convened), inspection, approval.' });
+    timeline.push({ phase: 'FDA Review (PMA)', durationEstimate: mdufaClock('pma_original', 'PMA') + ' (without advisory-committee input); a panel and the preapproval inspection may extend it', description: 'Filing review, substantive review, panel (if convened), inspection, approval.' });
   } else if (pathway === 'HDE') {
     timeline.push({ phase: 'FDA Review (HDE)', durationEstimate: '~75 FDA-days', description: 'Safety and probable-benefit review.' });
   }
@@ -2073,14 +2257,7 @@ export function planDeviceSubmission(params: PlanDeviceSubmissionParams): PlanDe
       'request or a Not-Substantially-Equivalent/Not-Approvable outcome.';
   }
 
-  findings.push({
-    id: 'ESTAR',
-    severity: 'recommendation',
-    statement:
-      'Use the FDA eSTAR template where available (mandatory for 510(k) and De Novo). eSTAR guides the content, ' +
-      'reduces administrative deficiencies, and supports the eSubmitter/CCP electronic pathway.',
-    citation: { source: 'FDA eSTAR Program', note: 'Electronic submission template.' },
-  });
+  findings.push(estarFinding(pathway, asOf, estar));
   findings.push({
     id: 'TOC',
     severity: 'info',

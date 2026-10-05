@@ -31,16 +31,14 @@ const plan = (p: PlanDeviceSubmissionParams) => planDeviceSubmission(p);
 
 describe('planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet', () => {
   for (const usPathway of ['510(k)', 'De Novo'] as const) {
-    for (const useEStar of [true, false, undefined]) {
-      it(`${usPathway} (useEStar=${String(useEStar)}) names neither Form FDA 3514 nor eCopy`, () => {
-        const out = text(plan({ usPathway, useEStar }).usSections);
-        expect(out).not.toMatch(/3514|ecopy/i);
-      });
-    }
+    it(`${usPathway} names neither Form FDA 3514 nor eCopy`, () => {
+      const out = text(plan({ usPathway, asOf: '2026-10-04' }).usSections);
+      expect(out).not.toMatch(/3514|ecopy/i);
+    });
   }
 
   it('the 510(k) plan carries every always-required eSTAR slot, by id and label', () => {
-    const sections = plan({ usPathway: '510(k)', useEStar: true }).usSections;
+    const sections = plan({ usPathway: '510(k)', asOf: '2026-10-04' }).usSections;
     for (const slot of estarSlots('510k').filter((s) => s.necessity === 'always')) {
       const hit = sections.find((s) => s.sectionId === slot.id);
       expect(hit, slot.id).toBeDefined();
@@ -50,7 +48,7 @@ describe('planDeviceSubmission — eSTAR pathways do not ask for the retired cov
   });
 
   it('the De Novo plan carries every always-required eSTAR slot, by id and label', () => {
-    const sections = plan({ usPathway: 'De Novo', useEStar: true }).usSections;
+    const sections = plan({ usPathway: 'De Novo', asOf: '2026-10-04' }).usSections;
     for (const slot of estarSlots('de_novo').filter((s) => s.necessity === 'always')) {
       const hit = sections.find((s) => s.sectionId === slot.id);
       expect(hit, slot.id).toBeDefined();

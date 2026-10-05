@@ -1,0 +1,29 @@
+# g-device-pathway-decisions GREEN (fix round 1), working copy on 55e2ba67, 2026-10-05T04:46:11Z
+ ✓ server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > class III by default, no predicate, novel low/moderate risk → De Novo, PMA the alternative 2ms
+ ✓ server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > class III with no predicate and no novelty claim → PMA route, with De Novo offered 1ms
+ ✓ server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > class I is exempt only when the product code says so 1ms
+ ✓ server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > a class III device stated to be 510(k)-exempt is not exempt: the inputs conflict 0ms
+ ✓ server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > class II or unclassified with no predicate is never sent to a 510(k) 1ms
+ ✓ server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > HUD population: not more than 8,000 qualifies; more does not; unknown is not an HDE 1ms
+ ✓ server/services/medical-device/__tests__/pathway-decisions.test.ts > selectDevicePathway — decisions FDA would accept > review clocks are the eSTAR catalog MDUFA V goals 0ms
+ ✓ server/services/medical-device/__tests__/pathway-decisions.test.ts > planDeviceSubmission — eSTAR mandate and clocks from the registries > a 510(k) plan is an eSTAR filing and the eSTAR finding is a requirement, sourced 5ms
+ ✓ server/services/medical-device/__tests__/pathway-decisions.test.ts > planDeviceSubmission — eSTAR mandate and clocks from the registries > De Novo eSTAR is not mandatory before the registry date and is after it 1ms
+ ✓ server/services/medical-device/__tests__/pathway-decisions.test.ts > planDeviceSubmission — eSTAR mandate and clocks from the registries > the tool no longer offers a useEStar switch 1ms
+ ✓ server/services/medical-device/__tests__/pathway-decisions.test.ts > planDeviceSubmission — eSTAR mandate and clocks from the registries > the Q-Sub phase uses the 70-day Pre-Submission goal 0ms
+ ✓ server/services/medical-device/__tests__/pathway-decisions.test.ts > De Novo citation and HUD wording > no De Novo citation names 21 CFR 860.93 0ms
+ ✓ server/services/medical-device/__tests__/pathway-decisions.test.ts > De Novo citation and HUD wording > no text states the superseded "<8,000" HUD threshold 0ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > 510(k) names neither Form FDA 3514 nor eCopy 2ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > De Novo names neither Form FDA 3514 nor eCopy 0ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > the 510(k) plan carries every always-required eSTAR slot, by id and label 1ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > the De Novo plan carries every always-required eSTAR slot, by id and label 1ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > an IVD 510(k) is planned against the IVD eSTAR, which asks for analytical performance 1ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > the plan names exactly the eSTAR sections — no parallel hand-written list beside them 1ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > a conditional section follows the device answer, and an unanswered one says it is undetermined 1ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > HDE keeps the CDRH cover sheet (Form FDA 3514) and the eCopy 0ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > HDE is not told to pay a MDUFA user fee (HDE applications are fee-exempt) 1ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > a device-led BLA names Form FDA 356h, not the CDRH cover sheet 0ms
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > an undetermined pathway does not pick a form for the client 0ms
+ Test Files  6 passed (6)
+      Tests  886 passed (886)
+
+# tsc --noEmit -p . (through the lock), filtered to medical-device-knowledge|medicalDeviceTools|pathway-decisions|plan-device-submission|AnaToolExecutor: 0 lines
