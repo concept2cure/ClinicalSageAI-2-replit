@@ -1,0 +1,215 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > no longer says the QMSR retains the Device Master Record 19ms
+   → expected '[{"id":"qms_general","number":"4","ti…' not to contain 'retains the Device Master Record'
+ × server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > gives every clause a current QMSR basis that cites no removed section 2ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > leads every fdaMapping with the QMSR and names a removed section only as "formerly" 1ms
+   → qms_general: expected '21 CFR 820.20/820.40/820.181 (QSR); Q…' to match /\b820\.(1|3|7|10|15|35|45)\b/
+ × server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > names the ISO 13485 medical device file and design and development file as ISO clauses, not FDA terms 2ms
+   → expected '{"id":"qms_general","number":"4","tit…' to match /§4\.2\.3/
+ × server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > builds FDA_QMSR_NOTE from the crosswalk and states the QMSR as in force 6ms
+   → Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ × server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > takes each clause basis from the crosswalk row of the same id 3ms
+   → Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ × server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > reads its effective date from the us-qmsr currency fact 2ms
+   → Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ × server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > cites the QMSR with the QSR section as "formerly" on and after the effective date 2ms
+   → Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ × server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > cites the QSR section alone before the effective date 2ms
+   → Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ × server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > fails closed on a date that is not YYYY-MM-DD and on an unknown id 1ms
+   → Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ × server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > carries the nine design-control elements, ISO 13485:2016 §7.3.2 to §7.3.10 against 820.30(b) to (j) 4ms
+   → Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ × server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > gives every row a well-formed basis tied to the us-qmsr fact, with unique ids 2ms
+   → Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > no longer says the QMSR retains the Device Master Record
+AssertionError: expected '[{"id":"qms_general","number":"4","ti…' not to contain 'retains the Device Master Record'
+
+Expected: "retains the Device Master Record"
+Received: "[{"id":"qms_general","number":"4","title":"Quality Management System","purpose":"Establish, document, implement and maintain the QMS, including the quality manual, document control and records (incl. a Medical Device File / DMR equivalent).","fdaMapping":"21 CFR 820.20/820.40/820.181 (QSR); QMSR retains the Device Master Record concept.","required":true,"reviewerQuestions":["Is the QMS scope and any non-applicable clauses justified?","Are documents and records controlled, with a defined retention period?"]},{"id":"management","number":"5","title":"Management Responsibility","purpose":"Management commitment, quality policy and objectives, responsibilities/authorities, management representative, and management review.","fdaMapping":"21 CFR 820.20 (management responsibility, management review).","required":true,"reviewerQuestions":["Are management reviews conducted at defined intervals with documented outputs/actions?","Is a management representative appointed with defined authority?"]},{"id":"resources","number":"6","title":"Resource Management","purpose":"Provision of resources, competence/training, infrastructure, and work environment / contamination control.","fdaMapping":"21 CFR 820.25 (personnel), 820.70 (environment).","required":true,"reviewerQuestions":["Is personnel competence (training, education, experience) defined and recorded?","Are environmental/contamination controls established where product quality requires it?"]},{"id":"design_controls","number":"7.3","title":"Design and Development (Design Controls)","purpose":"Design planning, inputs, outputs, review, verification, validation, transfer, change control, and the design history file (DHF).","fdaMapping":"21 CFR 820.30 (design controls) — a frequent inspection focus.","required":true,"reviewerQuestions":["Are design inputs traceable to outputs, verification AND validation, and the risk file?","Is design validation performed under actual or simulated use conditions, incl. usability?","Is the design history file complete and is design transfer controlled?"]},{"id":"purchasing","number":"7.4","title":"Purchasing","purpose":"Supplier evaluation/control, purchasing information, and verification of purchased product.","fdaMapping":"21 CFR 820.50 (purchasing controls).","required":true,"reviewerQuestions":["Are suppliers evaluated and controlled commensurate with the risk of the purchased product?"]},{"id":"production","number":"7.5","title":"Production and Service Provision","purpose":"Controlled production, process validation, identification and traceability, and preservation of product (incl. sterile/implantable special requirements).","fdaMapping":"21 CFR 820.70/820.75 (production + process validation), 820.60/820.65 (identification/traceability).","required":true,"reviewerQuestions":["Are special processes (e.g. sterilisation, welding) validated and revalidated?","Is UDI-level identification and traceability implemented (for implantable/required devices)?"]},{"id":"measuring_equipment","number":"7.6","title":"Control of Monitoring and Measuring Equipment","purpose":"Calibration/verification of measuring equipment and its records.","fdaMapping":"21 CFR 820.72 (inspection, measuring, and test equipment).","required":true,"reviewerQuestions":["Is measuring equipment calibrated/traceable with records and out-of-tolerance handling?"]},{"id":"feedback_complaints","number":"8.2","title":"Monitoring & Measurement — Feedback, Complaints, Reporting","purpose":"Feedback collection, complaint handling, and reporting to regulatory authorities (vigilance / MDR).","fdaMapping":"21 CFR 820.198 (complaint files), 803 (MDR reporting); QMSR strengthens complaint linkage.","required":true,"reviewerQuestions":["Is every complaint evaluated for reportability (MDR / vigilance) within the required timeframe?","Does post-market feedback flow back into risk management and the clinical/performance evaluation?"]},{"id":"nonconforming","number":"8.3","title":"Control of Nonconforming Product","purpose":"Identify, segregate, and disposition nonconforming product; rework; advisory notices / recalls.","fdaMapping":"21 CFR 820.90 (nonconforming product).","required":true,"reviewerQuestions":["Is nonconforming product controlled, and are advisory notices/recalls procedures defined?"]},{"id":"capa","number":"8.5.2","title":"Corrective and Preventive Action (CAPA)","purpose":"Investigate causes of nonconformities, take corrective/preventive action, and verify effectiveness.","fdaMapping":"21 CFR 820.100 (CAPA) — the most-cited inspection finding.","required":true,"reviewerQuestions":["Are CAPA root-cause investigations documented and is effectiveness verified before closure?","Do data sources (complaints, NCRs, audits, trends) feed the CAPA system?"]}]"
+
+ ❯ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts:32:22
+     30|   it('no longer says the QMSR retains the Device Master Record', () =>…
+     31|     const text = JSON.stringify(QMS_CLAUSES);
+     32|     expect(text).not.toContain('retains the Device Master Record');
+       |                      ^
+     33|     expect(text).not.toMatch(/DMR equivalent/);
+     34|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > gives every clause a current QMSR basis that cites no removed section
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts:38:33
+     36|   it('gives every clause a current QMSR basis that cites no removed se…
+     37|     for (const c of QMS_CLAUSES as Clause[]) {
+     38|       expect(c.qmsrBasis, c.id).toMatch(QMSR_SECTION);
+       |                                 ^
+     39|       expect(c.qmsrBasis, c.id).not.toMatch(REMOVED_QSR);
+     40|       expect(c.legacyQsr, c.id).toMatch(REMOVED_QSR);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > leads every fdaMapping with the QMSR and names a removed section only as "formerly"
+AssertionError: qms_general: expected '21 CFR 820.20/820.40/820.181 (QSR); Q…' to match /\b820\.(1|3|7|10|15|35|45)\b/
+
+- Expected:
+/\b820\.(1|3|7|10|15|35|45)\b/
+
++ Received:
+"21 CFR 820.20/820.40/820.181 (QSR); QMSR retains the Device Master Record concept."
+
+ ❯ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts:47:29
+     45|     for (const c of QMS_CLAUSES) {
+     46|       const [current, ...former] = c.fdaMapping.split('formerly');
+     47|       expect(current, c.id).toMatch(QMSR_SECTION);
+       |                             ^
+     48|       expect(current, c.id).not.toMatch(REMOVED_QSR);
+     49|       expect(former.join(''), c.id).toMatch(/\(QSR, until 2026-02-01\)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > names the ISO 13485 medical device file and design and development file as ISO clauses, not FDA terms
+AssertionError: expected '{"id":"qms_general","number":"4","tit…' to match /§4\.2\.3/
+
+- Expected:
+/§4\.2\.3/
+
++ Received:
+"{\"id\":\"qms_general\",\"number\":\"4\",\"title\":\"Quality Management System\",\"purpose\":\"Establish, document, implement and maintain the QMS, including the quality manual, document control and records (incl. a Medical Device File / DMR equivalent).\",\"fdaMapping\":\"21 CFR 820.20/820.40/820.181 (QSR); QMSR retains the Device Master Record concept.\",\"required\":true,\"reviewerQuestions\":[\"Is the QMS scope and any non-applicable clauses justified?\",\"Are documents and records controlled, with a defined retention period?\"]}"
+
+ ❯ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts:55:21
+     53|   it('names the ISO 13485 medical device file and design and developme…
+     54|     const general = JSON.stringify(getQmsClause('qms_general'));
+     55|     expect(general).toMatch(/§4\.2\.3/);
+       |                     ^
+     56|     expect(general).toMatch(/[Mm]edical [Dd]evice [Ff]ile/);
+     57|     expect(general).toMatch(/§7\.3\.10/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > builds FDA_QMSR_NOTE from the crosswalk and states the QMSR as in force
+Error: Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ ❯ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts:62:36
+     60|
+     61|   it('builds FDA_QMSR_NOTE from the crosswalk and states the QMSR as i…
+     62|     const { qmsrTransitionNote } = await crosswalk();
+       |                                    ^
+     63|     expect(FDA_QMSR_NOTE).toBe(qmsrTransitionNote());
+     64|     expect(FDA_QMSR_NOTE).toMatch(/2026-02-02/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > takes each clause basis from the crosswalk row of the same id
+Error: Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ ❯ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts:73:57
+     71|
+     72|   it('takes each clause basis from the crosswalk row of the same id', …
+     73|     const { QMSR_CROSSWALK, citeQms, QMSR_EFFECTIVE } = await crosswal…
+       |                                                         ^
+     74|     for (const c of QMS_CLAUSES as Clause[]) {
+     75|       const row = QMSR_CROSSWALK.find((r) => r.id === c.id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > reads its effective date from the us-qmsr currency fact
+Error: Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ ❯ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts:86:46
+     84| describe('the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts)', (…
+     85|   it('reads its effective date from the us-qmsr currency fact', async …
+     86|     const { QMSR_EFFECTIVE, QMSR_FACT_ID } = await crosswalk();
+       |                                              ^
+     87|     const fact = REGULATORY_FACTS.find((f) => f.id === QMSR_FACT_ID);
+     88|     expect(QMSR_FACT_ID).toBe('us-qmsr');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > cites the QMSR with the QSR section as "formerly" on and after the effective date
+Error: Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ ❯ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts:94:25
+     92|
+     93|   it('cites the QMSR with the QSR section as "formerly" on and after t…
+     94|     const { citeQms } = await crosswalk();
+       |                         ^
+     95|     expect(citeQms('designInputs', '2026-10-04')).toBe(
+     96|       '21 CFR 820.10(c) → ISO 13485:2016 §7.3.3; formerly 21 CFR 820.3…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > cites the QSR section alone before the effective date
+Error: Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ ❯ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts:102:25
+    100|
+    101|   it('cites the QSR section alone before the effective date', async ()…
+    102|     const { citeQms } = await crosswalk();
+       |                         ^
+    103|     expect(citeQms('designInputs', '2026-02-01')).toBe('21 CFR 820.30(…
+    104|     expect(citeQms('capa', '2025-06-30')).toBe('21 CFR 820.100');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > fails closed on a date that is not YYYY-MM-DD and on an unknown id
+Error: Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ ❯ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts:108:25
+    106|
+    107|   it('fails closed on a date that is not YYYY-MM-DD and on an unknown …
+    108|     const { citeQms } = await crosswalk();
+       |                         ^
+    109|     expect(() => citeQms('designInputs', 'today')).toThrow(/YYYY-MM-DD…
+    110|     expect(() => citeQms('designInputs', '2026-02-30')).toThrow(/YYYY-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > carries the nine design-control elements, ISO 13485:2016 §7.3.2 to §7.3.10 against 820.30(b) to (j)
+Error: Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ ❯ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts:115:32
+    113|
+    114|   it('carries the nine design-control elements, ISO 13485:2016 §7.3.2 …
+    115|     const { QMSR_CROSSWALK } = await crosswalk();
+       |                                ^
+    116|     const expected: Array<[string, string, string]> = [
+    117|       ['designPlan', '7.3.2', 'b'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > gives every row a well-formed basis tied to the us-qmsr fact, with unique ids
+Error: Cannot find module '/shared/regulatory/qmsr-crosswalk' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+ ❯ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts:136:32
+    134|
+    135|   it('gives every row a well-formed basis tied to the us-qmsr fact, wi…
+    136|     const { QMSR_CROSSWALK } = await crosswalk();
+       |                                ^
+    137|     expect(new Set(QMSR_CROSSWALK.map((r) => r.id)).size).toBe(QMSR_CR…
+    138|     for (const r of QMSR_CROSSWALK) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed (12)
+   Start at  03:15:58
+   Duration  1.03s (transform 237ms, setup 145ms, import 118ms, tests 48ms, environment 0ms)
+
