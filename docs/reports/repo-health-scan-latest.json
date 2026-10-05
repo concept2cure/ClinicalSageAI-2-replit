@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-05T03:35:41.165Z",
+  "generatedAt": "2026-10-05T05:00:16.569Z",
   "git": {
-    "sha": "8d919b1f8a22bc5ef2a82d45aa24afb2e8f1d234",
+    "sha": "11ad4f6cb5d39fe8b2233da581735f557de341d5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2052,7 +2052,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1117027
+        "bytes": 1117302
       },
       {
         "file": "shared/schema.ts",
@@ -2100,7 +2100,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 167314
+        "bytes": 167906
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2254,7 +2254,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21546
+        "lines": 21550
       },
       {
         "file": "shared/schema.ts",
@@ -2313,16 +2313,16 @@
         "lines": 3433
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 3330
+      },
+      {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "lines": 3326
       },
       {
         "file": "server/routes/authoring-actions.ts",
         "lines": 3325
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3320
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
