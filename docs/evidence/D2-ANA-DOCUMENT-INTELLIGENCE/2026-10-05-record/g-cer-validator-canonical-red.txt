@@ -1,0 +1,519 @@
+# g-cer-validator-canonical RED — 2026-10-05T12:54:46Z, HEAD 4b793d04, before the change
+# npx vitest run server/services/cer/__tests__/cer-conformance-canonical.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/cer/__tests__/cer-conformance-canonical.test.ts
+{
+  "timestamp": "2026-10-05T12:54:40.195Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > a column-complete CER with no scope, appraisal, evaluator qualification, PMCF or references is NOT valid 16ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > the same CER with those sections stored under their headings is valid 1ms
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > runs no private checklist: framework, device identification and the canonical required sections 4ms
+   → expected [ 'benefit_risk', …(8) ] to deeply equal [ 'analysis', 'appraisal', …(11) ]
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > a section row whose content is empty does not count as present 1ms
+   → expected true to be false // Object.is equality
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > a missing section says it was not found and names the headings that matched nothing 2ms
+   → expected undefined to be 'fail' // Object.is equality
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > equivalence: required when claimed; when the claim is not recorded it cannot pass silently 1ms
+   → expected true to be false // Object.is equality
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > reviewed false-valid case: substrings and equipment qualification are not sections > a CER with no scope heading and no evaluator-qualification heading is NOT valid 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > reviewed false-valid case: substrings and equipment qualification are not sections > true-valid counterpart: the same endoscope CER with real scope and evaluator headings is valid 0ms
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > reviewed false-valid case: substrings and equipment qualification are not sections > a PER whose only "qualification" row is analyser IQ/OQ has no evaluator qualification 9ms
+   → expected true to be false // Object.is equality
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > reviewed false-valid case: IVD reference terms of art are not a references section > a PER with reference-interval, -range, -material and -method rows but no references section is NOT valid 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > reviewed false-valid case: IVD reference terms of art are not a references section > true-valid counterpart: the same PER with a References heading is valid 0ms
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > IVDR — checked as a Performance Evaluation Report, not a CER > an IVDR report without the analytical-performance section is NOT valid 1ms
+   → expected true to be false // Object.is equality
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > IVDR — checked as a Performance Evaluation Report, not a CER > a column-complete IVDR report with no PER sections is NOT valid; no CER column stands in for a pillar 1ms
+   → expected true to be false // Object.is equality
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > IVDR — checked as a Performance Evaluation Report, not a CER > CER headings do not satisfy PER sections 9ms
+   → expected true to be false // Object.is equality
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > IVDR — checked as a Performance Evaluation Report, not a CER > a complete PER is valid and is checked against the canonical PER sections 1ms
+   → expected [ 'benefit_risk', …(8) ] to deeply equal [ 'analytical_performance', …(9) ]
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > every canonical CER and PER section title names its own section, and only it 2ms
+   → expected [ 'clinical_data', 'appraisal' ] to deeply equal [ 'appraisal' ]
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > numbered and styled headings are recognised 33ms
+   → expected [ 'summary', 'clinical_data', …(1) ] to deeply equal [ 'appraisal' ]
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > body prose, partial phrases and row ids never name a section 1ms
+   → expected [ 'scope' ] to deeply equal []
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > terms of art of the other framework never name a section 1ms
+   → mapStoredPerToCanonicalSections is not a function
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > no vocabulary phrase contains a term of art of the other framework, and none names two sections 1ms
+   → Cannot read properties of undefined (reading 'headings')
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > CER basis is the instrument of the declared framework > the framework check cites the declared framework, labelled recall 2ms
+   → expected 'MDR 2017/745 / IVDR 2017/746' to contain 'UK MDR 2002'
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > CER basis is the instrument of the declared framework > a UK MDR 2002 CER cites the MDD Annex X basis, not EU MDR Annex XIV 2ms
+   → expected 'MDR 2017/745 Annex XIV Part A / MEDDE…' to contain 'UK MDR 2002'
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > CER basis is the instrument of the declared framework > an EU MDR CER cites MDR Annex XIV Part A, labelled recall 2ms
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > UnifiedCERService.validateReportDetailed — reads the cer_sections rows > a stored column-complete CER with no section rows is not valid 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > UnifiedCERService.validateReportDetailed — reads the cer_sections rows > the stored section rows count toward the canonical structure 0ms
+ × server/services/cer/__tests__/cer-conformance-canonical.test.ts > UnifiedCERService.validateReportDetailed — reads the cer_sections rows > a stored IVDR report is checked as a PER 0ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > UnifiedCERService.validateReportDetailed — reads the cer_sections rows > an absent report is notFound, never valid 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 22 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > a column-complete CER with no scope, appraisal, evaluator qualification, PMCF or references is NOT valid
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:106:21
+    104|   it('a column-complete CER with no scope, appraisal, evaluator qualif…
+    105|     const r = mdr();
+    106|     expect(r.valid).toBe(false);
+       |                     ^
+    107|     expect(failedIds(r)).toEqual(
+    108|       expect.arrayContaining(['scope', 'appraisal', 'evaluator_qualifi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > runs no private checklist: framework, device identification and the canonical required sections
+AssertionError: expected [ 'benefit_risk', …(8) ] to deeply equal [ 'analysis', 'appraisal', …(11) ]
+
+- Expected
++ Received
+
+  [
+-   "analysis",
+-   "appraisal",
++   "benefit_risk",
+    "clinical_background",
+-   "clinical_data",
++   "clinical_evidence",
+    "conclusions",
+    "device_description",
+    "device_identification",
+-   "evaluator_qualification",
++   "executive_summary",
+    "framework",
+-   "pmcf",
+-   "references",
+-   "scope",
+-   "summary",
++   "gspr_conformity",
+  ]
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:125:23
+    123|       .sort();
+    124|     const canonical = CER_SECTIONS.filter(s => s.required && !s.equiva…
+    125|     expect(mandatory).toEqual(['device_identification', 'framework', .…
+       |                       ^
+    126|     for (const old of ['executive_summary', 'gspr_conformity', 'benefi…
+    127|       expect(r.checks.find(c => c.id === old)).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > a section row whose content is empty does not count as present
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:135:23
+    133|       const rowsWithHollow = CER_ROWS.map(x => (x.sectionId === 'appra…
+    134|       const r = mdr(rowsWithHollow);
+    135|       expect(r.valid).toBe(false);
+       |                       ^
+    136|       expect(failedIds(r)).toEqual(['appraisal']);
+    137|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > a missing section says it was not found and names the headings that matched nothing
+AssertionError: expected undefined to be 'fail' // Object.is equality
+
+- Expected:
+"fail"
+
++ Received:
+undefined
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:143:27
+    141|     const r = mdr([...CER_ROWS.filter(x => x.sectionId !== 'scope'), r…
+    142|     const scope = r.checks.find(c => c.id === 'scope');
+    143|     expect(scope?.status).toBe('fail');
+       |                           ^
+    144|     expect(scope?.detail).toMatch(/not found/i);
+    145|     expect(scope?.detail).toContain('Endoscope Design Overview');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > equivalence: required when claimed; when the claim is not recorded it cannot pass silently
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:150:27
+    148|   it('equivalence: required when claimed; when the claim is not record…
+    149|     const claimed = mdr(CER_ROWS, { equivalenceClaimed: true });
+    150|     expect(claimed.valid).toBe(false);
+       |                           ^
+    151|     expect(failedIds(claimed)).toEqual(['equivalence']);
+    152|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > reviewed false-valid case: substrings and equipment qualification are not sections > a CER with no scope heading and no evaluator-qualification heading is NOT valid
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:186:21
+    184|       { equivalenceClaimed: false } as never
+    185|     );
+    186|     expect(r.valid).toBe(false);
+       |                     ^
+    187|     expect(failedIds(r).sort()).toEqual(['evaluator_qualification', 's…
+    188|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > reviewed false-valid case: substrings and equipment qualification are not sections > a PER whose only "qualification" row is analyser IQ/OQ has no evaluator qualification
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:209:21
+    207|     );
+    208|     const r = ivdr(iq);
+    209|     expect(r.valid).toBe(false);
+       |                     ^
+    210|     expect(failedIds(r)).toEqual(['evaluator_qualification']);
+    211|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > reviewed false-valid case: IVD reference terms of art are not a references section > a PER with reference-interval, -range, -material and -method rows but no references section is NOT valid
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:226:21
+    224|   it('a PER with reference-interval, -range, -material and -method row…
+    225|     const r = ivdr([...withoutReferences, ...REFERENCE_TERMS_OF_ART]);
+    226|     expect(r.valid).toBe(false);
+       |                     ^
+    227|     expect(failedIds(r)).toEqual(['references']);
+    228|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > IVDR — checked as a Performance Evaluation Report, not a CER > an IVDR report without the analytical-performance section is NOT valid
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:240:21
+    238|   it('an IVDR report without the analytical-performance section is NOT…
+    239|     const r = ivdr(PER_ROWS_WITHOUT_ANALYTICAL);
+    240|     expect(r.valid).toBe(false);
+       |                     ^
+    241|     expect(failedIds(r)).toEqual(['analytical_performance']);
+    242|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > IVDR — checked as a Performance Evaluation Report, not a CER > a column-complete IVDR report with no PER sections is NOT valid; no CER column stands in for a pillar
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:246:21
+    244|   it('a column-complete IVDR report with no PER sections is NOT valid;…
+    245|     const r = ivdr();
+    246|     expect(r.valid).toBe(false);
+       |                     ^
+    247|     expect(failedIds(r)).toEqual(
+    248|       expect.arrayContaining(['pep', 'scientific_validity', 'analytica…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > IVDR — checked as a Performance Evaluation Report, not a CER > CER headings do not satisfy PER sections
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:258:21
+    256|       row('pmcf', 'Post-Market Clinical Follow-up (PMCF) Consideration…
+    257|     ]);
+    258|     expect(r.valid).toBe(false);
+       |                     ^
+    259|     expect(failedIds(r).sort()).toEqual(['clinical_performance', 'pmpf…
+    260|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > IVDR — checked as a Performance Evaluation Report, not a CER > a complete PER is valid and is checked against the canonical PER sections
+AssertionError: expected [ 'benefit_risk', …(8) ] to deeply equal [ 'analytical_performance', …(9) ]
+
+- Expected
++ Received
+
+  [
+-   "analytical_performance",
+-   "clinical_performance",
++   "benefit_risk",
++   "clinical_background",
++   "clinical_evidence",
++   "conclusions",
++   "device_description",
+    "device_identification",
+-   "evaluator_qualification",
++   "executive_summary",
+    "framework",
+-   "pep",
+-   "per_conclusion",
+-   "pmpf",
+-   "references",
+-   "scientific_validity",
++   "gspr_conformity",
+  ]
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:269:23
+    267|       .map(c => c.id)
+    268|       .sort();
+    269|     expect(mandatory).toEqual(
+       |                       ^
+    270|       ['device_identification', 'framework', ...PER_SECTIONS.filter(s …
+    271|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > every canonical CER and PER section title names its own section, and only it
+AssertionError: expected [ 'clinical_data', 'appraisal' ] to deeply equal [ 'appraisal' ]
+
+- Expected
++ Received
+
+  [
++   "clinical_data",
+    "appraisal",
+  ]
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:280:56
+    278|
+    279|   it('every canonical CER and PER section title names its own section,…
+    280|     for (const s of CER_SECTIONS) expect(cer(s.title)).toEqual([s.id]);
+       |                                                        ^
+    281|     for (const s of PER_SECTIONS) expect(per(s.title)).toEqual([s.id]);
+    282|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > numbered and styled headings are recognised
+AssertionError: expected [ 'summary', 'clinical_data', …(1) ] to deeply equal [ 'appraisal' ]
+
+- Expected
++ Received
+
+  [
++   "summary",
++   "clinical_data",
+    "appraisal",
+  ]
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:289:72
+    287|     expect(cer('## 9 References')).toEqual(['references']);
+    288|     expect(cer('**References**')).toEqual(['references']);
+    289|     expect(cer('<h2>4.5 Summary and Appraisal of Clinical Data</h2>'))…
+       |                                                                        ^
+    290|     expect(per('3.1 Analytical Performance Report')).toEqual(['analyti…
+    291|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > body prose, partial phrases and row ids never name a section
+AssertionError: expected [ 'scope' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "scope",
++ ]
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:294:87
+    292|
+    293|   it('body prose, partial phrases and row ids never name a section', (…
+    294|     expect(cer('The scope of this evaluation covers the flexible endos…
+       |                                                                                       ^
+    295|     expect(cer('Scope and limitations of the reprocessing validation')…
+    296|     expect(cer('Qualification')).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > terms of art of the other framework never name a section
+TypeError: mapStoredPerToCanonicalSections is not a function
+ ❯ per server/services/cer/__tests__/cer-conformance-canonical.test.ts:277:41
+    275| describe('a section is named only by a heading', () => {
+    276|   const cer = (title: string) => stored.mapStoredCerToCanonicalSection…
+    277|   const per = (title: string) => stored.mapStoredPerToCanonicalSection…
+       |                                         ^
+    278|
+    279|   it('every canonical CER and PER section title names its own section,…
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:309:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > no vocabulary phrase contains a term of art of the other framework, and none names two sections
+TypeError: Cannot read properties of undefined (reading 'headings')
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:321:57
+    319|     for (const v of vocabs) {
+    320|       const seen = new Map<string, string>();
+    321|       for (const [section, phrases] of Object.entries(v.headings)) {
+       |                                                         ^
+    322|         for (const p of phrases) {
+    323|           expect(seen.get(p) ?? section).toBe(section);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > CER basis is the instrument of the declared framework > the framework check cites the declared framework, labelled recall
+AssertionError: expected 'MDR 2017/745 / IVDR 2017/746' to contain 'UK MDR 2002'
+
+Expected: "UK MDR 2002"
+Received: "MDR 2017/745 / IVDR 2017/746"
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:344:29
+    342|     const uk = validateCerConformance(columnCompleteReport('UK_MDR_200…
+    343|     const ukFw = uk.checks.find(c => c.id === 'framework');
+    344|     expect(ukFw?.reference).toContain('UK MDR 2002');
+       |                             ^
+    345|     expect(ukFw?.reference).toContain('recall');
+    346|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > CER basis is the instrument of the declared framework > a UK MDR 2002 CER cites the MDD Annex X basis, not EU MDR Annex XIV
+AssertionError: expected 'MDR 2017/745 Annex XIV Part A / MEDDE…' to contain 'UK MDR 2002'
+
+Expected: "UK MDR 2002"
+Received: "MDR 2017/745 Annex XIV Part A / MEDDEV 2.7/1 rev 4 — device identification"
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:358:19
+    356|     expect(refs.length).toBeGreaterThan(0);
+    357|     for (const ref of refs) {
+    358|       expect(ref).toContain('UK MDR 2002');
+       |                   ^
+    359|       expect(ref).toContain('Annex X;');
+    360|       expect(ref).not.toContain('Annex XIV');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > CER basis is the instrument of the declared framework > an EU MDR CER cites MDR Annex XIV Part A, labelled recall
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:367:30
+    365|   it('an EU MDR CER cites MDR Annex XIV Part A, labelled recall', () =…
+    366|     const scope = mdr(CER_ROWS).checks.find(c => c.id === 'scope');
+    367|     expect(scope?.reference).toContain('MDR 2017/745 Annex XIV Part A'…
+       |                              ^
+    368|     expect(scope?.reference).toContain('recall');
+    369|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > UnifiedCERService.validateReportDetailed — reads the cer_sections rows > a stored column-complete CER with no section rows is not valid
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:381:21
+    379|     const r = await new UnifiedCERService({ organizationId: 7 }).valid…
+    380|     if ('notFound' in r) throw new Error('report should be found');
+    381|     expect(r.valid).toBe(false);
+       |                     ^
+    382|     expect(failedIds(r)).toEqual(expect.arrayContaining(['scope', 'app…
+    383|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/22]⎯
+
+ FAIL  server/services/cer/__tests__/cer-conformance-canonical.test.ts > UnifiedCERService.validateReportDetailed — reads the cer_sections rows > a stored IVDR report is checked as a PER
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/cer/__tests__/cer-conformance-canonical.test.ts:398:21
+    396|     const r = await new UnifiedCERService({ organizationId: 7 }).valid…
+    397|     if ('notFound' in r) throw new Error('report should be found');
+    398|     expect(r.valid).toBe(false);
+       |                     ^
+    399|     expect(failedIds(r)).toEqual(['analytical_performance']);
+    400|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/22]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  22 failed | 5 passed (27)
+   Start at  12:54:34
+   Duration  5.67s (transform 3.19s, setup 403ms, import 3.91s, tests 100ms, environment 0ms)
+
+
+# ADDENDUM — inputs added to the test after the red run (qualifier words, '&nbsp;', unknown framework).
+# Probe of the HEAD code (4b793d04) on those inputs: the HEAD mapper and validator, run with tsx from a scratch copy.
+"Appraisal Plan" -> [ 'appraisal' ]
+"Scope Justification" -> [ 'scope' ]
+"Endoscope Design Overview" -> [ 'scope' ]
+"Reprocessing Validation and Qualification" -> [ 'evaluator_qualification' ]
+"Reference Interval Study" -> [ 'references' ]
+HEAD validator, column-complete, framework FDA_510K -> valid true
+HEAD validator, column-complete, framework MDR_2017_745 -> valid true
+HEAD validator, column-complete, framework IVDR_2017_746 -> valid true
+# Each line above is what the new test asserts against: [] for every heading, valid:false for FDA_510K and for a column-complete report with no section rows.

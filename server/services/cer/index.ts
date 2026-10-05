@@ -16,20 +16,22 @@
  * @module server/services/cer/index
  */
 
-import { and, eq } from 'drizzle-orm';
 import cerGen from '../cerGenerationService';
-import { db } from '../../db';
-import { cerReports } from '../../../shared/schema';
+import { loadStoredCer } from '../market-specs/stored-cer-assessment';
 import {
   validateCerConformance,
+  type CerConformanceOptions,
   type CerConformanceResult,
-  type CerReportLike,
 } from './cerConformanceValidator';
 
 // Re-export from primary service (default singleton instance)
 export { default as cerGenerationService } from '../cerGenerationService';
 export { validateCerConformance } from './cerConformanceValidator';
-export type { CerConformanceResult, CerConformanceCheck } from './cerConformanceValidator';
+export type {
+  CerConformanceResult,
+  CerConformanceCheck,
+  CerConformanceOptions,
+} from './cerConformanceValidator';
 
 /** Regulatory frameworks supported by the underlying generation service. */
 export type CERRegulatoryFramework =
@@ -183,25 +185,19 @@ export class UnifiedCERService {
   }
 
   /**
-   * Run the full conformance checklist against the stored CER report and return
-   * the structured result. Scoped to this facade's organization. Returns
-   * { notFound: true } when no such report exists for the tenant.
+   * Check the stored report — its cer_reports columns AND its cer_sections rows —
+   * against the canonical CER (MDR) or PER (IVDR) structure and return the
+   * structured result (cerConformanceValidator.ts). Scoped to this facade's
+   * organization. Returns { notFound: true } when no such report exists for the
+   * tenant.
    */
   async validateReportDetailed(
     reportId: string,
+    opts: CerConformanceOptions = {},
   ): Promise<CerConformanceResult | { notFound: true }> {
-    const [row] = await db
-      .select()
-      .from(cerReports)
-      .where(
-        and(
-          eq(cerReports.reportId, reportId),
-          eq(cerReports.organizationId, this.config.organizationId),
-        ),
-      )
-      .limit(1);
-    if (!row) return { notFound: true };
-    return validateCerConformance(row as CerReportLike);
+    const loaded = await loadStoredCer(reportId, this.config.organizationId);
+    if (!loaded) return { notFound: true };
+    return validateCerConformance(loaded.report, loaded.sections, opts);
   }
 }
 
