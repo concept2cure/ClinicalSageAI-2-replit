@@ -72,10 +72,21 @@ function PasswordField({
   return (
     <div className={styles.field}>
       <div className={styles.fieldLabelRow}>
-        <label htmlFor={id} className={styles.label}>
+        <label id={`${id}-label`} htmlFor={id} className={styles.label}>
           {label}
         </label>
-        <button type="button" className={styles.toggle} onClick={() => setShow(s => !s)}>
+        {/* A bare "Show" named nothing (WCAG 2.4.6). The name is this button's
+            own text followed by the field's label — "Show Password" — composed
+            from the two translated strings already on screen (ARIA9), so every
+            locale is covered and the name starts with what is seen (2.5.3). */}
+        <button
+          type="button"
+          id={`${id}-toggle`}
+          className={styles.toggle}
+          aria-labelledby={`${id}-toggle ${id}-label`}
+          aria-controls={id}
+          onClick={() => setShow(s => !s)}
+        >
           {show ? t('action.hide') : t('action.show')}
         </button>
       </div>

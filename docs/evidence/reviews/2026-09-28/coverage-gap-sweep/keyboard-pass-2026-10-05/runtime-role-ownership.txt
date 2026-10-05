@@ -1,0 +1,3 @@
+tables owned by c2c: 0
+c2c UPDATE/DELETE on audit_logs: false/false
+c2c UPDATE/DELETE on electronic_signatures: false/false
