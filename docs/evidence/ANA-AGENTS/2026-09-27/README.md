@@ -18,4 +18,5 @@ on the work-order board as the founder's explicit exception to RULE 2.
 | H4 | Numerical integrity and document reconciliation said "clean" with nothing compared | `ba0d373b4` | `H4-nothing-checked-is-not-clean/` | landed |
 | D4 | The PQ could have passed without its rag component running; the rag blocker was misdescribed | `e41504ec7` | `docs/evidence/D4/2026-09-28-pq-rag-*` | landed; five items handed to `…01VB8JEG` |
 | E2E | S1, S2, S4 on the real server, database and UI with a scripted stand-in model | `0b5937f97` | `E2E-stand-in/` | 6 scenarios shown; findings F1–F4 recorded (F1, a declined action fed back as a failure, is next) |
+| F1 | A person's decline was fed back to the model as a failure to work around ("try an alternative tool") and shown as AnA failing | (this commit) | `F1-decline-not-a-failure/` | landed |
 | S5–S7 | Sub-agents, client agent rows, evidence and board | — | — | not started; S5 brief ready |

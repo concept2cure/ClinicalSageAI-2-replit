@@ -303,6 +303,21 @@ export function buildUnconfirmedMovesTurn(moves: string[]): GatewayMessage | nul
 export const APPROVAL_TIMEOUT_WHY = 'nobody decided in time';
 
 /**
+ * How a governed call came out of the approval gate. `heldBack` marks a call a
+ * person did not authorise — declined it, did not answer, could not be asked,
+ * or one only a person may take — as opposed to one authorised that then
+ * failed. A held-back call is not a failure for the model to work around
+ * (row 74, F1).
+ */
+type SettledApproval = { ok: boolean; result: unknown; why?: string; heldBack?: boolean };
+
+/** What the person reads for a step that did not run because it was not authorised. */
+function heldBackMessage(step: string, why: string | undefined): string {
+  if (why === 'declined') return `You declined ${step}, so it did not run.`;
+  return `${step.charAt(0).toUpperCase()}${step.slice(1)} did not run: it needs a person's authorisation${why ? ` (${why})` : ''}.`;
+}
+
+/**
  * The turn's round-boundary hold (services/ana/run-hold.ts), wired to its run
  * row. The checkpoint's pause wait used to be a loop written inline in the
  * checkpoint; it moved to run-hold.ts so everything that waits at a round
@@ -1842,8 +1857,8 @@ export function mountStreamRoute(router: Router): void {
         const settleApprovals = async (
           calls: ToolCall[],
           round: number
-        ): Promise<Map<string, { ok: boolean; result: unknown; why?: string }>> => {
-          const out = new Map<string, { ok: boolean; result: unknown; why?: string }>();
+        ): Promise<Map<string, SettledApproval>> => {
+          const out = new Map<string, SettledApproval>();
           for (const toolUse of calls) {
             const verdict = classifyToolCall(toolUse);
             if (verdict.kind === 'UNGOVERNED') continue;
@@ -1851,7 +1866,7 @@ export function mountStreamRoute(router: Router): void {
             if (verdict.kind === 'REFUSED') {
               // A person's own act. Not put to anyone — a yes would not make
               // it hers to take — and not dispatched.
-              out.set(toolUse.id, { ok: false, why: verdict.why, result: verdict.result });
+              out.set(toolUse.id, { ok: false, why: verdict.why, result: verdict.result, heldBack: true });
               continue;
             }
 
@@ -1883,6 +1898,7 @@ export function mountStreamRoute(router: Router): void {
               // governed action with nobody having authorised it.
               out.set(toolUse.id, {
                 ok: false,
+                heldBack: true,
                 why: 'no controllable run',
                 result: {
                   error: 'HUMAN_CONFIRMATION_REQUIRED',
@@ -1920,9 +1936,10 @@ export function mountStreamRoute(router: Router): void {
           round: number,
           /** The run's own tenant. Every write to the run row is bound to it. */
           orgId: number
-        ): Promise<{ ok: boolean; result: unknown; why?: string }> => {
-          const refused = (why: string, message: string) => ({
+        ): Promise<SettledApproval> => {
+          const refused = (why: string, message: string, heldBack = true) => ({
             ok: false,
+            heldBack,
             why,
             result: {
               error: 'HUMAN_CONFIRMATION_DECLINED',
@@ -2002,7 +2019,10 @@ export function mountStreamRoute(router: Router): void {
                 decision.error ?? 'declined',
                 decision.error
                   ? `A person authorised this, but it did not complete: ${decision.error}`
-                  : 'A person reviewed this and declined it, so it did not run.'
+                  : 'A person reviewed this and declined it, so it did not run.',
+                // Authorised and then failed is a real failure; anything else
+                // is a person's no.
+                decision.decided !== 'approved',
               );
             }
             if (Date.now() - started > MAX_PAUSE_MS) {
@@ -2114,6 +2134,8 @@ export function mountStreamRoute(router: Router): void {
               let resultStr: string;
               let toolStatus: 'success' | 'error' | 'not_found' | 'cancelled' = 'success';
               let toolErrorMessage: string | undefined;
+              // A person's no (or no answer): not a failure to work around.
+              let heldBack = false;
               // What a model wrote while this call ran (generation-capture.ts).
               // Null where the handler ran elsewhere — a person settled it in
               // the governed-action route — so its generations are unknown.
@@ -2130,6 +2152,7 @@ export function mountStreamRoute(router: Router): void {
                 resultStr = JSON.stringify(approval.result);
                 toolStatus = approval.ok ? 'success' : 'error';
                 toolErrorMessage = approval.ok ? undefined : approval.why;
+                heldBack = approval.heldBack === true;
               } else if (runSignal?.aborted) {
                 // Stopped before this step got its turn. It never ran, and
                 // saying so is the honest record — a step that silently
@@ -2219,7 +2242,7 @@ export function mountStreamRoute(router: Router): void {
               // The same server-measured duration the telemetry row gets, so the
               // client's work panel can show how long each step really took
               // rather than timing the round-trip from its own side.
-              return { toolUse, resultStr, toolStatus, toolErrorMessage, latencyMs: Date.now() - toolStart, generated };
+              return { toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs: Date.now() - toolStart, generated };
             },
             4
           );
@@ -2256,7 +2279,7 @@ export function mountStreamRoute(router: Router): void {
             });
           };
           const roundFailures: FailedToolCall[] = [];
-          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, latencyMs } of ran) {
+          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs } of ran) {
             entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
             const stepLabel = describeToolPlan([toolUse])[0].label;
             turnRecorder?.addStep({
@@ -2278,7 +2301,10 @@ export function mountStreamRoute(router: Router): void {
             // ending — there is no next attempt to steer, and telling her to
             // work around a step the person stopped would invite her to do the
             // very thing she was stopped from doing.
-            if (toolStatus !== 'success' && toolStatus !== 'cancelled') {
+            // A step a person declined, left unanswered, or that only a person
+            // may take is not one either (row 74, F1): the note would tell the
+            // model to find another way to do what a person just said no to.
+            if (toolStatus !== 'success' && toolStatus !== 'cancelled' && !heldBack) {
               roundFailures.push({
                 name: toolUse.name,
                 label: stepLabel,
@@ -2292,8 +2318,9 @@ export function mountStreamRoute(router: Router): void {
             // error string — trust is the interface, including when something
             // fails. The lower-cased label reads naturally mid-sentence.
             const humanStep = stepLabel.charAt(0).toLowerCase() + stepLabel.slice(1);
-            const humanMessage =
-              toolStatus === 'error'
+            const humanMessage = heldBack
+              ? heldBackMessage(humanStep, toolErrorMessage)
+              : toolStatus === 'error'
                 ? `AnA couldn't finish ${humanStep}. She'll continue with what she has.`
                 : toolStatus === 'not_found'
                 ? `This step (${humanStep}) isn't available here. AnA will work around it.`
