@@ -155,3 +155,49 @@ export async function readVaultEstarUses(
   }
   return out;
 }
+
+/** A CMC record that cites a version as the document it was taken from (cmc_source_evidence). */
+export interface VaultCmcEvidenceUse {
+  linkId: string;
+  sourceType: string;
+  sourceKey: string;
+  /** The Module 3 sections whose compile read that record, by key; empty when none has been compiled from it. */
+  sections: string[];
+}
+
+/**
+ * Each version's live CMC evidence links, by version id (row D2; the Data Room
+ * and Vault were blind to a Module 3 use, discovery map 2026-10-04,
+ * data-room-usage-blind-to-module3). A removed link is not a use. The sections
+ * are those whose recorded lineage reads the record, so superseding the version
+ * names what it holds (services/cmc/source-evidence.ts).
+ */
+export async function readVaultCmcEvidenceUses(
+  q: PlacementQueryable,
+  organizationId: number,
+  vaultIds: string[],
+): Promise<Map<string, VaultCmcEvidenceUse[]>> {
+  const out = new Map<string, VaultCmcEvidenceUse[]>();
+  if (vaultIds.length === 0) return out;
+  const { rows } = await q.query(
+    `SELECT e.vault_document_id::text AS vault_id, e.id::text AS link_id, e.source_type, e.source_key,
+            COALESCE(array_agg(DISTINCT s.section_key) FILTER (WHERE s.section_key IS NOT NULL), '{}') AS sections
+       FROM public.cmc_source_evidence e
+       LEFT JOIN cmc_source_objects o
+         ON o.organization_id = e.organization_id AND o.project_id = e.program_id::text AND o.source_key = e.source_key
+       LEFT JOIN cmc_section_lineage l ON l.source_object_id = o.id AND l.organization_id = e.organization_id
+       LEFT JOIN cmc_module3_sections s ON s.id = l.section_id AND s.organization_id = e.organization_id
+      WHERE e.organization_id = $1 AND e.vault_document_id = ANY($2::uuid[]) AND e.unlinked_at IS NULL
+      GROUP BY e.vault_document_id, e.id, e.source_type, e.source_key
+      ORDER BY e.vault_document_id, e.source_key, e.id`,
+    [organizationId, vaultIds],
+  );
+  for (const r of rows) {
+    const sections = (Array.isArray(r.sections) ? r.sections.map(String) : []).sort();
+    out.set(r.vault_id, [
+      ...(out.get(r.vault_id) ?? []),
+      { linkId: String(r.link_id), sourceType: String(r.source_type), sourceKey: String(r.source_key), sections },
+    ]);
+  }
+  return out;
+}

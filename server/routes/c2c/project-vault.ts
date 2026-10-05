@@ -1660,10 +1660,12 @@ export default function createProjectVaultRoutes(): Router {
       // Where each version is placed (VR-14a): the live submission leaves that
       // name it. An unreadable placement list fails the read, as the stage does:
       // "placed nowhere" would be a claim about leaves not read.
-      const { readVaultPlacements, readVaultEstarUses } = await import('../../services/vault/vault-where-used.js');
+      const { readVaultPlacements, readVaultEstarUses, readVaultCmcEvidenceUses } = await import('../../services/vault/vault-where-used.js');
       const ids = family.map((v) => v.id);
       const placements = await readVaultPlacements(pool, orgId, ids);
       const estarUses = await readVaultEstarUses(pool, orgId, ids);
+      // The CMC records that cite each version as their source (row D2).
+      const cmcEvidence = await readVaultCmcEvidenceUses(pool, orgId, ids);
       // Why each version would not be transmitted, in the words the transmit
       // refusal prints (VR-14's one rule, read for display), or null. Placement
       // is not refused on it; freeze, dispatch and transmit are. An unreadable
@@ -1674,6 +1676,7 @@ export default function createProjectVaultRoutes(): Router {
         lifecycle: lifecycles.get(v.id) ?? null,
         placements: placements.get(v.id) ?? [],
         estarUses: estarUses.get(v.id) ?? [],
+        cmcEvidence: cmcEvidence.get(v.id) ?? [],
         transmitRefusal: refusals[i],
       }));
       return res.json({ success: true, data: { versions } });

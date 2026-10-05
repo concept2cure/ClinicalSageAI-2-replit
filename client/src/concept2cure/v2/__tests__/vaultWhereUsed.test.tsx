@@ -19,7 +19,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
-import { VaultVersions, estarText, placedInText } from '../surfaces/VaultVersions';
+import { VaultVersions, cmcEvidenceText, estarText, placedInText } from '../surfaces/VaultVersions';
 
 const PID = '11111111-1111-4111-8111-111111111111';
 const V2 = '22222222-2222-4222-8222-222222222222';
@@ -81,6 +81,15 @@ describe('where each version is placed (VR-14a)', () => {
       .toBe(' · attached to the official eSTAR exported 2026-10-01 18:05 UTC, retained as eSTAR-510k-device v1.0 (/CHAPTER 1/CH1.01/)');
     expect(screen.getByTestId(`vault-version-estar-${V2}`).textContent).toBe('');
     expect(estarText([{ ...use, retainedAs: null, chapter: null }] as never)).toBe(' · attached to the official eSTAR exported 2026-10-01 18:05 UTC');
+  });
+
+  it('names the CMC records a version is evidence for, with the Module 3 sections that read them', () => {
+    expect(cmcEvidenceText([])).toBe('');
+    expect(cmcEvidenceText(undefined)).toBe('');
+    expect(cmcEvidenceText([
+      { linkId: 'l1', sourceType: 'batch', sourceKey: 'batch:1', sections: ['3.2.P.5.4', '3.2.S.4.4'] },
+      { linkId: 'l2', sourceType: 'stability', sourceKey: 'stability:2', sections: [] },
+    ])).toBe(' · evidence for CMC batch:1 (Module 3 §3.2.P.5.4, §3.2.S.4.4); stability:2');
   });
 
   it('several placements read as one list', () => {

@@ -67,7 +67,7 @@ function lineageBySection(rows: any[]): SectionLineage {
 }
 
 /** The sections a source of this type feeds, by the write-through's own impact map. */
-function sectionsFedBy(src: { sourceType: string; sourcePayload: unknown }): string[] {
+export function sectionsFedBy(src: { sourceType: string; sourcePayload: unknown }): string[] {
   return src.sourceType === 'change_control'
     ? impactedSectionsForChangeControl(changeControlScopeOf(src.sourcePayload))
     : impactedSectionsForSourceType(src.sourceType as CmcSourceType);
