@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-05T03:05:12.696Z",
+  "generatedAt": "2026-10-05T03:35:41.165Z",
   "git": {
-    "sha": "22b9c32f519f18e9d675f5d6f08038487afc633d",
+    "sha": "8d919b1f8a22bc5ef2a82d45aa24afb2e8f1d234",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2052,7 +2052,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1116952
+        "bytes": 1117027
       },
       {
         "file": "shared/schema.ts",
@@ -2100,7 +2100,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 166767
+        "bytes": 167314
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2132,7 +2132,7 @@
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "bytes": 138360
+        "bytes": 137175
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2151,12 +2151,12 @@
         "bytes": 133645
       },
       {
-        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
-        "bytes": 132755
+        "file": "shared/regulatory/global-document-registry.ts",
+        "bytes": 132951
       },
       {
-        "file": "shared/regulatory/global-document-registry.ts",
-        "bytes": 131912
+        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+        "bytes": 132755
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2254,7 +2254,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21545
+        "lines": 21546
       },
       {
         "file": "shared/schema.ts",
@@ -2322,7 +2322,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3311
+        "lines": 3320
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2386,7 +2386,7 @@
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "lines": 2430
+        "lines": 2406
       },
       {
         "file": "server/api/cmc/routes.ts",
@@ -2545,16 +2545,16 @@
         "lines": 1864
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1861
-      },
-      {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 1857
       },
       {
         "file": "server/routes/ivdr-routes.ts",
         "lines": 1855
+      },
+      {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1854
       },
       {
         "file": "server/services/ana/citation-engine.ts",
