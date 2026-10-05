@@ -125,7 +125,8 @@ pass on a clean export:
 - `transmit-guard-reports-checks`
 - `CrossReferenceMapping.no-fabricated-content`
 
-**Six were already red before this session's D3 work** (`dd73adb63`), and still are:
+**Six were already red before this session's D3 work** (`dd73adb63`). Session
+015w92's `1ca5c0727`, which landed while this was in progress, fixes them:
 
 - `auditChainIntegritySweep`
 - `mdx-esg-transmit-gateway`
@@ -141,7 +142,7 @@ clean exports.
 |---|---|---|---|
 | `session-open-contract` | mine, `proposal-seal.ts` (item 22) | The contract reads every `jwt.sign` payload literal, and the seal passed a variable. | The payload is an object literal at the call. |
 | `audit-compliance-reports` | `fe916edf4` (D6 platform standing) | The test granted platform standing through the request role `support`, which that commit closed on purpose. | The tenant role `support` cannot run reports; the owner allowlist can. `canReadAuditTrail` is one of the synchronous `isPlatformAdmin` sites that do not read grant rows, which `fe916edf4` handed on as board item 3. |
-| `unifiedTasks-governed` | `90b34d33c` (D2 CMC registers) | The Drizzle model reads `stability_studies.project_id`, and the suite's schema lacked it. | The suite runs that migration's `stability_studies` statements as written. |
+| `unifiedTasks-governed` | `90b34d33c` (D2 CMC registers) | The Drizzle model reads `stability_studies.project_id`, and the suite's schema lacked it. | Fixed by `1ca5c0727` (session 015w92), which runs the whole migration. My parallel fix was withdrawn so there is one. |
 | `deepening-tools` | `8d919b1f8` (writing gate) | `AnaToolDefinitions` now reaches the instrumented pool before the test's mock is set. | It is imported after the mock is set. |
 | `device-blueprint` | `433200b94` (510(k) readiness) | It expected the old form `eSTAR 510(k) template`. | It expects the canonical `eSTAR (submitted via CDRH Portal)` and `FDA 3601`. |
 | `workbenchAssignReview` | the calendar | Its due date was 2026-10-05, which is today, so the row read "due today". | The date is 2099-10-05. |
