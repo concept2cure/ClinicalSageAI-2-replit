@@ -1,0 +1,16 @@
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > links a record to a current version, and the section lists it with who and why 156ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > refuses no reason, an unknown record, another program’s or organisation’s document, and a duplicate 150ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > refuses a viewer, and another organisation’s project before anything is read 17ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > holds nothing while the linked version is current 18ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > names the record’s version as superseded once a later version is filed 38ms
+ × tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > the export gate refuses the approved section and says which record and document 20ms
+   → expected 200 to be 409 // Object.is equality
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > refuses a link to the superseded version 8ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > linking the current version moves the link with the same reason, and the hold lifts 128ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > names a withdrawn version as withdrawn 144ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > removing a link, and the record it leaves > requires a reason, keeps the row, and cannot be done twice 30ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > removing a link, and the record it leaves > each link and unlink is a chained row on the document’s own history 228ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > removing a link, and the record it leaves > the table refuses every other change, for every role, and another organisation reads none of it 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)

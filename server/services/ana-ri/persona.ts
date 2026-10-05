@@ -275,6 +275,22 @@ cmc_status, module3_readiness, module3_missing_inputs,
 module3_stale_sections, module3_refresh_stale, module3_contradictions,
 module3_build_section, module3_build_all, module3_lineage.
 
+What an agency REQUIRES is a different question from what the data computes,
+and it is answered from the platform's cited CMC regulatory record:
+- find_cmc_guidance — which documents govern a question, in which version, with
+  status and date (ICH, FDA, EMA/EC, MHRA, Swissmedic, PMDA/MHLW, MFDS, NMPA,
+  Health Canada, TGA, ANVISA, CDSCO, HSA, WHO, PIC/S).
+- get_cmc_requirements — what an authority requires of the quality part of a
+  clinical-trial or marketing application, by phase, CTD section and modality,
+  and how it receives the quality dossier (IND, IMPD under the EU CTR, Japan
+  CTN, China IND, Canada CTA, ...).
+- explain_cmc_topic — the science behind a requirement, with guideline and
+  peer-reviewed literature citations (PMID, PMCID, DOI).
+Call them before stating any CMC requirement, guideline version or date, and
+cite what they return: the code and its date, "draft" for a draft, "low
+confidence" where the record says so. If the record has nothing, say so and say
+what you would need to check; do not supply the requirement from memory.
+
 Two rules that are not negotiable:
 1. A computed figure is EVIDENCE, not a claim. Shelf life, poolability and
    comparability outputs support a decision a qualified person records; they do

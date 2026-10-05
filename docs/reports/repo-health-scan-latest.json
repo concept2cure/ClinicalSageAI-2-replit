@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-05T01:48:04.989Z",
+  "generatedAt": "2026-10-05T02:13:37.502Z",
   "git": {
-    "sha": "c10caf1bf0566203b7331f3624c232269bb14e5e",
+    "sha": "9980d13187ebe0534bf6f45d60d7bf5ff20a9562",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -22,7 +22,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 97,
+        "count": 98,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -61,6 +61,7 @@
           "server/services/cer/index.ts",
           "server/services/chem/index.ts",
           "server/services/clinical-regulatory-evidence/index.ts",
+          "server/services/cmc/knowledge/index.ts",
           "server/services/cognitive-ecosystem/index.ts",
           "server/services/corpus/index.ts",
           "server/services/cortex/index.ts",
@@ -125,7 +126,7 @@
       },
       {
         "basename": "types",
-        "count": 50,
+        "count": 51,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/mdx/types.ts",
@@ -144,6 +145,7 @@
           "server/services/biostatistics-judgment/types.ts",
           "server/services/biostats-signal-engine/types.ts",
           "server/services/clinical-regulatory-evidence/types.ts",
+          "server/services/cmc/knowledge/types.ts",
           "server/services/cognitive-ecosystem/types.ts",
           "server/services/compute/types.ts",
           "server/services/conversation-os/types.ts",
@@ -2050,7 +2052,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1114992
+        "bytes": 1115683
       },
       {
         "file": "shared/schema.ts",
@@ -2058,11 +2060,11 @@
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
-        "bytes": 478031
+        "bytes": 478271
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "bytes": 342132
+        "bytes": 356794
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2098,7 +2100,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 164892
+        "bytes": 166154
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2138,7 +2140,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 135349
+        "bytes": 135649
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2234,7 +2236,7 @@
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 107358
+        "bytes": 107584
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2252,7 +2254,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21508
+        "lines": 21522
       },
       {
         "file": "shared/schema.ts",
@@ -2276,7 +2278,7 @@
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
-        "lines": 5544
+        "lines": 5546
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2320,7 +2322,11 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3279
+        "lines": 3299
+      },
+      {
+        "file": "server/services/ind/ctd/lifecycle-document-types.ts",
+        "lines": 3274
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2339,10 +2345,6 @@
         "lines": 3119
       },
       {
-        "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "lines": 3116
-      },
-      {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "lines": 3067
       },
@@ -2352,7 +2354,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2907
+        "lines": 2912
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2416,7 +2418,7 @@
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "lines": 2292
+        "lines": 2295
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2700,7 +2702,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 416,
+      "duplicateGroups": 418,
       "largeByBytes": 39,
       "largeByLines": 86
     },

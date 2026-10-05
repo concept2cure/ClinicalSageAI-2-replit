@@ -29,6 +29,7 @@ import { buildCanonicalGovernedState } from '../governed-ana-execution.js';
    gate will refuse. */
 import { compiledRecordIsComplete, parsedDeterministicJson, readSectionTables } from './compiled-record';
 import { describeDrift, findSectionDrift, type SectionDrift } from './section-drift';
+import { findEvidenceDrift } from './source-evidence';
 
 export interface Module3GovernedState {
   totalSections: number;
@@ -61,6 +62,13 @@ export interface Module3GovernedState {
    * `stale` flag is set by only one of the three writers of source objects.
    */
   driftedApprovedSections: SectionDrift[];
+  /**
+   * Approved sections that read a record whose linked Vault document has
+   * since been superseded or withdrawn (source-evidence.ts). The record may no
+   * longer say what the current document says; a person re-verifies it and
+   * moves the link before the section is filed.
+   */
+  supersededEvidenceSections: SectionDrift[];
   canonicalGovernedState: Record<string, unknown> | null;
   /**
    * Did the governed-decision fabric actually produce a verdict? False when the
@@ -109,7 +117,7 @@ export async function evaluateModule3GovernedState(params: {
   const { orgId, projectId, actorId } = params;
   const pool = getPool();
 
-  const [sectionsRes, contradictionsRes, lineageRes, drift] = await Promise.all([
+  const [sectionsRes, contradictionsRes, lineageRes, drift, evidenceDrift] = await Promise.all([
     pool.query(
       `SELECT section_key, approval_state, stale, deterministic_json FROM cmc_module3_sections WHERE organization_id = $1 AND project_id = $2`,
       [orgId, projectId]
@@ -132,6 +140,7 @@ export async function evaluateModule3GovernedState(params: {
       [orgId, projectId]
     ),
     findSectionDrift(pool, orgId, projectId),
+    findEvidenceDrift(pool, orgId, projectId),
   ]);
 
   const sections = sectionsRes.rows;
@@ -161,6 +170,7 @@ export async function evaluateModule3GovernedState(params: {
     sections.filter((s: any) => s.approval_state === 'approved').map((s: any) => String(s.section_key)),
   );
   const driftedApprovedSections = drift.filter((d) => approvedKeys.has(d.sectionKey));
+  const supersededEvidenceSections = evidenceDrift.filter((d) => approvedKeys.has(d.sectionKey));
   // Derived, never asserted: with no sections there is no provenance chain to
   // be complete, and a section with no lineage row breaks it.
   const provenanceComplete = totalSections > 0 && sectionsWithoutProvenance === 0;
@@ -226,6 +236,7 @@ export async function evaluateModule3GovernedState(params: {
       incompleteApprovedSections,
       unplaceableApprovedSections,
       driftedApprovedSections,
+      supersededEvidenceSections,
       canonicalGovernedState,
       governedStateEvaluated,
       fabricBlocks,
@@ -260,6 +271,7 @@ export async function evaluateFinalExportGate(params: {
     data.governedDecisionsBlock ||
     data.staleSections > 0 ||
     data.driftedApprovedSections.length > 0 ||
+    data.supersededEvidenceSections.length > 0 ||
     data.sectionsWithoutProvenance > 0 ||
     data.incompleteApprovedSections.length > 0 ||
     data.unplaceableApprovedSections.length > 0
@@ -279,6 +291,10 @@ export async function evaluateFinalExportGate(params: {
         : data.driftedApprovedSections.length > 0
         ? `${data.driftedApprovedSections.length} approved section(s) no longer match their source data and must be ` +
           `recompiled and re-approved before final export: ${describeDrift(data.driftedApprovedSections)}`
+        : data.supersededEvidenceSections.length > 0
+        ? `${data.supersededEvidenceSections.length} approved section(s) read CMC records taken from a Vault document that ` +
+          `has since been superseded or withdrawn. Verify each record against the current version and move its evidence ` +
+          `link (or correct the record and recompile) before final export: ${describeDrift(data.supersededEvidenceSections)}`
         : data.sectionsWithoutProvenance > 0
           ? `${data.sectionsWithoutProvenance} section(s) have no recorded source lineage, so the audit trail required for export is incomplete`
           : !data.governedStateEvaluated

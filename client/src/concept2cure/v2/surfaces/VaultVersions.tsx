@@ -47,8 +47,26 @@ export interface VaultVersion {
   placements?: VaultPlacement[];
   /** The official eSTAR exports whose record names it as an attachment (VR-14c). */
   estarUses?: VaultEstarUse[];
+  /** The CMC records that cite it as the document they were taken from (row D2). */
+  cmcEvidence?: VaultCmcEvidenceUse[];
   /** Why this version would not be transmitted (the server's VR-14 rule, verbatim), or null. Absent when the server did not say. */
   transmitRefusal?: string | null;
+}
+
+/** A CMC record that cites a version as its source, as the server returns it (vault-where-used.ts). */
+export interface VaultCmcEvidenceUse {
+  linkId: string;
+  sourceType: string;
+  sourceKey: string;
+  sections: string[];
+}
+
+/** The CMC records a version is evidence for, in words; nothing when it is evidence for none. */
+export function cmcEvidenceText(uses: VaultCmcEvidenceUse[] | undefined): string {
+  if (!uses || uses.length === 0) return '';
+  const one = (u: VaultCmcEvidenceUse) =>
+    `${u.sourceKey}${u.sections.length ? ` (Module 3 §${u.sections.join(', §')})` : ''}`;
+  return ` · evidence for CMC ${uses.map(one).join('; ')}`;
 }
 
 /** An official eSTAR export that attached a version, as the server returns it (vault-where-used.ts). */
@@ -248,6 +266,7 @@ function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleCh
             {LINK_TEXT[v.link]}
             <span data-testid={`vault-version-placed-${v.id}`}>{placedInText(v.placements)}</span>
             <span data-testid={`vault-version-estar-${v.id}`}>{estarText(v.estarUses)}</span>
+            <span data-testid={`vault-version-cmc-${v.id}`}>{cmcEvidenceText(v.cmcEvidence)}</span>
             <LifecycleSummary lifecycle={v.lifecycle} />
           </span>
           <button

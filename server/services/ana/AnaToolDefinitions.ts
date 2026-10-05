@@ -50,6 +50,10 @@ import { AUTHORING_READ_TOOLS } from './authoring-read-tools.js';
 // chain and where the open project stands, FDA's technical rules — read from
 // server/services/ind/ctd. Handlers registered from regulatory-knowledge-tools.ts.
 import { REGULATORY_KNOWLEDGE_TOOLS } from './regulatory-knowledge-tools.js';
+// What agencies require of a CMC dossier, which documents say so in which
+// version, and the science behind it — read from server/services/cmc/knowledge.
+// Handlers registered from cmc-knowledge-tools.ts.
+import { CMC_KNOWLEDGE_TOOLS } from './cmc-knowledge-tools.js';
 // BLA biologics + CTD nonclinical/clinical tool definitions extracted to their
 // own module (decomposition tranche 2). Imported so the enabled-tools array can
 // reference them exactly as before.
@@ -2278,6 +2282,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   SEARCH_DOCUMENT_PASSAGES,
   ...AUTHORING_READ_TOOLS,
   ...REGULATORY_KNOWLEDGE_TOOLS,
+  ...CMC_KNOWLEDGE_TOOLS,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
   COMPUTE_SAMPLE_SIZE,
