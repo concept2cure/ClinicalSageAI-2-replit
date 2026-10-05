@@ -47,8 +47,21 @@ and folds severities into the score (`critical` −30, `high` −18, `medium` �
 | consistency | `terminology-consistency.checkTerminologyConsistency` | a document-level quantity (randomized / enrolled / sample size, MRSD, shelf life) stated two ways; one acronym expanded two ways; US/UK spelling & interchangeable-term drift | high / medium |
 | readability | `medical-writing-qc.assessReadability` | reading grade over the audience target | high (patient) / medium |
 | abbreviations | `medical-writing-qc.buildAbbreviationList` | acronym not defined at first use | medium |
-| claims | `promotional-screening.screenPromotionalLanguage` (existing) | superiority, absolutes, unqualified safety, causal overreach, unsupported comparatives, promotional tone | high / medium / low |
+| claims | `promotional-screening.screenPromotionalLanguage` (existing), in the `submission` register by default, plus `clinical-regulatory-evidence/governance.detectUnsupportedClaims` (composed, submission register only) | superiority, absolutes, unqualified safety, causal overreach, unsupported comparatives, promotional tone; in the submission register, a hit inside a `SUBMISSION_TERMS_OF_ART` entry (ICH E3 §5.3 consent statement, Breakthrough Therapy designation, test-of-cure endpoints, best supportive care, PK elimination, biopsy-proven, …) is dropped and listed in `claimExemptions` with its basis; a predicted approval or "the study was successful" is a `regulatory_outcome` finding; an approval match is dropped only when every named approver is on a deny-list of protocol-governance bodies ("approved by the sponsor / the IRB / the Safety Review Committee", "the Medical Monitor will approve") and nothing after the last one may name another agent, so a date ("by the end of 2027"), any regulator ("by MHLW", "the Food and Drug Administration will approve") or a later agent ("by the IRB, then by FDA", "by the sponsor (FDA)") stays flagged; "resolved completely" is exempt only as an intransitive AE outcome ("resolved completely without sequelae", "completely resolved by Day 10"), never with an object ("completely resolved the disease") | high / medium / low |
 | structure | `medical-writing-review.reviewMedicalWriting` | required section missing for the document type | high |
+
+The claims **register** is a tool input (`register: 'submission' | 'promotional'`)
+on `critique_draft`, `verify_revision` and `critique_document`, defaulting to
+`submission`, and is echoed in every result. `screen_promotional_language` keeps
+the `promotional` register (every lexicon hit). Each terms-of-art entry carries an
+`E3Basis` (`regulator-text` with URL, `recall`, or `platform-convention`); the
+facts are in `docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-04-depth/b3-writing-gate-register-facts.md`.
+A term of art is matched by its own syntax, not by a sentence-wide span: "All
+patients provided written informed consent" is exempt, "All patients responded to
+treatment and completed the study" is not; "eliminated by renal excretion" is
+exempt, "eliminated tumour recurrence in patients with renal impairment" is not.
+The over-claim guards in `writing-gate-regulatory-register.test.ts` lock both
+sides.
 
 One new deterministic module: `terminology-consistency.ts` (in-document value /
 abbreviation / preferred-term consistency). Everything else reuses an existing

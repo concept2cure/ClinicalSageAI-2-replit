@@ -86,9 +86,11 @@ beforeEach(() => {
   logActionMock.mockResolvedValue({ persisted: true, chained: true, tamperProof: true });
   chainedRowMock.mockReset();
   steps.length = 0;
-  queryMock.mockImplementation((sql: string) => {
-    // Guard fallback lookup: no grant → guard relies on the sync role check.
-    if (/FROM platform_role_grants\s+WHERE user_id/.test(sql)) return Promise.resolve({ rows: [] });
+  queryMock.mockImplementation((sql: string, params?: unknown[]) => {
+    // Grant lookups. The owner (SUPER, id 1) holds a super_admin grant, as the
+    // owner does in production: business standing is a platform grant, never
+    // the request role (D6, 2026-10-05). Everyone else holds none.
+    if (/FROM platform_role_grants\s+WHERE user_id/.test(sql)) return Promise.resolve({ rows: params?.[0] === 1 ? [{ ok: 1 }] : [] });
     if (/FROM users WHERE email/.test(sql)) return Promise.resolve({ rows: [{ id: 42 }] });
     if (/SELECT g\.id/.test(sql)) return Promise.resolve({ rows: [] });
     if (/INSERT INTO platform_role_grants/.test(sql))
@@ -164,6 +166,29 @@ describe('granting platform/support roles', () => {
 });
 
 describe('business-tier grants require a business-admin caller', () => {
+  /* D6, 2026-10-05 (docs/evidence/D6/2026-10-05-business-center-standing/).
+     The escalation check read the request role, which behind authMiddleware is
+     the caller's TENANT membership role. A platform administrator whose
+     membership in their own organisation said `owner` could designate finance
+     personnel, themselves included. */
+  it('403s a platform admin whose tenant membership role is owner', async () => {
+    queryMock.mockImplementation((sql: string, params?: unknown[]) => {
+      // Caller 6 is a platform admin by grant, with no business-tier grant.
+      if (/FROM platform_role_grants\s+WHERE user_id/.test(sql)) {
+        const roles = (params?.[1] as string[] | undefined) ?? [];
+        return Promise.resolve({ rows: params?.[0] === 6 && roles.includes('platform_admin') && !roles.includes('business_admin') ? [{ ok: 1 }] : [] });
+      }
+      if (/FROM users WHERE email/.test(sql)) return Promise.resolve({ rows: [{ id: 42 }] });
+      return Promise.resolve({ rows: [{}] });
+    });
+    const res = await request(makeApp())
+      .post('/api/admin/access/grants')
+      .set('x-test-user', JSON.stringify({ id: 6, role: 'owner', email: 'ops@x.io' }))
+      .send({ email: 'ops@x.io', role: 'business_admin', reason: 'designate myself' });
+    expect(res.status).toBe(403);
+    expect(chainedRowMock).not.toHaveBeenCalled();
+  });
+
   it('403s when a support user tries to grant business_admin', async () => {
     const res = await request(makeApp())
       .post('/api/admin/access/grants')
@@ -182,8 +207,8 @@ describe('business-tier grants require a business-admin caller', () => {
   });
 
   it('200s when a super_admin (platform + business) grants business_admin', async () => {
-    // super_admin is BOTH a platform role (passes the router guard) and a
-    // business role (passes the business-tier escalation check).
+    // super_admin is BOTH a platform role (passes the router guard) and, held
+    // as a platform grant, a business role (passes the business-tier check).
     const res = await request(makeApp())
       .post('/api/admin/access/grants')
       .set('x-test-user', SUPER)

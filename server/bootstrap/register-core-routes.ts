@@ -17,6 +17,7 @@ import cmcWorkflowRoutes from '../api/cmc/workflowRoutes';
 import cmcModule3OperatingSystemRoutes from '../api/cmc/module3OperatingSystemRoutes';
 import cmcModule3BuildStateRoutes from '../api/cmc/module3BuildStateRoutes';
 import cmcModule3ConvergenceRoutes from '../api/cmc/module3ConvergenceRoutes';
+import cmcSourceEvidenceRoutes from '../api/cmc/sourceEvidenceRoutes';
 import cmcModule3AutoDraftRoutes from '../api/cmc/module3AutoDraftRoutes';
 import cmcDocumentRoutes from '../api/cmc/documentRoutes';
 import cmcModule3BoardRoutes from '../routes/cmc-module3-board.routes';
@@ -83,6 +84,9 @@ export function registerCoreRoutes({
     app.use('/api/cmc/module3-os', cmcModule3OperatingSystemRoutes);
     app.use('/api/cmc/module3-os', cmcModule3BuildStateRoutes);
     app.use('/api/cmc/module3-os', cmcModule3ConvergenceRoutes);
+    /* The Vault document a CMC record was taken from (row D2): link, unlink and
+       read evidence under the same Module 3 project guard. */
+    app.use('/api/cmc/module3-os', cmcSourceEvidenceRoutes);
     app.use('/api/cmc/module3', cmcModule3AutoDraftRoutes);
     /* `/api/cmc/collaboration` is gone. Its four reads were keyed only by a
        caller-supplied workflowId or userId, over process-global in-memory Maps

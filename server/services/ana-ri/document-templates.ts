@@ -13,7 +13,21 @@
  * @module server/services/ana-ri/document-templates
  */
 
-import { e3TopLevel, e3Children, type E3Section } from '../ind/ctd/index.js';
+import {
+  e3TopLevel,
+  e3Children,
+  LIFECYCLE_DOCUMENT_TYPES,
+  type E3Section,
+  type LifecycleComponent,
+} from '../ind/ctd/index.js';
+import {
+  FDA_FORMAL_MEETING_TIMELINES,
+  FDA_FORMAL_MEETINGS_GUIDANCE,
+  ICH_E2F_DSUR_SECTIONS,
+  meetingPackageDeadline,
+  type E2fSection,
+  type FdaMeetingType,
+} from '../ind/ctd/lifecycle-document-types.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Document Template Registry Types
@@ -64,6 +78,59 @@ function e3TemplateSection(s: E3Section): TemplateSection {
   const guidance = s.purpose
     ?? (s.contains?.length ? s.contains.join('; ') : `Covers ${children.map((c) => `${c.number} ${c.title}`).join('; ')}.`);
   return { heading: `${s.number}. ${s.title}`, required: s.applies === 'always', guidance };
+}
+
+/** One ICH E2F heading as a template section, numbered as E2F numbers it. */
+function e2fTemplateSection(s: E2fSection): TemplateSection {
+  return { heading: s.number ? `${s.number}. ${s.title}` : s.title, required: s.required, guidance: s.guidance };
+}
+
+/** One lifecycle-record component as a template section: its title, what it carries, whether it is required. */
+function lifecycleTemplateSection(c: LifecycleComponent): TemplateSection {
+  return { heading: c.title, required: c.required, guidance: c.guidance };
+}
+
+const MEETING_ENTRIES = LIFECYCLE_DOCUMENT_TYPES.filter((t) => t.meetingPackage);
+
+function meetingEntry(id: string) {
+  const entry = MEETING_ENTRIES.find((t) => t.id === id);
+  if (!entry) throw new Error(`document-templates: lifecycle meeting entry "${id}" is missing`);
+  return entry;
+}
+
+/** The deadline sentence, from FDA_FORMAL_MEETING_TIMELINES: the request and the package are separate submissions for Type B and B(EOP). */
+function meetingDeadlineSentence(type: FdaMeetingType): string {
+  const row = FDA_FORMAL_MEETING_TIMELINES[type];
+  const separate = row.packageDue === 'with-request' ? 'The meeting package goes' : 'The meeting package is a separate submission from the request, due';
+  return `FDA schedules a Type ${type} meeting within ${row.scheduleDays} days of receiving the meeting request. ${separate} ${meetingPackageDeadline(type)}.`;
+}
+
+const MEETING_QUESTION_RULE = "Questions must be specific and answerable, each with the sponsor's position and the data behind it — do NOT ask open-ended questions.";
+
+/** A meeting-package template whose sections are the lifecycle entry's components, so the two cannot drift. */
+function lifecycleMeetingTemplate(
+  lifecycleId: string,
+  type: FdaMeetingType,
+  meta: Pick<RegulatoryDocumentTemplate, 'id' | 'chipLabel' | 'submissionFamily' | 'detectionPatterns'>,
+): RegulatoryDocumentTemplate {
+  const entry = meetingEntry(lifecycleId);
+  return {
+    ...meta,
+    displayName: entry.label,
+    authority: 'FDA',
+    minConfidence: 0.7,
+    draftingInstructions: `Draft the ${entry.label} per ${FDA_FORMAL_MEETINGS_GUIDANCE}. ${meetingDeadlineSentence(type)} ${MEETING_QUESTION_RULE}`,
+    regulatoryReferences: entry.regulatoryBasis,
+    sections: entry.components.map(lifecycleTemplateSection),
+  };
+}
+
+/** The components every lifecycle meeting entry shares, computed, in the first entry's order and wording. */
+function commonMeetingSections(): TemplateSection[] {
+  const [first, ...rest] = MEETING_ENTRIES;
+  return first.components
+    .filter((c) => rest.every((m) => m.components.some((o) => o.code === c.code)))
+    .map(lifecycleTemplateSection);
 }
 
 export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
@@ -450,63 +517,93 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     chipLabel: 'DSUR',
     authority: 'ICH',
     submissionFamily: 'IND/CTA',
+    // An IND annual report is its own lifecycle entry (ind_annual_report), not
+    // a DSUR. The pattern that once named it here held a form feed (\f) and
+    // never matched; it is deleted, not redirected.
     detectionPatterns: [
       /\bdsur\b/i,
       /\bdevelopment\s+safety\s+update\s+(?:report|annual)\b/i,
       /\bannual\s+(?:safety\s+)?report\s+(?:to\s+fda|for\s+ind)\b/i,
-      /\find\s+annual\s+report\b/i,
     ],
     minConfidence: 0.70,
-    draftingInstructions: 'Draft an ICH E2F Development Safety Update Report (DSUR). This annual report is submitted to health authorities to summarize all safety data collected on the investigational product during the reporting period. Follow the ICH E2F structure exactly. Include a benefit-risk evaluation for the current stage of development.',
+    draftingInstructions: 'Draft an ICH E2F Development Safety Update Report (DSUR): the annual review and evaluation of safety information on the investigational drug across the development programme for the reporting period ending at the data lock point. Use the E2F headings and numbering below; where a section has nothing to report, keep the heading and say so. Section 19 is the cumulative Summary of Important Risks; Section 20 states the conclusions. In the US a DSUR may serve the 21 CFR 312.33 annual report, with the US IND items in the region-specific appendices (Section 16).',
     regulatoryReferences: ['ICH E2F (DSUR guidance)', '21 CFR 312.33 (IND annual reports)', 'FDA Safety Reporting Guidance (2012)'],
-    sections: [
-      { heading: 'Title Page', required: true, guidance: 'Product name, INN, reporting period, data lock point, sponsor name/address, DAN number.' },
-      { heading: '1. Introduction', required: true, targetWords: [150, 300], guidance: 'Overview of the investigational product, reporting period, and structure of this DSUR.' },
-      { heading: '2. Worldwide Marketing Approval Status', required: true, targetWords: [100, 200], guidance: 'List of countries where the product is approved and any significant labeling changes during the period.' },
-      { heading: '3. Actions Taken for Safety Reasons', required: true, targetWords: [200, 400], guidance: 'Significant actions taken during the reporting period (clinical holds, protocol amendments for safety, labeling revisions, product withdrawals).' },
-      { heading: '4. Changes to Reference Safety Information', required: true, targetWords: [100, 200], guidance: 'Changes to the IB or reference safety document that occurred during the reporting period.' },
-      { heading: '5. Clinical Study/Trial Patient Exposure', required: true, targetWords: [200, 400], guidance: 'Summary of patient exposure in all ongoing and completed clinical studies during the period.' },
-      { heading: '6. Data in Line Listings and Summary Tabulations', required: true, targetWords: [100, 200], guidance: 'Reference to appended line listings and summary tables of SAEs, SUSARs, non-serious events.' },
-      { heading: '7. Significant Findings from Clinical Studies', required: true, targetWords: [300, 600], guidance: 'Summary of significant efficacy and safety findings, any new safety signals identified, and new information from ongoing studies that may affect the benefit-risk profile.' },
-      { heading: '8. Safety Findings from Non-Interventional Studies', required: false, targetWords: [100, 200], guidance: 'Relevant safety data from observational studies, registries, or real-world evidence if applicable.' },
-      { heading: '9. Information from Other Clinical Trials/Studies', required: false, targetWords: [100, 200], guidance: 'Safety data from related studies (different indications, combinations, or related compounds).' },
-      { heading: '10. Non-Clinical Data', required: true, targetWords: [150, 300], guidance: 'Summary of new nonclinical safety findings from studies completed during the reporting period.' },
-      { heading: '11. Literature', required: true, targetWords: [100, 200], guidance: 'Summary of published literature relevant to drug safety during the period.' },
-      { heading: '12. Summary of Significant Risks', required: true, targetWords: [200, 400], guidance: 'Cumulative list of identified risks (labeled and unlabeled) and risks under investigation.' },
-      { heading: '13. Overall Safety Evaluation', required: true, targetWords: [300, 600], guidance: 'Integrated benefit-risk evaluation for the current stage of development, including new information, changes in the benefit-risk profile, and adequacy of current risk minimization measures.' },
-      { heading: '14. Conclusions', required: true, targetWords: [100, 200], guidance: 'Key conclusions regarding subject safety during the reporting period and any recommended actions.' },
-    ],
+    // ICH E2F Title Page–§20 and Appendices, read from lifecycle-document-types
+    // (ICH_E2F_DSUR_SECTIONS). This was a hand-kept 14-heading list, numbered
+    // off by one from §5 and ending "14. Conclusions" (E2F: §20).
+    sections: ICH_E2F_DSUR_SECTIONS.map(e2fTemplateSection),
   },
 
   // ── FDA Meeting Packages ──────────────────────────────────────────────────
 
-  fda_type_b_meeting_package: {
-    id: 'fda_type_b_meeting_package',
-    displayName: 'FDA Type B Meeting Request Package',
-    chipLabel: 'Type B Meeting Package',
+  // Sections are the lifecycle meeting entries' components and deadlines come
+  // from FDA_FORMAL_MEETING_TIMELINES. This was one hand-kept 7-heading
+  // fda_type_b_meeting_package for every meeting: it had no CMC, nonclinical
+  // or clinical-plan section, said the package "accompanies the meeting
+  // request" (Type A, D and INTERACT only), and cited the 2017 draft.
+
+  fda_pre_ind_meeting_package: lifecycleMeetingTemplate('pre_ind_meeting', 'B', {
+    id: 'fda_pre_ind_meeting_package',
+    chipLabel: 'Pre-IND Meeting Package',
+    submissionFamily: 'IND',
+    detectionPatterns: [
+      /\bpre.?ind\s+meeting\b/i,
+      /\bpre.?ind\s+(?:meeting\s+)?(?:package|request|briefing)\b/i,
+    ],
+  }),
+
+  fda_eop_meeting_package: lifecycleMeetingTemplate('end_of_phase_2_meeting', 'B(EOP)', {
+    id: 'fda_eop_meeting_package',
+    chipLabel: 'EOP Meeting Package',
+    submissionFamily: 'IND',
+    // Phase 2 only: an EOP1 meeting is Type B(EOP) only for subpart E/H
+    // products, so EOP1 requests go to fda_formal_meeting_package.
+    detectionPatterns: [
+      /\bend[\s-]+of[\s-]+phase[\s-]*(?:2|ii)\s+meeting\b/i,
+      /\beop2\s+meeting\b/i,
+      /\btype\s*b\s*\(?eop\)?/i,
+      /\bend[\s-]+of[\s-]+phase[\s-]*(?:2|ii)\b.*\bbriefing\b/i,
+      /\bpre[\s-]*phase[\s-]*(?:3|iii)\s+meeting\b/i,
+    ],
+  }),
+
+  fda_pre_nda_meeting_package: lifecycleMeetingTemplate('pre_nda_meeting', 'B', {
+    id: 'fda_pre_nda_meeting_package',
+    chipLabel: 'Pre-NDA Meeting Package',
+    submissionFamily: 'NDA',
+    detectionPatterns: [
+      /\bpre.?nda\s+meeting\b/i,
+      /\bpre.?nda\s+(?:meeting\s+)?(?:package|request|briefing)\b/i,
+    ],
+  }),
+
+  fda_pre_bla_meeting_package: lifecycleMeetingTemplate('pre_bla_meeting', 'B', {
+    id: 'fda_pre_bla_meeting_package',
+    chipLabel: 'Pre-BLA Meeting Package',
+    submissionFamily: 'BLA',
+    detectionPatterns: [
+      /\bpre.?bla\s+meeting\b/i,
+      /\bpre.?bla\s+(?:meeting\s+)?(?:package|request|briefing)\b/i,
+    ],
+  }),
+
+  fda_formal_meeting_package: {
+    id: 'fda_formal_meeting_package',
+    displayName: 'FDA Formal Meeting Package',
+    chipLabel: 'FDA Meeting Package',
     authority: 'FDA',
     submissionFamily: 'IND/NDA/BLA',
     detectionPatterns: [
       /\btype\s*b\s+meeting\s+(?:package|request|briefing)\b/i,
-      /\bend\s+of\s+phase\s*[12]\s+meeting\b/i,
-      /\beop[12]\s+meeting\b/i,
-      /\bpre.?ind\s+meeting\s+(?:package|request)\b/i,
-      /\bpre.?nda\s+meeting\s+(?:package|request)\b/i,
-      /\bpre.?bla\s+meeting\s+(?:package|request)\b/i,
       /\bfda\s+meeting\s+(?:package|briefing\s+document)\b/i,
+      /\bformal\s+meeting\s+(?:package|request|briefing)\b/i,
+      /\bend[\s-]+of[\s-]+phase[\s-]*(?:1|i)\s+meeting\b/i,
+      /\beop1\s+meeting\b/i,
     ],
     minConfidence: 0.70,
-    draftingInstructions: "Draft an FDA Type B Meeting Request Package per FDA's Formal Meetings Between FDA and Sponsors or Applicants of PDUFA Products guidance. This package accompanies the meeting request and must contain enough background that FDA reviewers can engage substantively. Questions must be specific and answerable — do NOT ask open-ended questions.",
-    regulatoryReferences: ["FDA Formal Meetings Guidance (2017)", "21 CFR 312.47 (pre-NDA meetings)", "PDUFA Letter"],
-    sections: [
-      { heading: 'Cover Letter and Meeting Request', required: true, targetWords: [150, 300], guidance: 'Brief letter identifying the meeting type, proposed date, meeting format (in-person/teleconference), and sponsor contact.' },
-      { heading: 'Product Description and Development Status', required: true, targetWords: [200, 400], guidance: 'Drug name, INN, therapeutic class, indication, current phase of development, and IND number.' },
-      { heading: 'Background', required: true, targetWords: [500, 1000], guidance: 'Summary of the nonclinical program, completed clinical studies, and key findings. What has been established and what is still uncertain. This is the key informational section — be comprehensive but focused on what is relevant to the meeting questions.' },
-      { heading: 'Meeting Objectives', required: true, targetWords: [100, 200], guidance: 'One paragraph: what the sponsor hopes to achieve in the meeting. Not the questions themselves.' },
-      { heading: 'Specific Questions for FDA', required: true, targetWords: [300, 600], guidance: 'Numbered list of specific, answerable questions. Each question should: (1) provide brief background context, (2) state the sponsor\'s position or proposed approach, and (3) ask a specific yes/no or constrained question. Do NOT ask "Is our program adequate?" — ask "Does FDA agree that Study XYZ is adequate to support the proposed indication?"' },
-      { heading: 'Proposed Agenda', required: true, targetWords: [100, 200], guidance: 'Draft agenda for the meeting with time allocation per topic.' },
-      { heading: 'Proposed Attendee List', required: true, targetWords: [80, 150], guidance: 'Sponsor attendees by name and role. Request FDA attendees by division and discipline.' },
-    ],
+    draftingInstructions: `Draft an FDA formal-meeting package per ${FDA_FORMAL_MEETINGS_GUIDANCE}. Name the meeting type first, because the deadline follows from it. ${meetingDeadlineSentence('B')} For an end-of-phase meeting (Type B(EOP)) the package is due ${meetingPackageDeadline('B(EOP)')}. An End-of-Phase 1 meeting is Type B(EOP) only for a product under 21 CFR 312 subpart E or 21 CFR 314 subpart H; otherwise it is Type B. Type A, D and INTERACT packages go with the meeting request. The sections below are the ones every pre-IND, EOP, pre-NDA and pre-BLA package carries; add the discipline summaries the meeting's questions need. ${MEETING_QUESTION_RULE}`,
+    regulatoryReferences: [FDA_FORMAL_MEETINGS_GUIDANCE, '21 CFR 312.47 (meetings)', 'PDUFA VII commitment letter (meeting management goals)'],
+    sections: commonMeetingSections(),
   },
 
   // ── Post-Market Safety ────────────────────────────────────────────────────
@@ -703,11 +800,13 @@ export function buildDocumentTemplateBlock(detected: DetectedDocumentTemplate): 
 
   lines.push('### REQUIRED DOCUMENT STRUCTURE');
   lines.push('');
-  lines.push('You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present. Optional sections should be included when relevant data exists.');
-  lines.push('');
-
   const required = template.sections.filter(s => s.required);
   const optional = template.sections.filter(s => !s.required);
+
+  // The optional-sections sentence only where the template has any: a DSUR
+  // (E2F) has none, and told the model otherwise until 2026-10-05.
+  lines.push(`You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present.${optional.length > 0 ? ' Optional sections should be included when relevant data exists.' : ''}`);
+  lines.push('');
 
   lines.push('**Required sections:**');
   for (const section of required) {

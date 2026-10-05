@@ -1,0 +1,8 @@
+{"step":"POST /api/tenant-users","name":"JM Smith","status":401}
+{"step":"POST /api/tenant-users","name":"Dana Reyes","status":401}
+{"id" : 1, "name" : "JM Smith", "role" : "admin", "status" : "active"}
+{"step":"POST /api/tenant-users","name":"JM Smith","status":201}
+{"step":"POST /api/tenant-users","name":"Dana Reyes","status":201}
+{"id" : 1, "name" : "JM Smith", "role" : "admin", "status" : "active"}
+{"id" : 2, "name" : "JM Smith", "role" : "member", "status" : "active"}
+{"id" : 3, "name" : "Dana Reyes", "role" : "member", "status" : "active"}

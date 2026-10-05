@@ -1,0 +1,86 @@
++ - **6. Data in Line Listings and Summary Tabulations** (~100–200 words)
++   Reference to appended line listings and summary tables of SAEs, SUSARs, non-serious events.
++ - **7. Significant Findings from Clinical Studies** (~300–600 words)
++   Summary of significant efficacy and safety findings, any new safety signals identified, and new information from ongoing studies that may affect the benefit-risk profile.
++ - **10. Non-Clinical Data** (~150–300 words)
++   Summary of new nonclinical safety findings from studies completed during the reporting period.
++ - **11. Literature** (~100–200 words)
++   Summary of published literature relevant to drug safety during the period.
++ - **12. Summary of Significant Risks** (~200–400 words)
++   Cumulative list of identified risks (labeled and unlabeled) and risks under investigation.
++ - **13. Overall Safety Evaluation** (~300–600 words)
++   Integrated benefit-risk evaluation for the current stage of development, including new information, changes in the benefit-risk profile, and adequacy of current risk minimization measures.
++ - **14. Conclusions** (~100–200 words)
++   Key conclusions regarding subject safety during the reporting period and any recommended actions.
++
++ **Optional sections (include when applicable):**
++ - 8. Safety Findings from Non-Interventional Studies (~100–200 words)
++   Relevant safety data from observational studies, registries, or real-world evidence if applicable.
++ - 9. Information from Other Clinical Trials/Studies (~100–200 words)
++   Safety data from related studies (different indications, combinations, or related compounds).
++
++ ### OUTPUT RULES
++ 1. Use the section headings above verbatim as level-2 Markdown headers (`##`).
++ 2. Write [PLACEHOLDER] where the user has not yet provided the specific data needed — do NOT fabricate clinical data, patient numbers, p-values, or study results.
++ 3. After completing the document, add a brief "**What data do I still need?**" section listing any placeholders and the specific information needed to complete each.
++ 4. Write at the level expected by an FDA/EMA regulatory reviewer — precise, evidence-backed, and free of promotional language.
++ 5. Do NOT include a preamble like "Here is the draft you requested" — start directly with the first section heading.
+
+ ❯ tests/regulatory/meetings-and-dsur-truth.test.ts:179:19
+    177|   it('the injected block carries §16, §19 and §20 under their E2F numb…
+    178|     const block = blockFor('draft our DSUR');
+    179|     expect(block).toContain('16. Region-Specific Information');
+       |                   ^
+    180|     expect(block).toContain('19. Summary of Important Risks');
+    181|     expect(block).toContain('20. Conclusions');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/20]⎯
+
+ FAIL  tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > no detection pattern carries a form feed
+AssertionError: expected '\find\s+annual\s+report\b' not to contain '\f'
+
+Expected: "\f"
+Received: "\find\s+annual\s+report\b"
+
+ ❯ tests/regulatory/meetings-and-dsur-truth.test.ts:186:85
+    184|
+    185|   it('no detection pattern carries a form feed', () => {
+    186|     for (const p of DOCUMENT_TEMPLATES.dsur.detectionPatterns) expect(…
+       |                                                                                     ^
+    187|   });
+    188|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/20]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  20 failed | 4 passed (24)
+   Start at  00:02:19
+   Duration  885ms (transform 473ms, setup 79ms, import 461ms, tests 52ms, environment 0ms)
+
+
+--- per-test status (verbose reporter) ---
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > holds the six PDUFA meeting types with their schedule and package deadlines 5ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > labels every figure not read in FDA text as recall 1ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > timing is 70 days to the meeting and the package 50 calendar days before it 2ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > no EOP2 component tells the sponsor the package is due 30 days ahead 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_ind_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_nda_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_bla_meeting keeps the plain Type B 60/30 timing 0ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_ind_meeting carries no 2017 citation 1ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > end_of_phase_2_meeting carries no 2017 citation 1ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_nda_meeting carries no 2017 citation 1ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_bla_meeting carries no 2017 citation 1ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > a pre-IND meeting package carries the CMC summary and no "accompanies the request" claim 19ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > an EOP2 briefing document gets the EOP2 components and the 50-day package deadline 9ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "draft the pre-NDA meeting package" gets the pre_nda_meeting components 2ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "prepare our pre-BLA meeting briefing document" gets the pre_bla_meeting components 0ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > no meeting template is a hand-kept heading list 1ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > some component asks for E2F Section 19 (Summary of Important Risks) 1ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > no component calls Section 19 the conclusions 1ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > the conclusions are E2F Section 20 0ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > interval line listings are of serious adverse reactions (E2F 7.2), tabulations of SAEs (7.3) 3ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > exports the E2F outline once, every heading cited 0ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > the injected block carries §16, §19 and §20 under their E2F numbers 2ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > no detection pattern carries a form feed 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > an IND annual report request is not served the DSUR template 0ms

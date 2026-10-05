@@ -271,3 +271,39 @@ describe('drift from the sources: refused at approval and at export', () => {
     ]);
   });
 });
+
+describe('evidence from the Vault: refused at approval when the linked version was superseded', () => {
+  it('refuses to approve a section that read a record whose Vault document was since superseded', async () => {
+    // The evidence read runs for a program (a uuid); its own SQL is proven on
+    // PostgreSQL in tests/db/cmc-source-evidence.dbtest.ts.
+    mockQuery
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check
+      .mockResolvedValueOnce({}) // BEGIN
+      .mockResolvedValueOnce({
+        rows: [{ id: 'sec-5', deterministic_json: COMPLETE, narrative_text: 'x', approval_state: 'draft', stale: false }],
+      })
+      .mockResolvedValueOnce({ rows: [] }) // drift: lineage
+      .mockResolvedValueOnce({ rows: [] }) // drift: sources
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            section_key: '3.2.P.5.4',
+            source_key: 'batch:1',
+            title_at_link: 'CoA DP-001',
+            version_at_link: '1.0',
+            withdrawn: false,
+            current_version: '2.0',
+          },
+        ],
+      });
+    const res = await request(app)
+      .post('/api/cmc/module3-os/sections/aaaaaaaa-0000-4000-8000-00000000000a/3.2.P.5.4/approve')
+      .send({ reason: 'approve', meaning: 'approval', reauth: { password: 'ok' } });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('EVIDENCE_SUPERSEDED');
+    expect(res.body.detail).toContain('batch:1 was taken from "CoA DP-001" version 1.0, which version 2.0 has superseded');
+    expect(executedVerbs()).toContain('ROLLBACK');
+    expect(executedVerbs()).not.toContain('INSERT');
+    expect(mockRecordGoverned).not.toHaveBeenCalled();
+  });
+});

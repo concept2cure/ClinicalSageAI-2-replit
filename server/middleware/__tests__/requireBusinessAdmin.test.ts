@@ -15,11 +15,16 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock('../../db', () => ({
-  query: vi.fn(async () => ({ rows: [] })),
-}));
+const { query } = vi.hoisted(() => ({ query: vi.fn(async (..._a: unknown[]) => ({ rows: [] as unknown[] })) }));
+vi.mock('../../db', () => ({ query }));
 
 import { isBusinessAdmin, requireBusinessAdmin } from '../requireBusinessAdmin';
+
+/** An active platform_role_grants row for `userId`, as Access Management writes it. */
+function grantFor(userId: number) {
+  query.mockImplementation(async (_sql: unknown, params?: unknown) =>
+    ({ rows: Array.isArray(params) && params[0] === userId ? [{ ok: 1 }] : [] }));
+}
 
 function mkReq(over: Record<string, unknown> = {}): any {
   return {
@@ -55,9 +60,21 @@ describe('isBusinessAdmin', () => {
     else process.env.BUSINESS_CENTER_EMAILS = saved;
   });
 
-  it.each(['owner', 'business_admin', 'super_admin'])('accepts business role %s', role => {
-    expect(isBusinessAdmin(mkReq({ userRole: role }))).toBe(true);
-  });
+  /* D6, 2026-10-05 (docs/evidence/D6/2026-10-05-business-center-standing/).
+     This used to read "accepts business role %s" and pinned the defect.
+     req.userRole and req.user.role are the TENANT membership role
+     (server/auth.ts reads organization_users), and `owner` is a tenant
+     administrative role (tenant-users.ts, tenant-export.ts,
+     ORG_ROLE_FUNCTIONAL_GRANTS). The Business Center shows every client's
+     financials, so standing is platform standing: a platform_role_grants
+     row, or the owner's own address on the allowlist. */
+  it.each(['owner', 'business_admin', 'super_admin'])(
+    'a tenant membership role of %s is not platform standing',
+    role => {
+      expect(isBusinessAdmin(mkReq({ userRole: role }))).toBe(false);
+      expect(isBusinessAdmin(mkReq({ user: { id: 9, role, roles: [role] } }))).toBe(false);
+    }
+  );
 
   it.each(['support', 'platform_admin', 'admin', 'member', 'viewer'])(
     'rejects non-business role %s (stricter than Master Admin)',
@@ -94,10 +111,24 @@ describe('requireBusinessAdmin', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('calls next() for a business admin (sync fast-path, no db)', async () => {
+  it('403s a tenant owner with no platform grant — every client\'s financials are not a tenant\'s', async () => {
+    query.mockImplementation(async () => ({ rows: [] }));
     const res = mkRes();
     const next = vi.fn();
-    await requireBusinessAdmin(mkReq({ userId: 1, user: { id: 1 }, userRole: 'business_admin' }), res, next);
+    await requireBusinessAdmin(
+      mkReq({ userId: 5, user: { id: 5, role: 'owner', roles: ['owner', 'regulatory-author'] }, userRole: 'owner' }),
+      res,
+      next,
+    );
+    expect(res.statusCode).toBe(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('calls next() for a platform business grant, whatever the tenant role', async () => {
+    grantFor(1);
+    const res = mkRes();
+    const next = vi.fn();
+    await requireBusinessAdmin(mkReq({ userId: 1, user: { id: 1, role: 'member' }, userRole: 'member' }), res, next);
     expect(next).toHaveBeenCalledOnce();
   });
 });

@@ -51,6 +51,12 @@ const CASES: { prompt: string; expect: string }[] = [
   { prompt: 'what is blocking the clinical overview and what is the next step for the submission', expect: 'plan_submission_from_database_lock' },
   { prompt: 'will our dossier pass FDA technical validation and Elsa, what are the PDF requirements', expect: 'list_fda_technical_rules' },
   { prompt: 'why would the FDA gateway reject our study data, is the TS dataset and define.xml required', expect: 'list_fda_technical_rules' },
+  // The cited CMC regulatory record (cmc-knowledge-tools.ts, CMC/Module 3 lane 2026-10-04).
+  { prompt: 'what CMC quality information does the FDA require in an IND for a phase 1 study', expect: 'get_cmc_requirements' },
+  { prompt: 'what does the EU IMPD quality dossier need for a phase 2 biologic under the clinical trials regulation', expect: 'get_cmc_requirements' },
+  { prompt: 'is ICH Q2(R2) final and which guidance does it replace', expect: 'find_cmc_guidance' },
+  { prompt: 'which guidance covers nitrosamine impurities and what version is current', expect: 'find_cmc_guidance' },
+  { prompt: 'explain how impurity limits are justified for a phase 1 drug substance and the science behind it', expect: 'explain_cmc_topic' },
 ];
 
 describe('AnA tool-selection routing eval', () => {

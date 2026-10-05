@@ -20,6 +20,12 @@
  * overreach — the same four categories), so the claims dimension composes the
  * existing screener instead of duplicating it.
  *
+ * Claims register: the gate defaults to the screener's 'submission' register,
+ * which exempts named regulatory terms of art (the ICH E3 §5.3 consent
+ * statement, the Breakthrough Therapy designation, test-of-cure endpoints) and
+ * additionally composes governance.detectUnsupportedClaims, so a predicted
+ * approval or "the study was successful" is a high regulatory_outcome finding.
+ *
  * @module server/services/ana/writing-precision-gate
  */
 
@@ -27,7 +33,13 @@ import { assessGrounding } from './grounding-core';
 import { assessReadability, buildAbbreviationList, type ReadabilityAudience } from './medical-writing-qc';
 import { reviewMedicalWriting } from './medical-writing-review';
 import { checkTerminologyConsistency } from './terminology-consistency';
-import { screenPromotionalLanguage } from './promotional-screening';
+import {
+  screenPromotionalLanguage,
+  type ClaimCategory,
+  type ClaimRegister,
+  type ExemptedTerm,
+} from './promotional-screening';
+import { detectUnsupportedClaims } from '../clinical-regulatory-evidence/governance';
 
 export type PrecisionCategory =
   | 'grounding'
@@ -54,6 +66,10 @@ export interface PrecisionReport {
   /** 'pass' when no critical/high findings remain; else 'revise'. */
   verdict: 'pass' | 'revise';
   findings: PrecisionFinding[];
+  /** Claims register applied ('submission' unless the caller chose 'promotional'). */
+  register: ClaimRegister;
+  /** Lexicon hits the submission register dropped as terms of art, each with its basis. */
+  claimExemptions: ExemptedTerm[];
   metrics: {
     groundingScore: number;
     ungroundedClaims: number;
@@ -82,6 +98,8 @@ export interface CritiqueInput {
   audience?: ReadabilityAudience;
   /** When set, section coverage is checked against this document type's standard. */
   documentType?: string;
+  /** Claims register; defaults to 'submission' (regulatory prose). */
+  register?: ClaimRegister;
 }
 
 function groundingDimension(text: string, findings: PrecisionFinding[]) {
@@ -142,8 +160,70 @@ function abbreviationDimension(text: string, findings: PrecisionFinding[]) {
   return abbr;
 }
 
-function claimsDimension(text: string, findings: PrecisionFinding[]) {
-  const screen = screenPromotionalLanguage(text);
+const REGULATORY_OUTCOME: ClaimCategory = 'regulatory_outcome';
+
+/** Protocol-governance approvers (deny-list). Anything else after "by", a date included, is not one. */
+const GOVERNANCE_BODY =
+  '(?:(?:the|each|a|an|every|all)\\s+)?(?:(?:local|site|participating|central|independent|study|trial)\\s+){0,2}' +
+  '(?:sponsor|IRBs?|IECs?|ethics committees?|institutional review boards?|' +
+  '(?:Safety Review|(?:Independent )?Data Monitoring|Data (?:and )?Safety Monitoring|Steering|Dose Escalation)\\s+(?:Committee|Board)s?|' +
+  'SRC|DSMBs?|I?DMCs?|Medical Monitors?|(?:principal\\s+)?investigators?)\\b';
+const BODY_AHEAD = new RegExp(`^${GOVERNANCE_BODY}`, 'i');
+const BODY_BEHIND = new RegExp(`(?:^|[\\s,(])${GOVERNANCE_BODY}\\s*$`, 'i');
+/** A coordinator after an approver; another agent follows when the next word is "by", a determiner or capitalised. */
+const COORDINATED_AGENT_AHEAD = /^\s*(?:,\s*(?:(?:and|or)\s+)?|\s(?:and\/or|and|or)\s+|\/\s*)(?=by\s|(?:the|a|an|each)\s|[A-Z])(?:by\s+)?/;
+/** Before a subject: "and"/"or", or a comma after a capitalised name ("FDA, the IRB and"); "After review," is not one. */
+const COORDINATOR_BEHIND = /(?:(?<=\b[A-Z][\w-]*)\s*,|\b(?:and\/or|and|or)|\/)\s*$/;
+
+/** After the last body, a tail that may still name an agent: "'s date", "-requested", " (FDA)", ", then by FDA". */
+const AGENT_IN_TAIL = /^(?:['’]s\b|-|\s*[([])|\bby\b/i;
+
+/** "approved by the IRB (and the sponsor)": every named agent is a governance body. */
+function namesOnlyGovernanceApprovers(after: string): boolean {
+  let rest = after.replace(/^\s+by\s+/i, '');
+  for (;;) {
+    const body = BODY_AHEAD.exec(rest);
+    if (!body) return false;
+    rest = rest.slice(body[0].length);
+    const more = COORDINATED_AGENT_AHEAD.exec(rest);
+    if (!more) return !AGENT_IN_TAIL.test(rest.split(/[.;]/)[0]);
+    rest = rest.slice(more[0].length);
+  }
+}
+
+/** "The Medical Monitor (and the SRC) will approve": every coordinated subject is a governance body. */
+function subjectIsOnlyGovernanceBodies(before: string): boolean {
+  let rest = before;
+  for (;;) {
+    const body = BODY_BEHIND.exec(rest);
+    if (!body) return false;
+    rest = rest.slice(0, body.index);
+    const more = COORDINATOR_BEHIND.exec(rest);
+    if (!more) return true;
+    rest = rest.slice(0, more.index);
+  }
+}
+
+/**
+ * governance's approval pattern also matches protocol governance ("will be
+ * approved by the sponsor / the Safety Review Committee / each site IRB", "the
+ * Medical Monitor will approve"). Those are operational steps, not predictions of
+ * a regulatory decision. Fail closed: keep every approval match unless its only
+ * approvers are named governance bodies. "by the end of 2027", "by MHLW" and "by
+ * the Food and Drug Administration" are kept because they are not on the list.
+ */
+function predictsRegulatoryDecision(text: string, v: { match: string; index: number }): boolean {
+  if (!/approv/i.test(v.match)) return true; // the other governance patterns are not approval verbs
+  if (/\bbe\s+approved$/i.test(v.match)) {
+    const after = text.slice(v.index + v.match.length);
+    return !(/^\s+by\s/i.test(after) && namesOnlyGovernanceApprovers(after));
+  }
+  const clauseStart = Math.max(text.lastIndexOf('.', v.index), text.lastIndexOf(';', v.index)) + 1;
+  return !subjectIsOnlyGovernanceBodies(text.slice(clauseStart, v.index));
+}
+
+function claimsDimension(text: string, register: ClaimRegister, findings: PrecisionFinding[]) {
+  const screen = screenPromotionalLanguage(text, { register });
   for (const f of screen.flags) {
     findings.push({
       category: 'claims',
@@ -151,6 +231,17 @@ function claimsDimension(text: string, findings: PrecisionFinding[]) {
       message: `Over-claim (${f.category}): "${f.phrase}". ${f.suggestion}`,
       evidence: [f.context],
     });
+  }
+  if (register === 'submission') {
+    for (const v of detectUnsupportedClaims(text)) {
+      if (!predictsRegulatoryDecision(text, v)) continue;
+      findings.push({
+        category: 'claims',
+        severity: 'high',
+        message: `Unsupported claim (${REGULATORY_OUTCOME}): "${v.match}". ${v.reason} State the evidence and leave the regulatory decision to the agency.`,
+        evidence: [text.slice(Math.max(0, v.index - 40), v.index + v.match.length + 40).trim()],
+      });
+    }
   }
   return screen;
 }
@@ -178,13 +269,14 @@ function structureDimension(text: string, documentType: string | undefined, find
 export function critiqueDraft(input: CritiqueInput): PrecisionReport {
   const text = input.text ?? '';
   const audience: ReadabilityAudience = input.audience ?? 'regulator';
+  const register: ClaimRegister = input.register ?? 'submission';
   const findings: PrecisionFinding[] = [];
 
   const grounding = groundingDimension(text, findings);
   const consistency = consistencyDimension(text, findings);
   const readability = readabilityDimension(text, audience, findings);
   const abbr = abbreviationDimension(text, findings);
-  claimsDimension(text, findings);
+  const claims = claimsDimension(text, register, findings);
   const missingSections = structureDimension(text, input.documentType, findings);
 
   findings.sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity));
@@ -197,6 +289,8 @@ export function critiqueDraft(input: CritiqueInput): PrecisionReport {
     score,
     verdict,
     findings,
+    register,
+    claimExemptions: claims.exempted,
     metrics: {
       groundingScore: grounding.groundingScore,
       ungroundedClaims: grounding.ungroundedClaims.length,
@@ -224,6 +318,8 @@ export interface RevisionVerdict {
   resolvedFindings: number;
   remainingCriticalHigh: number;
   regressions: PrecisionFinding[];
+  /** Claims register both texts were judged in. */
+  register: ClaimRegister;
 }
 
 export function verifyRevision(
@@ -248,6 +344,7 @@ export function verifyRevision(
     resolvedFindings: resolved,
     remainingCriticalHigh,
     regressions,
+    register: a.register,
   };
 }
 
@@ -279,6 +376,8 @@ export interface DocumentCritique {
    * plus any required section missing from the document as a whole.
    */
   crossSectionFindings: PrecisionFinding[];
+  /** Claims register applied to every section and the whole document. */
+  register: ClaimRegister;
 }
 
 /**
@@ -289,10 +388,10 @@ export interface DocumentCritique {
  */
 export function critiqueDocument(
   sections: DocumentSectionInput[],
-  opts: { audience?: ReadabilityAudience; documentType?: string } = {}
+  opts: { audience?: ReadabilityAudience; documentType?: string; register?: ClaimRegister } = {}
 ): DocumentCritique {
   const sectionCritiques: SectionCritique[] = sections.map(s => {
-    const report = critiqueDraft({ text: s.text, audience: opts.audience });
+    const report = critiqueDraft({ text: s.text, audience: opts.audience, register: opts.register });
     return {
       title: s.title,
       score: report.score,
@@ -317,6 +416,7 @@ export function critiqueDocument(
     text: sections.map(s => s.text).join('\n\n'),
     audience: opts.audience,
     documentType: opts.documentType,
+    register: opts.register,
   });
   const crossSectionFindings = whole.findings.filter(
     f =>
@@ -333,7 +433,7 @@ export function critiqueDocument(
       ? 'revise'
       : 'pass';
 
-  return { documentScore, verdict, sections: sectionCritiques, crossSectionFindings };
+  return { documentScore, verdict, sections: sectionCritiques, crossSectionFindings, register: whole.register };
 }
 
 /**

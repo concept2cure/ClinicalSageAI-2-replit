@@ -252,7 +252,7 @@ const DOCUMENT_TYPES: DocumentTypeStandard[] = [
     id: 'meeting_package',
     label: 'Regulatory Meeting/Briefing Package',
     segment: 'general',
-    governingStandards: ['FDA formal-meeting guidance (Type A/B/C)', 'EMA scientific-advice procedure'],
+    governingStandards: ['FDA formal-meetings guidance for PDUFA products (final, Aug 2026): Type A, B, B(EOP), C, D, INTERACT', 'EMA scientific-advice procedure'],
     purpose: 'Frame specific questions to the agency and provide the minimum data to get an actionable answer.',
     defaultAudience: 'regulator',
     structure: ['Product & development context', 'Specific questions (numbered)', 'Company position per question', 'Supporting data/summaries', 'Proposed path forward'],
