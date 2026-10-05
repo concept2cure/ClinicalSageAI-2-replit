@@ -25,6 +25,7 @@ import { listMedicalWritingCatalog } from '../medical-writing';
 const CLEAN = 'All 186 subjects were analyzed for efficacy, per the SAP and the protocol.';
 
 const notice = (type: string) =>
+  // nosemgrep: detect-non-literal-regexp -- a test: type is a literal document type, its dots escaped
   new RegExp(`structure not checked: '${type.replace(/\./g, '\\.')}' is not an indexed document type`, 'i');
 
 describe('critiqueDraft — an unindexed documentType is never a silent pass', () => {
