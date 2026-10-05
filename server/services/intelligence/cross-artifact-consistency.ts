@@ -528,6 +528,12 @@ export interface InternalNumericalCandidate {
 export interface NumericalIntegrityReport {
   readonly contentLength: number;
   readonly factsExtracted: number;
+  /**
+   * Distinct labels stated at least twice: the only figures this check can
+   * compare. 0 means nothing was compared, whatever the verdict says — a text
+   * that states every labelled figure once reads 'clean' (row 74, S5).
+   */
+  readonly labelsCompared: number;
   readonly candidateCount: number;
   readonly candidates: readonly InternalNumericalCandidate[];
   /**
@@ -555,6 +561,7 @@ export function checkInternalNumericalIntegrity(content: string): NumericalInteg
     return {
       contentLength: content?.length ?? 0,
       factsExtracted: 0,
+      labelsCompared: 0,
       candidateCount: 0,
       candidates: [],
       verdict: 'clean',
@@ -568,8 +575,10 @@ export function checkInternalNumericalIntegrity(content: string): NumericalInteg
   const byLabel = groupByLabel(facts);
 
   const candidates: InternalNumericalCandidate[] = [];
+  let labelsCompared = 0;
   for (const [label, group] of byLabel) {
     if (group.length < 2) continue;
+    labelsCompared++;
     const distinctValuesSet = new Set<string>();
     for (const f of group) {
       const lower = f.value.replace(/,/g, '').trim();
@@ -604,6 +613,7 @@ export function checkInternalNumericalIntegrity(content: string): NumericalInteg
   return {
     contentLength: content?.length ?? 0,
     factsExtracted: facts.length,
+    labelsCompared,
     candidateCount: candidates.length,
     candidates,
     verdict,

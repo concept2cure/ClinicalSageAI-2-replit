@@ -257,7 +257,9 @@ function runGate() {
   }
 }
 
+// nosemgrep: detect-non-literal-regexp -- a self-test: n is a number the test passes
 const found = (n) => new RegExp(`fixtures found\\s*:\\s*${n}\\n`);
+// nosemgrep: detect-non-literal-regexp -- a self-test: n is a number the test passes
 const writes = (n) => new RegExp(`columns the writer writes\\s*:\\s*${n}\\n`);
 const OK_LINE = "every audit_logs fixture accepts the writer's full column list";
 
@@ -458,6 +460,7 @@ const cases = [
         // Each on the missing: line, in whatever order the real INSERT lists
         // them: reordering that INSERT does not make the gate wrong.
         expectRe: ['old_values', 'new_values', 'ip_address', 'user_agent'].map(
+          // nosemgrep: detect-non-literal-regexp -- a self-test: c is one of four literal column names
           (c) => new RegExp(`missing: [^\\n]*\\b${c}\\b`),
         ),
       };

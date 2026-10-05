@@ -1,0 +1,5 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-password: when the count is cleared (IAM-30) > a right password does not clear the count of an account with an authenticator
+ FAIL  server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-password: when the count is cleared (IAM-30) > control: a right password clears it for an account whose second factor is the emailed code
+ Test Files  1 failed | 17 passed (18)
+      Tests  2 failed | 338 passed (340)

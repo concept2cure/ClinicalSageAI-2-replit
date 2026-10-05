@@ -55,6 +55,7 @@ const join = (base: string, sub: string) => (sub === '/' ? base : `${base}${sub}
 
 /** The file a factory named in `router.use('<sub>', factory())` is imported from. */
 function fileOfFactory(src: string, factory: string): string {
+  // nosemgrep: detect-non-literal-regexp -- a test: factory is an identifier named in the test
   const m = src.match(new RegExp(`import\\s*\\{[^}]*\\b${factory}\\b[^}]*\\}\\s*from\\s*'(\\.[^']+)'`));
   if (!m) throw new Error(`${ROUTER} mounts ${factory} but no relative import names it`);
   return `server/routes/${m[1].replace(/^\.\//, '')}.ts`;

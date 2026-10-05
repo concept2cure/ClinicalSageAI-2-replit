@@ -11,6 +11,7 @@ import {
 import { clientIpOf } from '../utils/client-ip';
 import { createScopedLogger } from '../utils/logger.js';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
+import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 import {
   issueInvitation,
   type InvitationDelivery,
@@ -81,12 +82,16 @@ async function authorizeOrgAccess(
   opts: { requireAdmin: boolean }
 ): Promise<string | false> {
   const callerId = Number(req.user?.id ?? req.userId);
-  const callerRole = req.userRole ?? req.user?.role;
   if (!callerId || Number.isNaN(callerId)) {
     res.status(401).json({ error: 'Authentication required' });
     return false;
   }
-  if (callerRole === 'super_admin') return 'super_admin';
+  // Platform staff: platform standing for super_admin (holdsPlatformRole),
+  // never the request role. That is the tenant membership role behind
+  // server/auth.ts, so until 2026-10-05 a membership row naming super_admin
+  // administered every organization's users (D6,
+  // docs/evidence/D6/2026-10-05-cross-tenant-staff/).
+  if (await holdsPlatformRole(req, ['super_admin'])) return 'super_admin';
   const membership = await pool.query(
     'SELECT role FROM organization_users WHERE user_id = $1 AND organization_id = $2 LIMIT 1',
     [callerId, targetOrgId]

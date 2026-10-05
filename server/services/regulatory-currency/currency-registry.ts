@@ -411,6 +411,7 @@ function norm(s: string): string {
 function containsWords(haystack: string, needle: string): boolean {
   if (!needle) return false;
   const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // nosemgrep: detect-non-literal-regexp -- needle is escaped on the line above
   return new RegExp(`(^|[^a-z0-9])${escaped}(?:s|es)?($|[^a-z0-9])`).test(haystack);
 }
 

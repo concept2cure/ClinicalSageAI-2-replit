@@ -1,0 +1,7 @@
+# Each mutant applied alone to the fix; the changed test files must go red.
+M1 standing reads the request role again → Tests  25 failed | 262 passed (287)
+M2 standing ignores the grant row → Tests  58 failed | 229 passed (287)
+M3 no per-request memo → Tests  1 failed | 286 passed (287)
+M4 organizations staff from the request role → Tests  14 failed | 273 passed (287)
+M5 lifecycle asks standing on every request → Tests  2 failed | 285 passed (287)
+M6 cross-org scope opens for anyone → Tests  8 failed | 279 passed (287)

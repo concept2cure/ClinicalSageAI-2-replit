@@ -188,7 +188,7 @@ function requireJwtSecret(): string {
 function encrypt(plaintext: string): string {
   const key = getEncryptionKey();
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv, { authTagLength: AUTH_TAG_LENGTH });
 
   let encrypted = cipher.update(plaintext, 'utf8', 'hex');
   encrypted += cipher.final('hex');
@@ -213,7 +213,9 @@ function decrypt(encryptedStr: string): string {
   let lastErr: unknown;
   for (const key of getDecryptionKeys()) {
     try {
-      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+      // Full-length tag only: without authTagLength a 4-byte tag is accepted
+      // (2026-10-05, docs/evidence/D6/2026-10-05-semgrep-red/).
+      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv, { authTagLength: AUTH_TAG_LENGTH });
       decipher.setAuthTag(authTag);
       let decrypted = decipher.update(encrypted, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
@@ -689,3 +691,6 @@ export function verifyMfaChallengeToken(token: string): {
     return null;
   }
 }
+
+/** The secret cipher, for tests (tests/…/gcm-tag-length.test.ts). */
+export const __testing = { encrypt, decrypt };

@@ -462,6 +462,7 @@ function locate(r: RenderedSection, q: string): { start: number; end: number } |
   const { content, at } = searchable(r);
   const words = q.split(/\s+/).filter(Boolean).map(escapeRegExp);
   if (!words.length) return null;
+  // nosemgrep: detect-non-literal-regexp -- words are escaped (escapeRegExp) and joined by \s*: no nested quantifier
   const exact = new RegExp(words.join('\\s*'), 'iu').exec(content);
   const span = exact ? { index: exact.index, end: exact.index + exact[0].length } : wordsInOrder(content, words);
   if (!span) return null;
@@ -477,7 +478,9 @@ const WORD_GAP = 60;
  * between the words, which backtracks exponentially on a repetitive query.
  */
 function wordsInOrder(content: string, words: string[]): { index: number; end: number } | null {
+  // nosemgrep: detect-non-literal-regexp -- each word is escaped (escapeRegExp, in locate)
   const first = new RegExp(words[0], 'giu');
+  // nosemgrep: detect-non-literal-regexp -- each word is escaped (escapeRegExp, in locate); a scan, not one backtracking pattern
   const rest = words.slice(1).map((w) => new RegExp(w, 'iu'));
   let firstHit: { index: number; end: number } | null = null;
   for (let m = first.exec(content); m; m = first.exec(content)) {

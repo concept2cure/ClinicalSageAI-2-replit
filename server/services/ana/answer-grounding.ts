@@ -426,6 +426,7 @@ function escapeRegExp(s: string): string {
 
 /** `needle` in `haystack`, not continued as a longer number ("11" is not "110" or "11.5"). */
 function containsCitation(haystack: string, needle: string): boolean {
+  // nosemgrep: detect-non-literal-regexp -- needle is escaped (escapeRegExp)
   return new RegExp(`(?<![0-9])${escapeRegExp(needle)}(?![0-9]|\\.[0-9])`).test(haystack);
 }
 
@@ -434,16 +435,19 @@ function containsIchCode(haystack: string, code: string): boolean {
   const m = /^([QSEM]\d{1,2}[A-Z]?)(\(R\d{1,2}\))?$/.exec(code);
   if (!m) return false;
   const rev = m[2] ? `\\s?${escapeRegExp(m[2])}` : '(?!\\s?\\(R)';
+  // nosemgrep: detect-non-literal-regexp -- m[1] matched [QSEM]\d{1,2}[A-Z]? above; the revision is escaped
   return new RegExp(`(?<![A-Z0-9])${m[1]}${rev}(?![0-9A-Z])`).test(haystack);
 }
 
 /** `needle` in `haystack` as a whole token: not inside a longer identifier. */
 function containsToken(haystack: string, needle: string): boolean {
+  // nosemgrep: detect-non-literal-regexp -- needle is escaped (escapeRegExp)
   return new RegExp(`(?<![A-Z0-9])${escapeRegExp(needle)}(?![A-Z0-9])`).test(haystack);
 }
 
 /** A labelled number held with a label ("PMID 31234567", "pmid: 31234567", "NDA214360"). */
 function containsLabelled(haystack: string, label: string, number: string): boolean {
+  // nosemgrep: detect-non-literal-regexp -- label is a LABELED_ID_PATTERNS constant; number is escaped
   return new RegExp(`(?:${label})[^0-9A-Z]{0,12}${escapeRegExp(number)}(?![0-9])`).test(haystack);
 }
 
@@ -528,6 +532,7 @@ function checkTextClaims(
     while ((m = re.exec(answer)) !== null) {
       const number = m[1];
       settle(kind, number, m[0].replace(TRAILING_PUNCT_RE, '').trim(), (t) => containsLabelled(t.upper, label, number), (t) =>
+        // nosemgrep: detect-non-literal-regexp -- number is a capture of \d{4,8} from LABELED_ID_PATTERNS: digits only
         new RegExp(`(?<![0-9])${number}(?![0-9])`).test(t.upper),
       );
     }

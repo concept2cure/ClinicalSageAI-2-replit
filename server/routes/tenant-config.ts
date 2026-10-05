@@ -12,6 +12,7 @@ import { requireOrganizationContext } from '../middleware/tenantContext';
 import { createScopedLogger } from '../utils/logger';
 import { requestDb } from '../db/requestDb';
 import { staffCrossOrgScope } from '../middleware/staffCrossOrgScope';
+import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 // The one settings writer and its record, shared with the AnA platform
 // controller (P1-49, DP-58): services/tenant/tenant-settings-writer.ts.
 import {
@@ -51,8 +52,25 @@ const router = Router();
  */
 const staffAcrossOrgs = staffCrossOrgScope({
   param: 'tenantId',
-  isStaff: req => req.userRole === 'super_admin',
+  isStaff: req => isTenantStaff(req),
 });
+
+/**
+ * Platform staff for this router: platform standing for super_admin
+ * (holdsPlatformRole), never the request role. Behind server/auth.ts the
+ * request role is the tenant membership role, so a membership row naming
+ * super_admin used to read and write any tenant's settings (D6, 2026-10-05,
+ * docs/evidence/D6/2026-10-05-cross-tenant-staff/).
+ */
+function isTenantStaff(req: Parameters<typeof holdsPlatformRole>[0]): Promise<boolean> {
+  return holdsPlatformRole(req, ['super_admin']);
+}
+
+/** An administrator of THIS tenant, or platform staff. The handlers' write rule. */
+async function mayWriteTenant(req: Parameters<typeof holdsPlatformRole>[0], tenantId: number): Promise<boolean> {
+  if (req.userRole === 'admin' && tenantId === req.tenantId) return true;
+  return isTenantStaff(req);
+}
 
 const tenantSettingsSchema = z.object({
   branding: z
@@ -197,7 +215,7 @@ router.get('/:tenantId/settings', authMiddleware, requireOrganizationContext, as
     }
 
     // Check permissions
-    if (req.userRole !== 'super_admin' && tenantId !== req.tenantId) {
+    if (tenantId !== req.tenantId && !(await isTenantStaff(req))) {
       return res
         .status(403)
         .json({ error: 'You can only view settings for your own organization' });
@@ -244,16 +262,13 @@ router.patch(
         return res.status(403).json({ error: CONNECTOR_NOT_A_GENERAL_SETTING });
       }
 
-      // Check permissions
-      if (req.userRole !== 'super_admin' && req.userRole !== 'admin') {
-        return res.status(403).json({ error: 'Only organization admins can update settings' });
-      }
-
-      // For regular admins, ensure they're updating their own organization
-      if (req.userRole === 'admin' && tenantId !== req.tenantId) {
-        return res
-          .status(403)
-          .json({ error: 'You can only update settings for your own organization' });
+      // Check permissions: this tenant's administrator, or platform staff.
+      if (!(await mayWriteTenant(req, tenantId))) {
+        return res.status(403).json({
+          error: req.userRole === 'admin'
+            ? 'You can only update settings for your own organization'
+            : 'Only organization admins can update settings',
+        });
       }
 
       // Validate request body
@@ -303,16 +318,13 @@ router.post(
         return res.status(400).json({ error: 'Invalid tenant ID' });
       }
 
-      // Check permissions
-      if (req.userRole !== 'super_admin' && req.userRole !== 'admin') {
-        return res.status(403).json({ error: 'Only organization admins can reset settings' });
-      }
-
-      // For regular admins, ensure they're updating their own organization
-      if (req.userRole === 'admin' && tenantId !== req.tenantId) {
-        return res
-          .status(403)
-          .json({ error: 'You can only reset settings for your own organization' });
+      // Check permissions: this tenant's administrator, or platform staff.
+      if (!(await mayWriteTenant(req, tenantId))) {
+        return res.status(403).json({
+          error: req.userRole === 'admin'
+            ? 'You can only reset settings for your own organization'
+            : 'Only organization admins can reset settings',
+        });
       }
 
       // Every setting the tier's defaults define is restored; what they do not
@@ -370,16 +382,13 @@ router.patch(
         });
       }
 
-      // Check permissions
-      if (req.userRole !== 'super_admin' && req.userRole !== 'admin') {
-        return res.status(403).json({ error: 'Only organization admins can update settings' });
-      }
-
-      // For regular admins, ensure they're updating their own organization
-      if (req.userRole === 'admin' && tenantId !== req.tenantId) {
-        return res
-          .status(403)
-          .json({ error: 'You can only update settings for your own organization' });
+      // Check permissions: this tenant's administrator, or platform staff.
+      if (!(await mayWriteTenant(req, tenantId))) {
+        return res.status(403).json({
+          error: req.userRole === 'admin'
+            ? 'You can only update settings for your own organization'
+            : 'Only organization admins can update settings',
+        });
       }
 
       // Get schema for just this section

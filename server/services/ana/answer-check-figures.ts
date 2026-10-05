@@ -247,6 +247,7 @@ const COUNT_WORDS: Record<string, RegExp> = {
 
 /** The unit a number in a source is followed by, in the same vocabulary as the answer's. */
 const unitAfter = (table: Array<[RegExp, string]>, unitRe: string, after: string): string | undefined => {
+  // nosemgrep: detect-non-literal-regexp -- unitRe is DOSE_UNIT_RE or DURATION_UNIT_RE, module constants; only `after` is data, and it is the input, not the pattern
   const m = new RegExp(String.raw`^[ \t]?-?[ \t]?(${unitRe})(?![\w/])`, 'i').exec(after);
   return m ? unitOf(table, m[1]) : undefined;
 };

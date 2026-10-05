@@ -23,6 +23,7 @@ const cases = [
 ];
 let failed = 0;
 for (const [name, want, body] of cases) {
+  // nosemgrep: react-insecure-request -- the stand-in model server this harness started on loopback; nothing leaves the host
   const r = await fetch('http://127.0.0.1:8798/v1/messages', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
   const text = await r.text();
   const ok = r.status === want;

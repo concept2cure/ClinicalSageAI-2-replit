@@ -170,10 +170,18 @@ const PLATFORM_ADMIN = { userId: PLATFORM_GRANT_HOLDER, organizationId: 8, user:
 // A tenant membership row naming super_admin, and no platform grant.
 const MEMBERSHIP_SUPER_ADMIN = { userId: 4, organizationId: 8, userRole: 'super_admin', user: { id: 4, organizationId: 8, role: 'super_admin', roles: ['super_admin'] } };
 
-function part11App() {
+/**
+ * The seal check asks holdsPlatformRole(['super_admin', 'platform_admin']). Changed
+ * 2026-10-05 (D6, docs/evidence/D6/2026-10-05-cross-tenant-staff/): this harness gave
+ * user 1 `roles: ['platform_admin']`, which the route read and which behind
+ * server/auth.ts is the tenant membership role. Standing is now PLATFORM_ADMIN's
+ * platform_role_grants row (platformGrantRows), as in production; `identity` lets a
+ * case put a different caller in front of the route.
+ */
+function part11App(identity: Record<string, unknown> = PLATFORM_ADMIN) {
   const app = express();
   app.use((req, _res, next) => {
-    Object.assign(req as object, { pool: { query: h.dbQuery }, user: { id: 1, organizationId: 7, roles: ['platform_admin'] } });
+    Object.assign(req as object, { pool: { query: h.dbQuery } }, identity);
     next();
   });
   app.use('/', part11Router);
@@ -221,6 +229,18 @@ describe('with an anchor bucket configured, a chain whose anchored head is gone 
     expect(res.status).toBe(200);
     expect(res.body.data.ok).toBe(false);
     expect(res.body.data.head).toMatchObject({ verified: false, status: 'broken' });
+  });
+
+  // D6, 2026-10-05: a membership row naming platform_admin or super_admin, with no
+  // platform_role_grants row, was handed estate-wide hash material by this route.
+  it.each([
+    ['platform_admin', { userId: 5, organizationId: 7, userRole: 'platform_admin', user: { id: 5, organizationId: 7, role: 'platform_admin', roles: ['platform_admin'] } }],
+    ['super_admin', MEMBERSHIP_SUPER_ADMIN],
+  ])('GET /audit-trail/seal-integrity refuses a tenant membership role of %s with no platform grant (403), and walks nothing', async (_role, identity) => {
+    const res = await request(part11App(identity)).get('/audit-trail/seal-integrity');
+    expect(res.status).toBe(403);
+    expect(res.body.data).toBeUndefined();
+    expect(h.verifyAuditIntegrity).not.toHaveBeenCalled();
   });
 
   it('the licensing history reports the record store broken, not verified', async () => {
