@@ -62,6 +62,10 @@ function runGit(args) {
   return execFileSync('git', args, {
     encoding: 'utf8',
     stdio: ['pipe', 'pipe', 'pipe'],
+    // `git ls-files` passed execFileSync's 1 MB default once a vendored skill
+    // tree landed (2026-10-04); the scan then died with ENOBUFS before reading
+    // a file, and CI reported the crash as a "regression".
+    maxBuffer: 64 * 1024 * 1024,
   }).trim();
 }
 
