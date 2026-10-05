@@ -10,12 +10,34 @@
  *
  * Pure and deterministic (no I/O, no LLM), so the claim/citation detection is
  * directly unit-testable.
+ *
+ * Cross-references (Section/§/Table/Figure/Listing/Appendix/Module) are
+ * detected and classified by the one canonical detector, in-text-references.ts,
+ * on every path. A cross-reference grounds a claim unless it is known not to
+ * resolve. With no options nothing places the text in a document, so only an
+ * impossible CTD code ("Module 6.1") is unresolved and every other reference
+ * grounds as written (check_grounding). With `opts.references` the document
+ * class and captions decide: until 2026-10-05 an invented "Table 14.9.99"
+ * grounded an invented 45% in a CSR (g-in-text-reference-resolution).
  */
+
+import {
+  classifyInTextReferences,
+  type ClassifiedReference,
+  type ReferenceContext,
+} from './in-text-references';
 
 export interface QuantClaim {
   sentence: string;
   numbers: string[];
   hasCitation: boolean;
+  /** The claim sentence's cross-references, classified. */
+  references: ClassifiedReference[];
+}
+
+export interface GroundingOptions {
+  /** Resolve cross-references against this context instead of trusting the token. */
+  references?: ReferenceContext;
 }
 
 export interface GroundingReport {
@@ -25,6 +47,11 @@ export interface GroundingReport {
   /** grounded / total; 1 when there are no quantitative claims to ground. */
   groundingScore: number;
   ok: boolean;
+  /**
+   * Every quantitative claim with its classified cross-references — grounded or
+   * not, since a broken reference on a cited claim is still broken.
+   */
+  referencedClaims: QuantClaim[];
 }
 
 // Quantitative-claim signals: percentages, p-values, n=, CIs, fold-changes,
@@ -49,9 +76,7 @@ const CITATION_PATTERNS: RegExp[] = [
   /\bK\d{6}\b/, // 510(k) number
   /\bNCT\d{8}\b/, // trial id
   /\bdoi:\s*\S+/i,
-  /\b(?:Section|§)\s*\d/i,
   /\bp\.?\s?\d+\b/i, // p. 12  (page reference)
-  /\b(?:Table|Figure|Appendix)\s*\d/i,
   /\bper\s+(?:the\s+)?(?:ICH|FDA|EMA|PMDA|guidance|protocol|SAP|CSR|label|monograph)\b/i,
   /\baccording to\b/i,
   /\b(?:CFR|ICH\s?[EQSM]\d)/i,
@@ -78,15 +103,13 @@ function hasQuant(sentence: string): boolean {
   return QUANT_PATTERNS.some(re => re.test(sentence));
 }
 
-function hasCitation(sentence: string): boolean {
-  return CITATION_PATTERNS.some(re => re.test(sentence));
-}
-
 /**
  * Assess whether every quantitative claim in `text` is grounded by a nearby
  * citation/source marker. Returns the ungrounded claims and a 0–1 score.
+ * An unresolved cross-reference grounds nothing; `opts.references` says what
+ * document the text belongs to.
  */
-export function assessGrounding(text: string): GroundingReport {
+export function assessGrounding(text: string, opts: GroundingOptions = {}): GroundingReport {
   const sentences = splitSentences(text);
   const claims: QuantClaim[] = [];
 
@@ -95,10 +118,13 @@ export function assessGrounding(text: string): GroundingReport {
     // A claim is grounded only if its OWN sentence carries a citation/source
     // marker. Same-sentence is the defensible rule for a grounding guarantee —
     // a citation elsewhere must not silently ground an unrelated figure.
+    const references = classifyInTextReferences(sentence, opts.references ?? {});
     claims.push({
       sentence,
       numbers: numbersIn(sentence),
-      hasCitation: hasCitation(sentence),
+      hasCitation:
+        CITATION_PATTERNS.some(re => re.test(sentence)) || references.some(r => r.status !== 'unresolved'),
+      references,
     });
   }
 
@@ -112,5 +138,6 @@ export function assessGrounding(text: string): GroundingReport {
     ungroundedClaims: ungrounded,
     groundingScore: Math.round(groundingScore * 1000) / 1000,
     ok: ungrounded.length === 0,
+    referencedClaims: claims,
   };
 }
