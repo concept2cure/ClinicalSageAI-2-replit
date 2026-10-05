@@ -1,0 +1,81 @@
+# g-stf-name-tags-and-shape RED — run against HEAD stf-generator.ts / regional-packager.ts with the new test (2026-10-05T11:55:05Z)
+# cmd: npx vitest run server/services/ectd/__tests__/stf-generator.test.ts
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > names the file after the study, not stf.xml 14ms
+   → expected 'stf.xml' to be 'stf-abc-301.xml' // Object.is equality
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > keeps the sponsor study-id verbatim in the XML and case-folds only the file name 2ms
+   → expected 'stf.xml' to be 'stf-abc-301.xml' // Object.is equality
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (S&1) instead of escaping it 3ms
+   → expected [Function] to throw an error
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc 301) instead of escaping it 1ms
+   → expected [Function] to throw an error
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc_301) instead of escaping it 3ms
+   → expected [Function] to throw an error
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc/301) instead of escaping it 1ms
+   → expected [Function] to throw an error
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) instead of escaping it 1ms
+   → expected [Function] to throw an error
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses two studies whose ids fold to the same STF file name 1ms
+   → expected [Function] to throw an error
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > exports the dataset and define.xml tag lists with the study-data TRC basis 1ms
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for an .xpt dataset carrying a free-text tag 1ms
+   → expected [Function] to throw an error
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for a define.xml carrying a document tag 1ms
+   → expected [Function] to throw an error
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > accepts the 1735 tags on .xpt and define.xml leaves 2ms
+   → expected undefined to deeply equal []
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes a doc-content per leaf pointing at its index.xml leaf, holding an info-type file-tag, and no <leaf> 1ms
+   → expected '<?xml version="1.0" encoding="UTF-8"?…' not to match /<leaf[\s>]/
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > refuses a leaf with no index.xml leaf ID or no path to index.xml 1ms
+   → expected [Function] to throw an error
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > does not tag a deleted leaf: it ships no file to describe 21ms
+   → expected '<?xml version="1.0" encoding="UTF-8"?…' to contain 'index.xml#kept'
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes the study title from metadata and never invents a category 20ms
+   → expected '<?xml version="1.0" encoding="UTF-8"?…' not to contain 'study-category'
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > warns, without refusing, on a document tag outside the recall list 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > escapes XML metacharacters in titles 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > skips and counts untagged (no studyId) leaves 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > throws when a tagged leaf is missing its file-tag 3ms
+ × server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > emits the DTD declaration and ectd/xlink namespaces, one file per study in sorted order 2ms
+   → expected [ 'stf.xml', 'stf.xml' ] to deeply equal [ 'stf-s-001.xml', 'stf-s-002.xml' ]
+ × server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > ships m5/5-3-5-1/study-001/stf-study-001.xml whose doc-content resolves to the report leaf ID in index.xml 261ms
+   → expected [ 'm1/', 'm1/us/', …(13) ] to include 'm5/5-3-5-1/study-001/stf-study-001.xml'
+ × server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > refuses to package an .xpt study leaf tagged outside the 1735 list 28ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > names the file after the study, not stf.xml
+AssertionError: expected 'stf.xml' to be 'stf-abc-301.xml' // Object.is equality
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > keeps the sponsor study-id verbatim in the XML and case-folds only the file name
+AssertionError: expected 'stf.xml' to be 'stf-abc-301.xml' // Object.is equality
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (S&1) instead of escaping it
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc 301) instead of escaping it
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc_301) instead of escaping it
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc/301) instead of escaping it
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) instead of escaping it
+AssertionError: expected [Function] to throw an error
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses two studies whose ids fold to the same STF file name
+AssertionError: expected [Function] to throw an error
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > exports the dataset and define.xml tag lists with the study-data TRC basis
+TypeError: Cannot read properties of undefined (reading 'xpt')
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for an .xpt dataset carrying a free-text tag
+AssertionError: expected [Function] to throw an error
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for a define.xml carrying a document tag
+AssertionError: expected [Function] to throw an error
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > accepts the 1735 tags on .xpt and define.xml leaves
+AssertionError: expected undefined to deeply equal []
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes a doc-content per leaf pointing at its index.xml leaf, holding an info-type file-tag, and no <leaf>
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8"?…' not to match /<leaf[\s>]/
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > refuses a leaf with no index.xml leaf ID or no path to index.xml
+AssertionError: expected [Function] to throw an error
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > does not tag a deleted leaf: it ships no file to describe
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8"?…' to contain 'index.xml#kept'
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes the study title from metadata and never invents a category
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8"?…' not to contain 'study-category'
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > warns, without refusing, on a document tag outside the recall list
+TypeError: Cannot read properties of undefined (reading 'basis')
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > emits the DTD declaration and ectd/xlink namespaces, one file per study in sorted order
+AssertionError: expected [ 'stf.xml', 'stf.xml' ] to deeply equal [ 'stf-s-001.xml', 'stf-s-002.xml' ]
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > ships m5/5-3-5-1/study-001/stf-study-001.xml whose doc-content resolves to the report leaf ID in index.xml
+AssertionError: expected [ 'm1/', 'm1/us/', …(13) ] to include 'm5/5-3-5-1/study-001/stf-study-001.xml'
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > refuses to package an .xpt study leaf tagged outside the 1735 list
+AssertionError: promise resolved "{ …(10) }" instead of rejecting
+ Test Files  1 failed (1)
+      Tests  20 failed | 3 passed (23)

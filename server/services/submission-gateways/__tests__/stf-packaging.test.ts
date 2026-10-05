@@ -1,7 +1,7 @@
 /**
  * STF (Study Tagging File) cross-linking in the regional packager (audit gap G5).
  *
- * Proves that M4/M5 study leaves generate a per-study stf.xml, placed in the
+ * Proves that M4/M5 study leaves generate a per-study stf-<study-id>.xml, placed in the
  * study's folder, referenced in index.xml, checksummed in index-md5.txt, and
  * cross-linked to exactly that study's leaves.
  */
@@ -55,40 +55,42 @@ describe('helpers', () => {
 });
 
 describe('STF cross-linking in packageEctdSubmission', () => {
-  it('generates a per-study stf.xml in each study folder, cross-linked to that study\'s leaves', async () => {
+  it('generates a per-study stf-<study-id>.xml in each study folder, cross-linked to that study\'s leaves', async () => {
     const work = await fs.mkdtemp(path.join(os.tmpdir(), 'stf-test-'));
     try {
       const zip = await build(work);
       const names = Object.keys(zip.files);
 
-      // One stf.xml per study, in the study's own folder.
-      expect(names).toContain('m5/5-3-5-1/study-001/stf.xml');
-      expect(names).toContain('m5/5-3-5-1/study-002/stf.xml');
+      // One stf-<study-id>.xml per study (ICH STF v2.6.1), in the study's own folder.
+      expect(names).toContain('m5/5-3-5-1/study-001/stf-study-001.xml');
+      expect(names).toContain('m5/5-3-5-1/study-002/stf-study-002.xml');
 
-      // Study 1's STF tags exactly study 1's leaves (by relative href), with the meta title.
-      const stf1 = await zip.file('m5/5-3-5-1/study-001/stf.xml')!.async('string');
+      // Each doc-content points at its leaf's ID in index.xml and holds the file-tag.
+      const indexXml = await zip.file('index.xml')!.async('string');
+      const idOf = (href: string) =>
+        indexXml.match(new RegExp(`<leaf [^>]*xlink:href="${href.replace(/[.]/g, '\\.')}"[^>]*ID="([^"]+)"`))![1];
+      const stf1 = await zip.file('m5/5-3-5-1/study-001/stf-study-001.xml')!.async('string');
       expect(stf1).toContain('<study-id>STUDY-001</study-id>');
       expect(stf1).toContain('<title>Pivotal efficacy</title>');
-      expect(stf1).toContain('xlink:href="s1-report.pdf"');
-      expect(stf1).toContain('xlink:href="s1-crf.pdf"');
-      expect(stf1).toContain('<file-tag name="study-report-body">');
-      expect(stf1).toContain('<file-tag name="sample-crf">');
+      expect(stf1).toContain(`xlink:href="../../../index.xml#${idOf('m5/5-3-5-1/study-001/s1-report.pdf')}"`);
+      expect(stf1).toContain(`xlink:href="../../../index.xml#${idOf('m5/5-3-5-1/study-001/s1-crf.pdf')}"`);
+      expect(stf1).toContain('<file-tag name="study-report-body" info-type="ich"/>');
+      expect(stf1).toContain('<file-tag name="sample-crf" info-type="ich"/>');
       expect(stf1).not.toContain('s2-report'); // no cross-study leakage
 
       // Study 2's STF is separate and references only its leaf.
-      const stf2 = await zip.file('m5/5-3-5-1/study-002/stf.xml')!.async('string');
+      const stf2 = await zip.file('m5/5-3-5-1/study-002/stf-study-002.xml')!.async('string');
       expect(stf2).toContain('<study-id>STUDY-002</study-id>');
-      expect(stf2).toContain('xlink:href="s2-report.pdf"');
+      expect(stf2).toContain(`xlink:href="../../../index.xml#${idOf('m5/5-3-5-1/study-002/s2-report.pdf')}"`);
 
-      // Each stf.xml is referenced as a leaf in index.xml (not an orphan file).
-      const indexXml = await zip.file('index.xml')!.async('string');
-      expect(indexXml).toContain('m5/5-3-5-1/study-001/stf.xml');
-      expect(indexXml).toContain('m5/5-3-5-1/study-002/stf.xml');
+      // Each STF is referenced as a leaf in index.xml (not an orphan file).
+      expect(indexXml).toContain('m5/5-3-5-1/study-001/stf-study-001.xml');
+      expect(indexXml).toContain('m5/5-3-5-1/study-002/stf-study-002.xml');
 
-      // Each stf.xml is checksummed in the MD5 manifest.
+      // Each STF is checksummed in the MD5 manifest.
       const md5 = await zip.file('util/index-md5.txt')!.async('string');
-      expect(md5).toContain('m5/5-3-5-1/study-001/stf.xml');
-      expect(md5).toContain('m5/5-3-5-1/study-002/stf.xml');
+      expect(md5).toContain('m5/5-3-5-1/study-001/stf-study-001.xml');
+      expect(md5).toContain('m5/5-3-5-1/study-002/stf-study-002.xml');
     } finally {
       await fs.rm(work, { recursive: true, force: true });
     }

@@ -13,6 +13,7 @@
 import type { AnaTool } from '../ai-gateway/types';
 import { PLACEABLE_DOCUMENT_TABLE_LIST } from '../ectd/leaf-document-tables';
 import { DOCUMENT_TEMPLATES } from '../market-specs/document-template-library';
+import type { RmfJurisdiction } from '../market-specs/risk-management-structure';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Submission-center tools — give AnA reach over the canonical core + ingestion
@@ -85,7 +86,7 @@ export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
 export const GENERATE_STF: AnaTool = {
   name: 'generate_stf',
   description:
-    'Generate FDA Study Tagging File (stf.xml) content for each study from its tagged study-report leaves. You pass the leaves with their study id, file tag, CTD section, href, title, and operation; you get one stf.xml per study, grouped by file tag, plus a summary. Pure computation — nothing is written to the package. Use it when assembling Module 4 or 5 so each study folder carries a correct STF.',
+    "Generate the ICH Study Tagging File (stf-<study-id>.xml) for each study from its tagged leaves. You pass each leaf with its study id, file tag, CTD section, package path, title, operation, its leaf ID in index.xml and the STF folder's relative path to index.xml; you get one STF per study (a doc-content per leaf pointing at index.xml#ID, holding the file-tag), a summary and warnings. A .xpt or define.xml tagged outside FDA validation 1735's list is refused. Pure computation — nothing is written to the package; the packager generates the STFs it ships itself.",
   input_schema: {
     type: 'object',
     properties: {
@@ -96,13 +97,15 @@ export const GENERATE_STF: AnaTool = {
           type: 'object',
           properties: {
             study_id: { type: 'string', description: 'Controlling study identifier.' },
-            file_tag: { type: 'string', description: "STF file-tag, e.g. 'study-report-body', 'protocol-or-amendment'." },
+            file_tag: { type: 'string', description: "STF file-tag, e.g. 'study-report', 'protocol-or-amendment'." },
             ctd_section: { type: 'string', description: 'CTD section, e.g. "5.3.5.1".' },
-            href: { type: 'string', description: 'Relative href of the leaf in the package.' },
+            href: { type: 'string', description: 'Package-relative path of the leaf file (decides whether it is a dataset or define.xml).' },
             title: { type: 'string', description: 'Leaf title.' },
             operation: { type: 'string', enum: ['new', 'append', 'replace', 'delete'], description: 'Lifecycle operation.' },
+            index_leaf_id: { type: 'string', description: "The leaf's ID attribute in index.xml." },
+            index_rel_path: { type: 'string', description: "Relative path from the STF's folder to index.xml, e.g. '../../../index.xml'." },
           },
-          required: ['study_id', 'file_tag', 'ctd_section', 'href', 'title', 'operation'],
+          required: ['study_id', 'file_tag', 'ctd_section', 'href', 'title', 'operation', 'index_leaf_id', 'index_rel_path'],
         },
       },
       study_meta: {
@@ -696,16 +699,26 @@ export const CLASSIFY_POST_SUBMISSION_CHANGE: AnaTool = {
   },
 };
 
+/**
+ * The jurisdictions `assess_device_evidence_structure` accepts for an RMF. Keyed by
+ * `RmfJurisdiction` so a jurisdiction added to or removed from
+ * risk-management-structure.ts fails the typecheck here; the advertised enum and
+ * the handler's check (AnaToolExecutor.ts) both read this list.
+ */
+const RMF_JURISDICTION_KEYS: Record<RmfJurisdiction, true> = { EU_MDR: true, EU_IVDR: true, FDA: true, OTHER: true };
+export const RMF_JURISDICTIONS = Object.keys(RMF_JURISDICTION_KEYS) as RmfJurisdiction[];
+
 export const ASSESS_DEVICE_EVIDENCE_STRUCTURE: AnaTool = {
   name: 'assess_device_evidence_structure',
   description:
-    "Assess a device/IVD evidence document against its regulated structure. For `document: 'cer'` it checks the CER against MEDDEV 2.7/1 Rev 4 / MDR Annex XIV (set `equivalence_claimed` if equivalence is used); for `document: 'per'` it checks the IVDR Annex XIII Performance Evaluation Report and reports which of the three pillars (scientific validity, analytical, clinical) are covered; for `document: 'rmf'` it checks the ISO 14971 risk management file. Pass `present_section_ids` (the sections you have). Without `present_section_ids` it returns the full structure (stages/pillars/sections + reviewer questions). Deterministic, read-only. Use it to gap-check a CER/PER/RMF before Notified-Body review.",
+    "Assess a device/IVD evidence document against its regulated structure. For `document: 'cer'` it checks the CER against MEDDEV 2.7/1 Rev 4 / MDR Annex XIV (set `equivalence_claimed` if equivalence is used); for `document: 'per'` it checks the IVDR Annex XIII Performance Evaluation Report and reports which of the three pillars (scientific validity, analytical, clinical) are covered; for `document: 'rmf'` it checks the ISO 14971 risk management file, and with `jurisdiction` (EU_MDR, EU_IVDR, FDA, OTHER) it also returns that jurisdiction's risk-acceptability policy (`acceptabilityPolicy`: principle, statement, whether cost may justify stopping risk reduction, and its basis with confidence), e.g. AFAP with no economic justification for an EU MDR/IVDR file. Without `jurisdiction` no policy is returned; ask which market the file is for. Pass `present_section_ids` (the sections you have). Without `present_section_ids` it returns the full structure (stages/pillars/sections + reviewer questions). Deterministic, read-only. Use it to gap-check a CER/PER/RMF before Notified-Body review.",
   input_schema: {
     type: 'object',
     properties: {
       document: { type: 'string', enum: ['cer', 'per', 'rmf'], description: "'cer' (MDR clinical evaluation), 'per' (IVDR performance evaluation), or 'rmf' (ISO 14971 risk management file)." },
       present_section_ids: { type: 'array', items: { type: 'string' }, description: 'Section ids present in the document (for assessment).' },
       equivalence_claimed: { type: 'boolean', description: 'CER only — set true if equivalence to another device is claimed.' },
+      jurisdiction: { type: 'string', enum: RMF_JURISDICTIONS, description: "RMF only — the market the risk management file is for: 'EU_MDR', 'EU_IVDR', 'FDA', or 'OTHER' (not modelled). Returns the risk-acceptability policy beside the structure or assessment." },
     },
     required: ['document'],
   },
