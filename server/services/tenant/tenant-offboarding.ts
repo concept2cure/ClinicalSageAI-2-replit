@@ -1013,4 +1013,25 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      position is free. */
   'ana_turn_records',
   'ana_record_blobs',
+  /* Four org-keyed tables no foreign key reaches, so only this list does.
+     Found by ci:purge-coverage on the blank-database job of run 37245632351
+     (2026-10-05). Leaves, so their positions are free.
+     - organization_gateway_accounts (D7, 20261001g): the account each agency
+       gateway transmits under, and for a client account the credentials the
+       organisation supplied, encrypted. An erased tenant must not leave its
+       gateway credentials behind. Who sent what under which identity stays on
+       each transmittal record, which is not purged here.
+     - session_activity (20261001e): sign-in session state shared across
+       processes (last activity, superseded markers). Operational, and the
+       sign-in audit rows are kept elsewhere; the estate's organisation-0 rows
+       are not this tenant's and are not touched.
+     - coordination_leases (20261001f): the per-organisation lock and
+       concurrency leases of AnA governed actions. Operational.
+     - relation_extraction_log (0006_regulatory_atoms): what relation
+       extraction found in the tenant's documents. Its FK to organizations is
+       RESTRICT, which a purge never trips because it updates that row. */
+  'organization_gateway_accounts',
+  'session_activity',
+  'coordination_leases',
+  'relation_extraction_log',
 ]);
