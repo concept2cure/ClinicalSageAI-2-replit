@@ -1,0 +1,12 @@
+Mutant R70-no-guarantee-asserted: "There is no guarantee the agency will accept" is named as a verdict (probe-verdicts)
+
+--- server/services/clinical-regulatory-evidence/governance.ts
+- no\s+(?:guarantee|assurance|certainty)|
++ 
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > verdicts, re-run (probes p8 and probe-verdicts) > does not name a verdict asked, doubted, or made conditional after it 16ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

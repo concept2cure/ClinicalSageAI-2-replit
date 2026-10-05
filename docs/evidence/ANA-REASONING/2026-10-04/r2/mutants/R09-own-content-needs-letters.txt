@@ -1,0 +1,12 @@
+Mutant R09-own-content-needs-letters: a record whose own value is "47%" or "2.1" is not read as returning anything
+
+--- server/services/ana/answer-check-sources.ts
+- (value.match(/[A-Za-z0-9]/g) ?? []).length >= 2) acc.ownContent = true;
++ /[A-Za-z]{2,}/.test(value)) acc.ownContent = true;
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record whose own value is a figure ("47%") does confirm the identifier it is about 9ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

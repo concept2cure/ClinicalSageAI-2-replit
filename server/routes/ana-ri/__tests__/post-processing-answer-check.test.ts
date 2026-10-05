@@ -108,7 +108,7 @@ describe('the answer check AnA reports', () => {
     expect(strip.check.found).toBe(3);
     expect(strip.check.verdicts.map((v: any) => v.text)).toEqual(['is ready to file']);
     expect(strip.evidence.attempted).toBe(true);
-    expect(strip.trust_summary).toMatch(/2 of 5 .*not found/);
+    expect(strip.trust_summary).toMatch(/^⚠ Of 5 claims: 3 found in this turn's sources; 2 not found\./);
   });
 
   it('post_done, the stored message and the sealed record carry the same check', async () => {

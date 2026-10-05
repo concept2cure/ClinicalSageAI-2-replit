@@ -8,13 +8,15 @@ import { describe, expect, it } from 'vitest';
 import { readAnswerCheck, readGroundingStrip, readStoredVerification } from '../anaAnswerCheck';
 
 const check = {
-  engine: 'answer-check/1',
+  engine: 'answer-check/2',
   basis: 'sources',
   claims: 2,
   checked: 2,
   found: 1,
   notFound: [{ kind: 'figure', text: '31%' }],
   unchecked: [],
+  fromPerson: [],
+  fromInput: [{ kind: 'figure', text: '80%', source: 'tool:compute_sample_size' }],
   sources: ['tool:get_trial_details'],
   unreadable: [],
   verdicts: [{ text: 'is ready to file', reason: 'States a readiness verdict.' }],
@@ -61,6 +63,11 @@ describe('readAnswerCheck', () => {
     expect(readAnswerCheck({ ...check, found: -1 })).toBeUndefined();
     expect(readAnswerCheck({ ...check, notFound: [{ kind: 'figure' }] })).toBeUndefined();
     expect(readAnswerCheck({ ...check, verdicts: undefined })).toBeUndefined();
+    expect(readAnswerCheck({ ...check, fromInput: [{ kind: 'figure', text: '80%' }] })).toBeUndefined();
+    expect(readAnswerCheck({ ...check, fromPerson: 'x' })).toBeUndefined();
+    // A round-1 check, before the two lists existed, reads with both empty.
+    const { fromPerson: _p, fromInput: _i, ...roundOne } = check;
+    expect(readAnswerCheck(roundOne)).toEqual({ ...roundOne, fromPerson: [], fromInput: [] });
     expect(readAnswerCheck(null)).toBeUndefined();
   });
 });

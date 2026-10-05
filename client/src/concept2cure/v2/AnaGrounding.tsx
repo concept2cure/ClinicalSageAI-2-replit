@@ -25,7 +25,12 @@
  * - A zero is never a clean bill of health. No source consulted means the
  *   claims are not checked, not found; nothing to check is not a pass; a
  *   label check that did not run says so and shows no count.
- * - A check mark is earned only by the engine: every specific claim found.
+ * - Nothing earns a check mark. "Found" is a value in this turn's sources, not
+ *   a sentence verified, and a check mark read as more (refute-review of the
+ *   first engine, HS-2).
+ * - Each claim is said as it ended: found, not found, AnA's own input to a
+ *   tool, only in the person's message, or not checked because a source AnA
+ *   read is one this check cannot read.
  * - Nothing is synthesised here. Each line restates the server's own counts
  *   and texts; the one sentence of prose that is not a count is the server's
  *   risk summary, shown verbatim.
@@ -96,8 +101,11 @@ function describeFlags(flags: AnaGroundingEvidence['flaggedClaims']): string {
   return [...counts.entries()].map(([w, n]) => (n === 1 ? `one ${w}` : `${n} ${w}s`)).join(', ');
 }
 
-type Tone = 'ok' | 'weak' | 'unknown';
-const GLYPH: Record<Tone, React.ReactElement> = { ok: I.check, weak: I.alertTriangle, unknown: I.info };
+/* No tone certifies: "found" means the value is in this turn's sources, not
+   that the sentence is right, so no row earns a check mark (round 2 of the
+   engine: a check mark read as verification it never was). */
+type Tone = 'weak' | 'unknown';
+const GLYPH: Record<Tone, React.ReactElement> = { weak: I.alertTriangle, unknown: I.info };
 
 function Row({ tone, children }: { tone: Tone; children: React.ReactNode }) {
   return (
@@ -126,54 +134,91 @@ function Listed({ items }: { items: CheckedClaim[] }) {
   );
 }
 
-/** The engine's check: what was found in this turn's sources, and what was not. */
-function CheckRows({ check }: { check: AnswerCheckView }) {
-  let lead: React.ReactNode;
-  if (check.basis === 'no_sources') {
-    lead = (
-      <>
-        <Row tone="unknown">
-          {check.unchecked.length > 0
-            ? `No source consulted this turn — ${claimsWord(check.unchecked.length)} not checked`
-            : 'No source consulted this turn'}
-        </Row>
-        <Listed items={check.unchecked} />
-      </>
-    );
-  } else if (check.claims === 0) {
-    lead = <Row tone="unknown">No specific claims to check against this turn's sources</Row>;
-  } else if (check.notFound.length === 0) {
-    lead = (
-      <Row tone="ok">
-        {check.claims === 1
-          ? "The one specific claim was found in this turn's sources"
-          : `All ${check.claims} specific claims found in this turn's sources`}
-      </Row>
-    );
-  } else {
-    lead = (
-      <>
-        <Row tone="weak">
-          {check.notFound.length} of {claimsWord(check.claims)} not found in this turn's sources
-        </Row>
-        <Listed items={check.notFound} />
-      </>
-    );
-  }
+const countWord = (n: number) => (n === 1 ? '1 is' : `${n} are`);
+
+/** What the check compared, and how each claim ended, when AnA consulted something. */
+function SourcesRows({ check }: { check: AnswerCheckView }) {
+  const { claims, found, notFound, fromInput, fromPerson, unchecked, unreadable } = check;
+  if (claims === 0) return <Row tone="unknown">No specific claims to check against this turn's sources</Row>;
+  const inputTools = [...new Set(fromInput.map((c) => sourceName(c.source)))];
   return (
     <>
-      {lead}
-      {check.basis === 'sources' && check.sources.length > 0 && (
+      {notFound.length > 0 ? (
+        <>
+          <Row tone="weak">
+            {notFound.length} of {claimsWord(claims)} not found in this turn's sources
+          </Row>
+          <Listed items={notFound} />
+        </>
+      ) : (
+        <Row tone="unknown">
+          {found === claims
+            ? claims === 1
+              ? "The one specific claim was found in this turn's sources"
+              : `All ${claims} specific claims found in this turn's sources`
+            : `${found} of ${claimsWord(claims)} found in this turn's sources`}
+        </Row>
+      )}
+      {fromInput.length > 0 && (
+        <>
+          <Row tone="unknown">
+            {countWord(fromInput.length)} AnA's own input to {inputTools.join(', ')}, not a result
+          </Row>
+          <Listed items={fromInput} />
+        </>
+      )}
+      {fromPerson.length > 0 && (
+        <>
+          <Row tone="unknown">{fromPerson.length} only in your message, not in this turn's sources</Row>
+          <Listed items={fromPerson} />
+        </>
+      )}
+      {unchecked.length > 0 && (
+        <>
+          <Row tone="unknown">
+            {claimsWord(unchecked.length)} not checked — may be in {unreadable.map(sourceName).join(', ')}, which this
+            check cannot read
+          </Row>
+          <Listed items={unchecked} />
+        </>
+      )}
+      {unchecked.length === 0 && unreadable.length > 0 && (
+        <div className="ana-grounding-risk">Not readable by this check: {unreadable.map(sourceName).join(', ')}</div>
+      )}
+      {check.sources.length > 0 && (
         <div className="ana-grounding-risk">Checked against: {check.sources.map(sourceName).join(', ')}</div>
       )}
-      {check.unreadable.length > 0 && (
-        <div className="ana-grounding-risk">Not readable by this check: {check.unreadable.map(sourceName).join(', ')}</div>
+    </>
+  );
+}
+
+/** The engine's check: what was found in this turn's sources, and what was not. */
+function CheckRows({ check }: { check: AnswerCheckView }) {
+  return (
+    <>
+      {check.basis === 'no_sources' ? (
+        <>
+          <Row tone="unknown">
+            {check.unchecked.length > 0
+              ? `No source consulted this turn — ${claimsWord(check.unchecked.length)} not checked`
+              : 'No source consulted this turn'}
+          </Row>
+          <Listed items={check.unchecked} />
+          {check.fromPerson.length > 0 && (
+            <>
+              <Row tone="unknown">{check.fromPerson.length} only in your message, not checked against a source</Row>
+              <Listed items={check.fromPerson} />
+            </>
+          )}
+        </>
+      ) : (
+        <SourcesRows check={check} />
       )}
       {check.verdicts.length > 0 && (
         <>
           <Row tone="weak">
-            {check.verdicts.length === 1 ? 'States a verdict' : `States ${check.verdicts.length} verdicts`} — verdicts
-            come from engines; check which one gave {check.verdicts.length === 1 ? 'it' : 'them'}
+            {check.verdicts.length === 1 ? 'States a verdict' : `States ${check.verdicts.length} verdicts`}, not
+            checked — a verdict needs an engine result behind it
           </Row>
           <Listed items={check.verdicts.map((v) => ({ kind: 'verdict', text: v.text }))} />
         </>

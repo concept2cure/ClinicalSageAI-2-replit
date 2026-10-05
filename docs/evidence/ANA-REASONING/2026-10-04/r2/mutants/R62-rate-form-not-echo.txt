@@ -1,0 +1,13 @@
+Mutant R62-rate-form-not-echo: an engine restating AnA's proportion as a percentage (0.47 → "47%") is a result (probe p3 A2/A3)
+
+--- server/services/ana/answer-check-sources.ts
+- return input.numbers.has(value) || (rate && input.rateForms.has(value));
++ return input.numbers.has(value);
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a proportion she passed, restated as a percentage, is her input 10ms
+ × tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a percentage she passed, restated as a proportion, is her input 2ms
+      Tests  2 failed | 87 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

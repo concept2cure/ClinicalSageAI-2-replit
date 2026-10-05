@@ -1,0 +1,16 @@
+Mutant R14-searched-id-not-confirmed: a registry record about the identifier the model searched for no longer confirms it
+
+--- server/services/ana/answer-check-sources.ts
+- if (isSingleToken(value)) acc.confirmed.push(line);
++ 
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a hit returns the identifier in a record, and is found 10ms
+ × tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a regulation looked up is found in the record the lookup returns, not in the echo of a miss 2ms
+ × tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a registry record about the identifier the model searched for confirms it 10ms
+ × tests/services/answer-check-r2.test.ts > an identifier the citation tool verified is found (probe p5 G1) > a labelled PMID the tool verified is found 2ms
+ × tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record whose own value is a figure ("47%") does confirm the identifier it is about 2ms
+      Tests  5 failed | 84 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯

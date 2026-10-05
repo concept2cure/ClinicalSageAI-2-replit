@@ -1,74 +1,74 @@
 /**
- * Answer grounding — the self-verification round of AnA's chat loop.
+ * Answer grounding — the deterministic check of an AnA answer against what she
+ * consulted this turn.
  *
- * The existing enforcement checks (checkEvidenceDiscipline, validateResponseStructure,
- * validateEvidence) audit the answer's *language*: whether claims carry evidence
- * labels and avoid overclaim phrasing. None of them compare the answer against the
- * tool output AnA actually gathered this turn.
+ * The other checks (checkEvidenceDiscipline, validateResponseStructure,
+ * validateEvidence) read the answer's language: labels and phrasing. This
+ * module compares the answer's specific, checkable claims with the turn's
+ * sources, with no model call:
  *
- * This module closes that gap deterministically — no extra model call. It pulls the
- * verifiable, specific claims out of the answer — registry/literature/submission
- * identifiers (trial ids: NCT/ISRCTN/EudraCT; literature: PMID/DOI; FDA submissions:
- * 510(k)/PMA/De Novo/NDA/BLA/ANDA), the regulations it cites (CFR sections, ICH codes) and
- * quoted source text — and checks each one against the
- * evidence corpus (the concatenated tool results). A claim that does not appear in
- * the evidence is flagged as unsupported — a direct fabrication signal.
+ *   identifiers  trial (NCT, ISRCTN, EudraCT), literature (PMID, DOI) and FDA
+ *                submission numbers (510(k), PMA, De Novo, NDA, BLA, ANDA)
+ *   regulations  CFR sections and ICH codes
+ *   quotes       quoted source text
+ *   figures      percentages, p-values, ratios, intervals, n, counts, doses,
+ *                durations (answer-check-figures.ts)
  *
- * ── Figures, and what counts as a source (2026-10-04) ────────────────────────
- * The founder asked for AnA's reasoning layer to be enhanced. A read-only map of
- * the live turn found that this check, the one deterministic answer-vs-evidence
- * comparison AnA has, could not see a figure: an invented efficacy rate,
- * p-value, dose, shelf life or enrolment passed every check on every path. It
- * also said nothing when no tool ran, and it credited what was not evidence:
- * a failed or stopped step's error text, the model-authored content a governed
- * write stores, and figures the model itself passed into an engine and the
- * engine echoed back. Rule 2 says numbers come from engines and the model
- * narrates, so the check now reads figures too (checkAnswer):
+ * and names the verdicts the answer states (ready to file, compliant,
+ * approvable, the §14 prohibitions): Rule 2 says verdicts come from engines.
  *
- *   - a figure (a percentage, a p-value, a hazard, odds or risk ratio, a
- *     confidence interval, an n, a count of patients, a dose, a duration) is
- *     found when its number appears, as a whole number, in a source of this
- *     turn: a percentage also as its proportion (47% as 0.47). Only figures
- *     are checked, not every number: a section number or a year is not one;
- *   - a source is a tool result that succeeded and is not a governed write,
- *     a hosted web step, the person's own message, or the project data and
- *     enrichment AnA was given. A figure is not credited by a tool result that
- *     only echoes a number the model passed in as input: the model chose it;
- *   - with no source at all, the checkable claims are reported as not checked
- *     (basis 'no_sources'), never as grounded.
+ * ── What each claim can be (round 2, 2026-10-04) ─────────────────────────────
+ * Two refute-reviews of round 1 (a3775bcef) showed it reassured falsely: a
+ * fabricated figure was "found" through any matching number, the person's own
+ * question confirmed what it asked about, and a tool's echo of the model's
+ * request confirmed the request. Every claim now ends in one of five places:
  *
- *   - what a model wrote is not a source for itself. The gateway notes every
- *     generation made inside a tool call (ai-gateway/generation-capture.ts),
- *     so a tool whose result carries an inner model's words (batch drafting,
- *     a drafting council, a plan narration) credits no figure, identifier,
- *     regulation or quote that model wrote. A step whose generations are not
- *     known (it ran in the governed-action route) is not a source at all;
- *   - an identifier is matched whole: "PMID 3456789" is not found inside
- *     "PMID 23456789", nor "NDA 21436" inside "NDA214360";
- *   - an identifier, regulation or quote the model asked a tool for is found
- *     only where the result returns it in a record, never in the echo of the
- *     request: the search tools echo the query on a hit, a zero-hit and an
- *     outage alike, and generate_citation formats whatever section it is
- *     given and marks it not_verified (returnedRecords);
- *   - a verdict the answer states (ready to file, compliant, approvable, and
- *     the §14 prohibitions) is named, never counted as found: verdicts come
- *     from engines, and the person sees which ones ran.
+ *   found       in a source of this turn: a tool result (not failed, not a
+ *               governed write, not written by a model inside the call), a web
+ *               step, or project data the platform read. A figure only where
+ *               its number stands with its own measure; an identifier,
+ *               regulation or quote the model asked a tool for only where the
+ *               result returns it in a record (answer-check-sources.ts).
+ *   fromInput   a figure that is only AnA's own input to a tool (an assumed
+ *               power or hazard ratio), echoed back, restated in another form
+ *               (0.47 sent, "47%" returned) or not: hers, not a result.
+ *   fromPerson  only in the person's own message. Never a source: a question
+ *               ("was it 45% or 60%?") is not evidence for its answer.
+ *   unchecked   nothing was consulted, or a source AnA read is one this check
+ *               cannot read (a PDF's bytes), so it may hold the claim.
+ *   notFound    compared with every source, and in none.
  *
- * "Found" means the number is in this turn's sources, not that the sentence
- * around it is right. The check is advisory: surfaced to the person and sealed
- * in the turn record, not used to block or rewrite the answer. A record names
- * the engine that checked it (ANSWER_CHECK_VERSION), so a later re-run of a
- * changed engine is never taken for the verdict the person was shown.
+ * "Found" is not "verified": the value is in this turn's sources, not the
+ * sentence around it proven right. A percentage is found where a source
+ * states that percentage, whatever it measures there. The check is advisory:
+ * shown to the person and sealed in the turn record, never used to block or
+ * rewrite the answer. A record names the engine that checked it
+ * (ANSWER_CHECK_VERSION), so a later run of a changed engine is never taken
+ * for what the person was shown.
  */
 
 import {
   detectUnsupportedClaims,
   detectVerdictClaims,
+  isAssertedVerdict,
 } from '../clinical-regulatory-evidence/governance';
+import { figureHeld, figuresIn, indexNumbers, type Figure, type NumberIndex } from './answer-check-figures';
+import {
+  NO_INPUT,
+  numbersInSource,
+  numbersInText,
+  ownText,
+  parseJson,
+  readInput,
+  recordsText,
+  withoutUrls,
+  asciiDashes,
+  type InputRead,
+} from './answer-check-sources';
 import { isGovernedContentWriteTool } from './governed-write-tools';
 
 /** The engine that produced a check, recorded with it. Bump on any change to what it finds. */
-export const ANSWER_CHECK_VERSION = 'answer-check/1';
+export const ANSWER_CHECK_VERSION = 'answer-check/2';
 
 export interface UnsupportedClaim {
   kind:
@@ -107,173 +107,6 @@ export interface GroundingResult {
   ratio: number;
 }
 
-/** Normalize for tolerant substring matching: lowercase, punctuation → space. */
-function norm(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-type IdKind = Exclude<UnsupportedClaim['kind'], 'quote' | 'figure'>;
-
-// Whole-token identifiers. Each of these is a specific, registry-issued
-// identifier that cannot be legitimately recalled — it must come from the tool
-// evidence — so one that does not appear verbatim is a direct fabrication
-// signal. The token itself is distinctive enough to match and check as-is:
-//   - trial registries: US (NCT), UK/international (ISRCTN), EU (EudraCT)
-//   - literature: DOI
-//   - FDA submissions: 510(k) K######, PMA P######, De Novo DEN######
-//     (an invented predicate-device number is the classic medtech fabrication)
-//
-// The FDA single-/three-letter tokens carry a `(?<![./])` guard so they are not
-// re-extracted from inside a DOI suffix or a dotted path (e.g. "10.1016/P123456"
-// must count as one DOI, not also a bogus PMA number) — `/` and `.` are word
-// boundaries, so `\b` alone would let those embedded matches through.
-const TOKEN_ID_PATTERNS: ReadonlyArray<{ kind: IdKind; re: RegExp }> = [
-  { kind: 'nct', re: /NCT\d{8}/gi },
-  { kind: 'isrctn', re: /ISRCTN\d{8}/gi },
-  { kind: 'eudract', re: /(?<![./])\b\d{4}-\d{6}-\d{2}\b/g },
-  { kind: 'doi', re: /\b10\.\d{4,9}\/[^\s"”'<>)\]]+/gi },
-  { kind: 'fda_510k', re: /(?<![./])\bK\d{6}\b/g },
-  { kind: 'fda_pma', re: /(?<![./])\bP\d{6}\b/g },
-  { kind: 'fda_denovo', re: /(?<![./])\bDEN\d{6}\b/gi },
-];
-
-// Labeled-number identifiers. The bare number is not distinctive on its own, so
-// it is extracted only when it carries its label, then the number is checked
-// against the evidence (the tool returns the number in its result payload). The
-// full "LABEL number" is reported, but only the number is matched, so spacing
-// variants ("NDA 021436" vs "NDA021436" vs bare "021436") still ground.
-//   - literature: PMID
-//   - FDA drug submissions: NDA, BLA, ANDA (the biopharma analogues of 510(k))
-const LABELED_ID_PATTERNS: ReadonlyArray<{ kind: IdKind; re: RegExp }> = [
-  { kind: 'pmid', re: /\bPMID:?\s*(\d{7,8})\b/gi },
-  { kind: 'fda_nda', re: /\bNDA\s*:?\s*(\d{4,6})\b/gi },
-  { kind: 'fda_bla', re: /\bBLA\s*:?\s*(\d{4,6})\b/gi },
-  { kind: 'fda_anda', re: /\bANDA\s*:?\s*(\d{4,6})\b/gi },
-];
-
-// Regulations (D4, 2026-10-01). Unlike the identifiers above, a CFR section or
-// an ICH code can be recalled correctly — so a miss means "not supported by
-// this turn's evidence", not fabricated. It is still the claim most worth
-// checking: "21 CFR 820.30(g)" (superseded by the QMSR) or an ICH revision
-// cited from memory read as grounded as anything else after tools ran.
-//   - CFR: "<title> CFR <section>" in any common spelling ("21 C.F.R. §
-//     312.23", "21 CFR Part 11"); both sides are put in one spelling first.
-//   - ICH: a code after "ICH", or any code written with its revision
-//     ("E9(R1)"); a bare "E2" is too common a token to read as a guideline.
-const CFR_PREFIX_RE = /\b(\d{1,2})\s*C\.?\s*F\.?\s*R\.?\s*(?:§+\s*|Part\s+|Section\s+)?/gi;
-const CFR_CITATION_RE =
-  /\b(\d{1,2})\s*C\.?\s*F\.?\s*R\.?\s*(?:§+\s*|Part\s+|Section\s+)?(\d{1,4}(?:\.\d+[a-z]?)?(?:\([a-z0-9]{1,4}\))*)/gi;
-const ICH_CITATION_RE =
-  /\bICH\s+([QSEM]\d{1,2}[A-Z]?(?:\s?\(R\d{1,2}\))?)|(?<![A-Za-z0-9])([QSEM]\d{1,2}[A-Z]?\(R\d{1,2}\))/g;
-
-function escapeRegExp(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/** Is `needle` in `haystack`, not continued as a longer number ("11" is not "110" or "11.5")? */
-function containsCitation(haystack: string, needle: string): boolean {
-  return new RegExp(`${escapeRegExp(needle)}(?![0-9]|\\.[0-9])`).test(haystack);
-}
-
-// Trailing sentence punctuation captured alongside a token (notably on a DOI at
-// the end of a sentence) — trimmed before the verbatim check so "…/jama.2020.1."
-// grounds against the same DOI in the evidence.
-const TRAILING_PUNCT_RE = /[.,;:]+$/;
-
-// Double-quoted spans (straight or smart quotes), 20–200 chars of inner text.
-const QUOTE_RE = /["“]([^"”\n]{20,200})["”]/g;
-
-/* ── Figures ─────────────────────────────────────────────────────────────── */
-
-/** A number in the one form both sides are compared in: no thousands
- *  separators, no trailing zeros ("1,066" → "1066", "0.050" → "0.05"). */
-function canonNumber(raw: string): string | null {
-  const n = Number(raw.replace(/[,\s]/g, ''));
-  return Number.isFinite(n) ? String(n) : null;
-}
-
-// What a figure is. Each pattern captures the number(s) that must be found;
-// the whole match is what is reported. A percentage written as a confidence
-// level ("95% CI") is not a figure of the result, so it is skipped there.
-const NUM = String.raw`\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+`;
-const FIGURE_PATTERNS: ReadonlyArray<{ re: RegExp; percent?: boolean }> = [
-  // A confidence interval: both bounds must be found.
-  { re: new RegExp(String.raw`\b(?:95|90|99)\s?%\s*(?:CI|confidence interval)[:,]?\s*\(?\s*(-?(?:${NUM}))\s*(?:-|–|—|to|,)\s*(-?(?:${NUM}))`, 'gi') },
-  // A hazard, odds or risk ratio.
-  { re: new RegExp(String.raw`\b(?:HR|OR|RR|IRR|hazard ratio|odds ratio|risk ratio|relative risk)\s*(?:of|was|=|:)?\s*(${NUM})`, 'gi') },
-  // A p-value.
-  { re: new RegExp(String.raw`\bp\s*(?:<=|>=|<|>|=|≤|≥)\s*(${NUM})`, 'gi') },
-  // A percentage, not a confidence level.
-  { re: new RegExp(String.raw`(?<![\w.])(${NUM})\s?%(?!\s*(?:CI|confidence))`, 'gi'), percent: true },
-  // n = …
-  { re: new RegExp(String.raw`\b[nN]\s*=\s*(${NUM})`, 'g') },
-  // A count of people, events, sites or batches.
-  { re: new RegExp(String.raw`(?<![\w.])(\d{1,3}(?:,\d{3})+|\d{2,})\s+(?:patients|subjects|participants|cases|deaths|events|sites|batches|lots)\b`, 'gi') },
-  // A dose or an amount with its unit.
-  { re: new RegExp(String.raw`(?<![\w.])(${NUM})\s?(?:mg\/kg|mg\/m2|mg\/m²|µg\/kg|mcg\/kg|mg|mcg|µg|ug|ng|g|kg|mL|ml|IU|units)\b`, 'g') },
-  // A duration.
-  { re: new RegExp(String.raw`(?<![\w.])(${NUM})[\s-]?(?:hours?|days?|weeks?|months?|years?)\b`, 'gi') },
-];
-
-interface FigureClaim {
-  text: string;
-  values: string[];
-  percent: boolean;
-}
-
-function figuresIn(answer: string): FigureClaim[] {
-  const out: FigureClaim[] = [];
-  const seen = new Set<string>();
-  // A span already read as a figure is not read again by a later pattern (the
-  // "95%" of a confidence interval, the "0.62" of a hazard ratio).
-  const taken: Array<[number, number]> = [];
-  const overlaps = (a: number, b: number) => taken.some(([x, y]) => a < y && b > x);
-  for (const { re, percent } of FIGURE_PATTERNS) {
-    re.lastIndex = 0;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(answer)) !== null) {
-      const start = m.index;
-      const end = start + m[0].length;
-      if (overlaps(start, end)) continue;
-      const values = m.slice(1).filter((v): v is string => typeof v === 'string').map(canonNumber);
-      if (values.some((v) => v === null)) continue;
-      taken.push([start, end]);
-      const text = m[0].replace(/\s+/g, ' ').trim();
-      const key = `${text.toLowerCase()}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push({ text, values: values as string[], percent: Boolean(percent) });
-    }
-  }
-  return out;
-}
-
-/** Every number in a text, canonical. */
-function numbersIn(text: string): Set<string> {
-  const out = new Set<string>();
-  const re = /(?<![\w.])-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?!\w)|(?<![\w.])\.\d+(?!\w)/g;
-  for (const m of text.match(re) ?? []) {
-    const c = canonNumber(m);
-    if (c !== null) out.add(c);
-  }
-  return out;
-}
-
-/** Every number in a tool's input, canonical: what the model put in. */
-function inputNumbers(input: unknown, out: Set<string> = new Set(), depth = 0): Set<string> {
-  if (depth > 6 || input == null) return out;
-  if (typeof input === 'number') {
-    if (Number.isFinite(input)) out.add(String(input));
-  } else if (typeof input === 'string') {
-    for (const n of numbersIn(input)) out.add(n);
-  } else if (Array.isArray(input)) {
-    for (const v of input) inputNumbers(v, out, depth + 1);
-  } else if (typeof input === 'object') {
-    for (const v of Object.values(input as Record<string, unknown>)) inputNumbers(v, out, depth + 1);
-  }
-  return out;
-}
-
 /* ── Sources ───────────────────────────────────────────────────────────────── */
 
 /** One thing AnA had this turn, as the check reads it. */
@@ -281,19 +114,11 @@ export interface EvidenceEntry {
   /** Where it came from: `tool:<name>`, `web`, `person`, `context`, or an attachment. */
   source: string;
   content: string;
-  /** Numbers the model itself passed to the tool that produced this entry.
-   *  A figure is not credited by an entry that only echoes one of them. */
-  inputNumbers?: string[];
-  /** What a model wrote while this entry was produced. Nothing in it is
-   *  credited by this entry. */
+  /** What a model wrote while this entry was produced. Nothing in it is credited by this entry. */
   generated?: string[];
-  /** The call's input as text: what the model asked for. */
+  /** The call's input as JSON: what the model asked for. */
   asked?: string;
-  /** The values the result returns inside a record, without any echo of the
-   *  request: where an identifier or a quote the model asked for can be found. */
-  returned?: string;
-  /** AnA was given it but the check cannot read it (a PDF's bytes). Named,
-   *  never counted as read. */
+  /** AnA was given it but the check cannot read it (a PDF's bytes). Named, never counted as read. */
   unreadable?: boolean;
 }
 
@@ -328,52 +153,9 @@ export function toolEvidence(tool: string, outcome: ToolOutcome): EvidenceEntry 
   return {
     source: `tool:${tool}`,
     content,
-    inputNumbers: [...inputNumbers(input)],
     ...(generated.texts.length > 0 ? { generated: [...generated.texts] } : {}),
     asked: JSON.stringify(input ?? {}),
-    returned: returnedRecords(content),
   };
-}
-
-/** A result that says it checked what it returns against a source (generate_citation). */
-function declaresVerified(parsed: unknown): boolean {
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
-  const r = parsed as Record<string, unknown>;
-  return r.verified === true || r.verification === 'verified' || r.verification === 'identified';
-}
-
-/**
- * The values a result returns inside a record: every value in an array or
- * nested in an object, except a `query` field. A top-level field is the
- * envelope (the echoed request, a note, a manual-search suggestion), unless
- * the result declares it verified what it returns. A result that is not JSON
- * cannot tell an echo from data, so it returns none. The search tools echo
- * the request in a hit, a zero-hit and an outage alike, and generate_citation
- * formats whatever section it is given and marks it not_verified; only a
- * record a tool returns says the source holds it.
- */
-function returnedRecords(content: string): string {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(content);
-  } catch {
-    return '';
-  }
-  const topLevelIsRecord = declaresVerified(parsed);
-  const out: string[] = [];
-  const walk = (v: unknown, depth: number, inArray: boolean): void => {
-    if (Array.isArray(v)) {
-      for (const x of v) walk(x, depth + 1, true);
-    } else if (v && typeof v === 'object') {
-      for (const [k, x] of Object.entries(v as Record<string, unknown>)) {
-        if (k.toLowerCase() !== 'query') walk(x, depth + 1, false);
-      }
-    } else if ((typeof v === 'string' || typeof v === 'number') && (inArray || depth >= 2 || topLevelIsRecord)) {
-      out.push(String(v));
-    }
-  };
-  walk(parsed, 0, false);
-  return out.join('\n');
 }
 
 /** A verdict the answer states. */
@@ -382,26 +164,34 @@ export interface StatedVerdict {
   reason: string;
 }
 
+/** A figure that is AnA's own input to a tool, and which tool. */
+export interface InputClaim extends UnsupportedClaim {
+  source: string;
+}
+
 /** What the check found, and what it is based on. */
 export interface AnswerCheck {
   /** The engine that checked (ANSWER_CHECK_VERSION). */
   engine: string;
   /**
-   * 'sources': AnA consulted something this turn (a tool, the web, the
-   * project data she was given), and every claim was compared with it.
-   * 'no_sources': she consulted nothing. Only the person's own message could
-   * be compared, and a claim not in it is unchecked, not "not found".
+   * 'sources': AnA consulted something this turn (a tool, the web, project
+   * data, a document), and every claim was compared with it.
+   * 'no_sources': she consulted nothing; nothing could be found or not found.
    */
   basis: 'sources' | 'no_sources';
-  /** Checkable claims in the answer: found + notFound + unchecked. */
+  /** Checkable claims in the answer: every claim in every list below. */
   claims: number;
   /** Claims compared with a source: found + notFound. */
   checked: number;
   found: number;
-  /** Claims compared with this turn's sources and not found in any. */
+  /** Compared with this turn's sources and in none. */
   notFound: UnsupportedClaim[];
-  /** Claims nothing could be compared with (basis 'no_sources'). */
+  /** Not checkable: nothing consulted, or maybe in a source the check cannot read. */
   unchecked: UnsupportedClaim[];
+  /** Only in the person's own message: theirs, not a source's. */
+  fromPerson: UnsupportedClaim[];
+  /** Figures that are only AnA's own input to a tool: hers, not a result. */
+  fromInput: InputClaim[];
   /** The distinct sources the claims were compared with. */
   sources: string[];
   /** Sources AnA was given that the check could not read. */
@@ -410,112 +200,137 @@ export interface AnswerCheck {
   verdicts: StatedVerdict[];
 }
 
-/** One source, in every form the comparisons read. */
+/** One source, read every way the claims need it. */
 interface ReadSource {
-  upper: string;
-  cfr: string;
-  compact: string;
-  normed: string;
-  numbers: Set<string>;
+  name: string;
+  /** Everything it says ("key: value" lines for JSON), without URLs. */
+  own: TextForms;
+  /** What it returns as records: where a claim the model asked for can be found. Null for a source nobody asked. */
+  records: TextForms | null;
+  /** What the model sent it, when it is a tool result. */
+  input: InputRead;
+  inputText: TextForms | null;
+  /** What a model wrote inside the call: credits nothing. */
+  written: TextForms | null;
+  /** Its numbers that are its own, by value: where a figure can be found. */
+  results: NumberIndex;
+  /** Its numbers that are AnA's own input, echoed or as sent, by value. */
+  inputs: NumberIndex;
+  /** Numbers a model wrote inside the call, by value. */
+  writtenNumbers: NumberIndex;
 }
 
-function readSource(text: string): ReadSource {
-  const upper = text.toUpperCase();
+/** A text in the forms the comparisons read. */
+interface TextForms {
+  upper: string;
+  cfr: string;
+  normed: string;
+}
+
+function forms(text: string): TextForms {
+  const t = asciiDashes(withoutUrls(text));
   return {
-    upper,
-    cfr: text.replace(CFR_PREFIX_RE, (_m, title: string) => `${title} CFR `).toUpperCase(),
-    compact: upper.replace(/\s+/g, ''),
-    normed: norm(text),
-    numbers: numbersIn(text),
+    upper: t.toUpperCase(),
+    cfr: t.replace(CFR_PREFIX_RE, (_m, title: string) => `${title} CFR `).toUpperCase(),
+    normed: norm(t),
   };
 }
 
-/** A source with what its own model wrote, which it cannot credit, and what was asked of it. */
-interface Credit {
-  own: ReadSource;
-  written: ReadSource | null;
-  echoed: Set<string>;
-  /** The call's input, when the source is a tool result. */
-  asked: ReadSource | null;
-  /** What the result returns inside a record (returnedRecords). */
-  returned: ReadSource | null;
+function readSource(e: EvidenceEntry): ReadSource {
+  const parsed = parseJson(e.content);
+  const input = typeof e.asked === 'string' ? readInput(e.asked) : NO_INPUT;
+  const written = e.generated && e.generated.length > 0 ? e.generated.join('\n') : null;
+  const numbers = numbersInSource(e.content, parsed, input);
+  return {
+    name: e.source,
+    own: forms(ownText(e.content, parsed)),
+    records: typeof e.asked === 'string' ? forms(recordsText(parsed, input)) : null,
+    input,
+    inputText: typeof e.asked === 'string' ? forms(input.text) : null,
+    written: written ? forms(written) : null,
+    results: indexNumbers(numbers.filter((o) => !o.echo)),
+    inputs: indexNumbers([
+      ...numbers.filter((o) => o.echo),
+      ...(typeof e.asked === 'string' ? numbersInText(input.text, '', 'input', true) : []),
+    ]),
+    writtenNumbers: indexNumbers(written ? numbersInText(written, '', 'written', false) : []),
+  };
 }
 
-/**
- * Found in a source, and not in what a model wrote for that source. What the
- * model asked the source for is found only where the result returns it in a
- * record, never in the echo of the request (returnedRecords); anything else is
- * found wherever the source holds it.
- */
-function creditedUnlessEchoed(
-  sources: Credit[],
-  found: (r: ReadSource) => boolean,
-  askedFor: (r: ReadSource) => boolean = found,
-): boolean {
-  return sources.some((c) => {
-    const surface = c.asked && askedFor(c.asked) ? c.returned : c.own;
-    return Boolean(surface && found(surface)) && !(c.written && found(c.written));
-  });
-}
+/** Where a claim ended. */
+type Outcome = 'found' | 'fromInput' | 'fromPerson' | 'unchecked' | 'notFound';
 
 /**
  * Check the specific, checkable claims in `answer` against this turn's
- * sources: identifiers, regulations, quotes and figures; and name the
- * verdicts it states.
+ * sources, and name the verdicts it states.
  */
 export function checkAnswer(answer: string, entries: EvidenceEntry[]): AnswerCheck {
   const present = entries.filter((e) => e && typeof e.source === 'string');
-  const unreadable = present.filter((e) => e.unreadable).map((e) => e.source);
-  const usable = present.filter((e) => !e.unreadable && typeof e.content === 'string' && e.content.trim());
+  const unreadable = [...new Set(present.filter((e) => e.unreadable).map((e) => e.source))];
+  const readable = present.filter((e) => !e.unreadable && typeof e.content === 'string' && e.content.trim());
+  const sources = readable.filter((e) => e.source !== 'person').map(readSource);
+  const person = readable.filter((e) => e.source === 'person').map(readSource);
   const check: AnswerCheck = {
     engine: ANSWER_CHECK_VERSION,
-    basis: usable.some((e) => e.source !== 'person') || unreadable.length > 0 ? 'sources' : 'no_sources',
+    basis: sources.length > 0 || unreadable.length > 0 ? 'sources' : 'no_sources',
     claims: 0,
     checked: 0,
     found: 0,
     notFound: [],
     unchecked: [],
-    sources: [...new Set(usable.map((e) => e.source))],
-    unreadable: [...new Set(unreadable)],
+    fromPerson: [],
+    fromInput: [],
+    sources: [...new Set(sources.map((s) => s.name))],
+    unreadable,
     verdicts: [],
   };
   if (!answer) return check;
-  const record = (claim: UnsupportedClaim, found: boolean) => {
+
+  /** Settle a claim that no source holds. */
+  const unsettled = (inPerson: boolean): Outcome => {
+    if (inPerson) return 'fromPerson';
+    return check.basis === 'no_sources' || unreadable.length > 0 ? 'unchecked' : 'notFound';
+  };
+  const record = (claim: UnsupportedClaim, outcome: Outcome, inputSource?: string): void => {
     check.claims++;
-    if (found) {
+    if (outcome === 'found') {
       check.checked++;
       check.found++;
-    } else if (check.basis === 'no_sources') {
-      check.unchecked.push(claim);
-    } else {
+    } else if (outcome === 'notFound') {
       check.checked++;
       check.notFound.push(claim);
+    } else if (outcome === 'fromInput') {
+      check.fromInput.push({ ...claim, source: inputSource ?? '' });
+    } else if (outcome === 'fromPerson') {
+      check.fromPerson.push(claim);
+    } else {
+      check.unchecked.push(claim);
     }
   };
-  const credits: Credit[] = usable.map((e) => ({
-    own: readSource(e.content),
-    written: e.generated && e.generated.length > 0 ? readSource(e.generated.join('\n')) : null,
-    echoed: new Set(e.inputNumbers ?? []),
-    asked: typeof e.asked === 'string' ? readSource(e.asked) : null,
-    returned: typeof e.asked === 'string' ? readSource(e.returned ?? '') : null,
-  }));
-  checkTextClaims(answer, credits, record);
+
+  checkTextClaims(answer, sources, person, (claim, found, inPerson) => record(claim, found ? 'found' : unsettled(inPerson)));
   for (const fig of figuresIn(answer)) {
-    const has = (r: ReadSource, echoed: Set<string>) =>
-      fig.values.every((v) => {
-        const forms = fig.percent ? [v, String(Number(v) / 100)] : [v];
-        return forms.some((f) => r.numbers.has(f) && !echoed.has(f));
-      });
-    const found = credits.some((c) => has(c.own, c.echoed) && !(c.written && has(c.written, new Set())));
-    record({ kind: 'figure', text: fig.text }, found);
+    const claim: UnsupportedClaim = { kind: 'figure', text: fig.text };
+    if (sources.some((s) => figureHeld(fig, s.results) && !figureHeld(fig, s.writtenNumbers))) {
+      record(claim, 'found');
+      continue;
+    }
+    const asInput = sources.find((s) => figureHeld(fig, s.inputs));
+    if (asInput) {
+      record(claim, 'fromInput', asInput.name);
+      continue;
+    }
+    record(claim, unsettled(person.some((p) => figureHeld(fig, p.results))));
   }
   check.verdicts = statedVerdicts(answer);
   return check;
 }
 
-/** The §14 prohibitions and the verdict shapes, in order, one per span. */
+/** The §14 prohibitions and the verdict shapes the answer asserts, in order, one per span. */
 function statedVerdicts(answer: string): StatedVerdict[] {
-  const all = [...detectUnsupportedClaims(answer), ...detectVerdictClaims(answer)].sort((a, b) => a.index - b.index);
+  const all = [...detectUnsupportedClaims(answer), ...detectVerdictClaims(answer)]
+    .filter((v) => isAssertedVerdict(answer, v.index, v.match))
+    .sort((a, b) => a.index - b.index);
   const out: StatedVerdict[] = [];
   let end = -1;
   for (const v of all) {
@@ -546,88 +361,192 @@ export function groundingResultOf(check: AnswerCheck): GroundingResult {
   };
 }
 
+/* ── Identifiers, regulations and quotes ───────────────────────────────────── */
+
+/** Normalize for tolerant substring matching: lowercase, punctuation → space. */
+function norm(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+type IdKind = Exclude<UnsupportedClaim['kind'], 'quote' | 'figure'>;
+
+// Whole-token identifiers, each a registry-issued id that cannot be recalled
+// correctly from memory, so one no source holds is a fabrication signal. The
+// FDA single- and three-letter tokens carry `(?<![./])` so they are not read
+// from inside a DOI suffix or a dotted path ("10.1016/P123456" is one DOI). A
+// trial id is read with every digit it has: "NCT025786801" is a malformed id
+// no registry issued, reported as itself, never as the trial inside it.
+const TOKEN_ID_PATTERNS: ReadonlyArray<{ kind: IdKind; re: RegExp }> = [
+  { kind: 'nct', re: /\bNCT\d{8,}/gi },
+  { kind: 'isrctn', re: /\bISRCTN\d{8,}/gi },
+  { kind: 'eudract', re: /(?<![./])\b\d{4}-\d{6}-\d{2}\b/g },
+  { kind: 'doi', re: /\b10\.\d{4,9}\/[^\s"”'<>)\]]+/gi },
+  { kind: 'fda_510k', re: /(?<![./])\bK\d{6}\b/g },
+  { kind: 'fda_pma', re: /(?<![./])\bP\d{6}\b/g },
+  { kind: 'fda_denovo', re: /(?<![./])\bDEN\d{6}\b/gi },
+];
+
+// Labelled numbers: the bare number is not distinctive, so it is read only with
+// its label, and matched only where a source holds it with a label too
+// ("PMID: 31234567", "pmid: 31234567", "NDA214360"): an enrolment of 1274 is
+// not BLA 1274 (round 2, F7).
+const LABELED_ID_PATTERNS: ReadonlyArray<{ kind: IdKind; re: RegExp; label: string }> = [
+  { kind: 'pmid', re: /\bPMID:?\s*(\d{7,8})\b/gi, label: 'PMID|PUBMED' },
+  { kind: 'fda_nda', re: /\bNDA\s*:?\s*(\d{4,6})\b/gi, label: 'NDA|APPLICATION' },
+  { kind: 'fda_bla', re: /\bBLA\s*:?\s*(\d{4,6})\b/gi, label: 'BLA|APPLICATION' },
+  { kind: 'fda_anda', re: /\bANDA\s*:?\s*(\d{4,6})\b/gi, label: 'ANDA|APPLICATION' },
+];
+
+// Regulations. A CFR section or an ICH code can be recalled correctly, so a
+// miss means "not supported by this turn's sources", not fabricated.
+const CFR_PREFIX_RE = /\b(\d{1,2})\s*C\.?\s*F\.?\s*R\.?\s*(?:§+\s*|Parts?\s+|Sections?\s+)?/gi;
+const CFR_SECTION = String.raw`\d{1,4}(?:\.\d+[a-z]?)?(?:\([a-z0-9]{1,4}\))*`;
+const CFR_CITATION_RE = new RegExp(
+  String.raw`\b(\d{1,2})\s*C\.?\s*F\.?\s*R\.?\s*(?:(§§|Parts|Sections)\s*|§\s*|Part\s+|Section\s+)?(${CFR_SECTION})`,
+  'gi',
+);
+/** The next part or section in a list after a CFR citation: "21 CFR Parts 50 and 56", "§§ 312.32, 312.33". */
+const CFR_LIST_NEXT_RE = new RegExp(
+  String.raw`^(?:[ \t]{0,2},[ \t]{0,2}(?:and[ \t]{1,2}|or[ \t]{1,2})?|[ \t]{1,2}(?:and|or|&)[ \t]{1,2})(${CFR_SECTION})(?!\d|\.\d)(?![ \t]{0,2}(?:C\.?[ \t]?F\.?[ \t]?R|U\.?[ \t]?S\.?[ \t]?C))`,
+  'i',
+);
+/**
+ * A list item cites the same title only where the citation says it lists
+ * (Parts, Sections, §§) or the item is a section of the same part (312.32 and
+ * 312.33): "21 CFR 312.32 and 15 days" lists nothing.
+ */
+const listsAfter = (plural: boolean, first: string, item: string): boolean =>
+  plural || (first.includes('.') && item.startsWith(first.slice(0, first.indexOf('.') + 1)));
+const ICH_CITATION_RE =
+  /\bICH\s+([QSEM]\d{1,2}[A-Z]?(?:\s?\(R\d{1,2}\))?)|(?<![A-Za-z0-9])([QSEM]\d{1,2}[A-Z]?\(R\d{1,2}\))/g;
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** `needle` in `haystack`, not continued as a longer number ("11" is not "110" or "11.5"). */
+function containsCitation(haystack: string, needle: string): boolean {
+  return new RegExp(`(?<![0-9])${escapeRegExp(needle)}(?![0-9]|\\.[0-9])`).test(haystack);
+}
+
+/** An ICH code as a token: "E3" is not in "PHASE3", "E9(R1)" is "E9 (R1)" too. */
+function containsIchCode(haystack: string, code: string): boolean {
+  const m = /^([QSEM]\d{1,2}[A-Z]?)(\(R\d{1,2}\))?$/.exec(code);
+  if (!m) return false;
+  const rev = m[2] ? `\\s?${escapeRegExp(m[2])}` : '(?!\\s?\\(R)';
+  return new RegExp(`(?<![A-Z0-9])${m[1]}${rev}(?![0-9A-Z])`).test(haystack);
+}
+
 /** `needle` in `haystack` as a whole token: not inside a longer identifier. */
 function containsToken(haystack: string, needle: string): boolean {
   return new RegExp(`(?<![A-Z0-9])${escapeRegExp(needle)}(?![A-Z0-9])`).test(haystack);
 }
 
-/** A labelled number in `haystack`, not part of a longer number ("NDA214360" holds 214360). */
-function containsWholeNumber(haystack: string, needle: string): boolean {
-  return new RegExp(`(?<!\\d)${escapeRegExp(needle)}(?!\\d)`).test(haystack);
+/** A labelled number held with a label ("PMID 31234567", "pmid: 31234567", "NDA214360"). */
+function containsLabelled(haystack: string, label: string, number: string): boolean {
+  return new RegExp(`(?:${label})[^0-9A-Z]{0,12}${escapeRegExp(number)}(?![0-9])`).test(haystack);
 }
 
-/** Identifiers, regulations and quotes, against each source. */
-function checkTextClaims(answer: string, sources: Credit[], record: (c: UnsupportedClaim, found: boolean) => void): void {
-  // Registry / literature / submission identifiers — a classic fabrication.
-  // Each must appear whole in a source. De-duped across kinds so the same id
-  // is only counted once. The reported text keeps its original form; the
-  // match is case-insensitive (compared uppercased on both sides).
-  // `display` is what gets reported; `checkValue` is what must appear in a
-  // source. They differ for labeled ids, where the label anchors extraction
-  // from the answer but only the number is matched.
-  const seenIds = new Set<string>();
-  const checkId = (kind: IdKind, display: string, checkValue: string, labelled: boolean): void => {
-    const text = display.replace(TRAILING_PUNCT_RE, '').trim();
-    const needle = checkValue.replace(TRAILING_PUNCT_RE, '').trim().toUpperCase();
-    if (!text || !needle) return;
-    const key = `${kind}:${needle}`;
-    if (seenIds.has(key)) return;
-    seenIds.add(key);
-    const within = labelled ? containsWholeNumber : containsToken;
-    record({ kind, text }, creditedUnlessEchoed(sources, (r) => within(r.upper, needle)));
-  };
-  for (const { kind, re } of TOKEN_ID_PATTERNS) {
-    re.lastIndex = 0;
-    for (const raw of answer.match(re) || []) checkId(kind, raw, raw, false);
-  }
-  for (const { kind, re } of LABELED_ID_PATTERNS) {
-    re.lastIndex = 0;
-    let lm: RegExpExecArray | null;
-    while ((lm = re.exec(answer)) !== null) checkId(kind, lm[0], lm[1], true);
-  }
+const TRAILING_PUNCT_RE = /[.,;:]+$/;
+const QUOTE_RE = /["“]([^"”\n]{20,200})["”]/g;
 
-  // Regulations — checked in one spelling on both sides (see CFR_CITATION_RE).
-  const checkRegulation = (
-    kind: 'cfr' | 'ich',
-    display: string,
-    key: string,
-    found: (r: ReadSource) => boolean,
-    askedFor: (r: ReadSource) => boolean,
-  ): void => {
-    if (seenIds.has(`${kind}:${key}`)) return;
-    seenIds.add(`${kind}:${key}`);
-    record({ kind, text: display.replace(TRAILING_PUNCT_RE, '').trim() }, creditedUnlessEchoed(sources, found, askedFor));
+/**
+ * Found in a source, and not in what a model wrote for it. A claim the model
+ * asked the source for is found only in what it returns as records; anything
+ * else wherever it holds it.
+ */
+function creditedBy(
+  sources: ReadSource[],
+  found: (t: TextForms) => boolean,
+  askedFor: (t: TextForms) => boolean = found,
+): boolean {
+  return sources.some((s) => {
+    const surface = s.inputText && askedFor(s.inputText) ? s.records : s.own;
+    return Boolean(surface && found(surface)) && !(s.written && found(s.written));
+  });
+}
+
+/** Settle one claim: its kind, a key it is deduplicated by, its text, how a source holds it, and how a call asks for it. */
+type Settle = (
+  kind: UnsupportedClaim['kind'],
+  key: string,
+  text: string,
+  found: (t: TextForms) => boolean,
+  askedFor?: (t: TextForms) => boolean,
+) => void;
+
+/** CFR citations, and the parts or sections listed after one ("21 CFR Parts 50 and 56"). */
+function settleCfrCitations(answer: string, settle: Settle): void {
+  const settleCfr = (title: string, part: string, text: string) => {
+    const needle = `${title} CFR ${part}`.toUpperCase();
+    const section = part.toUpperCase();
+    // Asked for when the call named the section, in whatever fields it split it across.
+    settle('cfr', needle, text, (t) => containsCitation(t.cfr, needle), (t) => containsCitation(t.upper, section));
   };
   CFR_CITATION_RE.lastIndex = 0;
   let cm: RegExpExecArray | null;
   while ((cm = CFR_CITATION_RE.exec(answer)) !== null) {
-    const needle = `${cm[1]} CFR ${cm[2]}`.toUpperCase();
-    // Asked for when the call named the section, in whatever fields it split it across.
-    const section = cm[2].toUpperCase();
-    checkRegulation('cfr', cm[0], needle, (r) => containsCitation(r.cfr, needle), (r) => containsCitation(r.upper, section));
+    const [, title, plural, first] = cm;
+    settleCfr(title, first, cm[0].replace(TRAILING_PUNCT_RE, '').trim());
+    // The parts listed after it share its title: "21 CFR Parts 50 and 56" cites 21 CFR 56 too.
+    let rest = cm.index + cm[0].length;
+    let next: RegExpExecArray | null;
+    while ((next = CFR_LIST_NEXT_RE.exec(answer.slice(rest, rest + 40))) !== null && listsAfter(Boolean(plural), first, next[1])) {
+      settleCfr(title, next[1], `${title} CFR ${next[1]}`);
+      rest += next[0].length;
+    }
+    CFR_CITATION_RE.lastIndex = Math.max(CFR_CITATION_RE.lastIndex, rest);
   }
+}
+
+/** Identifiers, regulations and quotes: found, and if not, whether the person's own message holds it. */
+function checkTextClaims(
+  answer: string,
+  sources: ReadSource[],
+  person: ReadSource[],
+  record: (c: UnsupportedClaim, found: boolean, inPerson: boolean) => void,
+): void {
+  const seen = new Set<string>();
+  const settle: Settle = (kind, key, text, found, askedFor) => {
+    if (seen.has(`${kind}:${key}`)) return;
+    seen.add(`${kind}:${key}`);
+    const credited = creditedBy(sources, found, askedFor);
+    record({ kind, text }, credited, !credited && person.some((p) => found(p.own)));
+  };
+
+  for (const { kind, re } of TOKEN_ID_PATTERNS) {
+    re.lastIndex = 0;
+    for (const raw of answer.match(re) || []) {
+      const text = raw.replace(TRAILING_PUNCT_RE, '').trim();
+      const needle = text.toUpperCase();
+      if (needle) settle(kind, needle, text, (t) => containsToken(t.upper, needle));
+    }
+  }
+  for (const { kind, re, label } of LABELED_ID_PATTERNS) {
+    re.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(answer)) !== null) {
+      const number = m[1];
+      settle(kind, number, m[0].replace(TRAILING_PUNCT_RE, '').trim(), (t) => containsLabelled(t.upper, label, number), (t) =>
+        new RegExp(`(?<![0-9])${number}(?![0-9])`).test(t.upper),
+      );
+    }
+  }
+  settleCfrCitations(answer, settle);
   ICH_CITATION_RE.lastIndex = 0;
   let im: RegExpExecArray | null;
   while ((im = ICH_CITATION_RE.exec(answer)) !== null) {
     const code = (im[1] ?? im[2]).replace(/\s+/g, '').toUpperCase();
-    const found = (r: ReadSource) => containsCitation(r.compact, code);
-    checkRegulation('ich', im[0], code, found, found);
+    settle('ich', code, im[0].replace(TRAILING_PUNCT_RE, '').trim(), (t) => containsIchCode(t.upper, code));
   }
-
-  // Quoted source text — if AnA quotes the document, the quote should be in a
-  // source. Skip short or label-like quotes to avoid false positives.
-  const seen = new Set<string>();
-  let m: RegExpExecArray | null;
   QUOTE_RE.lastIndex = 0;
-  while ((m = QUOTE_RE.exec(answer)) !== null) {
-    const raw = m[1].trim();
+  let qm: RegExpExecArray | null;
+  while ((qm = QUOTE_RE.exec(answer)) !== null) {
+    const raw = qm[1].trim();
     const q = norm(raw);
-    if (q.length < 12 || !q.includes(' ')) continue; // too short / single token
-    if (seen.has(q)) continue;
-    seen.add(q);
-    record(
-      { kind: 'quote', text: raw.length > 80 ? raw.slice(0, 79) + '…' : raw },
-      creditedUnlessEchoed(sources, (r) => r.normed.includes(q)),
-    );
+    if (q.length < 12 || !q.includes(' ')) continue; // too short, or one token
+    settle('quote', q, raw.length > 80 ? raw.slice(0, 79) + '…' : raw, (t) => t.normed.includes(q));
   }
 }
+
+export type { Figure };

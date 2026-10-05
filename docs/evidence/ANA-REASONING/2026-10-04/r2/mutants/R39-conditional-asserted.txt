@@ -1,0 +1,12 @@
+Mutant R39-conditional-asserted: "whether the package is ready to file" is named as a verdict (HS-6)
+
+--- server/services/clinical-regulatory-evidence/governance.ts
+- fail(?:s|ed|ing)?\s+to|unlikely|uncertain|doubt(?:ful)?|may\s+not|might\s+not|whether|if|unless|before|until|once|when|in\s+order\s+to|so\s+that|confirm|check|verify|cannot|can't)
++ fail(?:s|ed|ing)?\s+to|unlikely|uncertain|doubt(?:ful)?|may\s+not|might\s+not|cannot|can't)
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > verdicts (F9, HS-6) > does not name a verdict declined, made conditional, or about a workflow step 10ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

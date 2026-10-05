@@ -1,0 +1,218 @@
+Round 2's suites, green, on the merged tree (trunk 4053be7be plus rounds 1 and 2).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts tests/services/answer-grounding.test.ts tests/services/answer-grounding-regulatory.test.ts server/services/evidence/__tests__/ server/services/__tests__/ana-trust-summary.test.ts server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts server/routes/ana-ri/__tests__/stream-answer-sources.test.ts server/services/ai-gateway/__tests__/generation-capture.test.ts client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > mounts DocumentCanvas beneath a turn whose draft carries authoringDocId, read from the store 151ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > puts what was checked directly under the answer, above the canvas whose drafted figures it does not check 58ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > keeps a document-backed draft OUT of the side-panel artifact list, and a legacy draft IN it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > a turn without a document gets no canvas 47ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > finds the document in a rehydrated turn’s tool trace, and never in prose 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > hides the side column while a canvas is expanded, and Open full editor mounts the one workbench in place 152ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > "Draft with AnA" opens the pane and shows the request in it 865ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays 384ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the canvas keeps up with AnA (2026-10-01) > re-reads the document when AnA’s turn ends 62ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > an empty section shows BOTH draft controls, and the toolbar one still asks for the section 561ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > offers no insert while no document is open 284ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > the pane composer sends into the same conversation 433ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > inserts a settled answer into the open section as an AnA suggestion, naming its turn record 878ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > shows real work, evidence, and follow-up actions from AnA 560ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > shows an honest empty pane rather than pretending a conversation exists 725ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > when the editor closes, the offer reopens it: the suggestion still lands where the person sees it 1141ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA knows the document open beside the conversation (2026-10-01) > sends the open document and section with the turn, and nothing once the editor closes 433ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — a sealed document is known to AnA, and takes no insert (2026-10-01) > names the frozen document on the turn but offers no insert into it 301ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — a section not yet drafted is one ask away (2026-10-01) > opens the editor at the section, puts the ask in the composer, and the turn and the insert name that section 840ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates the document from the draft, split at its headings, and opens it beside the conversation 357ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels 4620ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > post_done, the stored message and the sealed record carry the same check 12ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > with no tool run, a turn still says what was checked: claims unchecked, not grounded 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > a short answer the labels do not assess is still checked 2ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > opens the document already made from that turn instead of creating a second copy 330ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates nothing when it cannot check for an earlier copy, and says so 232ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > renders a heading, bold and a list as elements, not symbols; user text stays as typed 28ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > a <script> in model text never reaches the DOM 28ms
+ ✓ server/services/evidence/__tests__/evidence-asks-view-assembler.pglite.integration.test.ts > assembleOrgEvidenceAsks > assembles real asks: question, ranked chunks, generation-linked pedigree, honest nulls 22ms
+ ✓ server/services/evidence/__tests__/evidence-asks-view-assembler.pglite.integration.test.ts > assembleOrgEvidenceAsks > returns [] for an org with no asks, and never crosses tenants 4ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a date, an age or a page does not find a fabricated figure 40ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > the figures the record does hold are found by their measure 7ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a p-value is not a percentage, and a percentage is not a p-value 3ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > an outage envelope finds nothing through its percent-encoded URL (F3) 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a figure in a returned abstract is found, though the model searched for it (HS-5) 7ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a figure the model chose as an input and a tool echoes is AnA's input, not a result (HS-5) 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "The response rate was 47 percent." 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "hazard ratio, 0.31; 95% CI, 0.50 to 0.77" 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "The p-value = 0.0003." 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "A P value of 0.0003 was reported." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Enrollment was 212 pts." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "A total of 212 randomized patients." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "212 women were enrolled." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Median OS was 31.2 mo." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Treatment lasted 48 h." 2ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Dosed at 100 μg daily." 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "95% CI [0.41, 0.77]" 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "HR (95% CI) 0.62 (0.50–0.77)" 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Responses ranged from 38–56%." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > a range checks both ends, and a sign or a proportion is read as written (F8) 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > "or" in prose is not an odds ratio (HS-7) 2ms
+ ✓ tests/services/answer-check-r2.test.ts > the person's own message is never a source (F1, HS-3) > a claim found only in the question is reported as theirs, not found 1ms
+ ✓ tests/services/answer-check-r2.test.ts > the person's own message is never a source (F1, HS-3) > with nothing consulted, a claim in the question is still the person's, and the rest unchecked 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a citation check that did not find the PMID does not find it 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a verified citation confirms the identifier it matched, not what the model packed beside it 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > an identifier in a fetched URL is not found; the page must hold it 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a tool that searches text the model supplied returns only the model's words 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > echoes nested under other keys, in bare lists or in a not-found list find nothing 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a registry record about the identifier the model searched for confirms it 0ms
+ ✓ tests/services/answer-check-r2.test.ts > identifiers and regulations are matched as themselves (F7) > an ICH code is not found inside another word or beside an unrelated number 1ms
+ ✓ tests/services/answer-check-r2.test.ts > identifiers and regulations are matched as themselves (F7) > a labelled submission number needs its label in the source, not any equal number 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a source the check cannot read leaves its claims unchecked (HS-4) > claims not found elsewhere are not checked, naming the unread source 0ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts (F9, HS-6) > names the verdicts stated 2ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts (F9, HS-6) > does not name a verdict declined, made conditional, or about a workflow step 1ms
+ ✓ tests/services/answer-check-r2.test.ts > cost and shape (F10) > long whitespace runs in an answer stay linear 1ms
+ ✓ tests/services/answer-check-r2.test.ts > cost and shape (F10) > a deeply nested result does not throw 5ms
+ ✓ tests/services/answer-check-r2.test.ts > cost and shape (F10) > names the round-2 engine 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a proportion she passed, restated as a percentage, is her input 2ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a percentage she passed, restated as a proportion, is her input 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a figure she searched for is still found in a passage the source returns (HS-5 holds) 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a figure one tool restates from her input is found in another tool that returns it 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an identifier the citation tool verified is found (probe p5 G1) > a labelled PMID the tool verified is found 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an identifier the citation tool verified is found (probe p5 G1) > what the model packed beside it is still not found 1ms
+ ✓ tests/services/answer-check-r2.test.ts > regulations cited as a list are each read (probe p9 I7) > reads "21 CFR Parts 50 and 56" as two parts 1ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts, re-run (probes p8 and probe-verdicts) > names the verdicts round 2 still missed 1ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts, re-run (probes p8 and probe-verdicts) > does not name a verdict asked, doubted, or made conditional after it 0ms
+ ✓ tests/services/answer-check-r2.test.ts > cost at scale (probe p6) > 200 identifiers and 200 figures against 25 sources of 60k characters take well under two seconds 398ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a p-value needs p: alpha is not a p-value 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a hazard ratio needs its name: a dose is not a hazard ratio 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > n and a count need what they count: a page number is neither 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a dose needs its unit: a duration in days is not a dose in mg 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a date is not a count, even in a field named for a cohort or a sample 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > "or" in a source's prose is not an odds ratio 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > two bounds far apart in one text are not an interval 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > two numbers that are not a CI are not an interval 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > bounds from two different records are not one interval 7ms
+ ✓ tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > an interval returned as a pair of numbers is found 1ms
+ ✓ tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record that says it was not found confirms nothing it names 1ms
+ ✓ tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record holding only the model's own identifier and a position confirms nothing 1ms
+ ✓ tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record whose own value is a figure ("47%") does confirm the identifier it is about 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a malformed identifier is flagged, not skipped (round-2 mutants) > a nine-digit NCT number is a claim of its own, not the trial inside it 1ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes what a model wrote inside the capture 25ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes nothing outside a capture, and a call outside is not noted inside 7ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > keeps two concurrent tool calls apart 4ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture opened inside another also notes into the outer one 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says how many specific claims were not found in this turn's sources, and quotes them by kind 48ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > names what it checked against 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says every claim was found, and still earns no check mark: found is not verified (HS-2) 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says a figure is AnA's own input to a tool, not a result (HS-5) 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says a claim found only in the person's message is theirs, never found (HS-3) 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > with no source consulted, the claims are not checked — never found, never a pass 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > with no source consulted, a claim only in the person's message is said to be theirs (F1) 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > nothing to check is not a pass 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > names a verdict the answer states, and says where verdicts come from 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > names a source the check could not read, and leaves what it may hold unchecked (HS-4) 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > names an unread source on its own when nothing was left unchecked 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > says nothing about what it checked against when there was nothing to check (HS-9) 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > lists three claims and counts the rest 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > reports labels as labelled, never as grounded, and never as sources 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > names the flags by kind and quotes the first 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > a label check that ran and failed shows what failed — it is not "not assessed" 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > a failed label check with no counts still shows what failed, beside the engine's check 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > clean labels carry no check mark: a label is not verification 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > with no check either, says the answer was not assessed and shows no count 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > with a check, the unassessed labels add nothing to it 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > renders nothing when the turn carries no verdict at all 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > never states a verdict in colour alone 5ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > finds a figure a tool returned, and flags one it did not 19ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > reads a percentage as its proportion too 7ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > needs both bounds of a confidence interval, and does not read "95% CI" as a result 2ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a tool only echoed from what the model passed in 2ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a model wrote inside the tool call 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > a figure an engine returned beside a model-written one is still found 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > finds the identifiers the evidence holds 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > does not find a truncated or altered identifier inside a longer one 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > does not credit an identifier a model wrote inside the tool call 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > an outage envelope that echoes the query finds nothing 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a zero-hit result finds nothing, and neither does the query its provenance echoes 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a hit returns the identifier in a record, and is found 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a result that is not structured cannot tell an echo from data, and finds nothing the model asked for 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a quote the model searched for is found only in a returned passage 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > an identifier the model did not ask for is found wherever the result holds it 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a regulation looked up is found in the record the lookup returns, not in the echo of a miss 2ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a citation formatted from what the model gave, and not verified, finds nothing 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a citation the tool verified against a source is found 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a regulation a model wrote inside the tool call is not credited by it 1ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a successful result is a source, named by its tool 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a failed, stopped or empty step is not 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a governed write is not: its output is the content it stored 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a result whose generations are unknown, or too many to keep, is not 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > with only the person's own message, claims are unchecked or theirs, never "not found" 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > a source the check cannot read is named, not counted as read 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > names the engine that checked 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — verdicts > names a readiness, compliance or approval verdict the answer states 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — verdicts > includes the §14 prohibited claims, and not a verdict the answer declines to give 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > is a no-op when there is no evidence to check against 2ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds an NCT id that appears in the evidence 15ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated NCT id not present in the evidence 7ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a quote that appears in the evidence, tolerant of punctuation 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated quote not found in the evidence 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > ignores short or label-like quotes to avoid false positives 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > deduplicates repeated claims 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > truncates long unsupported quotes in the report 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds an ISRCTN id present in the evidence 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated ISRCTN id not in the evidence 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a EudraCT number present in the evidence 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated EudraCT number not in the evidence 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > counts NCT, ISRCTN and EudraCT ids together across registries 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a PMID that appears in the evidence 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated PMID, reporting the labeled form but matching by number 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a DOI present in the evidence, trimming trailing punctuation 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated DOI not in the evidence 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not extract an FDA submission number from inside a grounded DOI suffix 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not misclassify a fabricated DOI suffix as an FDA number 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not extract a EudraCT-shaped number from inside a DOI suffix 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > still grounds a standalone EudraCT number after the precision guard 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a 510(k) predicate number present in the evidence 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags fabricated 510(k), PMA and De Novo numbers together 3ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not let NCT or ISRCTN ids mis-trigger the FDA number patterns 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds an NDA number present in the evidence, regardless of spacing 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags fabricated NDA, BLA and ANDA numbers and reports the labeled form 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not let an ANDA citation double-count as an NDA 0ms
+ ✓ server/services/evidence/__tests__/grounding-eval.test.ts > grounding eval harness > every curated fixture meets its expected outcome 37ms
+ ✓ server/services/evidence/__tests__/grounding-eval.test.ts > grounding eval harness > achieves perfect fabrication detection on the fixture set 3ms
+ ✓ server/services/evidence/__tests__/grounding-eval.test.ts > grounding eval harness > grounded cases have a mean grounding ratio of 1 1ms
+ ✓ server/services/evidence/__tests__/grounding-eval.test.ts > grounding eval harness > flags a fabricated identifier and reports its kind 1ms
+ ✓ server/services/evidence/__tests__/grounding-eval.test.ts > grounding eval harness > detects a deliberately broken expectation (harness self-check) 0ms
+ ✓ server/services/evidence/__tests__/grounding-eval.test.ts > grounding eval harness > covers every checkable identifier kind across the fixtures 0ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > flags a CFR section the evidence does not hold 16ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > grounds a CFR section the evidence holds, whatever the spelling 7ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > flags an ICH code the evidence does not hold, and grounds one it does 8ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > reads a revisioned code without the ICH prefix, and leaves a bare letter-number alone 1ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > is still a no-op when no tools ran 0ms
+ ✓ server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > flags when no evidence check ran 2ms
+ ✓ server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > reports clean labels as labels, not as "Verified", and not as sources 1ms
+ ✓ server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > marks labels with caveats, and says how many claims need verification 1ms
+ ✓ server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > marks labels that did not pass 0ms
+ ✓ server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > leads with the engine's check when there is one 0ms
+ ✓ server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > appends the reviewer risk summary when present 0ms
+ ✓ server/services/evidence/__tests__/provenance.test.ts > getEvidenceSource > resolves registered sources and returns undefined for unknown 1ms
+ ✓ server/services/evidence/__tests__/provenance.test.ts > buildProvenance > inherits source-level facts and stamps the citation 1ms
+ ✓ server/services/evidence/__tests__/provenance.test.ts > buildProvenance > attaches the source default caveat and merges extra caveats (deduped) 1ms
+ ✓ server/services/evidence/__tests__/provenance.test.ts > buildProvenance > carries the deterministic-computation caveat for the cheminformatics source 0ms
+ ✓ server/services/evidence/__tests__/provenance.test.ts > buildProvenance > throws on an unknown source id rather than emit un-attributable evidence 1ms
+ ✓ server/services/evidence/__tests__/provenance.test.ts > rankByAuthority > orders primary before secondary before preliminary, stable within tier 1ms
+ ✓ server/services/evidence/__tests__/provenance.test.ts > toLineageSource > projects onto data_lineage_records SOURCE columns with a confidence score 0ms
+ ✓ server/services/evidence/__tests__/provenance.test.ts > toLineageSource > falls back to url then sourceId when no identifier 0ms
+ ✓ server/services/evidence/__tests__/provenance.test.ts > EVIDENCE_SOURCES registry integrity > every entry id matches its key and has a lineage object type 1ms
+ ✓ server/services/evidence/__tests__/persist-provenance.test.ts > provenanceToLineageEntry > projects source columns from the record and target columns from the target 2ms
+ ✓ server/services/evidence/__tests__/persist-provenance.test.ts > provenanceToLineageEntry > honors a custom linkage verb 1ms
+ ✓ server/services/evidence/__tests__/persist-provenance.test.ts > persistProvenance > writes one lineage entry per record via the injected recorder 2ms
+ ✓ server/services/evidence/__tests__/persist-provenance.test.ts > persistProvenance > no-ops on an empty record list without calling the recorder 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readGroundingStrip > carries attempted, the label counts and the engine's check 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readGroundingStrip > an event with no labels reads as not assessed, never as passed 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readAnswerCheck > a check with a field of the wrong type is no check 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readStoredVerification > reads a stored message the way the live event was read 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readStoredVerification > a message stored before checks were kept shows none 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > names each tool result, carries what a model wrote inside it, and drops a failed step 36ms
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > project data is a source; the instructions, the intelligence prefix and AnA's memory are not 6ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a generation that failed wrote nothing the tool could return 3563ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > the tool calls a model chose inside the capture are noted too 2ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture that outgrows its bound says so rather than keeping a part 3ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > the stream captures every tool handler it runs 1ms
+ Test Files  16 passed (16)
+      Tests  213 passed (213)

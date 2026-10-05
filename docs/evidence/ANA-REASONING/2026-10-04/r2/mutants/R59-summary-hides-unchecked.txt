@@ -1,0 +1,14 @@
+Mutant R59-summary-hides-unchecked: the summary line does not count the unchecked claims
+
+--- server/services/ana-ri/response-contract.ts
+- if (check.unchecked.length > 0) {
+    parts.push(
++ if (false) {
+    parts.push(
+
+Tests run: server/services/__tests__/ana-trust-summary.test.ts server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+Result: KILLED
+
+ × server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > leads with the engine's check when there is one 12ms
+      Tests  1 failed | 9 passed (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

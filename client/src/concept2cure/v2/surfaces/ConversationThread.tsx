@@ -299,6 +299,11 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, inser
             markdown renderer (marked → DOMPurify → React elements, no
             innerHTML); the person's own turn above stays as typed. */}
         {turn.answer && <AnaMarkdown text={turn.answer} className="ct-ana-text ana-md" />}
+        {/* What was checked about the answer, directly under it: the engine's
+            check of its specific claims against this turn's sources, then
+            AnA's labels, the same strip as the rail and the editor. Never under
+            the document canvas, whose drafted figures it does not check. */}
+        {turn.settled && <AnaGrounding evidence={turn.evidence} />}
         <InsertIntoOpenSection turn={turn} target={insertTarget} />
         {/* The document canvas: the authoring document this turn drafted,
             read from the store and expandable into THE editor in place. */}
@@ -331,10 +336,6 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, inser
             ))}
           </div>
         )}
-        {/* What was checked about the answer: the engine's check of its
-            specific claims against this turn's sources, then AnA's labels —
-            the same strip as the rail and the editor. */}
-        {turn.settled && <AnaGrounding evidence={turn.evidence} />}
         {/* The context layers the platform gave her, by name. Context, not
             evidence, so no check mark: until 2026-10-04 these read "Grounded
             in ✓" on every turn, a verification nothing performed. */}

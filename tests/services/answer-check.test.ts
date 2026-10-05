@@ -45,7 +45,10 @@ describe('checkAnswer — figures', () => {
   it('does not credit a figure a tool only echoed from what the model passed in', () => {
     const entries = [tool('compute_fih_dose', '{"dose_mg":240,"note":"computed"}', { proposed_dose_mg: 240 })];
     const c = checkAnswer('The starting dose is 240 mg.', entries);
-    expect(c.notFound).toEqual([{ kind: 'figure', text: '240 mg' }]);
+    // Round 2: not "not found" either. It is AnA's own input, and says so.
+    expect(c.notFound).toEqual([]);
+    expect(c.found).toBe(0);
+    expect(c.fromInput).toEqual([{ kind: 'figure', text: '240 mg', source: 'tool:compute_fih_dose' }]);
   });
 
   it('does not credit a figure a model wrote inside the tool call', () => {
@@ -216,19 +219,25 @@ describe('toolEvidence — what is a source', () => {
 });
 
 describe('checkAnswer — the basis', () => {
-  it('with only the person\'s own message, claims are unchecked, never "not found"', () => {
+  // Round 2 (refute-review F1, HS-3): the person's message is never a
+  // source. A claim only there is theirs, not found.
+  it('with only the person\'s own message, claims are unchecked or theirs, never "not found"', () => {
     const c = checkAnswer('Enrolment was 1,066 patients and ORR 47%.', [{ source: 'person', content: 'Our ORR was 47%.' }]);
     expect(c.basis).toBe('no_sources');
-    expect(c.found).toBe(1);
+    expect(c.found).toBe(0);
+    expect(c.fromPerson).toEqual([{ kind: 'figure', text: '47%' }]);
     expect(c.notFound).toEqual([]);
     expect(c.unchecked).toEqual([{ kind: 'figure', text: '1,066 patients' }]);
   });
 
+  // Round 2 (HS-4): a claim not found elsewhere may be in the source the
+  // check cannot read, so it is unchecked, not "not found".
   it('a source the check cannot read is named, not counted as read', () => {
     const c = checkAnswer('ORR was 47%.', [{ source: 'attachment:Protocol.pdf', content: '', unreadable: true }]);
     expect(c.basis).toBe('sources');
     expect(c.unreadable).toEqual(['attachment:Protocol.pdf']);
-    expect(c.notFound).toEqual([{ kind: 'figure', text: '47%' }]);
+    expect(c.notFound).toEqual([]);
+    expect(c.unchecked).toEqual([{ kind: 'figure', text: '47%' }]);
   });
 
   it('names the engine that checked', () => {

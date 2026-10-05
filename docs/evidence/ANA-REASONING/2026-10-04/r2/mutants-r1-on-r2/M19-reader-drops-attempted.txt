@@ -1,0 +1,12 @@
+Mutant M19-reader-drops-attempted: the client reads attempted from validated, as before
+
+--- client/src/concept2cure/components/ana/anaAnswerCheck.ts
+- attempted: ev.attempted === true,
++ attempted: ev.validated === true,
+
+Tests run: client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readGroundingStrip > carries attempted, the label counts and the engine's check 11ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

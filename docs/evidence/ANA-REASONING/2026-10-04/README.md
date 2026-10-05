@@ -4,6 +4,14 @@ Founder-directed 2026-10-04: *"Enhance the reasoning layer of ANA."* Supports
 launch rows D4 (validation package) and D5 (the turn record). Board row:
 "AnA's reasoning is checked by an engine…" (`docs/work-orders/README.md`).
 
+> **Round 2 (at the end of this file) supersedes four statements of round 1
+> below.** No row of the strip earns a check mark now (round 1: "a check mark
+> is earned only when every specific claim was found"). The person's message is
+> never a source. Neither the intelligence prefix nor the enrichment overlays
+> are project data (round 1 listed both). A claim a PDF AnA read may hold is
+> "not checked", not "not found". Two reviewers refuted round 1 before it was
+> pushed; round 2 is their findings answered.
+
 ## What was wrong
 
 A read-only map of the live turn (`POST /api/ana-ri/stream`) was split into five
@@ -115,3 +123,128 @@ These are in `map-findings.md`, each with its owner or round:
 
 "Found" means the claim is in this turn's sources, not that the sentence
 around it is right. The strip says exactly that.
+
+## Round 2: the first engine refuted, and answered before it shipped
+
+Round 1 (`a3775bcef`) was not pushed until it had been attacked. Two
+independent reviewers were told to refute it, each through one lens:
+
+- fail-open and correctness, findings F1–F10 (`r2/review-fail-open.md`);
+- honest state, findings HS-1–HS-11 (`r2/review-honest-state.md`).
+
+They ran 24 probes against the engine and, where a tool was named, its real
+handler with the network stubbed. Round 1 reassured falsely in the ways that
+matter most to a reviewer:
+
+- **A fabricated figure was "found" through any equal number in a source.**
+  Five real PubMed abstracts hold 144 distinct numbers. Against them, "the ORR
+  was N%" was found for 57 of 99 values of N, through dates, page numbers and
+  p-values. A PubMed outage envelope "found" 22% through its percent-encoded
+  URL.
+- **The person's own question confirmed what it asked about.** "Was the ORR
+  45% or 60%?" found "45%".
+- **Instruction text counted as project data.** The claim-grounding overlay's
+  example text ("a 30-day IND wait") found a recalled 30-day IND wait.
+- **One check mark was earned by all three.**
+
+### What round 2 changed
+
+| Finding | Sev | Now |
+|---|---|---|
+| F4, HS-2 | high | **A figure is found only where its number stands with its own measure or unit.** A percentage needs %, or its proportion under a rate's name. A p-value needs p. A ratio needs its own name (HR, OR, RR, IRR in capitals). An interval needs both bounds close together beside CI, in one record. A count needs what it counts. A dose or a duration needs the same unit. Dates and URLs are not numbers (`answer-check-figures.ts`). |
+| F1, HS-3 | high | **The person's message is never a source.** A claim found only there is reported as "only in your message". |
+| F5, HS-1 | high | **The `context` source holds the project data blocks only.** It excludes the instruction overlays (the enrichment block). It excludes the intelligence prefix, which holds custom and project instructions and AnA's own answers promoted to memory after seven days. |
+| F2, F3, F6 | high | **An echo of the model's request never confirms it, at any depth.** None of these are read: a field holding the request, a URL or a not-found list; a record that says it was not found; a string the model sent (except a single identifier inside a record that returns something of its own); the top-level envelope, unless the result declares it verified what it returns. URLs are dropped from every reading (`answer-check-sources.ts`). |
+| HS-5 | medium | **A figure in a passage the source returns is found, even when the model searched for it.** A figure that is only AnA's own input is reported as hers: "AnA's own input to <tool>, not a result". That covers an assumed power, a hazard ratio she chose, or a value echoed back or restated in another form (0.47 sent, "47%" returned). |
+| HS-4 | med-high | **A source AnA read that the check cannot read leaves claims unchecked.** When it is a PDF's bytes, claims found nowhere else are "not checked — may be in <file>", not "not found". |
+| F7 | medium | **Identifiers and regulations match only as themselves.** An ICH code needs a boundary on both sides ("E3" is not in "PHASE3"). A trial id is read with every digit, so a nine-digit NCT is flagged as itself. PMID, NDA, BLA and ANDA numbers need their label in the source. |
+| F8 | medium | **The answer's figures are read in the forms clinical writers use.** "47 percent", "hazard ratio, 0.31", "HR for death was 0.49", "p-value = 0.0003", "212 pts", "31.2 mo", "48 h", "100 μg", "95% CI [0.41, 0.77]", "HR (95% CI) 0.62 (0.50–0.77)". "38–56%" is checked at both ends. Signs are kept, and proportions compare without float noise. "21 CFR Parts 50 and 56" is read as two parts. |
+| F9, HS-6 | medium | **Verdicts cover more forms:** contractions, "Part 11 compliant", "GMP-compliant", "in compliance with", "complies with", "meets/satisfies all applicable requirements", "ready for FDA submission", "will likely / should be approved", "FDA will clear". A verdict that is declined, doubted, conditional before or after, asked, or a workflow step ("approved by two signers") is not named (`isAssertedVerdict`). |
+| HS-7 | medium | **"or" in prose is not an odds ratio,** in the answer or in a source. |
+| F10 | low | **Cost is bounded.** White space in every answer pattern is bounded, so time is linear. Walks stop at depth 64. Numbers are indexed by value, so a figure looks only at equal numbers. |
+| HS-2, HS-8, HS-9 | high/med/low | **The strip:** no row earns a check mark, because found is not verified. The strip sits directly under the answer, never under the document canvas, whose draft it does not check. "Checked against" shows only when there were claims. |
+
+Not done in round 2:
+
+- **HS-10:** no client reads `trust_summary`. Its words are now neutral, because `section-validation.ts` also uses it for a person's own draft.
+- **HS-11:** a message stored before round 1 renders no strip.
+
+### The reviewers' probes, run again before landing
+
+The 24 probes were re-run, unchanged, against the round-2 engine
+(`r2/probes-after.txt`). They confirmed the fixes above, and found what round 2
+still did wrong. Each item was failed first (`r2/red-r2-probes.txt`, 8 tests), then fixed:
+
+- **Speed.** The p6 turn (200 identifiers and 200 figures against 25 sources of
+  60k characters) went from 232 ms in round 1 to 5.6 s in round 2. Every figure
+  scanned every number. Numbers are now indexed by value: 0.27 s.
+- **Restated input.** An engine that restated AnA's proportion as a percentage
+  (`{rate: 0.47}` in, `"assumed_rate": "47%"` out) made her input "found".
+- **A citation the tool verified read "not found".** `generate_citation`
+  returns the PMID only in the echoed identifier and the PubMed URL, so the
+  labelled "PMID 27718847" was never confirmed.
+- **Text the check did not read:** "21 CFR Parts 50 and 56" and "The HR for
+  death was 0.49".
+- **Verdicts:** six forms missed, and three non-verdicts named ("Is the section
+  fully compliant?", "no guarantee the agency will accept", "compliant only
+  when audit trails are on").
+
+### Every rule made to fail
+
+`r2/mutants/` holds one file per mutant, and `r2/mutants/summary.txt` the list.
+Each mutant reverts one rule. The first run (`r2/first-run/`) killed 61 of 77.
+The 16 survivors were rules no test pinned. They included each figure kind's
+own measure (p, HR, n, count, dose), the interval's proximity, CI words and
+record, the not-found record, the substantive-record rule, dates, prose "or"
+in a source, "in compliance with", and the strip's no-sources person row.
+
+Pinning them found three defects, each failed first (`r2/red-r2-pins.txt`):
+
+- an interval's bounds were paired across two records of one list;
+- an interval returned as `ci95: [0.5, 0.77]` was not found;
+- a nine-digit NCT was silently skipped.
+
+The final run: **86 of 86 killed** (`r2/mutants/summary.txt`). Round 1's 28
+mutants, run again on the round-2 tree (`r2/mutants-r1-on-r2/`): **the 12 that
+still apply, all killed**. The other 16 targeted code round 2 rewrote; each
+one's successor in the round-2 set is named there (M05 → R04, M06 → R78,
+M08 → R03, M09 → R79, M10 → R80, M11 → R38/R39, M13 → R81, M18 → R48,
+M21 → R82, M22 → R05, M23 → R15, M24 → R10, M25 → R12, M26 → R83,
+M27 → R11, M28 → R84).
+
+### What the check still cannot tell, by decision
+
+- **A percentage is found where a source states that percentage, whatever it
+  measures there.** Against the five abstracts, a fabricated "ORR N%" is found
+  for 15 of 99 values of N, down from 57. Each of the 15 is a percentage those
+  abstracts state. Requiring the measure's name (ORR as against an AE rate)
+  would warn on correct answers phrased differently from their source, which is
+  the noise HS-7 reported. So the strip says "found in this turn's sources" and
+  no more.
+- **With a project open, a regulation or clock AnA recalls rather than reads is
+  "not found in this turn's sources", with a warning.** probe-noise finds this
+  in 9 of 12 correct answers. It is the honest state: nothing this turn holds
+  it. In a regulated submission, a recalled citation is one a reviewer
+  verifies. The regulation lookup tools would make it found.
+- **Not read:**
+  - two verdict forms: "Approval is expected in Q3" and "No deficiencies
+    remain; you can submit now";
+  - figures written in words ("thirty-one percent");
+  - a bare proportion ("one-year survival was 0.81").
+
+### Proof for round 2
+
+- **Red first.**
+  - `r2/red-r2-engine.txt`: the 37 cases of the reviewers' inputs against the
+    round-1 engine, 35 red.
+  - `r2/red-r2-probes.txt`: the re-run probes, 8 red.
+  - `r2/red-r2-pins.txt`: the pinned rules, 3 red.
+- **Green.** `r2/green.txt`: round 2's 16 suites, 213 tests, on the merged
+  tree.
+- **Related suites.** `r2/related.txt`: every suite of the touched modules on
+  the final tree, 5,732 tests passing. One file fails: the ESG transport suite.
+  It needs a `CONNECTOR_ENCRYPTION_KEY` this container does not set, and fails
+  the same way, 15 of 15, on an export of trunk `4053be7be`.
+- **Mutants:** as above.
+- **Lint and types.** `r2/lint.txt`: no touched file gains a warning, and the
+  new files have none. `r2/tsc.txt`: the whole-tree typecheck.

@@ -36,6 +36,10 @@ export interface AnswerCheckView {
   found: number;
   notFound: CheckedClaim[];
   unchecked: CheckedClaim[];
+  /** Only in the person's own message: theirs, never a source's. */
+  fromPerson: CheckedClaim[];
+  /** Figures that are only AnA's own input to a tool, and which tool. */
+  fromInput: Array<CheckedClaim & { source: string }>;
   sources: string[];
   unreadable: string[];
   verdicts: { text: string; reason: string }[];
@@ -77,6 +81,14 @@ export function readAnswerCheck(raw: unknown): AnswerCheckView | undefined {
   const counts = [num(raw.claims), num(raw.checked), num(raw.found)];
   const notFound = claims(raw.notFound);
   const unchecked = claims(raw.unchecked);
+  // Absent before the round-2 engine; present, they must be well formed.
+  const fromPerson = raw.fromPerson === undefined ? [] : claims(raw.fromPerson);
+  const fromInput =
+    raw.fromInput === undefined
+      ? []
+      : Array.isArray(raw.fromInput) && raw.fromInput.every((c) => isObj(c) && typeof c.kind === 'string' && typeof c.text === 'string' && typeof c.source === 'string')
+        ? raw.fromInput.map((c) => ({ kind: (c as CheckedClaim).kind, text: (c as CheckedClaim).text, source: (c as { source: string }).source }))
+        : null;
   const sources = strings(raw.sources);
   const unreadable = strings(raw.unreadable);
   const verdicts =
@@ -84,7 +96,7 @@ export function readAnswerCheck(raw: unknown): AnswerCheckView | undefined {
       ? raw.verdicts.map((v) => ({ text: (v as { text: string }).text, reason: (v as { reason: string }).reason }))
       : null;
   if (typeof raw.engine !== 'string' || !basis || counts.some((c) => c === null)) return undefined;
-  if (!notFound || !unchecked || !sources || !unreadable || !verdicts) return undefined;
+  if (!notFound || !unchecked || !fromPerson || !fromInput || !sources || !unreadable || !verdicts) return undefined;
   return {
     engine: raw.engine,
     basis,
@@ -93,6 +105,8 @@ export function readAnswerCheck(raw: unknown): AnswerCheckView | undefined {
     found: counts[2]!,
     notFound,
     unchecked,
+    fromPerson,
+    fromInput,
     sources,
     unreadable,
     verdicts,

@@ -1,0 +1,12 @@
+Mutant R63-only-bare-strings-echo: a value field like "47%" restating AnA's input is a result (probe p3 A2)
+
+--- server/services/ana/answer-check-sources.ts
+- const alone = VALUE_LIKE.test(v);
++ const alone = /^\s*-?[\d.,]+\s*$/.test(v);
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a proportion she passed, restated as a percentage, is her input 7ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

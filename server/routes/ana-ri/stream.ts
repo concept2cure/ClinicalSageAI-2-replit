@@ -954,13 +954,17 @@ export function mountStreamRoute(router: Router): void {
         (driveState.enabled ? buildLiveDrivePromptBlock(driveState.mode) : buildOfferedMovesPromptBlock());
 
       // What AnA was given this turn that her answer can be checked against
-      // (answer-grounding.ts): the person's own words and the project data the
-      // platform read for her. Not her persona or instructions, not her memory
-      // of earlier turns and not what she has learned about the person: none
-      // of those is a source. Tool results and web steps join below.
+      // (answer-grounding.ts): the person's own words, read as theirs and never
+      // as a source, and the project data the platform read for her. Not her
+      // persona, not the instruction overlays (the enrichment block's
+      // claim-grounding and agency-tactics text carries example figures and
+      // citations), not the intelligence prefix (custom and project
+      // instructions, and AnA's own answers promoted to memory after a week),
+      // and not her memory of earlier turns: none of those is a source
+      // (refute-review of a3775bcef, F5 and HS-1). Tool results and web steps
+      // join below.
       const turnContextSources: EvidenceEntry[] = [{ source: 'person', content: message }];
       const projectDataGiven = [
-        intelligencePrefix,
         streamRimContext,
         Array.isArray(streamDecisionContext) && streamDecisionContext.length > 0 ? JSON.stringify(streamDecisionContext) : '',
         streamProjectProfile ? JSON.stringify(streamProjectProfile) : '',
@@ -969,7 +973,6 @@ export function mountStreamRoute(router: Router): void {
         prefetchedStreamContext.sessionBriefingBlock,
         prefetchedStreamContext.contradictionWatchBlock,
         authoringContextBlock,
-        enrichment.block,
       ].filter((t) => typeof t === 'string' && t.trim().length > 0);
       if (projectDataGiven.length > 0) {
         turnContextSources.push({ source: 'context', content: projectDataGiven.join('\n\n') });

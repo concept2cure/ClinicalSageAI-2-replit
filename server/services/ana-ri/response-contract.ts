@@ -231,25 +231,39 @@ export function buildEmptyEvidenceVerdict(): EvidenceVerdict {
 /** "1 claim" / "2 claims". */
 const claimsWord = (n: number) => `${n} claim${n === 1 ? '' : 's'}`;
 
+/** A source as a person would name it ("tool:get_x" → "get x", "attachment:a.pdf" → "a.pdf"). */
+const sourceName = (s: string) =>
+  s.startsWith('tool:') ? s.slice(5).replace(/_/g, ' ') : s.startsWith('attachment:') ? s.slice('attachment:'.length) : s;
+
+/** Nothing consulted: what was not checked, and what was only the person's. */
+function noSourcesSentence(check: AnswerCheck): string {
+  const parts = [];
+  if (check.unchecked.length > 0) parts.push(`${claimsWord(check.unchecked.length)} not checked`);
+  if ((check.fromPerson?.length ?? 0) > 0) parts.push(`${check.fromPerson.length} only in your message`);
+  return parts.length > 0 ? `No source consulted this turn: ${parts.join('; ')}.` : 'No source consulted this turn.';
+}
+
+/** Sources consulted: how each claim ended. */
+function sourcesSentence(check: AnswerCheck): string {
+  if (check.claims === 0) return "No specific claims to check against this turn's sources.";
+  const fromInput = check.fromInput?.length ?? 0;
+  const fromPerson = check.fromPerson?.length ?? 0;
+  const parts = [`${check.found} found in this turn's sources`];
+  if (check.notFound.length > 0) parts.push(`${check.notFound.length} not found`);
+  if (fromInput > 0) parts.push(`${fromInput} AnA's own ${fromInput === 1 ? 'input' : 'inputs'}, not results`);
+  if (fromPerson > 0) parts.push(`${fromPerson} only in your message`);
+  if (check.unchecked.length > 0) {
+    parts.push(`${check.unchecked.length} not checked (may be in ${check.unreadable.map(sourceName).join(', ')}, which this check cannot read)`);
+  }
+  return `${check.notFound.length > 0 ? '⚠ ' : ''}Of ${claimsWord(check.claims)}: ${parts.join('; ')}.`;
+}
+
 /** The engine's check, in one sentence. */
 function checkSentence(check: AnswerCheck): string {
-  let line: string;
-  if (check.basis === 'no_sources') {
-    line =
-      check.unchecked.length > 0
-        ? `No source consulted this turn: ${claimsWord(check.unchecked.length)} unchecked.`
-        : 'No source consulted this turn.';
-  } else if (check.claims === 0) {
-    line = "No specific claims to check against this turn's sources.";
-  } else if (check.notFound.length === 0) {
-    line = `Checked against this turn's sources: all ${claimsWord(check.claims)} found.`;
-  } else {
-    line = `⚠ Checked against this turn's sources: ${check.notFound.length} of ${claimsWord(check.claims)} not found.`;
-  }
-  if (check.verdicts.length > 0) {
-    line += ` States ${check.verdicts.length === 1 ? 'a verdict' : `${check.verdicts.length} verdicts`}; verdicts come from engines.`;
-  }
-  return line;
+  const line = check.basis === 'no_sources' ? noSourcesSentence(check) : sourcesSentence(check);
+  if (check.verdicts.length === 0) return line;
+  const verdicts = check.verdicts.length === 1 ? 'a verdict' : `${check.verdicts.length} verdicts`;
+  return `${line} States ${verdicts}, not checked: a verdict needs an engine result behind it.`;
 }
 
 /**
@@ -258,10 +272,12 @@ function checkSentence(check: AnswerCheck): string {
  * verifiability). Honest by construction: it restates the check's and the
  * labels' own counts and never upgrades confidence.
  *
- * The check (the engine's comparison with what AnA consulted) leads. The
- * labels follow as hers: a [KNOWN] label is the model describing its own
+ * The check (the engine's comparison with what AnA consulted) leads, in its
+ * own words: found is "in this turn's sources", not verified. The evidence
+ * labels follow as the text's own: a [KNOWN] label is the writer describing a
  * claim, so a clean set of labels is not "Verified", and a label is not a
- * source (2026-10-04, AnA reasoning).
+ * source (2026-10-04, AnA reasoning). This line is also used for a person's
+ * own draft (section-validation.ts), so the labels are not named as AnA's.
  */
 export function buildTrustSummary(verdict?: EvidenceVerdict, check?: AnswerCheck | null): string {
   const lead = check ? checkSentence(check) : null;
@@ -272,7 +288,7 @@ export function buildTrustSummary(verdict?: EvidenceVerdict, check?: AnswerCheck
   const weak = verdict.weak_or_ungrounded_claim_count;
   const missing = verdict.missing_support_count;
   const clean = verdict.validated && weak === 0 && missing === 0;
-  let line = `${clean ? '' : '⚠ '}AnA's labels: ${labelled} labelled · ${weak} unlabelled or overclaimed · ${missing} marked missing`;
+  let line = `${clean ? '' : '⚠ '}Evidence labels: ${labelled} labelled · ${weak} unlabelled or overclaimed · ${missing} marked missing`;
   if (verdict.reviewer_risk_summary && verdict.reviewer_risk_summary.trim()) {
     line += `. ${verdict.reviewer_risk_summary.trim()}`;
   } else if (weak > 0) {

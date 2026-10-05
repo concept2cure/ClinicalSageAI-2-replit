@@ -151,10 +151,12 @@ vi.mock('../../../services/ana-ri/orchestrator.js', () => ({
 }));
 vi.mock('../../../services/ana-ri/chat-context-builder.js', async importOriginal => ({
   ...(await importOriginal<typeof import('../../../services/ana-ri/chat-context-builder.js')>()),
-  prefetchRouteIntelligenceContext: async () => ({}),
+  // Project data the platform read: a source.
+  prefetchRouteIntelligenceContext: async () => ({ rimContext: 'RIM: the shelf life on file is 24 months.', decisionContext: [] }),
 }));
 vi.mock('../../../services/lumen-context-builder.js', () => ({
-  getIntelligencePrefix: async () => '',
+  // Custom instructions and promoted summaries: not a source.
+  getIntelligencePrefix: async () => 'Custom instructions: always cite 21 CFR 314.110.',
   buildSectionSpecificPrompt: () => '',
 }));
 vi.mock('../../../services/memory-context-assembler.js', () => ({
@@ -162,7 +164,8 @@ vi.mock('../../../services/memory-context-assembler.js', () => ({
   buildMemoryContextForChat: async () => ({ memoryBlock: 'Working memory: ORR was 52%.', atoms: [], diagnostics: null }),
 }));
 vi.mock('../../../services/ana-ri/context-enrichment.js', () => ({
-  enrichContextForChat: async () => ({ block: 'Project data: the shelf life on file is 24 months.', sources: ['stability'] }),
+  // An instruction overlay, as the claim-grounding block is: its example figures are not a source.
+  enrichContextForChat: async () => ({ block: 'Claim grounding: an IND waits 30 days; a 510(k) has a 90-day clock.', sources: ['claim-grounding'] }),
 }));
 vi.mock('../../../services/chat-thread-helpers.js', () => ({
   getOrCreateThread: async () => 'thread-1',
@@ -254,13 +257,16 @@ describe('the sources the route hands the answer check', () => {
     expect(corpus.some(e => e.source === 'tool:estimate_shelf_life')).toBe(false);
   });
 
-  it('the person\'s message and the project data are sources; AnA\'s memory is not', async () => {
+  it('project data is a source; the instructions, the intelligence prefix and AnA\'s memory are not', async () => {
     h.state.script = ['The shelf life on file is 24 months.'];
     await turn('What shelf life do we have on file?');
     const corpus = h.state.post.toolEvidenceCorpus as Array<Record<string, any>>;
 
+    // The person's words are carried, to be read as theirs (never as a source).
     expect(corpus.find(e => e.source === 'person')?.content).toBe('What shelf life do we have on file?');
     expect(corpus.find(e => e.source === 'context')?.content).toContain('shelf life on file is 24 months');
-    expect(corpus.some(e => String(e.content).includes('ORR was 52%'))).toBe(false);
+    for (const notASource of ['ORR was 52%', '90-day clock', '21 CFR 314.110']) {
+      expect(corpus.some(e => String(e.content).includes(notASource)), notASource).toBe(false);
+    }
   });
 });

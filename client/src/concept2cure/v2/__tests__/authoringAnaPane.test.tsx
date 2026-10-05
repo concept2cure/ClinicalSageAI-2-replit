@@ -225,8 +225,8 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
             type: 'grounding_strip',
             evidence: { attempted: true, validated: true, source_count: 2, grounded_claim_count: 3, weak_or_ungrounded_claim_count: 0, missing_support_count: 0 },
             check: {
-              engine: 'answer-check/1', basis: 'sources', claims: 2, checked: 2, found: 2,
-              notFound: [], unchecked: [], sources: ['tool:check_dossier_consistency'], unreadable: [], verdicts: [],
+              engine: 'answer-check/2', basis: 'sources', claims: 2, checked: 2, found: 2,
+              notFound: [], unchecked: [], fromPerson: [], fromInput: [], sources: ['tool:check_dossier_consistency'], unreadable: [], verdicts: [],
             },
           },
           { type: 'text', content: 'The citation chain is consistent.' },

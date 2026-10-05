@@ -36,6 +36,54 @@ where marked. A severity is the verifier's corrected one.
 | GRD-missed (part) | medium | Project data AnA was given (intelligence, RIM, decisions) was outside the corpus, so a figure taken from it could not be checked. | A `context` source. Her persona, instructions and memory are not sources. |
 | GRD-missed (part), RT | medium | The conversation surface rendered no strip. It showed prompt overlays as "Grounded in ✓". | Strip added. The overlays are "Context used", with no check mark. |
 
+## Round 2: the refute-reviews of round 1, and what became of each
+
+Two reviewers were told to refute round 1 before it was pushed. Their reports
+are `r2/review-fail-open.md` (F1–F10) and `r2/review-honest-state.md`
+(HS-1–HS-11). Every finding was reproduced by the reviewer's own probe. The
+README's round-2 section says what changed.
+
+| ID | Sev | Finding | Outcome |
+|---|---|---|---|
+| F4, HS-2 | high | A fabricated figure was found through any equal number: dates, pages, p-values. | **fixed**: a figure is found only with its own measure or unit. |
+| F1, HS-3 | high | The person's question confirmed the claims it asked about. | **fixed**: never a source; reported as "only in your message". |
+| F2, F3, F6 | high | Echoes at depth confirmed the request. These included a nested `input`, a not-found list, a URL, a verified citation's echoed identifier, and search_document returning the model's own text. | **fixed**: an echo is never read, at any depth; URLs are dropped. |
+| F5, HS-1 | high/medium | Instruction overlays and the intelligence prefix (custom instructions, AnA's promoted answers) were "project context". | **fixed**: the context source holds the data blocks only. |
+| HS-5 | medium | A figure the model searched for was penalised even when the returned abstract held it. A figure that was her own input read as "not found". | **fixed**: found in a returned passage; "AnA's own input, not a result" otherwise. |
+| HS-4 | med-high | An attached PDF's figures read "not found". | **fixed**: "not checked — may be in <file>". |
+| F7 | medium | ICH codes were found inside other words, NCT ids by prefix, and BLA numbers by an equal enrolment. | **fixed** |
+| F8 | medium | Common figure forms were never read. Signs and float noise broke true matches. | **fixed** |
+| F9, HS-6 | medium | 16 of 17 verdict sentences were missed. Declined and conditional ones were named. | **fixed**: 15 of 17. The remaining two are under **next** below. |
+| HS-7 | medium | Prose "or N" was read as an odds ratio. | **fixed**: capitals only, in the answer and in a source. |
+| F10 | low | Quadratic white space; a deep result crashed the turn. | **fixed** |
+| HS-8 | medium | The conversation surface drew the strip under the document canvas. | **fixed**: directly under the answer. |
+| HS-9 | low | "Checked against" showed with zero claims. | **fixed** |
+| HS-10 | low | No client reads `trust_summary`. | **next**: its words are neutral meanwhile. |
+| HS-11 | low | Messages stored before round 1 render no strip. | **next** |
+
+Found by the reviewers' probes re-run on round 2, and fixed before landing:
+
+- the p6 turn took 5.6 s (round 1: 232 ms); now 0.24 s;
+- an engine restating AnA's input in another form made it "found";
+- a citation `generate_citation` verified read "not found";
+- "21 CFR Parts 50 and 56" and "HR for death was 0.49" were not read;
+- six verdict forms were missed and three non-verdicts named.
+
+Found by round 2's own mutants, and fixed:
+
+- an interval paired across two records;
+- `ci95: [lo, hi]` not read;
+- a nine-digit NCT silently skipped.
+
+**Next**, from round 2:
+
+| ID | Sev | Finding |
+|---|---|---|
+| R2-PCT | medium | A percentage is found where a source states it, whatever it measures there: 15 of 99 fabricated "ORR N%" against five abstracts. Matching the measure's name needs a vocabulary that does not warn on correct answers phrased differently from their source. |
+| R2-RECALL | medium | With a project open, a recalled regulation or clock reads "not found" with a warning (9 of 12 correct answers in probe-noise). Proposal: when AnA states a regulation, she looks it up, so the lookup finds it. That is a drafting-behaviour change, for the prompts lane. |
+| R2-VERD | low | "Approval is expected in Q3" and "No deficiencies remain; you can submit now" are not named. |
+| R2-WORDS | low | Figures in words ("thirty-one percent") and bare proportions ("survival was 0.81") are not read. |
+
 ## Next rounds of this lane
 
 | ID | Sev | Finding |

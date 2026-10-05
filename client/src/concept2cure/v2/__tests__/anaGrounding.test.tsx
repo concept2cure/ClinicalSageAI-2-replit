@@ -28,7 +28,7 @@ import type { AnswerCheckView } from '../../components/ana/anaAnswerCheck';
 afterEach(cleanup);
 
 const check = (over: Partial<AnswerCheckView> = {}): AnswerCheckView => ({
-  engine: 'answer-check/1',
+  engine: 'answer-check/2',
   basis: 'sources',
   claims: 5,
   checked: 5,
@@ -38,6 +38,8 @@ const check = (over: Partial<AnswerCheckView> = {}): AnswerCheckView => ({
     { kind: 'figure', text: '31%' },
   ],
   unchecked: [],
+  fromPerson: [],
+  fromInput: [],
   sources: ['tool:get_trial_details', 'web', 'context'],
   unreadable: [],
   verdicts: [],
@@ -71,20 +73,47 @@ describe('AnaGrounding — the engine\'s check leads', () => {
     expect(screen.getByText('Checked against: get trial details, web, project context')).toBeTruthy();
   });
 
-  it('earns its check mark only when every specific claim was found', () => {
+  it('says every claim was found, and still earns no check mark: found is not verified (HS-2)', () => {
     const { container } = render(
       <AnaGrounding evidence={{ ...labels, check: check({ found: 5, notFound: [] }) }} />,
     );
     expect(screen.getByText(/All 5 specific claims found in this turn's sources/)).toBeTruthy();
-    expect(container.querySelectorAll('.ana-grounding-ic.is-ok')).toHaveLength(1);
+    expect(container.querySelector('.ana-grounding-ic.is-ok')).toBeNull();
   });
 
+  it('says a figure is AnA\'s own input to a tool, not a result (HS-5)', () => {
+    render(
+      <AnaGrounding
+        evidence={{
+          ...labels,
+          check: check({ claims: 3, found: 2, notFound: [], fromInput: [{ kind: 'figure', text: '80%', source: 'tool:compute_sample_size' }] }),
+        }}
+      />,
+    );
+    expect(screen.getByText(/1 is AnA's own input to compute sample size, not a result/)).toBeTruthy();
+    expect(screen.getByText(/“80%” — figure/)).toBeTruthy();
+    expect(screen.getByText(/2 of 3 specific claims found in this turn's sources/)).toBeTruthy();
+  });
+
+  it('says a claim found only in the person\'s message is theirs, never found (HS-3)', () => {
+    const { container } = render(
+      <AnaGrounding
+        evidence={{ ...labels, check: check({ claims: 1, found: 0, checked: 0, notFound: [], fromPerson: [{ kind: 'figure', text: '45%' }] }) }}
+      />,
+    );
+    expect(screen.getByText(/1 only in your message, not in this turn's sources/)).toBeTruthy();
+    expect(container.textContent).not.toMatch(/claim was found/);
+  });
+
+});
+
+describe('AnaGrounding — what the engine could not check is said, never passed', () => {
   it('with no source consulted, the claims are not checked — never found, never a pass', () => {
     const { container } = render(
       <AnaGrounding
         evidence={{
           ...labels,
-          check: check({ basis: 'no_sources', checked: 0, found: 0, notFound: [], unchecked: [{ kind: 'figure', text: '1,066 patients' }], claims: 1, sources: ['person'] }),
+          check: check({ basis: 'no_sources', checked: 0, found: 0, notFound: [], unchecked: [{ kind: 'figure', text: '1,066 patients' }], claims: 1, sources: [] }),
         }}
       />,
     );
@@ -92,6 +121,28 @@ describe('AnaGrounding — the engine\'s check leads', () => {
     expect(screen.getByText(/“1,066 patients” — figure/)).toBeTruthy();
     expect(container.querySelector('.ana-grounding-ic.is-ok')).toBeNull();
     expect(container.textContent).not.toMatch(/Checked against/);
+  });
+
+  it('with no source consulted, a claim only in the person\'s message is said to be theirs (F1)', () => {
+    render(
+      <AnaGrounding
+        evidence={{
+          ...labels,
+          check: check({
+            basis: 'no_sources',
+            claims: 2,
+            checked: 0,
+            found: 0,
+            notFound: [],
+            unchecked: [{ kind: 'figure', text: '1,066 patients' }],
+            fromPerson: [{ kind: 'figure', text: '45%' }],
+            sources: [],
+          }),
+        }}
+      />,
+    );
+    expect(screen.getByText(/1 only in your message, not checked against a source/)).toBeTruthy();
+    expect(screen.getByText(/“45%” — figure/)).toBeTruthy();
   });
 
   it('nothing to check is not a pass', () => {
@@ -108,13 +159,31 @@ describe('AnaGrounding — the engine\'s check leads', () => {
         evidence={{ ...labels, check: check({ verdicts: [{ text: 'is ready to file', reason: 'States a readiness verdict.' }] }) }}
       />,
     );
-    expect(screen.getByText(/States a verdict — verdicts come from engines/)).toBeTruthy();
+    expect(screen.getByText(/States a verdict, not checked — a verdict needs an engine result behind it/)).toBeTruthy();
     expect(screen.getByText(/“is ready to file”/)).toBeTruthy();
   });
 
-  it('names a source the check could not read', () => {
+  it('names a source the check could not read, and leaves what it may hold unchecked (HS-4)', () => {
+    render(
+      <AnaGrounding
+        evidence={{
+          ...labels,
+          check: check({ claims: 2, found: 0, checked: 0, notFound: [], unchecked: [{ kind: 'figure', text: '47%' }, { kind: 'figure', text: '212 patients' }], unreadable: ['attachment:Protocol v3.pdf'] }),
+        }}
+      />,
+    );
+    expect(screen.getByText(/2 specific claims not checked — may be in Protocol v3.pdf, which this check cannot read/)).toBeTruthy();
+    expect(screen.queryByText(/not found in this turn's sources/)).toBeNull();
+  });
+
+  it('names an unread source on its own when nothing was left unchecked', () => {
     render(<AnaGrounding evidence={{ ...labels, check: check({ unreadable: ['attachment:Protocol v3.pdf'] }) }} />);
     expect(screen.getByText('Not readable by this check: Protocol v3.pdf')).toBeTruthy();
+  });
+
+  it('says nothing about what it checked against when there was nothing to check (HS-9)', () => {
+    const { container } = render(<AnaGrounding evidence={{ ...labels, check: check({ claims: 0, checked: 0, found: 0, notFound: [] }) }} />);
+    expect(container.textContent).not.toMatch(/Checked against/);
   });
 
   it('lists three claims and counts the rest', () => {
