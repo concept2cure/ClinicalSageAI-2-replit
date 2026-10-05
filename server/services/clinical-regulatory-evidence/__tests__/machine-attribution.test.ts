@@ -41,7 +41,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { createHash } from 'node:crypto';
-import { attributeMachineSpans, comparableText, MIN_MACHINE_CLAUSE_CHARS, rawTextFrom } from '../machine-attribution';
+import { attributeMachineSpans, comparableText, MIN_MACHINE_CLAUSE_CHARS, notComparedFrom } from '../machine-attribution';
 import { detectSpans, type SentenceSpan } from '../../sentenceTraceabilityService';
 
 const ACTOR = 'user-7';
@@ -179,22 +179,24 @@ describe('comparableText: the words a browser shows are the words compared', () 
     expect(machineSpansOf(clause), 'words the machine never wrote were recorded as its').toEqual([]);
   });
 
-  it('the machine\'s words inside ordinary markup are still the machine\'s', () => {
+  it('the machine\'s words inside the markup the editor writes are still the machine\'s', () => {
     const clause =
-      'The <STRONG>primary</STRONG> endpoint was <span class="hl" data-x="1">met</span> at week<br/>twelve in the trial population.';
+      'The <STRONG>primary</STRONG> endpoint was <span data-comment-id="c-1" class="rse-comment-anchor">met</span> at week<br/>twelve in the trial population.';
     expect(machineSpansOf(clause).map((s) => s.spanText)).toEqual([clause]);
   });
 
-  it('removes an ordinary tag, and keeps every `<` a browser does not read as a tag', () => {
-    expect(comparableText('<p>The <strong class="x">endpoint</strong> was met.</p>')).toBe('the endpoint was met.');
+  it('removes a tag every reader hides, and keeps every other `<` as written', () => {
+    expect(comparableText('<p>The <strong>endpoint</strong> was met.</p>')).toBe('the endpoint was met.');
     // Each of these is text to a browser (or a comment it hides). Kept, it can
     // only make a match fail.
     for (const text of ['p<0.05 and hr>1', 'met < 3 patients died > at', 'a <3 b> c', 'a </ b> c', 'a <!-- b --> c', 'a <?b?> c']) {
       expect(comparableText(text), text).toBe(text);
     }
-    // The raw-text elements keep their own tags: the regex cannot see where
-    // the browser stops reading tags inside them, so the region stays unequal.
-    expect(comparableText('a <xmp><b x></xmp> c')).toBe('a <xmp> </xmp> c');
+    // A tag carrying an attribute the editor does not write keeps its text:
+    // source mode shows it (round 4, D4). So do the raw-text elements' tags,
+    // and the tags inside them.
+    expect(comparableText('<p>The <strong class="x">endpoint</strong> was met.</p>')).toBe('the <strong class="x">endpoint was met.');
+    expect(comparableText('a <xmp><b x></xmp> c')).toBe('a <xmp><b x></xmp> c');
   });
 
   it('reads markdown only when asked, as the turn record\'s side is: `\\|` is `|` and `*` is dropped', () => {
@@ -212,12 +214,14 @@ describe('comparableText: the words a browser shows are the words compared', () 
 });
 
 /* ── What is compared (periodic review 2026-09-28, editor family, the
-   batch-draft accept, round 3) ─────────────────────────────────────────────
+   batch-draft accept, rounds 3 and 4) ─────────────────────────────────────
    The lineage runs comparableText per clause. A raw-text element's opening
    tag can be in one clause and its words in another, where `<b …>` was
-   stripped as a tag though a reader shows it as text (PROBE-C). And content
-   with no known tag is read as plain text by the section editor and the
-   export, which show every `<…>`. Neither kind of clause is compared now. */
+   stripped as a tag though a reader shows it as text (PROBE-C). In HTML
+   content no clause at or after such an opener is compared. In content with
+   no known tag every reader shows every character, so every character is
+   compared (round 4: there is no region in plain text). The reader-by-reader
+   rules of round 4 are pinned in machine-attribution-readers.test.ts. */
 const TAMPERED = 'The primary endpoint was met <b 3 patients died of hepatic failure> at week twelve in the trial population.';
 /** Exactly the lineage gate's path: detectSpans(content, 'clause'), then attributeMachineSpans. */
 const machineClausesOf = (content: string, accepted = M1) =>
@@ -228,27 +232,27 @@ const machineClausesOf = (content: string, accepted = M1) =>
     content,
   }).map((s) => s.spanText);
 
-describe('rawTextFrom: where a browser may first read `<…>` as text', () => {
+describe('notComparedFrom: where, in HTML content, a browser may first read `<…>` as text', () => {
   it.each([
-    ['<xmp>', 'a <xmp>b'],
-    ['upper case', 'a <XMP>b'],
-    ['an attribute', 'a <textarea rows="2">b'],
-    ['an attribute after a space', 'a <plaintext x>b'],
-    ['a self-closing slash', 'a <title/>b'],
-    ['a line break after the name', 'a <script\n>b'],
-    ['a CDATA section', 'a <![CDATA[b'],
+    ['<xmp>', '<p>a</p><xmp>b'],
+    ['upper case', '<p>a</p><XMP>b'],
+    ['an attribute', '<p>a</p><textarea rows="2">b'],
+    ['an attribute after a space', '<p>a</p><plaintext x>b'],
+    ['a self-closing slash', '<p>a</p><title/>b'],
+    ['a line break after the name', '<p>a</p><script\n>b'],
+    ['a CDATA section', '<p>a</p><![CDATA[b'],
   ])('finds %s', (_, content) => {
-    expect(rawTextFrom(content)).toBe(2);
+    expect(notComparedFrom(content)).toBe(8);
   });
 
   it.each([
-    ['another tag', 'a <p>b</p>'],
-    ['a longer name', 'a <xmpx>b'],
-    ['a space before the name', 'a < xmp>b'],
-    ['a closing tag alone', 'a </xmp>b'],
-    ['escaped text', 'a &lt;xmp&gt;b'],
+    ['another tag', '<p>a</p><p>b</p>'],
+    ['a longer name', '<p>a</p><xmpx>b'],
+    ['a space before the name', '<p>a</p>< xmp>b'],
+    ['a closing tag alone', '<p>a</p></xmp>b'],
+    ['escaped text', '<p>a</p>&lt;xmp&gt;b'],
   ])('finds nothing in %s', (_, content) => {
-    expect(rawTextFrom(content)).toBe(-1);
+    expect(notComparedFrom(content)).toBe(-1);
   });
 });
 
@@ -274,7 +278,7 @@ describe('a raw-text element whose opening tag the clause splitter puts in anoth
   });
 
   it('a clause before the first opener is still compared (guard)', () => {
-    expect(machineClausesOf(`${M1}\n\n<xmp>Reviewer note.</xmp>`)).toEqual([M1]);
+    expect(machineClausesOf(`${M1}\n\n<p>Note.</p><xmp>Reviewer note.</xmp>`)).toEqual([M1]);
   });
 });
 
@@ -285,8 +289,8 @@ describe('content read as plain text shows every `<…>`', () => {
     expect(machineClausesOf(TOKENED), 'shown by the editor and the export, credited to the machine').toEqual([]);
   });
 
-  it('with a known tag elsewhere, every reader parses the token as a tag and hides it (guard)', () => {
-    expect(machineClausesOf(`${TOKENED}\n\n<p>Reviewer note.</p>`)).toEqual([TOKENED]);
+  it('with a known tag elsewhere, its attribute words are not the machine\'s either: source mode shows them (round 4, D4)', () => {
+    expect(machineClausesOf(`${TOKENED}\n\n<p>Reviewer note.</p>`)).toEqual([]);
   });
 
   it('an asterisk added to the machine\'s clause makes it not the machine\'s: content is never read as markdown (N5)', () => {
@@ -311,7 +315,7 @@ function liveSpan(text: string, kind: 'accepted_machine_draft' | 'machine_draft'
   };
 }
 
-describe('carry-forward meets a raw-text region', () => {
+describe('carry-forward meets a raw-text region in HTML content', () => {
   const carried = (content: string, kind: 'accepted_machine_draft' | 'machine_draft') =>
     attributeMachineSpans(detectSpans(content, 'clause'), {
       accepted: [],
@@ -321,11 +325,11 @@ describe('carry-forward meets a raw-text region', () => {
     }).map((s) => s.spanText);
 
   it('an accepted clause a later save put inside one is not carried: its words were matched with tags removed', () => {
-    expect(carried(`<xmp>\n\n${M1}\n\n</xmp>`, 'accepted_machine_draft')).toEqual([]);
+    expect(carried(`<p>Note.</p><xmp>\n\n${M1}\n\n</xmp>`, 'accepted_machine_draft')).toEqual([]);
   });
 
   it('an unaccepted machine draft is carried: it was never compared, every character is the machine\'s (guard)', () => {
-    expect(carried(`<xmp>\n\n${M1}\n\n</xmp>`, 'machine_draft')).toEqual([M1]);
+    expect(carried(`<p>Note.</p><xmp>\n\n${M1}\n\n</xmp>`, 'machine_draft')).toEqual([M1]);
   });
 
   it('outside any region, an accepted clause is carried as before (guard)', () => {

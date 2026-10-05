@@ -114,6 +114,12 @@ import {
   type ToolTraceEntry,
 } from '../../services/ana/tool-trace.js';
 import { runWithRunScope } from '../../services/ai-gateway/run-scope.js';
+import {
+  newGenerationCapture,
+  runCapturingGenerations,
+  type GenerationCapture,
+} from '../../services/ai-gateway/generation-capture.js';
+import { toolEvidence, type EvidenceEntry } from '../../services/ana/answer-grounding.js';
 import { runStreamPostProcessing } from './post-processing.js';
 import {
   canonicalJson,
@@ -986,6 +992,31 @@ export function mountStreamRoute(router: Router): void {
         enrichment.block +
         (driveState.enabled ? buildLiveDrivePromptBlock(driveState.mode) : buildOfferedMovesPromptBlock());
 
+      // What AnA was given this turn that her answer can be checked against
+      // (answer-grounding.ts): the person's own words, read as theirs and never
+      // as a source, and the project data the platform read for her. Not her
+      // persona, not the instruction overlays (the enrichment block's
+      // claim-grounding and agency-tactics text carries example figures and
+      // citations), not the intelligence prefix (custom and project
+      // instructions, and AnA's own answers promoted to memory after a week),
+      // and not her memory of earlier turns: none of those is a source
+      // (refute-review of a3775bcef, F5 and HS-1). Tool results and web steps
+      // join below.
+      const turnContextSources: EvidenceEntry[] = [{ source: 'person', content: message }];
+      const projectDataGiven = [
+        streamRimContext,
+        Array.isArray(streamDecisionContext) && streamDecisionContext.length > 0 ? JSON.stringify(streamDecisionContext) : '',
+        streamProjectProfile ? JSON.stringify(streamProjectProfile) : '',
+        prefetchedStreamContext.externalIntelBlock,
+        prefetchedStreamContext.deadlineRadarBlock,
+        prefetchedStreamContext.sessionBriefingBlock,
+        prefetchedStreamContext.contradictionWatchBlock,
+        authoringContextBlock,
+      ].filter((t) => typeof t === 'string' && t.trim().length > 0);
+      if (projectDataGiven.length > 0) {
+        turnContextSources.push({ source: 'context', content: projectDataGiven.join('\n\n') });
+      }
+
       // Thread resolution (before message building so we can load server history).
       //
       // The id the CLIENT sent is never used as-is. getOrCreateThread resolves
@@ -1268,6 +1299,12 @@ export function mountStreamRoute(router: Router): void {
                   ],
                 });
                 contentReadIds.add(f.fileId);
+                // A text file the check can read; a PDF's bytes it cannot, and says so.
+                turnContextSources.push(
+                  docMime === 'text/plain'
+                    ? { source: `attachment:${f.fileName}`, content: buf.toString('utf8') }
+                    : { source: `attachment:${f.fileName}`, content: '', unreadable: true },
+                );
               }
             }
           }
@@ -1501,17 +1538,19 @@ export function mountStreamRoute(router: Router): void {
       // the next model turn (then cleared) so a failed round becomes a course
       // correction instead of an identical retry the thrash guard has to kill.
       let pendingAdaptationNote = '';
-      // Raw tool output this turn — the evidence corpus the final answer is
-      // verified against in the self-verification round (see answer-grounding.ts).
-      const toolEvidenceCorpus: string[] = [];
+      // What the tools returned this turn, each entry named by its tool: the
+      // corpus the answer is checked against (answer-grounding.ts). A failed
+      // step, a governed write and what a model wrote inside a tool call are
+      // not entries (toolEvidence).
+      const toolEvidenceCorpus: EvidenceEntry[] = [];
       // Hosted web steps (Anthropic ran them inside a model call) are evidence
       // too: their sources and fetched text join the corpus the answer is
-      // grounded against, so a citation taken from one can be credited.
+      // checked against, so a citation taken from one can be credited.
       const recordServerToolEvidence = (response: unknown): void => {
         const steps = (response as AnaGatewayResponse | undefined)?.serverToolUses ?? [];
         for (const step of steps) {
           const evidence = serverToolEvidence(step);
-          if (evidence) toolEvidenceCorpus.push(evidence);
+          if (evidence) toolEvidenceCorpus.push({ source: 'web', content: evidence });
         }
       };
       // Provenance envelopes emitted by evidence tools this turn — persisted to the
@@ -2059,6 +2098,10 @@ export function mountStreamRoute(router: Router): void {
               let resultStr: string;
               let toolStatus: 'success' | 'error' | 'not_found' | 'cancelled' = 'success';
               let toolErrorMessage: string | undefined;
+              // What a model wrote while this call ran (generation-capture.ts).
+              // Null where the handler ran elsewhere — a person settled it in
+              // the governed-action route — so its generations are unknown.
+              let generated: GenerationCapture | null = null;
               const lostInput = lostToolInputResult(toolUse);
               const approval = approvals.get(toolUse.id);
               if (approval) {
@@ -2091,9 +2134,12 @@ export function mountStreamRoute(router: Router): void {
                   // the ROUND stops waiting for it, which is the difference
                   // between a stop that lands in a second and one that waits
                   // out a forty-second search.
+                  generated = newGenerationCapture();
                   resultStr = await Promise.race([
                     // Inside the run's scope, so the gateway calls the tool makes
-                    // are listed under this run on the ledger (D6).
+                    // are listed under this run on the ledger (D6); and inside a
+                    // capture, so what a model writes for it is known.
+                    runCapturingGenerations(generated, () =>
                     runWithRunScope({ runId }, () =>
                     handler(toolUse.input, {
                       organizationId: orgId,
@@ -2108,7 +2154,7 @@ export function mountStreamRoute(router: Router): void {
                       lockedScreens,
                       turnState: driveTurnState,
                       signal: runSignal,
-                    })),
+                    }))),
                     abortRace(runSignal),
                   ]);
                 } catch (toolErr: any) {
@@ -2157,7 +2203,7 @@ export function mountStreamRoute(router: Router): void {
               // The same server-measured duration the telemetry row gets, so the
               // client's work panel can show how long each step really took
               // rather than timing the round-trip from its own side.
-              return { toolUse, resultStr, toolStatus, toolErrorMessage, latencyMs: Date.now() - toolStart };
+              return { toolUse, resultStr, toolStatus, toolErrorMessage, latencyMs: Date.now() - toolStart, generated };
             },
             4
           );
@@ -2496,8 +2542,21 @@ export function mountStreamRoute(router: Router): void {
           // was fed, a claim sitting in the truncated-away middle would be marked
           // "grounded" though the model never read it — a false pass in the one
           // direction that lets a fabrication through. The corpus therefore gets
-          // exactly the budgeted strings the model gets.
-          for (const b of budgeted) toolEvidenceCorpus.push(b.content);
+          // exactly the budgeted strings the model gets, each with the call's
+          // status, input and the generations its handler made.
+          const outcomes = new Map(ran.map(r => [r.toolUse.id, r]));
+          for (const b of budgeted) {
+            const r = outcomes.get(b.tool_use_id);
+            const entry = r
+              ? toolEvidence(r.toolUse.name, {
+                  status: r.toolStatus,
+                  input: r.toolUse.input,
+                  content: b.content,
+                  generated: r.generated,
+                })
+              : null;
+            if (entry) toolEvidenceCorpus.push(entry);
+          }
           // Failure guidance for the next model turn (cleared after use).
           pendingAdaptationNote = buildAdaptationNote(roundFailures, calls.length);
           /* The round is done and the loop is about to hand these results back to
@@ -2994,7 +3053,7 @@ export function mountStreamRoute(router: Router): void {
         runPolicy,
         pendingSteps: turnPolicy.pendingSteps,
         policyHolds: turnPolicy.policyHolds,
-        toolEvidenceCorpus,
+        toolEvidenceCorpus: [...turnContextSources, ...toolEvidenceCorpus],
         collectedProvenance,
         // The moves Live Drive could not make lead, so they are the chips the
         // cap keeps; the one chip derivation (toNavigationActions and its

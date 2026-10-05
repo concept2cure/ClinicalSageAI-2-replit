@@ -1,0 +1,13 @@
+Mutant M13-summary-hides-not-found: the summary line says all found when some were not
+
+--- server/services/ana-ri/response-contract.ts
+- } else if (check.notFound.length === 0) {
++ } else if (check.notFound.length >= 0) {
+
+Tests run: server/services/__tests__/ana-trust-summary.test.ts server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+Result: KILLED
+
+ × server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > leads with the engine's check when there is one 10ms
+ × server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels 4784ms
+      Tests  2 failed | 8 passed (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

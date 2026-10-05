@@ -1,0 +1,4 @@
+Whole-tree typecheck on the round-2 tree (trunk merged), before commit.
+Command: npm run -s typecheck:fast
+
+exit 0

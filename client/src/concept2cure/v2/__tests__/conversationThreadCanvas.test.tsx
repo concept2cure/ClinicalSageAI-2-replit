@@ -136,6 +136,29 @@ describe('ConversationThread — the document canvas', () => {
     expect(screen.getByTestId('dc-assign-review')).toBeTruthy();
   });
 
+  it('puts what was checked directly under the answer, above the canvas whose drafted figures it does not check', async () => {
+    // Refute-review HS-8 (2026-10-04): the strip sat after the canvas, so a
+    // reassurance about the answer read as one about the draft beneath it.
+    chatMessages.current = [
+      USER,
+      {
+        ...DRAFTED,
+        evidence: {
+          attempted: false, validated: false, sourceCount: 0, groundedClaims: 0, weakClaims: 0, missingSupport: 0,
+          check: {
+            engine: 'answer-check/2', basis: 'sources', claims: 1, checked: 1, found: 1, notFound: [], unchecked: [],
+            fromPerson: [], fromInput: [], sources: ['tool:draft_authoring_document'], unreadable: [], verdicts: [],
+          },
+        },
+      } as AnaChatMessage,
+    ];
+    const { container } = render(<ConversationThread {...OWNED_PROPS} />);
+    const canvas = await screen.findByTestId('document-canvas');
+    const strip = container.querySelector('.ana-grounding');
+    expect(strip).toBeTruthy();
+    expect(strip!.compareDocumentPosition(canvas) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('keeps a document-backed draft OUT of the side-panel artifact list, and a legacy draft IN it', () => {
     const arts = conversationArtifacts([USER, DRAFTED, LEGACY_DRAFT]);
     expect(arts.map(a => a.title)).toEqual(['A side-panel draft']);

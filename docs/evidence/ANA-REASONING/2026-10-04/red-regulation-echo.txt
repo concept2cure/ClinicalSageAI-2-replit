@@ -1,0 +1,33 @@
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > finds a figure a tool returned, and flags one it did not 11ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > reads a percentage as its proportion too 3ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > needs both bounds of a confidence interval, and does not read "95% CI" as a result 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a tool only echoed from what the model passed in 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a model wrote inside the tool call 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > a figure an engine returned beside a model-written one is still found 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > finds the identifiers the evidence holds 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > does not find a truncated or altered identifier inside a longer one 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > does not credit an identifier a model wrote inside the tool call 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > an outage envelope that echoes the query finds nothing 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a zero-hit result finds nothing, and neither does the query its provenance echoes 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a hit returns the identifier in a record, and is found 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a result that is not structured cannot tell an echo from data, and finds nothing the model asked for 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a quote the model searched for is found only in a returned passage 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > an identifier the model did not ask for is found wherever the result holds it 0ms
+ × tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a regulation looked up is found in the record the lookup returns, not in the echo of a miss 9ms
+   → expected [] to deeply equal [ { kind: 'ich', text: 'ICH E9(R1)' } ]
+ × tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a citation formatted from what the model gave, and not verified, finds nothing 2ms
+   → expected [] to deeply equal [ { kind: 'cfr', …(1) } ]
+ × tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a citation the tool verified against a source is found 1ms
+   → expected [ { kind: 'pmid', …(1) } ] to deeply equal []
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a regulation a model wrote inside the tool call is not credited by it 2ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a successful result is a source, named by its tool 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a failed, stopped or empty step is not 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a governed write is not: its output is the content it stored 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a result whose generations are unknown, or too many to keep, is not 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > with only the person's own message, claims are unchecked, never "not found" 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > a source the check cannot read is named, not counted as read 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > names the engine that checked 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — verdicts > names a readiness, compliance or approval verdict the answer states 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — verdicts > includes the §14 prohibited claims, and not a verdict the answer declines to give 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 25 passed (28)

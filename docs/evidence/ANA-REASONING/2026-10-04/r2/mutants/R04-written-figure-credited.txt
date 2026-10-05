@@ -1,0 +1,12 @@
+Mutant R04-written-figure-credited: a figure a model wrote inside the tool call is credited
+
+--- server/services/ana/answer-grounding.ts
+- if (sources.some((s) => figureHeld(fig, s.results) && !figureHeld(fig, s.writtenNumbers))) {
++ if (sources.some((s) => figureHeld(fig, s.results))) {
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a model wrote inside the tool call 9ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,19 @@
+Mutant R03-figure-number-bag: a figure is found through any equal number in a source, as in round 1 (F4, HS-2)
+
+--- server/services/ana/answer-check-figures.ts
+- return fig.values.every((value) => candidates(fig, value, index).some((o) => held(fig, value, o)));
++ return fig.values.every((value) => candidates(fig, value, index).length > 0);
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a date, an age or a page does not find a fabricated figure 31ms
+ × tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a p-value is not a percentage, and a percentage is not a p-value 2ms
+ × tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a figure the model chose as an input and a tool echoes is AnA's input, not a result (HS-5) 1ms
+ × tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a p-value needs p: alpha is not a p-value 3ms
+ × tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a hazard ratio needs its name: a dose is not a hazard ratio 1ms
+ × tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > n and a count need what they count: a page number is neither 1ms
+ × tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a dose needs its unit: a duration in days is not a dose in mg 1ms
+ × tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > "or" in a source's prose is not an odds ratio 1ms
+      Tests  8 failed | 81 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,27 @@
+Mutant D2-no-region: A `<` the two parsers may read differently opens no region.
+Result: KILLED (vitest exit 1, 6 failing tests)
+Tests run: server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts, server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts, server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/clinical-regulatory-evidence/machine-attribution.ts
++++ b/server/services/clinical-regulatory-evidence/machine-attribution.ts
+@@ -198,5 +198,3 @@
+ function readsDifferently(text: string, at: number): boolean {
+-  if (MARKUP_START.test(text.charAt(at + 1))) return true;
+-  LEAF_MARK.lastIndex = at;
+-  return LEAF_MARK.test(text);
++  return false;
+ }
+
+--- failing tests ---
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > outside the region it does not compare, node-html-parser and a browser show the same text, and the comparison drops only what neither shows 82ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > a comment opened in an earlier clause hides a later one from every reader: not AnA's 4ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a comment in HTML content 1ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a `<` a browser may read as markup and node-html-parser as text in HTML content 1ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a `<` the leaf reads as a mark and a browser as text in HTML content 1ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds a CDATA section 7ms
+
+--- summary ---
+ Test Files  2 failed | 2 passed (4)
+      Tests  6 failed | 141 passed (147)

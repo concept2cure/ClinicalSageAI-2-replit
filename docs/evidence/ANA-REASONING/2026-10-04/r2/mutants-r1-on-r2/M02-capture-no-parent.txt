@@ -1,0 +1,12 @@
+Mutant M02-capture-no-parent: a nested capture does not note into the outer one
+
+--- server/services/ai-gateway/generation-capture.ts
+- for (let c = store.getStore(); c; c = c.parent) {
++ for (let c = store.getStore(); c; c = undefined) {
+
+Tests run: server/services/ai-gateway/__tests__/generation-capture.test.ts
+Result: KILLED
+
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture opened inside another also notes into the outer one 6ms
+      Tests  1 failed | 7 passed (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

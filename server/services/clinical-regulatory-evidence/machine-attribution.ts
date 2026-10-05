@@ -40,35 +40,45 @@
  *   clause's words its hash changes, no accepted text contains the new words,
  *   and it becomes theirs — which is the true statement about an edited clause.
  *
- * ── What is compared: the words a reader is shown ─────────────────────────────
+ * ── What is compared: the words every reader is shown ─────────────────────────
  * A clause is the machine's only when every reader of the saved content shows
- * the machine's words in it. Two read it today (periodic review 2026-09-28,
- * editor family, the batch-draft accept, rounds 2 and 3):
+ * the machine's words in it (periodic review 2026-09-28, editor family, the
+ * batch-draft accept, rounds 2 to 4). The readers:
  *
- *   - as HTML: the eCTD leaf renderer always, and the section editor and the
- *     authoring export whenever the content holds a known tag (looksLikeHtml,
- *     shared/authoring/plain-text-html.ts). A tag is not shown, so the
- *     comparison form drops what a browser parses as one (comparableText);
- *   - as plain text: the section editor and the export, when the content holds
- *     no known tag. Every character is shown, `<q 3 patients died>` included.
+ *   - the section editor's canvas: a browser's parser, then the TipTap schema;
+ *   - the editor's source mode, a textarea showing every character. It opens
+ *     for content holding figure/svg/video/embed/object (opensInSourceMode,
+ *     shared/authoring/source-mode.ts) and for content its fidelity gate calls
+ *     lossy, which needs the editor's schema and cannot be known here;
+ *   - the eCTD leaf and the authoring export: node-html-parser, through
+ *     parseSectionHtml, each with its own printing rules;
+ *   - content holding no known tag (looksLikeHtml) is plain text to all of
+ *     them: every character is shown.
  *
- * So two kinds of clause are never compared, and stay the saver's:
+ * The comparison form (comparableText) removes only a tag that a browser and
+ * node-html-parser both read, with the same extent, that no reader prints
+ * anything for, and whose attributes are the presentational ones the editor
+ * writes, with the values it writes (SILENT_ATTRIBUTES): source mode shows
+ * those, and none reads as prose. An inline tag joins the text around it and
+ * a block tag separates it, as every reader shows them. Anything else stays as
+ * written, so a clause holding it matches only text that holds it as written.
  *
- *   - any clause at or after the first place a browser may start reading `<…>`
- *     as text: the opening tag of a raw-text element (xmp, textarea, plaintext,
- *     title, script, style, iframe, noembed, noframes, noscript) or a CDATA
- *     section (text in SVG and MathML). The clause splitter can put the
- *     opening tag in one clause and the words inside in another, where a tag
- *     strip would hide words a reader is shown. Where such an element ends
- *     depends on attribute quoting, comments and the element around it, which
- *     no regex follows; a scanner that tried could be misled into ending early.
- *     From the first opener to the end of the content is the region every such
- *     element can lie in, so nothing past it is compared;
- *   - in content read as plain text, a clause holding anything a browser would
- *     parse as a tag. One reader hides it and the other shows it, so its words
- *     are not one thing.
+ * Three kinds of clause are not compared, and stay the saver's:
  *
- * Both rules apply to newly accepted text and to the carry-forward of an
+ *   - in HTML content, any clause at or after the first place two readers may
+ *     read the markup differently (notComparedFrom): a `<` a browser may start
+ *     markup at that the strict tag reader below does not accept, a comment,
+ *     or an element whose inside a reader drops or reads as text (the raw-text
+ *     elements, template, head, svg, math). Where such a thing ends depends on
+ *     quoting and context no regex follows, so the whole tail is excluded;
+ *   - in HTML content, any clause overlapping an element a reader prints
+ *     something for that is not its text, to that element's end: an image, or
+ *     a tag carrying alt, title, a footnote, a citation, a cross-reference, a
+ *     suggestion's author or a list's start (PRINTED_ATTRIBUTES);
+ *   - where a reader shows every character (plain text, source mode), a clause
+ *     holding a tag the comparison form removes.
+ *
+ * The rules apply to newly accepted text and to the carry-forward of an
  * accepted clause, whose words were matched with tags removed and may hold
  * text a later save makes visible (an `<xmp>` put before it). An unaccepted
  * `machine_draft` clause carries forward as before: it was never matched,
@@ -87,6 +97,7 @@
  */
 
 import { looksLikeHtml } from '@shared/authoring/plain-text-html';
+import { opensInSourceMode } from '@shared/authoring/source-mode';
 import type { SentenceSpan } from '../sentenceTraceabilityService';
 import { normalizeForMatch } from './source-attribution';
 import { hashSpanText, type LiveMachineSpan } from './span-lineage.service';
@@ -131,53 +142,243 @@ export interface MachineAttributedSpan {
  */
 export const MIN_MACHINE_CLAUSE_CHARS = 8;
 
-/** The elements whose inside a browser reads as text, not as tags. */
-const RAW_TEXT_ELEMENTS = 'textarea|xmp|plaintext|title|script|style|iframe|noembed|noframes|noscript';
+/* ── Reading markup as every reader does ───────────────────────────────────── */
 
+/** White space inside a tag as a browser's tokenizer reads it: not JavaScript's `\s`. */
+const WS = '[\\t\\n\\f\\r ]';
+const ATTRIBUTE_NAME = '[A-Za-z_:][-A-Za-z0-9_:.]*';
 /**
- * What a browser parses as a tag, and nothing else: `<` or `</` followed by a
- * letter, up to the next `>`.
- *
- * - A `<` that starts no tag stays: `< 3 … >`, `p<0.05`, `</ x>`, `<!-- -->`,
- *   `<?x?>`. The first two are text a browser shows (the last three it hides
- *   as comments), and a match that keeps them can only fail. Stripping every
- *   `<…>` run (periodic review 2026-09-28, editor family, the batch-draft
- *   accept, round 2) let words typed inside `< … >` into a clause the machine
- *   wrote match as the machine's.
- * - A tag with a `<` or a quoted `>` inside it is stripped at most in part:
- *   what is left stays, and the match fails.
- * - The raw-text elements keep their own tags. In the lineage that changes
- *   nothing any more: no clause at or after one is compared (rawTextFrom). It
- *   is the claim verifier's: a claim holding an `<xmp>` or a `<textarea>` the
- *   turn record does not have is not text AnA wrote, and does not verify.
- * - `[^<>]*`, not `[^>]*`: a run of `<a` with no `>` is scanned once, not
- *   rescanned from every `<` (quadratic on a 400,000-character body).
+ * A quoted value holding no `<` or `>`, or an unquoted one holding nothing a
+ * browser and node-html-parser end it at differently. node-html-parser ends a
+ * tag at the first `>` outside a quoted value, a browser at the first `>`
+ * outside quotes it tracks itself; with no `>` and no `<` inside a value the
+ * two cannot differ (refute-review of round 3: D2).
  */
-const BROWSER_TAG = new RegExp(`<\\/?(?!(?:${RAW_TEXT_ELEMENTS})[\\s/>])[a-z][^<>]*>`, 'gi');
-
-/** BROWSER_TAG without the global flag's lastIndex, to ask whether a text holds one. */
-const HOLDS_BROWSER_TAG = new RegExp(BROWSER_TAG.source, 'i');
-
+const ATTRIBUTE_VALUE = `(?:"[^"<>]*"|'[^'<>]*'|[^\\t\\n\\f\\r "'<>=\`]+)`;
+const ATTRIBUTE = `${ATTRIBUTE_NAME}(?:${WS}*=${WS}*${ATTRIBUTE_VALUE})?`;
 /**
- * The opening tag of a raw-text element (tag name, then white space, `/` or
- * `>`, as a browser reads it, so `<xmp class="q">` and `<plaintext x>` count),
- * or the opening of a CDATA section.
+ * A start tag both parsers read alike: an ASCII name, then white space, `/`
+ * or `>` (a browser's tag name runs to one of those, node-html-parser's to the
+ * end of its name characters, so `<b"…">`, `<b/…>`, `<b,…>`, `<i(…)>` and
+ * `<u=…>` are a tag to one and text to the other), then strict attributes.
  */
-const RAW_TEXT_OPENER = new RegExp(`<(?:${RAW_TEXT_ELEMENTS})(?=[\\s/>])|<!\\[CDATA\\[`, 'i');
-
+const START_TAG = new RegExp(`<([A-Za-z][A-Za-z0-9]*)((?:${WS}+${ATTRIBUTE})*)${WS}*/?>`, 'y');
+const END_TAG = new RegExp(`</([A-Za-z][A-Za-z0-9]*)${WS}*>`, 'y');
+const ATTRIBUTES = new RegExp(`(${ATTRIBUTE_NAME})(?:${WS}*=${WS}*(${ATTRIBUTE_VALUE}))?`, 'g');
+/** After a `<`, what a browser may start markup at: a letter, `/`, `!` or `?`. */
+const MARKUP_START = /[A-Za-z/!?]/;
 /**
- * Where a browser may first read `<…>` in `content` as text: the offset of the
- * first raw-text opener (RAW_TEXT_OPENER), or -1 when there is none. Every
- * clause that ends after it is left to the saver (see "What is compared").
+ * What the leaf's inlineMarksToText reads as a mark and a browser as text:
+ * `< sup>`, `< /del>`. One run of white space, then a `/` and a second run:
+ * `<\s+\/?\s*` tried every split of a long run between its two runs, which
+ * was quadratic (30 s for 100,000 spaces after a `<`).
  */
-export function rawTextFrom(content: string): number {
-  const m = RAW_TEXT_OPENER.exec(content);
-  return m ? m.index : -1;
+const LEAF_MARK = /<\s+(?:\/\s*)?(?:sup|del|ins)(?![A-Za-z0-9_])/iy;
+
+interface Tag {
+  start: number;
+  end: number;
+  /** Lower case. */
+  name: string;
+  closing: boolean;
+  /** A start tag's attributes, as written. */
+  attributes: string;
+}
+
+function readTag(text: string, at: number): Tag | null {
+  START_TAG.lastIndex = at;
+  const start = START_TAG.exec(text);
+  if (start) return { start: at, end: START_TAG.lastIndex, name: start[1].toLowerCase(), closing: false, attributes: start[2] };
+  END_TAG.lastIndex = at;
+  const end = END_TAG.exec(text);
+  return end ? { start: at, end: END_TAG.lastIndex, name: end[1].toLowerCase(), closing: true, attributes: '' } : null;
+}
+
+/** Whether a `<` that is no tag readTag accepts may still be read as markup by some reader. */
+function readsDifferently(text: string, at: number): boolean {
+  if (MARKUP_START.test(text.charAt(at + 1))) return true;
+  LEAF_MARK.lastIndex = at;
+  return LEAF_MARK.test(text);
 }
 
 /**
- * The comparison form of a text: its tags removed as above, then
- * normalizeForMatch. Comparison only, never for storage or offsets.
+ * The tags a browser and node-html-parser both read, with the same extent, in
+ * order; and the first `<` either may read otherwise (-1 when none). Linear:
+ * no pattern above reads past the next `<`, so each `<` is read once.
+ */
+function scanMarkup(text: string): { tags: Tag[]; differsAt: number } {
+  const tags: Tag[] = [];
+  let differsAt = -1;
+  for (let at = text.indexOf('<'); at !== -1; ) {
+    const tag = readTag(text, at);
+    if (tag) {
+      tags.push(tag);
+      at = text.indexOf('<', tag.end);
+      continue;
+    }
+    if (differsAt === -1 && readsDifferently(text, at)) differsAt = at;
+    at = text.indexOf('<', at + 1);
+  }
+  return { tags, differsAt };
+}
+
+function attributesOf(tag: Tag): Array<[string, string]> {
+  const out: Array<[string, string]> = [];
+  for (const m of tag.attributes.matchAll(ATTRIBUTES)) {
+    const raw = m[2] ?? '';
+    out.push([m[1].toLowerCase(), raw.startsWith('"') || raw.startsWith("'") ? raw.slice(1, -1) : raw]);
+  }
+  return out;
+}
+
+/* ── What each tag is to the readers ───────────────────────────────────────── */
+
+/** Tags no reader shows any text for: inside a line, and between blocks. */
+const SILENT_INLINE = new Set(['a', 'b', 'code', 'em', 'font', 'i', 'mark', 's', 'span', 'strike', 'strong', 'u']);
+const SILENT_BLOCK = new Set([
+  'article', 'blockquote', 'br', 'col', 'colgroup', 'dd', 'div', 'dl', 'dt', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+  'hr', 'li', 'ol', 'p', 'pre', 'section', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'tr', 'ul',
+]);
+/**
+ * The attributes the canonical producers write on those tags, with the only
+ * values they write: TipTap's text-align (paragraphs, headings, cells), its
+ * table widths and cell spans, and the editor's comment anchor
+ * (client/src/concept2cure/v2/editor/commentAnchor.ts). plainTextToHtml and
+ * the batch-draft card write none. None of these reads as prose, so source
+ * mode, which shows them, shows no words (round 4, D4). Any other attribute
+ * keeps its tag in the comparison.
+ */
+const SILENT_ATTRIBUTES = new Map<string, RegExp>([
+  ['style', /^(?:text-align: ?(?:left|center|right|justify)|(?:min-)?width: ?\d{1,5}px);?$/],
+  ['colspan', /^[1-9]\d{0,2}$/],
+  ['rowspan', /^[1-9]\d{0,2}$/],
+  ['colwidth', /^\d{1,5}(?:,\d{1,5})*$/],
+  ['data-comment-id', /^[A-Za-z0-9_-]{1,64}$/],
+  ['class', /^rse-comment-anchor$/],
+]);
+/**
+ * What a reader prints from an element besides its text: the leaf an image's
+ * alt (or a label for its kind), the export a footnote, a citation's number
+ * and locator, a cross-reference's resolved label (each in place of the
+ * element's text) and a suggestion's author and date; the editor a citation's
+ * marker; a browser a title, an accessible label, a form value; the leaf a
+ * list's numbers from its start (rounds 3 and 4: D5, D6).
+ */
+const PRINTING_ELEMENTS = new Set(['img', 'image']);
+const PRINTED_ATTRIBUTES = new Set([
+  'alt', 'title', 'aria-label', 'data-note', 'data-cite', 'data-cite-locator', 'data-xref', 'data-xref-display',
+  'data-author-name', 'data-at', 'start', 'value', 'label', 'placeholder',
+]);
+const VOID_ELEMENTS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'image', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+/**
+ * Elements whose inside some reader reads as text, drops, or parses as
+ * another language. Raw text to a browser: textarea, xmp, plaintext, title,
+ * script, style, iframe, noembed, noframes, noscript. Dropped by the leaf
+ * while the export prints it: template, head (round 4, D3). Foreign content,
+ * with its own case, self-closing and CDATA rules: svg, math.
+ */
+const REGION_ELEMENTS = new Set([
+  'textarea', 'xmp', 'plaintext', 'title', 'script', 'style', 'iframe', 'noembed', 'noframes', 'noscript',
+  'template', 'head', 'svg', 'math',
+]);
+
+/** `''` for a silent inline tag, `' '` for a silent block tag, null for every other tag. */
+function silentAs(tag: Tag): '' | ' ' | null {
+  const inline = SILENT_INLINE.has(tag.name);
+  if (!inline && !SILENT_BLOCK.has(tag.name)) return null;
+  for (const [name, value] of attributesOf(tag)) {
+    const allowed = SILENT_ATTRIBUTES.get(name);
+    if (!allowed || !allowed.test(value)) return null;
+  }
+  return inline ? '' : ' ';
+}
+
+function prints(tag: Tag): boolean {
+  return !tag.closing && (PRINTING_ELEMENTS.has(tag.name) || attributesOf(tag).some(([name]) => PRINTED_ATTRIBUTES.has(name)));
+}
+
+/* ── The comparison form ───────────────────────────────────────────────────── */
+
+/** `text` with each tag's characters replaced by `fill(length)`. */
+function maskTags(text: string, tags: Tag[], fill: (length: number) => string): string {
+  let out = '';
+  let from = 0;
+  for (const tag of tags) {
+    out += text.slice(from, tag.start) + fill(tag.end - tag.start);
+    from = tag.end;
+  }
+  return out + text.slice(from);
+}
+
+/** A line of three or more asterisks: a thematic break, shown as a rule. */
+const THEMATIC_BREAK = /^[\t ]*\*(?:[\t ]*\*){2,}[\t ]*$/gm;
+/** An asterisk that starts a line, then white space: a list item's marker. */
+const LIST_MARKER = /^[\t ]*\*(?=[\t ])/gm;
+/** A backslash before `*` or `|`: the character itself, shown. */
+const ESCAPED = /\\[*|]/g;
+/** A run of one to three asterisks before a non-space, and the same run after one: emphasis. */
+const EMPHASIS = /(\*{1,3})(?=[^\s*])(?:[^*\n]*?[^\s*])?\1(?!\*)/g;
+
+/** The asterisks a markdown reader hides that are not emphasis, and the backslash of each escape. */
+function markdownMarkers(view: string): Set<number> {
+  const drop = new Set<number>();
+  for (const m of view.matchAll(THEMATIC_BREAK)) {
+    for (let i = m.index; i < m.index + m[0].length; i++) if (view[i] === '*') drop.add(i);
+  }
+  for (const m of view.matchAll(LIST_MARKER)) drop.add(m.index + m[0].length - 1);
+  for (const m of view.matchAll(ESCAPED)) drop.add(m.index);
+  return drop;
+}
+
+/**
+ * Paired emphasis delimiters, dropped into `drop`. An escaped asterisk and the
+ * markers already dropped are no delimiters; a lone `*` ("5*10") has no pair
+ * and stays. Pairs nested in pairs come out a level per round.
+ */
+function dropEmphasis(view: string, drop: Set<number>): void {
+  const chars = view.split('');
+  for (let i = 0; i < chars.length; i++) {
+    if (drop.has(i) || (view[i] === '*' && view[i - 1] === '\\')) chars[i] = '\u0001';
+  }
+  for (let round = 0; round < 4; round++) {
+    let found = false;
+    for (const m of chars.join('').matchAll(EMPHASIS)) {
+      found = true;
+      const run = m[1].length;
+      for (let k = 0; k < run; k++) {
+        for (const at of [m.index + k, m.index + m[0].length - run + k]) {
+          drop.add(at);
+          chars[at] = '\u0001';
+        }
+      }
+    }
+    if (!found) return;
+  }
+}
+
+/**
+ * `text` as a markdown reader shows it: emphasis delimiters, list markers and
+ * thematic breaks dropped, `\*` and `\|` read as `*` and `|`. Outside tags
+ * only. Every `*` used to be dropped, so a record's "5*10 mg/kg" verified a
+ * claim of "510 mg/kg", a dose no reader of the record is shown (round 4, D8).
+ */
+function markdownShown(text: string): string {
+  const view = maskTags(text, scanMarkup(text).tags, (n) => '\u0000'.repeat(n));
+  const drop = markdownMarkers(view);
+  dropEmphasis(view, drop);
+  let out = '';
+  let from = 0;
+  for (const at of [...drop].sort((a, b) => a - b)) {
+    out += text.slice(from, at);
+    from = at + 1;
+  }
+  return out + text.slice(from);
+}
+
+/**
+ * The comparison form of a text: each silent tag (silentAs) removed, inline
+ * to nothing and block to a space, every other character kept as written,
+ * then normalizeForMatch. Comparison only, never for storage or offsets.
  *
  * The ONE form both sides of machine authorship use: this module, to decide
  * which clauses of a save are the machine's, and the claim verifier
@@ -185,19 +386,155 @@ export function rawTextFrom(content: string): number {
  * turn record holds. A second copy is how they drifted apart.
  *
  * `markdown` is for text as a model wrote it, which only the turn record's side
- * of the verifier holds: the `\|` table escape reads as `|` and every `*` is
- * dropped (emphasis and list markers), because the editor shows neither. Every
- * text the lineage compares is text as shown, so it never sets it. The verifier
- * reads each record text both ways and a claim only as sent, so a claim with an
- * asterisk the record lacks in either reading does not verify.
+ * of the verifier holds (markdownShown). Every text the lineage compares is
+ * text as shown, so it never sets it. The verifier reads each record text both
+ * ways and a claim only as sent, so a claim holding what the record does not
+ * in either reading does not verify.
  */
 export function comparableText(text: string, opts: { markdown?: boolean } = {}): string {
-  const shown = text.replace(BROWSER_TAG, ' ');
-  return normalizeForMatch(opts.markdown ? shown.replace(/\\\|/g, '|').replace(/\*/g, '') : shown);
+  const source = opts.markdown ? markdownShown(text) : text;
+  let out = '';
+  let from = 0;
+  for (const tag of scanMarkup(source).tags) {
+    out += source.slice(from, tag.start) + (silentAs(tag) ?? source.slice(tag.start, tag.end));
+    from = tag.end;
+  }
+  return normalizeForMatch(out + source.slice(from));
 }
 
+/* ── What is not compared ──────────────────────────────────────────────────── */
+
+function regionFrom(scan: { tags: Tag[]; differsAt: number }): number {
+  const opener = scan.tags.find((t) => !t.closing && REGION_ELEMENTS.has(t.name));
+  if (!opener) return scan.differsAt;
+  return scan.differsAt === -1 ? opener.start : Math.min(opener.start, scan.differsAt);
+}
+
+/**
+ * Where, in `content`, two readers may first read its markup differently: the
+ * offset from which no clause is compared (see "What is compared"), or -1. In
+ * content with no known tag every reader shows every character, so there is
+ * none: a "<style guide>" in plain text used to drop every clause after it
+ * (round 4, C2).
+ */
+export function notComparedFrom(content: string): number {
+  return looksLikeHtml(content) ? regionFrom(scanMarkup(content)) : -1;
+}
+
+type Extent = [number, number];
+
+/** A printing element's end tag: closes the innermost open element of its name, and its extent if it prints. */
+function closeElement(tag: Tag, depth: Map<string, number>, open: Map<string, Array<{ start: number; depth: number }>>, extents: Extent[]): void {
+  const d = depth.get(tag.name) ?? 0;
+  if (d === 0) return;
+  depth.set(tag.name, d - 1);
+  const list = open.get(tag.name);
+  const top = list?.[list.length - 1];
+  if (list && top && top.depth === d) {
+    list.pop();
+    extents.push([top.start, tag.end]);
+  }
+}
+
+/**
+ * Each element a reader prints something for besides its text, start tag to
+ * its end tag (by nesting depth, so a reader's earlier end is inside it), or
+ * to the end of `content` when it has none. Its text can run into later
+ * clauses: a cross-reference's label holding a comma, a footnote over two.
+ */
+function printedExtents(content: string, tags: Tag[], until: number): Extent[] {
+  const extents: Extent[] = [];
+  const depth = new Map<string, number>();
+  const open = new Map<string, Array<{ start: number; depth: number }>>();
+  for (const tag of tags) {
+    if (tag.start >= until) break;
+    if (tag.closing) {
+      closeElement(tag, depth, open, extents);
+    } else if (VOID_ELEMENTS.has(tag.name)) {
+      if (prints(tag)) extents.push([tag.start, tag.end]);
+    } else {
+      const d = (depth.get(tag.name) ?? 0) + 1;
+      depth.set(tag.name, d);
+      if (!prints(tag)) continue;
+      let list = open.get(tag.name);
+      if (!list) open.set(tag.name, (list = []));
+      list.push({ start: tag.start, depth: d });
+    }
+  }
+  for (const list of open.values()) for (const o of list) extents.push([o.start, content.length]);
+  return extents;
+}
+
+/** The ranges of HTML `content` no clause overlapping is compared: sorted, disjoint. */
+function notComparedRanges(content: string): Extent[] {
+  const scan = scanMarkup(content);
+  const region = regionFrom(scan);
+  const ranges = printedExtents(content, scan.tags, region === -1 ? content.length : region);
+  if (region !== -1) ranges.push([region, content.length]);
+  ranges.sort((a, b) => a[0] - b[0]);
+  const merged: Extent[] = [];
+  for (const [start, end] of ranges) {
+    const last = merged[merged.length - 1];
+    if (last && start <= last[1]) last[1] = Math.max(last[1], end);
+    else merged.push([start, end]);
+  }
+  return merged;
+}
+
+/** Whether [start, end) overlaps a range of sorted, disjoint `ranges`. */
+function overlaps(ranges: Extent[], start: number, end: number): boolean {
+  let lo = 0;
+  let hi = ranges.length - 1;
+  let last = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (ranges[mid][0] < end) {
+      last = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return last !== -1 && ranges[last][1] > start;
+}
+
+/** Whether `text` holds a tag the comparison form removes. */
+function holdsRemovedTag(text: string): boolean {
+  return scanMarkup(text).tags.some((t) => silentAs(t) !== null);
+}
+
+/**
+ * For each candidate, whether its shown words can be compared at all (see
+ * "What is compared"). False means the clause stays the saver's unless it is an
+ * unaccepted machine draft carried forward unchanged.
+ */
+function comparableClauses(candidates: SentenceSpan[], content: string): boolean[] {
+  const html = looksLikeHtml(content);
+  const ranges = html ? notComparedRanges(content) : [];
+  const everyCharacterShown = !html || opensInSourceMode(content);
+  return candidates.map(
+    (c) => !overlaps(ranges, c.charStart, c.charEnd) && !(everyCharacterShown && holdsRemovedTag(c.text)),
+  );
+}
+
+/**
+ * `content` with the inside of every tag replaced, length for length, by
+ * characters the clause splitter never cuts at. The gate splits this and
+ * slices the content at the same offsets (lineage-gate.ts, clauseSpans), so no
+ * clause starts or ends inside a tag: a style's ": " cut TipTap's text-align
+ * tag in two, and neither half of an honest draft matched (round 4, C2).
+ * Plain text comes back as it is: every character of it is shown, a "tag"
+ * included.
+ */
+export function tagsMaskedForSplit(content: string): string {
+  if (!looksLikeHtml(content)) return content;
+  return maskTags(content, scanMarkup(content).tags, (n) => `<${'x'.repeat(n - 2)}>`);
+}
+
+/* ── Attribution ───────────────────────────────────────────────────────────── */
+
 /** Non-overlapping occurrences of `needle` in `haystack`. */
-function occurrences(haystack: string, needle: string): number {
+export function occurrencesIn(haystack: string, needle: string): number {
   if (needle.length === 0) return 0;
   let n = 0;
   let from = 0;
@@ -209,19 +546,6 @@ function occurrences(haystack: string, needle: string): number {
   }
 }
 
-/**
- * For each candidate, whether its shown words can be compared at all (see
- * "What is compared"). False means the clause stays the saver's unless it is an
- * unaccepted machine draft carried forward unchanged.
- */
-function comparableClauses(candidates: SentenceSpan[], content: string): boolean[] {
-  const rawFrom = rawTextFrom(content);
-  const readAsPlainText = !looksLikeHtml(content);
-  return candidates.map(
-    (c) => !((rawFrom !== -1 && c.charEnd > rawFrom) || (readAsPlainText && HOLDS_BROWSER_TAG.test(c.text))),
-  );
-}
-
 /** One accepted text, in comparison form. `index` is its place in the save's list. */
 interface Haystack {
   index: number;
@@ -231,18 +555,31 @@ interface Haystack {
 
 /**
  * Step 2 of attributeMachineSpans: the clauses inside text accepted in this
- * save, occurrence-bounded per (accepted text, clause). Marks each credited
- * clause in `claimed`.
+ * save, occurrence-bounded per (accepted text, clause), and, when the caller
+ * knows the records the texts were verified against, by what those hold.
+ * Marks each credited clause in `claimed`.
  */
 function creditNewlyAccepted(
   candidates: SentenceSpan[],
   haystacks: Haystack[],
   needleOf: (i: number) => string | null,
   claimed: Set<number>,
-  actor: string,
+  opts: { actor: string; recordOccurrences?: (needle: string) => number; reaccepted: Map<string, number> },
 ): MachineAttributedSpan[] {
   const out: MachineAttributedSpan[] = [];
   const budget = new Map<string, number>();
+  const credited = new Map(opts.reaccepted);
+  const held = new Map<string, number>();
+  /* The same claim sent three times, or overlapping claims, each brought its
+     own budget, so a sentence the record holds once was credited three times
+     (round 4, DUP). The records' own count bounds them all, the clauses this
+     save accepts again by carrying them forward included: a second accept of
+     the same draft otherwise credited the repeat the first one left alone. */
+  const recordHoldsMore = (needle: string): boolean => {
+    if (!opts.recordOccurrences) return true;
+    if (!held.has(needle)) held.set(needle, opts.recordOccurrences(needle));
+    return (credited.get(needle) ?? 0) < (held.get(needle) ?? 0);
+  };
   candidates.forEach((c, i) => {
     if (claimed.has(i)) return;
     const needle = needleOf(i);
@@ -263,18 +600,20 @@ function creditNewlyAccepted(
       const key = `${h.index} ${h.authorId} ${needle}`;
       let left = budget.get(key);
       if (left === undefined) {
-        left = occurrences(h.norm, needle);
+        left = occurrencesIn(h.norm, needle);
         budget.set(key, left);
       }
       if (left <= 0) continue;
+      if (!recordHoldsMore(needle)) return;
       budget.set(key, left - 1);
+      credited.set(needle, (credited.get(needle) ?? 0) + 1);
       claimed.add(i);
       out.push({
         charStart: c.charStart,
         charEnd: c.charEnd,
         spanText: c.text,
         machineAuthorId: h.authorId,
-        assertedBy: actor,
+        assertedBy: opts.actor,
         inAcceptedText: true,
       });
       break;
@@ -303,10 +642,17 @@ export function attributeMachineSpans(
     machineDraft?: { authorId: string } | null;
     /**
      * The saved content the candidates' offsets point into. Required: which
-     * reader shows what, and where a browser starts reading `<…>` as text, are
-     * facts about the whole content, not about any one clause.
+     * reader shows what, and where readers may disagree, are facts about the
+     * whole content, not about any one clause.
      */
     content: string;
+    /**
+     * How many times the turn records the accepted texts were verified against
+     * hold a clause's comparison form. When given, this save credits no more
+     * clauses with that form than that (the batch-draft accept, round 4: DUP).
+     * The saves that verify no record omit it.
+     */
+    recordOccurrences?: (needle: string) => number;
   },
 ): MachineAttributedSpan[] {
   const out: MachineAttributedSpan[] = [];
@@ -333,6 +679,9 @@ export function attributeMachineSpans(
     return needle.length < MIN_MACHINE_CLAUSE_CHARS ? null : needle;
   };
 
+  /** Clauses carried forward that this save's accepted text holds again, by comparison form. */
+  const reaccepted = new Map<string, number>();
+
   /** Match one live span to the nearest unclaimed clause with the same text. */
   const carryForward = (live: LiveMachineSpan, accepted: boolean): boolean => {
     const open = (byHash.get(live.spanTextSha256) ?? []).filter((i) => !claimed.has(i) && (!accepted || comparable[i]));
@@ -345,6 +694,8 @@ export function attributeMachineSpans(
     claimed.add(best);
     const c = candidates[best];
     const needle = accepted ? needleOf(best) : null;
+    const inAcceptedText = needle !== null && haystacks.some((h) => h.norm.includes(needle));
+    if (inAcceptedText) reaccepted.set(needle, (reaccepted.get(needle) ?? 0) + 1);
     out.push({
       charStart: c.charStart,
       charEnd: c.charEnd,
@@ -354,7 +705,7 @@ export function attributeMachineSpans(
       assertedAt: live.assertedAt ?? undefined,
       signatureId: live.signatureId,
       createdBy: live.createdBy,
-      inAcceptedText: needle !== null && haystacks.some((h) => h.norm.includes(needle)),
+      inAcceptedText,
     });
     return true;
   };
@@ -374,8 +725,13 @@ export function attributeMachineSpans(
   //    into an accepted one, and it would be missed if the draft had already
   //    claimed the clause.
   if (haystacks.length > 0) {
+    const newly = creditNewlyAccepted(candidates, haystacks, needleOf, claimed, {
+      actor: opts.actor,
+      recordOccurrences: opts.recordOccurrences,
+      reaccepted,
+    });
     // A loop, not a spread: a long section has more clauses than a call takes arguments.
-    for (const span of creditNewlyAccepted(candidates, haystacks, needleOf, claimed, opts.actor)) out.push(span);
+    for (const span of newly) out.push(span);
   }
 
   // 3. Still-UNACCEPTED spans carry forward as unaccepted. A human saving the

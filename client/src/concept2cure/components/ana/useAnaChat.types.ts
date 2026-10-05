@@ -18,6 +18,7 @@
  */
 
 import type { PendingSignoff } from './useGovernedAction';
+import type { AnaGroundingEvidence } from './anaAnswerCheck';
 import type { BriefingBookPremortemResult } from './BriefingBookPanel';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 import type { DetectedDocumentTemplatePayload } from '../../../../../shared/types/ana-document-detection';
@@ -368,21 +369,11 @@ export interface AnaChatMessage {
    */
   interjections?: string[];
   /**
-   * Evidence grounding summary from the server's validateEvidence pipeline.
-   * Surfaced as a small chip on the reply: a shield-check icon + "N sources"
-   * when grounded, or an alert icon + "N weak" when claims are unsupported.
+   * What was checked about the answer: the engine's check of its specific
+   * claims against this turn's sources, and AnA's own evidence labels
+   * (anaAnswerCheck.ts). Rendered under the reply by AnaGrounding.
    */
-  evidence?: {
-    validated: boolean;
-    sourceCount: number;
-    groundedClaims: number;
-    weakClaims: number;
-    missingSupport: number;
-    /** One-line reviewer risk summary from the server verdict. */
-    riskSummary?: string;
-    /** The specific claims the verdict flagged, so the chip can drill down. */
-    flaggedClaims?: { kind: 'ungrounded' | 'overclaim' | 'contradiction'; text: string }[];
-  };
+  evidence?: AnaGroundingEvidence;
   /**
    * Context layers ANA drew on this turn (from the server's enrichment step,
    * e.g. 'governance', 'precedent', 'safety'). Surfaced in the evidence panel

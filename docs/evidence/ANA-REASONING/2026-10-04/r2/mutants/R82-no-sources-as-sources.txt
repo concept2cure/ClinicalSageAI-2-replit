@@ -1,0 +1,13 @@
+Mutant R82-no-sources-as-sources: no source consulted reads as checked (successor of M21)
+
+--- client/src/concept2cure/v2/AnaGrounding.tsx
+- {check.basis === 'no_sources' ? (
++ {false ? (
+
+Tests run: client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > with no source consulted, the claims are not checked — never found, never a pass 14ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > with no source consulted, a claim only in the person's message is said to be theirs (F1) 8ms
+      Tests  2 failed | 20 passed (22)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

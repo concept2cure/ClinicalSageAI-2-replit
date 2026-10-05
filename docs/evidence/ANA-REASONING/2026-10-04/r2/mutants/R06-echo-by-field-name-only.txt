@@ -1,0 +1,13 @@
+Mutant R06-echo-by-field-name-only: an engine that renames the input field (proposed_dose_mg → dose_mg) returns AnA's number as a result
+
+--- server/services/ana/answer-check-sources.ts
+- out.push({ value, before: '', after: '', key: words, group, pos, field: true, echo: sentValue(input, value, RATE_KEY.test(words)) });
++ out.push({ value, before: '', after: '', key: words, group, pos, field: true, echo: input.numbersByKey.get(normKey(key))?.has(value) ?? false });
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a tool only echoed from what the model passed in 9ms
+ × tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a percentage she passed, restated as a proportion, is her input 8ms
+      Tests  2 failed | 87 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

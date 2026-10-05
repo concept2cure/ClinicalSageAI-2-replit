@@ -157,10 +157,14 @@ export function runGroundingEval(cases: GroundingEvalCase[] = GROUNDING_EVAL_FIX
  */
 export const GROUNDING_EVAL_FIXTURES: GroundingEvalCase[] = [
   {
+    /* 2026-10-04: this case was "grounded" with no enrolment in its evidence.
+       The check could not see a figure, so "1066 participants" passed against
+       a registry record that did not hold it. The record now holds it; the
+       unsupported version is its own case below. */
     name: 'grounded NCT id',
     category: 'trial_registry',
     answer: 'The pivotal study NCT04267848 enrolled 1066 participants.',
-    evidence: '{"studies":[{"nctId":"NCT04267848","title":"A pivotal study"}]}',
+    evidence: '{"studies":[{"nctId":"NCT04267848","title":"A pivotal study","enrollment":1066}]}',
     expectFabrication: false,
     minRatio: 1,
   },
@@ -259,5 +263,48 @@ export const GROUNDING_EVAL_FIXTURES: GroundingEvalCase[] = [
     evidence: '',
     expectFabrication: false,
     minRatio: 1,
+  },
+  /* Figures (2026-10-04). The most damaging error in a regulatory answer, a
+     figure that does not match its source, was invisible to this eval: no
+     case held one, and the check could not read one. */
+  {
+    name: 'an enrolment the registry record does not hold',
+    category: 'figure',
+    answer: 'The pivotal study NCT04267848 enrolled 1066 participants.',
+    evidence: '{"studies":[{"nctId":"NCT04267848","title":"A pivotal study","enrollment":1060}]}',
+    expectFabrication: true,
+    expectKinds: ['figure'],
+  },
+  {
+    name: 'a response rate and its interval, as the result holds them',
+    category: 'figure',
+    answer: 'The objective response rate was 47% (95% CI 38–56) in 212 patients.',
+    evidence: '{"result":{"orr":0.47,"ci_lower":38,"ci_upper":56,"n_evaluable":212}}',
+    expectFabrication: false,
+    minRatio: 1,
+  },
+  {
+    name: 'a p-value the analysis did not produce',
+    category: 'figure',
+    answer: 'The difference in the primary endpoint was significant (p = 0.003).',
+    evidence: '{"analysis":{"endpoint":"primary","p_value":0.03,"significant":true}}',
+    expectFabrication: true,
+    expectKinds: ['figure'],
+  },
+  {
+    name: 'a hazard ratio and a dose, as the sources hold them',
+    category: 'figure',
+    answer: 'At 10 mg/kg the hazard ratio was HR 0.62 over 24 months.',
+    evidence: '{"label":{"dose":"10 mg/kg"},"survival":{"hr":0.62,"follow_up_months":24}}',
+    expectFabrication: false,
+    minRatio: 1,
+  },
+  {
+    name: 'a shelf life no stability result supports',
+    category: 'figure',
+    answer: 'The data support a shelf life of 36 months at 25 °C.',
+    evidence: '{"stability":{"condition":"25C/60%RH","longest_timepoint_months":24,"conclusion":"within specification"}}',
+    expectFabrication: true,
+    expectKinds: ['figure'],
   },
 ];

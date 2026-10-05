@@ -1,0 +1,12 @@
+Mutant R85-records-paired-across: an interval is paired from bounds in two records of one list
+
+--- server/services/ana/answer-check-sources.ts
+- v.forEach((x, i) => walk(x, x !== null && typeof x === 'object' ? `${key}[${i}]` : key, `${group}/${key}`, i, depth + 1));
++ v.forEach((x, i) => walk(x, key, `${group}/${key}`, i, depth + 1));
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > bounds from two different records are not one interval 12ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

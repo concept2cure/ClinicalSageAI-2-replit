@@ -22,7 +22,8 @@
  * @module server/services/clinical-regulatory-evidence/lineage-gate
  */
 
-import { detectSpans } from '../sentenceTraceabilityService';
+import { createHash } from 'node:crypto';
+import { detectSpans, type SentenceSpan } from '../sentenceTraceabilityService';
 import {
   replaceAuthorSpans,
   replaceSourceSpans,
@@ -32,7 +33,7 @@ import {
   type Queryable,
   retireStaleSourceSpans,
 } from './span-lineage.service';
-import { attributeMachineSpans, type AcceptedMachineText } from './machine-attribution';
+import { attributeMachineSpans, tagsMaskedForSplit, type AcceptedMachineText } from './machine-attribution';
 import {
   attributeQuotedSpans,
   attributeAssertedParaphraseSpans,
@@ -71,6 +72,13 @@ export interface AuthorLineageOptions {
    * the machine wrote it.
    */
   machineDraft?: { authorId: string } | null;
+  /**
+   * How many times the turn records `acceptedMachineText` was verified
+   * against hold a clause's comparison form (machine-attribution.ts). When
+   * given, no more clauses with that form are credited than the records hold.
+   * Only a caller that verified the claims against records has it.
+   */
+  recordOccurrences?: (needle: string) => number;
 }
 
 export interface AuthorLineageResult {
@@ -88,6 +96,35 @@ export interface AuthorLineageResult {
 }
 
 /**
+ * The clause split of enforceAuthorLineage: detectSpans over the content with
+ * the inside of every tag masked (tagsMaskedForSplit), each clause's text then
+ * sliced from the content itself. The splitter cut inside a tag at a style's
+ * ": ", and neither half of an honest draft matched (periodic review
+ * 2026-09-28, editor family, the batch-draft accept, round 4: C2). Offsets are
+ * the content's; only where the cuts fall changes, and only inside tags.
+ *
+ * enforceSourceAndAuthorLineage keeps detectSpans: its quote pass splits the
+ * content itself (source-attribution.ts), and its remainder must be those
+ * same clauses.
+ */
+export function clauseSpans(content: string): SentenceSpan[] {
+  const masked = tagsMaskedForSplit(content);
+  if (masked === content) return detectSpans(content, 'clause');
+  return detectSpans(masked, 'clause').map((s) => {
+    const text = content.slice(s.charStart, s.charEnd);
+    return { ...s, text, contentHash: createHash('sha256').update(text).digest('hex').slice(0, 16) };
+  });
+}
+
+/** What the machine pass reads besides the clauses: see AuthorLineageOptions. */
+interface MachinePassInput {
+  accepted: AcceptedMachineText[];
+  machineDraft: { authorId: string } | null;
+  content: string;
+  recordOccurrences?: (needle: string) => number;
+}
+
+/**
  * The clause split every gate shares, with the machine's clauses taken out
  * and written first. Returns the clauses that remain the actor's to assert.
  *
@@ -102,17 +139,16 @@ async function attributeMachineThenAuthor(
   ref: AuthorLineageRef,
   candidates: Array<{ charStart: number; charEnd: number; text: string }>,
   actor: string,
-  accepted: AcceptedMachineText[],
-  machineDraft: { authorId: string } | null,
-  content: string,
+  input: MachinePassInput,
 ): Promise<{ machineSpans: number; machineDraftSpans: number; authorSpans: number; clausesInAcceptedText: number }> {
   const live = await listLiveMachineSpans(orgId, ref, exec);
   const machine = attributeMachineSpans(candidates as Parameters<typeof attributeMachineSpans>[0], {
-    accepted,
+    accepted: input.accepted,
     live,
     actor,
-    machineDraft,
-    content,
+    machineDraft: input.machineDraft,
+    content: input.content,
+    recordOccurrences: input.recordOccurrences,
   });
   await replaceMachineSpans(orgId, ref, machine, { createdBy: actor }, exec);
 
@@ -165,18 +201,18 @@ export async function enforceAuthorLineage(
   // human edit, not just across an accept.
   const { kept } = await retireStaleSourceSpans(orgId, ref, content, exec);
   const keptRanges = new Set(kept.map((k) => `${k.charStart}:${k.charEnd}`));
-  const candidates = detectSpans(content, 'clause').filter(
+  const candidates = clauseSpans(content).filter(
     (s) => !keptRanges.has(`${s.charStart}:${s.charEnd}`),
   );
 
   // The machine's clauses first — accepted in this save, or carried forward
   // from an earlier one by their text — then everything else as the actor's.
-  const { clausesInAcceptedText } = await attributeMachineThenAuthor(
-    exec, orgId, ref, candidates, actor,
-    opts.acceptedMachineText ?? [],
-    opts.machineDraft ?? null,
+  const { clausesInAcceptedText } = await attributeMachineThenAuthor(exec, orgId, ref, candidates, actor, {
+    accepted: opts.acceptedMachineText ?? [],
+    machineDraft: opts.machineDraft ?? null,
     content,
-  );
+    recordOccurrences: opts.recordOccurrences,
+  });
 
   // Ask the database what it is about to commit, rather than trusting that the
   // writer not throwing means the rows say what they should.
@@ -330,12 +366,11 @@ export async function enforceSourceAndAuthorLineage(
   const remainder = detectSpans(content, 'clause').filter(
     (s) => !attributedRanges.has(`${s.charStart}:${s.charEnd}`),
   );
-  const { machineSpans, machineDraftSpans, authorSpans } = await attributeMachineThenAuthor(
-    exec, orgId, ref, remainder, actor,
-    opts.acceptedMachineText ?? [],
-    opts.machineDraft ?? null,
+  const { machineSpans, machineDraftSpans, authorSpans } = await attributeMachineThenAuthor(exec, orgId, ref, remainder, actor, {
+    accepted: opts.acceptedMachineText ?? [],
+    machineDraft: opts.machineDraft ?? null,
     content,
-  );
+  });
 
   // 5. Ask the database what it is about to commit. A gap throws and rolls the
   //    content write back with it.

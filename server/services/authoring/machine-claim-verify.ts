@@ -26,15 +26,25 @@
  *      clinical-regulatory-evidence/machine-attribution.ts), so the two cannot
  *      drift. Each record text is read two ways: as written, for a claim sent
  *      as AnA wrote it (the batch card sends its draft unchanged), and as
- *      markdown (`\|` is `|`, `*` is dropped), for a claim taken from the
- *      editor, which shows neither. Reading the record only as markdown
- *      refused an honest, unedited draft holding `**`, a `*` list or `\|`
- *      (periodic review 2026-09-28, editor family, the batch-draft accept,
- *      round 3). The claim is read only as written, so an asterisk the record
- *      lacks in both readings fails it.
+ *      markdown shows it (paired emphasis, list markers and thematic breaks
+ *      dropped, `\|` and `\*` read as `|` and `*`), for a claim taken from the
+ *      editor. Reading the record only as markdown refused an honest, unedited
+ *      draft holding `**`, a `*` list or `\|` (periodic review 2026-09-28,
+ *      editor family, the batch-draft accept, round 3). Dropping every `*`
+ *      verified "510 mg/kg" against a record's "5*10 mg/kg", a dose no reader
+ *      of the record is shown (round 4, D8): a lone `*` stays. The claim is
+ *      read only as written, so an asterisk the record lacks in both readings
+ *      fails it.
  *
- * A verified claim carries the model and the person who asked from the RECORD.
- * Nothing about it is taken from the request but the words and the id.
+ * A verified claim carries the author, the model and the person who asked from
+ * the RECORD: an AnA turn record's author is AnA. The author used to be the
+ * request's, so "constructor" verified and named the machine (round 4, AUTH).
+ * Nothing about a claim is taken from the request but the words and the id.
+ *
+ * The verdict also says how many times the records that verified a claim hold
+ * a text (occurrencesInRecords). The same claim sent three times verified
+ * three times, and each credited a repeat of a sentence the record holds once
+ * (round 4, DUP); the lineage now credits no more than the records hold.
  *
  * ── What an unverified claim is ──────────────────────────────────────────────
  * Not refused and not dropped: the caller records the words as the saver's own
@@ -53,7 +63,8 @@
 import { isUuid } from '../../middleware/uuidParam';
 import { sha256Hex, type Queryable, type TurnRecordBody } from '../ana/turn-record';
 import { loadTurnRecord, verifyStoredTurnRecord, type StoredTurnRecord } from '../ana/turn-record-verify';
-import { comparableText } from '../clinical-regulatory-evidence/machine-attribution';
+import { comparableText, occurrencesIn } from '../clinical-regulatory-evidence/machine-attribution';
+import { ANA_MACHINE_AUTHOR_ID } from './revision-ledger';
 
 /** Why a claim was not believed. */
 export type MachineClaimReason =
@@ -74,6 +85,7 @@ export interface MachineTextClaim {
 }
 
 export interface VerifiedMachineClaim {
+  /** The record's author: ANA_MACHINE_AUTHOR_ID, whatever the claim said. */
   authorId: string;
   text: string;
   turnRecordId: string;
@@ -97,6 +109,13 @@ export interface UnverifiedMachineClaim {
 export interface MachineClaimVerdict {
   verified: VerifiedMachineClaim[];
   unverified: UnverifiedMachineClaim[];
+  /**
+   * How many times the records that verified a claim hold `needle`, a text in
+   * comparableText's form: per record, the most any one text it holds does
+   * (the answer streamed and stored, or a draft as written and as markdown, are
+   * one text read two ways), summed over the records. Zero when none verified.
+   */
+  occurrencesInRecords: (needle: string) => number;
 }
 
 /**
@@ -144,8 +163,9 @@ export async function verifyMachineText(
   orgId: number,
   claims: MachineTextClaim[],
 ): Promise<MachineClaimVerdict> {
-  const verdict: MachineClaimVerdict = { verified: [], unverified: [] };
+  const verdict: MachineClaimVerdict = { verified: [], unverified: [], occurrencesInRecords: () => 0 };
   const records = new Map<string, Promise<ReadRecord>>();
+  const vouching = new Set<ReadRecord>();
 
   for (const claim of claims) {
     const raw = typeof claim.turnRecordId === 'string' ? claim.turnRecordId.trim() : '';
@@ -194,8 +214,9 @@ export async function verifyMachineText(
       refuse('text_not_in_record');
       continue;
     }
+    vouching.add(rec);
     verdict.verified.push({
-      authorId: claim.authorId,
+      authorId: ANA_MACHINE_AUTHOR_ID,
       text: claim.text,
       turnRecordId: rec.stored.id,
       model: rec.model,
@@ -203,5 +224,8 @@ export async function verifyMachineText(
       recordSha256: rec.stored.recordSha256,
     });
   }
+  const outputs = [...vouching].map((rec) => rec.outputs);
+  verdict.occurrencesInRecords = (needle) =>
+    outputs.reduce((sum, texts) => sum + Math.max(0, ...texts.map((o) => occurrencesIn(o, needle))), 0);
   return verdict;
 }

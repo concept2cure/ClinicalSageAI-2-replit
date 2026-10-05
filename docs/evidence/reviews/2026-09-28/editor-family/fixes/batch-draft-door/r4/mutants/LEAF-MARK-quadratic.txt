@@ -1,0 +1,20 @@
+Mutant LEAF-MARK-quadratic: The leaf-mark pattern tries every split of a run of white space again.
+Result: KILLED (vitest exit 1, 1 failing tests)
+Tests run: server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts, server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/clinical-regulatory-evidence/machine-attribution.ts
++++ b/server/services/clinical-regulatory-evidence/machine-attribution.ts
+@@ -175,3 +175,3 @@
+  */
+-const LEAF_MARK = /<\s+(?:\/\s*)?(?:sup|del|ins)(?![A-Za-z0-9_])/iy;
++const LEAF_MARK = /<\s+\/?\s*(?:sup|del|ins)(?![A-Za-z0-9_])/iy;
+ 
+
+--- failing tests ---
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > linear time: the accept takes content up to 400,000 characters > a `<`, then a long run of white space 31053ms
+
+--- summary ---
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 108 passed (109)

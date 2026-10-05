@@ -1,0 +1,10 @@
+Mutant R29-p-any-number: a p-value is found through any equal number (F4)
+
+--- server/services/ana/answer-check-figures.ts
+- p: (_f, value, o) => o.value === value && (P_BEFORE.test(o.before) || P_KEY.test(o.key)),
++ p: (_f, value, o) => o.value === value,
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: SURVIVED
+
+      Tests  75 passed (75)

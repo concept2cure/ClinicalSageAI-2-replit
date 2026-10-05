@@ -1,0 +1,32 @@
+Mutant AUTH-both: An ordinary object, read by truthiness: the defect as found.
+Result: KILLED (vitest exit 1, 8 failing tests)
+Tests run: server/services/authoring/__tests__/accepted-machine-text.test.ts, server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/authoring/revision-ledger.ts
++++ b/server/services/authoring/revision-ledger.ts
+@@ -178,3 +178,3 @@
+ export const MACHINE_AUTHOR_IDS: Readonly<Record<string, string>> = Object.freeze(
+-  Object.assign(Object.create(null) as Record<string, string>, {
++  Object.assign({} as Record<string, string>, {
+     [ANA_MACHINE_AUTHOR_ID]: 'AnA (AI draft)',
+@@ -244,3 +244,3 @@
+     // Own keys only (round 4, AUTH): the vocabulary is null-prototype as well.
+-    if (typeof authorId !== 'string' || !Object.hasOwn(MACHINE_AUTHOR_IDS, authorId)) continue;
++    if (typeof authorId !== 'string' || !MACHINE_AUTHOR_IDS[authorId]) continue;
+     if (typeof text !== 'string' || text.trim().length === 0) continue;
+
+--- failing tests ---
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "constructor", a name every object inherits 7ms
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "__proto__", a name every object inherits 1ms
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "toString", a name every object inherits 1ms
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "hasOwnProperty", a name every object inherits 1ms
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "valueOf", a name every object inherits 1ms
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "isPrototypeOf", a name every object inherits 1ms
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > the vocabulary inherits nothing, so no reader of it can be handed a name it does not hold 1ms
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the machine author is the record's (AUTH) > authorId "constructor" is not a machine author: it is dropped, and nothing is credited to it 46ms
+
+--- summary ---
+ Test Files  2 failed | 1 passed (3)
+      Tests  8 failed | 42 passed (50)
