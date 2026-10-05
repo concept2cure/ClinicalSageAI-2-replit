@@ -66,17 +66,61 @@ recording no meaning is unchanged (it was checked for independence when signed).
 - client dispatch/freeze/honesty suites 31 passed
 - `tsc --noEmit` exit 0, no errors
 
-## Handed on — not fixed here (lane held)
+## The agency gateway — fixed the same day
 
-**The agency gateway's transmit runs no separation-of-duties check at all.**
-`POST /api/mdx/gateways/:region/:gateway/transmit` → `executeGovernedTransmit`
-(`server/services/submission-gateways/governed-transmit.ts`) re-authenticates
-and records the declared meaning, but never calls `assertSignerIsNotAuthor`, and
-`GatewayTransmittals.tsx` offers "Authorship — I authored this package". So
-whoever assembled a package can transmit it to FDA under any meaning. That path
-is the **Package-model spine** lane (claimed 2026-09-24, D7). Removing the
-"Authorship" option alone would hide the gap, not close it; the fix belongs with
-an author source for the package (assembler) and the check in the service.
+Found while building the warning above and first handed on to the Package-model
+spine lane. That lane last touched these files on 2026-10-01, and this repo's
+convention passes a held file's findings to its lane only until 24 hours have
+passed; its sweep (`docs/evidence/W5/2026-09-30-package-spine-sweep/`) did not
+track signer independence. So it was fixed here, narrowly.
 
-Also still open from 2026-10-05: no per-org setting exists to tighten
-separation of duties ("admin may tighten" has no mechanism).
+**The defect.** `POST /api/mdx/gateways/:region/:gateway/transmit` →
+`executeGovernedTransmit` re-authenticated the human and recorded their declared
+meaning, but never asked whether they were independent of the package, and the
+form offered "Authorship — I authored this package". Whoever assembled a package
+could transmit it to FDA themselves, under any meaning.
+
+**The fix**, through the same canonical check as the submissions spine, so the
+two paths to an agency cannot disagree about who may release:
+- `separation-of-duties.ts` — `SINGLE_AUTHOR['submission-package']`: the
+  package's `created_by_id`, tenant-scoped.
+- `governed-transmit-checks.ts` — `assertTransmitterIndependent`: refuses an
+  authorship meaning (`AUTHORSHIP_NOT_A_RELEASE`, 422) before any lookup; the
+  creator (`SIGNER_IS_AUTHOR`, 403); a package with no recorded creator
+  (`SIGNER_INDEPENDENCE_UNRESOLVED`, 409); a failed lookup fails closed as an
+  internal error.
+- `governed-transmit.ts` — called as the **last check before sending**, not the
+  first. First placement made a foreign or missing package read "no creator
+  recorded" instead of its own refusal; the existing cross-tenant test caught
+  it, and moving the call made those refusals keep their codes.
+- `GatewayTransmittals.tsx` — the transmit form no longer offers "Authorship".
+  The rejection-record form keeps it: recording an agency's notice is authorship.
+
+**Falsification.** Check not called → the two membership cases (unit) and the
+two route cases fail; authorship allowed → 2 fail; creator allowed through → 2
+fail. 16 transmit suites, 337 tests pass; `tsc` exit 0.
+
+Two harnesses answered every `FROM c2c_submission_packages` query with a
+metadata row and never modelled a creator; they now answer the creator lookup
+with a colleague (4242) of the acting user (777), and a route case pins the
+creator refusal. Two unit suites that test the signature record, not
+independence, model the signer as independent; independence is tested in
+`governed-transmit-independence.test.ts`. One unrelated failure seen while
+running these, `transmit-guard-reports-checks.test.ts` (tenant-RLS fail-closed
+under `RLS_ENFORCE=on`), fails identically without this change.
+
+## Handed on
+
+**AnA-created packages have no recorded creator, so they now cannot be
+transmitted** — refused with `SIGNER_INDEPENDENCE_UNRESOLVED`, never guessed.
+`server/services/ana-ri/command-executor.ts:1969` inserts into
+`c2c_submission_packages` without `created_by_id`; the HTTP route
+(`submission-ops.ts:267`) sets it. The fix is one column: `created_by_id` =
+`ctx.userId`. That file was changed at 2026-10-05 02:14 by another lane, inside
+its 24-hour window, so it is that lane's until then. Before launch (D1 is not
+green) this is a refusal with a reason, not a silent pass.
+
+Also still open: no per-org setting exists to tighten separation of duties
+("admin may tighten" has no mechanism), and Gateway Transmittals has no
+advance warning like the Dispatch tab's — the creator learns at the refusal,
+which now says why and that a colleague must transmit.

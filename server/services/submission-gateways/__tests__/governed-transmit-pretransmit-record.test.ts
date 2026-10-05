@@ -26,6 +26,15 @@ const { queries, connectMock, transmitMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../../db', () => ({ pool: { connect: connectMock, query: vi.fn() } }));
+// This suite tests the signature record, not separation of duties. Its pool is
+// a bare stub, so the package-author lookup assertTransmitterIndependent runs
+// would fail and refuse every transmit. The signer is modelled as independent
+// of the package here; requiresIndependence stays real. Independence itself is
+// tested in governed-transmit-independence.test.ts.
+vi.mock('../../governance/separation-of-duties', async (orig) => ({
+  ...(await orig<typeof import('../../governance/separation-of-duties')>()),
+  assertSignerIsNotAuthor: vi.fn().mockResolvedValue({ checked: true, reason: 'test: signer independent of the package' }),
+}));
 vi.mock('../index', () => ({ getGateway: () => ({ transmit: transmitMock }) }));
 vi.mock('../fda-esg', () => ({ findActiveTransmittal: vi.fn().mockResolvedValue(null) }));
 vi.mock('../../submission-bundle-storage', () => ({ getBundle: vi.fn() }));
