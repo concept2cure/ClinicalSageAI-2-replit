@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-05T13:07:13.499Z",
+  "generatedAt": "2026-10-05T13:29:53.810Z",
   "git": {
-    "sha": "e78869eec43301b44f2e1af01e630f0278b3d360",
+    "sha": "28e131547eee04e891f0db99408e900d50ea72a3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2042,7 +2042,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1124944
+        "bytes": 1125683
       },
       {
         "file": "shared/schema.ts",
@@ -2248,7 +2248,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21714
+        "lines": 21728
       },
       {
         "file": "shared/schema.ts",
@@ -2451,12 +2451,12 @@
         "lines": 2077
       },
       {
-        "file": ".claude/skills/gstack/browse/test/commands.test.ts",
-        "lines": 2076
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 2077
       },
       {
-        "file": "server/routes/510k-estar-routes.ts",
-        "lines": 2073
+        "file": ".claude/skills/gstack/browse/test/commands.test.ts",
+        "lines": 2076
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
@@ -2493,6 +2493,10 @@
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "lines": 2002
+      },
+      {
+        "file": "server/services/combination-products/combination-products-knowledge.ts",
+        "lines": 1973
       },
       {
         "file": "server/routes/c2c/projects.ts",
@@ -2613,10 +2617,6 @@
       {
         "file": "server/services/ana/submission-chat-handler.ts",
         "lines": 1756
-      },
-      {
-        "file": "server/services/combination-products/combination-products-knowledge.ts",
-        "lines": 1726
       },
       {
         "file": "tests/services/ana-biostats.test.ts",
