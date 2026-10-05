@@ -1,0 +1,217 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > is exported beside readVaultFacts 8ms
+ ✓ server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > issues the identical scoped statement and parameters as readVaultFacts, and selects d.id 7ms
+ ✓ server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > returns each document id with the same facts readVaultFacts returns 1ms
+ ✓ server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > leaves the plan’s facts exactly as they were: no id, same fields 1ms
+ ✓ server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > cuts both reads at the same cap and says so in both 52ms
+ ✓ server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > a failed read throws from both; neither reports an empty Vault 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > answers a CSR heading, a CTD section and a document type from the canonical record 28ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > says what it does not index, and lists what it does 1ms
+stderr | server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a failed Vault read is a failure, not a project with nothing filed
+{
+  "timestamp": "2026-10-05T11:46:50.041Z",
+  "level": "error",
+  "message": "[regulatory-knowledge-tools] plan_submission_from_database_lock failed",
+  "context": {
+    "err": "relation \"vault.documents\" does not exist"
+  }
+}
+
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > fits the result budget for every section, document type and E3 heading it knows 118ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > without a project, gives the plan and says there is no standing 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > with an organization but no open project, says so rather than reading another project 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > reads the open project’s Vault, scoped by organization and program, and decides the standing 5ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a step the Vault cannot hold is never reported missing, and never as what a step waits on 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a failed Vault read is a failure, not a project with nothing filed 3ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a read cut short says so, and claims nothing is missing 44ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > gives one step in full, with its checked sources 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > fits the result budget, with and without a standing 7ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > reads the folder and kind the Vault records, sees a CSR filed in Module 5 without a section, and reports misfiling 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > says in its description and step detail that it matches by kind and reports misfiling 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > fits the result budget with many misfiled, unspecific and noted documents 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > lists every rule in brief with what the platform checks, and what FDA has said about Elsa 3ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the pdf rules in full, each with its source 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the ectd rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the study-data rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the content rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > offers the labeling area and answers it with the PLR format rules 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > refuses an area it does not have 0ms
+stdout | server/services/ana/__tests__/tool-selection-routing.test.ts
+{
+  "timestamp": "2026-10-05T11:46:58.650Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T11:46:58.655Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-selection-routing.test.ts
+{
+  "timestamp": "2026-10-05T11:46:58.655Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/regulatory-knowledge-registration.test.ts
+{
+  "timestamp": "2026-10-05T11:46:58.761Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T11:46:58.763Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/regulatory-knowledge-registration.test.ts
+{
+  "timestamp": "2026-10-05T11:46:58.763Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ind-tools-retired.test.ts
+{
+  "timestamp": "2026-10-05T11:46:58.789Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T11:46:58.790Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/ind-tools-retired.test.ts
+{
+  "timestamp": "2026-10-05T11:46:58.790Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/regulatory-knowledge-registration.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stderr | server/services/ana/__tests__/ind-tools-retired.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/ind-tools-retired.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/ind-tools-retired.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/ana/__tests__/tool-selection-routing.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/tool-selection-routing.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/tool-selection-routing.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana/__tests__/regulatory-knowledge-registration.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/regulatory-knowledge-registration.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the always-on bridge + core are always offered 10ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the surface is genuinely over the cap (filtering actually engages) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_fda_form'" for: "'prepare FDA form 1571 as an editable …'" 22ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'amend_fda_form'" for: "'amend this FDA form with a reason for…'" 31ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_forms'" for: "'list all FDA forms available in the c…'" 17ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_effort_certification'" for: "'open a time and effort certification …'" 12ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_coi_disclosure'" for: "'file a foreign appointment conflict o…'" 35ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_grant_budget'" for: "'reconcile the budget versus actual ex…'" 31ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'search_grants_gov'" for: "'search grants.gov for posted cancer f…'" 12ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_expenditure'" for: "'record an actual expenditure booked a…'" 14ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'screen_restricted_party'" for: "'screen this vendor against the SAM.go…'" 12ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_subaward'" for: "'record a subaward to a subrecipient u…'" 11ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'research_compliance_briefing'" for: "'what needs my attention across resear…'" 22ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'register_controlled_substance'" for: "'register a schedule II controlled sub…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'open_grant_closeout'" for: "'open the grant closeout and track the…'" 9ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'fulfill_regulatory_commitment'" for: "'mark this PMR regulatory commitment f…'" 28ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'request_no_cost_extension'" for: "'request a no cost extension to extend…'" 17ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_ha_interaction'" for: "'is this FDA formal meeting interactio…'" 18ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_cost_share_contribution'" for: "'record an institutional cost share co…'" 10ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_training_gate'" for: "'review the training gate, is the PI c…'" 10ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_opportunity'" for: "'record this grants.gov funding opport…'" 9ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'what is blocking the clinical overvie…'" 17ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'assess_study_onboarding'" for: "'what approvals and training do we nee…'" 12ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'will our dossier pass FDA technical v…'" 43ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_award_closeout'" for: "'can we close out this grant award yet…'" 22ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'why would the FDA gateway reject our …'" 30ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_meeting_package'" for: "'are we ready for the FDA meeting, do …'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what CMC quality information does the…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'triage_compliance_attention'" for: "'triage the critical compliance attent…'" 22ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what does the EU IMPD quality dossier…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what has to go in section 12.2 advers…'" 10ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what should the summary of clinical e…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'we just locked the database, what hap…'" 15ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'is ICH Q2(R2) final and which guidanc…'" 25ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'which guidance covers nitrosamine imp…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'explain_cmc_topic'" for: "'explain how impurity limits are justi…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > each record tool is in the launch-scoped pool (so the cases below cannot pass vacuously) 1ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the ISS'" 11ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should I write the clinical overv…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what does FDA want in 2.7.4'" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how do I structure a CSR'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'help me write the quality overall sum…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should the investigator brochure …'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'review my clinical overview'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'list_fda_technical_rules'" for: "'will my submission be rejected'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'plan_submission_from_database_lock'" for: "'what do I do after database lock'" 6ms
+ ✓ server/services/ana/__tests__/fda-rules-labeling-budget.test.ts > list_fda_technical_rules labeling area leaves headroom under RESULT_BUDGET > renders the labeling area in at most 4500 of the 5000-character budget 2ms
+ ✓ server/services/ana/__tests__/fda-rules-labeling-budget.test.ts > list_fda_technical_rules labeling area leaves headroom under RESULT_BUDGET > still prints every PLR rule with its paragraph, eCFR source and platform note 9ms
+ ✓ server/services/ana/__tests__/fda-rules-labeling-budget.test.ts > list_fda_technical_rules labeling area leaves headroom under RESULT_BUDGET > keeps each verbatim statement inside the rule that requires it 1ms
+ ✓ server/services/ana/__tests__/fda-rules-labeling-budget.test.ts > list_fda_technical_rules labeling area leaves headroom under RESULT_BUDGET > keeps the limits the rules exist to state 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are offered to the model 5ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > have a handler 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are classed read, so a read never asks the person to confirm 5ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are in launch scope 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > have a plan label of their own, not a humanised tool name 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > report deterministic pedigree: the registry lookups as registry, the Vault read as a query 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are named in the prompt AnA drafts and audits under, and Elsa is never promised 1ms
+ ✓ server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > have no handler — the one they had could only ever get 401 AUTH_001 2ms
+ ✓ server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > are not offered to the model 1ms
+ ✓ server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > are absent from the authorization register 3ms
+ ✓ server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > are absent from the launch-scope inventory 1ms
+ ✓ server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > the IND flow offers drafting through draft_authoring_document, a registered tool 2ms
+
+ Test Files  6 passed (6)
+      Tests  89 passed (89)
+   Start at  11:46:45
+   Duration  22.04s (transform 25.08s, setup 1.09s, import 49.99s, tests 1.03s, environment 1ms)
+

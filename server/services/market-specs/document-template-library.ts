@@ -12,7 +12,7 @@
  * HONESTY ABOUT CONTENT: these are the FACTUAL document structures defined by the
  * cited published guidance (ICH M4Q/M4S/M4E for the CTD summaries; 21 CFR 807.92
  * for the 510(k) summary; the EU SmPC guideline / Directive 2001/83/EC Art. 11 for
- * the SmPC; EU MDR Annex I for the GSPR). They are heading skeletons + concise
+ * the SmPC; EU MDR Annex I and IVDR Annex I for the two GSPR checklists). They are heading skeletons + concise
  * purpose notes — NOT drafted regulatory prose and NOT a substitute for the current
  * agency template. Authors fill the content; this provides the spine.
  *
@@ -26,6 +26,7 @@
 
 import { e3TopLevel, e3Children, type E3Section } from '../ind/ctd/index.js';
 import { SMPC_QRD_SECTIONS } from '../labeling/smpc-qrd-catalog';
+import { basisLabel, type RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
 
 export interface TemplateSection {
   /** Section number within the document (e.g. "2.5.4", "4.1", "I.1"). */
@@ -44,9 +45,19 @@ export interface DocumentTemplateStructure {
   families: Array<'ectd' | 'estar' | 'eu_mdr' | 'eu_ivdr' | 'ctis'>;
   /** CTD section code where applicable (e.g. "2.5"). */
   ctdSection?: string;
-  /** Published structure source. */
+  /**
+   * Published structure source, as shown to the reader. Where `basis` is set this
+   * is `basisLabel(basis)`, so a recall basis reads as recall.
+   */
   regulatoryBasis: string;
+  /** The structured basis, where one is recorded (shared/regulatory/regulatory-basis.ts). */
+  basis?: RegulatoryBasis;
   sections: TemplateSection[];
+}
+
+/** A template whose shown basis is the one rendering of its structured basis — the two cannot disagree. */
+function withBasis(t: Omit<DocumentTemplateStructure, 'regulatoryBasis'> & { basis: RegulatoryBasis }): DocumentTemplateStructure {
+  return { ...t, regulatoryBasis: basisLabel(t.basis) };
 }
 
 /** One ICH E3 top-level heading as a template section: its purpose, or what it carries, or the headings under it. */
@@ -182,18 +193,45 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     })),
   },
 
-  // ── EU device — GSPR (MDR Annex I) ──────────────────────────────────────────
-  {
+  // ── EU device — GSPR checklists, one per regulation ─────────────────────────
+  // 2026-10-05 (g-ivdr-gspr-checklist, F73 part A): this was one template for
+  // eu_mdr and eu_ivdr, citing MDR Annex I numbering for both ("IVDR Annex I is
+  // parallel"). It is not: IVDR Annex I is Sections 1–8 / 9–19 / 20, MDR Annex I
+  // 1–9 / 10–22 / 23, so an IVD checklist sent labelling to a "Requirement 23"
+  // the IVDR does not have. Each regulation now has its own checklist. Both
+  // numberings are recall (EUR-Lex was not reachable; corroborated by secondary
+  // sources) — docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
+  // g-ivdr-gspr-checklist-facts.md.
+  withBasis({
     id: 'gspr_checklist',
-    title: 'General Safety and Performance Requirements (GSPR) Checklist',
-    families: ['eu_mdr', 'eu_ivdr'],
-    regulatoryBasis: 'Regulation (EU) 2017/745 (MDR) Annex I (IVDR Annex I is parallel)',
+    title: 'General Safety and Performance Requirements (GSPR) Checklist — MDR',
+    families: ['eu_mdr'],
+    basis: {
+      ref: 'Regulation (EU) 2017/745 (MDR) Annex I',
+      confidence: 'recall',
+      note: 'Section ranges by recall, corroborated by secondary sources; re-read owed against EUR-Lex CELEX:02017R0745.',
+    },
     sections: [
-      { number: 'I', heading: 'Chapter I — General Requirements', purpose: 'Requirements 1–9: safety/performance, risk management, risk-control, lifecycle risk.', required: true },
-      { number: 'II', heading: 'Chapter II — Requirements Regarding Design and Manufacture', purpose: 'Requirements 10–22: chemical/physical/biological properties, infection, construction, software, energy, etc.', required: true },
-      { number: 'III', heading: 'Chapter III — Information Supplied with the Device', purpose: 'Requirement 23: label and instructions for use.', required: true },
+      { number: 'I', heading: 'Chapter I — General Requirements', purpose: 'Sections 1–9: safety/performance, risk management, risk-control, lifecycle risk.', required: true },
+      { number: 'II', heading: 'Chapter II — Requirements Regarding Design and Manufacture', purpose: 'Sections 10–22: chemical/physical/biological properties, infection, construction, software, energy, etc.', required: true },
+      { number: 'III', heading: 'Chapter III — Requirements Regarding the Information Supplied with the Device', purpose: 'Section 23: label and instructions for use.', required: true },
     ],
-  },
+  }),
+  withBasis({
+    id: 'ivdr_gspr_checklist',
+    title: 'General Safety and Performance Requirements (GSPR) Checklist — IVDR',
+    families: ['eu_ivdr'],
+    basis: {
+      ref: 'Regulation (EU) 2017/746 (IVDR) Annex I',
+      confidence: 'recall',
+      note: 'Section ranges by recall, corroborated by secondary sources; re-read owed against EUR-Lex CELEX:02017R0746-20250110.',
+    },
+    sections: [
+      { number: 'I', heading: 'Chapter I — General Requirements', purpose: 'Sections 1–8: performance for the intended purpose, risk management, risk control, benefit-risk, transport and storage.', required: true },
+      { number: 'II', heading: 'Chapter II — Requirements Regarding Performance, Design and Manufacture', purpose: 'Sections 9–19: performance characteristics (analytical and clinical), chemical/physical/biological properties, infection and microbial contamination, interaction with the environment, measuring function, software, self-testing and near-patient testing, etc.', required: true },
+      { number: 'III', heading: 'Chapter III — Requirements Regarding Information Supplied with the Device', purpose: 'Section 20: 20.1 general requirements; 20.2 information on the label; 20.3 information on the packaging which maintains the sterile condition; 20.4 information in the instructions for use.', required: true },
+    ],
+  }),
 
   // ── EU IVD — Performance Evaluation Report ──────────────────────────────────
   {

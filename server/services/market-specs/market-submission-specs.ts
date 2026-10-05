@@ -30,6 +30,9 @@
  * @module server/services/market-specs/market-submission-specs
  */
 
+import { SUBMISSION_FORMATS } from '../global-ri/electronic-submission-format.js';
+import { REGULATORY_FACTS } from '../regulatory-currency/currency-registry.js';
+
 export type SubmissionFamily = 'ectd' | 'estar' | 'eu_mdr' | 'eu_ivdr' | 'ctis';
 export type ProductScope = 'drug' | 'biologic' | 'generic' | 'device' | 'ivd' | 'clinical-trial';
 
@@ -134,6 +137,23 @@ export interface MarketSubmissionSpec {
 
 const ICH = 'ICH eCTD Specification (v3.2.2 / v4.0); ICH M4 CTD';
 
+/**
+ * The US eCTD format, read from the dated fact `fda-ectd-v4-accepted`
+ * (regulatory-currency/currency-registry.ts), the one record of when FDA began
+ * accepting eCTD v4.0 and on what terms: voluntarily, for new applications
+ * only, with v3.2.2 still supported. v4.0 is named only while that fact's status is in force, and its
+ * date is the fact's, never a copy. With no such fact, no v4.0 claim is
+ * made (fail closed).
+ * 2026-10-05 (D2 record, step g-channel-prose-and-us-ectd-format; finding 52):
+ * this was the literal 'eCTD v4.0 (FDA also accepts v3.2.2)', which presented
+ * the voluntary v4.0 as the US format.
+ */
+function usEctdSubmissionFormat(): string {
+  const v4 = REGULATORY_FACTS.find((f) => f.id === 'fda-ectd-v4-accepted');
+  if (!v4 || v4.status !== 'in_force') return 'eCTD v3.2.2';
+  return `eCTD v3.2.2 (eCTD v4.0 accepted voluntarily for new applications since ${v4.effectiveDate})`;
+}
+
 export const MARKET_SUBMISSION_SPECS: MarketSubmissionSpec[] = [
   // ── FDA — drug/biologic eCTD ────────────────────────────────────────────────
   {
@@ -143,7 +163,7 @@ export const MARKET_SUBMISSION_SPECS: MarketSubmissionSpec[] = [
     authorityId: 'FDA',
     region: 'fda',
     family: 'ectd',
-    submissionFormat: 'eCTD v4.0 (FDA also accepts v3.2.2)',
+    submissionFormat: usEctdSubmissionFormat(),
     gateway: 'FDA ESG (AS2 over HTTPS or SFTP)',
     productScope: ['drug', 'biologic', 'generic'],
     language: {
@@ -199,7 +219,13 @@ export const MARKET_SUBMISSION_SPECS: MarketSubmissionSpec[] = [
     region: 'eu',
     family: 'ectd',
     submissionFormat: 'EU eCTD (EU M1 spec; eCTD v3.2.2 / v4.0)',
-    gateway: 'CESP (Common European Submission Portal) / eSubmission Gateway',
+    /* The one EMA wording (global-ri/electronic-submission-format.ts): the
+       eSubmission Gateway / Web Client for the centralised procedure, CESP for
+       national procedures. Which a given filing takes is submissionChannelFor's
+       answer (regulatory/registry/submittabilityCoverage.ts). 2026-10-05 (step
+       g-channel-prose-and-us-ectd-format; finding 42): this read 'CESP (Common
+       European Submission Portal) / eSubmission Gateway'. */
+    gateway: SUBMISSION_FORMATS.EMA.gateway,
     productScope: ['drug', 'biologic', 'generic'],
     language: {
       primary: 'en',

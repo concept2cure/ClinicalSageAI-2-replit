@@ -1,0 +1,28 @@
+# Green run (2026-10-05): the step's test, then every test file importing a changed file
+# Files: cdisc-package-readiness.test.ts (the step test, 22 tests), sdtm-domain-conformance-checker.test.ts, pipeline.test.ts, routes/__tests__/cdisc-validation.routes.test.ts, ana/__tests__/advanced-modeling-cover-letter-tools.test.ts, ana/__tests__/tool-registry-consistency.test.ts
+# Typecheck: flock tsc --noEmit -p . filtered to the five step files: no errors.
+# Lint vs HEAD (npx eslint working copy vs git show HEAD | eslint --stdin): cdisc-package-readiness.ts 0->0, routes/cdisc-validation.routes.ts 0->0, test file 0->0, pipeline.ts 1->1 (deepChecks complexity 17, pre-existing), sdtm-domain-conformance-checker.ts 1->1 (checkSdtmDomainConformance complexity 18, unchanged).
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness > rolls up a mixed SDTM + ADaM package 91ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness > is not ready when a dataset has an SDTM conformance error 23ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness > dispatches ADaM by class (ADSL/BDS/OCCDS) 1ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness > flags an unrecognized dataset (unknown domain/class) as not ready 21ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness > is not ready for an empty package 0ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness > is deterministic 1ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > an ADaM package with no TS, DM or ADSL is not ready and names TRC 1734 and 1736 1ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > recognises FDA's simplified ts.xpt as a conformant TS 0ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > recognises the full TS form, and requires STUDYID and TSPARMCD 1ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > [DM, ADSL] without TS is not ready and names TRC_1734_NO_TS 0ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > define.xml is not-stated unless the caller declares it, and never met by default 0ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > the study start date: missing without SSTDTC, not-stated when TS parameters are not supplied 25ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > a complete, declared package passes 0ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > a known SDTM domain with no spec is not-conformance-checked, not unrecognised, and keeps ready false 1ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > every requirement carries the FDA TRC basis 0ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > runCdiscPipeline reads its ADSL finding from the canonical requirement 2ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > passes declared define.xml and TS parameters through to the engine 271ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when defineXml not an object 25ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when defineXml with a non-boolean 20ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when defineXml with an unknown key 27ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when tsParameters not an array 29ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when tsParameters with a non-string 73ms
+ Test Files  6 passed (6)
+      Tests  865 passed (865)

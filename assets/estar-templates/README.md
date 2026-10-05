@@ -26,11 +26,26 @@ version/OMB/retirement facts live in
 `server/services/pathway-engines/estar/estar-versions.ts` (`ESTAR_VERSIONS`), and
 the full list of what each can carry lives in `estar-catalog.ts`:
 
-| Family | Current version | Used for | OMB numbers |
-|---|---|---|---|
-| Non-In Vitro Diagnostic (nIVD) eSTAR | **7.0** (6.2 retires 2026-08-03) | 510(k), De Novo, **PMA** — non-IVD devices | 0910-0120, 0910-0844, 0910-0231 |
-| In Vitro Diagnostic (IVD) eSTAR | **7.0** (6.2 retires 2026-08-03) | 510(k), De Novo, **PMA** — IVD devices | 0910-0120, 0910-0844, 0910-0231 |
-| Early Submission Requests eSTAR (PreSTAR2) | **3.0** (2.2 retires 2026-08-03) | Q-Submissions, IDEs, 513(g) requests | 0910-0756, 0910-0078, 0910-0511 |
+| Family | Current version | Vendored here | Used for | OMB numbers |
+|---|---|---|---|---|
+| Non-In Vitro Diagnostic (nIVD) eSTAR | **7.1** (7.0 superseded, retirement date unread; 6.2 retired 2026-08-03) | 7.0 | 510(k), De Novo, **PMA** — non-IVD devices | 0910-0120, 0910-0844, 0910-0231 |
+| In Vitro Diagnostic (IVD) eSTAR | **7.1** (7.0 superseded, retirement date unread; 6.2 retired 2026-08-03) | 7.0 | 510(k), De Novo, **PMA** — IVD devices | 0910-0120, 0910-0844, 0910-0231 |
+| Early Submission Requests eSTAR (PreSTAR) | **3.1** (3.0 superseded, retirement date unread; 2.2 retired 2026-08-03) | not vendored | Q-Submissions, IDEs, 513(g) requests | 0910-0756, 0910-0078, 0910-0511 |
+
+The "Current version" column was last checked on 2026-10-05, from fda.gov
+search extracts of the eSTAR Program page (fda.gov is not fetchable from the
+build environment). It is labelled `recall` in `ESTAR_VERSIONS` until someone
+reads the page verbatim and records the 7.0 / 3.0 retirement date. The OMB
+numbers for 7.1 / 3.1 are carried forward from 7.0 / 3.0 and were not re-read.
+
+**The vendored files are 7.0; FDA's current version is 7.1.** Until the 7.1
+PDFs are vendored, filing readiness (`assessEstarFilingReadiness`) reports
+"Official template on file is eSTAR v7.0; FDA's current version is v7.1." as a
+blocker and `canFileNow` stays false. That is the honest state, not a bug.
+Re-vendoring is an ops step (see **Versioning** below): new PDFs,
+`checksums.txt`, the manifest `version`s, and a re-enumeration of the field map
+in `estar-field-map.ts`, as one reviewed change. What changed between 7.0 and
+7.1 has not been read.
 
 A retired eSTAR version is still accepted by FDA but may draw information
 requests about the version delta; the current version is recommended for
@@ -60,9 +75,9 @@ page and predicate fields are 510(k)-only):
 | IDE | PreSTAR | PreSTAR | `ide-prestar` | `PreSTAR-ide.pdf` (not vendored) |
 | 513(g) | PreSTAR | PreSTAR | `513g-prestar` | `PreSTAR-513g.pdf` (not vendored) |
 
-FDA eSTAR program page: <https://www.fda.gov/medical-devices/premarket-submissions-selecting-and-preparing-correct-submission/estar-program>
+FDA eSTAR program page: <https://www.fda.gov/medical-devices/how-study-and-market-your-device/estar-program>
 
-## Currently vendored
+## Currently vendored (7.0 — superseded by FDA's 7.1)
 
 | File | Family | Version | FDA effective date | Descriptors filled from it | SHA-256 |
 |---|---|---|---|---|---|

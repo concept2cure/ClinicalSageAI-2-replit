@@ -13,7 +13,7 @@
  *
  * HONEST BY CONSTRUCTION:
  *   - `canTransmit` mirrors the registry — true for markets with a live gateway,
- *     false for markets without one (TW/SA/ZA/MDSAP).
+ *     false for markets without one (JP/TW/SA/ZA/MDSAP).
  *   - `canAssemble` is reported straight from the registry, never invented.
  *   - The planner never claims an assemble/transmit capability that the
  *     underlying registry does not assert.

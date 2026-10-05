@@ -11,6 +11,8 @@ import { and, desc, eq, ilike, or } from 'drizzle-orm';
 import { db } from '../db.js';
 import { csrReports } from '../../shared/schema.js';
 import { recordUsage, checkQuota } from './usage-metering.js';
+import { e3ParentNumber } from './ind/ctd/csr-e3-guidance.js';
+import { resolveRequirements } from './ind/ctd/requirements-resolver.js';
 
 // AI-powered drafting via the unified AI client (Claude primary)
 let ai: { complete: (messages: any, options?: any) => Promise<string> } | null = null;
@@ -488,7 +490,7 @@ export async function draftCSRSectionWithProvenance(
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: `Draft ICH E3 Section ${section.number}: ${section.title}\n\nDescription: ${section.description}\n\nWrite a complete, submission-ready draft for this section. Include all required elements per ICH E3 guidelines.`,
+            content: buildSectionUserMessage(section),
           },
         ],
         {
@@ -531,6 +533,50 @@ export async function draftCSRSectionWithProvenance(
     tokenCost: 0,
     lineage: Object.keys(baseLineage).length > 0 ? baseLineage : null,
   };
+}
+
+/**
+ * What ICH E3 says the heading `number` must contain, from the platform's one
+ * resolver (server/services/ind/ctd/requirements-resolver.ts), never from the
+ * model's memory of E3. `heading` is the E3 number that answered.
+ *
+ * The builder's synopsis (§2.x) and objectives (§8.x) children are its own
+ * decomposition, which E3 does not number, so they are answered by the
+ * nearest E3 heading above them (§2, §8). Null when no heading at any level
+ * resolves; the caller then says so rather than briefing from recall.
+ */
+export function e3RequirementsFor(number: string): { requirements: string; heading: string } | null {
+  for (let n: string | null = String(number ?? '').trim(); n; n = e3ParentNumber(n)) {
+    const answer = resolveRequirements({ document: 'csr', section: n });
+    if (answer.kind === 'answer') return { requirements: answer.requirements, heading: n };
+  }
+  return null;
+}
+
+/**
+ * The one user message both drafting paths send: the section, then what E3
+ * says it must contain (or that the platform has nothing indexed for it).
+ */
+function buildSectionUserMessage(section: CSRSection): string {
+  const e3 = e3RequirementsFor(section.number);
+  const requirements = !e3
+    ? `The platform has no ICH E3 requirements indexed for §${section.number}. Do not supply them from memory; draft from the description above and mark what it does not cover with [DATA TO BE INSERTED].`
+    : [
+        e3.heading === section.number
+          ? `What ICH E3 §${section.number} must contain, from the platform's ICH E3 record:`
+          : `ICH E3 does not number §${section.number}; it is this report's part of E3 §${e3.heading}. What §${e3.heading} must contain, from the platform's ICH E3 record — draft only the part this section's title and description cover:`,
+        '',
+        e3.requirements,
+      ].join('\n');
+  return [
+    `Draft ICH E3 Section ${section.number}: ${section.title}`,
+    '',
+    `Description: ${section.description}`,
+    '',
+    requirements,
+    '',
+    'Write a complete, submission-ready draft for this section. Cover what the record above lists; do not add requirements from memory.',
+  ].join('\n');
 }
 
 /**
@@ -594,7 +640,7 @@ async function generateSectionWithAI(
     const content = await ai.complete(
       [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Draft ICH E3 Section ${section.number}: ${section.title}\n\nDescription: ${section.description}\n\nWrite a complete, submission-ready draft for this section. Include all required elements per ICH E3 guidelines.` },
+        { role: 'user', content: buildSectionUserMessage(section) },
       ],
       {
         taskType: 'document_drafting',

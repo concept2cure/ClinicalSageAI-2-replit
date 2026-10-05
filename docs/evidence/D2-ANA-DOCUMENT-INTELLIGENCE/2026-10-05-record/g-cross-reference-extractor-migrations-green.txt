@@ -1,0 +1,658 @@
+# g-cross-reference-extractor-migrations — GREEN on working copy over HEAD 76e7528c, 2026-10-05T11:28:22Z
+# 1) npx vitest run server/services/__tests__/harmonize-references.test.ts server/services/ana/__tests__/in-text-references.test.ts --reporter=verbose
+stdout | server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > an invented CSR table is unresolved (error naming it), not "verify target exists"
+stdout | server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > a CTD code the CTD does not have is unresolved without any document type
+stdout | server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > references that resolve raise nothing: a section key, a CTD heading, E3 sponsor numbering in a CSR
+stdout | server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > a reference nothing here can decide is an info notice that costs no score
+stdout | server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > a number after "per" or "see" is not a cross-reference
+stdout | server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > a table cited twice in one section is still noted once
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > an invented CSR table is unresolved (error naming it), not "verify target exists" 24ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > a CTD code the CTD does not have is unresolved without any document type 5ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > references that resolve raise nothing: a section key, a CTD heading, E3 sponsor numbering in a CSR 8ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > a reference nothing here can decide is an info notice that costs no score 8ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > a number after "per" or "see" is not a cross-reference 1ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > a table cited twice in one section is still noted once 2ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > claim-evidence counts a listing as a data reference, through the same detector 5ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > neither engine keeps its own Table/Figure/Section reference pattern 3ms
+ Test Files  2 passed (2)
+      Tests  63 passed (63)
+
+# 2) every non-pglite test importing harmonize-engine, claim-evidence-engine, intelligence-engine, regulatory-graph.service, authoring-actions or contradiction-engine-service (43 files)
+# npx vitest run $(cat harm-importers.txt)
+#   server/routes/__tests__/authoringActionsUnsignedActsRemoved.test.ts
+#   server/routes/__tests__/bodyAwareGapsReachesService.test.ts
+#   server/routes/__tests__/contradictionFindingNotTrusted.test.ts
+#   server/routes/__tests__/decisionReadsTenantScoped.test.ts
+#   server/routes/__tests__/governedAuthorityFailsClosed.test.ts
+#   server/routes/__tests__/harmonize-error-containment.test.ts
+#   server/routes/__tests__/markSubmissionReadyFailsClosed.test.ts
+#   server/routes/__tests__/moduleReadinessDeleted.test.ts
+#   server/routes/__tests__/promotionBlockersHonestGate.test.ts
+#   server/routes/__tests__/reg-change-read.test.ts
+#   server/routes/__tests__/sectionPreflightVerdict.test.ts
+#   server/services/__tests__/contradiction-engine.test.ts
+#   server/services/__tests__/contradiction-scan-failclosed.test.ts
+#   server/services/__tests__/contradiction-scan-project-scope.test.ts
+#   server/services/__tests__/decision-receipt-durability.test.ts
+#   server/services/__tests__/governance-boundary-fail-closed.test.ts
+#   server/services/__tests__/harmonize-references.test.ts
+#   server/services/__tests__/intelligence-engine.test.ts
+#   server/services/ana-ri/__tests__/pharmacopoeia-corpus.test.ts
+#   server/services/ana/__tests__/contradiction-watch.test.ts
+#   server/services/intelligence/__tests__/prediction-governance.test.ts
+#   server/services/regulatory-graph/__tests__/regulatory-graph.test.ts
+#   tests/artifact-routes-project-scope.test.ts
+#   tests/artifact-status-audit-outcome.test.ts
+#   tests/artifact-status-lock-covers-approval.test.ts
+#   tests/artifact-status-project-scope.test.ts
+#   tests/golden-journeys/haq-correction.journey.test.ts
+#   tests/resolution/ana-orchestrator.test.ts
+#   tests/resolution/bundle-execution.test.ts
+#   tests/resolution/contradiction-resolution-bridge.test.ts
+#   tests/resolution/e2e-authoring-workflow.test.ts
+#   tests/resolution/golden-scenarios.test.ts
+#   tests/resolution/overlay-management.test.ts
+#   tests/resolution/receipt-capture.test.ts
+#   tests/resolution/resolution-orchestration.test.ts
+#   tests/routes/ai-entry-point-contract.test.ts
+#   tests/routes/authoring-actions-compare-versions-tenant.test.ts
+#   tests/routes/authoring-actions-governance.test.ts
+#   tests/schema-contract/contradiction-consequence-log-columns.contract.test.ts
+#   tests/schema/enum-alignment.test.ts
+#   tests/unit/contradiction-execution-hardened.test.ts
+#   tests/unit/contradiction-resolution-bundles.test.ts
+#   tests/unit/decision-architecture.test.ts
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Detection > confidence level mapping > maps score >= 0.85 to strong 2ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Detection > confidence level mapping > maps score 0.65-0.84 to moderate 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Detection > confidence level mapping > maps score 0.4-0.64 to provisional 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Detection > confidence level mapping > maps score < 0.4 to uncertain 9ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Detection > contradiction type taxonomy > all detection methods are documented 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Detection > contradiction type taxonomy > extended contradiction types cover all pass 8 requirements 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Typing and Severity > assumption drift severity depends on confidence level 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Typing and Severity > approved-vs-working drift severity scales with divergence ratio 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Typing and Severity > status conflict severity is higher for approved artifacts 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Typing and Severity > body-specific gap severity scales with missing requirement count 8ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Regulator Overlay Logic > overlay consequence captures original and overridden values 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Regulator Overlay Logic > overlay can escalate from non-blocking to blocking 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Regulator Overlay Logic > different regulators can produce different severity for same contradiction type 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Consequence Paths > consequence path has required structure 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Consequence Paths > escalation consequence requires escalation authority 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Consequence Paths > critical severity always offers correction draft path 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction → Decision Linkage > contradiction decision link has required fields 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction → Decision Linkage > contradiction-resolution-decision kind is valid 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction → Decision Linkage > decision receipt captures contradiction consequence execution 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction → Preflight > preflight context structure is complete 82ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction → Preflight > preflight contradiction summary maps to UI context 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > missing comparison objects produce no false findings 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > unknown body context defaults to no overlay 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > low confidence does not escalate to blocking 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > authority requirement cannot be bypassed for forbidden actions 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > unknown governed action defaults to requires-escalation 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > invalid decision status transitions are rejected 7ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > valid decision status transitions are allowed 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > receipt persistence failure does not crash workflow 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > user rejection of recommended action creates receipt with rejectionReason 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > all governed action types are mapped 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > read-only actions are autonomous 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > promotion requires human confirmation 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > approval requires reviewer role 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > contradiction consequence requires confirmation 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Inline Detail > inline detail provides everything needed for UI display 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Sample Contradiction Payload > produces a complete sample assumption-drift contradiction finding 2ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Sample Contradiction Payload > produces a complete sample cross-artifact contradiction with overlay 0ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 1: Assumption Change → Reapproval Cascade > supersedes the changed assumption 18ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 1: Assumption Change → Reapproval Cascade > flags approved artifact for reapproval (not auto-executed) 18ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 1: Assumption Change → Reapproval Cascade > harmonizes indirectly impacted draft artifact 1ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 1: Assumption Change → Reapproval Cascade > prepares review for indirectly impacted document 4ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 1: Assumption Change → Reapproval Cascade > contradiction state is in_resolution (prepared steps remain) 1ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 1: Assumption Change → Reapproval Cascade > receipt accounts for all 4 items 1ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 1: Assumption Change → Reapproval Cascade > passes ALL invariant checks 1ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 2: Low-Confidence Contradiction → No Auto-Execution > executes ZERO steps — system refuses when uncertain 1ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 2: Low-Confidence Contradiction → No Auto-Execution > prepares ALL items for human review 1ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 2: Low-Confidence Contradiction → No Auto-Execution > has ZERO blocked steps (items are valid, just not auto-executable) 1ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 2: Low-Confidence Contradiction → No Auto-Execution > uncertain rewrite is prepared, not executed 1ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 2: Low-Confidence Contradiction → No Auto-Execution > approved artifact reapproval is prepared 1ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 2: Low-Confidence Contradiction → No Auto-Execution > escalation is always prepared, never auto-executed 1ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 2: Low-Confidence Contradiction → No Auto-Execution > contradiction state is in_resolution (nothing was auto-resolved) 1ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 2: Low-Confidence Contradiction → No Auto-Execution > receipt accounts for all 3 items 0ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 2: Low-Confidence Contradiction → No Auto-Execution > passes ALL invariant checks 1ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 3: Endpoint Drift → Full Resolution > supersedes the root-cause assumption 5ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 3: Endpoint Drift → Full Resolution > executes SAP rewrite with strong confidence 2ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 3: Endpoint Drift → Full Resolution > flags protocol for harmonization 2ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 3: Endpoint Drift → Full Resolution > prepares regulatory brief review (not auto-executed) 1ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 3: Endpoint Drift → Full Resolution > has mixed execution: some executed, some prepared, zero blocked 2ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 3: Endpoint Drift → Full Resolution > contradiction state is in_resolution (review step still pending) 18ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 3: Endpoint Drift → Full Resolution > every executed step has full lineage (bundleId, planId, timestamps) 3ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 3: Endpoint Drift → Full Resolution > every prepared step explains why it was not auto-executed 1ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 3: Endpoint Drift → Full Resolution > contradiction state matches execution reality 1ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Bundle planning by contradiction type > assumption_drift produces supersede-assumption + review-thread + memo 16ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Bundle planning by contradiction type > protocol_sap_inconsistency produces review-thread + memo 1ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Bundle planning by contradiction type > decision_action_inconsistency produces prepare-correction-draft 0ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Bundle planning by contradiction type > status_conflict produces review-thread + mark-needs-reapproval 13ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Bundle planning by contradiction type > dosage_conflict produces escalate (blocks_promotion) 1ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Bundle planning by contradiction type > summary_body_inconsistency produces apply-harmonization 0ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Bundle planning by contradiction type > handles multiple findings in a single plan 1ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Overlay-aware bundle differences > FDA overlay escalates dosage_conflict to blocks_promotion 1ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Overlay-aware bundle differences > EMA overlay produces different bundle than FDA for same contradiction 29ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Overlay-aware bundle differences > overlay escalates prepare-correction-draft to review-thread when authority is blocks_promotion 0ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Authority-boundary blocking > requires_escalation blocks all non-review actions 0ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Authority-boundary blocking > advisory_only allows auto-preparable actions 0ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Authority-boundary blocking > blocks_promotion requires approval on all primary actions 0ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Plan action classification > classifies actions into auto-preparable, confirmation, approval, escalation 0ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Receipt structure > plan contains all required fields for receipt generation 1ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > AnA explanation grounding from plan/receipt > builds grounded explanation from plan-only result (no execution) 1ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > AnA explanation grounding from plan/receipt > builds grounded explanation from executed result with receipt 0ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > AnA explanation grounding from plan/receipt > includes overlay context in explanation when overlays applied 5ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Failure behavior > throws on empty findings array 1ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Failure behavior > handles finding with no valid consequence path gracefully 0ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Failure behavior > handles overlay context missing gracefully 0ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Failure behavior > handles unknown contradiction type with fallback 0ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Failure behavior > deduplicates actions on the same target 0ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Action kind to bundle action mapping > all action kinds map to valid BundleItemActionType 1ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Cross-cutting plan consistency > plan summary matches actual action counts 0ms
+ ✓ tests/unit/contradiction-resolution-bundles.test.ts > Cross-cutting plan consistency > expectedConsequences match findings 0ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 3: Endpoint Drift → Full Resolution > passes ALL invariant checks 16ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 3: Endpoint Drift → Full Resolution > no duplicate supersessions 14ms
+ ✓ tests/resolution/golden-scenarios.test.ts > GOLDEN SCENARIO 3: Endpoint Drift → Full Resolution > receipt is JSON-serializable and round-trips cleanly 6ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Authority Boundary Map Integration > maps contradiction-consequence action to requires-confirmation authority 1ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Authority Boundary Map Integration > maps explain-preflight-results to autonomous-read authority 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Authority Boundary Map Integration > maps prepare-correction-draft to requires-confirmation authority 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Authority Boundary Map Integration > defaults unknown actions to requires-escalation (fail-safe) 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Authority Boundary Map Integration > authorizes autonomous-read actions without actor role 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Authority Boundary Map Integration > blocks forbidden actions regardless of role 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Decision Record Creation for Contradiction Resolution > creates a contradiction-resolution-decision with linked contradiction ID 2ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Decision Record Creation for Contradiction Resolution > creates a decision receipt with affected objects from bundle execution 1ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Overlay-Aware Authority Escalation > overlay escalates advisory_only → blocks_promotion 1ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Overlay-Aware Authority Escalation > overlay does NOT downgrade blocks_promotion → advisory_only 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Overlay-Aware Authority Escalation > no overlay means original authority is preserved 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Confidence Mapping > maps high confidence (>=0.9) to strong 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Confidence Mapping > maps moderate confidence (0.7-0.89) to moderate 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Confidence Mapping > maps low confidence (0.5-0.69) to provisional 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Confidence Mapping > maps very low confidence (<0.5) to uncertain 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Contradiction Type → Resolution Path Mapping > maps assumption_drift to supersede 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Contradiction Type → Resolution Path Mapping > maps summary_body_tension to rewrite 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Contradiction Type → Resolution Path Mapping > maps cross_jurisdictional_divergence to harmonize 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Contradiction Type → Resolution Path Mapping > maps decision_action_inconsistency to review_only 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Contradiction Type → Resolution Path Mapping > maps regulatory_discrepancy to escalate 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Contradiction Type → Resolution Path Mapping > defaults unknown types to review_only 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Authority State → Governed Action Mapping > maps advisory_only to explain-preflight-results 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Authority State → Governed Action Mapping > maps requires_review to prepare-correction-draft 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Authority State → Governed Action Mapping > maps requires_approval to prepare-harmonization-suggestion 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Authority State → Governed Action Mapping > maps blocks_promotion to create-contradiction-consequence 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Authority State → Governed Action Mapping > maps requires_escalation to create-contradiction-consequence 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Wave 3 Authoring Action Types > defines all Wave 3 action IDs 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Affected Object Extraction from Findings > extracts both objects from a contradiction finding 7ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Trigger Description Building > builds description from finding metadata 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > Trigger Description Building > omits severity tag for medium/low 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > End-to-End: Finding → Authority → Action → Path > advisory finding without overlay → explain-preflight-results (autonomous) 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > End-to-End: Finding → Authority → Action → Path > requires_review finding with FDA overlay → blocks_promotion → create-contradiction-consequence 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > End-to-End: Finding → Authority → Action → Path > blocks_promotion finding with high confidence → resolution orchestrator should execute 0ms
+ ✓ tests/resolution/contradiction-resolution-bridge.test.ts > End-to-End: Finding → Authority → Action → Path > uncertain confidence → orchestrator should block 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > validateTransition > allows valid transitions from unresolved 7ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > validateTransition > rejects invalid transitions from unresolved 1ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > validateTransition > allows valid transitions from proposed_resolution 1ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > validateTransition > allows valid transitions from in_resolution 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > validateTransition > allows review to approval transition 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > validateTransition > rejects transitions from terminal state superseded 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > validateTransition > allows reopen from cancelled 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > validateTransition > throws on unknown state 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > getValidTransitions > returns correct transitions for each state 3ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > isTerminalState > identifies terminal states 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > isTerminalState > identifies non-terminal states 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > isResolved > identifies resolved states 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > isResolved > identifies non-resolved states 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > isActive > identifies active states 4ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Machine > isActive > identifies inactive states 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Bundle State Machine > validates all state transitions are defined 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Bundle State Machine > draft can transition to proposed or cancelled 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Bundle State Machine > applied is a terminal state 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Bundle State Machine > rejected can go back to draft 1ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Bundle State Machine > approved transitions to applied only 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Transition Completeness > all states are defined in transition map 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Resolution State Transition Completeness > there are no orphan transitions (all targets are valid states) 1ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > AnA Resolution Support > explainResolutionPlan > generates structured explanation from plan data 5ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > AnA Resolution Support > explainResolutionPlan > handles plan with no affected objects 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > AnA Resolution Support > explainResolutionPlan > includes alternative paths when present 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > AnA Resolution Support > explainResolutionPlan > omits alternative paths when empty 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > AnA Resolution Support > summarizeResolutionBundle > generates structured bundle summary 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > AnA Resolution Support > summarizeResolutionBundle > reports approved status correctly 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > AnA Resolution Support > buildAnaResolutionContext > produces resolution context block 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > AnA Resolution Support > buildAnaResolutionContext > handles empty state 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Rewrite Readiness Validation > marks ready when all targets have content 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Rewrite Readiness Validation > flags uncertain confidence targets 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Rewrite Readiness Validation > flags missing content for non-uncertain targets 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Rewrite Readiness Validation > handles empty targets list 5ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Affected Object Type Validation > affected object structure is correct 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Affected Object Type Validation > affected object allows minimal required fields 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Sample Resolution Payloads > sample resolution plan payload is valid 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Sample Resolution Payloads > sample resolution bundle payload is valid 1ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Failure Behavior > State machine rejects invalid transitions > cannot skip from unresolved to resolved_approved 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Failure Behavior > State machine rejects invalid transitions > cannot transition from terminal superseded state 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Failure Behavior > State machine rejects invalid transitions > error message includes valid transitions 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Failure Behavior > Rewrite readiness catches problems > reports all issues, not just first 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Failure Behavior > Supersession validation > type structure prevents self-supersession logically 0ms
+ ✓ tests/resolution/resolution-orchestration.test.ts > Failure Behavior > Low confidence behavior > uncertain confidence is flagged in rewrite readiness 0ms
+ ✓ tests/unit/decision-architecture.test.ts > DecisionRecord construction > buildPreflightDecision produces a valid decision record 74ms
+ ✓ tests/unit/decision-architecture.test.ts > DecisionRecord construction > buildGovernedActionDecision produces a valid governed decision 1ms
+ ✓ tests/unit/decision-architecture.test.ts > DecisionRecord construction > module-preflight-judgment maps to autonomous-read authority 0ms
+ ✓ tests/unit/decision-architecture.test.ts > DecisionRecord construction > dossier-preflight-judgment maps to autonomous-read authority 0ms
+ ✓ tests/unit/decision-architecture.test.ts > DecisionRecord construction > needs-reapproval overall maps to escalated status 11ms
+ ✓ tests/unit/decision-architecture.test.ts > DecisionRecord construction > unique decision IDs 1ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > AUTHORITY_BOUNDARY_MAP has all expected actions 1ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > read-only actions are autonomous 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > draft-preparation actions require confirmation 1ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > promote-to-review requires confirmation 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > approve-artifact requires reviewer approval 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > lock-artifact requires reviewer approval with restricted roles 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > judge-module-ready requires escalation 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > judge-dossier-ready requires escalation 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > execute-multi-object-correction is forbidden 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > unknown action defaults to escalation (fail-safe) 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Actor authorization > autonomous-read always authorizes 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Actor authorization > forbidden never authorizes 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Actor authorization > role restriction blocks unauthorized actors 4ms
+ ✓ tests/unit/decision-architecture.test.ts > Actor authorization > actor role unknown returns blocked with reason 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > recommended → confirmed is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > recommended → rejected is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > recommended → escalated is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > confirmed → executed is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > executed → approved is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > executed → provisional is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > provisional → approved is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > approved → superseded is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > superseded → anything is invalid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > recommended → executed is invalid (must confirm first) 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > rejected → confirmed is invalid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > escalated → confirmed is valid (escalation can be resolved) 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision receipt creation > buildDecisionReceipt creates a valid receipt 1ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision receipt creation > rejected confirmation receipt 226ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision receipt creation > receipt with provisional items 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision receipt creation > unique receipt IDs 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Blocked promotion decision > creates a decision with authority boundary for blocked promotion 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Provisional result handling > preflight with warnings produces provisional status 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Provisional result handling > executed but pending approval creates provisional receipt 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Contradiction consequence decision path > builds a contradiction-resolution decision from a finding 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Failure behavior > unknown action authority defaults to escalation 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Failure behavior > actor with no role cannot approve 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Failure behavior > invalid transition returns false 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Failure behavior > missing context returns safe defaults in decision 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Failure behavior > receipt with execution error records failure 29ms
+ ✓ tests/unit/decision-architecture.test.ts > Full workflow lifecycle > section preflight → promotion decision → receipt 16ms
+ ✓ tests/unit/decision-architecture.test.ts > Full workflow lifecycle > contradiction finding → correction decision → receipt 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Full workflow lifecycle > escalation path triggered for module readiness judgment 0ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Full Scenario > executes the full scenario and returns a valid BundleExecutionReceipt 47ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Full Scenario > produces executed steps with full traceability 16ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Full Scenario > handles the assumption supersession 16ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Full Scenario > handles the SAP rewrite with prepared content 9ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Full Scenario > handles the protocol harmonization 26ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Full Scenario > prepares review and reapproval steps (not auto-executed) 37ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Full Scenario > contradiction state reflects execution outcome 11ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Full Scenario > receipt has zero ambiguity — every item accounted for 11ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Failure Behavior > rejects execution from invalid bundle state 2ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Failure Behavior > rejects execution of empty bundle 1ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Failure Behavior > blocks steps for uncertain confidence rewrites 10ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Failure Behavior > handles already-completed items gracefully 2ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Failure Behavior > handles previously failed items 9ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Failure Behavior > escalation is always prepared, never auto-executed 1ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Failure Behavior > unknown reapproval state uses uncertain confidence 1ms
+ ✓ tests/resolution/bundle-execution.test.ts > Bundle Execution — Failure Behavior > provisional confidence rewrites are prepared, not executed 10ms
+ ✓ tests/resolution/bundle-execution.test.ts > BundleExecutionReceipt Format > receipt is JSON-serializable 2ms
+ ✓ tests/resolution/bundle-execution.test.ts > BundleExecutionReceipt Format > receipt summary totals match step arrays 34ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > detectClaimStrength > detects strong claims 7ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > detectClaimStrength > detects weak claims 1ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > detectClaimStrength > detects moderate claims 23ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > detectEvidenceStrength > detects adequate evidence 4ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > detectEvidenceStrength > detects no evidence 13ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > detectEvidenceStrength > detects partial evidence 0ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > classifyAlignment > strong claim + adequate evidence = aligned 0ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > classifyAlignment > strong claim + no evidence = unsupported 0ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > classifyAlignment > strong claim + partial evidence = overstated 0ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > classifyAlignment > moderate claim + partial evidence = aligned 0ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > classifyAlignment > weak claim + no evidence = unsupported 0ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > analyzeClaimEvidence > detects overstatement when strong claim lacks evidence 1ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > analyzeClaimEvidence > detects alignment when strong claim has adequate evidence 17ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > analyzeDocument > produces a report with alignment analysis 2ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 1: Claim/Evidence Alignment Engine > analyzeDocument > flags evidence-poor document as higher risk 10ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 2: Cross-Section Consistency Engine > extractAssertions > extracts assertions from regulatory text 3ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 2: Cross-Section Consistency Engine > analyzeConsistency > detects inconsistencies between contradictory sections 12ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 2: Cross-Section Consistency Engine > analyzeConsistency > returns high consistency for aligned sections 1ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 3: Defensibility Scoring Engine > scores a comprehensive document higher 2ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 3: Defensibility Scoring Engine > scores a poor document lower 2ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 3: Defensibility Scoring Engine > breakdown components sum to total 1ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 4: Reviewer Question Generator > generates questions from signals 4ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 4: Reviewer Question Generator > generates critical questions for unsupported claims 1ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 5: Risk Classification Engine > classifies risks for a poor document 1ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 5: Risk Classification Engine > has regulatory basis for every classification 1ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 6: Output Evaluation Gate > passes a high-quality output 2ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 6: Output Evaluation Gate > rejects a vague output 1ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Module 6: Output Evaluation Gate > rejects a too-brief output 0ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Intelligence Pipeline > runs the full pipeline and returns all module outputs 4ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Intelligence Pipeline > produces higher scores for better documents 2ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Intelligence Pipeline > emits RIM signals for problematic documents 4ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Intelligence Pipeline > builds constrained LLM prompts with structured signals 13ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Deterministic Reproducibility > produces identical outputs for identical inputs 0ms
+ ✓ server/services/__tests__/intelligence-engine.test.ts > Deterministic Reproducibility > defensibility score is deterministic 3ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Real execution path by action kind > supersede-assumption maps to supersede bundle action 2ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Real execution path by action kind > create-review-thread maps to review bundle action 4ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Real execution path by action kind > attach-contradiction-memo maps to review bundle action 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Real execution path by action kind > prepare-correction-draft maps to rewrite bundle action 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Real execution path by action kind > apply-harmonization maps to harmonize bundle action 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Real execution path by action kind > mark-needs-reapproval maps to reapprove bundle action 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Real execution path by action kind > escalate maps to escalate bundle action 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Real execution path by action kind > bundle items generated from plan use correct action types 2ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Partial execution handling > receipt correctly represents partial execution 1ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Partial execution handling > all-blocked receipt shows unresolved state 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Partial execution handling > all-executed receipt shows resolved_pending_review state 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Blocked action handling > blocked steps include explicit reason 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Blocked action handling > escalation-only plan blocks execution when requires escalation 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Receipt persistence and structure > receipt contains contradictionIds when set 1ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Receipt persistence and structure > receipt contains overlay context when set 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Receipt persistence and structure > receipt contains user confirmation decision 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Receipt persistence and structure > receipt contains post-execution results 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Receipt persistence and structure > receipt can be serialized to JSON and back without data loss 5ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Failure and partial execution behavior > one success + one failure = in_resolution, not resolved 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Failure and partial execution behavior > post-execution errors are tracked without failing orchestration 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Failure and partial execution behavior > bundle with no executable actions blocks cleanly 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > AnA explanation grounding from receipt with post-execution > explanation includes post-execution details 1ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > AnA explanation grounding from receipt with post-execution > explanation includes post-execution errors when present 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > AnA explanation grounding from receipt with post-execution > blocked result explanation does not claim execution 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Receipt linkage to contradictions and objects > receipt links back to contradiction findings 0ms
+ ✓ tests/unit/contradiction-execution-hardened.test.ts > Receipt linkage to contradictions and objects > receipt tracks affected objects through executed/blocked/prepared steps 0ms
+ ✓ tests/resolution/receipt-capture.test.ts > Receipt Capture — Full Execution Proof > produces a complete execution receipt 14ms
+ ✓ tests/resolution/receipt-capture.test.ts > Receipt Capture — Full Execution Proof > supersedes the root-cause assumption 3ms
+ ✓ tests/resolution/receipt-capture.test.ts > Receipt Capture — Full Execution Proof > stages the SAP rewrite with prepared content 6ms
+ ✓ tests/resolution/receipt-capture.test.ts > Receipt Capture — Full Execution Proof > flags protocol for harmonization 2ms
+ ✓ tests/resolution/receipt-capture.test.ts > Receipt Capture — Full Execution Proof > prepares review for executive summary (not auto-executed) 6ms
+ ✓ tests/resolution/receipt-capture.test.ts > Receipt Capture — Full Execution Proof > prepares reapproval for statistical rationale 6ms
+ ✓ tests/resolution/receipt-capture.test.ts > Receipt Capture — Full Execution Proof > contradiction state is in_resolution (2 steps still need human) 3ms
+ ✓ tests/resolution/receipt-capture.test.ts > Receipt Capture — Full Execution Proof > passes ALL invariant checks 6ms
+ ✓ tests/resolution/receipt-capture.test.ts > Receipt Capture — Full Execution Proof > receipt accounts for every item 5ms
+ ✓ tests/resolution/receipt-capture.test.ts > Receipt Capture — Full Execution Proof > all executed steps have full lineage 1ms
+ ✓ tests/resolution/receipt-capture.test.ts > Receipt Capture — Full Execution Proof > all prepared steps explain why they were not executed 12ms
+ ✓ tests/resolution/receipt-capture.test.ts > Receipt Capture — Full Execution Proof > contradiction state matches execution reality 1ms
+ ✓ tests/resolution/receipt-capture.test.ts > Receipt Capture — Full Execution Proof > no duplicate supersessions exist 1ms
+ ✓ tests/resolution/receipt-capture.test.ts > Receipt Capture — Full Execution Proof > receipt is JSON-serializable and round-trips cleanly 1ms
+ ✓ tests/resolution/receipt-capture.test.ts > Supersession Driver — Business Rules > prevents self-supersession 9ms
+ ✓ tests/resolution/receipt-capture.test.ts > Supersession Driver — Business Rules > prevents duplicate supersession 0ms
+ ✓ tests/resolution/receipt-capture.test.ts > Supersession Driver — Business Rules > prevents circular supersession (a→b, b→c, c→a) 1ms
+ ✓ tests/resolution/receipt-capture.test.ts > Supersession Driver — Business Rules > confirm/revert lifecycle works 0ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 1: Auto-Execution (moderate confidence) > decides to execute 18ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 1: Auto-Execution (moderate confidence) > provides decision rationale mentioning confidence 14ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 1: Auto-Execution (moderate confidence) > creates a resolution plan 6ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 1: Auto-Execution (moderate confidence) > creates a bundle 2ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 1: Auto-Execution (moderate confidence) > returns an execution receipt 18ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 1: Auto-Execution (moderate confidence) > returns a structured explanation 1ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 1: Auto-Execution (moderate confidence) > includes timestamp 1ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 2: Prepare-Only (provisional confidence) > decides to prepare (not execute) 6ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 2: Prepare-Only (provisional confidence) > provides rationale about provisional confidence 4ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 2: Prepare-Only (provisional confidence) > creates a plan 6ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 2: Prepare-Only (provisional confidence) > creates a bundle (prepared, not executed) 2ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 2: Prepare-Only (provisional confidence) > does NOT return an execution receipt 0ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 2: Prepare-Only (provisional confidence) > returns a structured explanation 0ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 3: Blocked (uncertain confidence) > decides to block 0ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 3: Blocked (uncertain confidence) > provides rationale about uncertainty 0ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 3: Blocked (uncertain confidence) > creates a plan (for visibility) 0ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 3: Blocked (uncertain confidence) > does NOT create a bundle 2ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 3: Blocked (uncertain confidence) > does NOT return an execution receipt 1ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Scenario 3: Blocked (uncertain confidence) > returns explanation so user understands the situation 1ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Decision Matrix > strong confidence + no escalation → execute 3ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Decision Matrix > provisional confidence → prepare (not execute) 2ms
+ ✓ tests/resolution/ana-orchestrator.test.ts > Orchestrator Decision Matrix > uncertain confidence → block (never act on uncertain) 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 1: detects assumption drift from conflicting endpoints 2ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 2: overlay escalates authority from requires_review to blocks_promotion 4ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 2: maps blocks_promotion to create-contradiction-consequence action 3ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 3: confidence maps to moderate (0.85 score) 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 3: assumption_drift maps to supersede path 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 3: affected objects include both assumptions 3ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 4: creates contradiction-resolution-decision 1ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 5: receipt proves what happened with full provenance chain 5ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 6: contradiction resolved → promotion gate passes 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 7a: draft → review (promote-to-review) 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 7b: review → approved (approve-artifact) 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 7c: approved → locked (lock-artifact) 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 7d: locked → submission_ready (judge-dossier-ready) 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 7e: decision status transitions are valid through lifecycle 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 8: final receipt proves complete lifecycle from contradiction to submission-ready 0ms
+ ✓ tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine 4684ms
+ ✓ tests/resolution/overlay-management.test.ts > Overlay Rules Grouping by Body > groups rules by regulator body 2ms
+ ✓ tests/resolution/overlay-management.test.ts > Overlay Rules Grouping by Body > FDA has 3 rules 0ms
+ ✓ tests/resolution/overlay-management.test.ts > Overlay Rules Grouping by Body > EMA has 2 rules 0ms
+ ✓ tests/resolution/overlay-management.test.ts > Overlay Rules Grouping by Body > PMDA has 1 rule 0ms
+ ✓ tests/resolution/overlay-management.test.ts > Overlay Override Display > blocking rules show danger variant 1ms
+ ✓ tests/resolution/overlay-management.test.ts > Overlay Override Display > approval-required rules show warning variant 0ms
+ ✓ tests/resolution/overlay-management.test.ts > Overlay Override Display > critical severity overrides show danger 0ms
+ ✓ tests/resolution/overlay-management.test.ts > Seed Rule Coverage > covers FDA, EMA, and PMDA bodies 0ms
+ ✓ tests/resolution/overlay-management.test.ts > Seed Rule Coverage > covers multiple contradiction types 0ms
+ ✓ tests/resolution/overlay-management.test.ts > Seed Rule Coverage > all rules have unique rule codes 0ms
+ ✓ tests/resolution/overlay-management.test.ts > Seed Rule Coverage > all rules have a priority 0ms
+ ✓ tests/resolution/overlay-management.test.ts > Overlay Rules API > search endpoint is POST with limit 0ms
+ ✓ tests/resolution/overlay-management.test.ts > Overlay Rules API > seed endpoint is POST to authoring-actions 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Contract definition exists and is canonical > shared/types/document-contract.ts defines GovernedDocumentActionContract 2ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Contract definition exists and is canonical > contract defines required fields: projectId, documentType, lifecycleStatus, originSurface 1ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Contract definition exists and is canonical > contract defines ArtifactSourceSystem with all known source systems 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Contract definition exists and is canonical > contract defines ArtifactStatus lifecycle states 5ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Contract definition exists and is canonical > contract validation function exists 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Governed contract service exists and is wired > governedDocumentContractService.ts exists 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Governed contract service exists and is wired > service exports resolveGovernedContext 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Primary AI generation paths use governed contract > ana-ri.ts /generate uses artifact creation with draft status 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Primary AI generation paths use governed contract > ana-ri.ts /chat uses processResponseActions for conditional artifact creation 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Primary AI generation paths use governed contract > authoring-actions.ts imports resolveGovernedContext 1ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Primary AI generation paths use governed contract > authoring-actions.ts sends governed contract errors on validation failure 5ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Primary AI generation paths use governed contract > the artifact creation route exists on the artifacts router 1ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > AI action system enforces typed action dispatch > shared/types/ai-actions.ts defines AIActionType union 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > AI action system enforces typed action dispatch > ai-actions.ts route exists with /execute endpoint 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > AI action system enforces typed action dispatch > ai-actions.ts has action type registry (/types endpoint) 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > AI action system enforces typed action dispatch > ai-actions.ts tracks execution history (/history endpoint) 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > AI gateway is the canonical LLM access layer > ai-gateway directory exists 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > AI gateway is the canonical LLM access layer > ana-ri.ts uses the AI gateway (not direct OpenAI/Anthropic) 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > AI gateway is the canonical LLM access layer > chat.ts uses the AI gateway 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Governed artifact lifecycle paths exist > promote-artifact handler exists in ai-actions 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Governed artifact lifecycle paths exist > promote-artifact handler uses resolveGovernedContext 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Existing governance tests are in place > authoring-actions-governance.test.ts exists 4ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Existing governance tests are in place > concept2cure-governed-upload.test.ts exists 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — Governed Document Contract Enforcement > Existing governance tests are in place > governedDocumentContractService.test.ts exists 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — AI Entry Point Classification > Governed paths (create artifacts through contract) > AnA RI chat/generate (server/routes/ana-ri.ts) exists as governed path 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — AI Entry Point Classification > Governed paths (create artifacts through contract) > Authoring actions (server/routes/authoring-actions.ts) exists as governed path 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — AI Entry Point Classification > Governed paths (create artifacts through contract) > AI actions dispatch (server/routes/ai-actions.ts) exists as governed path 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — AI Entry Point Classification > Governed paths (create artifacts through contract) > Compute plane (server/routes/compute.ts) exists as governed path 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — AI Entry Point Classification > Non-artifact paths (analysis, metadata, health — acceptable bypasses) > AI assistance (text-only, no persist) (server/routes/ai-assistance.ts) exists as non-artifact path 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — AI Entry Point Classification > Non-artifact paths (analysis, metadata, health — acceptable bypasses) > Claims binder (IVDR linkage, not general gen) (server/routes/ai-claims-routes.ts) exists as non-artifact path 0ms
+ ✓ tests/routes/ai-entry-point-contract.test.ts > Stage 12 — AI Entry Point Classification > Legacy paths (exist but not in beta shell — monitor only) > all previously-tracked legacy AI surfaces have been removed 1ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved v2 (approved at v2) → locked records published_version_id = 2, and the result is filable 85ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved at v2, edited to v3, then locked: REFUSED with 409, nothing written, and the message asks for re-approval 19ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved with no approved version recorded, then locked: REFUSED (fail closed) 8ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > review v3 → approved records approved_version_id = 3; an edit to v4 afterwards is not filable 14ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a reviewer still pending refuses the approval (400) and records no approved version 10ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a reviewer who did not approve refuses the approval (400) 5ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a quorum that cannot be read is not met: the approval is refused and records no approved version 13ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a decisions read that fails after the assignments read is not met either 8ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a manager is refused review → approved (403) and nothing is written 14ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a super_admin is refused review → approved (403) and nothing is written 8ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a author is refused review → approved (403) and nothing is written 2ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > POST …/audit-report/export: the locked report records its lock, and no approval nobody gave > inserts status locked with published_version_id = version = 1, approved_version_id unset, so it is not filable 9ms
+ ✓ tests/artifact-status-project-scope.test.ts > PUT …/status: the artifact of the project the URL names > a v2 project’s program UUID reaches review — "Route to review" works 31ms
+ ✓ tests/artifact-status-project-scope.test.ts > PUT …/status: the artifact of the project the URL names > refuses another project’s artifact through this project’s URL, and writes nothing 5ms
+ ✓ tests/artifact-status-project-scope.test.ts > PUT …/status: the artifact of the project the URL names > the same through the program UUID: the anchored project is the one that counts 4ms
+ ✓ tests/artifact-status-project-scope.test.ts > PUT …/status: the artifact of the project the URL names > a program with no anchored project, or an id of no project, is not found 10ms
+ ✓ tests/artifact-status-project-scope.test.ts > PUT …/status: the artifact of the project the URL names > a project lookup that could not complete is a 500, never a "not found" — and it is asked strictly 15ms
+ ✓ tests/artifact-status-project-scope.test.ts > PUT …/status: the artifact of the project the URL names > the outcome log records the resolved project, not parseInt of the URL 9ms
+ ✓ tests/artifact-status-project-scope.test.ts > PUT …/status: the artifact of the project the URL names > the promotion gate reads the resolved project, not the URL text 19ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > healthy control — the gates can say yes > allows the lock when both gates run and find nothing 8ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > healthy control — the gates can say yes > blocks on a real blocking contradiction (the gate works when it runs) 1ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > gate 3 — contradiction gate fails closed > blocks when the contradiction check throws 5ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > gate 3 — contradiction gate fails closed > blocks when the engine does not expose checkPromotionBlocked (was a silent skip) 1ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > gate 4 — fabric readiness gate fails closed > blocks a transition to approved when the fabric evaluator throws 1ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > gate 4 — fabric readiness gate fails closed > blocks a transition to locked when the fabric evaluator throws 1ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > gate 4 — fabric readiness gate fails closed > blocks a transition to submission_ready when the fabric evaluator throws 19ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > the audit row tells the truth > records transitionAllowed:false with the reason when a gate could not run 1ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > gate 4 — judges the real artifact, not asserted facts > fails closed when the artifact is not in this organization and project 1ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > gate 4 — judges the real artifact, not asserted facts > feeds the fabric what the row records — no hard-coded trues 1ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > gate 4 — judges the real artifact, not asserted facts > blocks locking an artifact with no content 0ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > gate 4 — judges the real artifact, not asserted facts > blocks submission-ready for an artifact that was never locked 0ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > gate 4 — judges the real artifact, not asserted facts > blocks submission-ready with no CTD placement 0ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > gate 4 — judges the real artifact, not asserted facts > allows submission-ready for a locked, placed artifact with content (control) 0ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > gate 4 — judges the real artifact, not asserted facts > does not judge a transition with no artifact as a document 20ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > documentBoundaryRequirements — pure > rejects a code-shaped-invalid placement by name 0ms
+ ✓ server/services/__tests__/governance-boundary-fail-closed.test.ts > documentBoundaryRequirements — pure > approve needs content only (status stays the route's check) 0ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …: another project's artifact through this project's URL is not found, and nothing is written 87ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/placement: another project's artifact through this project's URL is not found, and nothing is written 14ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/signatures: another project's artifact through this project's URL is not found, and nothing is written 6ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/snapshots: another project's artifact through this project's URL is not found, and nothing is written 8ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/provenance: another project's artifact through this project's URL is not found, and nothing is written 8ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/versions: another project's artifact through this project's URL is not found, and nothing is written 15ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/audit-report: another project's artifact through this project's URL is not found, and nothing is written 8ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/audit-report/export: another project's artifact through this project's URL is not found, and nothing is written 24ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/ctd-section: another project's artifact through this project's URL is not found, and nothing is written 10ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/verify-integrity: another project's artifact through this project's URL is not found, and nothing is written 7ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/rollback: another project's artifact through this project's URL is not found, and nothing is written 13ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/comments: another project's artifact through this project's URL is not found, and nothing is written 6ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/comments: another project's artifact through this project's URL is not found, and nothing is written 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/comments/c1/resolve: another project's artifact through this project's URL is not found, and nothing is written 10ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/reviewers: another project's artifact through this project's URL is not found, and nothing is written 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/reviewers: another project's artifact through this project's URL is not found, and nothing is written 10ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > delete …/reviewers/as1: another project's artifact through this project's URL is not found, and nothing is written 11ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/reviewers/as1/remind: another project's artifact through this project's URL is not found, and nothing is written 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/reviews/submit: another project's artifact through this project's URL is not found, and nothing is written 7ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/reviews/status: another project's artifact through this project's URL is not found, and nothing is written 10ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/status: another project's artifact through this project's URL is not found, and nothing is written 5ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …: a v2 project (program UUID) reaches the route 13ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/placement: a v2 project (program UUID) reaches the route 8ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/signatures: a v2 project (program UUID) reaches the route 6ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/snapshots: a v2 project (program UUID) reaches the route 9ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/provenance: a v2 project (program UUID) reaches the route 5ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/versions: a v2 project (program UUID) reaches the route 6ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/audit-report: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/audit-report/export: a v2 project (program UUID) reaches the route 4ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/ctd-section: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/verify-integrity: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/rollback: a v2 project (program UUID) reaches the route 16ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/comments: a v2 project (program UUID) reaches the route 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/comments: a v2 project (program UUID) reaches the route 9ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/comments/c1/resolve: a v2 project (program UUID) reaches the route 4ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/reviewers: a v2 project (program UUID) reaches the route 8ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/reviewers: a v2 project (program UUID) reaches the route 3ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > delete …/reviewers/as1: a v2 project (program UUID) reaches the route 5ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/reviewers/as1/remind: a v2 project (program UUID) reaches the route 2ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > post …/reviews/submit: a v2 project (program UUID) reaches the route 6ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > get …/reviews/status: a v2 project (program UUID) reaches the route 9ms
+ ✓ tests/artifact-routes-project-scope.test.ts > every artifact route acts only on its own project's artifact > put …/status: a v2 project (program UUID) reaches the route 3ms
+ ✓ tests/schema-contract/contradiction-consequence-log-columns.contract.test.ts > every consequence-log write names columns that exist > found the writes to check, in all three services 3ms
+ ✓ tests/schema-contract/contradiction-consequence-log-columns.contract.test.ts > every consequence-log write names columns that exist > raises no 42703 — the orchestrator's four are the ones that did 1ms
+ ✓ tests/schema-contract/contradiction-consequence-log-columns.contract.test.ts > every consequence-log write names columns that exist > no write mentions execution_notes at all 0ms
+ ✓ tests/schema-contract/contradiction-consequence-log-columns.contract.test.ts > the two creators agree about the table > defines the same consequence-log columns in both files 2ms
+ ✓ tests/schema-contract/contradiction-consequence-log-columns.contract.test.ts > the two creators agree about the table > does not default detected_by to an attribution nothing recorded 1ms
+ ✓ server/routes/__tests__/reg-change-read.test.ts > GET /api/reg-change > 403 without org context 24ms
+ ✓ server/routes/__tests__/reg-change-read.test.ts > GET /api/reg-change > returns real-store rows shaped to the display contract (when_label → when), source = reg_change_items 7ms
+ ✓ server/routes/__tests__/reg-change-read.test.ts > GET /api/reg-change > fails closed to an empty list when the store is missing (42P01) 3ms
+ ✓ server/routes/__tests__/reg-change-read.test.ts > POST /api/reg-change > 403 without org context 10ms
+ ✓ server/routes/__tests__/reg-change-read.test.ts > POST /api/reg-change > records a change and returns the shaped view (audited) 5ms
+ ✓ server/routes/__tests__/reg-change-read.test.ts > POST /api/reg-change > 400 on invalid input 3ms
+  "message": "[decision-lifecycle] Receipt persistence FAILED — the decision must not be reported as recorded",
+ ✓ server/services/__tests__/decision-receipt-durability.test.ts > the receipt carries the tenant that acted > names organization_id in the INSERT rather than leaving it to DEFAULT 1 11ms
+ ✓ server/services/__tests__/decision-receipt-durability.test.ts > a record that was not written is not reported as taken > refuses the decision when its durable write fails 3ms
+ ✓ server/services/__tests__/decision-receipt-durability.test.ts > a record that was not written is not reported as taken > refuses the decision when no tenant was supplied, rather than attributing it 1ms
+ ✓ server/services/__tests__/decision-receipt-durability.test.ts > a record that was not written is not reported as taken > refuses the receipt when its durable write fails 2ms
+ ✓ server/services/__tests__/decision-receipt-durability.test.ts > a record that was not written is not reported as taken > returns the record when both writes land 3ms
+ ✓ tests/artifact-status-audit-outcome.test.ts > PUT …/status carries its audit-row outcome > a status change whose row was lost still changes the status, and says the row is missing 86ms
+ ✓ tests/artifact-status-audit-outcome.test.ts > PUT …/status carries its audit-row outcome > a written row says so, and says it is not the chained audit_logs row 9ms
+ ✓ server/services/ana/__tests__/contradiction-watch.test.ts > sortContradictionsBySeverity > orders critical → low, then newest first within a severity 8ms
+ ✓ server/services/ana/__tests__/contradiction-watch.test.ts > summarizeContradictions > counts by severity and how many block promotion 0ms
+ ✓ server/services/ana/__tests__/contradiction-watch.test.ts > buildContradictionWatchBlock > returns empty string when there are no contradictions 0ms
+ ✓ server/services/ana/__tests__/contradiction-watch.test.ts > buildContradictionWatchBlock > flags blocks-promotion findings and caps the list 1ms
+ ✓ server/services/ana/__tests__/contradiction-watch.test.ts > getOpenContradictionsForOrg > excludes closed (approved_resolution / superseded) findings and maps blocksPromotion 3ms
+ ✓ server/services/ana/__tests__/contradiction-watch.test.ts > getOpenContradictionsForOrg > respects the cap after filtering 0ms
+ ✓ server/services/ana/__tests__/contradiction-watch.test.ts > getOpenContradictionsForOrg > is resilient — returns [] on a malformed / failed engine response 0ms
+ ✓ server/routes/__tests__/decisionReadsTenantScoped.test.ts > decision reads are tenant-scoped > does not return another organization’s project decisions 149ms
+[authoring-actions] GOVERNED RECORD FAILED — the act is not recorded {
+ ✓ server/routes/__tests__/decisionReadsTenantScoped.test.ts > decision reads are tenant-scoped > reports another organization’s decision as not found, not forbidden 24ms
+ ✓ server/routes/__tests__/decisionReadsTenantScoped.test.ts > decision reads are tenant-scoped > scopes decision-context, which returns receipts as well 220ms
+ ✓ server/routes/__tests__/decisionReadsTenantScoped.test.ts > decision reads are tenant-scoped > refuses to record a decision with no tenant context at all 8ms
+ ✓ server/routes/__tests__/decisionReadsTenantScoped.test.ts > decision reads are tenant-scoped > refuses all three reads when no tenant context is present 103ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > an invented CSR table is unresolved (error naming it), not "verify target exists" 21ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > a CTD code the CTD does not have is unresolved without any document type 9ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > references that resolve raise nothing: a section key, a CTD heading, E3 sponsor numbering in a CSR 3ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > a reference nothing here can decide is an info notice that costs no score 5ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > a number after "per" or "see" is not a cross-reference 1ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > a table cited twice in one section is still noted once 3ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > claim-evidence counts a listing as a data reference, through the same detector 2ms
+ ✓ server/services/__tests__/harmonize-references.test.ts > HARMONIZE reference integrity uses the canonical in-text reference detector > neither engine keeps its own Table/Figure/Section reference pattern 1ms
+ ✓ server/routes/__tests__/contradictionFindingNotTrusted.test.ts > POST /execute-contradiction-resolution > loads the finding from the store, scoped to the caller’s org 54ms
+ ✓ server/routes/__tests__/contradictionFindingNotTrusted.test.ts > POST /execute-contradiction-resolution > passes the STORED finding downstream, never the one in the body 6ms
+ ✓ server/routes/__tests__/contradictionFindingNotTrusted.test.ts > POST /execute-contradiction-resolution > refuses when the id does not resolve for this organization 4ms
+ ✓ server/routes/__tests__/contradictionFindingNotTrusted.test.ts > POST /execute-contradiction-resolution > does not accept a body-only finding with no id 4ms
+ ✓ server/routes/__tests__/contradictionFindingNotTrusted.test.ts > POST /plan-contradiction-resolution > loads the finding from the store, scoped to the caller’s org 25ms
+ ✓ server/routes/__tests__/contradictionFindingNotTrusted.test.ts > POST /plan-contradiction-resolution > passes the STORED finding downstream, never the one in the body 95ms
+ ✓ server/routes/__tests__/contradictionFindingNotTrusted.test.ts > POST /plan-contradiction-resolution > refuses when the id does not resolve for this organization 9ms
+ ✓ server/routes/__tests__/contradictionFindingNotTrusted.test.ts > POST /plan-contradiction-resolution > does not accept a body-only finding with no id 12ms
+ ✓ server/routes/__tests__/contradictionFindingNotTrusted.test.ts > POST /explain-contradiction-resolution > loads the finding from the store, scoped to the caller’s org 133ms
+ ✓ server/routes/__tests__/contradictionFindingNotTrusted.test.ts > POST /explain-contradiction-resolution > passes the STORED finding downstream, never the one in the body 4ms
+ ✓ server/routes/__tests__/contradictionFindingNotTrusted.test.ts > POST /explain-contradiction-resolution > refuses when the id does not resolve for this organization 9ms
+ ✓ server/routes/__tests__/contradictionFindingNotTrusted.test.ts > POST /explain-contradiction-resolution > does not accept a body-only finding with no id 2ms
+[authoring-actions] GOVERNED RECORD FAILED — the act is not recorded {
+ ✓ server/routes/__tests__/markSubmissionReadyFailsClosed.test.ts > POST /mark-submission-ready when the artifact does not resolve > does not answer "Artifact marked submission-ready" 1286ms
+ ✓ server/routes/__tests__/markSubmissionReadyFailsClosed.test.ts > POST /mark-submission-ready when the artifact does not resolve > does not mint a governance receipt for an artifact that does not exist 9ms
+ ✓ tests/schema/enum-alignment.test.ts > pgEnum <-> TS union alignment (shared/schema/resolution.ts <-> shared/types/resolution.ts) > resolution_trigger_type === ResolutionTriggerType 2ms
+ ✓ tests/schema/enum-alignment.test.ts > pgEnum <-> TS union alignment (shared/schema/resolution.ts <-> shared/types/resolution.ts) > resolution_path === ResolutionPath 1ms
+ ✓ tests/schema/enum-alignment.test.ts > pgEnum <-> TS union alignment (shared/schema/resolution.ts <-> shared/types/resolution.ts) > resolution_confidence === ResolutionConfidence 0ms
+ ✓ tests/schema/enum-alignment.test.ts > pgEnum <-> TS union alignment (shared/schema/resolution.ts <-> shared/types/resolution.ts) > resolution_state === ResolutionState 0ms
+ ✓ tests/schema/enum-alignment.test.ts > pgEnum <-> TS union alignment (shared/schema/resolution.ts <-> shared/types/resolution.ts) > bundle_state === BundleState 0ms
+ ✓ tests/schema/enum-alignment.test.ts > pgEnum <-> TS union alignment (shared/schema/resolution.ts <-> shared/types/resolution.ts) > supersession_state === SupersessionState 0ms
+ ✓ tests/routes/authoring-actions-governance.test.ts > authoring-actions governed validation envelopes > returns 400 GOVERNED_CONTRACT_INVALID on promote-to-review when governed validation fails 10ms
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > does not report blocked:false when a blocker source did not run 28ms
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > names every source that failed, not just a count 122ms
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > gives a real verdict when every source ran 22ms
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > builds the readiness payload with the canonical resolver, org-scoped 17ms
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > actually collects readiness blockers now that the call succeeds 15ms
+ ✓ server/routes/__tests__/authoringActionsUnsignedActsRemoved.test.ts > the unsigned approve and lock routes are gone > POST /approve-artifact on a review artifact: not served, and nothing is written 76ms
+ ✓ server/routes/__tests__/authoringActionsUnsignedActsRemoved.test.ts > the unsigned approve and lock routes are gone > POST /lock-artifact on a approved artifact: not served, and nothing is written 8ms
+ ✓ server/services/regulatory-graph/__tests__/regulatory-graph.test.ts > traceClaimEvidence > partitions links by type; supersedes is not surfaced 14ms
+ ✓ server/services/regulatory-graph/__tests__/regulatory-graph.test.ts > traceClaimEvidence > returns null when claim does not exist 1ms
+ ✓ server/services/regulatory-graph/__tests__/regulatory-graph.test.ts > traceClaimsForDocument > returns claims linked to a document 1ms
+ ✓ server/services/regulatory-graph/__tests__/regulatory-graph.test.ts > findOrphanClaims > flags zero-link and no-supporting-link claims 1ms
+ ✓ server/services/regulatory-graph/__tests__/regulatory-graph.test.ts > findContradictedClaims > returns only claims with at least one contradicts link 1ms
+ ✓ server/services/__tests__/contradiction-scan-failclosed.test.ts > a Pass-8 detector whose read fails does not report "no findings" > rejects instead of returning an empty findings array 31ms
+ ✓ server/services/__tests__/contradiction-scan-failclosed.test.ts > a Pass-8 detector whose read fails does not report "no findings" > still logs the breadcrumb before rethrowing 7ms
+ ✓ server/services/__tests__/contradiction-scan-failclosed.test.ts > a Pass-8 detector whose read fails does not report "no findings" > returns findings normally when the read succeeds 7ms
+ ✓ server/routes/__tests__/bodyAwareGapsReachesService.test.ts > POST /body-aware-gaps > actually calls the exported gap detector 59ms
+ ✓ server/routes/__tests__/bodyAwareGapsReachesService.test.ts > POST /body-aware-gaps > passes the four arguments the detector actually takes, in order 10ms
+ ✓ server/routes/__tests__/bodyAwareGapsReachesService.test.ts > POST /body-aware-gaps > unwraps the GapAnalysis the detector returns 81ms
+ ✓ server/routes/__tests__/bodyAwareGapsReachesService.test.ts > POST /body-aware-gaps > reports zero gaps as a RESULT, not as unavailability 15ms
+ ✓ server/routes/__tests__/bodyAwareGapsReachesService.test.ts > POST /body-aware-gaps > still degrades honestly when the detector genuinely is not there 15ms
+ ✓ server/routes/__tests__/bodyAwareGapsReachesService.test.ts > POST /body-aware-gaps > still validates its inputs 73ms
+ ✓ server/routes/__tests__/sectionPreflightVerdict.test.ts > sectionPreflightVerdict > does NOT call a section ready when checks did not run 2ms
+ ✓ server/routes/__tests__/sectionPreflightVerdict.test.ts > sectionPreflightVerdict > names the checks that did not run, so the verdict is legible 1ms
+ ✓ server/routes/__tests__/sectionPreflightVerdict.test.ts > sectionPreflightVerdict > is ready only when every assessed check actually ran and passed 0ms
+ ✓ server/routes/__tests__/sectionPreflightVerdict.test.ts > sectionPreflightVerdict > never reports ready when nothing was assessed at all 0ms
+ ✓ server/routes/__tests__/sectionPreflightVerdict.test.ts > sectionPreflightVerdict > keeps fail and warn dominant over an unrun check 0ms
+ ✓ server/routes/__tests__/sectionPreflightVerdict.test.ts > sectionPreflightVerdict > excludes placeholders from the verdict rather than treating them as inconclusive 0ms
+ ✓ server/routes/__tests__/moduleReadinessDeleted.test.ts > module readiness has one implementation > the broken duplicate is gone 6ms
+ ✓ server/routes/__tests__/moduleReadinessDeleted.test.ts > module readiness has one implementation > the canonical route exists and is mounted 1ms
+ ✓ server/routes/__tests__/moduleReadinessDeleted.test.ts > module readiness has one implementation > the canonical route builds its payload with the canonical builder 0ms
+ ✓ server/routes/__tests__/moduleReadinessDeleted.test.ts > module readiness has one implementation > no hand-rolled readiness payload survives in authoring-actions 1ms
+ ✓ tests/routes/authoring-actions-compare-versions-tenant.test.ts > authoring-actions compare-versions tenant isolation > never returns another tenant's artifact version content 5ms
+ ✓ tests/routes/authoring-actions-compare-versions-tenant.test.ts > authoring-actions compare-versions tenant isolation > returns 401 when no tenant context is present 2ms
+ ✓ server/routes/__tests__/moduleReadinessDeleted.test.ts > the deleted route is unreachable > 404s where it used to answer 200 1461ms
+ ✓ server/services/__tests__/contradiction-scan-project-scope.test.ts > a project the organisation does not hold > is refused, not scanned clean 5ms
+ ✓ server/services/__tests__/contradiction-scan-project-scope.test.ts > a program id, which is not a project id > is refused before anything is read, not scanned across the organisation 1ms
+ ✓ server/services/__tests__/contradiction-scan-project-scope.test.ts > a project the organisation holds > is scanned, and every read is filtered to it 1ms
+ ✓ server/routes/__tests__/governedAuthorityFailsClosed.test.ts > resolveGovernedAuthority > REFUSES when the authority check itself throws 2ms
+ ✓ server/routes/__tests__/governedAuthorityFailsClosed.test.ts > resolveGovernedAuthority > says it was the CHECK that failed, not the caller’s role 1ms
+ ✓ server/routes/__tests__/governedAuthorityFailsClosed.test.ts > resolveGovernedAuthority > refuses a denied role, and reports it as a role decision 1ms
+ ✓ server/routes/__tests__/governedAuthorityFailsClosed.test.ts > resolveGovernedAuthority > allows only an explicit allowed:true 1ms
+ ✓ server/routes/__tests__/governedAuthorityFailsClosed.test.ts > resolveGovernedAuthority > treats a malformed verdict as a refusal, not an approval 1ms
+ ✓ server/services/ana-ri/__tests__/pharmacopoeia-corpus.test.ts > pharmacopoeia corpus — integrity > indexes the major pharmacopoeias 3ms
+ ✓ server/services/ana-ri/__tests__/pharmacopoeia-corpus.test.ts > pharmacopoeia corpus — integrity > chapters are unique and well-formed; harmonised ones carry a Q4B annex 1ms
+ ✓ server/services/ana-ri/__tests__/pharmacopoeia-corpus.test.ts > pharmacopoeia corpus — lookups > resolves a pharmacopoeia and a chapter, rejects unknowns 0ms
+ ✓ server/services/ana-ri/__tests__/pharmacopoeia-corpus.test.ts > pharmacopoeia corpus — lookups > searches by test name and exposes equivalents 1ms
+ ✓ server/services/ana-ri/__tests__/pharmacopoeia-corpus.test.ts > pharmacopoeia corpus — lookups > exposes the harmonised subset 0ms
+ ✓ server/services/ana-ri/__tests__/pharmacopoeia-corpus.test.ts > pharmacopoeia corpus — rendered block > renders matches and always carries the verify caveat 0ms
+ ✓ server/services/ana-ri/__tests__/pharmacopoeia-corpus.test.ts > pharmacopoeia corpus — rendered block > renders an overview when nothing matches, still with the caveat 0ms
+ ✓ server/services/ana-ri/__tests__/pharmacopoeia-corpus.test.ts > pharmacopoeia corpus — summary > reports consistent totals 0ms
+ ✓ server/routes/__tests__/harmonize-error-containment.test.ts > POST /api/harmonize/check: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text 28ms
+ ✓ server/routes/__tests__/harmonize-error-containment.test.ts > POST /api/harmonize/check: the 500 body is contained > leaves the validation 400 exactly as it was 5ms
+ ✓ server/services/intelligence/__tests__/prediction-governance.test.ts > prediction governance — inference invariant (real feature extractor) > the serving vector (featuresForDraft) leaks no realized-outcome feature 4ms
+ ✓ server/services/intelligence/__tests__/prediction-governance.test.ts > prediction governance — inference invariant (real feature extractor) > the real feature schema contains no regulatory-evidence feature name 1ms
+ ✓ server/services/intelligence/__tests__/prediction-governance.test.ts > prediction governance — inference invariant (real feature extractor) > detects a leak when realized post-submission outcomes are non-zero at inference 1ms
+ ✓ server/services/intelligence/__tests__/prediction-governance.test.ts > prediction governance — inference invariant (real feature extractor) > flags a regulatory-evidence back-door feature name 1ms
+ Test Files  43 passed (43)
+      Tests  589 passed (589)

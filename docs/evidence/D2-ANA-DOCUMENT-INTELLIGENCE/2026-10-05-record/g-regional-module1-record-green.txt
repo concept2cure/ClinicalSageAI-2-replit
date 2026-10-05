@@ -1,0 +1,159 @@
+# g-regional-module1-record GREEN — 2026-10-05T05:12:56Z, working tree over HEAD 6d2b4bd1
+
+## 1. The step's tests
+ ✓ server/services/ind/ctd/__tests__/record-purity.test.ts > record purity > shared/regulatory/regional-module1.ts imports at runtime only from shared/** 6ms
+ ✓ server/services/ind/ctd/__tests__/record-purity.test.ts > record purity > shared/regulatory/regulatory-basis.ts imports at runtime only from shared/** 1ms
+ ✓ server/services/ind/ctd/__tests__/record-purity.test.ts > record purity > catches a planted server import, a package import, a dynamic import and a require() 59ms
+ ✓ server/services/ind/ctd/__tests__/record-purity.test.ts > record purity > lets type-only imports through 1ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > regional-ctd-templates projects the record > EU Module 1 carries 1.3.5, 1.3.6 and 1.5.3 2ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > regional-ctd-templates projects the record > EU 1.1 (table of contents) is not required of an eCTD MAA 2ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > regional-ctd-templates projects the record > the required Module 1 sets the dispatch-readiness gate reads did not move (EU 1.1 excepted) 2ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > regional-ctd-templates projects the record > FDA, EMA and PMDA Module 1 are exactly the record projected; NMPA and MFDS are labelled not modeled 1ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > every Module 1 node is cited > every node in every tree has a non-empty, well-formed basis and an applicability list 9ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > every Module 1 node is cited > US: a heading FDA publishes in its controlled vocabulary is regulator-text from the vendored CV; nothing else is 1ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > every Module 1 node is cited > EU 1.3.1–1.3.3, 1.8.2 and 1.10 cite the EU M1 eCTD Specification v3.1; JP 1.8, 1.11, 1.12 and 1.13 cite MHLW/PMDA text 1ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > the EU and JP trees > EU gains 1.3.5, 1.3.6 and 1.5.3, and 1.1 is marked not an eCTD item 0ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > the EU and JP trees > JP 1.8 is the draft package insert and points at its format engine; 1.11 is the draft RMP; the form is 1.2 1ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > the EU and JP trees > accepts m-prefixed codes and answers null, never another tree, for an unknown code 0ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > the EU and JP trees > US 1.1 lists the platform sub-keys 1.1.1–1.1.4, none of which is an FDA-published heading 0ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > the EU and JP trees > the record cannot be edited by one reader for everyone else 0ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > roles: placement and equivalence derive from one datum > every DocumentRole is used by at least one node, and no node uses a role outside the list 0ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > roles: placement and equivalence derive from one datum > placementFor answers each tree from its own nodes 1ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > roles: placement and equivalence derive from one datum > equivalentsOf is derived from shared roles 5ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > requiredModule1: an unknown fact is a gap > EU MAA: orphan and paediatric headings are undetermined until the fact is known 1ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > requiredModule1: an unknown fact is a gap > US: an NDA is not asked for the IND plan, and an IND is not asked for debarment 0ms
+ ✓ tests/regulatory/regional-module1-record.test.ts > requiredModule1: an unknown fact is a gap > module1Rows lists the tree for one application in CTD order, required only where always required 4ms
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+
+## 2. Mutations (each shown failing the gate it exists for, then restored)
+## Mutation 1: EU 1.7 loses its 'orphan' role (a role used by no node)
+0
+ × tests/regulatory/regional-module1-record.test.ts > roles: placement and equivalence derive from one datum > every DocumentRole is used by at least one node, and no node uses a role outside the list 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: roles no node uses: expected [ 'orphan' ] to deeply equal []
+      Tests  1 failed | 21 passed (22)
+
+## Mutation 2: a server import planted in the record
+42:import { CV_CONTEXT_OF_USE } from '../../server/services/ectd/controlled-vocab/cv-v4-data';
+ × server/services/ind/ctd/__tests__/record-purity.test.ts > record purity > shared/regulatory/regional-module1.ts imports at runtime only from shared/** 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ Array(1) ] to deeply equal []
+      Tests  1 failed | 21 passed (22)
+
+## Mutation 3: EU 1.8.2 basis demoted to recall
+ × tests/regulatory/regional-module1-record.test.ts > every Module 1 node is cited > EU 1.3.1–1.3.3, 1.8.2 and 1.10 cite the EU M1 eCTD Specification v3.1; JP 1.8, 1.11, 1.12 and 1.13 cite MHLW/PMDA text 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: EU 1.8.2: expected false to be true // Object.is equality
+      Tests  1 failed | 21 passed (22)
+
+## Mutation 4: EU 1.10 made always-required (an unknown paediatric fact no longer a gap)
+ × tests/regulatory/regional-module1-record.test.ts > regional-ctd-templates projects the record > the required Module 1 sets the dispatch-readiness gate reads did not move (EU 1.1 excepted) 10ms
+ × tests/regulatory/regional-module1-record.test.ts > requiredModule1: an unknown fact is a gap > EU MAA: orphan and paediatric headings are undetermined until the fact is known 6ms
+ × tests/regulatory/regional-module1-record.test.ts > requiredModule1: an unknown fact is a gap > module1Rows lists the tree for one application in CTD order, required only where always required 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: eu/maa: expected [ '1.0', '1.2', '1.3', '1.3.1', …(9) ] to deeply equal [ '1.0', '1.2', '1.3', '1.3.1', …(8) ]
+AssertionError: expected [ { code: '1.5.1', …(1) }, …(4) ] to deeply equal ArrayContaining{…}
+AssertionError: expected { code: '1.10', …(2) } to match object { required: false, …(1) }
+      Tests  3 failed | 19 passed (22)
+
+## Restored
+      Tests  22 passed (22)
+
+## 3. Every test file importing the changed modules or their readers (44 files: regional-ctd-templates, region-profile-service, body-aware-authoring, validate-completeness-engine, assess-dispatch-readiness, ectd4-validator, ectd/required-sections)
+client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx
+client/src/concept2cure/v2/__tests__/dispatchWorkspaceFreezeGate.test.tsx
+server/__tests__/services/submission-orchestrator.test.ts
+server/routes/__tests__/bodyAwareGapsReachesService.test.ts
+server/routes/__tests__/validate-completeness-error-containment.test.ts
+server/services/__tests__/body-aware-authoring.test.ts
+server/services/__tests__/sign-payload-snapshot.test.ts
+server/services/__tests__/validate-completeness-canonical.test.ts
+server/services/__tests__/validate-completeness-ivd.test.ts
+server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts
+server/services/ectd/__tests__/dispatch-gate.test.ts
+server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts
+server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts
+server/services/ectd/__tests__/ectd4-validator-module1-numbering.test.ts
+server/services/ectd/__tests__/ectd4-validator.test.ts
+server/services/ectd/__tests__/release-signature-gate.test.ts
+server/services/ectd/__tests__/release-signature-status.test.ts
+server/services/ectd/__tests__/required-sections-profile.test.ts
+server/services/ectd/__tests__/section-code-match.test.ts
+server/services/ectd/__tests__/signed-package-export.test.ts
+server/services/ectd/__tests__/validation-rule-corpus.test.ts
+server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts
+server/services/region-profiles/__tests__/region-profile-service.test.ts
+server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts
+server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts
+server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts
+server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts
+server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts
+server/services/submission-service/__tests__/gateway-selection.test.ts
+server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+server/services/vault/__tests__/vault-coverage.test.ts
+tests/golden-journeys/drug-nda-ectd.journey.test.ts
+tests/regulatory/fda-module1-numbering.test.ts
+tests/regulatory/ind-required-set-agrees-with-rule-pack.test.ts
+tests/regulatory/jnda-rule-pack-module1.test.ts
+tests/regulatory/region-identity.test.ts
+tests/regulatory/region-profiles.test.ts
+tests/regulatory/regional-module1-record.test.ts
+tests/regulatory/template-library-truth.test.ts
+tests/routes/ectd-compile-5xx-containment.test.ts
+tests/unit/ectd-export-routes.test.ts
+tests/unit/ectd-validator-hardening-uncovered.test.ts
+tests/unit/ectd4-validator-extensions.test.ts
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 42 passed | 1 skipped (45)
+      Tests  2 failed | 583 passed | 2 skipped (587)
+ FAIL  server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > does not demand an EU 1.1 table of contents of an eCTD MAA (known defect: EU region profile)
+ FAIL  server/services/vault/__tests__/vault-coverage.test.ts > Vault coverage feeds no readiness figure > is imported by the Vault read model only
+
+(Superseded by §6: fix round 1 makes the required-sections-profile flip part of this step.)
+- vault-coverage.test.ts 'is imported by the Vault read model only' trips on server/services/ind/ctd/submission-chain.ts, which another lane has modified in the working tree (uncommitted; it names vault-coverage.ts). This step does not touch either file.
+
+## 4. Typecheck and lint
+- npx tsc --noEmit -p . (through the shared lock), filtered to regional-module1, regional-ctd-templates, record-purity, regional-module1-record, region-profile-service, body-aware-authoring, validate-completeness-engine, SubmissionCenter: 0 errors.
+- eslint: shared/regulatory/regional-module1.ts, record-purity.test.ts, regional-module1-record.test.ts: 0 problems (a max-lines warning on the first draft was removed by putting leaf headings on one line each; REGIONAL_MODULE1 was compared as JSON before and after: EQUAL). server/services/regional-ctd-templates.ts: 0 problems at HEAD and in the working copy.
+
+## 5. Re-run after the formatting change
+ Test Files  4 passed (4)
+      Tests  55 passed (55)
+
+## 6. Fix round 1 (review): the EU 1.1 pin flipped in this change
+Red before the flip (reproduced by the reviewer and in this session's first run, §3):
+ FAIL  server/services/ectd/__tests__/required-sections-profile.test.ts > ... > does not demand an EU 1.1 table of contents of an eCTD MAA (known defect: EU region profile)
+ -> 'Expect test to fail': it.fails passes no longer, because EU 1.1 is now notInEctd and not required.
+Change:
+- server/services/ectd/__tests__/required-sections-profile.test.ts: it.fails(... '(known defect: EU region profile)') -> it('does not demand an EU 1.1 table of contents of an eCTD MAA'); KNOWN DEFECT comment replaced by the basis and the record path.
+- server/services/ectd/required-sections.ts: the KNOWN DEFECT comment above MAA removed (no code change).
+- shared/regulatory/regional-module1.ts: JP_RMP_GUIDANCE title corrected to 医薬品リスク管理計画の策定について (amended 2013-03-04); facts.md J2 likewise.
+
+Green, step tests plus the flipped pin:
+$ npx vitest run server/services/ectd/__tests__/required-sections-profile.test.ts tests/regulatory/regional-module1-record.test.ts server/services/ind/ctd/__tests__/record-purity.test.ts
+
+ Test Files  3 passed (3)
+      Tests  34 passed (34)
+   Start at  11:34:42
+   Duration  806ms (transform 741ms, setup 313ms, import 634ms, tests 109ms, environment 0ms)
+
+
+Importer set re-run (same 44 files as §3, --testTimeout=120000), failures only:
+ × server/services/vault/__tests__/vault-coverage.test.ts > Vault coverage feeds no readiness figure > is imported by the Vault read model only 1212ms
+stderr | tests/unit/ectd-validator-hardening-uncovered.test.ts > detectSequenceGaps (DB-backed) > emits SEQ_QUERY_FAILED as a gateway-blocking error when the DB query rejects
+  "message": "[ectd-validator-hardening] SEQ_QUERY_FAILED — sequence history query rejected",
+  "message": "[ectd-validator-hardening] SEQ_QUERY_FAILED — sequence history query rejected",
+stderr | tests/unit/ectd-validator-hardening-uncovered.test.ts > detectSequenceGaps (DB-backed) > SEQ_QUERY_FAILED flips gatewayReady to false in the composite validator
+  "message": "[ectd-validator-hardening] SEQ_QUERY_FAILED — sequence history query rejected",
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/vault/__tests__/vault-coverage.test.ts > Vault coverage feeds no readiness figure > is imported by the Vault read model only
+ Test Files  1 failed | 42 passed | 1 skipped (44)
+      Tests  1 failed | 580 passed | 2 skipped (583)
+
+The one remaining failure is vault-coverage.test.ts, which lists server/services/ind/ctd/submission-chain.ts as an extra importer of vault-coverage.ts: that file is another lane's uncommitted working-tree change (git diff --stat: 157 insertions, 16 deletions), not touched by this step. required-sections-profile.test.ts is green. tests/regulatory/jnda-rule-pack-module1.test.ts passed in this run (its earlier reviewer-run failure was a timeout under parallel load).
+
+Lint: npx eslint on server/services/ectd/required-sections.ts, server/services/ectd/__tests__/required-sections-profile.test.ts and shared/regulatory/regional-module1.ts: 0 problems; both ectd files also 0 at HEAD.
+
+Typecheck (fix round 1): flock tsc.lock npx tsc --noEmit -p . | grep -E 'regional-module1|regional-ctd-templates|record-purity|required-sections|region-profile-service|body-aware-authoring|validate-completeness-engine|assess-dispatch-readiness' -> no lines (grep exit 1): 0 errors in this step's files or their readers.

@@ -16,6 +16,8 @@
  */
 
 import { pool } from '../../db.js';
+import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage.js';
+import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -266,6 +268,18 @@ const BLA_WORKFLOW: SubmissionWorkflow = {
 
 // ─── MAA Workflow (EU) ───────────────────────────────────────────────────────
 
+/**
+ * How an MAA leaves the platform, as the one channel function answers it for
+ * EU_MAA (`submissionChannelFor`, regulatory/registry/submittabilityCoverage.ts):
+ * the centralised procedure's EMA eSubmission Gateway / Web Client, for which
+ * the platform has no connector, so the applicant transmits. Never restated here.
+ * 2026-10-05 (D2 record, step g-channel-prose-and-us-ectd-format; finding 42):
+ * this step read 'Submit to EMA via CESP/eSubmission gateway'. CESP carries
+ * national, MRP and DCP filings, not a centralised MAA. Any other answer (no
+ * EU_MAA entry, or a channel this text does not model) says so, and names none.
+ */
+const MAA_CHANNEL = ((e) => (e ? submissionChannelFor(e) : null))(getApplicationType('EU_MAA'));
+
 const MAA_WORKFLOW: SubmissionWorkflow = {
   type: 'maa',
   name: 'Marketing Authorisation Application',
@@ -301,7 +315,7 @@ const MAA_WORKFLOW: SubmissionWorkflow = {
       description: 'Validation, assessment, submission',
       steps: [
         { id: 'maa-8', phase: 'filing', title: 'Full MAA preflight', description: 'EU-specific readiness check including RMP, SmPC, PL', ctdSection: undefined, requiredArtifacts: ['preflight_report'], commands: ['/assess', '/preflight'], roles: ['ra_lead'], depends: ['maa-3', 'maa-4', 'maa-6', 'maa-7'], criticalPath: true },
-        { id: 'maa-9', phase: 'filing', title: 'Submit MAA', description: 'Submit to EMA via CESP/eSubmission gateway', ctdSection: undefined, requiredArtifacts: ['submission_package'], commands: ['/freeze', '/sign', '/submit'], roles: ['ra_lead'], depends: ['maa-8'], criticalPath: true },
+        { id: 'maa-9', phase: 'filing', title: 'Submit MAA', description: MAA_CHANNEL?.kind === 'unconnected' ? `Submit via the ${MAA_CHANNEL.channel}. ${MAA_CHANNEL.applicantStep}` : 'The EU_MAA submission channel is not modelled here; confirm it with EMA before submitting.', ctdSection: undefined, requiredArtifacts: ['submission_package'], commands: ['/freeze', '/sign', '/submit'], roles: ['ra_lead'], depends: ['maa-8'], criticalPath: true },
       ],
     },
   ],

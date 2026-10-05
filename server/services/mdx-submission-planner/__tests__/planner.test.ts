@@ -209,9 +209,9 @@ describe('planGlobalSubmission — honest capability flags & blockers', () => {
     expect(plan.marketPlans).toHaveLength(MARKET_IDS.length);
     const transmitCapable = plan.marketPlans.filter((mp) => mp.canTransmit);
     const transmitIncapable = plan.marketPlans.filter((mp) => !mp.canTransmit);
-    // 12 markets have live gateways; 4 (TW/SA/ZA/MDSAP) do not.
-    expect(transmitCapable.length).toBe(12);
-    expect(transmitIncapable.length).toBe(4);
+    // 11 markets have live gateways; 5 (JP/TW/SA/ZA/MDSAP) do not.
+    expect(transmitCapable.length).toBe(11);
+    expect(transmitIncapable.length).toBe(5);
     for (const mp of transmitIncapable) {
       const hasTransmitBlocker = mp.blockers.some((b) => b.includes('cannot transmit'));
       expect(hasTransmitBlocker).toBe(true);
@@ -322,9 +322,9 @@ describe('planGlobalSubmission — aggregate rollup', () => {
     expect(union).toEqual(plan.marketPlans.map((p) => p.marketId).sort());
   });
 
-  it('reports transmit-capable markets matching the registry (12 with gateways)', () => {
+  it('reports transmit-capable markets matching the registry (11 with gateways)', () => {
     const plan = planGlobalSubmission(emptyProfile(), [...MARKET_IDS]);
-    expect(plan.transmitCapableMarkets).toHaveLength(12);
+    expect(plan.transmitCapableMarkets).toHaveLength(11);
   });
 
   it('rolls up a de-duplicated set of all per-market blockers', () => {

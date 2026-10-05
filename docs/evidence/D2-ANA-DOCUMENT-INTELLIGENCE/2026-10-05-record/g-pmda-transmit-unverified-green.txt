@@ -1,0 +1,63 @@
+# g-pmda-transmit-unverified — GREEN, after the change (working tree on HEAD 9b04ea61, 2026-10-05)
+# npx vitest run server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts server/services/submission-gateways/__tests__/refused-before-wire.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA transmit — refused before the wire until a sourced protocol exists > with every credential set, refuses with UnverifiedTransportError: no socket, no transmittal row, claim releasable 11ms
+ ✓ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA transmit — refused before the wire until a sourced protocol exists > the unguarded implementation refuses the same way (no path around the refusal) 1ms
+ ✓ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA transmit — refused before the wire until a sourced protocol exists > a request missing its sequence number is still refused for that first, before any row 1ms
+ ✓ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA transmit — refused before the wire until a sourced protocol exists > a request missing its submission type is refused for that first, before any row 1ms
+ ✓ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA transmit — refused before the wire until a sourced protocol exists > the source header says the protocol is unverified and names the real system 1ms
+ ✓ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA status and configuration — no poll, no "configured" over an unsourced protocol > checkStatus never opens a request; it returns the stored row as source=stored with the reason 5ms
+ ✓ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > PMDA status and configuration — no poll, no "configured" over an unsourced protocol > isConfigured is false even with every variable set 1ms
+ ✓ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > Japan devices/IVDs — not transmittable > getMarket('jp-pmda').canTransmit is false, with no gateway and an honest note 1ms
+ ✓ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > pre-transmit size limit — the unsourced PMDA figure warns, it does not block > a JP bundle over the recorded 1 GB figure clears with a warning naming the figure as unsourced 2ms
+ ✓ server/services/submission-gateways/__tests__/pmda-gateway-unverified.test.ts > pre-transmit size limit — the unsourced PMDA figure warns, it does not block > a sourced limit still blocks (FDA control) 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — the guard refuses before the gateway > is true for a guard refusal, and the gateway is never called 6ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for TransportError raised by impl.transmit 9ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for GatewayError raised by impl.transmit 4ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for a plain Error raised by impl.transmit 3ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an unmarked ValidationError raised by impl.transmit 3ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an arbitrary error that merely carries transmitted === false (typed, not duck-typed) 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the FDA NextGen REST refusal (UnverifiedTransportError, transmitted === false) 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the requiredAgencyMetadata refusal raised before the transmittal row 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the CESP refusal of a centralised-procedure MAA, raised before the transmittal row 68ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the PMDA refusal over its unsourced protocol 3ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > requiredAgencyMetadata marks both of its refusals, and only those 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > is true for a CredentialError raised by a gateway's credential check (real MHRA transmit, no credentials) 3ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > is true for a TransportError only when its throw site passed NOTHING_TRANSMITTED 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > every `new CredentialError(` in server/ is at an audited pre-request site 430ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > test setup keeps staged bundles out of the repository > resolves the bundle root outside the working tree 0ms
+
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+   Start at  05:09:11
+   Duration  3.81s (transform 3.96s, setup 388ms, import 4.67s, tests 600ms, environment 0ms)
+
+
+# ---- fix round 1 (2026-10-05): the out-of-list pins moved with the change ----
+# Applied: market-registry.test.ts, planner.test.ts (12->11 transmit-capable, 4->5 incapable incl. jp-pmda),
+#          device-market-advisor.test.ts (jp-pmda canTransmit false + 'cannot transmit' blocker; us-fda unchanged).
+# Deleted: server/services/submission-gateways/__tests__/pmda-missing-receipt.test.ts (tested the deleted wire:
+#          receipt parsing, cert-file isConfigured, agency poll). Its live assertions are in pmda-gateway-unverified.test.ts:
+#          missing sequence / missing submission type refused before any row; checkStatus source=stored with a reason.
+# Before this round those 3 pinned files had 5 failing tests (red on the working tree, confirmed by the reviewer).
+#
+# npx vitest run (step tests + the 3 re-pinned files):
+#   Test Files 5 passed (5); Tests 76 passed (76)
+#
+# ---- importer tests: submission-gateways/__tests__, global-markets, mdx-submission-planner, ana-advisory,
+#      gateway-selection, gateway-region-enum-parity, module3-regional-readiness, gatewayTransmittalsNames ----
+# Only remaining failures: transmit-guard-reports-checks.test.ts (2), PRE-EXISTING and unrelated — FDA path, no db mock,
+# resolveGatewayAccount refused by RLS_ENFORCE=on (tenant-rls FAIL-CLOSED).
+ × server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > returns a failed, non-blocking check and the leaf-security report with the gateway result 85ms
+ × server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > reduces to the failed checks and warnings a transmit record carries; null when the guard reported nothing 56ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 46 passed (47)
+      Tests  2 failed | 587 passed (589)
+
+# ---- scripts/ops/ga-readiness-report.mjs --json, with PMDA_URL/APPLICANT_ID/CERT_PATH/KEY_PATH/HMAC_SECRET all set ----
+# row gateway:pmda:pmda_gateway
+# HEAD:    ready | all 5 credential vars set                 <- false readiness: the gateway reads none of them
+# WORKING: blocked | protocol unverified (no regulator source for a PMDA transport; the real system is the 申請電子データシステム, esg.pmda.go.jp); transmit raises UnverifiedTransportError (transmitted:false)

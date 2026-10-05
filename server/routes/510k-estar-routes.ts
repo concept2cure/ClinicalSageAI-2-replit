@@ -1851,6 +1851,10 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
       deviceFlags: validation.data.deviceFlags ?? storedDeviceFlags,
       templateAvailable: fill.templateAvailable,
       fieldMapPopulated: fill.fieldMapPopulated,
+      /* The FDA version of the file the fill would use, so a template FDA has
+         superseded blocks filing instead of reporting "Can file now". */
+      vendoredTemplateVersion: descriptorFor(entry.programType, templateVariant)?.version,
+      asOf: new Date().toISOString().slice(0, 10),
     });
 
     if (!result) {

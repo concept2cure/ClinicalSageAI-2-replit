@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-05T12:25:24.722Z",
+  "generatedAt": "2026-10-05T13:29:53.810Z",
   "git": {
-    "sha": "2879ee384ee6ec2b00d5c82a3392278860b17b4b",
+    "sha": "28e131547eee04e891f0db99408e900d50ea72a3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2042,7 +2042,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1124944
+        "bytes": 1125683
       },
       {
         "file": "shared/schema.ts",
@@ -2062,7 +2062,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 269937
+        "bytes": 272843
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2150,7 +2150,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 131238
+        "bytes": 131841
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2248,7 +2248,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21714
+        "lines": 21728
       },
       {
         "file": "shared/schema.ts",
@@ -2264,7 +2264,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5754
+        "lines": 5822
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2347,12 +2347,12 @@
         "lines": 2992
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2872
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2877
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2867
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2872
       },
       {
         "file": "server/routes/auth.ts",
@@ -2447,12 +2447,16 @@
         "lines": 2093
       },
       {
-        "file": ".claude/skills/gstack/browse/test/commands.test.ts",
-        "lines": 2076
+        "file": "client/src/concept2cure/v2/editor/suggestions.ts",
+        "lines": 2077
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
-        "lines": 2073
+        "lines": 2077
+      },
+      {
+        "file": ".claude/skills/gstack/browse/test/commands.test.ts",
+        "lines": 2076
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
@@ -2465,10 +2469,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
         "lines": 2050
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/suggestions.ts",
-        "lines": 2029
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
@@ -2493,6 +2493,10 @@
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "lines": 2002
+      },
+      {
+        "file": "server/services/combination-products/combination-products-knowledge.ts",
+        "lines": 1973
       },
       {
         "file": "server/routes/c2c/projects.ts",
@@ -2613,10 +2617,6 @@
       {
         "file": "server/services/ana/submission-chat-handler.ts",
         "lines": 1756
-      },
-      {
-        "file": "server/services/combination-products/combination-products-knowledge.ts",
-        "lines": 1726
       },
       {
         "file": "tests/services/ana-biostats.test.ts",

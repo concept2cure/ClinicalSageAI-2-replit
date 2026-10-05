@@ -32,6 +32,12 @@
  * same CoU descriptions the packager uses, so this test and the packager
  * cannot disagree.
  *
+ * The rules themselves (FDA_M1_CODES, PLACEMENT_RULES, HEADING_IDENTITY_RULES,
+ * violationsFor) live in tests/regulatory/ctd-contract.ts since 2026-10-05
+ * (g-ctd-contract-and-consistency), so every registry consistency test holds
+ * its tree to the same copy; their amendments are pinned in
+ * ctd-registry-consistency.test.ts.
+ *
  * Since 2026-10-05 (D2, g-fda-jnda-rule-pack-m1-v2-2) every live FDA CTD rule
  * pack — ind, nda, bla and anda — is held to the list, not only ind:fda. The
  * NDA/BLA packs had required '1.19 Environmental analysis' (FDA 1.19 is
@@ -42,7 +48,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { CV_CONTEXT_OF_USE } from '../../server/services/ectd/controlled-vocab/cv-v4-data';
+import { FDA_M1_CODES, normalize, violationsFor, type TreeNode } from './ctd-contract';
 import { getAllINDSections } from '../../services/regulatory/ind-ectd-sections';
 import { IND_SECTIONS } from '../../server/services/ind/ind-section-registry';
 import { CTD_AUTHORING_GUIDANCE } from '../../server/services/ind/ctd/authoring-guidance';
@@ -55,129 +61,12 @@ import { getWorkflow } from '../../server/services/ana-ri/workflow-orchestration
 
 const ROOT = path.resolve(__dirname, '../..');
 
-/** The FDA-published US regional Module 1 headings, as plain section codes. */
-const FDA_M1_CODES: string[] = CV_CONTEXT_OF_USE.codes
-  .map((c) => c.code)
-  .filter((c) => c.startsWith('us_1'))
-  .map((c) => c.replace(/^us_/, ''));
+/** A rule-pack section: always keyed. */
+type PackNode = TreeNode & { code: string };
 
-function normalize(code: string): string {
-  return String(code ?? '').trim().replace(/^m/i, '');
-}
+type SeededPack = { version: string; superseded: boolean; sections: PackNode[]; file: string };
 
-function isModule1(code: string): boolean {
-  const c = normalize(code);
-  return c === '1' || c.startsWith('1.');
-}
-
-/** A published heading, an ancestor of one, or a descendant of one. */
-function isFdaModule1Placement(code: string): boolean {
-  const c = normalize(code);
-  if (c === '1') return true;
-  if (FDA_M1_CODES.includes(c)) return true;
-  if (FDA_M1_CODES.some((k) => k.startsWith(`${c}.`))) return true; // ancestor
-  if (FDA_M1_CODES.some((k) => c.startsWith(`${k}.`))) return true; // descendant
-  return false;
-}
-
-/**
- * Where FDA files well-known Module 1 content. Each rule: a title pattern and
- * the heading prefix the content must sit under (or `null` when the content is
- * not a Module 1 heading at all in eCTD).
- */
-const PLACEMENT_RULES: Array<{
-  label: string;
-  title: RegExp;
-  /** The heading(s) the content must sit at or under; `null` = not a Module 1 heading in FDA eCTD. */
-  under: string | string[] | null;
-  /**
-   * Also accept an ANCESTOR of an `under` heading. For content that a coarser
-   * tree legitimately files at the parent: a Module 1 readiness aid that lists
-   * 'container/carton labels' at m1.14 is right, while the same title at
-   * 1.14.4 (investigational labeling) or 1.14.5 (foreign labeling) is wrong.
-   */
-  ancestorOk?: boolean;
-}> = [
-  { label: 'cover letter', title: /\bcover letter/i, under: '1.2' },
-  { label: 'FDA transmittal form', title: /\b(1571|1572|356h|3674|3397|2253)\b/i, under: '1.1' },
-  { label: 'financial certification / disclosure (3454/3455)', title: /\b(3454|3455)\b|financial (certification|disclosure)/i, under: '1.3.4' },
-  { label: 'field copy certification', title: /field copy/i, under: '1.3.2' },
-  { label: 'debarment certification', title: /debarment/i, under: '1.3.3' },
-  { label: 'patent information / certification', title: /\bpatent/i, under: '1.3.5' },
-  { label: 'letter of authorization', title: /letter of authorization/i, under: '1.4.1' },
-  { label: 'right of reference', title: /right of reference/i, under: '1.4.2' },
-  { label: 'meeting materials', title: /\bmeeting\b|briefing (book|document|package)/i, under: '1.6' },
-  { label: 'pediatric plan / PREA', title: /pediatric|paediatric|PREA/i, under: '1.9' },
-  { label: 'environmental assessment / categorical exclusion', title: /environmental/i, under: '1.12.14' },
-  { label: 'annual report / DSUR', title: /annual report|DSUR|development safety update/i, under: '1.13' },
-  { label: "investigator's brochure", title: /investigator'?s?\s+brochure/i, under: '1.14.4.1' },
-  { label: 'labeling', title: /labell?ing|package insert|prescribing information|medication guide|carton|container label/i, under: '1.14' },
-  // Carton/container labels and the labeling text (SPL) are draft (1.14.1.x)
-  // or final (1.14.2.x) labeling — never investigational (1.14.4) or foreign
-  // (1.14.5) labeling, and not the listed-drug comparison (1.14.3).
-  { label: 'carton and container labels', title: /carton|container label/i, under: ['1.14.1', '1.14.2'], ancestorOk: true },
-  { label: 'structured product labeling (SPL)', title: /[Ss]tructured [Pp]roduct [Ll]abell?ing|\bSPL\b/, under: ['1.14.1', '1.14.2'], ancestorOk: true },
-  { label: 'promotional material', title: /promotional/i, under: '1.15' },
-  { label: 'REMS / risk management', title: /\bREMS\b|risk management/i, under: '1.16' },
-  { label: 'general investigational plan', title: /general investigational plan/i, under: '1.20' },
-  // Not Module 1 headings in FDA eCTD: the XML backbone is the table of
-  // contents, and previous human experience is clinical content (M2.5 / M5).
-  { label: 'table of contents (the backbone is the TOC)', title: /table of contents/i, under: null },
-  { label: 'previous human experience (Module 2.5 / 5.3.5)', title: /previous human experience/i, under: null },
-];
-
-interface TreeNode {
-  code: string;
-  title: string;
-  parentKey?: string | null;
-  mandatory?: boolean;
-}
-
-/**
- * Headings whose meaning FDA fixes, checked code → title (the PLACEMENT_RULES
- * run title → code). A node AT the heading must say what the heading is.
- */
-const HEADING_IDENTITY_RULES: Array<{ code: string; meaning: string; title: RegExp }> = [
-  { code: '1.19', meaning: 'Pre-EUA and EUA', title: /\bEUA\b|emergency use/i },
-  { code: '1.14.5', meaning: 'Foreign labeling', title: /foreign/i },
-];
-
-function sitsUnder(code: string, heading: string, ancestorOk: boolean): boolean {
-  if (code === heading || code.startsWith(`${heading}.`)) return true;
-  return ancestorOk && (code === '1' || heading.startsWith(`${code}.`));
-}
-
-function violationsFor(nodes: TreeNode[]): string[] {
-  const out: string[] = [];
-  for (const n of nodes) {
-    const code = normalize(n.code);
-    if (!isModule1(code)) continue;
-    if (!isFdaModule1Placement(code)) {
-      out.push(`${n.code} "${n.title}" is not an FDA Module 1 heading (nor an ancestor/descendant of one)`);
-    }
-    for (const rule of PLACEMENT_RULES) {
-      if (!rule.title.test(n.title)) continue;
-      if (rule.under === null) {
-        out.push(`${n.code} "${n.title}" — ${rule.label} is not filed as a Module 1 section in FDA eCTD`);
-        continue;
-      }
-      const headings = Array.isArray(rule.under) ? rule.under : [rule.under];
-      if (!headings.some((h) => sitsUnder(code, h, rule.ancestorOk === true))) {
-        out.push(`${n.code} "${n.title}" — ${rule.label} files under ${headings.join(' or ')}`);
-      }
-    }
-    for (const id of HEADING_IDENTITY_RULES) {
-      if (code === id.code && !id.title.test(n.title)) {
-        out.push(`${n.code} "${n.title}" — FDA ${id.code} is ${id.meaning}`);
-      }
-    }
-  }
-  return out;
-}
-
-type SeededPack = { version: string; superseded: boolean; sections: TreeNode[]; file: string };
-
-function toNodes(sections: Array<{ key: string; label: string; parent_key?: string | null; mandatory?: boolean }>): TreeNode[] {
+function toNodes(sections: Array<{ key: string; label: string; parent_key?: string | null; mandatory?: boolean }>): PackNode[] {
   return sections.map((s) => ({ code: s.key, title: s.label, parentKey: s.parent_key ?? null, mandatory: !!s.mandatory }));
 }
 
@@ -220,7 +109,7 @@ function packsSeededBy(sql: string, file: string, docType: FdaCtdDocType): Seede
 }
 
 /** The <docType>:fda rule pack as seeded by the live migration set (the one version nothing supersedes). */
-function liveFdaPack(docType: FdaCtdDocType): { version: string; sections: TreeNode[] } {
+function liveFdaPack(docType: FdaCtdDocType): { version: string; sections: PackNode[] } {
   const dir = path.join(ROOT, 'migrations');
   const files = fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
   const found: SeededPack[] = [];
@@ -239,7 +128,7 @@ function liveFdaPack(docType: FdaCtdDocType): { version: string; sections: TreeN
 }
 
 /** The Module 1 codes the compile/validate/readiness gates require of a pack. */
-function requiredM1(pack: { sections: TreeNode[] }): string[] {
+function requiredM1(pack: { sections: PackNode[] }): string[] {
   return requiredSectionsFromPack(
     pack.sections.map((n) => ({ key: n.code, parent_key: n.parentKey ?? null, mandatory: n.mandatory })),
   ).find((m) => m.code === 'm1')!.requiredSections;
@@ -330,7 +219,8 @@ describe('FDA Module 1 numbering — one published heading list, every tree agre
     expect(violationsFor([{ code: '1.19', title: 'Environmental analysis' }]).join('\n')).toMatch(/1\.12\.14[\s\S]*1\.19 is Pre-EUA and EUA/);
     expect(violationsFor([{ code: '1.14.5', title: 'Structured product labeling (SPL)' }]).join('\n')).toMatch(/files under 1\.14\.1 or 1\.14\.2[\s\S]*Foreign labeling/);
     expect(violationsFor([{ code: '1.14.4', title: 'Label and container labeling' }])).toHaveLength(1);
-    expect(violationsFor([{ code: '1.3.5', title: 'Field copy certification' }])).toHaveLength(1);
+    // Caught twice since 2026-10-05: field copy files under 1.3.2, and FDA 1.3.5 is patent and exclusivity.
+    expect(violationsFor([{ code: '1.3.5', title: 'Field copy certification' }]).join('\n')).toMatch(/files under 1\.3\.2[\s\S]*1\.3\.5 is patent and exclusivity/);
     expect(violationsFor([{ code: '1.15.2', title: 'Patent certification (Paragraph I / II / III / IV)' }])).toHaveLength(1);
     // …and accept what a correct or coarser tree files.
     expect(violationsFor([

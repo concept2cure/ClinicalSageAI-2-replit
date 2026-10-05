@@ -3022,6 +3022,18 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-fda-jnda-rule-pack-m1-v2-2-*.
   'migrations/20261005_fda_jnda_m1_outline_v2_2.sql',
 
+  // ── The PMA outline names FDA's software Documentation Level (2026-10-05, D2)
+  // pma:fda fda-pma-21cfr814-20-v1.1: v1.0 node for node except C.4, which read
+  // "Software description and level of concern" — the 2005 construct FDA's
+  // June 2023 device-software guidance replaced with the Basic/Enhanced
+  // Documentation Level. ON CONFLICT DO NOTHING, provenance UPDATE after
+  // 20260810c, supersede of exactly v1.0, a 67-node / C.4 / live-pack RAISE; no
+  // DROP. 20260810's supersede was amended in place in the same change to name
+  // 'fda-pma-2024' only — its `version <> v1.0` form re-superseded this row on
+  // every replay. Documents bound to v1.0 keep their outline (decision 6).
+  // Evidence docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-pma-pack-software-doc-level-*.
+  'migrations/20261005b_pma_fda_outline_v1_1_software_documentation_level.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

@@ -1,0 +1,185 @@
+# g-eu-mdr-ivdr-rule-table — RED (retry, 2026-10-05; refreshed in review fix rounds 4 and 5)
+
+## 1. Final test file (57 cases) against the HEAD engine (HEAD content of server/services/market-specs/device-classification.ts put back in place for the run, then restored byte-identical)
+Command: npx vitest run server/services/market-specs/__tests__/device-classification.test.ts
+
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a non-invasive device is Class I 6ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a transient surgically invasive device is IIa; a short-term one is also IIa (Rule 7 default) 40ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a transient surgically invasive device that is absorbed is IIb under Rule 6 (not III, not "Rule 8/17") 2ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a short-term absorbed device is III under Rule 7; an implantable absorbed one is III under Rule 8 7ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > an implantable device is IIb, or IIa when placed in the teeth 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > an implantable device contacting the CNS/central circulation is III 0ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a pacemaker (active implantable) is III under Rule 8 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > breast implants, surgical meshes, joint replacements and spinal implants are III under Rule 8 9ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a device incorporating a medicinal substance is III (Rule 14) 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > software in an implant makes it an active implantable (Article 2(4)), the fail-closed reading 66ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses to state a class when the facts that decide it are missing 46ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > takes the HIGHEST applicable class and traces every rule that fired 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > states no class for an empty fact set: Rule 1 is not a verdict on facts never given 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 11 has IIa, IIb and III tiers 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > states no class below III for any device whose invasiveness was never given: an implant would be Rule 8 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 10: an active diagnostic device for a patient in immediate danger is IIb; the trace says why 35ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > never drops a qualifier given without the fact it qualifies: names that fact instead of stating a lower class 4ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 12: an active device administering a medicine is IIa, IIb only when potentially hazardous 2ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses a qualifier whose own fact is stated false, rather than picking one reading 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 17 is X-ray image recording (IIa); Rule 22 closed-loop diagnostic function is III 30ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > states no class for an active device whose invasiveness was never given: Rule 13 is a default, too 0ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses a fact it does not know, rather than ignoring it and stating the class of a device without it 17ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses a fact of the wrong type or outside its values ("true" is not true; "long" is not a duration) 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses contradictory invasiveness rather than picking one reading 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR classification (Annex VIII Rules 1–7) > blood-donation screening is Class D (Rule 1, first indent) 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR classification (Annex VIII Rules 1–7) > Rule 1 is cited by indent, never by a letter it does not have (the citation form MDCG 2020-16 uses) 22ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > blood grouping with no marker named states no class: the most common devices (ABO/RhD) are D 2ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > refuses contradictory Rule 2 facts rather than picking one reading 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > blood grouping is C, and D only for a listed Rule 2 marker 26ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > reads a hostile marker in linear time and refuses an over-long one (no catastrophic backtracking) 40ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > reads the Annex's own system names, the ISBT codes and the usual aliases of a listed Rule 2 marker as Class D 27ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > the EU rule tables are the one record, each row with a basis > every row carries a well-formed basis, labelled recall with the EUR-Lex URL until checked 47ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > a recognised marker outside the Rule 2 list stays Class C 2ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > the EU rule tables are the one record, each row with a basis > the trace says the wording is recall, never checked regulator text 6ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a companion diagnostic is Class C under Rule 3(f) 0ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > refuses a blood-grouping marker it cannot read rather than stating Class C 59ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > Rule 3 sub-points are cited by letter 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > exempt device → exempt 0ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > reads a Rule 3 sub-point however it is written: one string or a list, any letter case, with or without "Rule 3" 5ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > Class III → PMA 0ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses a Rule 3 sub-point it cannot read rather than falling through to Rule 6 (Class B) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > predicate available → 510(k) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > novel low-to-moderate risk, no predicate → De Novo 0ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > self-testing is Class C under Rule 4(a) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > no predicate and risk unestablished → PMA (conservative default) 0ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a self-test for an enumerated Rule 4(a) analyte is Class B, however the analyte is written 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > every recommendation carries a confirm caveat 0ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses a self-test analyte it cannot read rather than guessing B or C 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a control without an assigned value is Class B under Rule 7 69ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a general lab reagent/instrument is Class A 0ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > gives Class B (Rule 6) only when the facts given say each higher-class rule does not apply 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > states no class when no IVDR fact was given at all: Rule 6 is not a verdict on facts never given 0ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > one false fact is not a statement that no other rule applies: Rule 6 names the facts still unstated 0ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses contradictory Rule 3 facts rather than picking one reading 0ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses an IVDR fact it does not know, or of the wrong type 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > takes the highest class (infectious + self-test → C) 0ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > the EU rule tables are the one record, each row with a basis > MDR table covers Rules 1–22 and IVDR table Rules 1–7 0ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 44 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  44 failed | 13 passed (57)
+
+## 2. Round-3 review cases against the REVERTED engine (scratchpad abandoned-g-eu-mdr-ivdr-rule-table/tracked.diff applied to HEAD)
+The new test's ReDoS case (n=30) cannot run against the reverted engine: the regex blocks the event loop for longer than any timeout. This tsx probe (scratchpad retry-eu/probe-abandoned.ts) shows the growth and every other round-3 defect:
+
+bloodGroupingMarker Rh0 → "C"
+bloodGroupingMarker RH01 → "C"
+bloodGroupingMarker KEL01 → "C"
+bloodGroupingMarker ABO01 → "C"
+bloodGroupingMarker JK01 → "C"
+bloodGroupingMarker FY01 → "C"
+classifyMdr({active:true}) → ["I","Rule 13",[]]
+classifyMdr({pacemaker:true}) → null
+classifyIvdr({cancerScreening:true}) → "B"
+classifyIvdr({selfTesting:"yes"}) → "C"
+classifyIvdr({}) → "B"
+selfTestAnalyte "urine glucose" → "C"
+ReDoS 'HLA'+'1:'x6+'!' (16 chars): 1 ms
+ReDoS 'HLA'+'1:'x8+'!' (20 chars): 6 ms
+ReDoS 'HLA'+'1:'x10+'!' (24 chars): 104 ms
+ReDoS 'HLA'+'1:'x11+'!' (26 chars): 520 ms
+ReDoS 'HLA'+'1:'x12+'!' (28 chars): 2596 ms
+
+Each line is a case the new test pins: Rh0 / RH01 / KEL01 ... must be D or refused, not C; {active:true} must be not determined, not I under Rule 13; unknown keys and non-boolean values must be refused, not ignored (B / null / C); {} must be not determined, not B; 'urine glucose' must be B; the marker reader must be linear.
+
+## 3. Review fix round 4: the new cases against the engine as it stood at the end of the retry (before this fix round)
+The review of the retry found three blocking fail-open paths, probed with tsx on that engine (reviewer's probes, scratchpad rev-eu-probe*.ts):
+- classifyMdr({invasive:false, active:true, ionisingRadiation:true}) → I, "Rule 13", missingFacts [] (an X-ray/CT generator; Rule 10 gives IIb)
+- classifyMdr({invasive:false, active:true, energyExchangePotentiallyHazardous:true}) → I, Rule 13 (Rule 9 gives IIb)
+- classifyMdr({invasive:false, active:true, administrationPotentiallyHazardous:true}) → I
+- classifyMdr({surgicallyInvasive:true, duration:'transient', administrationPotentiallyHazardous:true}) → IIa
+- classifyMdr({bodyOrificeInvasive:true, duration:'transient', inhalationEssentialImpactOrLifeThreatening:true}) → I, Rule 5 (Rule 20 gives IIb)
+- classifyIvdr({bloodGrouping:true}) → C, "Rule 2", missingFacts [] (the test pinned it: expect(...).toBe('C'))
+- bloodGroupingMarker "HLA-ABO", "HLA-ABO typing", "HLA-A:RhD", "HPA-RHD", "HLA-KELL" → C (open-ended typing reader)
+and, minor: classifyIvdr({companionDiagnostic:false}) → B "Rule 6"; contradictory IVDR facts accepted; {activeTherapeutic:true}, {active:true, administersMedicine:true}, {software:true} → IIa / IIa / I with invasiveness never stated.
+
+The final test file against that engine (run in the fix round, scratchpad euclass-fix1-red.txt): 9 failed / 48 passed of 57.
+
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a non-invasive device is Class I 6ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a transient surgically invasive device is IIa; a short-term one is also IIa (Rule 7 default) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a transient surgically invasive device that is absorbed is IIb under Rule 6 (not III, not "Rule 8/17") 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a short-term absorbed device is III under Rule 7; an implantable absorbed one is III under Rule 8 4ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > an implantable device is IIb, or IIa when placed in the teeth 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > an implantable device contacting the CNS/central circulation is III 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a pacemaker (active implantable) is III under Rule 8 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > breast implants, surgical meshes, joint replacements and spinal implants are III under Rule 8 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a device incorporating a medicinal substance is III (Rule 14) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > software in an implant makes it an active implantable (Article 2(4)), the fail-closed reading 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > takes the HIGHEST applicable class and traces every rule that fired 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 11 has IIa, IIb and III tiers 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 10: an active diagnostic device for a patient in immediate danger is IIb; the trace says why 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 12: an active device administering a medicine is IIa, IIb only when potentially hazardous 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 17 is X-ray image recording (IIa); Rule 22 closed-loop diagnostic function is III 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses to state a class when the facts that decide it are missing 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > states no class for an empty fact set: Rule 1 is not a verdict on facts never given 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > states no class below III for any device whose invasiveness was never given: an implant would be Rule 8 11ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > never drops a qualifier given without the fact it qualifies: names that fact instead of stating a lower class 2ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses a qualifier whose own fact is stated false, rather than picking one reading 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > states no class for an active device whose invasiveness was never given: Rule 13 is a default, too 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses a fact it does not know, rather than ignoring it and stating the class of a device without it 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses a fact of the wrong type or outside its values ("true" is not true; "long" is not a duration) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses contradictory invasiveness rather than picking one reading 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR classification (Annex VIII Rules 1–7) > blood-donation screening is Class D (Rule 1, first indent) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR classification (Annex VIII Rules 1–7) > Rule 1 is cited by indent, never by a letter it does not have (the citation form MDCG 2020-16 uses) 10ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > blood grouping with no marker named states no class: the most common devices (ABO/RhD) are D 7ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > refuses contradictory Rule 2 facts rather than picking one reading 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > blood grouping is C, and D only for a listed Rule 2 marker 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > reads the Annex's own system names, the ISBT codes and the usual aliases of a listed Rule 2 marker as Class D 5ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > a recognised marker outside the Rule 2 list stays Class C 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > refuses a blood-grouping marker it cannot read rather than stating Class C 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > reads a hostile marker in linear time and refuses an over-long one (no catastrophic backtracking) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a companion diagnostic is Class C under Rule 3(f) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > Rule 3 sub-points are cited by letter 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > reads a Rule 3 sub-point however it is written: one string or a list, any letter case, with or without "Rule 3" 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses a Rule 3 sub-point it cannot read rather than falling through to Rule 6 (Class B) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > self-testing is Class C under Rule 4(a) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a self-test for an enumerated Rule 4(a) analyte is Class B, however the analyte is written 3ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses a self-test analyte it cannot read rather than guessing B or C 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a control without an assigned value is Class B under Rule 7 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a general lab reagent/instrument is Class A 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > gives Class B (Rule 6) only when the facts given say each higher-class rule does not apply 0ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > states no class when no IVDR fact was given at all: Rule 6 is not a verdict on facts never given 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > one false fact is not a statement that no other rule applies: Rule 6 names the facts still unstated 1ms
+ × server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses contradictory Rule 3 facts rather than picking one reading 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses an IVDR fact it does not know, or of the wrong type 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > takes the highest class (infectious + self-test → C) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > the EU rule tables are the one record, each row with a basis > MDR table covers Rules 1–22 and IVDR table Rules 1–7 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > the EU rule tables are the one record, each row with a basis > every row carries a well-formed basis, labelled recall with the EUR-Lex URL until checked 5ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > the EU rule tables are the one record, each row with a basis > the trace says the wording is recall, never checked regulator text 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > exempt device → exempt 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > Class III → PMA 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > predicate available → 510(k) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > novel low-to-moderate risk, no predicate → De Novo 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > no predicate and risk unestablished → PMA (conservative default) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > every recommendation carries a confirm caveat 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  9 failed | 48 passed (57)
+
+## 4. Review fix round 5: the two new cases against the engine as it stood at the end of fix round 4 (before this round)
+The review of fix round 4 probed (scratchpad rev5/probe.ts) and found:
+- classifyMdr({implantable:true, monitorsVitalParametersImmediateDanger:true}) → IIb, "Rule 8; Rule 10", missingFacts [] (an implantable loop recorder; an active implantable is Class III under Rule 8)
+- the same with diagnosisPatientInImmediateDanger and controlsActiveTherapeuticIIb → IIb
+  (those Rule 9/10 rows fire without `active`, but the facts were not in ACTIVE_FACTS, so the device was not active and Rule 8's active-implantable indent never fired)
+- classifyMdr({invasive:false, administersMedicine:true, administrationPotentiallyHazardous:true}) → I, Rule 1 (minor: the qualifier was dropped silently)
+- classifyMdr({bodyOrificeInvasive:true, duration:'short_term', administersMedicine:true, administrationPotentiallyHazardous:true}) → IIa, Rule 5 (minor, same)
+
+Command: npx vitest run server/services/market-specs/__tests__/device-classification.test.ts (new tests added, engine not yet changed; scratchpad euclass-fix5-red.txt)
+(After this run the two tests moved, unchanged, into their own describe block 'MDR classification — a fact names the device it describes', to keep the enclosing block under eslint's max-lines-per-function.)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > a device that is active by a Rule 9/10 fact is an active implantable when implanted (Rule 8 → III, not IIb)
+AssertionError: monitorsVitalParametersImmediateDanger: expected 'IIb' to be 'III' // Object.is equality
+ ❯ server/services/market-specs/__tests__/device-classification.test.ts:211:29
+ FAIL  server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > never drops administrationPotentiallyHazardous on a device no rule reads it for (only Rules 6 and 12 do)
+AssertionError: {"invasive":false,"administersMedicine":true,"administrationPotentiallyHazardous":true}: expected 'I' to be null
+ ❯ server/services/market-specs/__tests__/device-classification.test.ts:222:46
+      Tests  2 failed | 57 passed (59)
+
+The final 59-case test file against the HEAD engine, run from a scratch copy (git show HEAD:server/services/market-specs/device-classification.ts into scratchpad headrun5/, the test copied beside it, the shared/ import made absolute; the checkout was not touched):
+ Test Files  1 failed (1)
+      Tests  46 failed | 13 passed (59)

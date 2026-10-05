@@ -1,0 +1,201 @@
+# red: g-estar-version-currency, 2026-10-05T11:15:02Z, HEAD 76e7528c; the four estar source files were set to their HEAD content for this run (estar-versions.ts estar-filing-readiness.ts estar-template-registry.ts estar-mapper.ts), then restored
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (a) every eSTAR version row carries its provenance > has an ISO lastVerified, an fda.gov sourceUrl and a confidence on every row 106ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (a) every eSTAR version row carries its provenance > names nIVD 7.1, IVD 7.1 and PreSTAR 3.1 current, labelled recall until a verbatim read is filed 55ms
+   → expected '7.0' to be '7.1' // Object.is equality
+ × server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (a) every eSTAR version row carries its provenance > demotes 7.0 / 3.0 to retiring without inventing a retirement date 2ms
+   → expected 'current' to be 'retiring' // Object.is equality
+ × server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > (b) a 7.0 template against current 7.1 cannot file, and the blocker names both versions 3ms
+   → expected undefined to be false // Object.is equality
+ × server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > (c) a template matching FDA's current version files — the gate is not stuck closed 59ms
+   → expected undefined to be true // Object.is equality
+ × server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > (d) an absent or unpinned template version fails closed 30ms
+   → expected undefined to be false // Object.is equality
+ × server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > the shared comparison is the one the template registry reports, from the manifest version 1ms
+   → expected '7.0' to be '7.1' // Object.is equality
+ × server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (e) the table's age reuses the currency registry > ages from the oldest row with verificationAgeDays, and is stale past the registry maximum 1ms
+   → versionTableAgeDays is not a function
+ × server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (e) the table's age reuses the currency registry > reports versionTableStale on the readiness result, failing closed without an as-of date 1ms
+   → expected undefined to be false // Object.is equality
+ × server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (f) the human-factors slot cites FDA's final HF content guidance > names IEC 62366-1 and "Content of Human Factors Information in Medical Device Marketing Submissions" 10ms
+   → expected 'IEC 62366-1; FDA human factors guidan…' to match /Content of Human Factors Information …/
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (a) every eSTAR version row carries its provenance > has an ISO lastVerified, an fda.gov sourceUrl and a confidence on every row
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts:96:58
+     94|   it('has an ISO lastVerified, an fda.gov sourceUrl and a confidence o…
+     95|     for (const v of ESTAR_VERSIONS) {
+     96|       expect(v.lastVerified, `${v.family} ${v.version}`).toMatch(/^\d{…
+       |                                                          ^
+     97|       expect(v.sourceUrl, `${v.family} ${v.version}`).toBe(ESTAR_PROGR…
+     98|       expect(['regulator-text', 'recall'], `${v.family} ${v.version}`)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (a) every eSTAR version row carries its provenance > names nIVD 7.1, IVD 7.1 and PreSTAR 3.1 current, labelled recall until a verbatim read is filed
+AssertionError: expected '7.0' to be '7.1' // Object.is equality
+
+Expected: "7.1"
+Received: "7.0"
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts:103:48
+    101|
+    102|   it('names nIVD 7.1, IVD 7.1 and PreSTAR 3.1 current, labelled recall…
+    103|     expect(currentVersionFor('nivd')?.version).toBe('7.1');
+       |                                                ^
+    104|     expect(currentVersionFor('ivd')?.version).toBe('7.1');
+    105|     expect(currentVersionFor('prestar')?.version).toBe('3.1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (a) every eSTAR version row carries its provenance > demotes 7.0 / 3.0 to retiring without inventing a retirement date
+AssertionError: expected 'current' to be 'retiring' // Object.is equality
+
+Expected: "retiring"
+Received: "current"
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts:114:24
+    112|     for (const [family, version] of [['nivd', '7.0'], ['ivd', '7.0'], …
+    113|       const r = getVersionRecord(family, version)!;
+    114|       expect(r.status).toBe('retiring');
+       |                        ^
+    115|       expect(r.retirementDate).toBeNull();
+    116|       expect(r.note).toMatch(/retirement date .*not (found|verified)/i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > (b) a 7.0 template against current 7.1 cannot file, and the blocker names both versions
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts:128:38
+    126|     expect(r.contentReady).toBe(true);
+    127|     expect(r.officialTemplateProducible).toBe(true);
+    128|     expect(r.templateVersionCurrent).toBe(false);
+       |                                      ^
+    129|     expect(r.canFileNow).toBe(false);
+    130|     expect(r.blockers).toContain("Official template on file is eSTAR v…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > (c) a template matching FDA's current version files — the gate is not stuck closed
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts:135:38
+    133|   it('(c) a template matching FDA\'s current version files — the gate …
+    134|     const r = assess510k('7.1');
+    135|     expect(r.templateVersionCurrent).toBe(true);
+       |                                      ^
+    136|     expect(r.canFileNow).toBe(true);
+    137|     expect(r.blockers).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > (d) an absent or unpinned template version fails closed
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts:143:40
+    141|     for (const v of [undefined, 'unset', '']) {
+    142|       const r = assess510k(v);
+    143|       expect(r.templateVersionCurrent).toBe(false);
+       |                                        ^
+    144|       expect(r.canFileNow).toBe(false);
+    145|       expect(r.blockers.some((b) => /current version is v7\.1/.test(b)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > the shared comparison is the one the template registry reports, from the manifest version
+AssertionError: expected '7.0' to be '7.1' // Object.is equality
+
+Expected: "7.1"
+Received: "7.0"
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts:159:30
+    157|       requireTemplate: false,
+    158|     });
+    159|     expect(t.programVersion).toBe('7.1');
+       |                              ^
+    160|     expect(t.vendoredVersion).toBe('7.0');
+    161|     expect(t.versionCurrent).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (e) the table's age reuses the currency registry > ages from the oldest row with verificationAgeDays, and is stale past the registry maximum
+TypeError: versionTableAgeDays is not a function
+ ❯ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts:172:12
+    170|     const oldest = ESTAR_VERSIONS.map((v) => v.lastVerified).sort()[0];
+    171|     const asOf = '2026-12-01';
+    172|     expect(versionTableAgeDays(asOf)).toBe(
+       |            ^
+    173|       verificationAgeDays({ lastVerified: oldest } as RegulatoryFact, …
+    174|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (e) the table's age reuses the currency registry > reports versionTableStale on the readiness result, failing closed without an as-of date
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts:186:57
+    184|   it('reports versionTableStale on the readiness result, failing close…
+    185|     const oldest = ESTAR_VERSIONS.map((v) => v.lastVerified).sort()[0];
+    186|     expect(assess510k('7.1', oldest).versionTableStale).toBe(false);
+       |                                                         ^
+    187|     expect(assess510k('7.1', '2030-01-01').versionTableStale).toBe(tru…
+    188|     expect(assess510k('7.1').versionTableStale).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (f) the human-factors slot cites FDA's final HF content guidance > names IEC 62366-1 and "Content of Human Factors Information in Medical Device Marketing Submissions"
+AssertionError: expected 'IEC 62366-1; FDA human factors guidan…' to match /Content of Human Factors Information …/
+
+- Expected:
+/Content of Human Factors Information in Medical Device Marketing Submissions/
+
++ Received:
+"IEC 62366-1; FDA human factors guidance"
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts:198:28
+    196|       if (!hf) continue; // the IVD registry may not carry the slot
+    197|       expect(hf.authority).toMatch(/IEC 62366-1/);
+    198|       expect(hf.authority).toMatch(/Content of Human Factors Informati…
+       |                            ^
+    199|       expect(hf.authority).toMatch(/HF Submission Categor(y|ies) 1/);
+    200|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed (10)
+   Start at  11:15:05
+   Duration  3.74s (transform 675ms, setup 514ms, import 313ms, tests 387ms, environment 16ms)
+

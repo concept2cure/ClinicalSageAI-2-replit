@@ -351,14 +351,6 @@ const PROFILE_DEFS: Readonly<Record<ProfiledSubmissionType, ProfileDef>> = {
     m2m5: BLA_M2_M5,
     basis: '21 CFR 601.2; FDA eCTD Module 1 (region profile); ICH M4',
   },
-  /* KNOWN DEFECT, owned by the EU region profile, not fixed here: the EU
-     Module 1 template marks 1.1 (Comprehensive Table of Contents) required,
-     and EMA's eCTD guidance says no table of contents is required in eCTD
-     because the XML backbone acts as one. So this profile reports m1.1
-     missing on every correctly built EU eCTD MAA until
-     server/services/regional-ctd-templates.ts marks EU 1.1 not required for
-     eCTD. Filtering it out here would make a second source of EU Module 1
-     truth; required-sections-profile.test.ts pins the defect with it.fails. */
   MAA: {
     region: 'eu',
     module1App: 'maa',

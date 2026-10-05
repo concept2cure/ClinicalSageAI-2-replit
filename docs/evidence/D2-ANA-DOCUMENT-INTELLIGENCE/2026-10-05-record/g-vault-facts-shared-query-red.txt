@@ -1,0 +1,104 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > is exported beside readVaultFacts 8ms
+   → expected 'undefined' to be 'function' // Object.is equality
+ × server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > issues the identical scoped statement and parameters as readVaultFacts, and selects d.id 1ms
+   → expected 'undefined' to be 'function' // Object.is equality
+ × server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > returns each document id with the same facts readVaultFacts returns 1ms
+   → expected 'undefined' to be 'function' // Object.is equality
+ ✓ server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > leaves the plan’s facts exactly as they were: no id, same fields 2ms
+ × server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > cuts both reads at the same cap and says so in both 1ms
+   → expected 'undefined' to be 'function' // Object.is equality
+ × server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > a failed read throws from both; neither reports an empty Vault 1ms
+   → expected 'undefined' to be 'function' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > is exported beside readVaultFacts
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/ana/__tests__/vault-facts-shared-query.test.ts:45:74
+     43| describe('the Vault facts query that also returns document ids', () =>…
+     44|   it('is exported beside readVaultFacts', () => {
+     45|     expect(typeof (tools as Record<string, unknown>).readVaultDocument…
+       |                                                                          ^
+     46|   });
+     47|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > issues the identical scoped statement and parameters as readVaultFacts, and selects d.id
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/ana/__tests__/vault-facts-shared-query.test.ts:50:39
+     48|   it('issues the identical scoped statement and parameters as readVaul…
+     49|     const readVaultDocuments = (tools as Record<string, unknown>).read…
+     50|     expect(typeof readVaultDocuments).toBe('function');
+       |                                       ^
+     51|     const a = recordingPool(ROWS);
+     52|     const b = recordingPool(ROWS);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > returns each document id with the same facts readVaultFacts returns
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/ana/__tests__/vault-facts-shared-query.test.ts:73:39
+     71|       pool: KnowledgeQueryable, organizationId: number, programId: str…
+     72|     ) => Promise<{ documents: Array<Record<string, unknown>>; truncate…
+     73|     expect(typeof readVaultDocuments).toBe('function');
+       |                                       ^
+     74|     const docs = await readVaultDocuments(recordingPool(ROWS).pool, OR…
+     75|     const facts = await readVaultFacts(recordingPool(ROWS).pool, ORG, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > cuts both reads at the same cap and says so in both
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/ana/__tests__/vault-facts-shared-query.test.ts:95:39
+     93|       pool: KnowledgeQueryable, organizationId: number, programId: str…
+     94|     ) => Promise<{ documents: unknown[]; truncated: boolean }>;
+     95|     expect(typeof readVaultDocuments).toBe('function');
+       |                                       ^
+     96|     const many = Array.from({ length: VAULT_FACTS_MAX + 1 }, (_, i) =>…
+     97|     const docs = await readVaultDocuments(recordingPool(many).pool, OR…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/ana/__tests__/vault-facts-shared-query.test.ts > the Vault facts query that also returns document ids > a failed read throws from both; neither reports an empty Vault
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/ana/__tests__/vault-facts-shared-query.test.ts:107:39
+    105|   it('a failed read throws from both; neither reports an empty Vault',…
+    106|     const readVaultDocuments = (tools as Record<string, unknown>).read…
+    107|     expect(typeof readVaultDocuments).toBe('function');
+       |                                       ^
+    108|     const failing: KnowledgeQueryable = { async query() { throw new Er…
+    109|     await expect(readVaultFacts(failing, ORG, PROGRAM)).rejects.toThro…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  11:46:19
+   Duration  2.39s (transform 1.27s, setup 142ms, import 1.26s, tests 25ms, environment 0ms)
+

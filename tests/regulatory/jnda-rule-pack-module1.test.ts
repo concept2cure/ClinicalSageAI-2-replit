@@ -107,6 +107,10 @@ async function live(pg: PGlite, docType: string, agency: string) {
 const requiredM1 = (sections: Section[]) =>
   requiredSectionsFromPack(sections).find((m) => m.code === 'm1')!.requiredSections;
 
+// Each case boots PGlite and replays the migration set (3–6 s alone, far more under a loaded
+// run), so it takes the explicit per-test budget vitest.config.ts asks PGlite suites to pass.
+const DB_TIMEOUT_MS = 60_000;
+
 describe('jnda:pmda files the draft RMP at Module 1 section 1.11', () => {
   it('the migration is on the deploy path, above the tenant sweep', () => {
     expect(fs.existsSync(path.join(ROOT, MIGRATION)), `${MIGRATION} does not exist`).toBe(true);
@@ -136,7 +140,7 @@ describe('jnda:pmda files the draft RMP at Module 1 section 1.11', () => {
     const m2to5 = (s: Section[]) => s.filter((x) => !/^(M1|1\.)/.test(x.key)).map(({ key, parent_key, label, mandatory }) => ({ key, parent_key, label, mandatory }));
     expect(m2to5(secs)).toEqual(m2to5(old.required_sections));
     await pg.close();
-  });
+  }, DB_TIMEOUT_MS);
 
   it('every new row is live, every old row is superseded by it, and each records its basis', async () => {
     const pg = await boot();
@@ -156,7 +160,7 @@ describe('jnda:pmda files the draft RMP at Module 1 section 1.11', () => {
     expect((await row(pg, 'anda', 'fda', 'fda-anda-21cfr314-94-v1.1')).uncertainties).toMatch(/1\.3\.5\.3/);
     expect((await row(pg, 'jnda', 'pmda', 'ich-m4-v2.2')).uncertainties).toMatch(/1\.11/);
     await pg.close();
-  });
+  }, DB_TIMEOUT_MS);
 
   it('re-runs on every deploy without changing anything (Rule 1)', async () => {
     const pg = await boot();
@@ -169,7 +173,7 @@ describe('jnda:pmda files the draft RMP at Module 1 section 1.11', () => {
     await deploy(pg);
     expect(await snapshot()).toEqual(first);
     await pg.close();
-  });
+  }, DB_TIMEOUT_MS);
 
   it('refuses a truncated row already holding a new key — ON CONFLICT DO NOTHING would otherwise keep it', async () => {
     const pg = await boot();
@@ -177,7 +181,7 @@ describe('jnda:pmda files the draft RMP at Module 1 section 1.11', () => {
                    VALUES ('jnda', 'pmda', 'ich-m4-v2.2', 'truncated', '[{"key":"M1","parent_key":null,"label":"M1","mandatory":true,"path_order":1}]'::jsonb, DATE '2026-10-05')`);
     await expect(deploy(pg)).rejects.toThrow(/jnda:pmda ich-m4-v2\.2/);
     await pg.close();
-  });
+  }, DB_TIMEOUT_MS);
 
   it('a later version superseding a 2026-10-05 row does not break the replay', async () => {
     const pg = await boot();
@@ -191,5 +195,5 @@ describe('jnda:pmda files the draft RMP at Module 1 section 1.11', () => {
     expect((await live(pg, 'nda', 'fda')).map((r) => r.version)).toEqual(['ich-m4-v2.3']);
     expect((await row(pg, 'nda', 'fda', 'ich-m4-v2.1')).superseded_by).toBe('ich-m4-v2.2');
     await pg.close();
-  });
+  }, DB_TIMEOUT_MS);
 });

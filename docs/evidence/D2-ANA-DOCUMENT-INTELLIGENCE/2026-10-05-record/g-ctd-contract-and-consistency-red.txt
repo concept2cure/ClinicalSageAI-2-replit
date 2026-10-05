@@ -1,0 +1,375 @@
+# g-ctd-contract-and-consistency — RED (2026-10-05)
+# Round 1: tests/regulatory/ctd-registry-consistency.test.ts written before tests/regulatory/ctd-contract.ts existed.
+# npx vitest run tests/regulatory/ctd-registry-consistency.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts [ tests/regulatory/ctd-registry-consistency.test.ts ]
+Error: Cannot find module './ctd-contract' imported from /home/user/ClinicalSageAI-2-replit/tests/regulatory/ctd-registry-consistency.test.ts
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:31:1
+     29| import { describe, it, expect } from 'vitest';
+     30|
+     31| import {
+       | ^
+     32|   violationsFor,
+     33|   m2to5Violations,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  11:52:31
+   Duration  541ms (transform 126ms, setup 107ms, import 0ms, tests 0ms, environment 0ms)
+
+
+# Round 2: the rules MOVED verbatim into tests/regulatory/ctd-contract.ts (fda-module1-numbering.test.ts green, 22/22),
+# before the amendments and the Modules 2–5 helper. 31 failed / 17 passed. The 4 code-less pins pass: violationsFor already skipped
+# entries with no code (the finding's 'undefined' violations came from its own probe reader); they stay pinned.
+# npx vitest run tests/regulatory/ctd-registry-consistency.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/regulatory/ctd-registry-consistency.test.ts
+{
+  "timestamp": "2026-10-05T11:53:04.786Z",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T11:53:04.787Z",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/ctd-registry-consistency.test.ts
+{
+  "timestamp": "2026-10-05T11:53:04.788Z",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/ctd-registry-consistency.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/ctd-registry-consistency.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/ctd-registry-consistency.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > an entry with no code (undefined) is skipped, whatever its title says 2ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > an entry with no code (null) is skipped, whatever its title says 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > an entry with no code ("") is skipped, whatever its title says 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > an entry with no code ("   ") is skipped, whatever its title says 0ms
+ × tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > a node naming several Module 1 documents may sit at the heading that holds them all 9ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > …but a node naming one document still files at that document’s heading, not at a parent 2ms
+ × tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > a node AT 1.3.2 must carry the meaning FDA fixes for it (Patent information is caught) 1ms
+   → expected '1.3.2 "Patent information" — patent i…' to match /1\.3\.2 is field copy certification/
+ × tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > a node AT 1.3.5 must carry the meaning FDA fixes for it (Field copy certification is caught) 1ms
+   → expected '1.3.5 "Field copy certification" — fi…' to match /1\.3\.5 is patent and exclusivity/
+ × tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > a node AT 1.12.14 must carry the meaning FDA fixes for it (Pediatric study plan is caught) 1ms
+   → expected '1.12.14 "Pediatric study plan" — pedi…' to match /1\.12\.14 is environmental analysis/
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > the identity rules accept what those headings hold, and say nothing about a title-less code 0ms
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 4.3.1 is not a heading of the record 1ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > m4.3.1 is not a heading of the record 1ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.8 is not a heading of the record 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 5.3.8 is not a heading of the record 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7.3 "Summary of Clinical Safety" contradicts the record (efficacy/safety) 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7.3 "Summary of Clinical Pharmacodynamics" contradicts the record (the old orchestrator line) 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7.4 "Summary of Clinical Efficacy" contradicts the record (efficacy/safety) 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7.5 "Summary of Clinical Safety" contradicts the record (literature references, not a summary) 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.6.2 "Pharmacokinetics Written Summary" contradicts the record (pharmacology/pharmacokinetics) 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.6.6 "Pharmacology Written Summary" contradicts the record (toxicology/pharmacology) 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.6.3 "Pharmacology Written Summary" contradicts the record (written/tabulated) 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.5 "Clinical Summary" contradicts the record (overview/summary) 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7 "Clinical Overview" contradicts the record (summary/overview) 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 3.2.S "Drug Product" contradicts the record (substance/product) 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > m3.2.P "Drug Substance" contradicts the record (product/substance) 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > extra words are not contradictions, and neither is naming both members of a pair 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > Module 1, code-less and non-code entries are not its business 0ms
+   → m2to5Violations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > Module 3 depth the record does not yet model is reported unchecked — neither passed nor failed 0ms
+   → checkM2to5 is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > every heading of both halves is a heading, checked, and agrees with itself 0ms
+   → checkM2to5 is not a function
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.5 with "overview" 7ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.7 with "summary" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.7.3 with "efficacy" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.7.4 with "safety" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.7.5 with "literature" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.6.2 with "pharmacology written" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.6.3 with "pharmacology tabulated" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.6.4 with "pharmacokinetics written" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.6.6 with "toxicology written" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 3.2.S with "substance" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 3.2.P with "product" 0ms
+ × tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > every contradicting term is a word some record title carries 0ms
+   → CONTRADICTING_TERMS is not iterable
+ × tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > IND section registry (AnA plans, coverage, chat) 0ms
+   → registryViolations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > deep IND eCTD map (project bootstrap, readiness, checklist) 1ms
+   → registryViolations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > AnA document templates (injected when a message names a document) 1ms
+   → registryViolations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > AnA submission workflows (IND / NDA / BLA) 0ms
+   → registryViolations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > required-artifact matrix (US IND / NDA / BLA bootstrap) 1ms
+   → registryViolations is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the check is live — a wrong 2.7.3 is caught wherever 2.7.3 is named > retitling the record’s 2.7.3 "Summary of Clinical Safety" fails every registry that names 2.7.3 1ms
+   → retitled is not a function
+ × tests/regulatory/ctd-registry-consistency.test.ts > the check is live — a wrong 2.7.3 is caught wherever 2.7.3 is named > a copy that retitles 2.7.3 "Summary of Clinical Safety" fails against the real record 1ms
+   → registryViolations is not a function
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 31 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > a node naming several Module 1 documents may sit at the heading that holds them all
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "1.4 \"References — letters of authorization / right of reference\" — right of reference files under 1.4.2",
++ ]
+
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:130:115
+    128|     // FDA 1.4 References holds 1.4.1 letters of authorization and 1.4…
+    129|     // statements of right of reference; one node for both belongs at …
+    130|     expect(violationsFor([{ code: '1.4', title: 'References — letters …
+       |                                                                                                                   ^
+    131|     expect(violationsFor([{ code: 'm1.4', title: 'References (letter o…
+    132|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/31]⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > a node AT 1.3.2 must carry the meaning FDA fixes for it (Patent information is caught)
+AssertionError: expected '1.3.2 "Patent information" — patent i…' to match /1\.3\.2 is field copy certification/
+
+- Expected:
+/1\.3\.2 is field copy certification/
+
++ Received:
+"1.3.2 \"Patent information\" — patent information / certification files under 1.3.5"
+
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:147:57
+    145|     ['1.12.14', 'Pediatric study plan', /1\.12\.14 is environmental an…
+    146|   ])('a node AT %s must carry the meaning FDA fixes for it (%s is caug…
+    147|     expect(violationsFor([{ code, title }]).join('\n')).toMatch(messag…
+       |                                                         ^
+    148|   });
+    149|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/31]⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > a node AT 1.3.5 must carry the meaning FDA fixes for it (Field copy certification is caught)
+AssertionError: expected '1.3.5 "Field copy certification" — fi…' to match /1\.3\.5 is patent and exclusivity/
+
+- Expected:
+/1\.3\.5 is patent and exclusivity/
+
++ Received:
+"1.3.5 \"Field copy certification\" — field copy certification files under 1.3.2"
+
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:147:57
+    145|     ['1.12.14', 'Pediatric study plan', /1\.12\.14 is environmental an…
+    146|   ])('a node AT %s must carry the meaning FDA fixes for it (%s is caug…
+    147|     expect(violationsFor([{ code, title }]).join('\n')).toMatch(messag…
+       |                                                         ^
+    148|   });
+    149|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/31]⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > a node AT 1.12.14 must carry the meaning FDA fixes for it (Pediatric study plan is caught)
+AssertionError: expected '1.12.14 "Pediatric study plan" — pedi…' to match /1\.12\.14 is environmental analysis/
+
+- Expected:
+/1\.12\.14 is environmental analysis/
+
++ Received:
+"1.12.14 \"Pediatric study plan\" — pediatric plan / PREA files under 1.9"
+
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:147:57
+    145|     ['1.12.14', 'Pediatric study plan', /1\.12\.14 is environmental an…
+    146|   ])('a node AT %s must carry the meaning FDA fixes for it (%s is caug…
+    147|     expect(violationsFor([{ code, title }]).join('\n')).toMatch(messag…
+       |                                                         ^
+    148|   });
+    149|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/31]⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 4.3.1 is not a heading of the record
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > m4.3.1 is not a heading of the record
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.8 is not a heading of the record
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 5.3.8 is not a heading of the record
+TypeError: m2to5Violations is not a function
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:172:12
+    170|     ['5.3.8', 'Other study reports'],
+    171|   ])('%s is not a heading of the record', (code, title) => {
+    172|     expect(m2to5Violations([{ code, title }]).join('\n')).toMatch(/is …
+       |            ^
+    173|   });
+    174|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/31]⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7.3 "Summary of Clinical Safety" contradicts the record (efficacy/safety)
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7.3 "Summary of Clinical Pharmacodynamics" contradicts the record (the old orchestrator line)
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7.4 "Summary of Clinical Efficacy" contradicts the record (efficacy/safety)
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7.5 "Summary of Clinical Safety" contradicts the record (literature references, not a summary)
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.6.2 "Pharmacokinetics Written Summary" contradicts the record (pharmacology/pharmacokinetics)
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.6.6 "Pharmacology Written Summary" contradicts the record (toxicology/pharmacology)
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.6.3 "Pharmacology Written Summary" contradicts the record (written/tabulated)
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.5 "Clinical Summary" contradicts the record (overview/summary)
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7 "Clinical Overview" contradicts the record (summary/overview)
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 3.2.S "Drug Product" contradicts the record (substance/product)
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > m3.2.P "Drug Substance" contradicts the record (product/substance)
+TypeError: m2to5Violations is not a function
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:188:12
+    186|     ['m3.2.P', 'Drug Substance', 'product/substance'],
+    187|   ])('%s "%s" contradicts the record (%s)', (code, title) => {
+    188|     expect(m2to5Violations([{ code, title }]).join('\n')).toMatch(/con…
+       |            ^
+    189|   });
+    190|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/31]⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > extra words are not contradictions, and neither is naming both members of a pair
+TypeError: m2to5Violations is not a function
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:193:7
+    191|   it('extra words are not contradictions, and neither is naming both m…
+    192|     expect(
+    193|       m2to5Violations([
+       |       ^
+    194|         { code: '2.7.3', title: 'Summary of Clinical Efficacy (2.7.3)'…
+    195|         { code: '2.7.3', title: 'Summary of Clinical Efficacy — pooled…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/31]⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > Module 1, code-less and non-code entries are not its business
+TypeError: m2to5Violations is not a function
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:209:7
+    207|   it('Module 1, code-less and non-code entries are not its business', …
+    208|     expect(
+    209|       m2to5Violations([
+       |       ^
+    210|         { code: '1.2', title: 'Summary of Clinical Safety' },
+    211|         { code: undefined, title: 'Summary of Clinical Safety' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/31]⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > Module 3 depth the record does not yet model is reported unchecked — neither passed nor failed
+TypeError: checkM2to5 is not a function
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:221:20
+    219|     // ich-m4-headings.ts holds the Module 3 skeleton only; 2.3.S.x and
+    220|     // 3.2.S.x.y belong to the CMC lane, which appends them to the sam…
+    221|     const result = checkM2to5([
+       |                    ^
+    222|       { code: '2.3.S.1', title: 'General Information' },
+    223|       { code: '3.2.S.1.1', title: 'Nomenclature' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/31]⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > every heading of both halves is a heading, checked, and agrees with itself
+TypeError: checkM2to5 is not a function
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:236:20
+    234|     expect(RECORD.length).toBeGreaterThan(200);
+    235|     const m2to5 = RECORD.filter((n) => /^[2-5]/.test(n.code ?? ''));
+    236|     const result = checkM2to5(m2to5);
+       |                    ^
+    237|     expect(result.violations).toEqual([]);
+    238|     expect(result.unchecked).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/31]⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > every contradicting term is a word some record title carries
+TypeError: CONTRADICTING_TERMS is not iterable
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:262:25
+    260|   it('every contradicting term is a word some record title carries', (…
+    261|     const titles = RECORD.map((n) => n.title);
+    262|     for (const group of CONTRADICTING_TERMS) {
+       |                         ^
+    263|       for (const term of group) {
+    264|         expect(titles.some((t) => term.test(t)), String(term)).toBe(tr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/31]⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > IND section registry (AnA plans, coverage, chat)
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > deep IND eCTD map (project bootstrap, readiness, checklist)
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > AnA document templates (injected when a message names a document)
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > AnA submission workflows (IND / NDA / BLA)
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > required-artifact matrix (US IND / NDA / BLA bootstrap)
+TypeError: registryViolations is not a function
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:274:12
+    272|     const nodes = registry.read();
+    273|     expect(nodes.length, `${registry.ownerPath} yields no entries`).to…
+    274|     expect(registryViolations(registry), registry.ownerPath).toEqual([…
+       |            ^
+    275|   });
+    276| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/31]⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the check is live — a wrong 2.7.3 is caught wherever 2.7.3 is named > retitling the record’s 2.7.3 "Summary of Clinical Safety" fails every registry that names 2.7.3
+TypeError: retitled is not a function
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:284:21
+    282|     const naming = REGISTRIES.filter(names273);
+    283|     expect(naming.length, 'no registered copy names 2.7.3; the mutatio…
+    284|     const mutated = retitled('2.7.3', 'Summary of Clinical Safety');
+       |                     ^
+    285|     for (const r of naming) {
+    286|       expect(registryViolations(r, { titleOf: mutated }).join('\n'), r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/31]⎯
+
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the check is live — a wrong 2.7.3 is caught wherever 2.7.3 is named > a copy that retitles 2.7.3 "Summary of Clinical Safety" fails against the real record
+TypeError: registryViolations is not a function
+ ❯ tests/regulatory/ctd-registry-consistency.test.ts:298:14
+    296|           r.read().map((n) => (normalizeCtdCode(n.code) === '2.7.3' ? …
+    297|       };
+    298|       expect(registryViolations(wrong).join('\n'), r.name).toMatch(/2\…
+       |              ^
+    299|     }
+    300|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/31]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  31 failed | 17 passed (48)
+   Start at  11:53:02
+   Duration  3.83s (transform 2.37s, setup 77ms, import 3.35s, tests 43ms, environment 0ms)
+
