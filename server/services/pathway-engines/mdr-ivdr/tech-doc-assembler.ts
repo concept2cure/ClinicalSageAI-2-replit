@@ -56,7 +56,8 @@ export interface TechDocSlotStatus extends TechDocSlot {
   /**
    * 2026-09-23 (W5/D7, final pass): the subset of `leafIndices` this slot
    * matched by title alone — the slot would not match the leaf with its title
-   * blanked (no outline key, document type or code prefix of the slot's).
+   * blanked (no outline key or document type of the slot's; since 2026-10-05
+   * no slot matches by CTD code prefix).
    * Every Vault-built sequence leaf is such a leaf (CTD code, no document type,
    * titled with its file name), so a title-only match is not refused — that
    * would refuse the Vault flow — but it is reported, never presented as a
@@ -250,10 +251,15 @@ const titleHas = (...n: string[]): Matcher => titleMatches(n.map((x) => phrase(x
 const titleHasUnqualified = (x: string, q: Qualifiers): Matcher => titleMatches([phrase(x, q)]);
 /** A plan is not the report it plans, unless the title says it is both. */
 const NOT_THE_PLAN: Qualifiers = { notBefore: ['plan'], notBeforeUnless: ['report'] };
-const codeStarts = (...p: string[]): Matcher => (l) => p.some((x) => l.sectionCode.startsWith(x));
 const any = (...m: Matcher[]): Matcher => (l) => m.some((f) => f(l));
 const all = (...m: Matcher[]): Matcher => (l) => m.every((f) => f(l));
 const not = (m: Matcher): Matcher => (l) => !m(l);
+/**
+ * A plan or protocol anywhere in the title, and no report or results: the
+ * plan for a test, not its evidence. NOT_THE_PLAN reads only the word right
+ * after a phrase, which misses 'Biocompatibility evaluation plan'.
+ */
+const A_PLAN_NOT_ITS_REPORT: Matcher = all(titleHas('plan', 'protocol'), not(titleHas('report', 'result')));
 
 /**
  * Rule-pack section keys — the codes the GOVERNED authoring store carries for
@@ -300,7 +306,19 @@ const commonSlots = (annexPrefix: string): Array<TechDocSlot & { match: Matcher 
 
 const MDR_SECTIONS: Array<TechDocSlot & { match: Matcher }> = [
   ...commonSlots('Annex II'),
-  { id: 'preclinical-clinical', label: 'Product verification & validation (preclinical + clinical)', annex: 'Annex II 6', required: true, match: any(docType('preclinical', 'verification_validation'), codeStarts('4', '5'), titleHas('preclinical', 'verification and validation'), all(annexKey('II.6'), not(exactKey('II.6.1.g')))) },
+  /* 2026-10-05 (g-shonin-and-techdoc-fail-closed): codeStarts('4', '5') is
+     removed. It filled this required slot with any CTD Module 4/5 leaf — a
+     drug CSR at 5.3.5.1, a PMS plan at 5.3.6 — so a drug dossier read as
+     device V&V evidence. The slot matches by document type, outline key
+     (II.6) or title. A Vault-built bench report (CTD code, file-name title)
+     is placed by its title and reported as title-only; one whose name carries
+     none of the phrases leaves the slot missing, which is a gap, not a
+     fabrication. The added phrases are pre-clinical V&V subjects of the kind
+     MDR Annex II 6.1 describes (recall); 'bench test' and 'design
+     verification' are common file-name terms, not Annex wording. A plan or
+     protocol for one of those tests ('Design verification plan') is not its
+     evidence and does not fill the slot through them (fix round 2). */
+  { id: 'preclinical-clinical', label: 'Product verification & validation (preclinical + clinical)', annex: 'Annex II 6', required: true, match: any(docType('preclinical', 'verification_validation'), titleHas('preclinical', 'verification and validation'), all(titleHas('bench test', 'biocompatibility', 'electrical safety', 'design verification'), not(A_PLAN_NOT_ITS_REPORT)), all(annexKey('II.6'), not(exactKey('II.6.1.g')))) },
   { id: 'clinical-evaluation', label: 'Clinical Evaluation Report (CER)', annex: 'Annex XIV', required: true, match: any(docType('cer', 'clinical_evaluation'), titleHasUnqualified('clinical evaluation', { notAfter: ['pre', 'non'], ...NOT_THE_PLAN }), exactKey('II.6.1.g')) },
   { id: 'pms-plan', label: 'Post-market surveillance plan', annex: 'Annex III', required: true, match: any(docType('pms_plan', 'pms'), titleHas('post-market surveillance', 'pms plan'), annexKey('III')) },
 ];

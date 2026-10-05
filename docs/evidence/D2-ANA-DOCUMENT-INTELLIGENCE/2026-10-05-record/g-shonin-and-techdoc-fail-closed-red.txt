@@ -1,0 +1,555 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — MDR > marks every required MDR Annex II/III section present for a complete file 17ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — MDR > reports missing GSPR and CER as gaps, never invents them 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR > requires analytical + clinical performance and the PER (not a CER) 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR > is ready when IVDR performance evidence is supplied 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — each slot names the leaves it matched > two leaves with one section code: the CER slot holds the CER, not the first leaf with that code 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — each slot names the leaves it matched > an unmatched slot names no leaf 6ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > stability is a required slot after the PER; software/cybersecurity and usability are optional 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > an IVDR file without II.6.3 stability is not ready; with it, it is 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > claims II.6.3 / II.6.4 / II.6.5 keys (and the stability document type) and nothing next to them 11ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > the MDR registry is unchanged: stability evidence stays under Annex II 6 verification and validation 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > MDR: a II.6.1.a report titled "Preclinical evaluation ..." is verification and validation, not the CER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > IVDR: a II.6.1.a "Analytical performance evaluation report" is analytical performance, not the PER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > IVDR: the II.6.2.a scientific-validity section does not stand in for the II.6.2.c PER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > a group IV leaf is claimed by no slot through its title (IVDR IV.4 SSP names "clinical performance") 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > a document type still places a keyed leaf (the CER at II.6.1.b), and the key still places it too 10ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a title matcher matches the phrase as words, not inside another word > "preclinical", "pre-clinical" and "non-clinical" evaluation are not a clinical evaluation 10ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a title matcher matches the phrase as words, not inside another word > an analytical or clinical performance evaluation is not the performance evaluation report 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > underscore- and hyphen-joined file-name titles fill the IFU, GSPR and risk slots (the HEAD result) 8ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > the electronic IFU: "eIFU" (case transition) and "eifu" / "EIFU" / "e-IFU" (the eIFU token) fill the IFU slot 7ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > a phrase starts a token: "ifu" / "gspr" at the end of a longer word does not match 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > file-name titles of the CER and the PER fill their slots 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > pre-/non-clinical evaluation, in any spelling, is not the CER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > a plan is not the report: the CEP is not the CER and a performance evaluation plan is not the PER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > plural acronyms fill the IFU and GSPR slots 4ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > an acronym glued to a lower-case word is still the acronym; a capital run before a capitalised word still splits 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > plural and glued nouns at the end of a phrase fill their slots 3ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > the qualifiers still apply: a glued or plural plan is not the report, and a preclinical evaluation is not the CER 4ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the outline key is read trimmed and case-insensitively > " II.6.1.a" and "ii.6.1.a" are the outline key: placed by key, never by title 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the outline key is read trimmed and case-insensitively > a group IV leaf is claimed by no slot, by title or by document type (IV.4 SSCP with documentType "cer") 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a CTD-coded "Clinical_Evaluation_Report_v2" with no document type is a title-only CER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a leaf matched by its outline key or its document type is not title-only 0ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > 'Preclinical bench testing' at CTD 4.2.1 is a title-only V&V match (no code-prefix match) 11ms
+   → expected [] to deeply equal [ +0 ]
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a slot with a keyed and a title-only leaf names only the title-only one 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > file-name stability and shelf-life titles fill the stability slot 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > specimen or sample stability is not the device stability of Annex II 6.3 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > software verification, cybersecurity and usability titles fill their optional slots 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > a complete Vault-built IVDR set (CTD codes, no document type) is ready, and without its stability report it is not 1ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > a drug CSR at 5.3.5.1 leaves 'preclinical-clinical' missing 1ms
+   → expected true to be false // Object.is equality
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > drug leaves 4.2.3.2 and 5.3.6 fill no V&V slot 1ms
+   → expected true to be false // Object.is equality
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > a Vault V&V file named for its test still fills the slot, by title 1ms
+   → expected [] to deeply equal [ +0 ]
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > is ready when every required Shōnin section is present 17ms
+   → expected [ 'sted', 'clinical-bridging' ] to deeply equal []
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > flags missing Japanese labelling and required clinical trial results as gaps 2ms
+   → expected [ 'sted', 'clinical-bridging', …(1) ] to include 'clinical-data'
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > does not require optional sections (stability, foreign-approval status) 1ms
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > matches Japanese-language titles (添付文書, 規格, 基本要件) 1ms
+   → Cannot read properties of undefined (reading 'present')
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > drug CTD leaves 4.2.3.2 and 5.3.5.1 fill no Shōnin slot 1ms
+   → expected [ 'performance', 'clinical-bridging' ] to deeply equal []
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > a bench-test leaf numbered '5' (the Shōnin project template's Performance Testing) does not fill the clinical slot 0ms
+   → Cannot read properties of undefined (reading 'present')
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > has an Essential Principles conformity slot, no 'sted' slot, and no ICH E5 label 1ms
+   → expected [ 'device-description', 'sted', …(8) ] to include 'essential-principles-conformity'
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > a STED or "ICH E5 bridging" leaf fills no slot 1ms
+   → expected [ 'sted', 'clinical-bridging' ] to deeply equal []
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > without the Essential Principles checklist the file is not ready 5ms
+   → expected [ 'sted', 'clinical-bridging' ] to include 'essential-principles-conformity'
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > clinicalDataRequired false: ready without a clinical leaf; the slot is not applicable 1ms
+   → expected false to be true // Object.is equality
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > clinicalDataRequired undefined: the absent clinical slot is undetermined and blocks ready 6ms
+   → expected undefined to deeply equal [ 'clinical-data' ]
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > clinicalDataRequired undefined but clinical trial results present: ready 1ms
+   → expected undefined to deeply equal []
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > assessPathwayReadiness threads clinicalDataRequired and counts undetermined as a gap 1ms
+   → expected [ 'sted', 'clinical-bridging' ] to deeply equal [ 'clinical-data' ]
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > plans, writes a real ZIP, and the ZIP round-trips with manifest + files + checksums 66ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > is content-addressed: identical input yields the same sha256 18ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > pins every entry (files AND implicit folders) to a fixed epoch — no wall-clock timestamps 10ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > reports skipped sources for leaves with no resolvable file 10ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > an entry whose every source was skipped is not present, and the plan is not ready 17ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > a leaf no slot claims is reported as unmapped and does not make a complete file not ready 7ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > a leaf whose source did not materialize makes the plan not ready, even when every slot is filled 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — every leaf a slot claims reaches the ZIP once > two leaves with one section code in one slot are both placed, once each, and neither is unmapped 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — every leaf a slot claims reaches the ZIP once > when the second of two same-code leaves does not resolve, the slot lost a source and the plan is not ready 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — every leaf a slot claims reaches the ZIP once > an authored Annex II/III leaf no slot claims makes the plan not ready; an IV.* leaf does not 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — every leaf a slot claims reaches the ZIP once > only the Annex II and III key trees count: III is not II, and IV / IIa are neither 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > bench report and CER both at II.6.1.b, in either order: the CER slot holds the CER 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > IFU and CER share a non-Annex code (1.11): each lands in its own slot and the CER is not unmapped 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > a manifest entry whose sources are not the leaves its slot matches places nothing by string, and the plan is not ready 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > two same-named files in one slot are de-collided (the leaves are distinct, so both are placed) 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > no CER, and a II.6.1.a report titled "Preclinical evaluation ...": clinical-evaluation is missing and the plan is not ready 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > a real CER at II.6.1.g and a II.6.1.b "Pre-clinical evaluation ..." bench report: Annex XIV holds only the CER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > IVDR with no II.6.2.c PER and a II.6.1.a "Analytical performance evaluation report": the PER is missing, not filled 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > an IVDR program with II.6.3 / II.6.4 / II.6.5 places them in their slots and nothing is unmapped 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a Vault-built sequence (CTD codes, file-name titles) > "IFU_EN_rev3" + "GSPR_Checklist_v2", and "eIFU" + "GSPR-Checklist": the IFU and GSPR are filed and the plan is ready 5ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a Vault-built sequence (CTD codes, file-name titles) > plural and glued acronym file names ("IFUs_all_languages", "GSPRs_checklist", "eIFUs", "GSPRchecklist", "IFUen"): filed, and ready as at HEAD 9ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a Vault-built sequence (CTD codes, file-name titles) > the Annex II/III test reads the key trimmed and case-insensitively: " ii.9" counts, "iii.9" is the PMS plan, " IV.1" does not count 3ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a Vault-built sequence (CTD codes, file-name titles) > a CER placed by its title alone is reported as matchedByTitleOnly in the manifest; ready is unchanged 17ms
+   → expected undefined to deeply equal [ '4.2.1' ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > 'Preclinical bench testing' at CTD 4.2.1 is a title-only V&V match (no code-prefix match)
+AssertionError: expected [] to deeply equal [ +0 ]
+
+- Expected
++ Received
+
+- [
+-   0,
+- ]
++ []
+
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts:367:117
+    365|    */
+    366|   it("'Preclinical bench testing' at CTD 4.2.1 is a title-only V&V mat…
+    367|     expect(titleOnly([leaf({ sectionCode: '4.2.1', title: 'Preclinical…
+       |                                                                                                                     ^
+    368|   });
+    369|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > a drug CSR at 5.3.5.1 leaves 'preclinical-clinical' missing
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts:438:78
+    436|   it("a drug CSR at 5.3.5.1 leaves 'preclinical-clinical' missing", ()…
+    437|     const r = assembleTechDoc({ leaves: [leaf({ sectionCode: '5.3.5.1'…
+    438|     expect(r.sections.find((s) => s.id === 'preclinical-clinical')!.pr…
+       |                                                                              ^
+    439|     expect(r.summary.missingRequired).toContain('preclinical-clinical'…
+    440|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > drug leaves 4.2.3.2 and 5.3.6 fill no V&V slot
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts:443:142
+    441|
+    442|   it('drug leaves 4.2.3.2 and 5.3.6 fill no V&V slot', () => {
+    443|     expect(vv([leaf({ sectionCode: '4.2.3.2', title: 'Repeat-dose toxi…
+       |                                                                                                                                              ^
+    444|   });
+    445|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > a Vault V&V file named for its test still fills the slot, by title
+AssertionError: expected [] to deeply equal [ +0 ]
+
+- Expected
++ Received
+
+- [
+-   0,
+- ]
++ []
+
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts:450:38
+    448|       const s = vv([leaf({ sectionCode: '4.2.1', title })]);
+    449|       expect(s.present).toBe(true);
+    450|       expect(s.titleOnlyLeafIndices).toEqual([0]);
+       |                                      ^
+    451|     }
+    452|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a Vault-built sequence (CTD codes, file-name titles) > a CER placed by its title alone is reported as matchedByTitleOnly in the manifest; ready is unchanged
+AssertionError: expected undefined to deeply equal [ '4.2.1' ]
+
+- Expected:
+[
+  "4.2.1",
+]
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts:514:100
+    512|     // report at 4.2.1 is placed by its title alone; the CER at 5.3.5.…
+    513|     // are no longer V&V evidence.
+    514|     expect(plan.manifest.entries.find((e) => e.id === 'preclinical-cli…
+       |                                                                                                    ^
+    515|     expect(inSlot(plan, 'preclinical-clinical')).toEqual(['doc-6.pdf']…
+    516|     // A CER at its outline key is not title-only.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > is ready when every required Shōnin section is present
+AssertionError: expected [ 'sted', 'clinical-bridging' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "sted",
++   "clinical-bridging",
++ ]
+
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:30:39
+     28|   it('is ready when every required Shōnin section is present', () => {
+     29|     const r = assessPmdaShonin({ leaves: complete, clinicalDataRequire…
+     30|     expect(r.summary.missingRequired).toEqual([]);
+       |                                       ^
+     31|     expect(r.summary.undetermined).toEqual([]);
+     32|     expect(r.summary.ready).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > flags missing Japanese labelling and required clinical trial results as gaps
+AssertionError: expected [ 'sted', 'clinical-bridging', …(1) ] to include 'clinical-data'
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:39:39
+     37|     const r = assessPmdaShonin({ leaves: partial, clinicalDataRequired…
+     38|     expect(r.summary.missingRequired).toContain('japanese-labelling');
+     39|     expect(r.summary.missingRequired).toContain('clinical-data');
+       |                                       ^
+     40|     expect(r.summary.ready).toBe(false);
+     41|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > matches Japanese-language titles (添付文書, 規格, 基本要件)
+TypeError: Cannot read properties of undefined (reading 'present')
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:58:53
+     56|     expect(slot(r, 'japanese-labelling')!.present).toBe(true);
+     57|     expect(slot(r, 'specifications')!.present).toBe(true);
+     58|     expect(slot(r, 'essential-principles-conformity')!.present).toBe(t…
+       |                                                     ^
+     59|   });
+     60| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > drug CTD leaves 4.2.3.2 and 5.3.5.1 fill no Shōnin slot
+AssertionError: expected [ 'performance', 'clinical-bridging' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "performance",
++   "clinical-bridging",
++ ]
+
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:77:66
+     75|       clinicalDataRequired: true,
+     76|     });
+     77|     expect(r.sections.filter((s) => s.present).map((s) => s.id)).toEqu…
+       |                                                                  ^
+     78|   });
+     79|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > a bench-test leaf numbered '5' (the Shōnin project template's Performance Testing) does not fill the clinical slot
+TypeError: Cannot read properties of undefined (reading 'present')
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:82:35
+     80|   it("a bench-test leaf numbered '5' (the Shōnin project template's Pe…
+     81|     const r = assessPmdaShonin({ leaves: [leaf({ sectionCode: '5', tit…
+     82|     expect(slot(r, 'clinical-data')!.present).toBe(false);
+       |                                   ^
+     83|     expect(slot(r, 'performance')!.present).toBe(true);
+     84|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > has an Essential Principles conformity slot, no 'sted' slot, and no ICH E5 label
+AssertionError: expected [ 'device-description', 'sted', …(8) ] to include 'essential-principles-conformity'
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:89:17
+     87|     const r = assessPmdaShonin({ leaves: [] });
+     88|     const ids = r.sections.map((s) => s.id);
+     89|     expect(ids).toContain('essential-principles-conformity');
+       |                 ^
+     90|     expect(slot(r, 'essential-principles-conformity')!.required).toBe(…
+     91|     expect(ids).not.toContain('sted');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > a STED or "ICH E5 bridging" leaf fills no slot
+AssertionError: expected [ 'sted', 'clinical-bridging' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "sted",
++   "clinical-bridging",
++ ]
+
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:103:66
+    101|       ],
+    102|     });
+    103|     expect(r.sections.filter((s) => s.present).map((s) => s.id)).toEqu…
+       |                                                                  ^
+    104|   });
+    105|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > without the Essential Principles checklist the file is not ready
+AssertionError: expected [ 'sted', 'clinical-bridging' ] to include 'essential-principles-conformity'
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:108:39
+    106|   it('without the Essential Principles checklist the file is not ready…
+    107|     const r = assessPmdaShonin({ leaves: complete.filter((l) => l.sect…
+    108|     expect(r.summary.missingRequired).toContain('essential-principles-…
+       |                                       ^
+    109|     expect(r.summary.ready).toBe(false);
+    110|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > clinicalDataRequired false: ready without a clinical leaf; the slot is not applicable
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:116:29
+    114|   it('clinicalDataRequired false: ready without a clinical leaf; the s…
+    115|     const r = assessPmdaShonin({ leaves: withoutClinical, clinicalData…
+    116|     expect(r.summary.ready).toBe(true);
+       |                             ^
+    117|     expect(slot(r, 'clinical-data')!.applicability).toBe('not-applicab…
+    118|     expect(slot(r, 'clinical-data')!.required).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > clinicalDataRequired undefined: the absent clinical slot is undetermined and blocks ready
+AssertionError: expected undefined to deeply equal [ 'clinical-data' ]
+
+- Expected:
+[
+  "clinical-data",
+]
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:124:36
+    122|     const r = assessPmdaShonin({ leaves: withoutClinical });
+    123|     expect(r.summary.ready).toBe(false);
+    124|     expect(r.summary.undetermined).toEqual(['clinical-data']);
+       |                                    ^
+    125|     expect(r.summary.missingRequired).toEqual([]);
+    126|     expect(slot(r, 'clinical-data')!.applicability).toBe('undetermined…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > clinicalDataRequired undefined but clinical trial results present: ready
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:131:36
+    129|   it('clinicalDataRequired undefined but clinical trial results presen…
+    130|     const r = assessPmdaShonin({ leaves: complete });
+    131|     expect(r.summary.undetermined).toEqual([]);
+       |                                    ^
+    132|     expect(r.summary.ready).toBe(true);
+    133|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > assessPathwayReadiness threads clinicalDataRequired and counts undetermined as a gap
+AssertionError: expected [ 'sted', 'clinical-bridging' ] to deeply equal [ 'clinical-data' ]
+
+- Expected
++ Received
+
+  [
+-   "clinical-data",
++   "sted",
++   "clinical-bridging",
+  ]
+
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:138:39
+    136|     const undecided = assessPathwayReadiness({ pathway: 'pmda_shonin',…
+    137|     expect(undecided.ready).toBe(false);
+    138|     expect(undecided.missingRequired).toEqual(['clinical-data']);
+       |                                       ^
+    139|     const decided = assessPathwayReadiness({ pathway: 'pmda_shonin', l…
+    140|     expect(decided.ready).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  17 failed | 59 passed (76)
+   Start at  03:05:17
+   Duration  1.47s (transform 1.03s, setup 444ms, import 1.06s, tests 356ms, environment 0ms)
+
+
+==================================================================
+FIX ROUND 1 (2026-10-05) — red before the fix, pmda-shonin.test.ts with the 5 new tests
+Issues: '非臨床試験成績' filled clinical-data via the 臨床試験 substring; a CER (docType clinical_evaluation, 'Clinical evaluation report', '臨床評価報告書') filled the trial-results slot; the 0804001 basis claimed 'search-verified'.
+==================================================================
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > is ready when every required Shōnin section is present 2ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > flags missing Japanese labelling and required clinical trial results as gaps 1ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > does not require optional sections (stability, foreign-approval status) 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin > matches Japanese-language titles (添付文書, 規格, 基本要件) 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > drug CTD leaves 4.2.3.2 and 5.3.5.1 fill no Shōnin slot 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > a bench-test leaf numbered '5' (the Shōnin project template's Performance Testing) does not fill the clinical slot 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > has an Essential Principles conformity slot, no 'sted' slot, and no ICH E5 label 1ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > a STED or "ICH E5 bridging" leaf fills no slot 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a drug dossier is not a device file > without the Essential Principles checklist the file is not ready 1ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > clinicalDataRequired false: ready without a clinical leaf; the slot is not applicable 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > clinicalDataRequired undefined: the absent clinical slot is undetermined and blocks ready 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > clinicalDataRequired undefined but clinical trial results present: ready 0ms
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — clinical trial results are required only when the device needs them > assessPathwayReadiness threads clinicalDataRequired and counts undetermined as a gap 0ms
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — only clinical trial results fill the clinical-data slot > '非臨床試験成績' (nonclinical study results) does not fill clinical-data when trial results are required 8ms
+   → expected true to be false // Object.is equality
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — only clinical trial results fill the clinical-data slot > '非臨床試験成績' does not clear the undetermined clinical-data gap 1ms
+   → expected true to be false // Object.is equality
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — only clinical trial results fill the clinical-data slot > a clinical evaluation report (English or 臨床評価報告書, docType clinical_evaluation) is not clinical trial results 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — only clinical trial results fill the clinical-data slot > Japanese and English clinical trial titles still fill the slot 0ms
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — only clinical trial results fill the clinical-data slot > the clinical-data basis does not claim the 0804001 title was verified on a regulator site 1ms
+   → expected '薬食機発第0804001号 (2008-08-04), scope of …' not to match /search-verified/
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 14 passed (18)
+   Start at  03:26:15
+   Duration  534ms (transform 194ms, setup 92ms, import 137ms, tests 22ms, environment 0ms)
+
+
+==================================================================
+FIX ROUND 2 (2026-10-05) — RED. New tests written before the change:
+pmda-shonin.test.ts 'a trial plan or protocol is not clinical trial results' (3 tests) and
+tech-doc-assembler.test.ts 'a V&V plan or protocol is not V&V evidence' (2 tests). 4 fail at the round-1 code:
+CIP / protocol / 臨床試験計画書 fill clinical-data (flag true and undefined); docType clinical_investigation_report
+not recognised; 'Biocompatibility evaluation plan' fills MDR preclinical-clinical.
+==================================================================
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a trial plan or protocol is not clinical trial results > does not fill clinical-data when trial results are required 8ms
+   → Clinical investigation plan: expected true to be false // Object.is equality
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a trial plan or protocol is not clinical trial results > does not clear the undetermined clinical-data gap 1ms
+   → Clinical investigation plan: expected true to be false // Object.is equality
+ × server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a trial plan or protocol is not clinical trial results > a results report still fills it, including one that names its plan or protocol 1ms
+   → CIR: expected false to be true // Object.is equality
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a V&V plan or protocol is not V&V evidence > plans and protocols leave the slot missing 14ms
+   → Biocompatibility evaluation plan: expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a V&V plan or protocol is not V&V evidence > plans and protocols leave the slot missing
+AssertionError: Biocompatibility evaluation plan: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts:467:40
+    465|   it('plans and protocols leave the slot missing', () => {
+    466|     for (const title of ['Biocompatibility evaluation plan', 'Design v…
+    467|       expect(vv(title).present, title).toBe(false);
+       |                                        ^
+    468|     }
+    469|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a trial plan or protocol is not clinical trial results > does not fill clinical-data when trial results are required
+AssertionError: Clinical investigation plan: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:220:58
+    218|     for (const p of plans) {
+    219|       const r = assessPmdaShonin({ leaves: [...withoutClinical, p], cl…
+    220|       expect(slot(r, 'clinical-data')!.present, p.title).toBe(false);
+       |                                                          ^
+    221|       expect(r.summary.missingRequired).toContain('clinical-data');
+    222|       expect(r.summary.ready).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a trial plan or protocol is not clinical trial results > does not clear the undetermined clinical-data gap
+AssertionError: Clinical investigation plan: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:229:58
+    227|     for (const p of plans) {
+    228|       const r = assessPmdaShonin({ leaves: [...withoutClinical, p] });
+    229|       expect(slot(r, 'clinical-data')!.present, p.title).toBe(false);
+       |                                                          ^
+    230|       expect(r.summary.undetermined).toContain('clinical-data');
+    231|       expect(r.summary.ready).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts > assessPmdaShonin — a trial plan or protocol is not clinical trial results > a results report still fills it, including one that names its plan or protocol
+AssertionError: CIR: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts:245:60
+    243|     for (const rep of reports) {
+    244|       const r = assessPmdaShonin({ leaves: [...withoutClinical, rep], …
+    245|       expect(slot(r, 'clinical-data')!.present, rep.title).toBe(true);
+       |                                                            ^
+    246|       expect(r.summary.ready).toBe(true);
+    247|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 59 passed (63)
+   Start at  04:07:01
+   Duration  1.60s (transform 666ms, setup 356ms, import 444ms, tests 171ms, environment 0ms)
+
