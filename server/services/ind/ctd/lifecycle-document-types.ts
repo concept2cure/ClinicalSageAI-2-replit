@@ -11,6 +11,7 @@
  * @module server/services/ind/ctd/lifecycle-document-types
  */
 import type { E3Basis, LifecycleDocumentType } from './types.js';
+import { recall } from './regulatory-basis.js';
 
 // ── FDA formal meetings (PDUFA products) ─────────────────────────────────────
 // One table for every meeting deadline AnA states. The meeting entries below
@@ -32,7 +33,6 @@ const FORMAL_MEETINGS_DRAFT_URL = 'https://www.fda.gov/media/172311/download';
 
 const pdufa = (ref: string): E3Basis => ({ ref: `PDUFA VII commitment letter: ${ref}`, confidence: 'regulator-text', url: PDUFA_VII_URL, checked: CHECKED });
 const draftText = (ref: string): E3Basis => ({ ref: `FDA formal-meetings guidance (2023 revised draft text; finalized Aug 2026): ${ref}`, confidence: 'regulator-text', url: FORMAL_MEETINGS_DRAFT_URL, checked: CHECKED });
-const recall = (ref: string): E3Basis => ({ ref, confidence: 'recall' });
 
 export type FdaMeetingType = 'A' | 'B' | 'B(EOP)' | 'C' | 'D' | 'INTERACT';
 

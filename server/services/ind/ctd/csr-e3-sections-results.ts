@@ -9,7 +9,8 @@
  */
 
 import type { E3Section } from './types.js';
-import { CDISC_CONVENTION, FDA_E3, FDA_OCMQ, FDA_STF_IG } from './csr-e3-basis.js';
+import { CDISC_CONVENTION } from './csr-e3-basis.js';
+import { FDA_E3, FDA_OCMQ, FDA_STF_IG } from './regulatory-basis.js';
 
 export const E3_RESULTS_SECTIONS: E3Section[] = [
   { number: '10', title: 'Study Patients', applies: 'always' },

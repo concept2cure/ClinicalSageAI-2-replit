@@ -26,15 +26,20 @@
  */
 
 import type { E3Basis } from './types.js';
-import { CFR_314_50_F, FDA_PDF_SPECS, FDA_SDTCG, FDA_STUDY_DATA_TRC } from './csr-e3-basis.js';
+import {
+  CFR_314_101,
+  CFR_314_50_F,
+  cfr201_57,
+  FDA_ECTD_TCG,
+  FDA_ISS_ISE_PLACEMENT,
+  FDA_PDF_SPECS,
+  FDA_SDTCG,
+  FDA_STUDY_DATA_TRC,
+  M4E_R2,
+} from './regulatory-basis.js';
 
+/** The date the Elsa facts below were read. */
 const CHECKED = '2026-10-04';
-const FDA_ECTD_TCG: E3Basis = { ref: 'FDA, eCTD Technical Conformance Guide', confidence: 'regulator-text', url: 'https://www.fda.gov/media/93818/download', checked: CHECKED };
-const FDA_ISS_ISE: E3Basis = { ref: 'FDA, Placement of ISS/ISE in the eCTD', confidence: 'regulator-text', url: 'https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/placement-integrated-summaries-safety-and-effectiveness-issise-applications-submitted-ectd-format', checked: CHECKED };
-const M4E_R2: E3Basis = { ref: 'ICH M4E(R2), as published by FDA', confidence: 'regulator-text', url: 'https://www.fda.gov/media/93569/download', checked: CHECKED };
-const CFR_314_101: E3Basis = { ref: '21 CFR 314.101(d)(3)', confidence: 'regulator-text', url: 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-314/subpart-D/section-314.101', checked: CHECKED };
-/** 21 CFR 201.57 at one paragraph, e.g. cfr201_57('(d)(6)'). */
-const cfr201_57 = (para: string): E3Basis => ({ ref: `21 CFR 201.57${para}`, confidence: 'regulator-text', url: 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-C/part-201/subpart-B/section-201.57', checked: CHECKED });
 
 export type RuleArea = 'pdf' | 'ectd' | 'study-data' | 'content' | 'labeling';
 
@@ -143,7 +148,7 @@ export const FDA_TECHNICAL_RULES: readonly TechnicalRule[] = Object.freeze<Techn
     id: 'content-iss-ise', area: 'content',
     rule: 'The ISS and ISE — integrated analyses, not summaries — are filed in 5.3.5.3; a narrative portion suitable for 2.7.3 / 2.7.4 is placed there once and referenced.',
     consequence: 'Missing integrated summaries are a refuse-to-file ground; misplaced ones are hard for the review division to find.',
-    basis: FDA_ISS_ISE,
+    basis: FDA_ISS_ISE_PLACEMENT,
     platform: { check: 'not-checked', note: 'The chain (plan_submission_from_database_lock) reports whether a document titled as the ISS or ISE is filed at 5.3.5.3; nothing on the package gate does.' },
   },
   {
