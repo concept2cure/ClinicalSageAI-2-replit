@@ -26,7 +26,9 @@ const PROGRAM = '11111111-2222-4333-8444-555555555555';
 const CTX = { organizationId: 7, projectRef: PROGRAM };
 
 /** A pool that owns PROGRAM for org 7 and answers the Vault read with `rows`. */
-function fakePool(rows: Array<{ ctd_section: string; placement_status: string; document_title: string }>, opts: { fail?: boolean } = {}) {
+type VaultRow = { ctd_section: string | null; placement_status: string; document_title: string; folder_id?: string | null; evidence_kind?: string | null };
+
+function fakePool(rows: VaultRow[], opts: { fail?: boolean } = {}) {
   const calls: Array<{ sql: string; params?: unknown[] }> = [];
   const pool: KnowledgeQueryable = {
     async query(sql, params) {
@@ -157,6 +159,54 @@ describe('plan_submission_from_database_lock', () => {
     for (const n of SUBMISSION_CHAIN) {
       expect((await handlers().plan_submission_from_database_lock({ step: n.id })).length, n.id).toBeLessThanOrEqual(RESULT_BUDGET);
     }
+  });
+});
+
+describe('plan_submission_from_database_lock reads the Vault’s filing vocabulary', () => {
+  // A CSR uploaded with its type declared is stored in Module 5 with kind 'csr'
+  // and no section (vault-filing.service reconcileDeclaredType). Before
+  // 2026-10-05 the read dropped every row without a section, so that CSR was
+  // invisible; and a SAP at 5.3.5.1 was counted as the CSR.
+  it('reads the folder and kind the Vault records, sees a CSR filed in Module 5 without a section, and reports misfiling', async () => {
+    const { pool, calls } = fakePool([
+      { ctd_section: null, folder_id: 'module-5', evidence_kind: 'csr', placement_status: 'confirmed', document_title: 'Study 301 report' },
+      { ctd_section: '5.3.5.1', folder_id: 'module-5', evidence_kind: 'protocol', placement_status: 'confirmed', document_title: 'Statistical Analysis Plan v2.0 final' },
+      { ctd_section: '5.3.5', folder_id: 'module-5', evidence_kind: 'report', placement_status: 'confirmed', document_title: 'Summary of Clinical Efficacy' },
+    ]);
+    const s = JSON.parse(await handlers(pool).plan_submission_from_database_lock({}, CTX)).standing;
+    const sql = calls.find((c) => /vault\.documents/.test(c.sql))!.sql;
+    expect(sql).toMatch(/d\.folder_id/);
+    expect(sql).toMatch(/d\.evidence_kind/);
+    expect(sql).toMatch(/ctd_section IS NULL AND d\.folder_id = 'module-5'/);
+    expect(s.states.sap_final).toBe('filed (1)');
+    expect(s.states.csr).toBe('suggested (1)');
+    expect(s.next.join(' ')).not.toMatch(/\biss\b/);
+    expect(s.unspecific_placement.join(' ')).toMatch(/Study 301 report.*Module 5 \(no section\)/);
+    expect(s.misfiled.join(' ')).toMatch(/Summary of Clinical Efficacy.*5\.3\.5.*2\.7\.3/);
+  });
+
+  it('says in its description and step detail that it matches by kind and reports misfiling', async () => {
+    const tool = REGULATORY_KNOWLEDGE_TOOLS.find((t) => t.name === 'plan_submission_from_database_lock')!;
+    expect(tool.description).toMatch(/misfiled/);
+    const csr = JSON.parse(await handlers().plan_submission_from_database_lock({ step: 'csr' }));
+    expect(csr.step.platform_sees).toMatch(/clinical study report/i);
+    expect(csr.step.platform_sees).toMatch(/5\.3\.5/);
+  });
+
+  it('fits the result budget with many misfiled, unspecific and noted documents', async () => {
+    const long = 'X'.repeat(200);
+    const many = (n: number, row: (i: number) => VaultRow) => Array.from({ length: n }, (_, i) => row(i));
+    const { pool } = fakePool([
+      ...many(20, (i) => ({ ctd_section: '5.3.5', folder_id: 'module-5', evidence_kind: 'report', placement_status: 'confirmed', document_title: `Summary of Clinical Efficacy ${i} ${long}` })),
+      ...many(20, (i) => ({ ctd_section: null, folder_id: 'module-5', evidence_kind: 'csr', placement_status: 'confirmed', document_title: `CSR ${i} ${long}` })),
+      ...many(20, (i) => ({ ctd_section: '2.7.4', folder_id: 'module-2', evidence_kind: 'report', placement_status: 'confirmed', document_title: `Integrated Summary of Safety ${i} ${long}` })),
+    ]);
+    const raw = await handlers(pool).plan_submission_from_database_lock({}, CTX);
+    expect(raw.length).toBeLessThanOrEqual(RESULT_BUDGET);
+    const s = JSON.parse(raw).standing;
+    expect(s.misfiled.at(-1)).toBe('and 17 more');
+    expect(s.unspecific_placement.at(-1)).toBe('and 17 more');
+    expect(s.placement_notes.at(-1)).toBe('and 17 more');
   });
 });
 
