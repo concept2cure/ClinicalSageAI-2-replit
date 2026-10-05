@@ -1185,6 +1185,22 @@ export function V2App() {
          off, and those stylesheets are outside this change. */
       data-editor={ownsConversation || undefined}
     >
+      {/* WCAG 2.2 SC 2.4.1. The rail and the top bar put 22 tab stops before
+          a surface's first control on every page (measured 2026-10-05,
+          tests/e2e/launch-surface-keyboard.e2e.spec.ts). Landmarks let a
+          screen reader skip them; a keyboard user without one could not. The
+          link is the first stop and moves focus to the surface itself; it is
+          position: fixed, so it takes no cell in the shell's grid. */}
+      <a
+        className="skip-link"
+        href="#c2c-page"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById('c2c-page')?.focus();
+        }}
+      >
+        Skip to content
+      </a>
       <Rail
         activeId={activeId}
         onNav={nav}
@@ -1220,7 +1236,7 @@ export function V2App() {
           onNav={nav}
           onAsk={ask}
         />
-        <div className={isFull ? 'page page-full' : 'page'}>
+        <div id="c2c-page" tabIndex={-1} className={isFull ? 'page page-full' : 'page'}>
           <SurfaceBoundary resetKey={bodyKey}>
             {/* A deep link to a surface outside the launch scope renders the
                 honest panel, from the same verdict the rail and catalog read. */}

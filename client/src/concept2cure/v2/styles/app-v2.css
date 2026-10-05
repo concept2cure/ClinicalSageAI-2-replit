@@ -93,6 +93,25 @@
 .c2c-v2 textarea:focus-visible,
 .c2c-v2 select:focus-visible { outline: 2px solid var(--accent-200); outline-offset: 2px; border-radius: var(--radius-md); }
 
+/* Skip link (WCAG 2.2 SC 2.4.1): off-screen until focused, then shown over the
+   top-left corner. Its target, `.page`, takes focus only from the link
+   (tabindex=-1); a region is not a control, so it carries no ring. */
+.c2c-v2 .skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 1000;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--text-100);
+  color: var(--bg-000);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 16px));
+}
+.c2c-v2 .skip-link:focus { transform: none; outline: 2px solid var(--accent-200); outline-offset: 2px; }
+.c2c-v2 .page:focus { outline: none; }
+
 /* `.c2c-input` — the field chrome the class never had.
    ────────────────────────────────────────────────────────────────────────────
    The focus ring above was half the repair. The class carrying it still had NO
