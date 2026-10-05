@@ -794,8 +794,6 @@
    "guidance_change_radar",
    "guidance_for_anda",
    "import_ris_references",
-   "ind_generate_section",
-   "ind_get_status",
    "insert_clause_template",
    "insert_document_content",
    "inspect_uploaded_document",

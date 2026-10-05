@@ -1,0 +1,150 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/ind-tools-retired.test.ts
+{
+  "timestamp": "2026-10-05T03:36:15.887Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:36:15.888Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/ind-tools-retired.test.ts
+{
+  "timestamp": "2026-10-05T03:36:15.889Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ind-tools-retired.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/ind-tools-retired.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/ind-tools-retired.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > have no handler — the one they had could only ever get 401 AUTH_001
+{
+  "timestamp": "2026-10-05T03:36:19.949Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Database operation blocked because tenant scope is missing",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "select \"role\" from \"organization_users\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3",
+    "enforcement": "on"
+  }
+}
+
+ × server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > have no handler — the one they had could only ever get 401 AUTH_001 28ms
+   → expected { …(2) } to deeply equal { …(2) }
+ × server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > are not offered to the model 1ms
+   → ind_generate_section: expected true to be false // Object.is equality
+ × server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > are absent from the authorization register 4ms
+   → ind_generate_section: expected [ 'ack_training', …(791) ] to not include 'ind_generate_section'
+ × server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > are absent from the launch-scope inventory 1ms
+   → ind_generate_section: expected [ 'ack_training', …(608) ] to not include 'ind_generate_section'
+ × server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > the IND flow offers drafting through draft_authoring_document, a registered tool 2ms
+   → expected [ 'ind_generate_section', …(2) ] to include 'draft_authoring_document'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > have no handler — the one they had could only ever get 401 AUTH_001
+AssertionError: expected { …(2) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+-   "ind_generate_section": "no handler",
+-   "ind_get_status": "no handler",
++   "ind_generate_section": "{\"error\":\"ind_generate_section could not confirm your role in this organization, so nothing was changed: Failed query: select \\\"role\\\" from \\\"organization_users\\\" where (\\\"organization_users\\\".\\\"user_id\\\" = $1 and \\\"organization_users\\\".\\\"organization_id\\\" = $2) limit $3\\nparams: 1,1,1\"}",
++   "ind_get_status": "{\"success\":false,\"error\":\"Authentication required\",\"code\":\"AUTH_001\"}",
+  }
+
+ ❯ server/services/ana/__tests__/ind-tools-retired.test.ts:66:21
+     64|         : 'no handler';
+     65|     }
+     66|     expect(answers).toEqual({ ind_generate_section: 'no handler', ind_…
+       |                     ^
+     67|   });
+     68|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > are not offered to the model
+AssertionError: ind_generate_section: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/ind-tools-retired.test.ts:71:65
+     69|   it('are not offered to the model', () => {
+     70|     const offered = new Set(ALL_ANA_TOOLS.map((t) => t.name));
+     71|     for (const name of RETIRED) expect(offered.has(name), name).toBe(f…
+       |                                                                 ^
+     72|   });
+     73|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > are absent from the authorization register
+AssertionError: ind_generate_section: expected [ 'ack_training', …(791) ] to not include 'ind_generate_section'
+ ❯ server/services/ana/__tests__/ind-tools-retired.test.ts:79:79
+     77|     ) as { tools: Record<string, unknown> };
+     78|     expect(Object.keys(register.tools).length).toBeGreaterThan(100);
+     79|     for (const name of RETIRED) expect(Object.keys(register.tools), na…
+       |                                                                               ^
+     80|   });
+     81|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > are absent from the launch-scope inventory
+AssertionError: ind_generate_section: expected [ 'ack_training', …(608) ] to not include 'ind_generate_section'
+ ❯ server/services/ana/__tests__/ind-tools-retired.test.ts:89:43
+     87|     const hidden = JSON.stringify(inv.tools.hiddenApp);
+     88|     for (const name of RETIRED) {
+     89|       expect(inv.tools.inScope, name).not.toContain(name);
+       |                                           ^
+     90|       expect(hidden, name).not.toContain(`"${name}"`);
+     91|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > the IND flow offers drafting through draft_authoring_document, a registered tool
+AssertionError: expected [ 'ind_generate_section', …(2) ] to include 'draft_authoring_document'
+ ❯ server/services/ana/__tests__/ind-tools-retired.test.ts:104:19
+    102|     const actions = buildSuggestedActions(def!);
+    103|     const types = actions.map((a) => a.actionType);
+    104|     expect(types).toContain('draft_authoring_document');
+       |                   ^
+    105|     for (const name of RETIRED) {
+    106|       expect(types, name).not.toContain(name);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  03:36:12
+   Duration  7.64s (transform 5.13s, setup 91ms, import 7.21s, tests 40ms, environment 0ms)
+
