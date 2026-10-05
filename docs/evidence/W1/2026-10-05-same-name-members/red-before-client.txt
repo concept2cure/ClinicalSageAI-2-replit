@@ -1,0 +1,5 @@
+# ProtocolDevForms.tsx at trunk 69bb475b (unchanged), the new test added
+$ npx vitest run client/src/concept2cure/v2/__tests__/sameNameMemberPickers.test.tsx
+ × the protocol review reviewer select > offers two same-name accounts as two different choices
+AssertionError: expected [ …(4) ] to include 'JM Smith · jm.smith@acme.test · admin'
+      Tests  1 failed (1)
