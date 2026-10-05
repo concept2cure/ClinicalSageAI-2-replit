@@ -1,0 +1,88 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/project-knowledge-search-open-program.test.ts
+{
+  "timestamp": "2026-10-05T02:00:18.993Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:00:18.994Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/project-knowledge-search-open-program.test.ts
+{
+  "timestamp": "2026-10-05T02:00:18.994Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/project-knowledge-search-open-program.test.ts
+[database] Database connection successful
+
+ × server/services/ana/__tests__/project-knowledge-search-open-program.test.ts > project_knowledge_search with a v2 project open (as the chat stream calls it) > searches the program's project, with the tenant uuid from the request scope 15ms
+   → expected [] to have a length of 1 but got +0
+ ✓ server/services/ana/__tests__/project-knowledge-search-open-program.test.ts > project_knowledge_search with a v2 project open (as the chat stream calls it) > does not search a program the resolver does not give for this organization 2ms
+ ✓ server/services/ana/__tests__/project-knowledge-search-open-program.test.ts > project_knowledge_search with a v2 project open (as the chat stream calls it) > never takes another tenant's uuid from the scope 1ms
+ × server/services/ana/__tests__/project-knowledge-search-open-program.test.ts > project_knowledge_search with a v2 project open (as the chat stream calls it) > resolves for the caller's own organization: another organization's caller does not get org 7's project 5ms
+   → expected undefined to match object { orgId: 8 }
+ ✓ server/services/ana/__tests__/project-knowledge-search-open-program.test.ts > project_knowledge_search with a v2 project open (as the chat stream calls it) > a lookup that fails is no project, never a guessed one 1ms
+ ✓ server/services/ana/__tests__/project-knowledge-search-open-program.test.ts > project_knowledge_search with a v2 project open (as the chat stream calls it) > control: an integer project with a uuid in context is searched exactly as before, without the resolver 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/project-knowledge-search-open-program.test.ts > project_knowledge_search with a v2 project open (as the chat stream calls it) > searches the program's project, with the tenant uuid from the request scope
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ana/__tests__/project-knowledge-search-open-program.test.ts:70:23
+     68|   it('searches the program\'s project, with the tenant uuid from the r…
+     69|     await inScope('7', ORG_UUID, () => search({ organizationId: 7, use…
+     70|     expect(rag.calls).toHaveLength(1);
+       |                       ^
+     71|     expect(rag.calls[0]).toMatchObject({
+     72|       intent: 'project_scoped',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ana/__tests__/project-knowledge-search-open-program.test.ts > project_knowledge_search with a v2 project open (as the chat stream calls it) > resolves for the caller's own organization: another organization's caller does not get org 7's project
+AssertionError: expected undefined to match object { orgId: 8 }
+
+- Expected:
+{
+  "orgId": 8,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/project-knowledge-search-open-program.test.ts:94:35
+     92|   it('resolves for the caller\'s own organization: another organizatio…
+     93|     const out = await inScope('8', ORG8_UUID, () => search({ organizat…
+     94|     expect(resolver.calls.at(-1)).toMatchObject({ orgId: 8 });
+       |                                   ^
+     95|     expect(rag.calls).toHaveLength(0);
+     96|     expect(String(out)).toMatch(/No active project/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  02:00:16
+   Duration  7.18s (transform 4.61s, setup 74ms, import 6.82s, tests 31ms, environment 0ms)
+
