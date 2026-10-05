@@ -30,14 +30,21 @@
  *  - EMA Pediatric: Regulation (EC) No 1901/2006 — a Paediatric Investigation
  *    Plan (PIP) is required for a marketing-authorisation application unless
  *    waived or deferred.
- *  - PMDA Orphan: Japan Pharmaceutical Affairs Act — fewer than 50,000 patients
- *    in Japan and high medical need (severe disease, no alternative therapy).
- *  - PMDA Pediatric: pediatric development encouraged; local requirements apply.
+ *  - PMDA Orphan and Pediatric: the criteria, the paediatric development plan
+ *    duty and their bases are read from the one Japanese programmes record,
+ *    server/services/ind/ctd/jp-programs.ts (`pmda-orphan-drug`,
+ *    `jp-pediatric-development-plan`). The 50,000-patient threshold applied in
+ *    assessOrphan is the predicate for the record's first orphan criterion.
  *
  * @module server/services/global-ri/special-designations
  */
 
+import { getJpProgram, jpProgramBasisLabel, jpProgramCriteriaText } from '../ind/ctd/jp-programs';
+
 export type Market = 'FDA' | 'EMA' | 'PMDA';
+
+const JP_ORPHAN = getJpProgram('pmda-orphan-drug');
+const JP_PEDIATRIC_PLAN = getJpProgram('jp-pediatric-development-plan');
 
 export interface DesignationCriteria {
   /** Orphan program name for the market. */
@@ -74,12 +81,10 @@ export const DESIGNATION_REFERENCE: Record<Market, DesignationCriteria> = {
   },
   PMDA: {
     orphanProgram: 'PMDA / MHLW Orphan Drug Designation',
-    orphanCriteria:
-      'Disease affecting fewer than 50,000 patients in Japan and high medical need (severe disease with no satisfactory alternative therapy).',
-    pediatricProgram: 'Pediatric development (MHLW)',
-    pediatricCriteria:
-      'Pediatric development is encouraged; confirm local pediatric data requirements and applicable incentives with PMDA.',
-    citation: 'Pharmaceutical Affairs Act (Japan); MHLW orphan drug designation criteria',
+    orphanCriteria: `${jpProgramCriteriaText(JP_ORPHAN)}.`,
+    pediatricProgram: `${JP_PEDIATRIC_PLAN.name} (${JP_PEDIATRIC_PLAN.nameJa})`,
+    pediatricCriteria: `${JP_PEDIATRIC_PLAN.description} In force from ${JP_PEDIATRIC_PLAN.effectiveFrom}.`,
+    citation: `${jpProgramBasisLabel(JP_ORPHAN)}; ${jpProgramBasisLabel(JP_PEDIATRIC_PLAN)}`,
   },
 };
 
@@ -249,10 +254,11 @@ function assessPediatric(market: Market, ref: DesignationCriteria): PediatricAss
       obligation: 'Agree a PIP with the EMA Paediatric Committee (PDCO), or obtain a waiver/deferral, before MAA validation.',
     };
   }
+  const consultation = getJpProgram('pmda-consultation-pediatric-plan');
   return {
     applicable: true,
-    requirement: 'Pediatric development encouraged; confirm local pediatric data requirements with PMDA.',
-    obligation: 'Discuss pediatric development plans and applicable incentives with PMDA.',
+    requirement: `${JP_PEDIATRIC_PLAN.name}: ${jpProgramCriteriaText(JP_PEDIATRIC_PLAN)}. Basis: ${jpProgramBasisLabel(JP_PEDIATRIC_PLAN)}.`,
+    obligation: `${JP_PEDIATRIC_PLAN.timing ?? ''} PMDA confirms the plan through the ${consultation.name} (${consultation.nameJa}).`.trim(),
   };
 }
 

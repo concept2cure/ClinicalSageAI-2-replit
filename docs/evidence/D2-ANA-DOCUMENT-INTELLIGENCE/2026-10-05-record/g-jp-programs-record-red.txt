@@ -1,0 +1,414 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > pediatric obligation catalog > models program + citation for every market 2ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > pediatric obligation catalog > exposes exactly the three modeled markets 1ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > pediatric obligation catalog > throws for an unmodeled market in getPediatricObligation 1ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — FDA (PREA / iPSP) > plan outstanding when nothing has been submitted 7ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — FDA (PREA / iPSP) > satisfied when the iPSP has been submitted 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — FDA (PREA / iPSP) > waiver/deferral pending when a waiver is requested 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — FDA (PREA / iPSP) > waiver/deferral pending when a deferral is requested 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — FDA (PREA / iPSP) > not_applicable when the application does not trigger the requirement 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — EMA (PIP) > PIP required with timing referencing pharmacokinetic / Phase 1 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — EMA (PIP) > satisfied when the PIP has been agreed/submitted 0ms
+ × server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — PMDA (paediatric development plan, effort obligation since 2026-05-01) > reports the effort obligation, not "no mandatory plan" 6ms
+   → expected 'No mandatory pediatric study plan (de…' not to match /No mandatory/i
+ × server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — PMDA (paediatric development plan, effort obligation since 2026-05-01) > an application that triggers the duty has a plan outstanding until PMDA has confirmed one 1ms
+   → expected undefined to be 'effort' // Object.is equality
+ × server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — PMDA (paediatric development plan, effort obligation since 2026-05-01) > satisfied when the plan has been confirmed by PMDA 2ms
+   → expected 'not_applicable' to be 'satisfied' // Object.is equality
+ × server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — PMDA (paediatric development plan, effort obligation since 2026-05-01) > not_applicable when the application does not trigger the duty 1ms
+   → expected undefined to be 'none' // Object.is equality
+ × server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — duty > FDA and EMA are mandatory duties when triggered 1ms
+   → expected undefined to be 'mandatory' // Object.is equality
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — errors + determinism > throws for an unmodeled market 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — errors + determinism > is deterministic for the same input 0ms
+ ✓ server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — errors + determinism > produces sorted actions and notes 0ms
+ × server/services/global-ri/__tests__/expedited-programs.test.ts > EXPEDITED_PROGRAMS catalog > encodes the FDA, EMA and PMDA programs 17ms
+   → expected [ …(4) ] to deeply equal ArrayContaining{…}
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > EXPEDITED_PROGRAMS catalog > is ordered by id and every program is well-formed 11ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > EXPEDITED_PROGRAMS catalog > has unique program ids 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > serious + unmet need → Fast Track eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > serious + preliminary evidence + substantial improvement → Breakthrough eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > surrogate + serious + unmet need → Accelerated Approval eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > regenerative + serious + preliminary evidence → RMAT eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — FDA > substantial improvement alone → Priority Review eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — EMA > unmet need + preliminary evidence → PRIME eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — EMA > serious + unmet need → Conditional MA eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — EMA > comprehensive data unobtainable → Exceptional Circumstances eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > all four Sakigake criteria → eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > only substantial improvement + early JP development → NOT Sakigake eligible (all four criteria required) 0ms
+ × server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > conditional approval is the system as amended in 2025: approval at the exploratory-trial stage, not "confirmatory trials are difficult" 1ms
+   → expected undefined to be defined
+ × server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > the conditional-approval screen explains itself from the record and says it is recall 1ms
+   → expected undefined to be defined
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > orphan → Orphan Drug Designation eligible 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — non-matching and scoping > empty input → nothing eligible, programs reported as notSuitable 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — non-matching and scoping > only returns programs for the requested region 1ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — non-matching and scoping > partitions: a program is either eligible or notSuitable, never both 0ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — determinism and ordering > identical input yields identical output 1ms
+ ✓ server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — determinism and ordering > both result lists are ordered by program id 0ms
+ × server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > holds each programme once, with the ids the engines read 10ms
+   → Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ × server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > names the consultations as PMDA does 3ms
+   → Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ × server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > every entry has a well-formed basis, and nothing unread is presented as regulator text 2ms
+   → Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ × server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > a regulator-text basis must have been checked on or after the date the programme took effect 1ms
+   → Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ × server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > conditional approval is the 2025 system: exploratory-trial stage, revocable, drugs only until read 1ms
+   → Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ × server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > the paediatric plan is an effort obligation confirmed by PMDA 1ms
+   → Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ × server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > SAKIGAKE keeps the four criteria the matcher screens 1ms
+   → Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ × server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > getJpProgram throws for an id it does not hold 1ms
+   → Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ × server/services/ind/ctd/__tests__/jp-programs.test.ts > readers of the record > special-designations states the PMDA paediatric duty from the record, not "encouraged" 3ms
+   → expected 'Pediatric development (MHLW) Pediatri…' not to match /encouraged/i
+ × server/services/ind/ctd/__tests__/jp-programs.test.ts > readers of the record > the global pathway comparison describes Japan conditional approval as amended 2ms
+   → Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ × server/services/ind/ctd/__tests__/jp-programs.test.ts > readers of the record > no migrated file carries its own Japan paediatric or conditional-approval prose 13ms
+   → expected [ …(24) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/global-ri/__tests__/expedited-programs.test.ts > EXPEDITED_PROGRAMS catalog > encodes the FDA, EMA and PMDA programs
+AssertionError: expected [ …(4) ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   "pmda-sakigake",
+-   "pmda-conditional-approval",
+-   "pmda-priority-review",
++ [
++   "pmda-conditional-early-approval",
+    "pmda-orphan-drug",
++   "pmda-priority-review",
++   "pmda-sakigake",
+  ]
+
+ ❯ server/services/global-ri/__tests__/expedited-programs.test.ts:44:30
+     42|       ]),
+     43|     );
+     44|     expect(byRegion('PMDA')).toEqual(
+       |                              ^
+     45|       expect.arrayContaining([
+     46|         'pmda-sakigake',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > conditional approval is the system as amended in 2025: approval at the exploratory-trial stage, not "confirmatory trials are difficult"
+AssertionError: expected undefined to be defined
+ ❯ server/services/global-ri/__tests__/expedited-programs.test.ts:175:15
+    173|   it('conditional approval is the system as amended in 2025: approval …
+    174|     const p = programsForRegion('PMDA').find((x) => x.id === 'pmda-con…
+    175|     expect(p).toBeDefined();
+       |               ^
+    176|     const text = [p!.name, p!.description, ...p!.criteria].join(' ');
+    177|     expect(p!.criteria.some((c) => /exploratory/i.test(c))).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  server/services/global-ri/__tests__/expedited-programs.test.ts > matchExpeditedPrograms — PMDA > the conditional-approval screen explains itself from the record and says it is recall
+AssertionError: expected undefined to be defined
+ ❯ server/services/global-ri/__tests__/expedited-programs.test.ts:194:15
+    192|     });
+    193|     const m = res.eligible.find((e) => e.id === 'pmda-conditional-appr…
+    194|     expect(m).toBeDefined();
+       |               ^
+    195|     expect(m!.rationale).toMatch(/exploratory/i);
+    196|     expect(m!.rationale).not.toMatch(/confirmatory trials are difficul…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — PMDA (paediatric development plan, effort obligation since 2026-05-01) > reports the effort obligation, not "no mandatory plan"
+AssertionError: expected 'No mandatory pediatric study plan (de…' not to match /No mandatory/i
+
+- Expected:
+/No mandatory/i
+
++ Received:
+"No mandatory pediatric study plan (development plan discussable with PMDA)"
+
+ ❯ server/services/global-ri/__tests__/pediatric-requirements.test.ts:88:31
+     86|   it('reports the effort obligation, not "no mandatory plan"', () => {
+     87|     const ob = getPediatricObligation('PMDA');
+     88|     expect(ob.instrument).not.toMatch(/No mandatory/i);
+       |                               ^
+     89|     expect(ob.planName).not.toMatch(/No mandatory|voluntary/i);
+     90|     expect(ob.instrument).toMatch(/paediatric development plan/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — PMDA (paediatric development plan, effort obligation since 2026-05-01) > an application that triggers the duty has a plan outstanding until PMDA has confirmed one
+AssertionError: expected undefined to be 'effort' // Object.is equality
+
+- Expected:
+"effort"
+
++ Received:
+undefined
+
+ ❯ server/services/global-ri/__tests__/pediatric-requirements.test.ts:97:20
+     95|   it('an application that triggers the duty has a plan outstanding unt…
+     96|     const r = assessPediatricPlan({ market: 'PMDA' });
+     97|     expect(r.duty).toBe('effort');
+       |                    ^
+     98|     // An effort obligation (努力義務) is not an approval prerequisite: ne…
+     99|     expect(r.required).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — PMDA (paediatric development plan, effort obligation since 2026-05-01) > satisfied when the plan has been confirmed by PMDA
+AssertionError: expected 'not_applicable' to be 'satisfied' // Object.is equality
+
+Expected: "satisfied"
+Received: "not_applicable"
+
+ ❯ server/services/global-ri/__tests__/pediatric-requirements.test.ts:109:22
+    107|   it('satisfied when the plan has been confirmed by PMDA', () => {
+    108|     const r = assessPediatricPlan({ market: 'PMDA', planSubmitted: tru…
+    109|     expect(r.status).toBe('satisfied');
+       |                      ^
+    110|     expect(r.duty).toBe('effort');
+    111|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — PMDA (paediatric development plan, effort obligation since 2026-05-01) > not_applicable when the application does not trigger the duty
+AssertionError: expected undefined to be 'none' // Object.is equality
+
+- Expected:
+"none"
+
++ Received:
+undefined
+
+ ❯ server/services/global-ri/__tests__/pediatric-requirements.test.ts:116:20
+    114|     const r = assessPediatricPlan({ market: 'PMDA', triggersRequiremen…
+    115|     expect(r.status).toBe('not_applicable');
+    116|     expect(r.duty).toBe('none');
+       |                    ^
+    117|   });
+    118| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  server/services/global-ri/__tests__/pediatric-requirements.test.ts > assessPediatricPlan — duty > FDA and EMA are mandatory duties when triggered
+AssertionError: expected undefined to be 'mandatory' // Object.is equality
+
+- Expected:
+"mandatory"
+
++ Received:
+undefined
+
+ ❯ server/services/global-ri/__tests__/pediatric-requirements.test.ts:122:57
+    120| describe('assessPediatricPlan — duty', () => {
+    121|   it('FDA and EMA are mandatory duties when triggered', () => {
+    122|     expect(assessPediatricPlan({ market: 'FDA' }).duty).toBe('mandator…
+       |                                                         ^
+    123|     expect(assessPediatricPlan({ market: 'EMA' }).duty).toBe('mandator…
+    124|     expect(assessPediatricPlan({ market: 'FDA', triggersRequirement: f…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > holds each programme once, with the ids the engines read
+Error: Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ ❯ server/services/ind/ctd/__tests__/jp-programs.test.ts:57:29
+     55| describe('JP_PROGRAMS — the record', () => {
+     56|   it('holds each programme once, with the ids the engines read', async…
+     57|     const { JP_PROGRAMS } = await record();
+       |                             ^
+     58|     const ids = JP_PROGRAMS.map((p) => p.id);
+     59|     expect(new Set(ids).size).toBe(ids.length);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > names the consultations as PMDA does
+Error: Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ ❯ server/services/ind/ctd/__tests__/jp-programs.test.ts:79:30
+     77|
+     78|   it('names the consultations as PMDA does', async () => {
+     79|     const { getJpProgram } = await record();
+       |                              ^
+     80|     expect(getJpProgram('pmda-consultation-pre-meeting').nameJa).toBe(…
+     81|     expect(getJpProgram('pmda-consultation-clinical-trial').nameJa).to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > every entry has a well-formed basis, and nothing unread is presented as regulator text
+Error: Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ ❯ server/services/ind/ctd/__tests__/jp-programs.test.ts:92:48
+     90|
+     91|   it('every entry has a well-formed basis, and nothing unread is prese…
+     92|     const { JP_PROGRAMS, jpProgramProblems } = await record();
+       |                                                ^
+     93|     expect(jpProgramProblems()).toEqual([]);
+     94|     for (const p of JP_PROGRAMS) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > a regulator-text basis must have been checked on or after the date the programme took effect
+Error: Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ ❯ server/services/ind/ctd/__tests__/jp-programs.test.ts:109:48
+    107|
+    108|   it('a regulator-text basis must have been checked on or after the da…
+    109|     const { jpProgramProblems, JP_PROGRAMS } = await record();
+       |                                                ^
+    110|     const stale = {
+    111|       ...JP_PROGRAMS.find((p) => p.id === 'pmda-conditional-approval')…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > conditional approval is the 2025 system: exploratory-trial stage, revocable, drugs only until read
+Error: Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ ❯ server/services/ind/ctd/__tests__/jp-programs.test.ts:118:30
+    116|
+    117|   it('conditional approval is the 2025 system: exploratory-trial stage…
+    118|     const { getJpProgram } = await record();
+       |                              ^
+    119|     const p = getJpProgram('pmda-conditional-approval');
+    120|     expect(p.effectiveFrom).toBe('2026-05-01');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/19]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > the paediatric plan is an effort obligation confirmed by PMDA
+Error: Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ ❯ server/services/ind/ctd/__tests__/jp-programs.test.ts:130:30
+    128|
+    129|   it('the paediatric plan is an effort obligation confirmed by PMDA', …
+    130|     const { getJpProgram } = await record();
+       |                              ^
+    131|     const p = getJpProgram('jp-pediatric-development-plan');
+    132|     expect(p.kind).toBe('obligation');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/19]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > SAKIGAKE keeps the four criteria the matcher screens
+Error: Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ ❯ server/services/ind/ctd/__tests__/jp-programs.test.ts:140:30
+    138|
+    139|   it('SAKIGAKE keeps the four criteria the matcher screens', async () …
+    140|     const { getJpProgram } = await record();
+       |                              ^
+    141|     expect(getJpProgram('pmda-sakigake').criteria).toHaveLength(4);
+    142|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/19]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/jp-programs.test.ts > JP_PROGRAMS — the record > getJpProgram throws for an id it does not hold
+Error: Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ ❯ server/services/ind/ctd/__tests__/jp-programs.test.ts:145:30
+    143|
+    144|   it('getJpProgram throws for an id it does not hold', async () => {
+    145|     const { getJpProgram } = await record();
+       |                              ^
+    146|     expect(() => getJpProgram('pmda-conditional-early-approval')).toTh…
+    147|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/19]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/jp-programs.test.ts > readers of the record > special-designations states the PMDA paediatric duty from the record, not "encouraged"
+AssertionError: expected 'Pediatric development (MHLW) Pediatri…' not to match /encouraged/i
+
+- Expected:
+/encouraged/i
+
++ Received:
+"Pediatric development (MHLW) Pediatric development is encouraged; confirm local pediatric data requirements and applicable incentives with PMDA."
+
+ ❯ server/services/ind/ctd/__tests__/jp-programs.test.ts:153:64
+    151|   it('special-designations states the PMDA paediatric duty from the re…
+    152|     const c = getDesignationCriteria('PMDA');
+    153|     expect(`${c.pediatricProgram} ${c.pediatricCriteria}`).not.toMatch…
+       |                                                                ^
+    154|     expect(c.pediatricCriteria).toMatch(/effort obligation/i);
+    155|     const r = assessDesignationEligibility({ market: 'PMDA', pediatric…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/19]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/jp-programs.test.ts > readers of the record > the global pathway comparison describes Japan conditional approval as amended
+Error: Cannot find module '/server/services/ind/ctd/jp-programs' imported from /home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/__tests__/jp-programs.test.ts
+ ❯ server/services/ind/ctd/__tests__/jp-programs.test.ts:161:30
+    159|
+    160|   it('the global pathway comparison describes Japan conditional approv…
+    161|     const { getJpProgram } = await record();
+       |                              ^
+    162|     const jp = compareGlobalPathways({ productType: 'small_molecule', …
+    163|     const ca = getJpProgram('pmda-conditional-approval');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/19]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/jp-programs.test.ts > readers of the record > no migrated file carries its own Japan paediatric or conditional-approval prose
+AssertionError: expected [ …(24) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "server/services/global-ri/expedited-programs.ts:19: *   - PMDA — Sakigake Designation, Conditional Early Approval, Priority Review,",
++   "server/services/global-ri/expedited-programs.ts:173: name: 'Conditional Early Approval',",
++   "server/services/global-ri/expedited-programs.ts:175: 'System allowing earlier approval, with post-marketing conditions, for drugs treating serious diseases where conducting confirmatory clinical trials is difficult and a certain level of efficacy/safety can be shown from available data.',",
++   "server/services/global-ri/expedited-programs.ts:178: 'Confirmatory clinical trials are difficult to conduct or would take long',",
++   "server/services/global-ri/expedited-programs.ts:373: 'Serious disease with high medical need where confirmatory trials are difficult but available clinical evidence shows efficacy/safety — candidate for Conditional Early Approval.',",
++   "server/services/global-ri/expedited-programs.ts:373: 'Serious disease with high medical need where confirmatory trials are difficult but available clinical evidence shows efficacy/safety — candidate for Conditional Early Approval.',",
++   "server/services/global-ri/expedited-programs.ts:375: 'Conditional Early Approval requires a serious disease with high medical need and available clinical evidence of efficacy/safety where confirmatory trials are difficult.',",
++   "server/services/global-ri/expedited-programs.ts:375: 'Conditional Early Approval requires a serious disease with high medical need and available clinical evidence of efficacy/safety where confirmatory trials are difficult.',",
++   "server/services/global-ri/pediatric-requirements.ts:15: * stage; pediatric development encouraged and discussable with PMDA).",
++   "server/services/global-ri/pediatric-requirements.ts:41: *  - PMDA: PMD Act / MHLW — no mandatory PIP/PSP at the same development stage;",
++   "server/services/global-ri/pediatric-requirements.ts:42: *    pediatric development is encouraged, may be discussed with PMDA, and can",
++   "server/services/global-ri/pediatric-requirements.ts:100: instrument: 'No mandatory pediatric study plan (development plan discussable with PMDA)',",
++   "server/services/global-ri/pediatric-requirements.ts:102: 'No mandatory PIP/PSP at the same development stage; pediatric development is encouraged, may be discussed with PMDA, and can inform the re-examination period. Confirm local requirements.',",
++   "server/services/global-ri/pediatric-requirements.ts:102: 'No mandatory PIP/PSP at the same development stage; pediatric development is encouraged, may be discussed with PMDA, and can inform the re-examination period. Confirm local requirements.',",
++   "server/services/global-ri/pediatric-requirements.ts:103: planName: 'No mandatory plan (voluntary pediatric development plan)',",
++   "server/services/global-ri/pediatric-requirements.ts:107: 'Pediatric development is encouraged and can inform/extend the re-examination period; confirm applicable incentives with PMDA.',",
++   "server/services/global-ri/pediatric-requirements.ts:179: 'PMDA does not require a mandatory pediatric study plan at the same development stage; pediatric development is encouraged.',",
++   "server/services/global-ri/pediatric-requirements.ts:183: actions.push('Consider discussing a voluntary pediatric development plan with PMDA.');",
++   "server/services/global-ri/special-designations.ts:35: *  - PMDA Pediatric: pediatric development encouraged; local requirements apply.",
++   "server/services/global-ri/special-designations.ts:81: 'Pediatric development is encouraged; confirm local pediatric data requirements and applicable incentives with PMDA.',",
++   "server/services/global-ri/special-designations.ts:254: requirement: 'Pediatric development encouraged; confirm local pediatric data requirements with PMDA.',",
++   "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts:1318: name: 'Conditional Early Approval',",
++   "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts:1344: name: 'Conditional Early Approval System',",
++   "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts:1349: 'Difficult to conduct adequate confirmatory trial in Japan (small population)',",
++ ]
+
+ ❯ server/services/ind/ctd/__tests__/jp-programs.test.ts:179:18
+    177|       });
+    178|     }
+    179|     expect(hits).toEqual([]);
+       |                  ^
+    180|   });
+    181| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/19]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  19 failed | 31 passed (50)
+   Start at  04:05:08
+   Duration  667ms (transform 510ms, setup 259ms, import 360ms, tests 113ms, environment 0ms)
+

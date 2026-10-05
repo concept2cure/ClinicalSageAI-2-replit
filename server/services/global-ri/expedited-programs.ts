@@ -16,8 +16,11 @@
  *            (EC) 726/2004), Conditional Marketing Authorisation (Reg. (EC)
  *            507/2006), Marketing Authorisation under Exceptional Circumstances
  *            (Art. 14(8) Reg. (EC) 726/2004).
- *   - PMDA — Sakigake Designation, Conditional Early Approval, Priority Review,
- *            Orphan Drug Designation (Pharmaceuticals and Medical Devices Act).
+ *   - PMDA — Sakigake Designation, conditional approval, Priority Review and
+ *            Orphan Drug Designation. Their names, descriptions, criteria,
+ *            benefits and bases are read from the one Japanese programmes
+ *            record, server/services/ind/ctd/jp-programs.ts; only the
+ *            eligibility predicates live here.
  *
  * The matcher is pure / deterministic: identical input yields identical output,
  * and both the `eligible` and `notSuitable` lists are ordered by program id.
@@ -25,6 +28,9 @@
  *
  * @module server/services/global-ri/expedited-programs
  */
+
+import type { RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
+import { getJpProgram, jpProgramBasisLabel, jpProgramCriteriaText, type JpProgram } from '../ind/ctd/jp-programs';
 
 /** Reference regulatory agencies covered by this catalog. */
 export type Region = 'FDA' | 'EMA' | 'PMDA';
@@ -40,6 +46,27 @@ export interface ExpeditedProgram {
   criteria: string[];
   /** The principal benefit the program confers. */
   benefit: string;
+  /** ISO date from which the program as described is in force (PMDA entries, from the JP record). */
+  effectiveFrom?: string;
+  /** Where the description comes from and whether it was checked (PMDA entries, from the JP record). */
+  basis?: readonly RegulatoryBasis[];
+}
+
+/** The PMDA programs screened here, by id in the Japanese programmes record. */
+const PMDA_PROGRAM_IDS = ['pmda-conditional-approval', 'pmda-orphan-drug', 'pmda-priority-review', 'pmda-sakigake'] as const;
+
+/** A JP record entry as a catalog entry. */
+function fromJpRecord(p: JpProgram): ExpeditedProgram {
+  return {
+    id: p.id,
+    region: 'PMDA',
+    name: p.name,
+    description: p.description,
+    criteria: [...p.criteria],
+    benefit: p.benefit,
+    ...(p.effectiveFrom ? { effectiveFrom: p.effectiveFrom } : {}),
+    basis: p.basis,
+  };
 }
 
 /**
@@ -166,59 +193,8 @@ export const EXPEDITED_PROGRAMS: readonly ExpeditedProgram[] = [
     benefit: 'All Breakthrough/Fast Track features, plus pathways to support accelerated approval (e.g. surrogate endpoints).',
   },
 
-  // ── PMDA ──────────────────────────────────────────────────────────────────
-  {
-    id: 'pmda-conditional-early-approval',
-    region: 'PMDA',
-    name: 'Conditional Early Approval',
-    description:
-      'System allowing earlier approval, with post-marketing conditions, for drugs treating serious diseases where conducting confirmatory clinical trials is difficult and a certain level of efficacy/safety can be shown from available data.',
-    criteria: [
-      'Serious disease with high medical need',
-      'Confirmatory clinical trials are difficult to conduct or would take long',
-      'Certain efficacy and safety demonstrable from available clinical data',
-    ],
-    benefit: 'Earlier approval with mandatory post-marketing surveillance and conditions.',
-  },
-  {
-    id: 'pmda-orphan-drug',
-    region: 'PMDA',
-    name: 'Orphan Drug Designation',
-    description:
-      'Designation for drugs targeting serious diseases affecting fewer than 50,000 patients in Japan with high medical need, providing development support, priority review, and re-examination/tax incentives.',
-    criteria: [
-      'Target patient population under 50,000 in Japan',
-      'Indication is a serious disease with high medical need',
-      'Sound rationale and feasible development plan',
-    ],
-    benefit: 'Development subsidies, consultation support, priority review, and extended re-examination period.',
-  },
-  {
-    id: 'pmda-priority-review',
-    region: 'PMDA',
-    name: 'Priority Review',
-    description:
-      'Shortened MHLW/PMDA review period for drugs treating serious diseases with high medical usefulness relative to existing therapies.',
-    criteria: [
-      'Indication is a serious disease',
-      'High medical usefulness (no existing therapy, or superior efficacy/safety/usefulness over existing therapies)',
-    ],
-    benefit: 'Prioritized, shortened regulatory review timetable.',
-  },
-  {
-    id: 'pmda-sakigake',
-    region: 'PMDA',
-    name: 'Sakigake Designation',
-    description:
-      'Designation promoting early practical application in Japan of innovative drugs developed there ahead of (or simultaneously with) other countries, offering prioritized consultation, review, and a substantive review-period target.',
-    criteria: [
-      'Innovative product with a novel mechanism',
-      'Serious or life-threatening target disease',
-      'Prominent effectiveness expected (substantial improvement over existing therapies)',
-      'Intended for early/world-first development and filing in Japan',
-    ],
-    benefit: 'Prioritized consultation and review (target ~6 months), with a dedicated PMDA concierge.',
-  },
+  // ── PMDA (from server/services/ind/ctd/jp-programs.ts) ─────────────────────
+  ...PMDA_PROGRAM_IDS.map((id) => fromJpRecord(getJpProgram(id))),
 ];
 
 /** Input context used to screen a product against the catalog. */
@@ -278,6 +254,22 @@ interface ProgramRule {
   rationale: string;
   /** Reason when not suitable. */
   reason: string;
+}
+
+/**
+ * A PMDA rule: the predicate is local; the rationale and reason are rendered
+ * from the Japanese programmes record, with its basis label, so the screen never
+ * restates a criterion the record does not hold.
+ */
+function pmdaRule(id: (typeof PMDA_PROGRAM_IDS)[number], test: (i: MatchInput) => boolean): ProgramRule {
+  const p = getJpProgram(id);
+  const effective = p.effectiveFrom ? ` (as in force from ${p.effectiveFrom})` : '';
+  return {
+    id,
+    test,
+    rationale: `Screens as a candidate for ${p.name}${effective}: ${jpProgramCriteriaText(p)}. Basis: ${jpProgramBasisLabel(p)}.`,
+    reason: `${p.name}${effective} requires: ${jpProgramCriteriaText(p)}. Basis: ${jpProgramBasisLabel(p)}.`,
+  };
 }
 
 /**
@@ -365,45 +357,20 @@ const RULES: Record<Region, ProgramRule[]> = {
     },
   ],
   PMDA: [
-    {
-      id: 'pmda-conditional-early-approval',
-      test: (i) =>
-        !!i.seriousOrLifeThreatening && !!i.unmetMedicalNeed && !!i.preliminaryClinicalEvidence,
-      rationale:
-        'Serious disease with high medical need where confirmatory trials are difficult but available clinical evidence shows efficacy/safety — candidate for Conditional Early Approval.',
-      reason:
-        'Conditional Early Approval requires a serious disease with high medical need and available clinical evidence of efficacy/safety where confirmatory trials are difficult.',
-    },
-    {
-      id: 'pmda-orphan-drug',
-      test: (i) => !!i.orphan,
-      rationale:
-        'Targets a serious disease in a small Japanese patient population with high medical need — eligible for Orphan Drug Designation.',
-      reason: 'Orphan Drug Designation requires an orphan indication (under 50,000 patients in Japan) with high medical need.',
-    },
-    {
-      id: 'pmda-priority-review',
-      test: (i) => !!i.seriousOrLifeThreatening && !!i.substantialImprovementOverExisting,
-      rationale:
-        'Serious disease with high medical usefulness over existing therapies — eligible for Priority Review.',
-      reason:
-        'Priority Review requires a serious disease with high medical usefulness relative to existing therapies.',
-    },
-    {
-      id: 'pmda-sakigake',
-      test: (i) =>
-        // All four catalog criteria must hold — previously only the last two were
-        // checked, so products that were neither innovative/novel-mechanism nor
-        // for a serious/life-threatening disease were wrongly screened as eligible.
-        !!i.innovativeNovelMechanism &&
-        !!i.seriousOrLifeThreatening &&
-        !!i.substantialImprovementOverExisting &&
-        !!i.intendedForEarlyJapanDevelopment,
-      rationale:
-        'Innovative product expected to show prominent effectiveness and intended for early/world-first development in Japan — candidate for Sakigake Designation.',
-      reason:
-        'Sakigake Designation requires prominent expected effectiveness (substantial improvement) and intent for early/world-first development and filing in Japan.',
-    },
+    pmdaRule('pmda-conditional-approval', (i) =>
+      !!i.seriousOrLifeThreatening && !!i.unmetMedicalNeed && !!i.preliminaryClinicalEvidence,
+    ),
+    pmdaRule('pmda-orphan-drug', (i) => !!i.orphan),
+    pmdaRule('pmda-priority-review', (i) => !!i.seriousOrLifeThreatening && !!i.substantialImprovementOverExisting),
+    pmdaRule('pmda-sakigake', (i) =>
+      // All four record criteria must hold — previously only the last two were
+      // checked, so products that were neither innovative/novel-mechanism nor
+      // for a serious/life-threatening disease were wrongly screened as eligible.
+      !!i.innovativeNovelMechanism &&
+      !!i.seriousOrLifeThreatening &&
+      !!i.substantialImprovementOverExisting &&
+      !!i.intendedForEarlyJapanDevelopment,
+    ),
   ],
 };
 
