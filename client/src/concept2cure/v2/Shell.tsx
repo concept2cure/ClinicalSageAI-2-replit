@@ -32,6 +32,7 @@ import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
 import { AnaMessageWarnings } from './AnaMessageWarnings';
+import { EngineChoices } from './EngineChoices';
 import { CONTINUE_PROMPT, continueTurnIndex } from './anaWorkModel';
 import { AnaProgressChip, AnaWorkPanel } from './AnaWorkPanel';
 import { RunControlStrip } from './AnaWorkSections';
@@ -726,6 +727,7 @@ export function AnaRail({
   const policyLabel = useRunPolicyLabel();
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
+  const modeMenuId = React.useId();
   /* The progress panel: shown by default, hidden by one shared per-browser
      choice (workDock.ts) that every host honours. The chip in the header is
      its one control — the panel sits directly beneath it, and a second close
@@ -764,7 +766,8 @@ export function AnaRail({
   const readyAttachments = attachments.filter((a) => a.status === 'ready');
   const uploadingAttachments = attachments.filter((a) => a.status === 'uploading');
   const failedAttachments = attachments.filter((a) => a.status === 'error');
-  const model = ANA_MODES.find((m) => m.id === mode)?.model ?? 'Balanced';
+  // The effort the mode buys, never a model (row 74, ADR-0015 §9).
+  const effortLabel = ANA_MODES.find((m) => m.id === mode)?.effortLabel ?? 'Balanced';
   /* AnA's per-surface context is local, and no longer claims otherwise.
    *
    * This used to fetch `GET /api/coauthor?surface=…&segment=…` under a comment
@@ -833,7 +836,7 @@ export function AnaRail({
           <div>
             <div className="ana-id-name">AnA — Co-Author</div>
             <div className="ana-id-model">
-              {model} engine · in {ac.module || 'this workspace'}
+              {effortLabel} effort · in {ac.module || 'this workspace'}
             </div>
           </div>
         </div>
@@ -887,7 +890,7 @@ export function AnaRail({
               project: projectLabel(),
               module: ac.module || null,
               surface: surface.label,
-              engine: model,
+              engine: effortLabel,
             }}
           />
         )}
@@ -1031,7 +1034,9 @@ export function AnaRail({
             <div key={i} className={`ana-msg is-${m.role}`}>
               {m.role === 'ana' && (
                 <div className="who">
-                  AnA · {m.model || model}
+                  {/* The model that answered, only when the server said which:
+                      the mode's effort word is not a model (ADR-0015 §9). */}
+                  {m.model ? `AnA · ${m.model}` : 'AnA'}
                   {m.sample ? ' · sample' : ''}
                 </div>
               )}
@@ -1273,6 +1278,9 @@ export function AnaRail({
               <button
                 type="button"
                 className="ana-modepull"
+                aria-haspopup="dialog"
+                aria-expanded={modeOpen}
+                aria-controls={modeOpen ? modeMenuId : undefined}
                 onClick={() => {
                   setModeOpen((o) => !o);
                   setPlusOpen(false);
@@ -1281,7 +1289,7 @@ export function AnaRail({
               >
                 <span className="ana-modepull-ic">{agent ? I.wand : I.sparkles}</span>
                 <span>
-                  {agent ? 'Agent' : 'Ask'} · {ANA_MODES.find((m) => m.id === mode)?.model}
+                  {agent ? 'Agent' : 'Ask'} · {ANA_MODES.find((m) => m.id === mode)?.effortLabel}
                   {policyLabel ? ` · ${policyLabel}` : null}
                 </span>
                 {I.down}
@@ -1415,7 +1423,7 @@ export function AnaRail({
             </div>
           )}
           {modeOpen && (
-            <div className="ana-menu" onMouseLeave={() => setModeOpen(false)}>
+            <div className="ana-menu" role="dialog" aria-label="Control & engine" id={modeMenuId} onMouseLeave={() => setModeOpen(false)}>
               <div className="ana-menu-sec">Control</div>
               <button
                 type="button"
@@ -1504,19 +1512,7 @@ export function AnaRail({
                 </>
               )}
               <div className="ana-menu-sec">Engine</div>
-              {ANA_MODES.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  className="ana-menu-item"
-                  data-on={mode === m.id || undefined}
-                  onClick={() => setMode(m.id)}
-                >
-                  <span className="ico">{I.zap}</span>
-                  {m.model}
-                  <span className="mh">{m.desc}</span>
-                </button>
-              ))}
+              <EngineChoices variant="rail" mode={mode} onChoose={setMode} />
             </div>
           )}
           {liveDrive?.on && (

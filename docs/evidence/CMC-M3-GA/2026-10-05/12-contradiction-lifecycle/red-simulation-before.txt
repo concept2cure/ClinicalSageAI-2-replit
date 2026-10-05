@@ -1,0 +1,12 @@
+── 12c. Re-running the sweep keeps QA's resolutions — the same finding over the same data stays resolved
+   ✗ re-sweep erased QA's resolutions: 2 open again, 0 still resolved (of 2)
+
+
+Downstream failures on the same run (critical findings reopened, so the export gate blocked):
+   ✗ gate still refuses (409): Governed document fabric blocked final export
+   ✗ placement failed (409): {"success":false,"error":"Governed document fabric blocked final export","data":{"totalSections":21,"approvedSections":21,"staleSections":0,"openCriticalContradictions":
+   ✗ eCTD compile: code=200 status=failed rendered=0 placeholders=1
+   ✗ same-sequence re-placement: code=409 leaves before=0 after=0 {"success":false,"error":"Governed document fabric blocked final export","data":{"totalSections":21,"approvedSections":21,"staleSect
+   ✗ amendment placement: seq=57 code=409 ops= {"success":false,"error":"Governed document fabric blocked final export","data":{"totalSections":21,"approvedSections":21,"staleSections":0,"openCritic
+
+════ RESULT: 125 passed, 6 failed ════

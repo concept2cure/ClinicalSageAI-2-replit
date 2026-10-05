@@ -1,0 +1,12 @@
+Red first: round 5's tests against the tree before the change (trunk 20b52c44b plus nothing of round 5).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run tests/services/tool-outcome.test.ts server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts
+
+ × server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts > the model is told what came back empty (TP-RL-4) > a search that found nothing is named in the note the next call reads 46ms
+   → expected '[Tool Result for search_literature (t…' to contain '[Adaptation note]'
+ ✓ server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts > the model is told what came back empty (TP-RL-4) > a round where every step returned something carries no note 6ms
+ FAIL  tests/services/tool-outcome.test.ts [ tests/services/tool-outcome.test.ts ]
+Error: Cannot find module '../../server/services/ana/tool-outcome' imported from <repo>/tests/services/tool-outcome.test.ts
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts > the model is told what came back empty (TP-RL-4) > a search that found nothing is named in the note the next call reads
+ Test Files  2 failed (2)
+      Tests  1 failed | 1 passed (2)

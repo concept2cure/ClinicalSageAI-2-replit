@@ -7,6 +7,7 @@
  *                     surfaces whose components haven't ported yet
  * Styles: styles/surfaces-v2.css (+ shell classes from app-v2.css).
  */
+import { EngineChoices } from '../EngineChoices';
 import { LiveDriveSwitch } from '../LiveDriveSwitch';
 import { RunPolicySwitch } from '../RunPolicySwitch';
 import React from 'react';
@@ -174,6 +175,8 @@ export function Home({
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const userName = user?.firstName || user?.displayName || 'there';
   const engine = ANA_MODES.find((m) => m.id === mode) ?? ANA_MODES[0];
+  const engineMenuId = React.useId();
+  const engineBtnRef = React.useRef<HTMLButtonElement>(null);
 
   const send = () => {
     const t = draft.trim();
@@ -358,29 +361,25 @@ export function Home({
               )}
             </div>
             <div className="landing-crow-r">
-              <button type="button" className="landing-engine" aria-haspopup="true" aria-expanded={modeOpen}
+              <button type="button" className="landing-engine" aria-haspopup="dialog" aria-expanded={modeOpen}
+                aria-controls={modeOpen ? engineMenuId : undefined} ref={engineBtnRef}
                 onClick={() => setModeOpen((o) => !o)}>
                 <span className="landing-eng-ana">AnA</span>
-                <span>{engine.model}</span>
+                <span>{engine.effortLabel}</span>
                 <span className="landing-eng-mode">{engine.label}</span>
                 <span className="landing-eng-chev">{I.down}</span>
               </button>
               {modeOpen && (
-                <div className="landing-mode-menu">
-                  {ANA_MODES.map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      data-on={mode === m.id || undefined}
-                      onClick={() => {
-                        setMode(m.id);
-                        setModeOpen(false);
-                      }}
-                    >
-                      <span className="lm-label">{m.model}</span>
-                      <span className="lm-desc">{m.desc}</span>
-                    </button>
-                  ))}
+                <div className="landing-mode-menu" role="dialog" aria-label="Engine" id={engineMenuId}>
+                  <EngineChoices
+                    mode={mode}
+                    onChoose={(id) => {
+                      setMode(id);
+                      setModeOpen(false);
+                      // Back to the pill: the choice's own button is gone.
+                      engineBtnRef.current?.focus();
+                    }}
+                  />
                 </div>
               )}
               <button

@@ -60,7 +60,7 @@ Each was reproduced on a running server (`red-simulation-before.txt`,
 ## Red, then green
 
 - **Route** (`red-route-before.txt`). Against the previous route,
-  `module3PlacementGovernance.test.ts` fails all three tests: a viewer placed
+  `module3GovernedActs.test.ts` fails all three tests: a viewer placed
   (200, where 403 was expected), a placement with no reason placed (200, where
   400 was expected), and the reason never reached the service. With the fix, all
   three pass.

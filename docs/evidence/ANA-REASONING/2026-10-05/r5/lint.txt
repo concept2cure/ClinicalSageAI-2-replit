@@ -1,0 +1,7 @@
+ESLint warnings/errors per file touched by round 5: on the round-5 tree (merged with trunk b2e745744), and warnings on trunk where the file exists there.
+Command: npx eslint --no-warn-ignored <file>
+
+server/routes/ana-ri/stream.ts                                         round5=24/0   trunk=24
+server/services/ana/tool-outcome.ts                                    round5=0/0    trunk=new
+tests/services/tool-outcome.test.ts                                    round5=0/0    trunk=new
+server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts          round5=0/0    trunk=new

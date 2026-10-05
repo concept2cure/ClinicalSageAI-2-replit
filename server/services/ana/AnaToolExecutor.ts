@@ -15,6 +15,7 @@
  */
 
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
+import { frameToolOutput } from './tool-output-frame.js';
 import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
 import { registeredToolTier } from './governed-tool-gate.js';
 import { foreignProgramRefusal, foreignRecordRefusal } from './tool-record-scope.js';
@@ -16086,7 +16087,7 @@ export async function executeAgenticLoop(
       role: 'user',
       content:
         results
-          .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
+          .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${frameToolOutput(capToolResultForModel(tr.content))}`)
           .join('\n\n') + adaptationSuffix,
     });
 

@@ -70,11 +70,12 @@ function openMenu(): HTMLElement {
   return menu as HTMLElement;
 }
 
-function menuItem(menu: HTMLElement, mode: { model: string }): HTMLButtonElement {
+function menuItem(menu: HTMLElement, mode: { effortLabel: string }): HTMLButtonElement {
+  // Each mode is a radio in the engine group (EngineChoices, ADR-0015 §9).
   const btn = within(menu)
-    .getAllByRole('button')
-    .find((b) => b.querySelector('.lm-label')?.textContent === mode.model);
-  if (!btn) throw new Error(`no menu item for ${mode.model}`);
+    .getAllByRole('radio')
+    .find((b) => b.querySelector('.lm-label')?.textContent === mode.effortLabel);
+  if (!btn) throw new Error(`no menu item for ${mode.effortLabel}`);
   return btn as HTMLButtonElement;
 }
 
@@ -96,7 +97,7 @@ describe('Home — the engine pill is the engine the turn runs on', () => {
     render(<Home {...baseProps()} mode={DEEP.id} setMode={vi.fn()} />);
 
     expect(pill().textContent).toContain(DEEP.label);
-    expect(pill().textContent).toContain(DEEP.model);
+    expect(pill().textContent).toContain(DEEP.effortLabel);
     // The first mode is the old local default; it must not be what shows.
     expect(pill().textContent).not.toContain(FIRST.label);
 

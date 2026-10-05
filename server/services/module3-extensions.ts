@@ -30,6 +30,13 @@ import {
   isHumanOrAnimalOrigin,
   isReviewRequiredOrigin,
 } from '../../shared/cmc/material-scope';
+import {
+  isUsClinicalTrialApplication,
+  US_IND_REGIONAL_FIELDS,
+  usIndRegionalNarrative,
+  usIndRegionalRows,
+  type IndRegionalStatus,
+} from './cmc/us-ind-regional';
 
 export type RegionCode = 'US' | 'EU' | 'JP' | 'CA';
 
@@ -1482,7 +1489,53 @@ export const REGIONAL_SECTION_LABELS: Readonly<Record<string, string>> = Object.
 );
 
 /** The source-payload fields a 3.2.R subsection reads, by section key. */
-export function regionalRequiredFields(sectionKey: string): string[] {
+/** An IND row's standing, in this composer's own status vocabulary. */
+function indStatus(st: IndRegionalStatus): RegionalStatus {
+  switch (st.kind) {
+    case 'cross-referenced':
+      return crossReferenced(st.section);
+    case 'module1':
+      return requiredInModule1(st.location);
+    case 'not-recorded':
+      return st.note ? { text: `Not recorded in this dossier — ${st.note}` } : notRecorded();
+    case 'as-they-occur':
+      return { text: st.text };
+  }
+}
+
+/**
+ * §3.2.R.1.US for an IND (services/cmc/us-ind-regional.ts): 21 CFR
+ * 312.23(a)(7)'s regional items in place of the marketing application's.
+ * Composed when the linked submission is an IND (discovery map 2026-10-04,
+ * us-32r-written-for-nda: the marketing text was filed into INDs).
+ */
+const US_IND_SUBSECTION: RegionalSubsection = {
+  sectionKey: '3.2.R.1.US',
+  title: 'Regional Information — United States (FDA IND)',
+  region: 'US',
+  requiredFields: US_IND_REGIONAL_FIELDS,
+  generator: m => ({
+    narrative: usIndRegionalNarrative(m),
+    tables: [
+      kvTable('US Regional Information — Submission Summary', {
+        Region: 'United States — FDA',
+        'Submission Type': 'IND (21 CFR Part 312)',
+        'Dosage Form': val(m, 'dosageFormDescription'),
+        Strength: val(m, 'strength'),
+        'Manufacturing Site': val(m, 'manufacturingSite'),
+      }),
+      regionalPointerTable(
+        'US IND Regional Items (21 CFR 312.23(a)(7))',
+        usIndRegionalRows(m).map(r => ({ item: r.item, basis: r.basis, status: indStatus(r.status) })),
+      ),
+    ],
+  }),
+};
+
+export function regionalRequiredFields(sectionKey: string, applicationType?: string | null): string[] {
+  if (sectionKey === US_IND_SUBSECTION.sectionKey && isUsClinicalTrialApplication(applicationType)) {
+    return US_IND_SUBSECTION.requiredFields;
+  }
   return REGIONAL_SUBSECTIONS.find(rs => rs.sectionKey === sectionKey)?.requiredFields ?? [];
 }
 
@@ -1499,9 +1552,14 @@ export function hasRegionalTemplate(region: string): boolean {
 
 export function composeRegional(
   sourceObjects: CanonicalSource[],
-  region: RegionCode
+  region: RegionCode,
+  /** The linked submission's application type: an IND gets the IND regional section, not the marketing one. */
+  opts: { applicationType?: string | null } = {},
 ): ComposedSection[] {
-  const applicable = REGIONAL_SUBSECTIONS.filter(rs => rs.region === region);
+  const ind = region === 'US' && isUsClinicalTrialApplication(opts.applicationType);
+  const applicable = REGIONAL_SUBSECTIONS.filter(rs => rs.region === region).map(rs =>
+    ind && rs.sectionKey === US_IND_SUBSECTION.sectionKey ? US_IND_SUBSECTION : rs,
+  );
   return applicable.map(rs => {
     const generated = rs.generator(sourceObjects);
     const present = rs.requiredFields.filter(f => val(sourceObjects, f));

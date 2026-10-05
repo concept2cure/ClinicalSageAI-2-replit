@@ -114,11 +114,22 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
   it('AnA modes display engine labels, never vendor/model names', () => {
     const banned = /claude|anthropic|sonnet|opus|haiku|gpt|gemini/i;
     for (const m of ANA_MODES) {
-      expect(m.model).not.toMatch(banned);
+      expect(m.effortLabel).not.toMatch(banned);
       expect(m.label).not.toMatch(banned);
       expect(m.desc).not.toMatch(banned);
     }
-    expect(ANA_MODES.map((m) => m.model)).toEqual(['Balanced', 'Maximum', 'Instant']);
+  });
+
+  // Row 74, ADR-0015 §9: the pill names the effort a mode buys, not a model or
+  // a speed it cannot guarantee. "Maximum" and "Instant" overclaimed (high-risk
+  // work is served by the flagship whatever the mode), and the field was called
+  // `model`, so the rail printed it as the model that answered.
+  it('each mode names its effort, in the words of the effort the server runs', () => {
+    const WORD = { fast: 'Light', balanced: 'Balanced', thorough: 'Thorough' } as const;
+    for (const m of ANA_MODES) {
+      expect(m.effortLabel).toBe(WORD[m.effort]);
+      expect(m).not.toHaveProperty('model');
+    }
   });
 
   it('getAnaContext derives a context for unknown surfaces without throwing', () => {

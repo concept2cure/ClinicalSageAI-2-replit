@@ -138,7 +138,7 @@ export async function resolveSubmissionSpine(
    * and when the pool had no slot free, the read waited while the caller's
    * transaction sat idle holding its locks. Measured: the Module 3 compile
    * route (module3OperatingSystemRoutes POST /compile/:projectId) opens a
-   * transaction, calls composeProjectModule3 -> resolveProjectRegionCode ->
+   * transaction, calls composeProjectModule3 -> resolveProjectRegional ->
    * here, and with the 20-connection dev pool saturated the transaction stalled
    * on Client/ClientRead while a concurrent compile's INSERT INTO
    * cmc_module3_sections waited on its uncommitted rows until the 30s

@@ -24,7 +24,7 @@ const REQUIRED_PROMPTS = [
   'shadow-review/v1.1.md', // shadow-review-service
   'fcoi-completeness-review/v1.0.md', // financial-disclosures route
   'document-extract/v1.0.md', // ingestion-service
-  'submission-plan/v1.0.md', // submission-ai-service
+  'submission-plan/v1.1.md', // submission-ai-service
 ];
 
 describe('ai-gateway PROMPTS_DIR resolution', () => {
