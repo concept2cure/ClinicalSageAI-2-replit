@@ -3,7 +3,8 @@
  *
  * The four remaining pure-input AI tasks the spec §6 calls for that take
  * structured input and return structured output (no new tables, no streaming):
- *   - submission-plan   (§6.1) module/section map + forms + timeline + gaps
+ *   - submission-plan   (§6.1) NARRATIVE (gaps, dependencies) over the deterministic structure
+ *                        (sections, forms and clocks come from the reasoning engine — see generateSubmissionPlan)
  *   - validation-explain (§6.6) plain-language causes + fixes for validator errors
  *   - cross-region-gap   (§6.7) deltas to file region A's submission in B/C
  *   - dispatch-qc        (§6.8) NARRATIVE over the deterministic pre-transmit verdict
@@ -25,6 +26,7 @@ import { getGateway } from '../ai-gateway';
 import { classifyGatewayError, type GatewayErrorCode } from '../ai-gateway/gateway-error-map';
 import { evaluateDispatchGate } from '../ectd/dispatch-gate';
 import type { DispatchReadinessAssessment } from '../ectd/assess-dispatch-readiness';
+import type { SubmissionStructure } from '../reasoning-engine/index.js';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
@@ -42,7 +44,13 @@ export class SubmissionAiError extends Error {
 }
 
 /** Audit an AI invocation outcome (best-effort; never masks the real error). */
-async function auditAiOutcome(task: string, ctx: AiTaskCtx, outcome: 'success' | 'failed', extra?: Record<string, unknown>) {
+async function auditAiOutcome(
+  task: string,
+  ctx: AiTaskCtx,
+  outcome: 'success' | 'failed',
+  extra?: Record<string, unknown>,
+  version = 'v1.0',
+) {
   // Audit must never block the response — and it does not. The try/catch this
   // replaced enforced nothing, because `logAction` resolves normally on a
   // persistence failure rather than rejecting; the catch was dead code. An
@@ -54,7 +62,7 @@ async function auditAiOutcome(task: string, ctx: AiTaskCtx, outcome: 'success' |
     action: 'AI_GENERATE',
     resourceType: 'submission',
     resourceId: ctx.submissionId,
-    details: { task, promptVersion: `${task}@v1.0`, outcome, ...extra },
+    details: { task, promptVersion: `${task}@${version}`, outcome, ...extra },
   });
   if (!generateAudit.persisted) {
     logger.warn('AI_GENERATE audit row was not persisted', {
@@ -100,9 +108,9 @@ async function runJsonTask<T>(
   taskType: GatewayTaskType,
   input: unknown,
   ctx: AiTaskCtx,
-  maxTokens: number
+  { maxTokens, version = 'v1.0' }: { maxTokens: number; version?: string },
 ): Promise<T> {
-  const systemPrompt = await loadPrompt(task);
+  const systemPrompt = await loadPrompt(task, version);
   try {
     const response = await getGateway().route({
       taskType,
@@ -113,24 +121,24 @@ async function runJsonTask<T>(
       jsonMode: true,
       temperature: 0.2,
       maxTokens,
-      promptVersion: `${task}@v1.0`,
+      promptVersion: `${task}@${version}`,
       organizationId: ctx.organizationId,
       userId: ctx.userId,
       callerModule: 'submission-ai-service',
       metadata: { task, submissionId: ctx.submissionId },
     });
     const result = parseJson<T>(response.content);
-    await auditAiOutcome(task, ctx, 'success');
+    await auditAiOutcome(task, ctx, 'success', undefined, version);
     logger.info('Ran submission AI task', { task, organizationId: ctx.organizationId, submissionId: ctx.submissionId });
     return result;
   } catch (err) {
     // Always audit the failed attempt with its true code, then rethrow mapped.
     if (err instanceof SubmissionAiError) {
-      await auditAiOutcome(task, ctx, 'failed', { code: err.code });
+      await auditAiOutcome(task, ctx, 'failed', { code: err.code }, version);
       throw err;
     }
     const { code, message } = classifyGatewayError(err);
-    await auditAiOutcome(task, ctx, 'failed', { code });
+    await auditAiOutcome(task, ctx, 'failed', { code }, version);
     throw new SubmissionAiError(code, message);
   }
 }
@@ -143,14 +151,73 @@ export interface SubmissionPlanInput {
   regions: string[];
   productProfile?: string;
 }
-export async function generateSubmissionPlan<T = unknown>(input: SubmissionPlanInput, ctx: AiTaskCtx): Promise<T> {
-  const narration = await runJsonTask<Record<string, unknown>>('submission-plan', 'regulatory_review', input, ctx, 8000);
-  // Ground the plan's STRUCTURE deterministically via the reasoning-engine, so
-  // required sections + review clocks are resolved by rule (not LLM-invented).
-  // The LLM narration sits on top; this is the determinism boundary (WO-5).
+export const SUBMISSION_PLAN_PROMPT_VERSION = 'v1.1';
+
+export const SUBMISSION_PLAN_NARRATIVE_LABEL =
+  'Model narrative — advisory only. The plan is deterministicStructure: the required sections, Module 1 forms ' +
+  'and review clocks the reasoning engine resolves by rule. The model adds gaps and dependencies as prose, and no figure.';
+
+/** Model prose about the plan. Labelled as such; never an input to it. */
+export interface SubmissionPlanNarrative {
+  source: 'model';
+  label: string;
+  promptVersion: string;
+  gaps: Array<{ sectionCode: string; description: string }>;
+  dependencies: Array<{ before: string; after: string }>;
+}
+
+export interface SubmissionPlanResult {
+  /** The plan: the reasoning engine's structure, computed by rule (WO-5). */
+  deterministicStructure: SubmissionStructure;
+  /** null when no provider is configured or the model call failed; the plan is unaffected. */
+  narrative: SubmissionPlanNarrative | null;
+  narrativeUnavailable: { code: string; message: string } | null;
+}
+
+const asList = <T>(v: unknown, keep: (x: Record<string, unknown>) => T | null): T[] =>
+  Array.isArray(v) ? v.flatMap((x) => (x && typeof x === 'object' ? [keep(x as Record<string, unknown>)] : [])).filter((x): x is T => x !== null) : [];
+
+/**
+ * A submission plan (spec §6.1). The STRUCTURE is the plan, and it is
+ * deterministic: required sections, Module 1 forms and review clocks resolved by
+ * the reasoning engine (WO-5). The model narrates on top of it: the gaps it sees
+ * and the order work depends on, as prose.
+ *
+ * Until 2026-10-05 the model also returned its own module map, forms and a
+ * timeline of day offsets keyed to PDUFA, 210-day or PMDA clocks, spread beside
+ * the engine's structure, and the two could disagree (Rule 2: a tool that asks a
+ * model for a figure is a defect; work-orders item 21). Prompt v1.1 asks for none
+ * of them, any it returns is dropped, and the model is given the engine's
+ * structure to narrate. The plan stands when the model is unavailable.
+ */
+export async function generateSubmissionPlan(input: SubmissionPlanInput, ctx: AiTaskCtx): Promise<SubmissionPlanResult> {
   const { buildSubmissionStructure } = await import('../reasoning-engine/index.js');
   const deterministicStructure = buildSubmissionStructure(input.regions ?? [], input.applicationType);
-  return { ...narration, deterministicStructure } as T;
+  try {
+    const narration = await runJsonTask<Record<string, unknown>>(
+      'submission-plan',
+      'regulatory_review',
+      { ...input, deterministicStructure },
+      ctx,
+      { maxTokens: 8000, version: SUBMISSION_PLAN_PROMPT_VERSION },
+    );
+    const text = (v: unknown) => (typeof v === 'string' ? v : '');
+    return {
+      deterministicStructure,
+      narrative: {
+        source: 'model',
+        label: SUBMISSION_PLAN_NARRATIVE_LABEL,
+        promptVersion: `submission-plan@${SUBMISSION_PLAN_PROMPT_VERSION}`,
+        gaps: asList(narration.gaps, (g) => (text(g.description) ? { sectionCode: text(g.sectionCode), description: text(g.description) } : null)),
+        dependencies: asList(narration.dependencies, (d) => (text(d.before) && text(d.after) ? { before: text(d.before), after: text(d.after) } : null)),
+      },
+      narrativeUnavailable: null,
+    };
+  } catch (err) {
+    const code = err instanceof SubmissionAiError ? err.code : 'PROVIDER_UNAVAILABLE';
+    const message = err instanceof Error ? err.message : String(err);
+    return { deterministicStructure, narrative: null, narrativeUnavailable: { code, message } };
+  }
 }
 
 export interface ValidationExplainInput {
@@ -158,7 +225,7 @@ export interface ValidationExplainInput {
   region: string;
 }
 export function explainValidation<T = unknown>(input: ValidationExplainInput, ctx: AiTaskCtx): Promise<T> {
-  return runJsonTask<T>('validation-explain', 'document_analysis', input, ctx, 4000);
+  return runJsonTask<T>('validation-explain', 'document_analysis', input, ctx, { maxTokens: 4000 });
 }
 
 export interface CrossRegionGapInput {
@@ -168,7 +235,7 @@ export interface CrossRegionGapInput {
   sectionsPresent?: string[];
 }
 export function computeCrossRegionGap<T = unknown>(input: CrossRegionGapInput, ctx: AiTaskCtx): Promise<T> {
-  return runJsonTask<T>('cross-region-gap', 'regulatory_review', input, ctx, 4000);
+  return runJsonTask<T>('cross-region-gap', 'regulatory_review', input, ctx, { maxTokens: 4000 });
 }
 
 export interface DispatchQcInput {
@@ -316,7 +383,7 @@ async function narrateDispatchQc(
       'regulatory_review',
       { ...input, deterministicVerdict: verdict },
       ctx,
-      4000,
+      { maxTokens: 4000 },
     );
     const observations = [...asStringList(ai?.blockers), ...asStringList(ai?.warnings)];
     const checklistNotes: DispatchQcChecklistItem[] = Array.isArray(ai?.checklist)
