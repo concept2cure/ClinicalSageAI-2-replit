@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-05T02:25:28.749Z",
+  "generatedAt": "2026-10-05T02:49:50.237Z",
   "git": {
-    "sha": "107f93ff70979b4749af3421f81c30eaccc813b3",
+    "sha": "28c63cd22e8f0675c247aabf82034997c8de2ac0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2100,7 +2100,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 166154
+        "bytes": 166767
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2322,7 +2322,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3299
+        "lines": 3311
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2537,16 +2537,16 @@
         "lines": 1869
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1866
-      },
-      {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
         "lines": 1866
       },
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
         "lines": 1864
+      },
+      {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1858
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
@@ -2590,7 +2590,7 @@
       },
       {
         "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 1795
+        "lines": 1796
       },
       {
         "file": "ui_kits/home/Projects.jsx",
