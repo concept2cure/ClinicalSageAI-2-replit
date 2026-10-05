@@ -262,7 +262,14 @@ const baseSlots: SlotDef[] = [
     any(dt('emc', 'electrical_safety'),
         ti('electromagnetic', 'electrical safety', 'emc', 'wireless coexistence'))),
   whenApplicable('human-factors', 'Human factors / usability engineering',
-    'IEC 62366-1; FDA human factors guidance',
+    /* FDA's final guidance (FR 2026-10734, 2026-05-29; submissions received on
+       or after 2026-08-01). The eSTAR itself branches on it: the vendored v7.0
+       template asks for HF Submission Category 1, 2 or 3 and maps them to
+       Section 1, Sections 1-4 and Sections 1-8 of the HFE/UE report. The
+       category is the sponsor's answer in the form; no engine here decides it. */
+    'IEC 62366-1; FDA guidance "Content of Human Factors Information in Medical Device Marketing ' +
+      'Submissions" (2026) — the eSTAR asks for HF Submission Category 1, 2 or 3 (HFE/UE report ' +
+      'Section 1, Sections 1-4, or Sections 1-8)',
     'the device has critical tasks whose use error could cause harm',
     any(dt('human_factors', 'usability'), ti('human factors', 'usability', '62366'))),
   whenApplicable('reprocessing', 'Reprocessing instructions and validation',

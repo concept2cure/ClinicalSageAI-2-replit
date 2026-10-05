@@ -58,8 +58,11 @@ describe('eSTAR template registry', () => {
     expect(r.available).toBe(true);
     expect(r.cleared).toBe(true);
     expect(r.blockers).toHaveLength(0);
-    // Surfaces the current FDA program version for the family (nIVD → 7.0).
-    expect(r.programVersion).toBe('7.0');
+    // Surfaces the current FDA program version for the family (nIVD → 7.1),
+    // and that the vendored file (7.0) is not it.
+    expect(r.programVersion).toBe('7.1');
+    expect(r.vendoredVersion).toBe('7.0');
+    expect(r.versionCurrent).toBe(false);
   });
 
   it('fails closed in production when the required template is missing and required', () => {
@@ -148,7 +151,8 @@ describe('eSTAR template registry — De Novo and PMA on the vendored files', ()
       expect(r.available).toBe(true);
       expect(r.cleared).toBe(true);
       expect(r.blockers).toEqual([]);
-      expect(r.programVersion).toBe('7.0');
+      expect(r.programVersion).toBe('7.1');
+      expect(r.versionCurrent).toBe(false);
     }
     // The PreSTAR template is still absent, so a Q-Sub still fails closed.
     const qsub = assessEstarTemplateReadiness({
