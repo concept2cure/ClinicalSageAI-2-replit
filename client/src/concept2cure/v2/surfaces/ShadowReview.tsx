@@ -36,7 +36,11 @@ function riskPct(v: GateScore): string { return v === null ? 'not scored' : Math
    persists max(model self-report, aggregate). The card therefore showed "0%
    low risk" for runs whose recorded score was far higher and which
    SubmissionCenter printed at that higher value. They are nullable: a run that
-   recorded no score for a gate renders the third state, never 0%. */
+   recorded no score for a gate renders the third state, never 0%.
+
+   2026-10-05 (Rule 2): a new run records only the aggregate of its findings'
+   severities; the model no longer reports a figure. `scoreBasis` says which a
+   run holds — 'model_reported' for runs recorded under prompt v1.0. */
 interface ShadowFindingRow {
   dimension: string;
   severity: string;
@@ -51,6 +55,7 @@ interface ShadowLensRow {
   runId?: number | null;
   rtfRiskScore?: number | null;
   crlRiskScore?: number | null;
+  scoreBasis?: 'severity_aggregate' | 'model_reported';
   findings: ShadowFindingRow[];
 }
 
@@ -129,6 +134,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
   const crl: GateScore = lensRan ? gateScore(rowByLens[lensId]?.crlRiskScore) : null;
   const runId = lensRan ? rowByLens[lensId]?.runId ?? null : null;
   const scored = rtf !== null || crl !== null;
+  const modelReported = lensRan && rowByLens[lensId]?.scoreBasis === 'model_reported';
   const criticals = findings.filter((f) => f.severity === 'critical').length;
   const majors = findings.filter((f) => f.severity === 'major').length;
 
@@ -172,8 +178,10 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
         `Shadow review under the "${lensLabel}" reviewer lens: ${findings.length} finding(s) — ` +
         `${criticals} critical, ${majors} major. ` +
         (scored
-          ? `Refuse-to-file risk ${riskPct(rtf)}, complete-response risk ${riskPct(crl)} — the 0-1 scores this ` +
-            'run itself recorded, NOT a count of the findings on screen.'
+          ? `Refuse-to-file risk ${riskPct(rtf)}, complete-response risk ${riskPct(crl)} — ` +
+            (modelReported
+              ? 'recorded by an earlier version of this review, which kept the reviewer model\'s own estimate when it was higher. Re-run the lens for a score computed from the findings.'
+              : 'computed from the severities of the findings on screen, which the reviewer model assigned; the model reports no figure of its own.')
           : 'This run recorded no gate score, so there is no refuse-to-file or complete-response risk on ' +
             'screen. That is a missing score, not a score of zero, and must not be reported as a clean gate.'),
       facts: {
@@ -188,9 +196,11 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
         refuseToFileRisk: rtf,
         completeResponseRisk: crl,
         gateScoresRecorded: scored,
-        gateScoreSource: scored
-          ? 'shadow_review_runs.rtf_risk_score / crl_risk_score — the score this run recorded'
-          : 'none recorded by this run',
+        gateScoreSource: !scored
+          ? 'none recorded by this run'
+          : modelReported
+            ? "shadow_review_runs.rtf_risk_score / crl_risk_score — recorded under prompt v1.0, the higher of the model's estimate and the severity aggregate"
+            : "shadow_review_runs.rtf_risk_score / crl_risk_score — the aggregate of the findings' severities",
         findings: findings.slice(0, 12).map((f) => ({
           dimension: f.dimension, severity: f.severity, title: f.title,
           detail: f.detail, basis: f.basis, recommendation: f.recommendation, leafRef: f.leafRef,
@@ -242,7 +252,9 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
           b: !scored
             ? <>This run recorded no score for either gate, so nothing here clears them. An absent score is not a low one — re-run this reviewer to get a scored result before you treat the sequence as fileable.</>
             : elevated
-              ? <>The reviewer raised no critical or major finding, but this run still recorded an elevated gate risk. That score is the run's own verdict, not a count of the list below — treat the gate as open, not clear.</>
+              ? (modelReported
+                  ? <>The reviewer raised no critical or major finding, but this run, recorded by an earlier version of the review, kept a higher estimate from the reviewer model. Re-run the lens for a score computed from the findings, and treat the gate as open until then.</>
+                  : <>The reviewer raised no critical or major finding, but enough minor ones that their combined severity reads as an elevated gate risk. Treat the gate as open, not clear.</>)
               : <>This is a clean simulated review. It is not a guarantee — but a reviewer opening this sequence would not hit an administrative or substantive wall.</>,
         };
 
