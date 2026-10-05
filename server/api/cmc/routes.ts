@@ -73,6 +73,7 @@ import { linkToModule3, type LinkableRow, type WriteThroughFn } from '../../serv
    commit projector alike (services/cmc/interview-commit.ts). */
 import {
   PROCESS_VOCAB,
+  PROGRAM_FILED_REGISTERS,
   QUALIFICATION_VOCAB,
   RegisterWriteRefusal,
   characterizationStudyBody,
@@ -87,14 +88,17 @@ import {
   currentFormulationConflict,
   drugProductBody,
   drugSubstanceBody,
+  filedProjectOnCreate,
   formulationRecordBody,
   manufacturingProcessBody,
   materialSpecBody,
   optionalDate,
+  projectOnEdit,
   requiredDate,
   ungovernedQualificationRefusal,
   withoutGovernedFields,
   withoutOrgId,
+  withoutProject,
   withoutTenantKey,
   type QualificationVocab,
 } from '../../services/cmc/register-writes';
@@ -198,13 +202,14 @@ router.get('/analytical-methods', async (req, res) => {
         /* Carried so an edit round-trips: without it the client can only send
            back an empty validation record and would erase the one on file. */
         ichQ2Parameters: analyticalMethods.ichQ2Parameters,
+        projectId: analyticalMethods.projectId,
         status: analyticalMethods.status,
         organizationId: analyticalMethods.organizationId,
         createdAt: analyticalMethods.createdAt,
         updatedAt: analyticalMethods.updatedAt,
       })
       .from(analyticalMethods)
-      .where(eq(analyticalMethods.organizationId, orgId));
+      .where(and(eq(analyticalMethods.organizationId, orgId), projectFilter(req, analyticalMethods.projectId)));
     res.json({ success: true, data: methods });
   } catch (error) {
     console.error('Error fetching analytical methods:', error);
@@ -273,11 +278,10 @@ router.post('/analytical-methods', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = analyticalMethodBody.parse(req.body);
+    const projectId = await filedProjectOnCreate(orgId, (validatedData as { projectId?: unknown }).projectId);
     // createInsertSchemaOmit widens the parsed type to `{}`, so cast the
     // Zod-validated values to the table insert type at this boundary.
-    const [method] = await db.insert(analyticalMethods).values({ ...validatedData, organizationId: orgId } as typeof analyticalMethods.$inferInsert).returning();
-    /* projectId is not persisted on this table; the caller names the program
-       and the link reports whether the row reached Module 3. */
+    const [method] = await db.insert(analyticalMethods).values({ ...validatedData, projectId, organizationId: orgId } as typeof analyticalMethods.$inferInsert).returning();
     const linkage = await linkToModule3('write_through_analytical_method', orgId, method, writeThroughAnalyticalMethod, req);
     res.json({ success: true, data: method, ...linkage });
   } catch (error) {
@@ -290,11 +294,13 @@ router.put('/analytical-methods/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = analyticalMethodBody.partial().parse(req.body);
+    const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.analyticalMethod, id, req.body?.projectId);
+    if (!filing.found) return res.status(404).json({ success: false, error: 'Analytical method not found' });
     // Strip organizationId so the tenant scope cannot be overridden by the request body.
-    const safeData = withoutOrgId(validatedData as Record<string, unknown>);
+    const safeData = withoutProject(withoutOrgId(validatedData as Record<string, unknown>));
     const [method] = await db
       .update(analyticalMethods)
-      .set({ ...safeData, updatedAt: new Date() })
+      .set({ ...safeData, ...filing.set, updatedAt: new Date() })
       .where(and(eq(analyticalMethods.id, id), eq(analyticalMethods.organizationId, orgId)))
       .returning();
     if (!method) return res.status(404).json({ success: false, error: 'Analytical method not found' });
@@ -312,7 +318,7 @@ router.get('/process-validation', async (req, res) => {
     const validation = await db
       .select()
       .from(processValidation)
-      .where(eq(processValidation.organizationId, orgId));
+      .where(and(eq(processValidation.organizationId, orgId), projectFilter(req, processValidation.projectId)));
     res.json({ success: true, data: validation });
   } catch (error) {
     console.error('Error fetching process validation:', error);
@@ -324,7 +330,8 @@ router.post('/process-validation', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = processValidationBody.parse(req.body);
-    const [validation] = await db.insert(processValidation).values({ ...validatedData, organizationId: orgId } as typeof processValidation.$inferInsert).returning();
+    const projectId = await filedProjectOnCreate(orgId, (validatedData as { projectId?: unknown }).projectId);
+    const [validation] = await db.insert(processValidation).values({ ...validatedData, projectId, organizationId: orgId } as typeof processValidation.$inferInsert).returning();
     const linkage = await linkToModule3('write_through_process_validation', orgId, validation, writeThroughProcessValidation, req);
     res.json({ success: true, data: validation, ...linkage });
   } catch (error) {
@@ -342,9 +349,11 @@ router.put('/process-validation/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = processValidationBody.partial().parse(req.body);
+    const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.processValidation, id, req.body?.projectId);
+    if (!filing.found) return res.status(404).json({ success: false, error: 'Process validation record not found' });
     const [validation] = await db
       .update(processValidation)
-      .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
+      .set({ ...withoutProject(withoutOrgId(validatedData as Record<string, unknown>)), ...filing.set, updatedAt: new Date() })
       .where(and(eq(processValidation.id, id), eq(processValidation.organizationId, orgId)))
       .returning();
     if (!validation) return res.status(404).json({ success: false, error: 'Process validation record not found' });
@@ -386,11 +395,12 @@ router.get('/stability-studies', async (req, res) => {
         startDate: stabilityStudies.startDate,
         plannedEndDate: stabilityStudies.plannedEndDate,
         organizationId: stabilityStudies.organizationId,
+        projectId: stabilityStudies.projectId,
         createdAt: stabilityStudies.createdAt,
         updatedAt: stabilityStudies.updatedAt,
       })
       .from(stabilityStudies)
-      .where(eq(stabilityStudies.organizationId, orgId));
+      .where(and(eq(stabilityStudies.organizationId, orgId), projectFilter(req, stabilityStudies.projectId)));
     res.json({ success: true, data: studies });
   } catch (error) {
     console.error('Error fetching stability studies:', error);
@@ -402,7 +412,8 @@ router.post('/stability-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = stabilityStudyBody.parse(req.body);
-    const [study] = await db.insert(stabilityStudies).values({ ...validatedData, organizationId: orgId } as typeof stabilityStudies.$inferInsert).returning();
+    const projectId = await filedProjectOnCreate(orgId, (validatedData as { projectId?: unknown }).projectId);
+    const [study] = await db.insert(stabilityStudies).values({ ...validatedData, projectId, organizationId: orgId } as typeof stabilityStudies.$inferInsert).returning();
     const linkage = await linkToModule3('write_through_stability_study', orgId, study, writeThroughStabilityStudy, req);
     res.json({ success: true, data: study, ...linkage });
   } catch (error) {
@@ -421,9 +432,11 @@ router.put('/stability-studies/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = stabilityStudyBody.partial().parse(req.body);
+    const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.stabilityStudy, id, req.body?.projectId);
+    if (!filing.found) return res.status(404).json({ success: false, error: 'Stability study not found' });
     const [study] = await db
       .update(stabilityStudies)
-      .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
+      .set({ ...withoutProject(withoutOrgId(validatedData as Record<string, unknown>)), ...filing.set, updatedAt: new Date() })
       .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)))
       .returning();
     if (!study) return res.status(404).json({ success: false, error: 'Stability study not found' });
@@ -544,7 +557,7 @@ router.get('/change-control', async (req, res) => {
     const changes = await db
       .select()
       .from(cmcChangeControl)
-      .where(eq(cmcChangeControl.organizationId, orgId));
+      .where(and(eq(cmcChangeControl.organizationId, orgId), projectFilter(req, cmcChangeControl.projectId)));
     res.json({ success: true, data: changes });
   } catch (error) {
     console.error('Error fetching change control:', error);
@@ -556,7 +569,8 @@ router.post('/change-control', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = changeControlBody.parse(req.body);
-    const [change] = await db.insert(cmcChangeControl).values({ ...validatedData, organizationId: orgId } as typeof cmcChangeControl.$inferInsert).returning();
+    const projectId = await filedProjectOnCreate(orgId, (validatedData as { projectId?: unknown }).projectId);
+    const [change] = await db.insert(cmcChangeControl).values({ ...validatedData, projectId, organizationId: orgId } as typeof cmcChangeControl.$inferInsert).returning();
     const linkage = await linkToModule3('write_through_change_control', orgId, change, writeThroughChangeControl, req);
     res.json({ success: true, data: change, ...linkage });
   } catch (error) {
@@ -574,9 +588,11 @@ router.put('/change-control/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = changeControlBody.partial().parse(req.body);
+    const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.changeControl, id, req.body?.projectId);
+    if (!filing.found) return res.status(404).json({ success: false, error: 'Change-control record not found' });
     const [change] = await db
       .update(cmcChangeControl)
-      .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
+      .set({ ...withoutProject(withoutOrgId(validatedData as Record<string, unknown>)), ...filing.set, updatedAt: new Date() })
       .where(and(eq(cmcChangeControl.id, id), eq(cmcChangeControl.organizationId, orgId)))
       .returning();
     if (!change) return res.status(404).json({ success: false, error: 'Change-control record not found' });
@@ -604,11 +620,12 @@ router.get('/drug-substances', async (req, res) => {
         status: drugSubstances.status,
         developmentPhase: drugSubstances.developmentPhase,
         organizationId: drugSubstances.organizationId,
+        projectId: drugSubstances.projectId,
         createdAt: drugSubstances.createdAt,
         updatedAt: drugSubstances.updatedAt,
       })
       .from(drugSubstances)
-      .where(eq(drugSubstances.organizationId, orgId));
+      .where(and(eq(drugSubstances.organizationId, orgId), projectFilter(req, drugSubstances.projectId)));
     res.json({ success: true, data: substances });
   } catch (error) {
     console.error('Error fetching drug substances:', error);
@@ -632,9 +649,11 @@ router.put('/drug-substances/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = drugSubstanceBody.partial().parse(req.body);
+    const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.drugSubstance, id, req.body?.projectId);
+    if (!filing.found) return res.status(404).json({ success: false, error: 'Drug substance not found' });
     const [substance] = await db
       .update(drugSubstances)
-      .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
+      .set({ ...withoutProject(withoutOrgId(validatedData as Record<string, unknown>)), ...filing.set, updatedAt: new Date() })
       .where(and(eq(drugSubstances.id, id), eq(drugSubstances.organizationId, orgId)))
       .returning();
     if (!substance) return res.status(404).json({ success: false, error: 'Drug substance not found' });
@@ -668,11 +687,12 @@ router.get('/drug-products', async (req, res) => {
         packagingMaterials: drugProducts.packagingMaterials,
         status: drugProducts.status,
         organizationId: drugProducts.organizationId,
+        projectId: drugProducts.projectId,
         createdAt: drugProducts.createdAt,
         updatedAt: drugProducts.updatedAt,
       })
       .from(drugProducts)
-      .where(eq(drugProducts.organizationId, orgId));
+      .where(and(eq(drugProducts.organizationId, orgId), projectFilter(req, drugProducts.projectId)));
     res.json({ success: true, data: products });
   } catch (error) {
     console.error('Error fetching drug products:', error);
@@ -696,9 +716,11 @@ router.put('/drug-products/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = drugProductBody.partial().parse(req.body);
+    const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.drugProduct, id, req.body?.projectId);
+    if (!filing.found) return res.status(404).json({ success: false, error: 'Drug product not found' });
     const [product] = await db
       .update(drugProducts)
-      .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
+      .set({ ...withoutProject(withoutOrgId(validatedData as Record<string, unknown>)), ...filing.set, updatedAt: new Date() })
       .where(and(eq(drugProducts.id, id), eq(drugProducts.organizationId, orgId)))
       .returning();
     if (!product) return res.status(404).json({ success: false, error: 'Drug product not found' });

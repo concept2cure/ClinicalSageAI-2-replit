@@ -417,6 +417,22 @@ SHELF2=$(cat "$OUT/shelf2.json" | jq -r '.data.limitingParameter // .data.shelfL
   && ok "shelf life estimated once the pull points exist (limiting: $SHELF2)" \
   || bad "shelf life over recorded results: code=$CODE $(head -c200 "$OUT/shelf2.json")"
 
+step "11c-file. The recorded pull points reach Module 3, and the section that files them carries them"
+# The study records its program (migrations/20261005_cmc_core_registers_
+# project.sql). Before it, a pull-point PUT that named no program was never
+# linked: the results never reached Module 3, nothing went stale, and
+# §3.2.S.7 was approved without them. Now the write goes through, the section
+# is stale until it is recompiled, and the recompiled section tabulates them.
+LINKED=$(jq -r '.module3Linked // empty' "$OUT/stabdata.json")
+[ "$LINKED" = "true" ] && ok "the recorded pull points were linked into Module 3 under the study's own program" \
+  || bad "pull points not linked: $(jq -c '{module3Linked, module3Warning}' "$OUT/stabdata.json")"
+CODE=$(req recompile POST "/api/cmc/module3-os/compile/$PROGRAM" '{}')
+[ "$CODE" = 200 ] && ok "recompiled after recording the pull points" || bad "recompile failed ($CODE)"
+CODE=$(req read7 GET "/api/cmc/module3-os/sections/$PROGRAM/3.2.S.7")
+S7ROWS=$(jq -r '[.data.tables[]? | select(.title | test("Stability Results"))][0].rows | length' "$OUT/read7.json" 2>/dev/null)
+[ "$CODE" = 200 ] && [ "${S7ROWS:-0}" = 6 ] && ok "§3.2.S.7 tabulates the six recorded pull points it cites" \
+  || bad "§3.2.S.7 results table: code=$CODE rows=$S7ROWS"
+
 step "11d. §3.2.P.7 and §3.2.S.5 compose from the two new registers — and the unrecorded side stays honestly empty"
 # Four sections that could never leave zero completeness because no table
 # anywhere held their source. The drug-substance container closure was NOT

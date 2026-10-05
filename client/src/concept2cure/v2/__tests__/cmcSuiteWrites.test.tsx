@@ -94,6 +94,10 @@ afterEach(() => {
 
 /* ══════════════════ Analytical method library ══════════════════ */
 
+/* The method library reads the open program's methods: analytical_methods
+   records its program since migrations/20261005_cmc_core_registers_project.sql. */
+const METHODS_READ = `/api/cmc/analytical-methods?projectId=${encodeURIComponent(PROJECT)}`;
+
 describe('CmMethodLibrary — the write half of the register', () => {
   const persisted = {
     id: 31,
@@ -110,7 +114,7 @@ describe('CmMethodLibrary — the write half of the register', () => {
 
   it('opens a drawer and POSTs the mapped body to the register endpoint', async () => {
     apiRequest.mockImplementation(async (m: string, u: string) => {
-      if (m === 'GET' && u === '/api/cmc/analytical-methods') return res({ success: true, data: [] });
+      if (m === 'GET' && u === METHODS_READ) return res({ success: true, data: [] });
       if (m === 'POST' && u === '/api/cmc/analytical-methods') return res({ success: true, data: persisted });
       return res({});
     });
@@ -142,7 +146,7 @@ describe('CmMethodLibrary — the write half of the register', () => {
 
   it('shows the SERVER’s row, not the values that were typed', async () => {
     apiRequest.mockImplementation(async (m: string, u: string) => {
-      if (m === 'GET' && u === '/api/cmc/analytical-methods') return res({ success: true, data: [] });
+      if (m === 'GET' && u === METHODS_READ) return res({ success: true, data: [] });
       // The server normalises the code; the table must show what was persisted.
       if (m === 'POST') return res({ success: true, data: { ...persisted, methodCode: 'AM-0014' } });
       return res({});
@@ -163,7 +167,7 @@ describe('CmMethodLibrary — the write half of the register', () => {
 
   it('a rejected write adds nothing and names the rejected field', async () => {
     apiRequest.mockImplementation(async (m: string, u: string) => {
-      if (m === 'GET' && u === '/api/cmc/analytical-methods') return res({ success: true, data: [] });
+      if (m === 'GET' && u === METHODS_READ) return res({ success: true, data: [] });
       if (m === 'POST') {
         return res(
           { success: false, error: 'Invalid payload', details: [{ path: ['matrix'], message: 'Required' }] },
@@ -190,7 +194,7 @@ describe('CmMethodLibrary — the write half of the register', () => {
 
   it('an edit PUTs against the row and keeps the validation record it was seeded with', async () => {
     apiRequest.mockImplementation(async (m: string, u: string) => {
-      if (m === 'GET' && u === '/api/cmc/analytical-methods') return res({ success: true, data: [persisted] });
+      if (m === 'GET' && u === METHODS_READ) return res({ success: true, data: [persisted] });
       if (m === 'PUT') return res({ success: true, data: { ...persisted, status: 'retired' } });
       return res({});
     });

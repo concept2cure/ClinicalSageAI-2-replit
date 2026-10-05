@@ -113,28 +113,28 @@ import { useAuth } from '@/services/portal/authService';
    reused across programs. To move one, change its entry here — nothing else
    reads this decision.
 
-   'program-unscoped-store' is the honest third state. The record belongs to a
-   program, but its table has NO project_id column (public.drug_substances,
-   drug_products, analytical_methods, stability_studies are org-scoped only —
-   the shared/cmc-schema shapes drizzle.config.ts never provisioned), so the
-   list CANNOT be narrowed. The card says so rather than implying the rows on
-   screen are this program's. The project-scoped truth for those record types
-   lives in cmc_source_objects, which is what the Module 3 composer and the ICH
-   engines read. */
-export type RegisterScope = 'program' | 'organization' | 'program-unscoped-store';
+   Since 2026-10-05 every per-application register's table records its
+   program (migrations/20261005_cmc_core_registers_project.sql): drug
+   substances, drug products, stability studies and analytical methods were
+   org-scoped only, so their lists could not be narrowed and an edit made with
+   another program open filed a second copy of the record under that program.
+   A list narrowed to a program still shows UNFILED records (no program) — they
+   are nobody else's, and hiding them would lose a saved record. */
+export type RegisterScope = 'program' | 'organization';
 
 export const REGISTER_SCOPE: Record<string, RegisterScope> = {
   // Per-application records — filed against one dossier.
   '/api/cmc/qc-testing': 'program',
   '/api/cmc/comparability-studies': 'program',
+  '/api/cmc/drug-substances': 'program',
+  '/api/cmc/drug-products': 'program',
+  '/api/cmc/stability-studies': 'program',
+  /* A method is validated for a product's matrix, and §3.2.S.4.2 / §3.2.P.5.2
+     cite the dossier's own methods, so it is filed per program like the rest. */
+  '/api/cmc/analytical-methods': 'program',
   // Organisation assets — reused across programs by design.
   '/api/cmc/change-control': 'organization',
   '/api/cmc/process-validation': 'organization',
-  // Per-application, but the store cannot express it. See the note above.
-  '/api/cmc/drug-substances': 'program-unscoped-store',
-  '/api/cmc/drug-products': 'program-unscoped-store',
-  '/api/cmc/stability-studies': 'program-unscoped-store',
-  '/api/cmc/analytical-methods': 'program-unscoped-store',
 };
 
 /** The path to read, narrowed to the open program when the register is scoped. */
@@ -273,14 +273,6 @@ const SCOPE_NOTE: Record<RegisterScope | 'program-none', { testId: string; text:
   program: { testId: 'register-scope-program', text: '· this program' },
   'program-none': { testId: 'register-scope-no-program', text: '· all programs — open one to narrow' },
   organization: { testId: 'register-scope-organization', text: '· all programs' },
-  'program-unscoped-store': {
-    testId: 'register-scope-unscopeable',
-    text: '· all programs — this register cannot be narrowed',
-    title:
-      "These records are filed per program, but this register's table records no " +
-      'program, so the list cannot be narrowed. The per-program record is what the ' +
-      'Module 3 build reads.',
-  },
 };
 
 function RegisterScopeNote({ scope, hasProgram }: { scope: RegisterScope; hasProgram: boolean }) {
