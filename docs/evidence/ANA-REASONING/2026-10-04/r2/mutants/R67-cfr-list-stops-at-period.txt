@@ -1,0 +1,12 @@
+Mutant R67-cfr-list-stops-at-period: a list ending a sentence ("Parts 50 and 56.") loses its last part
+
+--- server/services/ana/answer-grounding.ts
+- (${CFR_SECTION})(?!\d|\.\d)(?![ \t]{0,2}(?:C
++ (${CFR_SECTION})(?![\d.])(?![ \t]{0,2}(?:C
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > regulations cited as a list are each read (probe p9 I7) > reads "21 CFR Parts 50 and 56" as two parts 10ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

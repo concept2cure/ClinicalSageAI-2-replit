@@ -1,0 +1,21 @@
+Mutant D6-attributes: No attribute is a printed one.
+Result: KILLED (vitest exit 1, 2 failing tests)
+Tests run: server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts, server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts, server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/clinical-regulatory-evidence/machine-attribution.ts
++++ b/server/services/clinical-regulatory-evidence/machine-attribution.ts
+@@ -268,4 +268,2 @@
+ const PRINTED_ATTRIBUTES = new Set([
+-  'alt', 'title', 'aria-label', 'data-note', 'data-cite', 'data-cite-locator', 'data-xref', 'data-xref-display',
+-  'data-author-name', 'data-at', 'start', 'value', 'label', 'placeholder',
+ ]);
+
+--- failing tests ---
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a cross-reference whose words run into a later clause: the export prints something else over them, so no clause of it is AnA's 11ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a citation whose words run into a later clause: the export prints something else over them, so no clause of it is AnA's 2ms
+
+--- summary ---
+ Test Files  1 failed | 3 passed (4)
+      Tests  2 failed | 145 passed (147)

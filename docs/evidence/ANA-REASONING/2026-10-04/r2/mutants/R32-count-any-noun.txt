@@ -1,0 +1,12 @@
+Mutant R32-count-any-noun: "212 patients" is found through any 212
+
+--- server/services/ana/answer-check-figures.ts
+- o.value === value && (COUNT_WORDS[fig.unit ?? 'people'] ?? COUNT_WORDS.people).test(`${o.before.slice(-30)} ${o.key} ${o.after}`),
++ o.value === value,
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > n and a count need what they count: a page number is neither 10ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

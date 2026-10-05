@@ -1,0 +1,12 @@
+Mutant R20-ich-no-left-boundary: ICH E3 is found inside "PHASE3" (F7)
+
+--- server/services/ana/answer-grounding.ts
+- return new RegExp(`(?<![A-Z0-9])${m[1]}${rev}(?![0-9A-Z])`).test(haystack);
++ return new RegExp(`${m[1]}${rev}(?![0-9A-Z])`).test(haystack);
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > identifiers and regulations are matched as themselves (F7) > an ICH code is not found inside another word or beside an unrelated number 8ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

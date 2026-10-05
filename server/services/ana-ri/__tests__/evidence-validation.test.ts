@@ -151,3 +151,43 @@ describe('validateEvidence — itemized flagged claims', () => {
     expect(v.validated).toBe(false);
   });
 });
+
+/**
+ * [MISSING] is AnA saying support is absent (persona.ts). It was counted as
+ * grounding: a claim with only [MISSING] near it read as grounded, the label
+ * was counted as a source, and missing_support_count could never be anything
+ * but 0 (it filtered on a pattern no claim pattern contains). So an answer
+ * whose one claim was a declared gap read "All claims appear adequately
+ * grounded by evidence labels." (2026-10-04, AnA reasoning).
+ */
+describe('validateEvidence — a declared gap is not grounding', () => {
+  const gap = pad('Per 21 CFR 312.23 the data package is insufficient for the long-term safety section [MISSING: no 12-month data].');
+
+  it('a claim whose only label is [MISSING] is not grounded, and is counted as missing support', () => {
+    const v = validateEvidence(gap, 'ana-ri');
+    expect(v.grounded_claim_count).toBe(0);
+    expect(v.missing_support_count).toBeGreaterThan(0);
+    expect(v.reviewer_risk_summary).not.toMatch(/adequately grounded/);
+  });
+
+  it('[MISSING] is not counted as a source, and the labels are reported as AnA wrote them', () => {
+    const v = validateEvidence(gap, 'ana-ri');
+    expect(v.source_count).toBe(0);
+    expect(v.source_types).not.toContain('identified_gap');
+    expect(v.label_counts).toEqual({ known: 0, inferred: 0, missing: 1 });
+  });
+
+  it('a [KNOWN] claim beside it is still grounded', () => {
+    const v = validateEvidence(
+      pad(
+        'Safety reporting is required by 21 CFR 312.32 [KNOWN: 21 CFR 312.32]. ' +
+          'x'.repeat(600) +
+          ' The long-term data is insufficient for filing [MISSING: no 12-month data].',
+      ),
+      'ana-ri',
+    );
+    expect(v.grounded_claim_count).toBe(1);
+    expect(v.missing_support_count).toBe(1);
+    expect(v.label_counts).toEqual({ known: 1, inferred: 0, missing: 1 });
+  });
+});

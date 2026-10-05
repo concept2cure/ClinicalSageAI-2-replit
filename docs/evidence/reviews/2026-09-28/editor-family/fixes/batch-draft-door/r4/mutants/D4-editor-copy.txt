@@ -1,0 +1,20 @@
+Mutant D4-editor-copy: The editor keeps its own copy of the source-mode test.
+Result: KILLED (vitest exit 1, 1 failing tests)
+Tests run: shared/authoring/__tests__/source-mode.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/client/src/concept2cure/v2/editor/RichSectionEditor.tsx
++++ b/client/src/concept2cure/v2/editor/RichSectionEditor.tsx
+@@ -871,3 +871,3 @@
+       // content as this reader shows it (shared/authoring/source-mode.ts).
+-      if (opensInSourceMode(stored)) {
++      if (/<(figure|svg|video|embed|object)[\s/>]/i.test(stored)) {
+         return { mode: 'source' as const, html: null, verdict: null };
+
+--- failing tests ---
+ × shared/authoring/__tests__/source-mode.test.ts > opensInSourceMode > is the editor's own test: RichSectionEditor imports it and keeps no copy 12ms
+
+--- summary ---
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)

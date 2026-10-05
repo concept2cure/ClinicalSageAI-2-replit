@@ -118,3 +118,89 @@ export function assertNoUnsupportedClaims(text: string): void {
 export function isEvidentiallySound(text: string): boolean {
   return detectUnsupportedClaims(text).length === 0;
 }
+
+// ─── 3. Verdicts stated in generated text ─────────────────────────────────────
+
+/**
+ * Verdicts: that a package is ready to file, that a section complies, that a
+ * submission is approvable. Rule 2 (CLAUDE.md): numbers and verdicts come from
+ * deterministic engines and the model narrates, so a verdict in an answer is
+ * named to the person, who can see which engine, if any, gave it
+ * (services/ana/answer-grounding.ts).
+ *
+ * A separate set from the §14 prohibitions above, on purpose: those refuse
+ * retrieval atoms (retrieval-atoms.service.ts), and source text that records
+ * a finding ("the site was found compliant") is evidence, not a claim to
+ * refuse. A verdict the text declines or makes conditional is not asserted
+ * (isAssertedVerdict).
+ */
+const VERDICT_CLAIM_PATTERNS: { pattern: RegExp; reason: string }[] = [
+  { pattern: /\b(?:is|are|it's|it is|that's|that is|they're|they are|we're|we are|now)\s+(?:now\s+|fully\s+|already\s+)?(?:ready|fit|cleared)\s+(?:to\s+(?:file|submit|be\s+(?:filed|submitted))|for\s+(?:(?:FDA|EMA|PMDA|MHRA|regulatory|agency|IND|NDA|BLA|MAA|the|an?)\s+){0,2}(?:filing|submission))\b/gi,
+    reason: 'States a readiness verdict.' },
+  { pattern: /\bsubmission[-\s]ready\b/gi,
+    reason: 'States a readiness verdict.' },
+  { pattern: /\b(?:is|are|it's|it is|remains?)\s+(?:now\s+|fully\s+|completely\s+|entirely\s+)?(?:(?:[A-Z0-9][\w.()§]*|CFR|Part|GMP|GCP|GLP)(?:\s+|-)){0,4}compliant\b/gi,
+    reason: 'States a compliance verdict.' },
+  { pattern: /\b(?:fully|completely)\s+compl(?:y|ies|iant)\b/gi,
+    reason: 'States a compliance verdict.' },
+  { pattern: /\bcomplies\s+(?:fully\s+)?with\b/gi,
+    reason: 'States a compliance verdict.' },
+  { pattern: /\b(?:meets?|satisf(?:y|ies))\s+all\s+(?:(?:the|applicable|relevant|regulatory|statutory|FDA|EMA|ICH|GMP)\s+){0,3}requirements\b/gi,
+    reason: 'States a compliance verdict.' },
+  { pattern: /\bin\s+(?:full\s+)?compliance\s+with\b/gi,
+    reason: 'States a compliance verdict.' },
+  { pattern: /\b(?:is|are)\s+approvable\b/gi,
+    reason: 'States an approvability verdict.' },
+  { pattern: /\b(?:will|would|should)\s+(?:likely|probably|certainly|surely|almost\s+certainly)\s+be\s+approved\b/gi,
+    reason: 'Predicts an approval decision.' },
+  // "will be approved" is a §14 prohibition above; these are the forms it misses.
+  { pattern: /\b(?:NDA|BLA|ANDA|sNDA|sBLA|MAA|PMA|510\(k\)|De\s+Novo|IND|application|submission|dossier)\s+(?:should\s+(?:likely\s+|probably\s+|certainly\s+)?be\s+(?:approved|cleared|accepted|granted)|(?:will|would)\s+(?:likely\s+|probably\s+|certainly\s+)?be\s+(?:cleared|accepted|granted))\b/gi,
+    reason: 'Predicts an approval decision.' },
+  { pattern: /\b(?:FDA|EMA|PMDA|MHRA|Health\s+Canada|the\s+agency|the\s+reviewers?|regulators?)\s+(?:will|would)\s+(?:likely\s+|probably\s+|certainly\s+)?(?:accept|approve|clear|grant)\b/gi,
+    reason: 'Predicts an agency decision.' },
+];
+
+/** Every verdict pattern match in the text, in order (not yet judged asserted). */
+export function detectVerdictClaims(text: string): ClaimViolation[] {
+  if (!text) return [];
+  const out: ClaimViolation[] = [];
+  for (const { pattern, reason } of VERDICT_CLAIM_PATTERNS) {
+    pattern.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = pattern.exec(text)) !== null) {
+      out.push({ match: m[0].replace(/\s+/g, ' '), reason, index: m.index });
+    }
+  }
+  return out.sort((a, b) => a.index - b.index);
+}
+
+/** Words that decline a verdict, doubt it or make it conditional, in the clause before it or inside it. */
+const NOT_ASSERTED =
+  /\b(?:not|never|no\s+longer|no\s+(?:guarantee|assurance|certainty)|yet\s+to|fail(?:s|ed|ing)?\s+to|unlikely|uncertain|doubt(?:ful)?|may\s+not|might\s+not|whether|if|unless|before|until|once|when|in\s+order\s+to|so\s+that|confirm|check|verify|cannot|can't)\b|n't\b/i;
+/** A condition after the verdict, in its own sentence: "is compliant only when audit trails are on". */
+const CONDITION_AFTER =
+  /\b(?:only\s+(?:if|when|once|after)|provided(?:\s+that)?|as\s+long\s+as|subject\s+to|unless|if|once|when|until)\b/i;
+/** "approved by two signers" is a workflow step; "approved by FDA" is a prediction. */
+const APPROVED_BY_PERSON = /^\s+by\s+(?!(?:the\s+)?(?:FDA|EMA|PMDA|MHRA|agency|regulators?|health\s+authorit))/i;
+
+/**
+ * Whether the text asserts the verdict a pattern found at `index`: not
+ * declined or doubted ("does not meet all requirements", "no guarantee FDA
+ * will accept"), not conditional ("whether the package is ready to file",
+ * "before it is ready to file", "is compliant only when audit trails are
+ * on"), not asked ("Is the section fully compliant?"), not a workflow step
+ * ("will be approved by two signers"). The clause before it is read back to
+ * the last sentence or clause break, at most 60 characters; the rest of its
+ * sentence after it, at most 120.
+ */
+export function isAssertedVerdict(text: string, index: number, match: string): boolean {
+  const before = text.slice(Math.max(0, index - 60), index);
+  const clause = before.slice(Math.max(before.lastIndexOf('.'), before.lastIndexOf(';'), before.lastIndexOf('!'), before.lastIndexOf('?'), before.lastIndexOf(',')) + 1);
+  if (NOT_ASSERTED.test(clause) || NOT_ASSERTED.test(match)) return false;
+  const after = text.slice(index + match.length, index + match.length + 120);
+  if (/approv(?:ed|e)$/i.test(match.trim()) && APPROVED_BY_PERSON.test(after)) return false;
+  // The rest of its sentence: a question asks for the verdict, a condition withholds it.
+  const end = after.search(/[.!?](?:\s|$)/);
+  if (end >= 0 && after[end] === '?') return false;
+  return !CONDITION_AFTER.test(end >= 0 ? after.slice(0, end) : after);
+}

@@ -1,0 +1,480 @@
+The reviewers' 24 probes (fail-open p1–p11, honest-state probe-*), re-run unchanged against the final round-2 engine.
+Each imports the engine (and, where named, a real tool handler with the network stubbed) and prints what the check reports.
+Read each against its finding in review-fail-open.md / review-honest-state.md, which quote the same probes on round 1.
+Some probes print their round-1 expectation in their own labels ("CHECK MARK", "NOT named"); the data after each label is what the round-2 engine reports. Database pool log lines are removed; nothing else is edited.
+
+════════ p1-figures
+
+## A1 fabricated "n = 19" credited by a date day (2014-08-19)
+answer: "The phase 3 trial (n = 19) was positive."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["n = 19"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## A2 fabricated "5%" credited by date month 05
+answer: "Grade 3 pneumonitis occurred in 5% of patients."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["5%"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## A3 fabricated "15 patients" / "26 sites"
+answer: "Only 15 patients discontinued, across 26 sites."
+{"basis":"sources","claims":2,"checked":2,"found":0,"notFound":["15 patients","26 sites"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## A4 fabricated "18 months" PFS credited by minimumAge 18
+answer: "Median PFS was 18 months."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["18 months"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## A5 fabricated ORR 14% credited by a date year part 2014? (should NOT)
+answer: "ORR was 14%."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["14%"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## A6 fabricated "HR 0.62" vs sources w/o 0.62
+answer: "HR 0.62 for OS."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["HR 0.62"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## B1 fabricated "0.1%" SAE rate credited by P<0.001
+answer: "Treatment-related deaths occurred in 0.1% of patients."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["0.1%"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## B2 fabricated "5%" credited by p 0.05
+answer: "The discontinuation rate was 5%."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["5%"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## B3 fabricated "0.5%" credited by P=0.005
+answer: "Hepatitis occurred in 0.5% of patients."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["0.5%"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "The response rate was 47 percent."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["47 percent"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "hazard ratio, 0.31; 95% CI, 0.50 to 0.77"
+{"basis":"sources","claims":2,"checked":2,"found":0,"notFound":["hazard ratio, 0.31","95% CI, 0.50 to 0.77"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "The p-value = 0.0003."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["p-value = 0.0003"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "P value of 0.0003 was reported."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["P value of 0.0003"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "Enrollment was 212 pts."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["212 pts"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "A total of 212 randomized patients."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["212 randomized patients"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "212 women were enrolled."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["212 women"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "Median OS was 31.2 mo."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["31.2 mo"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "Treatment lasted 48 h."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["48 h"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "Dosed at 100 μg (Greek mu)."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["100 μg"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "Irradiated to 60 Gy."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["60 Gy"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "95% CI [0.41, 0.77]"
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["95% CI [0.41, 0.77]"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "95% CI −0.82 to −0.11"
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["95% CI −0.82 to −0.11"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "ORR 38–56%"
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["38–56%"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "Mean change 47.3 ± 5.2%"
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["5.2%"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "Two hundred patients were enrolled."
+{"basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "A 2.4-fold increase."
+{"basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "IC50 of 12 nM."
+{"basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "Stored at 2–8 °C for 36 mo."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["36 mo"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "HR (95% CI) 0.62 (0.50–0.77)"
+{"basis":"sources","claims":2,"checked":2,"found":0,"notFound":["HR (95% CI) 0.62","(0.50–0.77)"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "NNT of 12."
+{"basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## C miss
+answer: "Lancet style: HR 0·62 (95% CI 0·50–0·77)."
+{"basis":"sources","claims":1,"checked":1,"found":0,"notFound":["HR 0"],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## D1 "-1.2 kg" true figure vs source "-1.2 kg"
+answer: "Weight change was -1.2 kg."
+{"basis":"sources","claims":1,"checked":1,"found":1,"notFound":[],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## D2 "1.2 kg" (sign flipped) vs source "+1.2 kg" -> credited
+answer: "Patients lost 1.2 kg."
+{"basis":"sources","claims":1,"checked":1,"found":1,"notFound":[],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## D3 float artifact: true "1.1%" vs source "0.011"
+answer: "The rate was 1.1%."
+{"basis":"sources","claims":1,"checked":1,"found":1,"notFound":[],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## D4 float artifact: true "0.7%" vs source "0.007"
+answer: "The rate was 0.7%."
+{"basis":"sources","claims":1,"checked":1,"found":1,"notFound":[],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## D5 true CI with negative lower bound (ASCII) vs source unicode minus
+answer: "95% CI -0.82 to -0.11"
+{"basis":"sources","claims":1,"checked":1,"found":1,"notFound":[],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+## D6 range "1,066–1,200" fine?
+answer: "n = 1,066"
+{"basis":"sources","claims":1,"checked":1,"found":1,"notFound":[],"unchecked":[],"sources":["tool:search_trials"],"verdicts":[]}
+
+════════ p10-self-echo
+[search_document result] {"query":"pivotal","isRegex":false,"totalMatches":1,"matches":[{"line":2,"text":"The pivotal study NCT09999999 (PMID 39999999) met its primary endpoint.","section":null}],"truncated":false}
+S1 {"claims":2,"found":0,"notFound":["NCT09999999","PMID 39999999"]}
+
+[extract_document_structure result] {"documentId":null,"counts":{"headings":0,"sections":1,"tables":0,"figures":0,"lines":4},"toc":[],"sections":[{"number":null,"title":"(preamble)","level":0,"startLine":1,"endLine":4}]}
+S2 {"claims":5,"found":0,"notFound":["NCT09999999","PMID 39999999","21 CFR 312.42","ICH E9(R1)","the totality of evidence supports a favorable benefit-risk assessment"]}
+
+════════ p11-trust-line
+A check: {"basis":"sources","claims":3,"found":0,"notFound":[],"sources":["tool:search_clinical_evidence"]}
+A trust line: Of 3 claims: 0 found in this turn's sources; 3 only in your message.
+
+B check: {"basis":"sources","claims":2,"found":0,"notFound":[{"kind":"figure","text":"22%"},{"kind":"figure","text":"20 months"}],"sources":["tool:search_literature"]}
+B trust line: ⚠ Of 2 claims: 0 found in this turn's sources; 2 not found.
+
+════════ p2-sources
+
+## P1a zero-hit search alone (echo rule)
+{"basis":"sources","claims":3,"found":0,"notFound":["nct:NCT04123456","cfr:21 CFR 312.42","figure:47%"],"sources":["tool:search_clinical_evidence"]}
+
+## P1b same, with the person message the stream always adds
+{"basis":"sources","claims":3,"found":0,"notFound":[],"sources":["tool:search_clinical_evidence"]}
+
+[industry wisdom block contains "30 days": false ; "21 CFR 312.42": false ; length 4815 ]
+[first lines] "\n\n## Industry wisdom — all segments, general\nExperiential judgment that bears on this situation. Use it as a senior colleague would: apply the relevant heuristic to the user's actual context, flag the consequence before they hit it, and recommend the veteran m"
+
+## P2 instruction pack credits a regulation and a figure
+{"basis":"sources","claims":2,"found":0,"notFound":["cfr:21 CFR 312.42","figure:30 days"],"sources":["context"]}
+
+[web evidence] "[web_fetch] https://clinicaltrials.gov/study/NCT09999999\nClinicalTrials.gov. This site requires JavaScript."
+
+## P3 web_fetch URL credits NCT09999999
+{"basis":"sources","claims":1,"found":0,"notFound":["nct:NCT09999999"],"sources":["web"]}
+
+[returned records] undefined
+
+## P4 verify_citations not_found PMID credited
+{"basis":"sources","claims":1,"found":0,"notFound":["pmid:PMID 31234567"],"sources":["tool:verify_citations"]}
+
+════════ p2b-context
+[builder: biotech/clinical] has 312.42: true  has "30 days": true
+
+[enrichment for "What veterans do when FDA puts our IND on clinical hold? Any lessons learned?"] sources=["industry-wisdom","client-attunement"] len=5760 has312.42=false has314.101=false has60days=false has30days=false
+
+## context = enrichment.block
+{"basis":"sources","claims":4,"found":0,"notFound":["cfr:21 CFR 312.42","cfr:21 CFR 314.101","figure:30 days","figure:60 days"],"sources":["context"]}
+
+[enrichment for "Any lessons learned or pitfalls for a biotech BLA filing — refuse to file risk?"] sources=["industry-wisdom"] len=3876 has312.42=false has314.101=true has60days=true has30days=false
+
+## context = enrichment.block
+{"basis":"sources","claims":4,"found":2,"notFound":["cfr:21 CFR 312.42","figure:30 days"],"sources":["context"]}
+
+[enrichment for "/wisdom clinical hold response"] sources=["wisdom"] len=4843 has312.42=false has314.101=false has60days=false has30days=false
+
+## context = enrichment.block
+{"basis":"sources","claims":4,"found":0,"notFound":["cfr:21 CFR 312.42","cfr:21 CFR 314.101","figure:30 days","figure:60 days"],"sources":["context"]}
+
+════════ p3-echo
+[engine output percentages] undefined
+[inputNumbers] undefined
+
+## A1 "47% response rate" the model passed as 0.47
+{"claims":4,"found":0,"notFound":[]}
+
+## A2 input 0.47 echoed as "47%"
+{"claims":1,"found":0,"notFound":[]}
+
+## A3 input 47 echoed as 0.47
+{"claims":1,"found":0,"notFound":[]}
+
+## B1 echo nested under another key (meta.searchTerm)
+{"claims":1,"found":0,"notFound":["nct:NCT04123456"]}
+
+## B2 echo inside an array of strings (searched ids)
+{"claims":1,"found":0,"notFound":["nct:NCT04123456"]}
+
+## B3 not_found list
+{"claims":1,"found":0,"notFound":["nct:NCT04123456"]}
+
+## B4 provenance retrieval url in an array
+{"claims":1,"found":0,"notFound":["nct:NCT04123456"]}
+
+## B5 top-level array of messages
+{"claims":1,"found":1,"notFound":[]}
+
+## B6 echoed request object at depth 2
+{"claims":1,"found":0,"notFound":["nct:NCT04123456"]}
+
+## B7 Query key spelled queryTerm
+{"claims":1,"found":0,"notFound":["nct:NCT04123456"]}
+
+## B8 top-level "verified": true flag unrelated to the echo
+{"claims":1,"found":0,"notFound":["nct:NCT04123456"]}
+
+## C1 asked "NCT 04123456", tool echoes normalized "NCT04123456" at top level
+{"claims":1,"found":1,"notFound":[]}
+
+## C2 asked url-encoded DOI, tool echoes decoded DOI at top level
+{"claims":1,"found":1,"notFound":[]}
+
+## D1 prose that only mentions the id
+{"claims":1,"found":1,"notFound":[]}
+
+════════ p3b-real-sample-size
+[status] computed [percent strings in result] ["The current design (N=302, power=80.2%) has statistical co","uperiority) yields N=302 (128/group) at 80.2% power, α=0.05. Effe","ty: fragile (index 65). effect_size has 5% margin to breakpoin","t; attrition_rate has 50% margin to breakpoin","tect the expected treatment effect with 80.2% confidence. The des","he sample size of 302 subjects provides 80.2% power using Two-pro"]
+[80 at] "ons\":[{\"name\":\"Power Adequacy\",\"verdict\":\"adequate\",\"score\":80},{\"name\":\"Sample Size Adequ"
+[80 at] "{\"name\":\"Sample Size Adequacy\",\"verdict\":\"adequate\",\"score\":80},{\"name\":\"Assumption Qualit"
+[80 at] "ame\":\"Overinterpretation Risk\",\"verdict\":\"adequate\",\"score\":80},{\"name\":\"Multiplicity Cont"
+[80 at] "95},{\"name\":\"Estimand Clarity\",\"verdict\":\"adequate\",\"score\":80},{\"name\":\"Missing Data Risk"
+[inputNumbers] undefined
+{"claims":4,"found":0,"notFound":[]}
+
+════════ p4-accidental-rate
+[compute_sample_size result, 2758 chars] fabricated "N%" credited for 3 of 99 values: 5,17,50
+  fabricated "N patients" (10..99) credited for 0 of 90 values: 
+[3-study search result, 918 chars] fabricated "N%" credited for 0 of 99 values: 
+  fabricated "median PFS N months" (1..60) credited for 0 of 60 values: 
+
+════════ p4b-real-ctgov
+[search_clinical_evidence result: 6982 chars, no efficacy figure anywhere in it]
+fabricated ORR "N%" 1..99 credited: 0 of 99: 
+fabricated "median OS N months" 1..60 credited: 0 of 60: 
+fabricated "N patients" 10..99 credited: 0 of 90: 
+
+mixed answer (NCT is real, every figure invented): {"claims":5,"found":1,"notFound":["48%","n = 410","22 months","67%"]}
+
+════════ p5-citation-tools
+[verify_citations result] {"results":[{"input":{"pmid":"39999999"},"status":"not_found","exists":false,"confidence":null,"match":null,"detail":"Identifier(s) did not resolve in PubMed/CrossRef.","checkedAt":"2026-10-05T00:22:05.913Z"}],"summary":{"total":1,"verified":0,"retracted":0,"n
+V1 {"claims":1,"found":0,"notFound":["PMID 39999999"]}
+
+[generate_citation result] {"sourceType":"journal_article","sourceIdentifier":"PMID 31234567 (pivotal trial NCT09999999; hold under 21 CFR 312.42; NDA 214999)","citation":"Smith J. A real trial report. N Engl J Med. 2019.","verification":"verified","verifiedAgainst":"pubmed","url":"https://pubmed.ncbi.nlm.nih.gov/31234567/","styleRequested":"regulatory","
+G1 {"claims":4,"found":0,"notFound":["NCT09999999","PMID 31234567","NDA 214999","21 CFR 312.42"]}
+
+════════ p6-perf-crash
+deep JSON depth 2000 (4013 chars): JSON.parse alone: 0 ms "ok"
+deep JSON depth 2000: budgetToolResultsForModel: 0 ms {"kept":4013}
+deep JSON depth 2000: toolEvidence: 0 ms {}
+deep JSON depth 8000 (16013 chars): JSON.parse alone: 1 ms "ok"
+deep JSON depth 8000: budgetToolResultsForModel: 0 ms {"kept":7998}
+deep JSON depth 8000: toolEvidence: 0 ms {}
+deep JSON depth 20000 (40013 chars): JSON.parse alone: 3 ms "ok"
+deep JSON depth 20000: budgetToolResultsForModel: 0 ms {"kept":7999}
+deep JSON depth 20000: toolEvidence: 0 ms {}
+answer "95% CI"+5000 spaces: 9 ms 0
+answer "95% CI"+10000 spaces: 0 ms 0
+answer "95% CI"+20000 spaces: 1 ms 0
+answer "HR"+20000 spaces: 1 ms 0
+answer "p <"+20000 spaces: 1 ms 0
+200 ids + 200 figures vs 25 x 60k sources: 265 ms {"claims":400,"found":0}
+
+════════ p6b-depth
+depth 3000: 6001 chars, budget kept 6001 (unchanged=true) -> returned=undefined
+depth 3500: 7001 chars, budget kept 7001 (unchanged=true) -> returned=undefined
+depth 3990: 7981 chars, budget kept 7981 (unchanged=true) -> returned=undefined
+
+════════ p7-outage-url
+[search_literature result] {"source":"PubMed","query":"pembrolizumab \"overall survival\" \"non-small cell\"","note":"PubMed API unavailable — use manual search","url":"https://pubmed.ncbi.nlm.nih.gov/?term=pembrolizumab%20%22overall%20survival%22%20%22non-small%20cell%22"}
+[inputNumbers] undefined
+{"basis":"sources","claims":4,"found":0,"notFound":["22%","5 years","20 months","n = 22"]}
+
+════════ p8-verdicts
+## verdicts NOT named (each sentence states one):
+"It's ready to file." -> ["It's ready to file"]
+"The dossier is ready to be filed." -> ["is ready to be filed"]
+"The package is ready for FDA submission." -> ["is ready for FDA submission"]
+"The IND is now fully ready to file." -> ["now fully ready to file"]
+"The system is Part 11 compliant." -> ["is Part 11 compliant"]
+"The facility is GMP-compliant." -> ["is GMP-compliant"]
+"The section is in compliance with 21 CFR 312.23." -> ["in compliance with"]
+"The protocol complies with ICH E6(R3)." -> ["complies with"]
+"It meets all applicable regulatory requirements." -> ["meets all applicable regulatory requirements"]
+"It satisfies all FDA requirements." -> ["satisfies all FDA requirements"]
+"The device will likely be approved." -> ["will likely be approved"]
+"FDA will clear the 510(k)." -> ["FDA will clear"]
+"The NDA should be approved." -> ["NDA should be approved"]
+"FDA would accept this approach." -> ["FDA would accept"]
+"Approval is expected in Q3." -> []
+"This is approvable as submitted." -> ["is approvable"]
+"No deficiencies remain; you can submit now." -> []
+
+## non-verdicts that ARE named:
+"I cannot tell you whether the package is ready to file." -> []
+"Before deciding if the system is compliant, we need the audit trail." -> []
+"The site does not meet all requirements yet." -> []
+"It is not yet submission-ready." -> []
+"Is the section fully compliant? That needs the gap analysis." -> []
+"The QA change will be approved by the change board next week." -> []
+
+════════ p9-identifiers
+## I1 "ICH E3" credited by "PHASE3" (whitespace-compacted, no left boundary)
+{"claims":1,"found":0,"notFound":["ich:ICH E3"]}
+## I2 "ICH E1"/"ICH E2" vs the same record (control: not present)
+{"claims":2,"found":0,"notFound":["ich:ICH E1","ich:ICH E2"]}
+## I3 bare ICH codes credited by "Table 9", "Figure 6", "Module 2", "Item 4", "Class 1"
+{"claims":5,"found":0,"notFound":["ich:ICH E9","ich:ICH E6","ich:ICH M4","ich:ICH E2","ich:ICH S1"]}
+## I4 malformed "NCT025786801" (9 digits) credited by NCT02578680
+{"claims":1,"found":0,"notFound":["nct:NCT025786801"]}
+## I5 "NCT 09999999" (spaced, fabricated) is not a claim at all
+{"claims":0,"found":0,"notFound":[]}
+## I6 "BLA 1274" credited by an enrollment count of 1274
+{"claims":1,"found":0,"notFound":["fda_bla:BLA 1274"]}
+## I7 "21 CFR Parts 50 and 56" (not extracted)
+{"claims":2,"found":0,"notFound":["cfr:21 CFR Parts 50","cfr:21 CFR 56"]}
+
+════════ probe-bag
+ORR N% (1..99): 15/99 fabricated figures "found" (15%)
+HR 0.50..0.99: 2/50 fabricated figures "found" (4%)
+median OS N months (1..40): 9/40 fabricated figures "found" (23%)
+p = 0.001..0.050: 2/50 fabricated figures "found" (4%)
+N patients (300..700): 7/401 fabricated figures "found" (2%)
+distinct numbers in this one result: 144 | chars: 14218
+
+════════ probe-engine
+
+=== P1 figure only in the person question, after an unrelated search
+{"basis":"sources","claims":1,"checked":0,"found":0,"notFound":[],"unchecked":[],"sources":["tool:search_pubmed"],"unreadable":[],"verdicts":[]}
+TRUST: Of 1 claim: 0 found in this turn's sources; 1 only in your message.
+
+=== P2 fabricated figures credited by unrelated numbers in a record
+{"basis":"sources","claims":5,"checked":5,"found":3,"notFound":["figure:24 sites","figure:12%"],"unchecked":[],"sources":["tool:search_clinical_trials"],"unreadable":[],"verdicts":[]}
+TRUST: ⚠ Of 5 claims: 3 found in this turn's sources; 2 not found.
+
+=== P3 attached PDF only: figures from it
+{"basis":"sources","claims":3,"checked":0,"found":0,"notFound":[],"unchecked":["figure:320 patients","figure:200 mg","figure:3 weeks"],"sources":[],"unreadable":["attachment:protocol-v3.pdf"],"verdicts":[]}
+TRUST: Of 3 claims: 0 found in this turn's sources; 3 not checked (may be in protocol-v3.pdf, which this check cannot read).
+
+=== P4 follow-up: figure from an earlier turn, project context present
+{"basis":"sources","claims":2,"checked":2,"found":0,"notFound":["figure:45%","figure:95% CI 38-52"],"unchecked":[],"sources":["context"],"unreadable":[],"verdicts":[]}
+TRUST: ⚠ Of 2 claims: 0 found in this turn's sources; 2 not found.
+
+=== P5 follow-up: figure from an earlier turn, no context
+{"basis":"no_sources","claims":2,"checked":0,"found":0,"notFound":[],"unchecked":["figure:45%","figure:95% CI 38-52"],"sources":[],"unreadable":[],"verdicts":[]}
+TRUST: No source consulted this turn: 2 claims not checked.
+
+=== P6 sample size from model-chosen inputs
+{"basis":"sources","claims":4,"checked":2,"found":2,"notFound":[],"unchecked":[],"sources":["tool:calculate_sample_size"],"unreadable":[],"verdicts":[]}
+TRUST: Of 4 claims: 2 found in this turn's sources; 2 AnA's own inputs, not results.
+
+=== P7 regulatory clocks recalled, a tool ran for something else
+{"basis":"sources","claims":4,"checked":4,"found":0,"notFound":["cfr:21 CFR 312.32(c)","figure:15 days","figure:7 days","figure:30 days"],"unchecked":[],"sources":["tool:get_project_deadlines"],"unreadable":[],"verdicts":[]}
+TRUST: ⚠ Of 4 claims: 0 found in this turn's sources; 4 not found. ⚠ Evidence labels: 0 labelled · 1 unlabelled or overclaimed · 0 marked missing. 1/1 claims (100%) lack nearby evidence labels.
+
+=== P8 verdicts in hedged / negated language
+{"basis":"no_sources","claims":1,"checked":0,"found":0,"notFound":[],"unchecked":["cfr:21 CFR 11.50"],"sources":[],"unreadable":[],"verdicts":[]}
+TRUST: No source consulted this turn: 1 claim not checked. ⚠ Evidence labels: 0 labelled · 1 unlabelled or overclaimed · 0 marked missing. 1/1 claims (100%) lack nearby evidence labels.
+
+P9 overlay chars: 1415
+
+=== P9 regulation found only in an instruction overlay / person message
+{"basis":"sources","claims":4,"checked":2,"found":0,"notFound":["cfr:21 CFR 11.70","cfr:21 CFR 312.32"],"unchecked":[],"sources":["context"],"unreadable":[],"verdicts":[]}
+TRUST: ⚠ Of 4 claims: 0 found in this turn's sources; 2 not found; 2 only in your message.
+
+════════ probe-extract
+[]  <-  This applies to Phase 2 or 3 studies.
+[]  <-  Submit Module 2 or 3 first.
+[]  <-  Use 1 or 2 reviewers.
+["cfr:21 CFR 312","cfr:21 CFR 314"]  <-  Either 21 CFR 312 or 21 CFR 314 applies.
+[]  <-  Section 2.7.3 summarises clinical efficacy; Section 5.3.5.1 holds the CSRs.
+["figure:74 days","figure:10 months","figure:60-day"]  <-  The Day 74 letter arrives 74 days after receipt; the PDUFA goal is 10 months from the 60-day filing date.
+[]  <-  Version 2.0 of the template, dated 15 March 2024, replaces the 2019 edition.
+["figure:12-month","figure:24-month"]  <-  Store at 2-8 °C; the 12-month stability data support a 24-month shelf life.
+["ich:ICH E6(R3)"]  <-  ICH E6(R3) took effect in the EU on 23 July 2025.
+["figure:6 hours"]  <-  Store below 25 °C for up to 6 hours after reconstitution.
+[]  <-  Use form FDA 1571 and FDA 3674.
+["figure:100%"]  <-  A 100% source data verification plan is not required.
+["figure:18 years"]  <-  Patients aged 18 years or older were enrolled.
+[]  <-  or 2026 — the next cycle.
+
+════════ probe-ich
+E9(R1) exact? true code field: E9(R1) -> found 1 notFound []
+E6(R3) exact? true code field: E6(R3) -> found 1 notFound []
+Q1A(R2) exact? true code field: Q1A(R2) -> found 1 notFound []
+
+════════ probe-noise
+WARN recalled CFR clock notFound=["21 CFR 312.32(c)(1)","15 days"] verdicts=[]
+WARN recalled IND wait  notFound=["21 CFR 312.40(b)","30 days"] verdicts=[]
+WARN recalled ICH       notFound=["ICH E6(R3)","E6(R2)"] verdicts=[]
+WARN recalled PDUFA     notFound=["10 months","60-day"] verdicts=[]
+WARN recalled stability notFound=["ICH Q1A(R2)","12 months"] verdicts=[]
+ok   section map        notFound=[] verdicts=[]
+ok   phase phrasing     notFound=[] verdicts=[]
+ok   declined verdict   notFound=[] verdicts=[]
+WARN follow-up          notFound=["45%"] verdicts=[]
+WARN designation        notFound=["60 days"] verdicts=[]
+WARN eligibility        notFound=["18 years"] verdicts=[]
+WARN QMS workflow       notFound=["21 CFR 11.50"] verdicts=[]
+
+9/12 correct answers show a warning row with a project open.
+
+════════ probe-overlay
+
+
+## Claim-grounding check (NON-NEGOTIABLE)
+This exchange involves high-stakes factual claims that a client could act on. Before you commit them, ground each one against your injected context using your [KNOWN] / [INFERRED] / [MISSING] discipline. This raises rigor, not caution: state what you can stand behind, label what you are inferring, and flag what you cannot ground rather than smoothing over it. Apply specifically to:
+
+- **Regulatory citation:** For every specific citation (a 21 CFR part/section, an ICH guideline code, an EU regulation number, a guidance title), verify it against the injected context or your established knowledge. If you are recalling it rather than reading it from provided evidence, mark it [INFERRED] and tell the user to confirm the exact section before relying on it. Never invent a section number to look precise.
+- **Regulatory clock or date claim:** For any review-clock or statutory-timeline figure (a PDUFA date, a 75-day Pre-Sub clock, a 90-day review, a 30-day IND wait), confirm the clock and any clock-stop conditions. Label it [INFERRED] if recalled, and note that clocks reset on major amendments — do not state a date as fixed when an amendment could move it.
+
+If a load-bearing claim cannot be grounded, say so plainly and tell the user how to confirm it. A labeled uncertainty is a strength here; a confident fabrication is the one failure this tool cannot afford.
+
+════════ probe-recall
+1 of 3 not found ["hazard ratio for death was 0.35"]         <- the hazard ratio for death was 0.35
+1 of 3 not found ["61 percent"]                              <- the response rate was 61 percent
+1 of 3 not found ["11.3 months"]                             <- median OS was 24.1 vs 11.3 months
+1 of 3 not found ["HR, 0.35"]                                <- HR, 0.35
+CHECK MARK: All 2 specific claims found                      <- one-year survival was 0.81
+CHECK MARK: All 2 specific claims found                      <- grade 3 or higher adverse events occurred in thirty-one percent
+
+════════ probe-verdicts
+[]                                 <- Module 3 fails to meet all requirements of ICH Q6A.
+[]                                 <- The package does not meet all the requirements yet.
+[]                                 <- It never meets all applicable requirements for a 505(b)(2).
+[]                                 <- It is unlikely that FDA will accept a missing Module 3.
+[]                                 <- There is no guarantee the agency will accept this approach.
+[]                                 <- Before it is ready to file, run the readiness check.
+[]                                 <- If the package is ready to file, the readiness engine will say so.
+[]                                 <- Ask whether the submission is approvable before you commit.
+[]                                 <- The SOP will be approved by two signers under 21 CFR 11.50.
+[]                                 <- Your protocol amendment will be approved by the IRB before implementation.
+[]                                 <- The system is compliant only when audit trails are switched on.
+[]                                 <- Is the package ready to file? Not yet.
+[]                                 <- The package is not ready to file.
+[]                                 <- Your eTMF is not compliant.
+
+════════ probe-verify-search
+{"found":4,"claims":4,"notFound":[]}

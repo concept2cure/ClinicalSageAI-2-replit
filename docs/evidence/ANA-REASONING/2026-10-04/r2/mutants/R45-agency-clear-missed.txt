@@ -1,0 +1,12 @@
+Mutant R45-agency-clear-missed: "FDA will clear the 510(k)" is not named (F9)
+
+--- server/services/clinical-regulatory-evidence/governance.ts
+- (?:will|would)\s+(?:likely\s+|probably\s+|certainly\s+)?(?:accept|approve|clear|grant)\b/gi,
++ will\s+accept\b/gi,
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > verdicts (F9, HS-6) > names the verdicts stated 10ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

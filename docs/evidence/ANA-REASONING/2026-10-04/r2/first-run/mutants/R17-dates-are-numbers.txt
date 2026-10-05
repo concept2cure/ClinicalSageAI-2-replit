@@ -1,0 +1,10 @@
+Mutant R17-dates-are-numbers: the digits of a date or a timestamp are read as figures
+
+--- server/services/ana/answer-check-sources.ts
+- const t = asciiDashes(withoutUrls(text)).replace(ISO_DATE_RE, (m) => ' '.repeat(m.length));
++ const t = asciiDashes(withoutUrls(text));
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: SURVIVED
+
+      Tests  75 passed (75)

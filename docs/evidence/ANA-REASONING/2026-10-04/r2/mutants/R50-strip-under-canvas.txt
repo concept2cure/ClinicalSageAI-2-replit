@@ -1,0 +1,19 @@
+Mutant R50-strip-under-canvas: the check sits under the document canvas, as if it checked the draft (HS-8)
+
+--- client/src/concept2cure/v2/surfaces/ConversationThread.tsx
+- {turn.settled && <AnaGrounding evidence={turn.evidence} />}
+        <InsertIntoOpenSection
++ <InsertIntoOpenSection
+--- client/src/concept2cure/v2/surfaces/ConversationThread.tsx
+- )}
+        {turn.links && (
++ )}
+        {turn.settled && <AnaGrounding evidence={turn.evidence} />}
+        {turn.links && (
+
+Tests run: client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > puts what was checked directly under the answer, above the canvas whose drafted figures it does not check 53ms
+      Tests  1 failed | 18 passed (19)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

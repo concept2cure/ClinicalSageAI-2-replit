@@ -1,0 +1,21 @@
+Mutant D8-every-asterisk: The markdown reading drops every `*`, as round 3 did.
+Result: KILLED (vitest exit 1, 3 failing tests)
+Tests run: server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts, server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts, server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/clinical-regulatory-evidence/machine-attribution.ts
++++ b/server/services/clinical-regulatory-evidence/machine-attribution.ts
+@@ -365,2 +365,3 @@
+ function markdownShown(text: string): string {
++  if (text) return text.replace(/\\\|/g, '|').replace(/\*/g, '');
+   const view = maskTags(text, scanMarkup(text).tags, (n) => '\u0000'.repeat(n));
+
+--- failing tests ---
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D8: the turn record read as markdown drops only what markdown hides > a lone asterisk stays: "5*10" is not "510" 12ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D8: the turn record read as markdown drops only what markdown hides > paired emphasis, list markers, a thematic break and escapes read as markdown shows them 2ms
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the verifier reads the record as markdown shows it (D8) > record "5*10 mg/kg", claim and content "510 mg/kg": does not verify, nothing is AnA's 68ms
+
+--- summary ---
+ Test Files  2 failed | 2 passed (4)
+      Tests  3 failed | 144 passed (147)

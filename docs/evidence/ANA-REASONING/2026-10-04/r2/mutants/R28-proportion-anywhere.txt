@@ -1,0 +1,12 @@
+Mutant R28-proportion-anywhere: a percentage is found through any equal proportion, whatever it measures (F4)
+
+--- server/services/ana/answer-check-figures.ts
+- (o.value === proportionOf(value) && RATE_WORDS.test(`${o.before} ${o.key}`)),
++ (o.value === proportionOf(value)),
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a p-value is not a percentage, and a percentage is not a p-value 9ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

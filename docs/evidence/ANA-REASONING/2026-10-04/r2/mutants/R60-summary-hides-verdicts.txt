@@ -1,0 +1,12 @@
+Mutant R60-summary-hides-verdicts: the summary line does not say the answer states a verdict
+
+--- server/services/ana-ri/response-contract.ts
+- if (check.verdicts.length === 0) return line;
++ return line;
+
+Tests run: server/services/__tests__/ana-trust-summary.test.ts server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+Result: KILLED
+
+ × server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > leads with the engine's check when there is one 6ms
+      Tests  1 failed | 9 passed (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

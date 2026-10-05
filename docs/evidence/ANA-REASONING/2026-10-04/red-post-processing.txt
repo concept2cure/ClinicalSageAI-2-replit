@@ -1,0 +1,10 @@
+ × server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels 3690ms
+   → Cannot read properties of undefined (reading 'engine')
+ × server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > post_done, the stored message and the sealed record carry the same check 5ms
+   → Cannot read properties of undefined (reading 'check')
+ × server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > with no tool run, a turn still says what was checked: claims unchecked, not grounded 2ms
+   → Cannot read properties of undefined (reading 'basis')
+ × server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > a short answer the labels do not assess is still checked 2ms
+   → Cannot read properties of undefined (reading 'notFound')
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed (4)

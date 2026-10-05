@@ -1,0 +1,12 @@
+Mutant R12-echo-keys-read: a nested query, URL or not-found list is read as part of a record (F2)
+
+--- server/services/ana/answer-check-sources.ts
+- if (isEchoKey(k) || v === null || v === undefined) continue;
++ if (v === null || v === undefined) continue;
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a zero-hit result finds nothing, and neither does the query its provenance echoes 10ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

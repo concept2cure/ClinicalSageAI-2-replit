@@ -1,0 +1,20 @@
+Mutant D4-source-mode: Content that opens in source mode is read as HTML only.
+Result: KILLED (vitest exit 1, 1 failing tests)
+Tests run: server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts, server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts, server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/clinical-regulatory-evidence/machine-attribution.ts
++++ b/server/services/clinical-regulatory-evidence/machine-attribution.ts
+@@ -513,3 +513,3 @@
+   const ranges = html ? notComparedRanges(content) : [];
+-  const everyCharacterShown = !html || opensInSourceMode(content);
++  const everyCharacterShown = !html;
+   return candidates.map(
+
+--- failing tests ---
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > content that opens in source mode is read as plain text: a clause holding a tag the comparison removes is not AnA's 13ms
+
+--- summary ---
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 146 passed (147)

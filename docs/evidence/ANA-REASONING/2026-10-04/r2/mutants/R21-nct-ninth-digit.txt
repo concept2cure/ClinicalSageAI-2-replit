@@ -1,0 +1,12 @@
+Mutant R21-nct-ninth-digit: a nine-digit NCT number is read as the eight-digit trial inside it
+
+--- server/services/ana/answer-grounding.ts
+- { kind: 'nct', re: /\bNCT\d{8,}/gi },
++ { kind: 'nct', re: /\bNCT\d{8}/gi },
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > a malformed identifier is flagged, not skipped (round-2 mutants) > a nine-digit NCT number is a claim of its own, not the trial inside it 9ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

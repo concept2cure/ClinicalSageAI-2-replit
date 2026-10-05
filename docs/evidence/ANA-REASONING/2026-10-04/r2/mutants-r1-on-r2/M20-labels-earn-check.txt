@@ -1,0 +1,12 @@
+Mutant M20-labels-earn-check: clean labels earn a check mark
+
+--- client/src/concept2cure/v2/AnaGrounding.tsx
+- <Row tone={clean ? 'unknown' : 'weak'}>
++ <Row tone={clean ? 'ok' : 'weak'}>
+
+Tests run: client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > clean labels carry no check mark: a label is not verification 10ms
+      Tests  1 failed | 21 passed (22)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

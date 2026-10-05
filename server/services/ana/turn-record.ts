@@ -20,6 +20,11 @@
  *                             pause / steer / stop, her reasoning
  *   what she answered         the answer as streamed and as stored, and every
  *                             draft she produced
+ *   what was checked          the engine's check of that answer against what
+ *                             she consulted, and her own evidence labels, as
+ *                             the person was shown them (`verification`,
+ *                             schema /2 from 2026-10-04: a later re-run of a
+ *                             changed engine is not the verdict she was given)
  *
  * ── How it is kept ───────────────────────────────────────────────────────────
  * Content-addressed. Every text is stored once, in `ana_record_blobs`, under
@@ -54,8 +59,10 @@ import { stableStringify } from '../../../shared/canonical-json.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import type { TurnPlanStep } from './turn-plan.js';
 import type { ContextUsedEvent } from './turn-context-used.js';
+import type { TurnVerification } from './turn-verification.js';
 
-export const TURN_RECORD_SCHEMA = 'ana-turn-record/1';
+/** /2 (2026-10-04) adds `verification`. A /1 record has no such section. */
+export const TURN_RECORD_SCHEMA = 'ana-turn-record/2';
 export const TURN_RECORD_AUDIT_ACTION = 'ana.turn.recorded';
 export const TURN_RECORD_RESOURCE = 'ana_turn_record';
 
@@ -177,6 +184,12 @@ export interface TurnRecordBody {
     executedActions: unknown[];
     executedCommands: unknown[];
   };
+  /**
+   * The check of the stored answer and AnA's labels, exactly as the person
+   * was shown them (services/ana/turn-verification.ts). Null when no check
+   * ran: the turn failed first, or its door does not check.
+   */
+  verification: TurnVerification | null;
   warnings: string[];
 }
 
@@ -225,6 +238,7 @@ export class TurnRecorder {
   private reasoning: TextRef | null = null;
   private answer: TurnRecordBody['answer'] = { streamed: null, stored: null };
   private outputs: TurnRecordBody['outputs'] = { drafts: [], executedActions: [], executedCommands: [] };
+  private verification: TurnVerification | null = null;
   private readonly warnings: string[] = [];
   private streamedSoFar = '';
 
@@ -423,6 +437,11 @@ export class TurnRecorder {
     };
   }
 
+  /** What was checked about the stored answer, as the person was shown it. */
+  setVerification(v: TurnVerification | null): void {
+    this.verification = v;
+  }
+
   warn(text: string): void {
     this.warnings.push(text);
   }
@@ -459,6 +478,7 @@ export class TurnRecorder {
       reasoning: this.reasoning,
       answer: this.answer,
       outputs: this.outputs,
+      verification: this.verification,
       warnings: this.warnings,
     };
     const text = canonicalJson(body);
