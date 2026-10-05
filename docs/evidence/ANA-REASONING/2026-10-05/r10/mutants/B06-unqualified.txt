@@ -1,0 +1,14 @@
+Mutant B06-unqualified: the source names the models but not what RULE 2 says of them
+
+--- server/services/authoring/authoring-record.ts
+- servedBy: qualifyServedModels(v.servedBy),
++ servedBy: v.servedBy as never,
+
+Tests run: server/routes/__tests__/authoring-decision-source.pglite.test.ts server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > a verified source names every model that wrote the words, as RULE 2 reads it > single: two models served the turn → both, each qualified or not, with its PQ status 71ms
+ × server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: a turn record of this organization → verified, with that record’s SHA-256 48ms
+ × server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > bulk: each change is resolved on its own — own, foreign, non-id and none 35ms
+      Tests  3 failed | 17 passed (20)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

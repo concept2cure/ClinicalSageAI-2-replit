@@ -1,0 +1,47 @@
+Probe (scratch, not committed): what decision texts the real editor produces when a realistic AnA answer is inserted as a tracked suggestion,
+and whether the canonical claim verifier's matcher (comparableText, as machine-claim-verify.ts reads a record: as written and as markdown shows it)
+finds each inside the answer the turn record holds. Editor: StarterKit + TableKit + TrackChanges, as RichSectionEditor builds it; insert through
+insertSuggestedContent with an AnA author carrying a turn record id; texts from collectSuggestions -> decisionOf, exactly what the strip sends.
+Run with track changes off (the database default) and on.
+
+Answers:
+  prose: one paragraph with bold, a CI, a citation marker and a second line.
+  structured: a heading, a paragraph naming a study and an NCT id, a bullet list, a markdown table, inline code, a link and a CFR quote.
+
+found  kind       author  decided text (first 100 characters)
+== prose/tracking=false
+  True   insertion  ana     'The primary endpoint was met: ORR 42% (95% CI 31–53) in the 10 mg arm, versus 18% on placebo [1]. Re'
+== structured/tracking=false
+  True   insertion  ana     'Efficacy overview'
+  True   insertion  ana     'In study ABC-301 (NCT01234567), the 10 mg arm showed:'
+  True   insertion  ana     'ORR of 42% (n = 120)'
+  True   insertion  ana     'Median PFS of 11.2 months (HR 0.62; 95% CI 0.48–0.80)'
+  True   insertion  ana     'Arm'
+  True   insertion  ana     'N'
+  True   insertion  ana     'ORR'
+  True   insertion  ana     '10 mg'
+  True   insertion  ana     '120'
+  True   insertion  ana     '42%'
+  True   insertion  ana     'Placebo'
+  True   insertion  ana     '118'
+  True   insertion  ana     '18%'
+  True   insertion  ana     'See `Table 14.2.1` and [the CSR](https://example.test/csr) for details. Per 21 CFR 314.126, "adequat'
+== prose/tracking=true
+  True   insertion  ana     'The primary endpoint was met: ORR 42% (95% CI 31–53) in the 10 mg arm, versus 18% on placebo [1]. Re'
+== structured/tracking=true
+  True   insertion  ana     'Efficacy overview'
+  True   insertion  ana     'In study ABC-301 (NCT01234567), the 10 mg arm showed:'
+  True   insertion  ana     'ORR of 42% (n = 120)'
+  True   insertion  ana     'Median PFS of 11.2 months (HR 0.62; 95% CI 0.48–0.80)'
+  True   insertion  ana     'Arm'
+  True   insertion  ana     'N'
+  True   insertion  ana     'ORR'
+  True   insertion  ana     '10 mg'
+  True   insertion  ana     '120'
+  True   insertion  ana     '42%'
+  True   insertion  ana     'Placebo'
+  True   insertion  ana     '118'
+  True   insertion  ana     '18%'
+  True   insertion  ana     'See `Table 14.2.1` and [the CSR](https://example.test/csr) for details. Per 21 CFR 314.126, "adequat'
+
+30 of 30 decision texts found in the record's answer: no honest insert is refused as 'the turn record does not hold this text'.

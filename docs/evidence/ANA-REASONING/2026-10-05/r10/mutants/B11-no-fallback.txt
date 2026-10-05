@@ -1,0 +1,12 @@
+Mutant B11-no-fallback: a door that records no calls names no model
+
+--- server/services/ana/turn-record-models.ts
+- const named = calls.length > 0 ? calls : model.model || model.provider ? [model] : [];
++ const named = calls;
+
+Tests run: server/services/ana/__tests__/turn-record-served-models.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: every model that served the turn > falls back to the turn's one model where the door records no calls, and is empty where it names none 8ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

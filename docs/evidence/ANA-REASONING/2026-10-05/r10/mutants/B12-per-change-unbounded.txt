@@ -1,0 +1,19 @@
+Mutant B12-per-change-unbounded: each change is verified on its own, so one decision can read any number of records
+
+--- server/services/authoring/authoring-record.ts
+- const verdict = await verifyMachineText(
+    executor,
+    tenantId,
+    named.map((n) => ({ authorId: ANA_MACHINE_AUTHOR_ID, text: n.text, turnRecordId: n.id })),
+  );
++ const verdict = { verified: [] as Awaited<ReturnType<typeof verifyMachineText>>['verified'], unverified: [] as Awaited<ReturnType<typeof verifyMachineText>>['unverified'] };
+  for (const [k, n] of named.entries()) {
+    const one = await verifyMachineText(executor, tenantId, [{ authorId: ANA_MACHINE_AUTHOR_ID, text: n.text, turnRecordId: n.id }]);
+    verdict.verified.push(...one.verified.map((x) 
+
+Tests run: server/routes/__tests__/authoring-decision-source.pglite.test.ts server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > one decision reads a bounded number of turn records > bulk: at most MAX_TURN_RECORDS_PER_CHECK distinct turns; a change from one more is said, not verified 131ms
+      Tests  1 failed | 19 passed (20)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

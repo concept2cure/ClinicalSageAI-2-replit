@@ -84,7 +84,7 @@ import {
   type AuthoringAuditContext,
   type CreateAuditTrailOptions,
 } from '../services/authoring/authoring-evidence';
-import { loadAuthoringRecord, resolveTurnRecordSource, textSha256 } from '../services/authoring/authoring-record';
+import { loadAuthoringRecord, resolveTurnRecordSources, textSha256, type TurnRecordSource } from '../services/authoring/authoring-record';
 import { sendAuditedExport, walkTenantChain } from '../services/audit/audited-export';
 import { canReadAuditTrail } from '../services/audit/audit-api-authority';
 import {
@@ -6799,7 +6799,13 @@ async function recordTrackedChangeAct(
 ): Promise<any[]> {
   const rows: any[] = [];
   const described: Record<string, unknown>[] = [];
-  for (const { changeId, context } of act.changes) {
+  // The AnA turn each change names, verified against the words decided, once for the act (round 10).
+  const sources = await resolveTurnRecordSources(
+    client,
+    act.tenantId,
+    act.changes.map(({ context }) => ({ claimed: context.sourceRecord, text: decidedText(context.text) })),
+  );
+  for (const [i, { changeId, context }] of act.changes.entries()) {
     const result = await client.query(
       `INSERT INTO authoring_tracked_change_decisions
          (artifact_id, change_id, decision, user_id, user_name, tenant_id)
@@ -6811,15 +6817,17 @@ async function recordTrackedChangeAct(
     );
     rows.push(result.rows[0]);
     described.push(
-      await describeTrackedChange(client, act.tenantId, {
-        changeId,
-        changeType: context.changeType,
-        text: context.text,
-        authorName: context.authorName,
-        authorId: context.authorId,
-        at: context.at,
-        sourceRecord: context.sourceRecord,
-      })
+      describeTrackedChange(
+        {
+          changeId,
+          changeType: context.changeType,
+          text: context.text,
+          authorName: context.authorName,
+          authorId: context.authorId,
+          at: context.at,
+        },
+        sources[i],
+      )
     );
   }
   // sectionId in the details as well as the row's own column: readers of the
@@ -6848,25 +6856,28 @@ function statedReason(reason: unknown): string | null {
   return typeof reason === 'string' && reason.trim() ? reason.trim().slice(0, 2000) : null;
 }
 
+/** The words a decision names: a non-empty string, or none. */
+const decidedText = (text: unknown): string | null => (typeof text === 'string' && text.length > 0 ? text : null);
+
 /**
  * What was decided, whole: the change, its full proposed text and that text's
  * hash, who proposed it as the editing client recorded it (describeProposer),
- * when, and the AnA turn record it came from — verified in this tenant, or
- * recorded as claimed-but-unverified with why.
+ * when, and the AnA turn record it came from — verified in this tenant against
+ * the words decided (resolveTurnRecordSources), or recorded as
+ * claimed-but-unverified with why.
  */
-async function describeTrackedChange(
-  executor: Queryable,
-  tenantId: number,
-  c: { changeId: unknown; changeType: unknown; text: unknown; authorName: unknown; authorId: unknown; at: unknown; sourceRecord: unknown },
-): Promise<Record<string, unknown>> {
-  const text = typeof c.text === 'string' && c.text.length > 0 ? c.text : null;
-  const source = await resolveTurnRecordSource(executor, tenantId, c.sourceRecord);
+function describeTrackedChange(
+  c: { changeId: unknown; changeType: unknown; text: unknown; authorName: unknown; authorId: unknown; at: unknown },
+  source: TurnRecordSource | null,
+): Record<string, unknown> {
+  const text = decidedText(c.text);
   /* A machine author's name is canonical (describeProposer), but the claim
      that the machine proposed this change is the editing client's until a
      turn record of this organization is named for it: only then is it
      `proposedByVerified` (DP-43, 2026-09-29). Any caller could send
      authorId 'ana'. What the turn record proves is that the named turn
-     exists here; the text's own hash is recorded beside it. */
+     wrote these words (round 10: it proved only that the turn existed);
+     the text's own hash is recorded beside it. */
   const proposer = describeProposer(c.authorName, c.authorId);
   if (proposer.proposedByVerified && source?.verified !== true) proposer.proposedByVerified = false;
   return {
