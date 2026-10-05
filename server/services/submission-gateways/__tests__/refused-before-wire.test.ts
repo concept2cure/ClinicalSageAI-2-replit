@@ -258,6 +258,7 @@ describe('refusedBeforeWire — CredentialError and the proof-carrying Transport
     const found: Record<string, number> = {};
     const walk = (dir: string): void => {
       for (const name of readdirSync(dir)) {
+        // nosemgrep: path-join-resolve-traversal -- a test walking the repository tree: name comes from readdirSync of a directory under it
         const abs = path.join(dir, name);
         if (statSync(abs).isDirectory()) {
           if (name !== '__tests__' && name !== 'node_modules') walk(abs);

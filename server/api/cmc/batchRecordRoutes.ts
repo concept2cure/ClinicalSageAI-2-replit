@@ -507,6 +507,8 @@ router.post('/:id/release', async (req, res) => {
     }
     /* Who released the batch is the signer of this session. It used to be
        `releasedBy` from the request body, a name the client typed. */
+    // tenant-isolation-safe: the signer's own row (userId is this session's account,
+    // resolveActorUserId), read under public.users' membership policy in this tenant's scope
     const signer = await client.query(`SELECT name, email FROM users WHERE id = $1`, [userId]);
     const releasedBy = String(signer.rows[0]?.name || signer.rows[0]?.email || `user ${userId}`);
 

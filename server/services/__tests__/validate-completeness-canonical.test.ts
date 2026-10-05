@@ -165,6 +165,7 @@ describe('a type with no profile is not_assessed, never conditional_go', () => {
     const res = await engine.validate({ submissionType: t, presentSections: [] });
     if (res.assessment.status !== 'not_assessed') throw new Error(`${t} was assessed by the CTD engine`);
     expect(res.assessment.assessWith?.engine).toBe('assembleTechDoc');
+    // nosemgrep: detect-non-literal-regexp -- a test: regulation is a literal from the table
     expect(res.assessment.assessWith?.route).toMatch(new RegExp(`technical-file\\?regulation=${regulation}$`));
   });
 

@@ -398,7 +398,7 @@ export async function assertSignerIsNotAuthor(
   } catch (err: unknown) {
     const e = err as { code?: unknown; message?: unknown } | null;
     const cause = typeof e?.code === 'string' ? `database error ${e.code}` : 'owner lookup failed';
-    console.error(`[governance/SoD] authorship lookup failed for "${target}"; refusing to sign:`, e?.message);
+    console.error('[governance/SoD] authorship lookup failed for "%s"; refusing to sign:', target, e?.message);
     throw new SeparationOfDutiesUnverifiedError(target, cause);
   }
 

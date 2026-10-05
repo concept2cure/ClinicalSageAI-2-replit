@@ -207,6 +207,20 @@ beforeEach(async () => {
   await pg.exec(BASE_DDL);
   await pg.exec(TENANT_COLUMN_DDL);
   await pg.exec(parityBatchDdl());
+  // Since 88f27b53d a release is signed over the batch's recorded QC results
+  // (services/cmc/batch-release-evidence.ts) by the session's own account. The
+  // columns those two reads select, and one reviewed passing result per batch
+  // in organisation 1, so what is judged here is still the tenant predicate.
+  await pg.exec(`CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);
+    INSERT INTO users (id, name, email) VALUES (42, 'QA Signer', 'qa-signer@example.invalid');
+    CREATE TABLE qc_testing (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, project_id TEXT,
+      batch_number TEXT, sample_id TEXT, test_method TEXT, test_results JSONB, specifications JSONB,
+      pass_fail_status TEXT, reviewed_by INTEGER);`);
+  await pg.query(
+    `INSERT INTO qc_testing (organization_id, project_id, batch_number, sample_id, test_method, pass_fail_status, reviewed_by)
+     VALUES (1, $1, $2, 'S-1', 'Assay', 'pass', 42), (1, $1, $3, 'S-2', 'Assay', 'pass', 42)`,
+    [PROJECT, OWNED_BATCH, LEGACY_BATCH],
+  );
   h.holder.pg = pg;
   h.holder.afterQuery = null;
   gov.signatures = 0;
