@@ -1,0 +1,13 @@
+Mutant W01-read-before-gate: every turn reads the whole thread, not only a turn that refreshes the summary
+
+--- server/services/working-memory.ts
+- const shouldRefresh = await needsWorkingMemoryRefreshByThread(threadId, organizationId, messages.length);
++ await threadBasis(threadId, messages, answerCheck);
+    const shouldRefresh = await needsWorkingMemoryRefreshByThread(threadId, organizationId, messages.length);
+
+Tests run: server/services/__tests__/working-memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > below the refresh threshold, neither summarises nor reads the thread 15ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
