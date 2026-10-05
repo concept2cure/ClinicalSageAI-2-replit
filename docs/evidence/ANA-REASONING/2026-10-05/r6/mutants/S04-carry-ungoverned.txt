@@ -1,0 +1,12 @@
+Mutant S04-carry-ungoverned: a carried name the tenant's governed set does not hold is offered
+
+--- server/services/ana/tool-selection.ts
+- const tool = allTools.find(t => t.name === name);
++ const tool = allTools.find(t => t.name === name) ?? ({ name } as T);
+
+Tests run: server/services/ana/__tests__/tool-selection-carry-over.test.ts server/services/ana/__tests__/tool-selection-context.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > never offers a carried name outside the governed set, nor carries an unhealthy one ahead 6ms
+      Tests  1 failed | 43 passed (44)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

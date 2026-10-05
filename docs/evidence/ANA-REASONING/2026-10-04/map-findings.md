@@ -101,7 +101,7 @@ Found by round 2's own mutants, and fixed:
 | GRD-missed | medium | Citation coverage misses EU MDR/IVDR articles, ISO/IEC standards, MDCG documents, EMA references and author-year references. |
 | GRD-missed | medium | "Insert into section as tracked suggestion" carries no check with the inserted text. |
 | GRD-8, GRD-missed | medium | The label check excuses an overclaim next to any `[KNOWN]`, and counts `[INFERRED]` as labelled. It no longer leads the strip. |
-| TP-RL-3 | high | Tool selection scores 786 tools down to 50 on the current message, and stringifies object context to `[object Object]`. |
+| TP-RL-3 | high | Tool selection scores 786 tools down to 50 on the current message, and stringifies object context to `[object Object]`. **Fixed in round 6** (`../2026-10-05/r6/`): a follow-up is offered the tools earlier turns ran successfully. At most 4 are carried, out of the relevance slots, each once and only from the governed set. On today's trunk, 33 of 48 probed follow-ups lost the previous turn's tool; round 6 loses none. **Corrected:** on the live door the object context was dropped, not stringified. "[object Object]" and a `hints` TypeError were on two doors no client calls; the selector now reads each field only as its declared string. Folding the open section's title into selection is its own change, next. |
 | TP-RL-6, TP-RL-7, MC-RL-7, RT-4, RT-5, RT-7, GRD-7, FV-missed | low | Lower-severity items:<br>• the closing call is not told it is closing;<br>• a round is extended on novelty alone;<br>• role inference;<br>• summarised reasoning labelled as reasoning;<br>• a reload loses the record link;<br>• a disconnect is recorded as a person's stop;<br>• model citations are dropped. |
 
 ## Handed on
