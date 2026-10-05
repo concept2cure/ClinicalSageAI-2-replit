@@ -21,7 +21,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const { query } = vi.hoisted(() => ({ query: vi.fn(async (..._a: unknown[]) => ({ rows: [] as unknown[] })) }));
 vi.mock('../../db', () => ({ query }));
 
-import { isPlatformAdmin, requirePlatformAdmin } from '../requirePlatformAdmin';
+import { holdsPlatformRole, isPlatformAdmin, requirePlatformAdmin } from '../requirePlatformAdmin';
 
 function mkReq(over: Record<string, unknown> = {}): any {
   return {
@@ -199,5 +199,70 @@ describe('PLATFORM_ADMIN_EMAILS does not apply to a federated (SAML) identity', 
         mkReq({ userRole: 'member', userEmail: OWNER, user: { id: 7, email: OWNER, provider: 'local-jwt' } })
       )
     ).toBe(true);
+  });
+});
+
+/**
+ * holdsPlatformRole — the one decision for every across-organisations power
+ * (D6, 2026-10-05, docs/evidence/D6/2026-10-05-cross-tenant-staff/). Each route
+ * passes its own role set; standing is the owner's own sign-in or a grant row
+ * for one of those roles, never the request role.
+ */
+describe('holdsPlatformRole', () => {
+  const savedEnv = process.env.PLATFORM_ADMIN_EMAILS;
+  beforeEach(() => {
+    delete process.env.PLATFORM_ADMIN_EMAILS;
+    query.mockReset();
+  });
+  afterEach(() => {
+    if (savedEnv === undefined) delete process.env.PLATFORM_ADMIN_EMAILS;
+    else process.env.PLATFORM_ADMIN_EMAILS = savedEnv;
+  });
+  const grants = (byUser: Record<number, string[]>) =>
+    query.mockImplementation(async (_sql: unknown, params?: unknown) => {
+      const [id, roles] = (params as [number, string[]]) ?? [];
+      return { rows: (byUser[id] ?? []).some((r) => roles.includes(r)) ? [{ ok: 1 }] : [] };
+    });
+
+  it('a grant for one of the roles holds them; a grant for another role does not', async () => {
+    grants({ 5: ['support'] });
+    expect(await holdsPlatformRole(mkReq({ userId: 5 }), ['support', 'platform_admin'])).toBe(true);
+    expect(await holdsPlatformRole(mkReq({ userId: 5 }), ['super_admin'])).toBe(false);
+  });
+
+  it('a membership role naming the role holds nothing', async () => {
+    grants({});
+    expect(await holdsPlatformRole(mkReq({ userId: 6, userRole: 'super_admin', user: { id: 6, role: 'super_admin', roles: ['super_admin'] } }), ['super_admin'])).toBe(false);
+  });
+
+  it("the owner's own sign-in on the allowlist holds every role, with no lookup", async () => {
+    process.env.PLATFORM_ADMIN_EMAILS = 'owner@concept2cure.ai';
+    expect(await holdsPlatformRole(mkReq({ userId: 1, userEmail: 'owner@concept2cure.ai', identity: { provider: 'local-jwt' } }), ['super_admin'])).toBe(true);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('reads the verified id from req.user when req.userId is absent (middleware/auth.ts sets only req.user)', async () => {
+    grants({ 8: ['super_admin'] });
+    expect(await holdsPlatformRole(mkReq({ user: { id: 8 } }), ['super_admin'])).toBe(true);
+  });
+
+  it('a session with no verified integer id holds nothing and is not looked up', async () => {
+    expect(await holdsPlatformRole(mkReq({ user: { id: 'abc' } }), ['super_admin'])).toBe(false);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('asks once per request and role set; the next request asks again', async () => {
+    grants({ 9: ['super_admin'] });
+    const req = mkReq({ userId: 9 });
+    await holdsPlatformRole(req, ['super_admin']);
+    await holdsPlatformRole(req, ['super_admin']);
+    expect(query).toHaveBeenCalledTimes(1);
+    grants({});
+    expect(await holdsPlatformRole(mkReq({ userId: 9 }), ['super_admin'])).toBe(false);
+  });
+
+  it('fails closed when the lookup errors', async () => {
+    query.mockImplementation(async () => { throw new Error('db down'); });
+    expect(await holdsPlatformRole(mkReq({ userId: 10 }), ['super_admin'])).toBe(false);
   });
 });

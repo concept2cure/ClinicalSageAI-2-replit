@@ -74,19 +74,18 @@ export function isPlatformAdmin(req: Request): boolean {
 }
 
 /**
- * True when the user holds an active platform_role_grants row for one of this
- * guard's roles. DB-backed fallback for when the synchronous role/email checks
- * fail — lets the owner designate personnel from inside the app (see
+ * True when the user holds an active platform_role_grants row for one of
+ * `roles`. Lets the owner designate personnel from inside the app (see
  * shared/schema.ts platformRoleGrants) without editing env allowlists. On any
  * DB error we DENY (return false) so a transient outage can never widen access.
  */
-async function hasActivePlatformGrant(userId: number): Promise<boolean> {
+async function hasActivePlatformGrant(userId: number, roles: readonly string[]): Promise<boolean> {
   try {
     const result = await query(
       `SELECT 1 FROM platform_role_grants
         WHERE user_id = $1 AND revoked_at IS NULL AND LOWER(role) = ANY($2)
         LIMIT 1`,
-      [userId, [...PLATFORM_ROLES]]
+      [userId, [...roles]]
     );
     return result.rows.length > 0;
   } catch (err) {
@@ -110,10 +109,53 @@ async function hasActivePlatformGrant(userId: number): Promise<boolean> {
  * lookup, which denies on any DB error.
  */
 export async function resolvePlatformAdmin(req: Request): Promise<boolean> {
-  if (isPlatformAdmin(req)) return true;
-  const userId = Number(req.userId ?? NaN);
-  if (!Number.isFinite(userId)) return false;
-  return hasActivePlatformGrant(userId);
+  return holdsPlatformRole(req, [...PLATFORM_ROLES]);
+}
+
+/** The verified account id an authenticator resolved: req.userId (server/auth.ts)
+ *  or req.user.id / userId (middleware/auth.ts sets only req.user). Null unless a
+ *  positive integer. */
+function verifiedUserId(req: Request): number | null {
+  const user = req.user as { id?: unknown; userId?: unknown } | undefined;
+  const id = Number(req.userId ?? user?.id ?? user?.userId ?? NaN);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+/** Per-request memo of platform standing by role set, so a route that asks in
+ *  its guard and again in its handler costs one lookup. */
+const standingMemo = new WeakMap<Request, Map<string, Promise<boolean>>>();
+
+/**
+ * Does this request hold platform standing for one of `roles`?
+ *
+ * The ONE decision for every across-organisations power: Master
+ * Administration (via resolvePlatformAdmin), and each route's own staff rule
+ * with its own role set (organizations, tenant settings, client workspaces,
+ * tenant users, the lifecycle override, the estate audit checks). Standing is
+ * the owner's own sign-in on PLATFORM_ADMIN_EMAILS, which holds every platform
+ * role, or an active platform_role_grants row for one of `roles`.
+ *
+ * Never the request role. Behind server/auth.ts that is the tenant membership
+ * role (organization_users.role, no CHECK), and each of those routes used to
+ * read it, so a membership row naming super_admin reached every organisation
+ * (D6, 2026-10-05, docs/evidence/D6/2026-10-05-cross-tenant-staff/).
+ */
+export function holdsPlatformRole(req: Request, roles: readonly string[]): Promise<boolean> {
+  if (isPlatformAdmin(req)) return Promise.resolve(true);
+  const userId = verifiedUserId(req);
+  if (userId === null) return Promise.resolve(false);
+  const key = [...roles].map(r => r.toLowerCase()).sort().join(',');
+  let memo = standingMemo.get(req);
+  if (!memo) {
+    memo = new Map();
+    standingMemo.set(req, memo);
+  }
+  let decision = memo.get(key);
+  if (!decision) {
+    decision = hasActivePlatformGrant(userId, key.split(','));
+    memo.set(key, decision);
+  }
+  return decision;
 }
 
 /**

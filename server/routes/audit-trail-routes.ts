@@ -15,7 +15,7 @@ import type { Pool } from 'pg';
 import type { Request, Response } from 'express';
 import { requireAuthedOrgId, usableOrgId } from '../utils/authedOrgId';
 import { requireAuditReader, requireAuditRecorder, clientEventRefusal } from '../services/audit/audit-api-authority.js';
-import { isPlatformAdmin } from '../middleware/requirePlatformAdmin.js';
+import { resolvePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 import { clientIpOf } from '../utils/client-ip';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context.js';
 import { verifyTenantChainOnAdminScope } from '../services/audit/tenant-chain-verdict.js';
@@ -777,7 +777,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   router.get('/audit/chain-monitor/status', async (req: Request, res: Response) => {
     // The monitor is estate-wide, not one organisation's: reading or running it
     // is a platform administrator's act (2026-09-26 lens, P1-36 follow-up).
-    if (!isPlatformAdmin(req)) {
+    if (!(await resolvePlatformAdmin(req))) {
       return res.status(403).json({ error: 'PLATFORM_ADMIN_REQUIRED', message: 'The chain-integrity monitor is a platform administrator surface.' });
     }
     try {
@@ -809,7 +809,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
    * Trigger an on-demand chain integrity check.
    */
   router.post('/audit/chain-monitor/check', async (req: Request, res: Response) => {
-    if (!isPlatformAdmin(req)) {
+    if (!(await resolvePlatformAdmin(req))) {
       return res.status(403).json({ error: 'PLATFORM_ADMIN_REQUIRED', message: 'The chain-integrity monitor is a platform administrator surface.' });
     }
     try {
