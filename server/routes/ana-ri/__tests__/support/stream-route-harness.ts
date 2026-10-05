@@ -71,6 +71,8 @@ function freshState() {
     /** requestApproval opens the gate (true) or cannot hold the run (false). */
     approvalOpens: false,
     approvalDecisionsRecorded: 0,
+    /** What readApprovalDecision returns once the gate is open: a person's answer, or null (none yet). */
+    approvalDecision: null as null | { decided: 'approved' | 'denied'; error?: string; result?: unknown },
     endRuns: [] as Array<{ status: string; stoppedReason: string }>,
     /** The context post-processing was handed. */
     post: null as any,
@@ -177,7 +179,7 @@ function runControl(real: { readMoveId: unknown }) {
       state.approvalDecisionsRecorded++;
       return true;
     },
-    readApprovalDecision: async () => null,
+    readApprovalDecision: async () => state.approvalDecision,
     stopRunInternally: async () => {
       state.stops++;
     },
