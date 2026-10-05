@@ -603,9 +603,12 @@ CODE=$(req gate1 POST "/api/cmc/module3-os/guard/final-export/$PROGRAM" '{}')
 
 step "14. Placement MUST refuse the same way — same gate, before any write"
 LEAVES_BEFORE=$(PGPASSWORD=c2c_local psql -h 127.0.0.1 -U c2c -d clinicalsage -tAc "SELECT count(*) FROM submission_leaves")
-CODE=$(req place1 POST "/api/cmc/module3-os/place-into-submission/$PROGRAM" '{"submissionId":1,"sequenceId":1}')
+CODE=$(req place1 POST "/api/cmc/module3-os/place-into-submission/$PROGRAM" '{"submissionId":1,"sequenceId":1,"reason":"Attempted placement before approval."}')
 LEAVES_AFTER=$(PGPASSWORD=c2c_local psql -h 127.0.0.1 -U c2c -d clinicalsage -tAc "SELECT count(*) FROM submission_leaves")
 [ "$CODE" = 409 ] && [ "$LEAVES_BEFORE" = "$LEAVES_AFTER" ] && ok "placement refused (409), zero leaves written" || bad "placement did not refuse cleanly ($CODE; leaves $LEAVES_BEFORE→$LEAVES_AFTER)"
+
+CODE=$(req place0 POST "/api/cmc/module3-os/place-into-submission/$PROGRAM" '{"submissionId":1,"sequenceId":1}')
+[ "$CODE" = 400 ] && [ "$(cat "$OUT/place0.json" | JQ '.code')" = REASON_REQUIRED ] && ok "a placement with no stated reason is refused (400 REASON_REQUIRED)" || bad "placement without a reason was not refused ($CODE): $(head -c200 "$OUT/place0.json")"
 
 step "14b. The signer can READ what the signature covers — §11.50 is over content, not a section number"
 # Until this route existed, the only thing the product could show a signer at the
@@ -742,7 +745,7 @@ SEQ=$(cat "$OUT/seq.json" | jq -r 'if type=="array" then .[0] else (.data // .) 
 [ -n "$SEQ" ] && ok "sequence id=$SEQ" || bad "sequence create failed ($CODE): $(head -c300 "$OUT/seq.json")"
 
 step "19. Place the approved Module 3 into the sequence"
-CODE=$(req place2 POST "/api/cmc/module3-os/place-into-submission/$PROGRAM" "{\"submissionId\":$SUBMISSION,\"sequenceId\":$SEQ}")
+CODE=$(req place2 POST "/api/cmc/module3-os/place-into-submission/$PROGRAM" "{\"submissionId\":$SUBMISSION,\"sequenceId\":$SEQ,\"reason\":\"Initial IND: approved Module 3 placed into sequence 0001.\"}")
 PLACED=$(cat "$OUT/place2.json" | JQ '.data.placements | length')
 PSKIP=$(cat "$OUT/place2.json" | JQ '.data.skipped | length')
 [ "$CODE" = 200 ] && [ "${PLACED:-0}" -gt 0 ] && ok "$PLACED section(s) placed as leaves ($PSKIP skipped with reasons)" || bad "placement failed ($CODE): $(head -c400 "$OUT/place2.json")"
@@ -819,6 +822,23 @@ HELD2=$(cat "$OUT/readyev2.json" | JQ '.data.supersededEvidenceSections | length
 [ "$CODE" = 201 ] && [ "$MOVED" = 1 ] && [ "$HELD2" = 0 ] \
   && ok "re-verified: the link moved to the reissued certificate with the person's reason, and the hold lifted" \
   || bad "re-verification: link=$CODE moved=$MOVED still held=$HELD2"
+
+step "21c. Placing Module 3 again into the SAME sequence updates its leaves — never a second copy"
+LEAVES_BEFORE=$(req lv1 GET "/api/submissions/sequences/$SEQ/leaves" >/dev/null; cat "$OUT/lv1.json" | jq '[.[]? | select(.documentType=="cmc_module3_section")] | length' 2>/dev/null)
+CODE=$(req place3 POST "/api/cmc/module3-os/place-into-submission/$PROGRAM" "{\"submissionId\":$SUBMISSION,\"sequenceId\":$SEQ,\"reason\":\"Re-placed after the certificate re-verification; content unchanged.\"}")
+LEAVES_AFTER=$(req lv2 GET "/api/submissions/sequences/$SEQ/leaves" >/dev/null; cat "$OUT/lv2.json" | jq '[.[]? | select(.documentType=="cmc_module3_section")] | length' 2>/dev/null)
+[ "$CODE" = 200 ] && [ "${LEAVES_BEFORE:-0}" -gt 0 ] && [ "$LEAVES_AFTER" = "$LEAVES_BEFORE" ] \
+  && ok "re-placed: still $LEAVES_AFTER Module 3 leaves in sequence $SEQ, each updated in place" \
+  || bad "same-sequence re-placement: code=$CODE leaves before=$LEAVES_BEFORE after=$LEAVES_AFTER $(head -c200 "$OUT/place3.json")"
+
+step "21d. A CMC amendment: sequence 0002 receives Module 3 as replace of what 0001 filed"
+CODE=$(req seq2 POST "/api/submissions/$SUBMISSION/sequences" '{"sequenceNumber":"0002","type":"amendment","region":"fda"}')
+SEQ2=$(cat "$OUT/seq2.json" | jq -r 'if type=="array" then .[0] else (.data // .) end | .id // empty' 2>/dev/null)
+CODE=$(req place4 POST "/api/cmc/module3-os/place-into-submission/$PROGRAM" "{\"submissionId\":$SUBMISSION,\"sequenceId\":$SEQ2,\"reason\":\"CMC information amendment: re-verified certificate of analysis.\"}")
+OPS=$(req lv3 GET "/api/submissions/sequences/$SEQ2/leaves" >/dev/null; cat "$OUT/lv3.json" | jq -r '[.[]? | select(.documentType=="cmc_module3_section") | .lifecycleOp] | group_by(.) | map("\(.[0])=\(length)") | join(",")' 2>/dev/null)
+[ -n "$SEQ2" ] && [ "$CODE" = 200 ] && echo "$OPS" | grep -q "replace=" \
+  && ok "sequence 0002 carries the Module 3 leaves as $OPS" \
+  || bad "amendment placement: seq=$SEQ2 code=$CODE ops=$OPS $(head -c300 "$OUT/place4.json")"
 
 step "22. Governed change marked sections stale → gate refuses again (fail closed end-to-end)"
 CODE=$(req change2 POST /api/cmc-changes "{\"title\":\"Filter membrane change\",\"dosageFormFamily\":\"biologic\",\"changeCategory\":\"manufacturing_process\",\"processChangeKind\":\"minor_adjustment\",\"cmcProjectId\":\"$PROGRAM\"}")

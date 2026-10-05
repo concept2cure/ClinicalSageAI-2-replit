@@ -1,0 +1,25 @@
+ × server/services/cmc/__tests__/ich-compliance-currency.test.ts > the compliance engine cites current ICH revisions > reports only against final, unsuperseded ICH guidelines in the record 9ms
+   → expected [ 'Q2(R1): not in the record', …(1) ] to deeply equal []
+ × server/services/cmc/__tests__/ich-compliance-currency.test.ts > the compliance engine cites current ICH revisions > every finding a rule makes is against a guideline in that list 3ms
+   → expected [ 'Q2(R2)', 'Q9(R1)' ] to deeply equal []
+ × server/services/cmc/__tests__/ich-compliance-currency.test.ts > analytical validation is judged at the program’s stage > a first-in-human IND whose methods are shown suitable passes 2ms
+   → expected [ [ …(2) ], [ …(2) ] ] to deeply equal [ [ 'Q2_OK', 'pass' ] ]
+ × server/services/cmc/__tests__/ich-compliance-currency.test.ts > analytical validation is judged at the program’s stage > a recorded phase 2 or 3 is a warning that names the expectation 2ms
+   → expected 'fail' to be 'warning' // Object.is equality
+ × server/services/cmc/__tests__/ich-compliance-currency.test.ts > analytical validation is judged at the program’s stage > an IND with no recorded phase is told so, never failed as a marketing application 1ms
+   → expected 'fail' to be 'warning' // Object.is equality
+ × server/services/cmc/__tests__/ich-compliance-currency.test.ts > analytical validation is judged at the program’s stage > a phase 1 method that is neither validated nor shown suitable is a warning, not a pass 1ms
+   → expected 'fail' to be 'warning' // Object.is equality
+ ✓ server/services/cmc/__tests__/ich-compliance-currency.test.ts > reading a recorded phase > Phase 1 → 1 1ms
+ ✓ server/services/cmc/__tests__/ich-compliance-currency.test.ts > reading a recorded phase > I → 1 0ms
+ ✓ server/services/cmc/__tests__/ich-compliance-currency.test.ts > reading a recorded phase > phase_1 → 1 0ms
+ ✓ server/services/cmc/__tests__/ich-compliance-currency.test.ts > reading a recorded phase > Phase 1/2 → 2 0ms
+ ✓ server/services/cmc/__tests__/ich-compliance-currency.test.ts > reading a recorded phase > Phase IIb → 2 0ms
+ ✓ server/services/cmc/__tests__/ich-compliance-currency.test.ts > reading a recorded phase > Phase III → 3 0ms
+ ✓ server/services/cmc/__tests__/ich-compliance-currency.test.ts > reading a recorded phase > 3 → 3 0ms
+ ✓ server/services/cmc/__tests__/ich-compliance-currency.test.ts > reading a recorded phase > Phase 4 → null 0ms
+ ✓ server/services/cmc/__tests__/ich-compliance-currency.test.ts > reading a recorded phase >  → null 0ms
+ ✓ server/services/cmc/__tests__/ich-compliance-currency.test.ts > reading a recorded phase > null → null 0ms
+ ✓ server/services/cmc/__tests__/ich-compliance-currency.test.ts > reading a recorded phase > Phase 0 → null 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 14 passed (20)

@@ -56,6 +56,7 @@ vi.mock('../stability-source', () => ({
 import { runIchComplianceCheck } from '../ich-compliance-checker';
 import { analyzeQbdFromSources } from '../qbd-analyzer';
 import { generateControlStrategy } from '../control-strategy-generator';
+import { readProgramStage } from '../program-stage';
 
 const MINE = 1;
 const THEIRS = 2;
@@ -98,6 +99,16 @@ beforeAll(async () => {
     CREATE TABLE cmc_module3_sections (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int, project_id uuid,
       section_key text, approval_state text, stale boolean, narrative_text text);
+    -- The program's stage (program-stage.ts): what it files and the phase its
+    -- study designs record, read for the stage-dependent Q2 rule.
+    CREATE TABLE regulatory_programs (
+      id uuid PRIMARY KEY, organization_id int, program_type text, deleted_at timestamptz);
+    CREATE TABLE cdisc_prm_studies (
+      id serial PRIMARY KEY, tenant_id int, program_id uuid, study_phase text);
+    INSERT INTO regulatory_programs (id, organization_id, program_type)
+      VALUES ('${MY_PROJECT}', ${MINE}, 'ind'), ('${THEIR_PROJECT}', ${THEIRS}, 'nda');
+    INSERT INTO cdisc_prm_studies (tenant_id, program_id, study_phase)
+      VALUES (${MINE}, '${MY_PROJECT}', 'Phase 1'), (${THEIRS}, '${THEIR_PROJECT}', 'Phase 3');
 
     -- test_parameters gives the QbD analyzer a CQA to derive, and the method's
     -- its "purpose" is what matchMethodForCqa keys on. Both are needed for a loaded
@@ -160,6 +171,17 @@ describe('runIchComplianceCheck — ICH compliance checker', () => {
     }
   });
 
+  it("reads no stage from another organization's program, and the caller's own", async () => {
+    // What a program files and the phase it is in are its sponsor's: the
+    // stage read is scoped like every other input.
+    expect(await readProgramStage(h.pool, MINE, THEIR_PROJECT)).toBeNull();
+    expect(await readProgramStage(h.pool, MINE, MY_PROJECT)).toEqual({
+      application: 'clinical_trial',
+      phase: 1,
+      basis: 'program type "ind"; clinical phase 1, the highest of 1 study design(s)',
+    });
+  });
+
   it("still evaluates the caller's own project — the fix is not 'scope everything to nothing'", async () => {
     const own = await runIchComplianceCheck(MINE, MY_PROJECT);
     const foreign = await runIchComplianceCheck(MINE, THEIR_PROJECT);
@@ -169,6 +191,8 @@ describe('runIchComplianceCheck — ICH compliance checker', () => {
     expect(own.counts, "the caller's own inputs were dropped too").not.toEqual(foreign.counts);
     // And nothing failed to read: a leak fixed by breaking the query is not a fix.
     expect(own.unevaluatedInputs).toEqual([]);
+    // The caller's own stage was read: a phase 1 IND, whose validated method passes.
+    expect(blobOf(own)).toContain(JSON.stringify('program type "ind"; clinical phase 1').slice(1, -1));
   });
 });
 

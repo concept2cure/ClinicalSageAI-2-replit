@@ -721,7 +721,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
         question:
           'What analytical methods and test parameters are included in your stability-indicating testing program? The stability-indicating assay method is the cornerstone of any stability program. Describe your approach to assay, degradation product monitoring, and dosage-form-specific testing.',
         guidance:
-          'ICH Q1A(R2) Section 2.2.4 requires that testing should cover those features susceptible to change during storage and likely to influence quality, safety, and/or efficacy. A validated, stability-indicating analytical procedure per ICH Q2(R1) must be used, capable of detecting changes in the active ingredient and distinguishing degradation products from the parent compound. Degradation product limits must comply with ICH Q3A(R2) for drug substances and ICH Q3B(R2) for drug products.',
+          'ICH Q1A(R2) Section 2.2.4 requires that testing should cover those features susceptible to change during storage and likely to influence quality, safety, and/or efficacy. A validated, stability-indicating analytical procedure per ICH Q2(R2) must be used, capable of detecting changes in the active ingredient and distinguishing degradation products from the parent compound. Degradation product limits must comply with ICH Q3A(R2) for drug substances and ICH Q3B(R2) for drug products.',
         fields: [
           {
             id: 'stability_indicating_method',
@@ -744,7 +744,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
               { value: 'ce', label: 'Capillary Electrophoresis' },
               { value: 'other', label: 'Other' },
             ],
-            helpText: 'The assay method must be validated per ICH Q2(R1) and demonstrated to be stability-indicating through forced degradation studies.',
+            helpText: 'The assay method must be validated per ICH Q2(R2) and demonstrated to be stability-indicating through forced degradation studies.',
           },
           {
             id: 'degradation_product_monitoring',
@@ -793,7 +793,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
             title: 'No Stability-Indicating Method Available',
             message:
               'ICH Q1A(R2) Section 2.2.4 requires that a validated, stability-indicating analytical procedure be used for all stability studies. Without a stability-indicating method, the analytical data cannot reliably distinguish between the intact drug and its degradation products, rendering the stability data of limited regulatory value. Method development and validation should be prioritized.',
-            reference: 'ICH Q1A(R2) Section 2.2.4; ICH Q2(R1)',
+            reference: 'ICH Q1A(R2) Section 2.2.4; ICH Q2(R2)',
           },
         ],
         defaultNext: 'photostability',

@@ -312,13 +312,33 @@ describe('placeModule3IntoSubmission', () => {
 
     const s1 = upsertLeaf.mock.calls.find((c) => c[0].sectionCode === 'm3.2.S.1')![0];
     expect(s1.lifecycleOp).toBe('replace');
-    expect(s1.parentLeafId).toBe(700);
+    // No parent from another sequence: upsertLeaf refuses one (500, simulation step 21d).
+    expect(s1.parentLeafId).toBeNull();
+    expect(s1.leafId).toBeUndefined();
     const p8 = upsertLeaf.mock.calls.find((c) => c[0].sectionCode === 'm3.2.P.8')![0];
     expect(p8.lifecycleOp).toBe('new');
     expect(p8.parentLeafId ?? null).toBeNull();
     // Every sequence read is tenant-scoped.
     expect(listSequences).toHaveBeenCalledWith(10, { organizationId: 7 });
     expect(listLeaves).toHaveBeenCalledWith(10, { organizationId: 7 });
+  });
+
+  it('placing again into the SAME sequence updates its leaves rather than adding a second copy', async () => {
+    // Placing twice filed a second leaf per section (21 → 42 leaves, simulation step 21c).
+    evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
+    getSequence.mockResolvedValue({ id: 20, submissionId: 10, sequenceNumber: '0001', status: 'draft' });
+    listLeaves.mockImplementation(async (sequenceId: number) => (sequenceId !== 20 ? [] : [
+      { id: 950, sectionCode: 'm3.2.S.1', documentType: 'cmc_module3_section', lifecycleOp: 'new' },
+      { id: 951, sectionCode: 'm3.2.P.8', documentType: 'cmc_module3_section', lifecycleOp: 'delete' }, // off file
+    ]));
+    upsertLeaf.mockImplementation(async (input: { sectionCode: string; leafId?: number }) => ({ id: input.leafId ?? 990, sectionCode: input.sectionCode }));
+    sectionRows = ['3.2.S.1', '3.2.P.8'].map((sectionKey) => ({ sectionKey, narrativeText: 'Narrative.', deterministicJson: { tables: [] } }));
+    const reason = 'Re-placed after re-verification; content unchanged.';
+    const result = await placeModule3IntoSubmission({ orgId: 7, userId: 42, cmcProjectId: 'proj-1', submissionId: 10, sequenceId: 20, reason });
+    const call = (code: string) => upsertLeaf.mock.calls.find((c) => c[0].sectionCode === code)![0];
+    expect(call('m3.2.S.1')).toMatchObject({ leafId: 950, lifecycleOp: 'new', reason });
+    expect(call('m3.2.P.8').leafId).toBeUndefined(); // a deleted leaf is off file: filed afresh
+    expect(result.placed && result.placements.find((p) => p.sectionKey === '3.2.S.1')?.updatedInPlace).toBe(true);
   });
 
   it('snapshots approved sections into coauthor_documents and places m-prefixed leaves', async () => {
