@@ -1,0 +1,12 @@
+Mutant K04-no-length-cap: an overlong string is trimmed into a listed code
+
+--- server/services/kernel-router.ts
+- typeof openSectionCode !== 'string' || openSectionCode.length > 64
++ typeof openSectionCode !== 'string'
+
+Tests run: server/services/__tests__/kernel-router-open-section.test.ts
+Result: KILLED
+
+ × server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for an overlong string 6ms
+      Tests  1 failed | 20 passed (21)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

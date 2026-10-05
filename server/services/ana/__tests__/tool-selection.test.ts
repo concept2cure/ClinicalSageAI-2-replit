@@ -16,7 +16,7 @@ afterEach(() => {
 });
 
 describe('selectToolsForTurn', () => {
-  it('always includes the platform command bridge — nothing is ever out of reach', () => {
+  it('always includes the platform command bridge (the command registry; a typed tool it drops is not reachable through it)', () => {
     const sel = selectToolsForTurn(ALL, 'totally unrelated chit-chat about the weather', { maxTools: 20 });
     const n = names(sel);
     expect(n.has('list_platform_commands')).toBe(true);

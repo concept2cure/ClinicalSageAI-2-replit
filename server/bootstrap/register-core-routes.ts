@@ -20,6 +20,7 @@ import cmcModule3ConvergenceRoutes from '../api/cmc/module3ConvergenceRoutes';
 import cmcSourceEvidenceRoutes from '../api/cmc/sourceEvidenceRoutes';
 import cmcModule3AutoDraftRoutes from '../api/cmc/module3AutoDraftRoutes';
 import cmcDocumentRoutes from '../api/cmc/documentRoutes';
+import { cmcWriteRoleGate } from '../api/cmc/cmc-write-role-gate';
 import cmcModule3BoardRoutes from '../routes/cmc-module3-board.routes';
 import cmcAgencyQuestionRoutes from '../routes/cmc-agency-questions.routes';
 import aiAssistanceRoutes, { setAIService } from '../routes/ai-assistance';
@@ -66,6 +67,9 @@ export function registerCoreRoutes({
   // and SCIM (scim.ts). Custom-role creation never worked and has no replacement.
 
   try {
+    // A viewer reads CMC and writes none of it: one gate ahead of every
+    // /api/cmc router, so a write route added later is gated by default.
+    app.use('/api/cmc', cmcWriteRoleGate);
     app.use('/api/cmc', cmcCoreRoutes);
     app.use('/api/cmc', cmcAggregatorRoutes);
     app.use('/api/cmc', cmcProjectRoutes);

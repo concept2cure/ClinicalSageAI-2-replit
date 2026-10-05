@@ -1,0 +1,6 @@
+ ✓ server/services/ana-ri/__tests__/module3-readiness-gate.test.ts > AnA Module 3 readiness is the export gate > module3_readiness: counts clear but the gate refuses on drift → BLOCKED, with the gate sentence 3ms
+ ✓ server/services/ana-ri/__tests__/module3-readiness-gate.test.ts > AnA Module 3 readiness is the export gate > cmc_status: counts clear but the gate refuses on superseded evidence → BLOCKED, with the gate sentence 1ms
+ ✓ server/services/ana-ri/__tests__/module3-readiness-gate.test.ts > AnA Module 3 readiness is the export gate > both say READY only when the gate allows 1ms
+ ✓ server/services/ana-ri/__tests__/module3-readiness-gate.test.ts > AnA Module 3 readiness is the export gate > the counts shown are the gate’s, not a second read 0ms
+ Test Files  41 passed (41)
+      Tests  487 passed (487)
