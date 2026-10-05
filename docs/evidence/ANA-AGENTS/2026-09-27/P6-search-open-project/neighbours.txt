@@ -1,0 +1,3 @@
+ FAIL  server/services/ana/__tests__/governed-reason-not-invented.test.ts > every module that registers a handler — no ledger write can carry an invented reason > reads every handler the registry holds (a scan that matches nothing proves nothing)
+ Test Files  1 failed | 247 passed | 1 skipped (249)
+      Tests  1 failed | 3558 passed | 3 skipped (3562)
