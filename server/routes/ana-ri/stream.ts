@@ -54,6 +54,7 @@ import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
 import { governedToolsetFor } from '../../services/ana/governed-toolset.js';
+import { submissionContextBlockFor } from '../../services/ana/submission-context-block.js';
 import { getToolHandler, servedModelOf } from '../../services/ana/AnaToolExecutor.js';
 import { commandBlockProposer } from '../../services/ana/command-attribution.js';
 import { requestsGovernedDraft } from '../../services/ana/governed-write-tools.js';
@@ -941,6 +942,13 @@ export function mountStreamRoute(router: Router): void {
           orchestration.systemPrompt += `\n\n${sectionGuide}`;
         }
       }
+
+      // IND / NDA / BLA submission context — the same helper send-message calls
+      // (chat-path-parity.test.ts). '' for any other declared type.
+      orchestration.systemPrompt += submissionContextBlockFor({
+        submissionType: typeof submission_type === 'string' ? submission_type : null,
+        projectContext: req.body.context ?? null,
+      });
 
       // Status: loading_context (about to fetch intelligence prefix, memory atoms, enrichment)
       res.write(
