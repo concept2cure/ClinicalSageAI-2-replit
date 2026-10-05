@@ -1,0 +1,10 @@
+Mutant S03-cap-8: eight tools are carried: (as first labelled) a change of topic crowds out a tool near the cutoff
+
+--- server/services/ana/tool-selection.ts
+- export const MAX_CARRIED_TOOLS = 4;
++ export const MAX_CARRIED_TOOLS = 8;
+
+Tests run: server/services/ana/__tests__/tool-selection-carry-over.test.ts server/services/ana/__tests__/tool-selection-context.test.ts
+Result: SURVIVED
+
+      Tests  33 passed (33)

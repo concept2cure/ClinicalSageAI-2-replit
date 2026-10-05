@@ -1,0 +1,38 @@
+Mutant S06-offered-twice: a carried tool the request also selects is named twice, which the provider refuses
+
+--- server/services/ana/tool-selection.ts
+- .filter(t => t.name && !alwaysNames.has(t.name) && !carried.includes(t))
++ .filter(t => t.name && !alwaysNames.has(t.name))
+
+Tests run: server/services/ana/__tests__/tool-selection-carry-over.test.ts server/services/ana/__tests__/tool-selection-context.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > offers a carried tool once, though the current request also selects it 15ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'prepare_fda_form' after any other topic 38ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'amend_fda_form' after any other topic 31ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_forms' after any other topic 39ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'search_grants_gov' after any other topic 39ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'screen_restricted_party' after any other topic 42ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'triage_compliance_attention' after any other topic 26ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 33ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 31ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 30ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 30ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 33ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 15ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_cmc_requirements' after any other topic 31ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_cmc_requirements' after any other topic 34ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'find_cmc_guidance' after any other topic 19ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'find_cmc_guidance' after any other topic 31ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'explain_cmc_topic' after any other topic 34ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 25ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 24ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 26ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 31ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 26ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 25ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 25ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 25ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 26ms
+      Tests  27 failed | 17 passed (44)
+⎯⎯⎯⎯⎯⎯ Failed Tests 27 ⎯⎯⎯⎯⎯⎯⎯

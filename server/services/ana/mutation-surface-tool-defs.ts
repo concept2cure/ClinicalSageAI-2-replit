@@ -418,7 +418,7 @@ export const PAIR_COMPANION_DIAGNOSTIC: AnaTool = {
 export const REGISTER_LDT: AnaTool = {
   name: 'register_ldt',
   description:
-    "Register a laboratory-developed test in the LDT inventory. Tracks lab name, CLIA certificate, intended use, first-offered date (used for grandfathering eligibility per FDA 2024 LDT final rule), and FDA pathway. current_phase starts at 1 per the rule's phased transition schedule; use set_ldt_phase_milestone to log specific milestone progress.",
+    "Register a laboratory-developed test in the LDT inventory. Tracks lab name, CLIA certificate, analyte, intended use and FDA pathway. LDTs are CLIA-regulated and need no FDA premarket submission: the FDA 2024 LDT final rule is void (vacated 2025-03-31, reverted by FDA rule 2025-09-19; currency fact us-ldt-final-rule-void). The grandfathering, first-offered-date and current_phase fields are HISTORICAL records of that rule's phase-out schedule, as the /api/mdx/ldt surface labels them; they impose no current obligation. Never tell the user a phase or milestone is due.",
   input_schema: {
     type: 'object',
     properties: {
@@ -427,12 +427,12 @@ export const REGISTER_LDT: AnaTool = {
       test_name:                      { type: 'string' },
       analyte:                        { type: 'string' },
       intended_use:                   { type: 'string' },
-      first_offered_date:             { type: 'string', description: 'ISO date — pre-rule date supports grandfathering.' },
-      grandfathered:                  { type: 'boolean' },
-      enforcement_discretion_eligible: { type: 'boolean' },
-      enforcement_discretion_basis:   { type: 'string', enum: ['unmet_need', 'hde_companion', 'forensic', 'cf_blood_banking', 'public_health'] },
+      first_offered_date:             { type: 'string', description: 'ISO date the lab first offered the test. Historical: grandfathering under the void 2024 LDT rule no longer applies.' },
+      grandfathered:                  { type: 'boolean', description: 'Historical: grandfathering under the void 2024 LDT rule. Imposes no current obligation.' },
+      enforcement_discretion_eligible: { type: 'boolean', description: 'Historical: an enforcement-discretion category of the void 2024 LDT rule.' },
+      enforcement_discretion_basis:   { type: 'string', enum: ['unmet_need', 'hde_companion', 'forensic', 'cf_blood_banking', 'public_health'], description: 'Historical: the void 2024 LDT rule\'s enforcement-discretion category.' },
       fda_pathway:                    { type: 'string', enum: ['510k', 'pma', 'de_novo', 'none', 'enforcement_discretion'] },
-      current_phase:                  { type: 'number', minimum: 1, maximum: 5 },
+      current_phase:                  { type: 'number', minimum: 1, maximum: 5, description: 'Historical: stage in the void 2024 LDT rule\'s phase-out schedule. Not a current compliance obligation.' },
     },
     required: ['lab_name', 'test_name'],
   },

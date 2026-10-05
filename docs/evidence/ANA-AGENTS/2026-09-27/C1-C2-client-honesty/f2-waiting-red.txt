@@ -1,0 +1,13 @@
+ × client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx > waitingForPerson > is an approval when an action waits for a person 5ms
+   → expected null to be 'approval' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx > waitingForPerson > is a hold under Manual 1ms
+   → expected null to be 'manual' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx > waitingForPerson > is nothing while she is working, or once the turn has settled 0ms
+ × client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx > the work panel line > says she is waiting for your approval, not "Still working" 3ms
+   → expected 'Still working · 0:42' to be 'Waiting for your approval · 0:42' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx > the work panel line > control: working is still working 0ms
+ × client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx > the Live Drive strip > says AnA is waiting for you while she is held 22ms
+   → expected 'AnA is driving' to be 'AnA is waiting for you' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx > the Live Drive strip > control: says she is driving when she is 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 3 passed (7)

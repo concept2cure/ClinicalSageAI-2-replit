@@ -381,7 +381,9 @@ const SLOTS_DE_NOVO: SlotDef[] = [
  * direction that assumption fails in is the dangerous one: a sterile device
  * whose sterilization section is missing would read as complete.
  */
-function applicabilityOf(slot: SlotDef, flags: DeviceFlags | undefined): EstarApplicability {
+export function slotApplicability(
+  slot: Pick<EstarSlot, 'necessity' | 'flag'>, flags: DeviceFlags | undefined,
+): EstarApplicability {
   if (slot.necessity === 'always') return 'required';
   if (slot.necessity === 'when-applicable') return 'when-applicable';
   const value = flags?.[slot.flag as DeviceFlagId];
@@ -397,12 +399,43 @@ function evalSlot(slot: SlotDef, leaves: EstarInputLeaf[], flags: DeviceFlags | 
   const present = matched.some((l) => l.substantive);
   const sources = matched.filter((l) => l.substantive).map((l) => l.sectionCode || l.title);
   const { match, ...rest } = slot;
-  const applicability = applicabilityOf(slot, flags);
+  const applicability = slotApplicability(slot, flags);
   /* `required` is derived, not authored: it now means "required for THIS
      device", so a sterile device's sterilization section reports required and
      the completeness figures computed from it by five callers are right without
      any of them changing. */
   return { ...rest, required: applicability === 'required', present, sources, applicability };
+}
+
+/* The one place the registry is chosen. De Novo is filed on the same two
+   family templates, but its own slot set is enumerated from the nIVD form; an
+   IVD De Novo is out of scope here and falls to SLOTS_DE_NOVO rather than being
+   silently given the 510(k) IVD set. */
+function registryFor(type: EstarType, variant: 'device' | 'ivd' | undefined): SlotDef[] {
+  return type === 'de_novo' ? SLOTS_DE_NOVO
+    : variant === 'ivd' ? SLOTS_510K_IVD
+    : SLOTS_510K;
+}
+
+/**
+ * The eSTAR slot registry for a submission type, without its matchers: id,
+ * label, necessity, the deciding flag or property, and the authority.
+ *
+ * This is how other engines read eSTAR content rather than keeping their own
+ * list of it — market-specs/submission-requirements.ts builds its 510k and
+ * de_novo rows from this, so a slot added or re-labelled here reaches every
+ * reader. Returns fresh objects; mutating them does not touch the registry.
+ */
+export function estarSlots(type: EstarType, variant?: 'device' | 'ivd'): EstarSlot[] {
+  return registryFor(type, variant).map((s) => ({
+    id: s.id,
+    label: s.label,
+    required: s.required,
+    necessity: s.necessity,
+    ...(s.flag ? { flag: s.flag } : {}),
+    ...(s.appliesWhen ? { appliesWhen: s.appliesWhen } : {}),
+    authority: s.authority,
+  }));
 }
 
 export interface MapToEstarInput {
@@ -427,15 +460,7 @@ export interface MapToEstarInput {
 /** Map canonical leaves onto the FDA eSTAR sections + completeness report. */
 export function mapToEstar(input: MapToEstarInput): EstarResult {
   const leaves = Array.isArray(input.leaves) ? input.leaves : [];
-  /* De Novo is filed on the same two family templates, but its own slot set is
-     enumerated from the nIVD form; an IVD De Novo is out of scope here and
-     falls to SLOTS_DE_NOVO exactly as before rather than being silently given
-     the 510(k) IVD set. */
-  const registry =
-    input.type === 'de_novo' ? SLOTS_DE_NOVO
-    : input.variant === 'ivd' ? SLOTS_510K_IVD
-    : SLOTS_510K;
-  const sections = registry.map((s) => evalSlot(s, leaves, input.flags));
+  const sections = registryFor(input.type, input.variant).map((s) => evalSlot(s, leaves, input.flags));
 
   const absent = sections.filter((s) => !s.present);
   const missingRequired = absent.filter((s) => s.applicability === 'required').map((s) => s.id);
@@ -458,4 +483,4 @@ export function mapToEstar(input: MapToEstarInput): EstarResult {
   };
 }
 
-export default { mapToEstar };
+export default { mapToEstar, estarSlots };

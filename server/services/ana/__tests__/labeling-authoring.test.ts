@@ -44,6 +44,10 @@ describe('required section headers (PLR vs QRD checklists)', () => {
     expect(h).toContain('4.2 Posology and method of administration');
     expect(h).toContain('4.7 Effects on ability to drive and use machines');
     expect(h).toContain('7. MARKETING AUTHORISATION HOLDER');
+    // Every heading of sections 1-10, top-level and sub-section (was 18 until 2026-10-05).
+    expect(h).toHaveLength(28);
+    expect(h).toContain('6.3 Shelf life');
+    expect(h).toContain('10. DATE OF REVISION OF THE TEXT');
     // QRD uses dotted subsection numbering, not the US flat scheme.
     expect(h.some((x) => x.startsWith('4.'))).toBe(true);
   });

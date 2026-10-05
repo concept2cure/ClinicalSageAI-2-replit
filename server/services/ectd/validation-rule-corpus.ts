@@ -327,9 +327,16 @@ export const RULE_CORPUS: ValidationRule[] = [
     category: 'format',
     regions: ['fda', 'eu', 'jp', 'ca', 'au', 'ch'],
     severity: 'high',
-    rationale: 'Encrypted or permission-restricted PDFs cannot be processed by the agency review tools.',
+    rationale:
+      'Encrypted or permission-restricted PDFs cannot be processed by the agency review tools. ' +
+      'The platform refuses a secured PDF leaf, judged from its bytes by ectd/leaf-pdf-security.ts, at three points: ' +
+      'eCTD v3.2.2 packaging (submission-gateways/regional-packager.ts), eCTD v4.0 packaging (ectd/ectd4/rps-packager.ts) ' +
+      'and transmit, re-reading the signed bundle (submission-gateways/bundle-leaf-security.ts). ' +
+      'The one exception: for an FDA sequence, an FDA form shipped with the security settings FDA issued it with.',
     source: FDA_CRIT,
-    enforcement: 'external',
+    // 2026-10-05 (g-pdf-security-enforcement-truth): was 'external', which told
+    // list_validation_rules the agency validator decides; the packagers refuse it.
+    enforcement: 'packager',
   },
   {
     id: 'ACCEPTED_FILE_TYPES',

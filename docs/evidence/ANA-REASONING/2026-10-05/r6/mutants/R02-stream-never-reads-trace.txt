@@ -1,0 +1,12 @@
+Mutant R02-stream-never-reads-trace: the stream never reads the thread's steps into the carry
+
+--- server/routes/ana-ri/stream.ts
+- carriedTools = carriedToolsFrom(collectTracesFromHistory(previousMsgs));
++ 
+
+Tests run: server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 46ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

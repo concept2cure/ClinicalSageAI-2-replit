@@ -1,0 +1,13 @@
+Mutant K03-no-type-guard: a list or an object the client sent is read as a section code
+
+--- server/services/kernel-router.ts
+- if (typeof openSectionCode !== 'string' || openSectionCode.length > 64) return null;
++ if (openSectionCode == null) return null;
+
+Tests run: server/services/__tests__/kernel-router-open-section.test.ts
+Result: KILLED
+
+ × server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for a list 6ms
+ × server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for an overlong string 1ms
+      Tests  2 failed | 19 passed (21)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

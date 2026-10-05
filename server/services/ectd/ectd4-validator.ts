@@ -26,7 +26,7 @@
  */
 
 import { anyLeafSatisfies } from './section-code-match';
-import { requiredModule1CodesForRegion } from '../region-profiles/region-profile-service';
+import { requiredSectionProfileFor } from './required-sections';
 
 import crypto from 'crypto';
 import {
@@ -143,94 +143,41 @@ export function validateFilename(filename: string): { valid: boolean; message?: 
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// REQUIRED SECTIONS REGISTRY
+// REQUIRED SECTIONS — read from the one profile home
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * MODULE 1 COMES FROM THE REGION PROFILE, NOT FROM A LITERAL HERE.
+ * The required leaf codes ('m3.2.S') for a submission type in a region, with
+ * the profile's own citation, or NULL when no profile exists.
  *
- * These sets used to spell Module 1 out by hand, and their comments described
- * the EU/legacy CTD layout while the codes were read as FDA ones. Against this
- * repository's own FDA Module 1 model four IND entries named a different
- * heading than the comment beside them claimed:
- *
- *   demanded  comment said                        FDA v2.3 is            real home
- *   m1.5      Table of Contents                   Application Status     —
- *   m1.6      Introductory Statement & Gen. Plan  Meetings               1.20
- *   m1.7      Investigator's Brochure             (absent from FDA M1)   1.14.4.1
- *   m1.9      Environmental Assessment            Pediatric Admin Info   1.12.14
- *
- * NDA and BLA carried the same m1.5, and NDA added m1.15 "Annotated Labeling"
- * where FDA 1.15 is Promotional Material. So a correctly assembled IND was told
- * it was missing four sections, under codes that would have sent its
- * Investigator's Brochure and general investigational plan to headings meant
- * for something else — while the sections it genuinely must carry (1.12.14,
- * 1.14.4.1, 1.20) were never asked for at all.
- *
- * `requiredModule1CodesForRegion` is the one walk over the profile, shared with
- * `assess-dispatch-readiness.requiredModule1Codes` — the gate that blocks
- * freeze and transmit — so the two cannot disagree about Module 1 again.
- * Modules 2-5 stay declared here: the region profile models Module 1 only, and
- * these are the ICH M4 bodies each application type must carry.
+ * The profile itself — Module 1 from the region profile, Modules 2-5 per ICH
+ * M4, IND/NDA/BLA (FDA), MAA (EU) and J-NDA (Japan) — lives in
+ * `required-sections.ts requiredSectionProfileFor`; this module kept a private
+ * copy until 2026-10-05. Null means the check did not run, never "nothing
+ * required": an empty set once let an unprofiled type validate clean.
  */
-function module1Required(applicationType: 'ind' | 'nda' | 'bla'): string[] {
-  return requiredModule1CodesForRegion('fda', applicationType).map((c) => `m${c}`);
+function requiredLeafSectionsFor(
+  submissionType: string | undefined,
+  region?: string | null,
+): { sections: ReadonlySet<string>; basis: string } | null {
+  const profile = requiredSectionProfileFor(submissionType ?? 'IND', region);
+  if (!profile) return null;
+  return { sections: new Set([...profile.sections].map((c) => `m${c}`)), basis: profile.basis };
 }
 
-/** Modules 2-5 for an initial IND per 21 CFR 312.23(a). */
-const IND_M2_M5 = [
-  'm2.3', // Quality Overall Summary
-  'm2.4', // Nonclinical Overview
-  'm2.6', // Nonclinical Summaries
-  'm3.2.S', // Drug Substance
-  'm3.2.P', // Drug Product
-  'm4.2.1', // Pharmacology
-  'm4.2.2', // Pharmacokinetics
-  'm4.2.3', // Toxicology
-  'm5.3.5', // Phase 1 protocol (21 CFR 312.23(a)(6))
-];
+/** No profile: no required set, and the citation the not-assessed warning carries. */
+const NOT_ASSESSED: { sections: ReadonlySet<string> | null; basis: string } = {
+  sections: null,
+  basis: 'ICH M4 / regional Module 1 specification',
+};
 
-/** Modules 2-5 for an NDA per 21 CFR 314.50 / ICH M4. */
-const NDA_M2_M5 = [
-  'm2.2', 'm2.3', 'm2.4', 'm2.5', 'm2.6', 'm2.7',
-  'm3.2.S', 'm3.2.P', 'm3.2.A', 'm3.2.R',
-  'm4.2.1', 'm4.2.2', 'm4.2.3',
-  'm5.2', 'm5.3.5',
-];
-
-/** Modules 2-5 for a BLA per 21 CFR 601 / ICH M4. */
-const BLA_M2_M5 = [
-  'm2.2', 'm2.3', 'm2.4', 'm2.5', 'm2.6', 'm2.7',
-  'm3.2.S', 'm3.2.P', 'm3.2.A', 'm3.2.R',
-  'm4.2.1', 'm4.2.3',
-  'm5.2', 'm5.3.5',
-];
-
-const IND_REQUIRED_SECTIONS: ReadonlySet<string> = new Set([...module1Required('ind'), ...IND_M2_M5]);
-const NDA_REQUIRED_SECTIONS: ReadonlySet<string> = new Set([...module1Required('nda'), ...NDA_M2_M5]);
-const BLA_REQUIRED_SECTIONS: ReadonlySet<string> = new Set([...module1Required('bla'), ...BLA_M2_M5]);
-
-/**
- * The required-section profile for a submission type, or NULL when this module
- * has none for it.
- *
- * Null, not an empty set. An empty set produced no MISSING_REQUIRED_SECTION
- * findings and no missing codes, so an ANDA — or any type not listed — came
- * back from `validatePackage` looking structurally complete, and from
- * `quickValidate` at 100%, with the required-section check never having run.
- * Callers now have to say which of the two happened.
- */
-function requiredSectionsFor(submissionType: string): ReadonlySet<string> | null {
-  switch (submissionType?.toUpperCase?.() ?? 'IND') {
-    case 'IND':
-      return IND_REQUIRED_SECTIONS;
-    case 'NDA':
-      return NDA_REQUIRED_SECTIONS;
-    case 'BLA':
-      return BLA_REQUIRED_SECTIONS;
-    default:
-      return null;
-  }
+/** The REQUIRED_SECTIONS_NOT_ASSESSED message, naming the region when one was given. */
+function notAssessedMessage(submissionType: string, region?: string | null): string {
+  const where = region ? ` in region ${region}` : '';
+  return (
+    `No required-section profile for submission type "${submissionType}"${where} — completeness was NOT assessed. ` +
+    'This package may be missing required sections that nothing here checked for.'
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -273,7 +220,12 @@ export function validatePackage(
   let findingId = 0;
 
   const presentSections = new Set(leaves.map(l => l.sectionCode));
-  const requiredSections = requiredSectionsFor(submissionType);
+  /* The region narrows the profile: an "NDA" validated for the EU or an IND for
+     Japan has no profile and is reported not assessed, never judged against the
+     FDA set. */
+  const requestedRegion = options?.region;
+  const { sections: requiredSections, basis: requiredBasis } =
+    requiredLeafSectionsFor(submissionType, requestedRegion) ?? NOT_ASSESSED;
   const missingSections: string[] = [];
 
   /* 1. Check required sections.
@@ -291,11 +243,9 @@ export function validatePackage(
       severity: 'warning',
       code: 'REQUIRED_SECTIONS_NOT_ASSESSED',
       sectionCode: '',
-      message:
-        `No required-section profile for submission type "${submissionType}" — completeness was NOT assessed. ` +
-        'This package may be missing required sections that nothing here checked for.',
+      message: notAssessedMessage(submissionType, requestedRegion),
       fix: 'Add a required-section profile for this submission type, or validate it against the region rule pack.',
-      rule: 'ICH M4 / regional Module 1 specification',
+      rule: NOT_ASSESSED.basis,
     });
   }
 
@@ -309,7 +259,7 @@ export function validatePackage(
         sectionCode: required,
         message: `Required section ${required} has no document`,
         fix: `Add a document for eCTD section ${required}`,
-        rule: '21 CFR 312.23(a)',
+        rule: requiredBasis,
       });
     }
   }
@@ -650,9 +600,10 @@ export function computeChecksum(buffer: Buffer): string {
  */
 export function quickValidate(
   presentSectionCodes: string[],
-  submissionType: string = 'IND'
+  submissionType: string = 'IND',
+  region?: ValidatePackageRegion,
 ): { completeness: number | null; missing: string[]; assessed: boolean } {
-  const required = requiredSectionsFor(submissionType);
+  const required = requiredLeafSectionsFor(submissionType, region)?.sections ?? null;
   /* NOT ASSESSED IS NOT COMPLETE. This computed
      `required.size > 0 ? … : 100`, so every submission type without a profile
      came back 100% complete having checked nothing — and this function exists

@@ -1,0 +1,12 @@
+Mutant K07-root-outside-overlay: a listed root the canonical CTD overlay does not know
+
+--- server/services/kernel-router.ts
+- ['2.3', '2.4', '2.5', '2.6', '2.7', '5.3.5.3']
++ ['2.3', '2.4', '2.5', '2.6', '2.7', '2.9', '5.3.5.3']
+
+Tests run: server/services/__tests__/kernel-router-open-section.test.ts
+Result: KILLED
+
+ × server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > every listed root is a section the canonical CTD overlay knows 5ms
+      Tests  1 failed | 20 passed (21)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

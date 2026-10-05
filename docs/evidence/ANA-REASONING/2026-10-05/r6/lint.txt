@@ -1,0 +1,11 @@
+ESLint warnings/errors per file touched by round 6: on the round-6 tree (merged with trunk d11ee2368), and warnings on trunk where the file exists there.
+Command: npx eslint --no-warn-ignored <file>
+(tool-trace.ts's one warning is summarizeToolResult's complexity, on trunk too; round 6 does not touch that function.)
+
+server/routes/ana-ri/stream.ts                                         round6=24/0   trunk=24
+server/services/ana/tool-selection.ts                                  round6=0/0    trunk=0
+server/services/ana/tool-trace.ts                                      round6=1/0    trunk=1
+server/services/ana/__tests__/tool-selection.test.ts                   round6=0/0    trunk=0
+server/services/ana/__tests__/tool-selection-carry-over.test.ts        round6=0/0    trunk=new
+server/services/ana/__tests__/tool-selection-context.test.ts           round6=0/0    trunk=new
+server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts          round6=0/0    trunk=new

@@ -55,6 +55,7 @@ import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
 import { governedToolsetFor } from '../../services/ana/governed-toolset.js';
+import { submissionContextBlockFor } from '../../services/ana/submission-context-block.js';
 import { getToolHandler, servedModelOf } from '../../services/ana/AnaToolExecutor.js';
 import { commandBlockProposer } from '../../services/ana/command-attribution.js';
 import { requestsGovernedDraft } from '../../services/ana/governed-write-tools.js';
@@ -105,6 +106,7 @@ import { buildSteerMessage } from '../../services/ana/operator-channel.js';
 import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import {
   buildTraceEntry,
+  carriedToolsFrom,
   collectTracesFromHistory,
   formatStoppedTurnNote,
   formatTraceForContext,
@@ -944,6 +946,13 @@ export function mountStreamRoute(router: Router): void {
         }
       }
 
+      // IND / NDA / BLA submission context — the same helper send-message calls
+      // (chat-path-parity.test.ts). '' for any other declared type.
+      orchestration.systemPrompt += submissionContextBlockFor({
+        submissionType: typeof submission_type === 'string' ? submission_type : null,
+        projectContext: req.body.context ?? null,
+      });
+
       // Status: loading_context (about to fetch intelligence prefix, memory atoms, enrichment)
       res.write(
         `data: ${JSON.stringify({
@@ -1097,6 +1106,10 @@ export function mountStreamRoute(router: Router): void {
       /* How many turns preceded this one. It decides whether this is the START
          of a session, which is the only point the rehydration below fires. */
       let streamPriorTurns = 0;
+      /* The tools earlier turns ran successfully, offered again so a follow-up
+         ("draft it", "and for the EU?") keeps the tool it builds on (TP-RL-3,
+         tool-selection.ts). Only the thread's own history records them. */
+      let carriedTools: string[] = [];
       if (threadId) {
         try {
           const serverHistory = await getThreadMessages(threadId);
@@ -1113,6 +1126,7 @@ export function mountStreamRoute(router: Router): void {
             // Tool-trace memory: carry forward a compact summary of the tools AnA
             // already ran in earlier turns (stored on each assistant message's
             // metadata) so she reuses prior findings instead of re-running them.
+            carriedTools = carriedToolsFrom(collectTracesFromHistory(previousMsgs));
             const traceNote = formatTraceForContext(collectTracesFromHistory(previousMsgs));
             // …except the work of a turn that did not finish. The trace note
             // says "reuse these findings"; when the last turn was cut short by
@@ -1419,6 +1433,8 @@ export function mountStreamRoute(router: Router): void {
         submissionType: orchestration.detectedSubmissionType,
         requestedMaxTokens: resolveOutputBudget(effortUsed),
         requestsGovernedDraft: requestsGovernedDraft(message),
+        // The open section: a Module 2 summary is high-stakes however the question is worded (MC-RL-3).
+        openSectionCode: sectionCode,
       });
 
       const policyHint = await getKernelPolicyHint({
@@ -1686,9 +1702,10 @@ export function mountStreamRoute(router: Router): void {
       // model. Loader is fail-open (default-allow) on any DB issue.
       const governedTools = await toolPolicyPromise;
       // Governance first (tenant deny-list), then offer the subset relevant to this
-      // turn's intent + context. The platform command bridge is always retained, so
-      // intent selection never removes a capability — anything dropped stays
-      // reachable through execute_platform_command. User-pinned tools are honoured.
+      // turn's intent + context. The platform command bridge is always retained,
+      // but it reaches the command registry only — a typed tool dropped here is
+      // not reachable through it, which is why the tools earlier turns used are
+      // carried. User-pinned tools are honoured.
       const asStr = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
       const streamTools = selectToolsForTurn(
         governedTools,
@@ -1723,6 +1740,7 @@ export function mountStreamRoute(router: Router): void {
           // (the always-on core + platform bridge are unaffected). Per-tenant when an
           // org is in context, else the global view.
           deprioritize: new Set(getUnhealthyTools(3, orgId ?? undefined).map(t => t.tool)),
+          carriedTools,
         }
       );
 

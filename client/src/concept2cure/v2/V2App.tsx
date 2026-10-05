@@ -42,6 +42,7 @@ import {
   readDirectiveProgram,
   validateDriveAction,
 } from './surfaceActions';
+import { waitingForPerson } from './anaWorkModel';
 import { LiveDriveOverlay } from './LiveDriveOverlay';
 import { LiveDriveControlsContext } from './LiveDriveSwitch';
 import { RunPolicyContext } from './RunPolicySwitch';
@@ -1185,6 +1186,22 @@ export function V2App() {
          off, and those stylesheets are outside this change. */
       data-editor={ownsConversation || undefined}
     >
+      {/* WCAG 2.2 SC 2.4.1. The rail and the top bar put 22 tab stops before
+          a surface's first control on every page (measured 2026-10-05,
+          tests/e2e/launch-surface-keyboard.e2e.spec.ts). Landmarks let a
+          screen reader skip them; a keyboard user without one could not. The
+          link is the first stop and moves focus to the surface itself; it is
+          position: fixed, so it takes no cell in the shell's grid. */}
+      <a
+        className="skip-link"
+        href="#c2c-page"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById('c2c-page')?.focus();
+        }}
+      >
+        Skip to content
+      </a>
       <Rail
         activeId={activeId}
         onNav={nav}
@@ -1220,7 +1237,7 @@ export function V2App() {
           onNav={nav}
           onAsk={ask}
         />
-        <div className={isFull ? 'page page-full' : 'page'}>
+        <div id="c2c-page" tabIndex={-1} className={isFull ? 'page page-full' : 'page'}>
           <SurfaceBoundary resetKey={bodyKey}>
             {/* A deep link to a surface outside the launch scope renders the
                 honest panel, from the same verdict the rail and catalog read. */}
@@ -1301,6 +1318,19 @@ export function V2App() {
         activity={driveActivity}
         narration={ownsConversation ? driveNarration : undefined}
         onTakeOver={takeOverDrive}
+        /* Held for a person (a Manual hold, an approval): the strip says she is
+           waiting, not driving (row 74, F2). Known for the shell's own chat;
+           when another chat drives, its state is not visible here, so the
+           strip keeps its wording rather than guess. */
+        waiting={
+          driveControlsRef.current
+            ? null
+            : waitingForPerson(
+                [...anaChat.messages].reverse().find((m) => m.role === 'assistant') ?? null,
+                anaChat.runStatus,
+                anaChat.runHold,
+              )
+        }
         /* Stop and steer reach the chat that is DRIVING, which is not always
            the shell's own (the editor dock's, the co-author's). Stop ends the
            drive first: the stopped run keeps streaming until its cancel is

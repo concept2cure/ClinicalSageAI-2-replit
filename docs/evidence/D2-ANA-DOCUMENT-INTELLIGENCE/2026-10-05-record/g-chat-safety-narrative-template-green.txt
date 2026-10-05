@@ -1,0 +1,2146 @@
+# g-chat-safety-narrative-template — green, 2026-10-05
+# Run 1: the step's test + document-templates importers' tests
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > has at least 10 registered document types 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_2_introduction — required fields present 2ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_3_qos — required fields present 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_4_nonclinical_overview — required fields present 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_5_clinical_overview — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_7_3_efficacy_summary — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_7_4_safety_summary — required fields present 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ind_investigator_brochure — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ind_phase1_protocol — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > cmc_drug_substance — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > cmc_drug_product — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_510k_se_statement — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > pma_summary_safety_effectiveness — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > clinical_study_report — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > dsur — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_pre_ind_meeting_package — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_eop_meeting_package — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_pre_nda_meeting_package — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_pre_bla_meeting_package — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_formal_meeting_package — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > psur_pbrer — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > safety_narrative — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_information_request_response — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > every template has at least one required section with heading and guidance 7ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Clinical Overview 8ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Clinical Overview section 3ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > QOS 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > QOS section ref 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Nonclinical Overview 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Efficacy Summary 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Efficacy Summary section 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Safety Summary 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Safety Summary section 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CMC Drug Substance 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CMC 3.2.S 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CMC Drug Product 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CMC 3.2.P 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Investigator's Brochure 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Phase 1 Protocol 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > FIH Protocol 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > 510(k) SE 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > PMA SSED 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CSR 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > DSUR 6ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Type B Meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP2 meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP2 abbreviation 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Pre-Phase 3 meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP1 meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP1 abbreviation 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Pre-IND meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Pre-NDA meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Pre-BLA meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > PBRER 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Safety Narrative 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > FDA IR Response 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: What are the risks of this drug? 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: Can you audit my submission? 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: Help me improve this section 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: Run a war game on this protocol 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: What is the regulatory strategy for our IND? 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: section 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: draft 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: clinical 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — specificity > clinical overview wins when section 2.5 is mentioned 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — specificity > efficacy summary wins when section 2.7.3 is mentioned 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — specificity > CMC drug substance wins when 3.2.S is mentioned 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — specificity > CMC drug product wins when 3.2.P is mentioned 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > buildDocumentTemplateBlock > returns a non-empty block with required structural elements 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > buildDocumentTemplateBlock > includes all required section headings for the matched template 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > buildDocumentTemplateBlock > includes regulatory references when present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > buildDocumentTemplateBlock > includes word count targets in the section outline 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > the E3 node exists and lists the narrative elements 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > every element the E3 §12.3.2 node lists is in the block AnA receives 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names post-mortem findings 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names countermeasures 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names the sponsor's opinion on causality 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names the disease being treated and its duration 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > carries the reviewer deficiencies the node records 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > labels the E3 basis honestly (the node is recall until a verbatim check is filed) 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > causality: the investigator and the sponsor, in the study's own terms > imposes no five-point scale ending in "definitely related" 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > causality: the investigator and the sponsor, in the study's own terms > the causality section asks for the investigator's and the sponsor's assessments 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > detection reads "causal", not "casual" > "causal assessment" reaches the safety narrative template 7ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > detection reads "causal", not "casual" > no detection pattern spells "casual" 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > the template derives from the node, and fails closed without it > a change to the E3 node reaches the template 25ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > the template derives from the node, and fails closed without it > a missing E3 node says the content is not encoded instead of inventing it 13ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > holds the six PDUFA meeting types with their schedule and package deadlines 3ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > labels every figure not read in FDA text as recall 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > timing is 70 days to the meeting and the package 50 calendar days before it 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > no EOP2 component tells the sponsor the package is due 30 days ahead 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_ind_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_nda_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_bla_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_ind_meeting carries no 2017 citation 3ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > end_of_phase_2_meeting carries no 2017 citation 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_nda_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_bla_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > a pre-IND meeting package carries the CMC summary and no "accompanies the request" claim 5ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > an EOP2 briefing document gets the EOP2 components and the 50-day package deadline 5ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "end of phase 1 meeting" is not served the EOP2 (Type B(EOP)) template 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "EOP1 meeting package" is not served the EOP2 (Type B(EOP)) template 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "draft the pre-NDA meeting package" gets the pre_nda_meeting components 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "prepare our pre-BLA meeting briefing document" gets the pre_bla_meeting components 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > no meeting template is a hand-kept heading list 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > some component asks for E2F Section 19 (Summary of Important Risks) 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > no component calls Section 19 the conclusions 3ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > the conclusions are E2F Section 20 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > interval line listings are of serious adverse reactions (E2F 7.2), tabulations of SAEs (7.3) 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > exports the E2F outline once, every heading cited 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > the injected block carries §16, §19 and §20 under their E2F numbers 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > every E2F section is required: E2F says complete all of them, stating when there is nothing to report 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > the injected block lists the E2F headings in E2F order, none of them optional 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > no detection pattern carries a form feed 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > an IND annual report request is not served the DSUR template 1ms
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-05T02:31:41.082Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:31:41.083Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-05T02:31:41.083Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-05T02:31:41.082Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:31:41.083Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-05T02:31:41.083Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-05T02:31:41.715Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > carries exactly the headings E3 numbers, in report order 3ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading sits under a heading that exists 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.1 has its 12 numbered headings 5ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.3 has its 2 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §14.3 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §11.4.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.2 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.3.1 has its 3 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.4 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.5 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading cites its own E3 number; every checked source names its URL and date 5ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > a heading that names data sources says they are practice, not a requirement 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > E3 §16.2.7 and §12.2.4 name both the preferred and the investigator’s term; §16.3.1 names 314.50(f)(2) 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > resolves a number however it is written, and answers nothing for one E3 does not have 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > csr-builder's ICH_E3_STRUCTURE uses E3's numbers and headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR scaffold behind get_csr_template carries every E3 heading 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR template injected into AnA's prompt covers §1–§16 with E3's headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the medical-writing base outlines the CSR with E3's sixteen headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the stream's 5.3.5 playbook lists E3's sixteen headings 1ms
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+Loaded 0 academic documents
+
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.3 is Summary of Clinical Efficacy 2ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.4 is Summary of Clinical Safety 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.5 is Literature References 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.2 is Cover Letter 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.12.14 is Environmental Assessment 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.14 is labeling, not the environmental assessment 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a sub-section is briefed as its nearest registered section, and says so 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a parent is briefed by the sections it contains, not as its first child 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a code nothing registers gets no line rather than a guessed one 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > agrees with the canonical overlay on every registered code 4ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.1 carries Form FDA 1571 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.2 carries Cover Letter 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.3.3 carries Debarment Certification 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.14.4.1 carries Investigator's Brochure 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.2 carries Tabular Listing 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.3.5.1 holds the reports of controlled clinical studies, not a protocol playbook 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > opens with the canonical code and title for every registered code 4ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > keeps the module playbooks the overlay does not model 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical efficacy" → 2.7.3 4ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "draft section 2.7.3" → 2.7.3 3ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical safety" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4 summary of clinical safety" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every template with a CTD primary code is named for that code 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every coded 2.5.x / 2.7.x sub-heading carries its ICH M4E title 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 does not claim to be the ISE 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.4 does not claim to be the ISS 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 states FDA’s own description of the summary 0ms
+
+ Test Files  5 passed (5)
+      Tests  162 passed (162)
+   Start at  02:31:38
+   Duration  6.37s (transform 5.67s, setup 276ms, import 8.99s, tests 180ms, environment 0ms)
+
+
+# Run 2: tests of modules that import document-templates (orchestrator, capabilities index, submission routes)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/__tests__/ana-proactive-blocks.test.ts
+{
+  "timestamp": "2026-10-05T02:31:56.527Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:31:56.528Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stdout | server/services/__tests__/ana-personality-core.test.ts
+{
+  "timestamp": "2026-10-05T02:31:56.526Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:31:56.527Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/__tests__/ana-personality-core.test.ts
+{
+  "timestamp": "2026-10-05T02:31:56.527Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-ri.test.ts
+{
+  "timestamp": "2026-10-05T02:31:56.530Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:31:56.531Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts
+{
+  "timestamp": "2026-10-05T02:31:56.531Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/__tests__/ana-proactive-blocks.test.ts
+{
+  "timestamp": "2026-10-05T02:31:56.528Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/__tests__/ana-personality-core.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/__tests__/ana-personality-core.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/__tests__/ana-personality-core.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/__tests__/ana-proactive-blocks.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/__tests__/ana-proactive-blocks.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/__tests__/ana-proactive-blocks.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/__tests__/ana-personality-core.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-proactive-blocks.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-ri.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-personality-core.test.ts
+{
+  "timestamp": "2026-10-05T02:31:56.880Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/__tests__/ana-proactive-blocks.test.ts
+{
+  "timestamp": "2026-10-05T02:31:56.880Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts
+{
+  "timestamp": "2026-10-05T02:31:56.881Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-ri.test.ts
+Loaded 0 academic documents
+
+stdout | server/services/__tests__/ana-proactive-blocks.test.ts
+Loaded 0 academic documents
+
+stdout | server/services/__tests__/ana-personality-core.test.ts
+Loaded 0 academic documents
+
+ ✓ server/services/__tests__/ana-proactive-blocks.test.ts > orchestrator proactive block injection > injects the deadline radar block when provided 20ms
+ ✓ server/services/__tests__/ana-proactive-blocks.test.ts > orchestrator proactive block injection > injects the session briefing block when provided 9ms
+ ✓ server/services/__tests__/ana-proactive-blocks.test.ts > orchestrator proactive block injection > is a no-op when the blocks are empty 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > defines the requested traits 2ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > is composed into the AnA RI system prompt 4ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > is composed into the cortex prompts (single source of truth) 0ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > injects relational context when provided 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > renders nothing when no relational notes exist yet 0ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Orchestrator — relational + external intelligence injection > injects the pre-fetched relational overlay and external intel block 17ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Orchestrator — relational + external intelligence injection > omits both blocks when not provided 6ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Relational reflection signal detection > fires on emotional and corrective signals 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Relational reflection signal detection > stays quiet on neutral turns 0ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > parses RSS 2.0 items 2ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > parses Atom entries 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > registry covers regulatory agencies and knowledge centers (incl. SCDM) 1ms
+stdout | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+{
+  "timestamp": "2026-10-05T02:32:02.443Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:32:02.444Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+{
+  "timestamp": "2026-10-05T02:32:02.444Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+{
+  "timestamp": "2026-10-05T02:32:02.519Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/market-specs/__tests__/regulatory-capabilities-index.test.ts > regulatory capabilities index — consistency > has unique ids, a category, and a description for every capability 11ms
+ ✓ server/services/market-specs/__tests__/regulatory-capabilities-index.test.ts > regulatory capabilities index — consistency > index summary counts are consistent 0ms
+ ✓ server/services/market-specs/__tests__/regulatory-capabilities-index.test.ts > regulatory capabilities index — consistency > every referenced AnA tool exists in the registry (no drift) 1ms
+ ✓ server/services/market-specs/__tests__/regulatory-capabilities-index.test.ts > regulatory capabilities index — consistency > covers each capability category 0ms
+stdout | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > handles narrative slash commands without unhandled markers
+{
+  "timestamp": "2026-10-05T02:32:03.902Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > supports deterministic preflight slash enrichment
+{
+  "timestamp": "2026-10-05T02:32:03.906Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > supports deterministic preflight slash enrichment
+{
+  "timestamp": "2026-10-05T02:32:03.908Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects audit intent from reviewer language 4ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects improve intent from rewrite language 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects risk intent from rejection language 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects strategy intent from pathway language 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects compare intent from comparison language 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > returns auto for generic messages 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects IND from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects 510(k) from message 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects NDA from message 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects BLA from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects CER from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects eCTD from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > returns null for generic message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > intent lens changes affect orchestration output 12ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > explicit intent overrides auto-detection 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > role changes affect system prompt 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > submission type injects deficiency context 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > conversation history builds continuity context 3ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > detects an active workstream and injects it into the prompt 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > routes deficiency-heavy messages into the deficiency response workstream 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > detects a workstream handoff when the thread pivots from strategy into drafting 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > continuity context does not inject conflicting submission type 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > continuity concern patterns require problem context, not just mention 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > suggested actions match intent lens 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Evaluation > penalizes hedging language in writing quality 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Evaluation > rewards evidence labels in evidence discipline 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Evaluation > detects document consequence in responses 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Evaluation > assigns correct grade thresholds 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for IND submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for 510k submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for PMA submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for De Novo submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for CER submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns critical deficiencies 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > finds deficiency by ID 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns category summary 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > infers CEO role from title 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > infers RA lead from title 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > infers medical writer from screen name 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > infers CMC lead from screen name 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > returns general for unknown signals 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > builds role-specific output structure for CEO 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > builds role-specific output structure for medical writer 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > builds role-specific output structure for investor 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Document Actions > returns all actions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Document Actions > filters actions by audit lens 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Document Actions > filters actions by improve lens 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > includes evidence discipline instructions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > includes document consequence mandate 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > adapts for different roles 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects intent lens overlay 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects workstream context when provided 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects workstream handoff context when provided 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > leaves the prompt unchanged for English (default language) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects a localized response-language overlay for non-English 6ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > keeps regulatory identifiers canonical while localizing prose 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects market-specific cultural awareness for each non-English market 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > does not add any cultural overlay for English 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects an English market brief when the target agency is non-US 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects the dedicated Japan regulatory deep-dive whenever Japan is in scope 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > does not add the Japan deep-dive when Japan is not in scope 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects the dedicated EU regulatory deep-dive whenever the EU is in scope 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > does not add the EU deep-dive when the EU is not in scope 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > covers additional non-US target markets by agency name 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > skips the market brief when the language overlay already covers that market 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > adds no market brief for FDA or unknown agencies 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > intent detection edge cases > handles empty string without crashing 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > intent detection edge cases > handles very long messages 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > intent detection edge cases > resolves ties deterministically — highest score wins 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > submission type edge cases > returns null for empty string 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > submission type edge cases > detects de novo from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > submission type edge cases > detects PMA from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > orchestrator edge cases > handles empty conversation history 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > orchestrator edge cases > handles single-message history 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > evaluation edge cases > handles empty response 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > evaluation edge cases > calculateDimensionScore boundary: exactly 3 signals = score 3 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Artifact Generator > returns all 8 artifact types with titles 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Artifact Generator > includes all expected action types 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateResponseStructure > passes structured response with required sections 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateResponseStructure > fails unstructured response 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateResponseStructure > detects evidence labels 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > checkEvidenceDiscipline > flags substantive response without evidence labels 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > checkEvidenceDiscipline > passes response with evidence labels 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > checkEvidenceDiscipline > passes short casual responses without labels 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateArtifactQuality > passes high-quality artifact 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateArtifactQuality > rejects too-short artifact 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateArtifactQuality > flags generic AI filler 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateArtifactQuality > flags missing structure 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > buildArtifactContract > builds complete contract with all required fields 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > generation observability > logs and retrieves generation events 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > generation observability > tracks generation stats 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > COMMAND_REGISTRY completeness > has all 27 commands registered 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > COMMAND_REGISTRY completeness > every command has name, description, parameters, and example 5ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > COMMAND_REGISTRY completeness > includes all critical workflow commands 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > COMMAND_REGISTRY completeness > has no duplicate command names 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > buildCommandContextForPrompt > returns a string with command list 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > buildCommandContextForPrompt > includes command format instructions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > handles narrative slash commands without unhandled markers 5ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > supports deterministic preflight slash enrichment 5ms
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > with a project, an @app mention also attempts the app's data enrichment, by any handle, anywhere in the text
+{
+  "timestamp": "2026-10-05T02:32:03.934Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > supports deterministic draft slash enrichment
+{
+  "timestamp": "2026-10-05T02:32:03.935Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.939Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.939Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.940Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.940Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.941Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.942Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.942Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.943Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.943Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:104:8
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:182:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[enrichment] Live recommendations failed, falling back to memory: __vite_ssr_import_0__.db.select is not a function
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.958Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:104:8
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:182:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[enrichment] Live recommendations failed, falling back to memory: __vite_ssr_import_0__.db.select is not a function
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.960Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.960Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.961Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.961Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:104:8
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 1)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.962Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:182:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 1)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 1)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[enrichment] Live recommendations failed, falling back to memory: __vite_ssr_import_0__.db.select is not a function
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.963Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.964Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.964Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[enrichment] Cross-module analysis failed: __vite_ssr_import_0__.db.execute is not a function
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.965Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.966Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:03.966Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.004Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:104:8
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 1)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.005Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:182:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 1)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 1)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[enrichment] Live recommendations failed, falling back to memory: __vite_ssr_import_0__.db.select is not a function
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.006Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.007Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.007Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.007Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.008Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.008Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.008Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.009Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.009Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.010Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.010Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.010Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.011Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.011Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.012Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.012Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.012Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.013Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.013Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.014Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.014Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.014Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.015Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.015Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.015Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.016Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.016Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.017Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:104:8
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 2)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.018Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:182:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 2)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 2)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[enrichment] Live recommendations failed, falling back to memory: __vite_ssr_import_0__.db.select is not a function
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.020Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.020Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.020Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.021Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.021Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.022Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.022Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.023Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.023Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.023Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.024Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.024Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.028Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.030Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.030Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.031Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.031Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.033Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.034Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.034Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.037Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.037Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.037Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.038Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.040Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.040Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.042Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.042Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.043Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.045Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.046Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.046Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.047Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.048Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.048Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.049Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-10-05T02:32:04.049Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > reads an @app mention with NO project — the front-door composer — into the block and the rewrite 23ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > with a project, an @app mention also attempts the app's data enrichment, by any handle, anywhere in the text 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > supports deterministic draft slash enrichment 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > detects every supported slash command token 3ms
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > handles /align via enrichment and proactively detects stakeholder tension
+{
+  "timestamp": "2026-10-05T02:32:04.087Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > handles /align via enrichment and proactively detects stakeholder tension
+{
+  "timestamp": "2026-10-05T02:32:04.088Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — claim-grounding integration > proactively injects the grounding guard on a high-stakes claim
+{
+  "timestamp": "2026-10-05T02:32:04.097Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — claim-grounding integration > does not inject the guard on a plain orientation request
+{
+  "timestamp": "2026-10-05T02:32:04.103Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — capabilities command > grounds a "what can you do" request in the capability catalogue
+{
+  "timestamp": "2026-10-05T02:32:04.107Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — composer integration > preserves legacy join when no budget is requested
+{
+  "timestamp": "2026-10-05T02:32:04.121Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — composer integration > engages the composer and emits a trace when a budget is set
+{
+  "timestamp": "2026-10-05T02:32:04.122Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — scope-guard integration > proactively injects the scope guard on a determination request
+{
+  "timestamp": "2026-10-05T02:32:04.132Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — scope-guard integration > does not inject the guard on a normal drafting request
+{
+  "timestamp": "2026-10-05T02:32:04.134Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /wisdom as a first-class slash command
+{
+  "timestamp": "2026-10-05T02:32:04.140Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /guide as a first-class slash command
+{
+  "timestamp": "2026-10-05T02:32:04.144Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > surfaces industry wisdom from a natural-language pitfall question
+{
+  "timestamp": "2026-10-05T02:32:04.145Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /challenge as a first-class slash command
+{
+  "timestamp": "2026-10-05T02:32:04.146Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively challenges a risky assertion mid-conversation
+{
+  "timestamp": "2026-10-05T02:32:04.147Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /decide as a first-class slash command
+{
+  "timestamp": "2026-10-05T02:32:04.148Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively frames a trade-off the user is weighing
+{
+  "timestamp": "2026-10-05T02:32:04.148Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /meeting as a first-class slash command
+{
+  "timestamp": "2026-10-05T02:32:04.150Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively coaches an agency-interaction situation
+{
+  "timestamp": "2026-10-05T02:32:04.151Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled) 111ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > gives AnA a distinct character (Who You Are) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > licenses polite, grounded pushback (Constructive Dissent) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > makes AnA aware of her wayfinding, wisdom, and challenge reflexes 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > carries an always-on empathy posture (Meet the human) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > keeps the reconciled regulatory breadth index in the live prompt 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > stays inside the design-system voice (no emoji, no exclamation) in the new copy 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > covers all three segments plus cross-cutting wisdom 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > every heuristic is pattern -> consequence -> veteran move, with a basis 5ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > infers segment from submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > infers segment and stage from free text 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > selectWisdom always includes cross-cutting heuristics for a segment 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > builds a non-empty wisdom block for any segment 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > keeps wisdom copy inside the design-system voice (no emoji, no exclamation) 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > provides journeys for all three segments 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > every use case names first moves and a pitfall to watch 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > builds an orientation that asks to place the user when segment is unknown 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > builds a segment-specific tour-guide block 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > keeps playbook copy inside the design-system voice (no emoji, no exclamation) 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > covers all three segments plus cross-cutting challenges 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > every pattern has a claim, triggers, risk, challenge, reframe, and basis 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > linked heuristics resolve to real wisdom entries 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > fires on representative risky assertions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > does not fire on neutral questions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > builds a polite-challenge block that invokes the dissent doctrine 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > returns empty when nothing is challengeable 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > keeps challenge copy inside the design-system voice (no emoji, no exclamation) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > covers all three segments plus cross-cutting frameworks 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > every framework states the trade-off, both tilt sets, and how to decide 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > fires on representative trade-off questions 4ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > does not fire on a plain factual question 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > builds a framework block that refuses to decide for the user 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > forceGeneric makes an explicit /decide always do work 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > returns empty for a non-trade-off message without forceGeneric 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > keeps framework copy inside the design-system voice 7ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > covers meeting prep, response strategy, and posture 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > every tactic states the move, why, watch-out, and basis 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > fires on meeting-prep and response-letter situations 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > can narrow by kind 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > does not fire on an unrelated drafting request 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > builds a tactics block, and forceGeneric always does work 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > keeps tactics copy inside the design-system voice 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > covers reading precedent, positioning, and differentiation 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > every play states the insight, move, watch-out, and basis 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > fires on precedent and positioning situations 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > does not fire on an unrelated drafting request 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > builds a block, and forceGeneric always does work 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > keeps competitive copy inside the design-system voice 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > every state has a reading, attune, leadWith, and avoid 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > reads the salient state from a message 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > crisis outranks a co-occurring softer state 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > returns null on a neutral, unemotional message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > builds an attunement directive scoped to delivery, not truth 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > exposes a lookup by state 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > keeps attunement copy inside the design-system voice (no emoji, no exclamation) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > covers cross-functional, commercial, executive, and partner axes 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > every alignment play states tension, insight, move, watch-out, and basis 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > fires on representative internal-tension situations 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > does not fire on a plain regulatory question 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > builds an alignment block, and forceGeneric always does work 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > ties the internal tension to regulatory consequence and leaves the call to the client 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > keeps stakeholder-alignment copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > handles /align via enrichment and proactively detects stakeholder tension 8ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > every claim check has a label, directive, and triggers 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > detects each high-stakes claim category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > does not fire on a plain conversational message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > builds a non-negotiable grounding directive scoped to the claims present 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > returns empty when there is nothing groundable 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > can scan AnA's drafted answer as a self-check, not only the user message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > exposes a lookup by category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > keeps claim-grounding copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > persona declares the claim-grounding discipline 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — claim-grounding integration > proactively injects the grounding guard on a high-stakes claim 3ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — claim-grounding integration > grounds a high-stakes claim for a project-less user 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — claim-grounding integration > does not inject the guard on a plain orientation request 3ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > every capability has commands, a description, and a category 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > command lookups resolve in both directions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > lists capabilities by category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > has no duplicate command across capabilities 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > ANTI-DRIFT: every registered capability command is a wired slash command 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > ANTI-DRIFT: every judgment-pack slash command is catalogued here 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > builds a grounded catalogue that is not a recite-this menu 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > keeps capability copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — capabilities command > grounds a "what can you do" request in the capability catalogue 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — capabilities command > grounds capabilities for a project-less user 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > tokenizes, drops stopwords, and keeps regulatory tokens like 510(k) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > approxTokens scales with length and is always positive 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > BM25 ranks the block that shares query terms highest 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > returns all-zero relevance for an empty or stopword-only query 9ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > lexical similarity is high for near-duplicates, low for unrelated text 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > composes within budget, dropping the lowest-value block when it cannot fit 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > always keeps pinned blocks regardless of relevance 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > de-duplicates near-identical blocks via MMR under tight budget 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > is a no-op (keeps everything) when budget is generous 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > handles the empty candidate set 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > emits an explainable trace for every candidate 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > maps source priorities and slash-command aliases to pack weights 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — composer integration > preserves legacy join when no budget is requested 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — composer integration > engages the composer and emits a trace when a budget is set 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > returns the prior exactly when there are no samples 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > rewards an all-accepted source above an all-rejected one 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > treats edited as partial credit (between accepted and rejected) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > shrinks low-sample sources toward the prior (small-sample safety) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > maps rewards to bounded multipliers centered on 1.0 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > builds a multiplier map only for sources with stats 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > applyAdaptivePriority scales and clamps, and is a no-op for unknown sources 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > learned multipliers can reorder composer selection under tight budget 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > every scope check has a label, mode, directive, and triggers 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > detects each scope-sensitive category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > flags data-integrity requests as requiring refusal, not just handoff 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > does not fire on a normal in-scope request 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > builds a hand-off directive that keeps AnA useful, not stonewalling 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > builds an integrity-boundary directive on a data-integrity ask 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > returns empty when the request is fully in scope 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > exposes a lookup by category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > keeps scope-guard copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > persona declares the know-your-limits discipline 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — scope-guard integration > proactively injects the scope guard on a determination request 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — scope-guard integration > injects the integrity boundary for a project-less data-integrity ask 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — scope-guard integration > does not inject the guard on a normal drafting request 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Lens > produces a distinct audience lens for each non-general role 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Lens > returns empty for the general role and reports lens availability 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Lens > keeps lens copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > provides a first-session tour for every segment plus a generic fallback 3ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > builds a segment-specific welcome from the message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > keeps onboarding copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > every use-case command resolves to a registered slash command (no drift) 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > every mdx use-case surface resolves to a known MDX surface key (no drift) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /wisdom as a first-class slash command 4ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /guide as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > orients a project-less (new) user from a wayfinding question 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > surfaces industry wisdom from a natural-language pitfall question 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /challenge as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively challenges a risky assertion mid-conversation 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > challenges a risky assertion from a project-less user 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > welcomes a project-less new user with a first-session tour 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /decide as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively frames a trade-off the user is weighing 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > frames a trade-off for a project-less user 0ms
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > applies a role lens when a role is supplied and a pack fired
+{
+  "timestamp": "2026-10-05T02:32:04.151Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /position as a first-class slash command
+{
+  "timestamp": "2026-10-05T02:32:04.152Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively reads the landscape on a positioning question
+{
+  "timestamp": "2026-10-05T02:32:04.153Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > reads a client in crisis and steadies the delivery
+{
+  "timestamp": "2026-10-05T02:32:04.154Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > does not apply a role lens for the general role
+{
+  "timestamp": "2026-10-05T02:32:04.155Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /meeting as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively coaches an agency-interaction situation 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > applies a role lens when a role is supplied and a pack fired 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /position as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively reads the landscape on a positioning question 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > reads a client in crisis and steadies the delivery 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > attunes to an overwhelmed project-less newcomer 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > does not apply a role lens for the general role 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Diff Service Integration > diffText produces correct results for simple changes 14ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Diff Service Integration > diffText handles identical content 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Diff Service Integration > diffText handles empty strings 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Quality Gate Regression > dynamic maxScore: depth types get 12, others get 10 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Quality Gate Regression > semantic depth gate rewards root cause + evidence + action 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Quality Gate Regression > filler patterns are detected correctly 0ms
+stdout | server/routes/__tests__/submission-routes-registration.test.ts
+{
+  "timestamp": "2026-10-05T02:32:04.618Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:32:04.619Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/submission-routes-registration.test.ts
+{
+  "timestamp": "2026-10-05T02:32:04.619Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/submission-routes-registration.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/submission-routes-registration.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/submission-routes-registration.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/submission-routes-registration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submission-routes-registration.test.ts
+{
+  "timestamp": "2026-10-05T02:32:04.775Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > open findings render into contradictionWatchBlock, org-scoped 3ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > no open findings → empty block (quiet orgs pay no tokens) 1ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > no org context → the query is never made 1ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the orchestrator injects _contradictionWatchBlock into the system prompt 1ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the live route hands the prefetched block to the orchestrator 1ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the chat-context-builder orchestrator input carries it too 0ms
+ ✓ server/routes/__tests__/submission-routes-registration.test.ts > submission routes ↔ capabilities index > mounts a non-trivial number of routes 1ms
+ ✓ server/routes/__tests__/submission-routes-registration.test.ts > submission routes ↔ capabilities index > mounts every route the capabilities index advertises 1ms
+ ✓ server/routes/__tests__/submission-routes-registration.test.ts > submission routes ↔ capabilities index > has the keystone device + market routes mounted 0ms
+
+ Test Files  6 passed (6)
+      Tests  284 passed (284)
+   Start at  02:31:53
+   Duration  11.64s (transform 16.90s, setup 417ms, import 31.07s, tests 457ms, environment 1ms)
+

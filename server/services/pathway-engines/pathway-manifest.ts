@@ -21,7 +21,12 @@
 
 import type { Pathway } from './index';
 
-export type PathwaySectionStatus = 'present' | 'missing' | 'optional-absent';
+/**
+ * 'undetermined' and 'not-applicable' come from engines that model them (CTIS
+ * today): an undetermined slot blocks readiness exactly as a missing one does,
+ * so it must not be rendered as 'optional-absent'.
+ */
+export type PathwaySectionStatus = 'present' | 'missing' | 'optional-absent' | 'undetermined' | 'not-applicable';
 
 export interface PathwayManifestEntry {
   /** Deterministic, sortable path, e.g. "03-annex-ii/device-description". */
@@ -40,7 +45,8 @@ export interface PathwayManifest {
   framework: string;
   generatedFrom: 'canonical-core';
   ready: boolean;
-  totals: { sections: number; requiredPresent: number; requiredMissing: number };
+  /** `undetermined`: slots whose need or placement is unanswered; they block `ready` like missing ones. */
+  totals: { sections: number; requiredPresent: number; requiredMissing: number; undetermined: number };
   entries: PathwayManifestEntry[];
 }
 
@@ -77,24 +83,30 @@ interface FlatSlot {
   present: boolean;
   sources: string[];
   annex?: string;
+  /** eSTAR only: 'undetermined' when the device flag deciding the section was not answered. */
+  applicability?: string;
 }
 interface FlatResult {
   sections: FlatSlot[];
-  summary: { missingRequired: string[]; ready: boolean };
+  /** `undetermined`: eSTAR only (W1-5). */
+  summary: { missingRequired: string[]; undetermined?: string[]; ready: boolean };
 }
 interface CtisSlot {
   id: string;
   label: string;
   required: boolean;
   present: boolean;
+  status: 'present' | 'missing' | 'undetermined' | 'not-applicable' | 'check-applicability';
   sources: string[];
 }
 interface CtisResult {
   partI: CtisSlot[];
-  partII: Array<{ memberState: string; slots: CtisSlot[]; missingRequired: string[] }>;
+  partII: Array<{ memberState: string; slots: CtisSlot[]; missingRequired: string[]; undetermined: string[] }>;
   summary: {
     partIMissingRequired: string[];
+    partIUndetermined: string[];
     partIIMissingByState: Record<string, string[]>;
+    partIIUndeterminedByState: Record<string, string[]>;
     ready: boolean;
   };
 }
@@ -112,14 +124,19 @@ function statusOf(required: boolean, present: boolean): PathwaySectionStatus {
   return required ? 'missing' : 'optional-absent';
 }
 
-function toEntry(s: FlatSlot | CtisSlot, group: string): PathwayManifestEntry {
+/** CTIS reports its own five-state status; a conditional slot nobody filed reads as optional-absent. */
+function ctisStatus(s: CtisSlot): PathwaySectionStatus {
+  return s.status === 'check-applicability' ? 'optional-absent' : s.status;
+}
+
+function toEntry(s: FlatSlot | CtisSlot, group: string, status: PathwaySectionStatus): PathwayManifestEntry {
   return {
     path: '', // assigned after global ordering
     id: s.id,
     label: s.label,
     group,
     required: s.required,
-    status: statusOf(s.required, s.present),
+    status,
     sources: s.sources,
   };
 }
@@ -132,24 +149,32 @@ function toEntry(s: FlatSlot | CtisSlot, group: string): PathwayManifestEntry {
 export function buildPathwayManifest(pathway: Pathway, detail: unknown): PathwayManifest {
   const entries: PathwayManifestEntry[] = [];
   let requiredMissing: number;
+  let undetermined: number;
   let ready: boolean;
 
   const probe = detail as Partial<FlatResult & CtisResult> | null | undefined;
 
   if (probe && Array.isArray(probe.partI)) {
     const ctis = detail as CtisResult;
-    for (const s of ctis.partI) entries.push(toEntry(s, 'Part I'));
+    for (const s of ctis.partI) entries.push(toEntry(s, 'Part I', ctisStatus(s)));
     for (const st of ctis.partII) {
-      for (const s of st.slots) entries.push(toEntry(s, `Part II — ${st.memberState}`));
+      for (const s of st.slots) entries.push(toEntry(s, `Part II — ${st.memberState}`, ctisStatus(s)));
     }
     requiredMissing =
       ctis.summary.partIMissingRequired.length +
       Object.values(ctis.summary.partIIMissingByState).reduce((a, b) => a + b.length, 0);
+    undetermined =
+      ctis.summary.partIUndetermined.length +
+      Object.values(ctis.summary.partIIUndeterminedByState).reduce((a, b) => a + b.length, 0);
     ready = ctis.summary.ready;
   } else if (probe && Array.isArray(probe.sections)) {
     const flat = detail as FlatResult;
-    for (const s of flat.sections) entries.push(toEntry(s, s.annex ?? DEFAULT_GROUP[pathway]));
+    for (const s of flat.sections) {
+      const status = !s.present && s.applicability === 'undetermined' ? 'undetermined' : statusOf(s.required, s.present);
+      entries.push(toEntry(s, s.annex ?? DEFAULT_GROUP[pathway], status));
+    }
     requiredMissing = flat.summary.missingRequired.length;
+    undetermined = flat.summary.undetermined?.length ?? 0;
     ready = flat.summary.ready;
   } else {
     throw new Error('Unrecognized pathway result shape (expected sections[] or partI[]).');
@@ -166,7 +191,7 @@ export function buildPathwayManifest(pathway: Pathway, detail: unknown): Pathway
     framework: FRAMEWORK[pathway],
     generatedFrom: 'canonical-core',
     ready,
-    totals: { sections: entries.length, requiredPresent, requiredMissing },
+    totals: { sections: entries.length, requiredPresent, requiredMissing, undetermined },
     entries,
   };
 }

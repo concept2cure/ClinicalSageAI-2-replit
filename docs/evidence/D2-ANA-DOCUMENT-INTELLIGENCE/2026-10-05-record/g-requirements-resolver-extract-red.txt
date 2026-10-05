@@ -1,0 +1,490 @@
+# g-requirements-resolver-extract — RED evidence, two parts
+#
+# RED 1 proves the gate: tests/regulatory/requirements-resolver.test.ts held only the regression
+# snapshot (621 inputs, fingerprints recorded from documentSectionRequirements at a425d1de, where it
+# passed). One CSR alias was then mutated in the tool's inline CSR_ALIASES and the snapshot failed,
+# naming exactly the four inputs the alias moves. The file was restored byte-identical (git diff empty).
+# The pinned table was later packed three rows to a line for the max-lines lint rule; the rows are
+# unchanged and the same mutation fails the packed test (see the green file, part 2).
+#
+# RED 2 is the step's own failure: with the resolver assertions added, 6 of 7 tests fail at a425d1de
+# because server/services/ind/ctd/requirements-resolver.ts does not exist and the tool still carries the
+# dispatch.
+
+# g-requirements-resolver-extract — RED 1: the regression snapshot catches a mutated CSR alias
+# Mutation (temporary, at a425d1de): CSR_ALIASES 'ich e3' -> 'ich-e3' in server/services/ana/regulatory-knowledge-tools.ts
+# Command: npx vitest run tests/regulatory/requirements-resolver.test.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted 45ms
+   → expected { …(621) } to deeply equal { …(621) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted
+AssertionError: expected { …(621) } to deeply equal { …(621) }
+
+- Expected
++ Received
+
+@@ -299,13 +299,13 @@
+    "{\"document\":\"Clinical_Study_Report\",\"section\":\"99.9\"}": "a21d12ad27f75da4",
+    "{\"document\":\"Clinical_Study_Report\"}": "176c058cf3810b76",
+    "{\"document\":\"DSUR\"}": "0dbb6e1f372a036b",
+    "{\"document\":\"END_OF_PHASE_2_MEETING\"}": "85a81d1dbe378983",
+    "{\"document\":\"EU_MAA\"}": "b13ef653b9211557",
+-   "{\"document\":\"ICH E3\",\"section\":\"12.2\"}": "7437010924e1da0a",
+-   "{\"document\":\"ICH E3\",\"section\":\"99.9\"}": "a21d12ad27f75da4",
+-   "{\"document\":\"ICH E3\"}": "176c058cf3810b76",
++   "{\"document\":\"ICH E3\",\"section\":\"12.2\"}": "144b48e6c731d031",
++   "{\"document\":\"ICH E3\",\"section\":\"99.9\"}": "144b48e6c731d031",
++   "{\"document\":\"ICH E3\"}": "144b48e6c731d031",
+    "{\"document\":\"II.6.1\"}": "dac1f91b5987f30e",
+    "{\"document\":\"IND_ANNUAL_REPORT\"}": "751b699919cf785d",
+    "{\"document\":\"IND_CMC_AMENDMENT\"}": "fd97f5fd4c09b3a5",
+    "{\"document\":\"IND_INFORMATION_AMENDMENT\"}": "d493f5903aa46c0c",
+    "{\"document\":\"IND_INITIAL\"}": "59876328aabc3a3c",
+@@ -455,11 +455,11 @@
+    "{\"document\":\"e3\",\"section\":\"12.2\"}": "7437010924e1da0a",
+    "{\"document\":\"e3\",\"section\":\"99.9\"}": "a21d12ad27f75da4",
+    "{\"document\":\"e3\"}": "176c058cf3810b76",
+    "{\"document\":\"end_of_phase_2_meeting\"}": "85a81d1dbe378983",
+    "{\"document\":\"eu_maa\"}": "d1e057f68596de2e",
+-   "{\"document\":\"ich-e3\"}": "1e72548c25606fe8",
++   "{\"document\":\"ich-e3\"}": "176c058cf3810b76",
+    "{\"document\":\"ind_annual_report\"}": "751b699919cf785d",
+    "{\"document\":\"ind_cmc_amendment\"}": "fd97f5fd4c09b3a5",
+    "{\"document\":\"ind_information_amendment\"}": "d493f5903aa46c0c",
+    "{\"document\":\"ind_initial\"}": "59876328aabc3a3c",
+    "{\"document\":\"ind_protocol_amendment\"}": "05d14b57e72c8420",
+
+ ❯ tests/regulatory/requirements-resolver.test.ts:81:17
+     79|     }
+     80|     expect(Object.keys(now).length).toBe(Object.keys(PINNED).length);
+     81|     expect(now).toEqual(PINNED);
+       |                 ^
+     82|   });
+     83| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  02:07:36
+   Duration  892ms (transform 500ms, setup 90ms, import 486ms, tests 48ms, environment 0ms)
+
+
+
+################################################################
+
+# g-requirements-resolver-extract — RED 2: resolveRequirements does not exist at a425d1de
+# Command: npx vitest run tests/regulatory/requirements-resolver.test.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted 30ms
+ × tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CTD code from the section brief, naming the entry and how it matched 4ms
+   → resolveRequirements is not a function
+ × tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CSR alias from the ICH E3 outline, with the basis the outline carries 1ms
+   → resolveRequirements is not a function
+ × tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a lifecycle document type by id, case-insensitively 0ms
+   → resolveRequirements is not a function
+ × tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > says what it does not index, and never answers from another entry 0ms
+   → resolveRequirements is not a function
+ × tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > is the only dispatch: the tool delegates and keeps no copy of the rule 12ms
+   → expected '/**\n * AnA\'s read-only tools over t…' to contain 'resolveRequirements('
+ × tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > imports the brief renderers and is imported by none of them 1ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/requirements-resolver.ts'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CTD code from the section brief, naming the entry and how it matched
+TypeError: resolveRequirements is not a function
+ ❯ tests/regulatory/requirements-resolver.test.ts:106:26
+    104| describe('resolveRequirements — the one dispatch', () => {
+    105|   it('answers a CTD code from the section brief, naming the entry and …
+    106|     const exact = answer(resolveRequirements({ document: 'm2.7.3' }));
+       |                          ^
+    107|     expect(exact.source).toEqual({ kind: 'ctd-section', code: '2.7.3' …
+    108|     expect(exact.match).toBe('exact');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CSR alias from the ICH E3 outline, with the basis the outline carries
+TypeError: resolveRequirements is not a function
+ ❯ tests/regulatory/requirements-resolver.test.ts:123:28
+    121|
+    122|   it('answers a CSR alias from the ICH E3 outline, with the basis the …
+    123|     const outline = answer(resolveRequirements({ document: 'ICH E3' })…
+       |                            ^
+    124|     expect(outline.source).toEqual({ kind: 'outline', outlineId: 'csr-…
+    125|     expect(outline.match).toBe('outline');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a lifecycle document type by id, case-insensitively
+TypeError: resolveRequirements is not a function
+ ❯ tests/regulatory/requirements-resolver.test.ts:136:24
+    134|
+    135|   it('answers a lifecycle document type by id, case-insensitively', ()…
+    136|     const iss = answer(resolveRequirements({ document: 'ISS' }));
+       |                        ^
+    137|     expect(iss.source).toEqual({ kind: 'lifecycle', id: 'iss' });
+    138|     expect(iss.match).toBe('exact');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > says what it does not index, and never answers from another entry
+TypeError: resolveRequirements is not a function
+ ❯ tests/regulatory/requirements-resolver.test.ts:144:17
+    142|   it('says what it does not index, and never answers from another entr…
+    143|     for (const document of ['9.9.9', 'maa', '510k', 'Totally Fabricate…
+    144|       const a = resolveRequirements({ document });
+       |                 ^
+    145|       expect(a.kind).toBe('not_indexed');
+    146|       if (a.kind !== 'not_indexed') continue;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > is the only dispatch: the tool delegates and keeps no copy of the rule
+AssertionError: expected '/**\n * AnA\'s read-only tools over t…' to contain 'resolveRequirements('
+
+- Expected
++ Received
+
+- resolveRequirements(
++ /**
++  * AnA's read-only tools over the platform's regulatory knowledge.
++  *
++  *   get_document_section_requirements — what a CTD section, a document type
++  *       (NDA, ISS, DSUR, ...) or an ICH E3 clinical study report heading must
++  *       contain, where it comes from, what reviewers find wrong, and the basis;
++  *   plan_submission_from_database_lock — the sequence from database lock to a
++  *       filed application, and where the open project stands on it, read from
++  *       what its Vault records;
++  *   list_fda_technical_rules — FDA's published PDF, eCTD and study-data rules,
++  *       what missing each costs, and whether the platform checks it today.
++  *
++  * ── Why these exist ──────────────────────────────────────────────────────────
++  * The platform's deepest regulatory knowledge — the CTD authoring overlay, the
++  * lifecycle document types — was reachable by no AnA tool: only the IND section
++  * registry and one IND route read it (D2 survey, 2026-10-04). AnA drafted from
++  * prompt tables that had drifted from it. These tools put the canonical record
++  * in front of her, and the record says how strongly each statement is
++  * evidenced, so she can tell a client what FDA requires from what the platform
++  * recommends.
++  *
++  * ── Rules these tools keep ───────────────────────────────────────────────────
++  *   - Deterministic: every answer is read from server/services/ind/ctd; nothing
++  *     here asks a model for a fact, a verdict or a figure.
++  *   - The program comes from the conversation (resolveOpenProgram), never from
++  *     input. With no open project the plan still answers, without a standing.
++  *   - A failed read is said to have failed. A step the Vault cannot hold is
++  *     `not_visible`, never `not_found`, and never done.
++  *   - Every result fits RESULT_BUDGET serialized (see authoring-read-tools.ts
++  *     "Size": results over 8000 characters are cut before the model reads
++  *     them), and no result has a top-level `status`.
++  *
++  * Handlers are registered through the injected `register`, so this module
++  * imports only types from the executor and adds no import cycle.
++  *
++  * @module server/services/ana/regulatory-knowledge-tools
++  */
++
++ import type { AnaTool } from '../ai-gateway/types';
++ import type { ToolContext } from './AnaToolExecutor.js';
++ import type { RegisterFn } from './document-tools-shared.js';
++ import { resolveOpenProgram } from '../c2c/program-access';
++ import { createScopedLogger } from '../../utils/logger';
++ import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
++ import {
++   ELSA_NOTE,
++   SUBMISSION_CHAIN,
++   evaluateChain,
++   getChainNode,
++   listLifecycleIds,
++   renderE3Brief,
++   renderLifecycleBrief,
++   renderSectionBrief,
++   rulesByArea,
++   type ChainVerdict,
++   type VaultSectionFact,
++ } from '../ind/ctd/index.js';
++
++ const logger = createScopedLogger('regulatory-knowledge-tools');
++
++ /** The most any one result may weigh, serialized. */
++ export const RESULT_BUDGET = 5000;
++ /** Vault rows read for a standing; one more than this means the read was cut short. */
++ export const VAULT_FACTS_MAX = 5000;
++
++ const BRIEF_CHARS = 4200;
++ const CSR_ALIASES = new Set(['csr', 'clinical study report', 'clinical_study_report', 'e3', 'ich e3']);
++
++ export const GET_DOCUMENT_SECTION_REQUIREMENTS: AnaTool = {
++   name: 'get_document_section_requirements',
++   description:
++     'What a regulatory document or section must contain, from the platform’s canonical guidance: the content a ' +
++     'complete section carries, the tables and data reviewers expect, where the data usually come from, the common ' +
++     'deficiencies that draw information requests or refuse-to-file, what to read it with, and the basis of each ' +
++     'statement (a checked FDA/ICH text, ICH recall, or platform practice). Pass a CTD section code ("2.7.3", ' +
++     '"2.5", "3.2.P.5", "1.14.4.1", "5.3.5.3"), a document type ("nda", "bla", "iss", "ise", "ind_initial", "dsur", ' +
++     '"pre_nda_meeting", "nda_bla_annual_report"), or "csr" with an ICH E3 heading in `section` ("12.2", "16.1.9"; ' +
++     'omit for the outline). Call it before drafting or reviewing a CSR, a Module 2 summary or overview, a Module 3 ' +
++     'section or an application component, and state its requirements rather than recalling them.',
++   input_schema: {
++     type: 'object',
++     properties: {
++       document: { type: 'string', description: 'A CTD section code, a document type id, or "csr".' },
++       section: { type: 'string', description: 'With document "csr": the ICH E3 heading number. Omit for the outline.' },
++     },
++     required: ['document'],
++   },
++ };
++
++ export const PLAN_SUBMISSION_FROM_DATABASE_LOCK: AnaTool = {
++   name: 'plan_submission_from_database_lock',
++   description:
++     'The sequence from study close-out and database lock to a filed NDA or BLA, and where the open project stands ' +
++     'on it: SAP final → database lock → SDTM (TS, DM, define.xml, reviewer’s guide) → ADaM (ADSL) → tables, listings ' +
++     'and figures → clinical study reports → integrated datasets → ISS and ISE (5.3.5.3) → 2.7.x summaries → 2.5 ' +
++     'Clinical Overview → labeling → eCTD assembly → technical validation → transmission. Each step names what it ' +
++     'produces, what it is written from, where it is filed, the check it must pass, and what FDA checks on receipt. ' +
++     'With a project open, each step’s state is read from the project’s Vault (filed, proposed, not found, or not ' +
++     'visible to the platform), with what is next, what is blocked and on what, and anything filed ahead of its ' +
++     'sources. Pass `step` (for example "csr", "ise", "m2_7_3") for one step in full. Use it for "what happens after ' +
++     'database lock", "what is next for the submission", "what is blocking 2.7.3", or organising the data room.',
++   input_schema: {
++     type: 'object',
++     properties: {
++       step: { type: 'string', description: 'A step id from the plan, for its full detail. Omit for the whole plan.' },
++     },
++     required: [],
++   },
++ };
++
++ export const LIST_FDA_TECHNICAL_RULES: AnaTool = {
++   name: 'list_fda_technical_rules',
++   description:
++     'FDA’s published technical rules for what a reviewer receives — PDF (version, no security, embedded fonts, ' +
++     'bookmarks and hyperlinked table of contents, text searchable rather than scanned images), eCTD (relative ' +
++     'hyperlinks, file and path naming, granularity), study data (TS dataset, DM, ADSL and define.xml, XPORT v5, ' +
++     'reviewer’s guides — the technical rejection criteria), and content (ISS/ISE placement, CRFs for deaths and ' +
++     'adverse-event withdrawals, Module 2 length, refuse-to-file) — each with what missing it costs, its source, and ' +
++     'whether this platform checks it today. Also what FDA has said about Elsa, its AI review assistant. Use it for ' +
++     '"will this pass FDA technical validation", "is our dossier ready for Elsa", "what are FDA’s PDF requirements", ' +
++     'or "why would the gateway reject this". Pass `area` (pdf, ectd, study-data, content, labeling) for one area in full; labeling holds the PLR format rules for a US Prescribing Information.',
++   input_schema: {
++     type: 'object',
++     properties: {
++       area: { type: 'string', enum: ['pdf', 'ectd', 'study-data', 'content', 'labeling'], description: 'One area in full. Omit for every rule in brief.' },
++     },
++     required: [],
++   },
++ };
++
++ export const REGULATORY_KNOWLEDGE_TOOLS: AnaTool[] = [
++   GET_DOCUMENT_SECTION_REQUIREMENTS,
++   PLAN_SUBMISSION_FROM_DATABASE_LOCK,
++   LIST_FDA_TECHNICAL_RULES,
++ ];
++
++ // ── get_document_section_requirements ───────────────────────────────────────
++
++ const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
++
++ export function documentSectionRequirements(input: Record<string, unknown>): string {
++   const document = str(input.document);
++   const section = str(input.section);
++   if (!document) {
++     return JSON.stringify({ error: 'get_document_section_requirements needs `document`: a CTD section code, a document type id, or "csr".' });
++   }
++   const key = document.toLowerCase();
++   let requirements: string | null;
++   let kind: string;
++   if (CSR_ALIASES.has(key)) {
++     requirements = renderE3Brief(section || null, BRIEF_CHARS);
++     kind = 'ICH E3 clinical study report';
++     if (!requirements) {
++       return JSON.stringify({ not_indexed: true, message: `ICH E3 has no heading "${section}". Omit \`section\` for the outline of §1–§16.` });
++     }
++   } else if (normalizeCtdCode(document)) {
++     requirements = renderSectionBrief(document, BRIEF_CHARS);
++     kind = 'CTD section';
++   } else {
++     requirements = renderLifecycleBrief(key, BRIEF_CHARS);
++     kind = 'document type';
++   }
++   if (!requirements) {
++     return JSON.stringify({
++       not_indexed: true,
++       message: `The platform's guidance has no entry for "${document}". It is not stated here; do not supply requirements from memory as if it were.`,
++       document_types: [...listLifecycleIds(), 'csr'],
++     });
++   }
++   return JSON.stringify({
++     kind,
++     requirements,
++     note: 'Reference structure from the platform’s canonical guidance; the sponsor owns every conclusion. Statements marked as recall or platform practice are not a regulator’s text.',
++   });
++ }
++
++ // ── plan_submission_from_database_lock ──────────────────────────────────────
++
++ export interface KnowledgeQueryable { query(sql: string, params?: unknown[]): Promise<{ rows: unknown[] }> }
++ type PoolSource = () => KnowledgeQueryable | Promise<KnowledgeQueryable>;
++ const appPool: PoolSource = async () => (await import('../../db.js')).getPool();
++
++ /**
++  * The open program's live Vault documents at the CTD sections the plan reads,
++  * scoped by organization and program in the statement itself.
++  */
++ export async function readVaultFacts(
++   pool: KnowledgeQueryable,
++   organizationId: number,
++   programId: string,
++ ): Promise<{ facts: VaultSectionFact[]; truncated: boolean }> {
++   const { rows } = await pool.query(
++     `SELECT d.ctd_section, d.placement_status, d.document_title
++        FROM vault.documents d
++        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
++       WHERE d.program_id = $2
++         AND d.deleted_at IS NULL
++         AND d.ctd_section IS NOT NULL
++         AND (d.ctd_section LIKE '2.%' OR d.ctd_section LIKE '5.%' OR d.ctd_section LIKE '1.14%')
++       LIMIT $3`,
++     [organizationId, programId, VAULT_FACTS_MAX + 1],
++   );
++   const facts = (rows as Array<Record<string, unknown>>).slice(0, VAULT_FACTS_MAX).map((r) => ({
++     ctdSection: String(r.ctd_section),
++     placementStatus: String(r.placement_status ?? ''),
++     title: String(r.document_title ?? ''),
++   }));
++   return { facts, truncated: rows.length > VAULT_FACTS_MAX };
++ }
++
++ function stepDetail(id: string): string {
++   const node = getChainNode(id);
++   if (!node) {
++     return JSON.stringify({ error: `No step "${id}" in the plan.`, steps: SUBMISSION_CHAIN.map((n) => n.id) });
++   }
++   return JSON.stringify({
++     step: {
++       id: node.id, title: node.title, stage: node.stage, scope: node.scope, produces: node.produces,
++       written_from: node.dependsOn, filed_under: node.files ?? [], gate: node.gate, fda_checks: node.reviewerChecks ?? [],
++       basis: node.basis.map((b) => `${b.ref} (${b.confidence}${b.url ? `, ${b.url}` : ''})`),
++       platform_sees: node.evidence.kind === 'vault' ? `a document filed at ${node.evidence.sections.join(', ')}` : node.evidence.why,
++     },
++   });
++ }
++
++ function compactStanding(v: ChainVerdict, truncated: boolean): Record<string, unknown> {
++   const states: Record<string, string> = {};
++   for (const n of v.nodes) states[n.id] = n.documents ? `${n.state} (${n.documents})` : n.state;
++   return {
++     states,
++     next: v.next.map((n) => (n.assumes.length ? `${n.id} (assumes ${n.assumes.join(', ')} done; not visible here)` : n.id)),
++     blocked: v.blocked.map((b) => `${b.id} waits on ${b.waitsOn.join(', ')}`),
++     filed_ahead_of_sources: v.filedAheadOfSources.map((f) => `${f.id} is filed but ${f.missing.join(', ')} is not`),
++     ...(truncated ? { incomplete: `More than ${VAULT_FACTS_MAX} documents at these sections; "not_found" may be wrong — say so.` } : {}),
++   };
++ }
++
++ const PLAN_LINES = SUBMISSION_CHAIN.map((n) => `${n.id}: ${n.title} ← ${n.dependsOn.length ? n.dependsOn.join(', ') : 'start'}${n.files?.length ? ` [${n.files.join(', ')}]` : ''}`);
++
++ async function submissionPlan(poolOf: PoolSource, input: Record<string, unknown>, ctx?: ToolContext): Promise<string> {
++   const step = str(input.step);
++   if (step) return stepDetail(step);
++   const base = {
++     plan: PLAN_LINES,
++     legend: 'id: step ← what it is written from [where it is filed]. Pass step=<id> for one step in full.',
++   };
++   if (!ctx?.organizationId) {
++     return JSON.stringify({ ...base, standing: null, standing_note: 'No organization in context, so no project standing.' });
++   }
++   try {
++     const pool = await poolOf();
++     const programId = await resolveOpenProgram(pool, {
++       organizationId: ctx.organizationId, projectId: ctx.projectId ?? null, projectRef: ctx.projectRef ?? null,
++     });
++     if (!programId) {
++       return JSON.stringify({ ...base, standing: null, standing_note: 'No project is open, so no standing. Open a project to see where it stands.' });
++     }
++     const { facts, truncated } = await readVaultFacts(pool, Number(ctx.organizationId), programId);
++     let verdict = evaluateChain(facts);
++     if (truncated) {
++       verdict = { ...verdict, nodes: verdict.nodes.map((n) => (n.state === 'not_found' ? { ...n, state: 'not_visible' as const, why: 'The Vault read was cut short.' } : n)) };
++     }
++     return JSON.stringify({ ...base, standing: compactStanding(verdict, truncated) });
++   } catch (err) {
++     // The driver's message names tables; it goes to the log. The model is told
++     // the read failed, never that the steps are missing.
++     logger.error('plan_submission_from_database_lock failed', { err: err instanceof Error ? err.message : String(err) });
++     return JSON.stringify({ ...base, standing: null, standing_error: 'The project’s Vault could not be read just now. Say so; do not report any step as missing.' });
++   }
++ }
++
++ // ── list_fda_technical_rules ────────────────────────────────────────────────
++
++ export function fdaTechnicalRules(input: Record<string, unknown>): string {
++   const area = str(input.area).toLowerCase();
++   const rules = rulesByArea(area || null);
++   if (area && rules.length === 0) {
++     return JSON.stringify({ error: `No area "${area}". Areas: pdf, ectd, study-data, content, labeling.` });
++   }
++   const full = Boolean(area);
++   return JSON.stringify({
++     rules: rules.map((r) => full
++       ? { id: r.id, rule: r.rule, if_missed: r.consequence, source: r.basis.ref, url: r.basis.url, platform: r.platform.check, platform_note: r.platform.note }
++       : { id: r.id, area: r.area, rule: r.rule, platform: r.platform.check }),
++     elsa: full ? undefined : { checked: ELSA_NOTE.checked, guidance: ELSA_NOTE.guidance, facts: ELSA_NOTE.facts.map((f) => f.url) },
++     note: full ? undefined : 'Pass area for each rule’s consequence, source and what the platform checks.',
++   });
++ }
++
++ // ── registration ─────────────────────────────────────────────────────────────
++
++ /** Register the three handlers on the executor's registry (or a test's). */
++ export function registerRegulatoryKnowledgeHandlers(register: RegisterFn, options: { pool?: PoolSource } = {}): void {
++   const poolOf = options.pool ?? appPool;
++   register('get_document_section_requirements', async (input) => documentSectionRequirements(input ?? {}));
++   register('plan_submission_from_database_lock', async (input, ctx) => submissionPlan(poolOf, input ?? {}, ctx));
++   register('list_fda_technical_rules', async (input) => fdaTechnicalRules(input ?? {}));
++ }
++
+
+ ❯ tests/regulatory/requirements-resolver.test.ts:159:18
+    157|   it('is the only dispatch: the tool delegates and keeps no copy of th…
+    158|     const tool = source('server/services/ana/regulatory-knowledge-tool…
+    159|     expect(tool).toContain('resolveRequirements(');
+       |                  ^
+    160|     for (const copy of ['CSR_ALIASES', 'renderE3Brief', 'renderSection…
+    161|       expect(tool, `regulatory-knowledge-tools.ts still carries ${copy…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > imports the brief renderers and is imported by none of them
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/requirements-resolver.ts'
+ ❯ source tests/regulatory/requirements-resolver.test.ts:97:33
+     95|
+     96| const ROOT = resolve(__dirname, '../..');
+     97| const source = (rel: string) => readFileSync(resolve(ROOT, rel), 'utf8…
+       |                                 ^
+     98|
+     99| function answer(a: RequirementAnswer): Extract<RequirementAnswer, { ki…
+ ❯ tests/regulatory/requirements-resolver.test.ts:166:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/server/services/ind/ctd/requirements-resolver.ts' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  02:08:04
+   Duration  925ms (transform 526ms, setup 85ms, import 516ms, tests 52ms, environment 0ms)
+
