@@ -1,0 +1,12 @@
+Mutant F03-followups-other-config: the follow-up rounds reason under a different config than the first call's
+
+--- server/routes/ana-ri/stream.ts
+- const followUpThinking = () => (driveState.enabled && driveState.mode === 'demo' ? undefined : streamThinkingConfig);
++ const followUpThinking = () => (driveState.enabled && driveState.mode === 'demo' ? undefined : streamThinkingConfig && { ...streamThinkingConfig, budgetTokens: 1024 });
+
+Tests run: server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > every call of a reasoning turn carries the turn's thinking config, and every round's reasoning is shown and kept 38ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
