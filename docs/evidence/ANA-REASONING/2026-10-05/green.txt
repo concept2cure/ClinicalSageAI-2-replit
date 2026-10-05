@@ -1,0 +1,237 @@
+Round 3's suites (GRD-2) and the suites of the paths it joins, green, on the round-3 tree (trunk 962f15f7f plus this change).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run tests/services/proposal-check.test.ts server/routes/ana-ri/__tests__/stream-proposal-check.test.ts server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts server/routes/ana-ri/__tests__/stream-run-hold.test.ts server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says how many specific claims were not found in this turn's sources, and quotes them by kind 45ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > names what it checked against 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says every claim was found, and still earns no check mark: found is not verified (HS-2) 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says a figure is AnA's own input to a tool, not a result (HS-5) 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says a claim found only in the person's message is theirs, never found (HS-3) 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > with no source consulted, the claims are not checked — never found, never a pass 15ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > with no source consulted, a claim only in the person's message is said to be theirs (F1) 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > nothing to check is not a pass 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > names a verdict the answer states, and says where verdicts come from 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > names a source the check could not read, and leaves what it may hold unchecked (HS-4) 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > names an unread source on its own when nothing was left unchecked 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > says nothing about what it checked against when there was nothing to check (HS-9) 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > lists three claims and counts the rest 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > reports labels as labelled, never as grounded, and never as sources 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > names the flags by kind and quotes the first 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > a label check that ran and failed shows what failed — it is not "not assessed" 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > a failed label check with no counts still shows what failed, beside the engine's check 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > clean labels carry no check mark: a label is not verification 16ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > with no check either, says the answer was not assessed and shows no count 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > with a check, the unassessed labels add nothing to it 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > renders nothing when the turn carries no verdict at all 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > never states a verdict in colour alone 14ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > reads it with the strip's own reader 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > a malformed check is no check, and the prompt still opens 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > a frame with no check opens the prompt with none 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > an end-of-turn proposal carries the check too > reads the check from a HUMAN_CONFIRMATION_REQUIRED envelope in post_done, and drops a malformed one 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > quotes what was not found in this turn's sources, and names the verdict 86ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > shows no check when the proposal carried none 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > shows a list by its items' titles, not as "N items" 10ms
+ ✓ tests/services/proposal-check.test.ts > the prose a proposal would store > reads every free-text field, at any depth, and no other field 30ms
+ ✓ tests/services/proposal-check.test.ts > the prose a proposal would store > reads a list of paragraphs under a prose field 1ms
+ ✓ tests/services/proposal-check.test.ts > the prose a proposal would store > stops at a fixed depth, so no proposal shape can overflow the stack 3ms
+ ✓ tests/services/proposal-check.test.ts > a proposal checked against this turn's sources > finds what the sources hold, and names what they do not 19ms
+ ✓ tests/services/proposal-check.test.ts > a proposal checked against this turn's sources > names a verdict the draft states 8ms
+ ✓ tests/services/proposal-check.test.ts > a proposal checked against this turn's sources > with nothing consulted, the draft's claims are not checked — never found 1ms
+ ✓ tests/services/proposal-check.test.ts > a proposal checked against this turn's sources > a proposal that stores no prose has nothing to check 0ms
+ ✓ server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts > the sign-off row names what the approver was shown about the draft > carries the check of the draft: its counts, what was not found, and the verdicts it states 3ms
+ ✓ server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts > the sign-off row names what the approver was shown about the draft > a proposal held with no check carries none, and claims none 0ms
+ ✓ server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts > the sign-off row names what the approver was shown about the draft > keeps the row bounded: at most twenty texts of each list, each at most 200 characters 1ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > post_done names what the proposed draft states that this turn's sources do not hold 49ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > a result that is not put to a person carries no check 5ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels 1868ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > post_done, the stored message and the sealed record carry the same check 11ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > with no tool run, a turn still says what was checked: claims unchecked, not grounded 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > a short answer the labels do not assess is still checked 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > the approval frame and the held approval carry the check of the draft against what AnA consulted 67ms
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a draft written before anything was consulted is not checked — never found 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a proposal that stores no prose carries no check 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > extractPendingSignoffs > pulls only well-formed PART11 blocks and reads the tier flag 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > extractPendingSignoffs > returns [] for missing / non-array input 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > extractPendingSignoffs > surfaces an agent's proposal (HUMAN_CONFIRMATION_REQUIRED) with its tier — the confirm tier asks for no reason 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > asks for neither a reason nor credentials, and says what AnA proposed 65ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > confirming posts { confirm: true } with the command and params, and no reason or password 178ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > the reason tier still needs its reason before the button enables 36ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > reason-only tier shows no password field 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact tier requires a password field 16ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > an ordinary write runs with no reason and no password, confirmed by a person 35ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run without an explicit yes 6ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run when the confirmation could not be recorded 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > the Part 11 tiers still demand what they demanded 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > a read is still not something this route runs 5ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a yes on a held run runs the command from the ROW and releases the run 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a yes on a held command runs it with the model call that proposed it, from the ROW (D6) 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a command posted without its run names no model call: null, never the body's claim (D6) 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline records the decision, runs nothing, and releases the run at once 11ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline whose audit row was lost still releases the run, and says so 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline needs a run to apply to 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > an approval proposed by AnA asks for a reason, not a click 5ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > runs on a yes, with the run's own context and the confirmation stamped 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > runs as the conversation and turn that proposed it, under the model that served it (PF-10 S5) 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > is not run without an explicit yes 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact tier presents the §11.50 meaning enum (AUTHOR/REVIEWER/APPROVER) 56ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact tier states the 11.100(b) attestation and re-auth-at-signing 8ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > renders as a modal dialog naming the action and consequence 15ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > Escape cancels the dialog 9ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > associates the reason error via aria-invalid + aria-describedby when too short 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > submits the reason + command to the governed-action route and reports outcome 29ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > is not run from a body alone — there is no held run to take its context from 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > can be declined like any proposal 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > any write the register classes confirm runs on a yes — not only the original five 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > never runs a person's own act, whatever the held row says and whatever was clicked 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > a tool the register does not know is still a tool, confirmed like any write (it failed closed) 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > is not run on a bare yes: the person states the reason 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > runs with the person's reason in place of the model's, and records both 7ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > a person who adopts AnA's wording is recorded as having done so 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > a tool whose reason input is reason_for_change gets the person's reason there 8ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > a signer who declares Authorship is recorded as Authorship, not Approval — on the sign-off and the audit row 8ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > REVIEWER is recorded as review 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > APPROVER is recorded as approval 7ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an e-signature with no declared meaning, and runs and records nothing 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("approval"), and runs and records nothing 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("OWNER"), and runs and records nothing 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("author"), and runs and records nothing 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning (""), and runs and records nothing 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning (7), and runs and records nothing 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > the FDA ESG transmit is handed the declared meaning — the value its signature row records 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > on a held run the meaning is the signer's, from the posted body — never one the model wrote into the row 6ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > the reason-only tier is unchanged: no meaning is asked for 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature sign-off carries the verified factors > the sign-off carries the factors re-verification actually checked (MFA as MFA) 11ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > the sign-off names the run, the tool call, the model call and a hash of the params authorised 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > an executed row follows, with the outcome, the duration and the same trace 5ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a command its own gate refused is recorded refused, not ok 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a failed execution is recorded failed, with what failed 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a failed execution whose row did not persist says that too 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > an executed row that did not persist is said, to the person and to the waiting run 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a command posted without its run still gets both rows, with no run and no model call 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact submit requires reason + re-auth + meaning and forwards them 46ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > keeps Confirm disabled until the reason is long enough 13ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — a proposed reason > shows what AnA proposed and its reason whole, but leaves the reason field empty 26ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — a proposed reason > adopting AnA's wording is an act of the person, and that is what is sent 28ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — a proposed reason > the person's own words are sent when they write them 25ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > the proposal carries the meaning the act fixes > end of turn: extractPendingSignoffs keeps it 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > the proposal carries the meaning the act fixes > live: pendingSignoffFromApproval keeps it 9ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > the proposal carries the meaning the act fixes > a value that is not a meaning the dialog has is dropped, not offered 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — declining > on a live prompt, Cancel tells the waiting run 69ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — declining > Escape on a live prompt declines too 66ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — declining > on a finished turn there is nothing waiting, and nothing is sent 12ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > offers that meaning only, already chosen 226ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > signs with it: the reason and the password are all that is asked for 68ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > an act that fixes none still offers the three, and no Release 47ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > shows the statement of intent the server records with the signature 14ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a date, an age or a page does not find a fabricated figure 26ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > the figures the record does hold are found by their measure 7ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a p-value is not a percentage, and a percentage is not a p-value 3ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > an outage envelope finds nothing through its percent-encoded URL (F3) 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a figure in a returned abstract is found, though the model searched for it (HS-5) 7ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a figure the model chose as an input and a tool echoes is AnA's input, not a result (HS-5) 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "The response rate was 47 percent." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "hazard ratio, 0.31; 95% CI, 0.50 to 0.77" 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "The p-value = 0.0003." 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "A P value of 0.0003 was reported." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Enrollment was 212 pts." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "A total of 212 randomized patients." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "212 women were enrolled." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Median OS was 31.2 mo." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Treatment lasted 48 h." 2ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Dosed at 100 μg daily." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "95% CI [0.41, 0.77]" 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "HR (95% CI) 0.62 (0.50–0.77)" 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Responses ranged from 38–56%." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > a range checks both ends, and a sign or a proportion is read as written (F8) 2ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > "or" in prose is not an odds ratio (HS-7) 2ms
+ ✓ tests/services/answer-check-r2.test.ts > the person's own message is never a source (F1, HS-3) > a claim found only in the question is reported as theirs, not found 1ms
+ ✓ tests/services/answer-check-r2.test.ts > the person's own message is never a source (F1, HS-3) > with nothing consulted, a claim in the question is still the person's, and the rest unchecked 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a citation check that did not find the PMID does not find it 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a verified citation confirms the identifier it matched, not what the model packed beside it 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > an identifier in a fetched URL is not found; the page must hold it 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a tool that searches text the model supplied returns only the model's words 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > echoes nested under other keys, in bare lists or in a not-found list find nothing 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a registry record about the identifier the model searched for confirms it 0ms
+ ✓ tests/services/answer-check-r2.test.ts > identifiers and regulations are matched as themselves (F7) > an ICH code is not found inside another word or beside an unrelated number 1ms
+ ✓ tests/services/answer-check-r2.test.ts > identifiers and regulations are matched as themselves (F7) > a labelled submission number needs its label in the source, not any equal number 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a source the check cannot read leaves its claims unchecked (HS-4) > claims not found elsewhere are not checked, naming the unread source 0ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts (F9, HS-6) > names the verdicts stated 2ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts (F9, HS-6) > does not name a verdict declined, made conditional, or about a workflow step 0ms
+ ✓ tests/services/answer-check-r2.test.ts > cost and shape (F10) > long whitespace runs in an answer stay linear 1ms
+ ✓ tests/services/answer-check-r2.test.ts > cost and shape (F10) > a deeply nested result does not throw 2ms
+ ✓ tests/services/answer-check-r2.test.ts > cost and shape (F10) > names the round-2 engine 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a proportion she passed, restated as a percentage, is her input 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a percentage she passed, restated as a proportion, is her input 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a figure she searched for is still found in a passage the source returns (HS-5 holds) 3ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a figure one tool restates from her input is found in another tool that returns it 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an identifier the citation tool verified is found (probe p5 G1) > a labelled PMID the tool verified is found 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an identifier the citation tool verified is found (probe p5 G1) > what the model packed beside it is still not found 0ms
+ ✓ tests/services/answer-check-r2.test.ts > regulations cited as a list are each read (probe p9 I7) > reads "21 CFR Parts 50 and 56" as two parts 1ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts, re-run (probes p8 and probe-verdicts) > names the verdicts round 2 still missed 2ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts, re-run (probes p8 and probe-verdicts) > does not name a verdict asked, doubted, or made conditional after it 0ms
+ ✓ tests/services/answer-check-r2.test.ts > cost at scale (probe p6) > 200 identifiers and 200 figures against 25 sources of 60k characters take well under two seconds 337ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a p-value needs p: alpha is not a p-value 4ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a hazard ratio needs its name: a dose is not a hazard ratio 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > n and a count need what they count: a page number is neither 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a dose needs its unit: a duration in days is not a dose in mg 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a date is not a count, even in a field named for a cohort or a sample 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > "or" in a source's prose is not an odds ratio 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > two bounds far apart in one text are not an interval 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > two numbers that are not a CI are not an interval 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > bounds from two different records are not one interval 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > an interval returned as a pair of numbers is found 0ms
+ ✓ tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record that says it was not found confirms nothing it names 1ms
+ ✓ tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record holding only the model's own identifier and a position confirms nothing 0ms
+ ✓ tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record whose own value is a figure ("47%") does confirm the identifier it is about 0ms
+ ✓ tests/services/answer-check-r2.test.ts > a malformed identifier is flagged, not skipped (round-2 mutants) > a nine-digit NCT number is a claim of its own, not the trial inside it 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > finds a figure a tool returned, and flags one it did not 18ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > reads a percentage as its proportion too 6ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > needs both bounds of a confidence interval, and does not read "95% CI" as a result 2ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a tool only echoed from what the model passed in 2ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a model wrote inside the tool call 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > a figure an engine returned beside a model-written one is still found 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > finds the identifiers the evidence holds 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > does not find a truncated or altered identifier inside a longer one 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > does not credit an identifier a model wrote inside the tool call 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > an outage envelope that echoes the query finds nothing 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a zero-hit result finds nothing, and neither does the query its provenance echoes 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a hit returns the identifier in a record, and is found 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a result that is not structured cannot tell an echo from data, and finds nothing the model asked for 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a quote the model searched for is found only in a returned passage 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > an identifier the model did not ask for is found wherever the result holds it 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a regulation looked up is found in the record the lookup returns, not in the echo of a miss 2ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a citation formatted from what the model gave, and not verified, finds nothing 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a citation the tool verified against a source is found 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a regulation a model wrote inside the tool call is not credited by it 1ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a successful result is a source, named by its tool 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a failed, stopped or empty step is not 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a governed write is not: its output is the content it stored 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a result whose generations are unknown, or too many to keep, is not 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > with only the person's own message, claims are unchecked or theirs, never "not found" 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > a source the check cannot read is named, not counted as read 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > names the engine that checked 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — verdicts > names a readiness, compliance or approval verdict the answer states 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — verdicts > includes the §14 prohibited claims, and not a verdict the answer declines to give 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a live approval becomes the sign-off the rail already renders > carries the command, the params and the tier 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a live approval becomes the sign-off the rail already renders > carries the routing pair — without it the decision cannot reach her 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a live approval becomes the sign-off the rail already renders > carries the confirm tier the server names, and derives the tier when an older server names none 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a live approval becomes the sign-off the rail already renders > is the reason-only tier when no signature is demanded 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a live approval becomes the sign-off the rail already renders > defaults params rather than leaving them undefined 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a live approval becomes the sign-off the rail already renders > falls back to honest copy when the server sent none 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a frame that could not be answered raises no prompt > no runId — the answer would have nowhere to go 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a frame that could not be answered raises no prompt > no toolUseId — the decision could not be bound to a proposal 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a frame that could not be answered raises no prompt > no command — nothing to describe to the person 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a frame that could not be answered raises no prompt > no data at all 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a frame that could not be answered raises no prompt > non-string routing values are refused, not coerced 0ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — 21 CFR Part 11 signature gate > draws the signature prompt for a turn the server blocked pending sign-off 268ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — 21 CFR Part 11 signature gate > draws no prompt for an ordinary answer 27ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — the turn's work record reaches the thread > in flight: the phase line and the tool row are in the thread, on one turn, with no dots 36ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — the turn's work record reaches the thread > settled: the record survives the answer, collapsed to its summary 21ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a dispatched tool receives the resolved thread, the run as its turn, and the served model 32ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a held governed call records the same: the only path a confirm-class draft takes in production 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > when the thread could not be persisted, the held call names no conversation — never the client's thread id 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run that is not paused runs its round with no pause frames 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a paused run holds the round, says paused once and resumed once, then runs it 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run cancelled while paused says cancelled and runs nothing more 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a pause nobody answers is resumed as abandoned once, at MAX_PAUSE_MS, and the round runs 6ms
+ Test Files  15 passed (15)
+      Tests  232 passed (232)

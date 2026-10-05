@@ -31,6 +31,7 @@ import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import { groundingResultOf, type EvidenceEntry } from '../../services/ana/answer-grounding.js';
+import { withProposalChecks } from '../../services/ana/proposal-check.js';
 import { verifyTurnAnswer } from '../../services/ana/turn-verification.js';
 import { computeRimClaimMetrics } from '../../services/ana/rim-claim-metrics.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
@@ -422,6 +423,9 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
         console.warn('[AnA RI Stream] Command executor failed:', e?.message);
       }
     }
+    // Each proposal put to a person at the end of the turn carries the check of
+    // the prose it would store, as one held mid-turn does (GRD-2, stream.ts).
+    executedCommands = withProposalChecks(executedCommands, toolEvidenceCorpus);
 
     const finalAssistantContent =
       cleanedFullContent && cleanedFullContent.trim().length > 0
