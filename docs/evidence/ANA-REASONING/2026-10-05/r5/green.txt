@@ -1,0 +1,262 @@
+Round 5's suites, green, on the round-5 tree (merged with trunk b2e745744): round 5's two suites, every stream-route suite (stream-*.test.ts), and every suite of the agentic loop and the tool trace.
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run tests/services/tool-outcome.test.ts server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts server/routes/ana-ri/__tests__/stream-*.test.ts tests/services/agentic-loop.test.ts tests/services/tool-trace.test.ts server/services/ana/__tests__/{agentic-loop-*,executor-agentic-loop*,tool-trace-*}.test.ts
+
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message 5054ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a run-policy turn stores its policy, the steps it did not run and her own holds (S4) 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > an answer that was cut off is stored as one 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > keeps the loop rounds beside its reason 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > the turn's done frame carries stoppedReason, rounds and the run policy 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > hands both to post-processing 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > records a warning on the turn record when the loop did not end by her choice 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > adds the stopped-turn note beside the trace note, from the same history 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > decides a cut-off answer from the last call, before anything reads the reason 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > returns immediately when the first turn has no tool calls 4ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > chains multiple rounds until the model stops calling tools 2ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > caps at maxRounds and forces a final answer (tools withdrawn on the last round) 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > detects thrashing (same call repeated) and withdraws tools to break the loop 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > continues when a tool result encodes an error (executor does not throw) 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > rejects a maxRounds below 1 1ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > returns short content unchanged 0ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > truncates oversized content but keeps the head, tail, and a marker 1ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > clamps an unreasonably small limit so it never produces a negative tail 1ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > grounds an answer against the capped view, not the omitted middle 23ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > preserves input order even when workers resolve out of order 31ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > never exceeds the concurrency limit 27ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > processes every item and handles the empty case 0ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > rejects a concurrency below 1 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > produces friendly labels for known tools, incorporating key args 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > truncates long argument values in the label 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > falls back to a humanized name for unknown tools 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > handles a missing query gracefully 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > the approval frame and the held approval carry the check of the draft against what AnA consulted 76ms
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a draft written before anything was consulted is not checked — never found 16ms
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a proposal that stores no prose carries no check 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "auto" → runPolicy "auto" 39ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "manual" → runPolicy "manual" 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "AUTO" → runPolicy null 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "" → runPolicy null 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy undefined → runPolicy null 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > runs round 1 unheld, holds before round 2 naming the step, then runs it 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold before a step that already goes to a person 40ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold while a demonstration drives 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > a person pausing a Manual turn is a person, not the policy 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > Auto and no policy never hold on their own 16ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > the held step never runs; the model is told it was redirected, with the steer in the same call 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > a steer already waiting replaces the step without holding 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > …and the record says the steer replaced a step nobody was shown — never that she stopped and was answered 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > under Auto the same steer does not replace anything: it applies after the step 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > hold_expired, no further model call, the step named and not run 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > a person's own pause in a Manual turn ends it the same way 18ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > the same pause under Auto is resumed as abandoned, as today 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run has no owner who could resume it 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > Auto without a run row runs on, as today 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > an approval nobody answers ends the turn with a closing answer 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, the same unanswered approval is a denial and the turn goes on 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > past 15 minutes of work the next call is the closing answer 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > time held for a person is not work 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, a long step is not a stop 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Auto keeps going past the effort ceiling while each round is new, to 20 rounds 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy the same turn keeps its effort ceiling (balanced: 6 + 2) 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Manual keeps the effort ceiling too 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "failed" (not a person's pause): fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "finished" (not a person's pause): fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads null (not a person's pause): fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written though the row reads running, twice: fails closed, never runs unasked 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written (holdForPerson threw): fails closed 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "failed" — no person answered: fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "finished" — no person answered: fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as null — no person answered: fails closed 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > a person's own pause already in place where Manual would hold becomes her hold: Next is shown, and Resume answers it 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > Stop at a hold: not run, named on done, and the hold filed as stopped 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > a person's pause that expires is filed as the person's pause, not as AnA waiting before her step 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2c) a demonstration the model starts does not switch Manual off > Manual with Live Drive on (not a demo), round 1 starts a demo: a hold is still due before round 2 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > is not sent back to the model as a failure to work around 55ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > is shown to the person as their decision, not as AnA failing 15ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > nobody answering in time is not a failure to work around either 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > control: an approved action that then fails is still a failure > stays in the adaptation note, so a real error is not hidden 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a dispatched tool receives the resolved thread, the run as its turn, and the served model 61ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a held governed call records the same: the only path a confirm-class draft takes in production 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > when the thread could not be persisted, the held call names no conversation — never the client's thread id 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run that is not paused runs its round with no pause frames 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a paused run holds the round, says paused once and resumed once, then runs it 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run cancelled while paused says cancelled and runs nothing more 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a pause nobody answers is resumed as abandoned once, at MAX_PAUSE_MS, and the round runs 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > every call of a reasoning turn carries the turn's thinking config, and every round's reasoning is shown and kept 42ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a demonstration keeps its follow-up rounds as narration: no reasoning display there 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a Fast turn reasons on no call 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > runs at high API effort on the first call and every follow-up, whatever effort was chosen 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > a turn that is not high-stakes keeps the effort chosen 5ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn cut at its round ceiling says max_rounds 5ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn stopped after its first round says cancelled, not no_more_tools 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > an answer with no tools reports a zero-round loop 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > answers TOOL_NOT_OFFERED without dispatching, and lists no other tools 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > an offered name with no handler lists only the offered tools, never the whole registry 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > without an allowlist the unknown-tool answer is what it always was 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent: start and end per call, fired inside the worker, with the round and latency 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent reports a refused call too, so a caller can list what did not run 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onModelResponse: once per gateway call, first call included, with its round 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > stopWhen is the caller’s > ends the turn with a closing answer and its own reason 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > bounds a round to the lanes asked for 31ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > is 4 when not asked, as before 31ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 0 lanes is refused before any model call is spent 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > -1 lanes is refused before any model call is spent 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 1.5 lanes is refused before any model call is spent 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > NaN lanes is refused before any model call is spent 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the dispatch runs inside the refusal scope, and the gateway sends nothing for it 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the loop's own model calls are not refused 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolModelCalls 'refuse' alone also tells the tool (ctx.modelCalls), so it asks for its model-free path 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolContext.modelCalls 'refuse' alone also opens the refusal scope, so the gateway enforces it 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > with neither, the tool is handed exactly the context the caller passed: no modelCalls 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > without the option a tool may call a model, as before 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > names each tool result, carries what a model wrote inside it, and drops a failed step 38ms
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > project data is a source; the instructions, the intelligence prefix and AnA's memory are not 6ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'budget_exhausted' after round 2 withdraws tools from the round-2 model call and names itself 8ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'approval_timeout' after round 2 withdraws tools from the round-2 model call and names itself 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'halt' ends the loop as cancelled with no further model call 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > a thrashing round still reports duplicate_thrash, not the budget 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > is asked once per executed round, with that round 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > hands the checkpoint the pending calls as its second argument 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > replan: the pending calls never run, the model reads one redirected result per call, the count is unchanged 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > the redirected result says the step did not run and asks the model to follow the person 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > the checkpoint is shown the pending step, not handed it: changing what it was shown changes nothing that runs 2ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > abort still stops before the round, exactly as before 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > bounds progress-earned extension 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > bounds a ceiling that rises mid-turn (the demo promotion) 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > without it, the same demo-promoted Auto budget would have reached 34 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > an always-novel Auto loop stops at 20 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > a repeating Auto loop is cut for thrashing well before 20 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > also bounds a base ceiling above it 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, null) → {"maxRounds":6,"progressExtension":2} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, manual) → {"maxRounds":6,"progressExtension":2} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, auto) → {"maxRounds":6,"progressExtension":14,"roundCap":20} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (thorough, auto) → {"maxRounds":10,"progressExtension":10,"roundCap":20} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (fast, auto) → {"maxRounds":4,"progressExtension":16,"roundCap":20} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (thorough, null) → {"maxRounds":10,"progressExtension":4} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > takes an explicit base ceiling (the demo base) and never lowers it 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > adds no roundCap key outside Auto 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'novel, capped': stopWhen returning null and no roundCap change nothing 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'novel, extended': stopWhen returning null and no roundCap change nothing 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'thrash': stopWhen returning null and no roundCap change nothing 5ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'ends early': stopWhen returning null and no roundCap change nothing 2ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'demo floor': stopWhen returning null and no roundCap change nothing 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > a one-argument checkpoint that never replans behaves as before 1ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a tool that needs input it was not given 2ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a service that could not be reached 1ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a lookup or search that found nothing 1ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a result that returned something is not a shortfall 1ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a CMC lookup that found nothing indexed says so as found: 0 (cmc-knowledge-tools.ts) 1ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a vault passage search that matched nothing (document-passage-tools.ts) 0ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a project search that answers in a sentence of its own (project_knowledge_search) 1ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a sentence that is a finding, or an analysis that opens with one, is a result 0ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > records under a field this reader does not know still count as returned 0ms
+ ✓ tests/services/tool-outcome.test.ts > the note the model reads after the round > names each step that returned nothing usable, and says what to do instead of presenting it as found 1ms
+ ✓ tests/services/tool-outcome.test.ts > the note the model reads after the round > is empty when every step returned something, and ignores failed or held steps 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the assistant message keeps the policy, the holds and the steps not run > stores all three with the reason and rounds 2ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the assistant message keeps the policy, the holds and the steps not run > a finished Manual turn keeps its policy and holds, and no reason 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the assistant message keeps the policy, the holds and the steps not run > a turn with no policy stores exactly what it stored before 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the assistant message keeps the policy, the holds and the steps not run > keeps only well-formed labels and holds 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the assistant message keeps the policy, the holds and the steps not run > an unknown policy is not stored 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the turn record says why in words, with the policy, the round and the steps > a Manual hold nobody answered 1ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the turn record says why in words, with the policy, the round and the steps > Manual that could not hold 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the turn record says why in words, with the policy, the round and the steps > Auto's time limit and an unanswered approval 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the turn record says why in words, with the policy, the round and the steps > names the policy on the older reasons too, and only when there is one 1ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the turn record says why in words, with the policy, the round and the steps > no reserved-reason fallback remains for the policy reasons 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the turn record says why in words, with the policy, the round and the steps > each of her own holds is written down: what she held before, and what the person did 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the next turn is told what did not run > names the steps a hold left unrun and says nothing from them was used 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the next turn is told what did not run > budget_exhausted is an unfinished turn 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the next turn is told what did not run > approval_timeout is an unfinished turn 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the next turn is told what did not run > hold_expired is an unfinished turn 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the next turn is told what did not run > hold_unavailable is an unfinished turn 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the next turn is told what did not run > ignores a malformed step list 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > review follow-through: the record never claims a hold, or a wait, that did not happen > a person's pause that expired is the person's pause, not AnA waiting before her step 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > review follow-through: the record never claims a hold, or a wait, that did not happen > a steer that replaced a step before it was shown is not written as a stop she made 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > review follow-through: the record never claims a hold, or a wait, that did not happen > a hold ended by Stop, or by the page closing, says the step was not run 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > review follow-through: the record never claims a hold, or a wait, that did not happen > a Stop at a hold names the step it left unrun 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > review follow-through: the record never claims a hold, or a wait, that did not happen > the new outcomes are kept with the message; an unknown one is not 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the record states durations from the shared ceilings, never as literals > tool-trace.ts has no hard-coded minute count 1ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the record states durations from the shared ceilings, never as literals > turn-run-policy.ts has no hard-coded minute count 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > produces one entry per call, with the ids preserved 3ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > every entry SAYS it was cancelled rather than being empty 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > names the tool, so the record says WHICH step was stopped 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > its barge-in branch returns a mapped result, not an empty array 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > passes the abort signal to the gateway, not only to its own checks 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > forwards the round-boundary checkpoint the loop has always accepted 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > drains the queued operator turns into the next round 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > places them AFTER the tool results, as the streaming route does 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > is declared on the public options, beside the checkpoint it serves 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > races each handler against the signal 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > puts the signal INTO the handler context, not only around it 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > a CANCELLED tool is not reported as a FAILED tool 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > a genuine tool failure still carries its errorMessage 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > scales the round ceiling by effort 3ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > lifts the old flat cap of 5 for the default (balanced) turn 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > falls back to the balanced ceiling for unknown/absent effort 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > never returns fewer rounds than needed to chain a real investigation 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveRoundExtension > scales the progress-earned allowance by effort 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveRoundExtension > falls back to the balanced allowance for unknown/absent effort 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > extends past maxRounds while every round tries novel work 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > does NOT extend when the model is repeating itself 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > default behavior is unchanged when progressExtension is not set 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > thrash still cuts the loop even with extension headroom 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > passes small rounds through byte-identical (classic per-result caps) 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > squeezes an oversized round into the total budget 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > never squeezes a result below the floor 2ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > handles an empty round 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > returns empty when nothing failed 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > names the failures and coaches adaptation, not retry 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > truncates a pathological error message 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores a round-limit stop and the rounds it ran 2ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores a repeated-step stop, and a stop the person made 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > omits the reason when she finished herself, and keeps the rounds 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores nothing new for a turn that ran no tools and ended normally 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > keeps a stop even when nothing else about the turn was worth storing 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > keeps no round count that is not a positive whole number 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names a round-limit stop, with its rounds, and says not to reuse the work as complete 1ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names the limit without a number when the rounds were not kept 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names a repeated-step stop 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > says nothing for a turn she finished, or one the person stopped 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > says nothing for a stored reason that names an Object.prototype member 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > reads only the LAST assistant turn — an earlier stop was already followed by a later answer 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says the answer was written from the work so far, for the round limit and the repeat guard 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says a stop between rounds as one, and a stop before the first round without claiming a round 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says nothing for a turn she finished 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > a loop that ended for want of tools, on an answer that was cut off, did not finish 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > an answer that ended on its own, or whose ending is unknown, leaves the reason as it was 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > a stop the loop already reports stands — it already says the turn stopped short 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > the next turn is told, and the record says, that the answer was cut off 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > passes a highRisk option to resolveModelOverride 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > computes it with isHighRiskRequest from the routing plan’s taskType and riskTier 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > the gateway is sent that same taskType and riskTier on every call that carries the pin 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > writes the frame in exactly one place 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > the frame is the route family’s warning shape, with the code and the plain message 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is written after the pin is resolved and before the model is first called 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelled 1ms
+ ✓ tests/services/tool-trace.test.ts > summarizeToolResult > summarizes known result shapes 2ms
+ ✓ tests/services/tool-trace.test.ts > summarizeToolResult > falls back to truncated text for non-JSON or opaque results 1ms
+ ✓ tests/services/tool-trace.test.ts > buildTraceEntry > captures the tool, label, status and a result summary 1ms
+ ✓ tests/services/tool-trace.test.ts > collectTracesFromHistory > extracts traces from assistant message metadata, most recent last 1ms
+ ✓ tests/services/tool-trace.test.ts > collectTracesFromHistory > ignores messages without a trace and caps the number of entries 1ms
+ ✓ tests/services/tool-trace.test.ts > collectTracesFromHistory > returns nothing when no message carries a trace 0ms
+ ✓ tests/services/tool-trace.test.ts > formatTraceForContext > formats a continuity note and marks non-success entries 0ms
+ ✓ tests/services/tool-trace.test.ts > formatTraceForContext > separates successful tools from failed attempts with distinct guidance 0ms
+ ✓ tests/services/tool-trace.test.ts > formatTraceForContext > omits the reuse section entirely when every attempt failed 1ms
+ ✓ tests/services/tool-trace.test.ts > formatTraceForContext > returns an empty string when there is nothing to carry forward 0ms
+ ✓ tests/services/tool-trace.test.ts > buildAssistantMetadata > returns undefined when there is nothing worth storing 0ms
+ ✓ tests/services/tool-trace.test.ts > buildAssistantMetadata > stores the tool trace alone when no claims were checked 0ms
+ ✓ tests/services/tool-trace.test.ts > buildAssistantMetadata > stores the grounding verdict alongside the trace when claims were checked 0ms
+ ✓ tests/services/tool-trace.test.ts > buildAssistantMetadata > stores grounding even when the trace is empty 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > runs a round's tools in parallel, caps oversized results, and returns the final answer 31ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > stops on duplicate (thrash) tool calls before the round cap 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > short-circuits when the abort signal is already set 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > returns immediately when the first turn requests no tools 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > fills it from the request scope when the scope is the same tenant 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > never borrows another tenant's uuid 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > keeps a uuid the caller passed 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > invents nothing outside a scope 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts > the model is told what came back empty (TP-RL-4) > a search that found nothing is named in the note the next call reads 47ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts > the model is told what came back empty (TP-RL-4) > a round where every step returned something carries no note 7ms
+ Test Files  19 passed (19)
+      Tests  257 passed (257)
