@@ -1,0 +1,227 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts
+{
+  "timestamp": "2026-10-05T03:23:34.527Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:23:34.528Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts
+{
+  "timestamp": "2026-10-05T03:23:34.528Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > blocks an original PMDA sequence on or after the fact's effective date, naming that date 11ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > reads the effective date itself — the first day it is in force blocks 1ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > resolves every spelling of Japan the platform uses (jp, JP, PMDA) 1ms
+   → jp: expected [] to have a length of 1 but got +0
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > does not block before the effective date 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > does not block a continuing sequence of a lifecycle begun in v3.2.2 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > is scoped to Japan — an FDA or EU original is untouched 2ms
+ × server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > follows the registry when its date moves — the date is never copied 1ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > fails closed when the registry no longer carries the fact 1ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > fails closed when no usable as-of date is supplied for a Japanese original 1ms
+   → undefined: expected [] to have a length of 1 but got +0
+ × server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED is a named corpus rule > is catalogued as a Japan dispatch-readiness rule that references the currency fact and the notices 1ms
+   → RULE_CORPUS names JP_ECTD_V4_REQUIRED: expected undefined to be truthy
+ × server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > the assessor hands the sequence's region and an as-of date to the validator > passes region, original-ness, sequence number and asOf through 1ms
+   → readinessOptionsForSequence is not a function
+ × server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > the assessor hands the sequence's region and an as-of date to the validator > a continuing Japanese sequence is not an original 0ms
+   → readinessOptionsForSequence is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > blocks an original PMDA sequence on or after the fact's effective date, naming that date
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts:79:19
+     77|     });
+     78|     const found = r.findings.filter((f) => f.code === CODE);
+     79|     expect(found).toHaveLength(1);
+       |                   ^
+     80|     expect(found[0].severity).toBe('error');
+     81|     expect(found[0].sectionCode).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > reads the effective date itself — the first day it is in force blocks
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts:89:113
+     87|
+     88|   it('reads the effective date itself — the first day it is in force b…
+     89|     expect(jpFinding({ region: 'pmda', isOriginalSequence: true, seque…
+       |                                                                                                                 ^
+     90|   });
+     91|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > resolves every spelling of Japan the platform uses (jp, JP, PMDA)
+AssertionError: jp: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts:94:115
+     92|   it('resolves every spelling of Japan the platform uses (jp, JP, PMDA…
+     93|     for (const region of ['jp', 'JP', 'PMDA', 'pmda']) {
+     94|       expect(jpFinding({ region, isOriginalSequence: true, sequenceNum…
+       |                                                                                                                   ^
+     95|     }
+     96|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > follows the registry when its date moves — the date is never copied
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts:118:19
+    116|     expect(jpFinding({ region: 'pmda', isOriginalSequence: true, seque…
+    117|     const later = jpFinding({ region: 'pmda', isOriginalSequence: true…
+    118|     expect(later).toHaveLength(1);
+       |                   ^
+    119|     expect(later[0].message).toContain('from 2027-01-01;');
+    120|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > fails closed when the registry no longer carries the fact
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts:125:19
+    123|     registryOverride.drop = true;
+    124|     const found = jpFinding({ region: 'pmda', isOriginalSequence: true…
+    125|     expect(found).toHaveLength(1);
+       |                   ^
+    126|     expect(found[0].severity).toBe('error');
+    127|     expect(found[0].message).toMatch(/pmda-ectd-v4-mandatory/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > fails closed when no usable as-of date is supplied for a Japanese original
+AssertionError: undefined: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts:133:35
+    131|     for (const asOf of [undefined, '', '04/10/2026']) {
+    132|       const found = jpFinding({ region: 'pmda', isOriginalSequence: tr…
+    133|       expect(found, String(asOf)).toHaveLength(1);
+       |                                   ^
+    134|       expect(found[0].severity).toBe('error');
+    135|       expect(found[0].message).toMatch(/as-of date/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED is a named corpus rule > is catalogued as a Japan dispatch-readiness rule that references the currency fact and the notices
+AssertionError: RULE_CORPUS names JP_ECTD_V4_REQUIRED: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts:143:59
+    141|   it('is catalogued as a Japan dispatch-readiness rule that references…
+    142|     const rule = getRule(CODE);
+    143|     expect(rule, 'RULE_CORPUS names JP_ECTD_V4_REQUIRED').toBeTruthy();
+       |                                                           ^
+    144|     expect(rule!.findingCode).toBe(CODE);
+    145|     expect(rule!.enforcement).toBe('dispatch-readiness');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > the assessor hands the sequence's region and an as-of date to the validator > passes region, original-ness, sequence number and asOf through
+TypeError: readinessOptionsForSequence is not a function
+ ❯ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts:158:18
+    156| describe('the assessor hands the sequence\'s region and an as-of date …
+    157|   it('passes region, original-ness, sequence number and asOf through',…
+    158|     const opts = readinessOptionsForSequence(
+       |                  ^
+    159|       { region: 'jp', type: 'original', sequenceNumber: '0000' },
+    160|       null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > the assessor hands the sequence's region and an as-of date to the validator > a continuing Japanese sequence is not an original
+TypeError: readinessOptionsForSequence is not a function
+ ❯ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts:168:18
+    166|
+    167|   it('a continuing Japanese sequence is not an original', () => {
+    168|     const opts = readinessOptionsForSequence(
+       |                  ^
+    169|       { region: 'jp', type: 'amendment', sequenceNumber: '0003' },
+    170|       null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 3 passed (12)
+   Start at  03:23:32
+   Duration  4.84s (transform 2.55s, setup 129ms, import 4.35s, tests 25ms, environment 0ms)
+

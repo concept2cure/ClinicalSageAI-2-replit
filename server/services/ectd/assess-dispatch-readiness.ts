@@ -25,7 +25,12 @@ import {
   getSubmissionRegionProfile,
   requiredModule1CodesForRegion,
 } from '../region-profiles/region-profile-service';
-import { computeDispatchReadiness, type DispatchReadinessReport, type ReadinessFinding } from './dispatch-readiness';
+import {
+  computeDispatchReadiness,
+  type ComputeReadinessOptions,
+  type DispatchReadinessReport,
+  type ReadinessFinding,
+} from './dispatch-readiness';
 import { resolveLeafDocuments } from './leaf-document-resolver';
 import {
   evaluateDispatchGate,
@@ -58,6 +63,40 @@ export interface AssessDispatchReadinessParams {
    * fail-closed rule applies under ECTD_REQUIRE_EVALIDATOR in production.
    */
   externalValidationReport?: ExternalValidationReport | null;
+  /**
+   * ISO date (YYYY-MM-DD) the sequence is judged as at. Defaults to today
+   * (UTC) — dispatch files the sequence now, so a date-effective acceptance
+   * rule (JP_ECTD_V4_REQUIRED) is judged against the filing day. Tests and
+   * replays pass it explicitly.
+   */
+  asOf?: string;
+}
+
+/** Today's date (UTC, YYYY-MM-DD) — the filing day a dispatch assessment is judged as at. */
+export function dispatchAsOfDate(now: Date = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
+
+/**
+ * The validator options for one stored sequence. The region and as-of date go
+ * through so a date-effective, region-scoped acceptance rule can be judged;
+ * until 2026-10-05 (g-jp-ectd-v4-dispatch-blocker) neither did, and a new
+ * Japanese application in eCTD v3.2.2 read dispatch-clear after PMDA stopped
+ * receiving that format for new applications.
+ */
+export function readinessOptionsForSequence(
+  sequence: { region: string; type: string | null; sequenceNumber: string },
+  applicationType: string | null,
+  asOf: string,
+): ComputeReadinessOptions {
+  return {
+    requiredSections: requiredModule1Codes(sequence.region, applicationType),
+    // An original is type 'original' or sequence number '0000'.
+    isOriginalSequence: sequence.type === 'original' || sequence.sequenceNumber === '0000',
+    sequenceNumber: sequence.sequenceNumber,
+    region: sequence.region,
+    asOf,
+  };
 }
 
 /** A composed dispatch gate, keyed as composeDispatchGates takes it. */
@@ -444,12 +483,7 @@ export async function assessSequenceDispatchReadiness(
       documentUuid: l.documentUuid,
       document: documents[i],
     })),
-    {
-      requiredSections: requiredModule1Codes(sequence.region, submissionApplicationType),
-      // An original is type 'original' or sequence number '0000'.
-      isOriginalSequence: sequence.type === 'original' || sequence.sequenceNumber === '0000',
-      sequenceNumber: sequence.sequenceNumber,
-    }
+    readinessOptionsForSequence(sequence, submissionApplicationType, params.asOf ?? dispatchAsOfDate()),
   );
 
   // Fail-visible on an unrecognized region: requiredModule1Codes returns [] for a
