@@ -158,12 +158,14 @@ export const PLAN_COMBINATION_CGMP: AnaTool = {
   description:
     'Plan the cGMP operating model for a combination product under 21 CFR Part 4, using the ' +
     'streamlined approach (21 CFR 4.4): choose a single base quality system — drug cGMP ' +
-    '(21 CFR 210/211) or device QS (21 CFR 820) — and additionally satisfy the specific ' +
+    '(21 CFR 210/211) or the device quality system (21 CFR 820) — and additionally satisfy the specific ' +
     '"called-out" provisions of the other system. Returns whether Part 4 applies, the recommended ' +
-    'base, the exact called-out provisions (for a drug base: 820.20, 820.30, 820.50, 820.100, ' +
-    '820.170, 820.200; for a device base: 211.84, 211.103, 211.132, 211.137, 211.165, 211.166, ' +
+    'base, the exact called-out provisions resolved for asOf, each with its basis (for a drug base, ' +
+    '21 CFR 4.4(b)(1) as amended by the QMSR, in force 2026-02-02: 21 CFR 820.10 and the ISO 13485:2016 ' +
+    'clauses it names, each removed QSR section shown only as "formerly"; before 2026-02-02 the QSR ' +
+    'sections; for a device base: 211.84, 211.103, 211.132, 211.137, 211.165, 211.166, ' +
     '211.167, 211.170), postmarketing safety-reporting requirements (Part 4 Subpart B), the QMSR ' +
-    '(ISO 13485, effective 2026-02-02) mapping note, rationale, and citations. Use when the user ' +
+    'transition note, rationale, and citations. Report the called-out provisions as returned. Use when the user ' +
     'needs to design the quality-system / cGMP compliance strategy for a combination product. ' +
     DETERMINISTIC_NOTE,
   input_schema: {
@@ -205,6 +207,12 @@ export const PLAN_COMBINATION_CGMP: AnaTool = {
       hasOtcDrugConstituent: {
         type: 'boolean',
         description: 'Whether any drug constituent is an OTC product (drives the 211.132 tamper-evident provision).',
+      },
+      asOf: {
+        type: 'string',
+        description:
+          'Date the plan is for (YYYY-MM-DD); defaults to today. Selects the 21 CFR 4.4(b)(1) text in force: ' +
+          'the QMSR call-outs on and after 2026-02-02, the QSR call-outs before.',
       },
     },
     required: ['constituentTypes', 'category'],
