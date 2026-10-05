@@ -1,0 +1,224 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:05:05.023Z",
+  "level": "info",
+  "message": "start called",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:05:05.023Z",
+  "level": "info",
+  "message": "start() called",
+  "context": {}
+}
+
+stdout | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:05:05.024Z",
+  "level": "info",
+  "message": "document created",
+  "context": {
+    "docId": "af7fdb7d-bb13-4073-97e2-7377be2931f5"
+  }
+}
+
+stdout | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:05:05.033Z",
+  "level": "info",
+  "message": "edit called",
+  "context": {
+    "docId": "af7fdb7d-bb13-4073-97e2-7377be2931f5"
+  }
+}
+{
+  "timestamp": "2026-10-05T05:05:05.033Z",
+  "level": "info",
+  "message": "humanEdit() called",
+  "context": {
+    "docId": "af7fdb7d-bb13-4073-97e2-7377be2931f5"
+  }
+}
+
+stdout | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:05:05.037Z",
+  "level": "info",
+  "message": "polish called",
+  "context": {
+    "docId": "af7fdb7d-bb13-4073-97e2-7377be2931f5"
+  }
+}
+{
+  "timestamp": "2026-10-05T05:05:05.037Z",
+  "level": "info",
+  "message": "polish() called",
+  "context": {
+    "docId": "af7fdb7d-bb13-4073-97e2-7377be2931f5"
+  }
+}
+
+stderr | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:05:05.038Z",
+  "level": "error",
+  "message": "AI polish failed, falling back to append",
+  "context": {
+    "docId": "af7fdb7d-bb13-4073-97e2-7377be2931f5",
+    "err": "gateway disabled for fallback test"
+  }
+}
+
+stdout | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:05:05.038Z",
+  "level": "info",
+  "message": "audit log recorded",
+  "context": {
+    "auditId": "054de2b2-e7b8-4f19-b829-ce6be2f778af",
+    "docId": "af7fdb7d-bb13-4073-97e2-7377be2931f5",
+    "provider": "fallback"
+  }
+}
+
+stdout | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:05:05.042Z",
+  "level": "info",
+  "message": "start called",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:05:05.042Z",
+  "level": "info",
+  "message": "start() called",
+  "context": {}
+}
+
+stdout | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:05:05.042Z",
+  "level": "info",
+  "message": "document created",
+  "context": {
+    "docId": "0b3c3032-6dab-48c4-be5e-463d78dd3ff5"
+  }
+}
+
+stdout | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:05:05.045Z",
+  "level": "info",
+  "message": "polish called",
+  "context": {
+    "docId": "0b3c3032-6dab-48c4-be5e-463d78dd3ff5"
+  }
+}
+{
+  "timestamp": "2026-10-05T05:05:05.045Z",
+  "level": "info",
+  "message": "polish() called",
+  "context": {
+    "docId": "0b3c3032-6dab-48c4-be5e-463d78dd3ff5"
+  }
+}
+
+stdout | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:05:05.046Z",
+  "level": "info",
+  "message": "AI polish succeeded",
+  "context": {
+    "docId": "0b3c3032-6dab-48c4-be5e-463d78dd3ff5"
+  }
+}
+
+stdout | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:05:05.047Z",
+  "level": "info",
+  "message": "audit log recorded",
+  "context": {
+    "auditId": "2d063ea4-4099-4b3b-9c59-16e57a17520d",
+    "docId": "0b3c3032-6dab-48c4-be5e-463d78dd3ff5",
+    "provider": "fallback"
+  }
+}
+
+stderr | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:05:05.050Z",
+  "level": "warn",
+  "message": "Attempt to access test routes in production blocked",
+  "context": {}
+}
+
+stderr | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > is disabled in production by default
+{
+  "timestamp": "2026-10-05T05:05:05.063Z",
+  "level": "warn",
+  "message": "Attempt to access test routes in production blocked",
+  "context": {}
+}
+
+stdout | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > enforces tenant gating when ALLOWED_TEST_ASSEMBLY_TENANTS is set
+{
+  "timestamp": "2026-10-05T05:05:05.069Z",
+  "level": "info",
+  "message": "start called",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:05:05.069Z",
+  "level": "info",
+  "message": "start() called",
+  "context": {}
+}
+
+stdout | ../../..<scratch>/gate.neg.test.ts > test-assembly routes > enforces tenant gating when ALLOWED_TEST_ASSEMBLY_TENANTS is set
+{
+  "timestamp": "2026-10-05T05:05:05.069Z",
+  "level": "info",
+  "message": "document created",
+  "context": {
+    "docId": "5d2203ac-d1a8-42be-a6c9-e4d7b71264f8"
+  }
+}
+
+ ✓ ../../..<scratch>/gate.neg.test.ts > test-assembly routes > works end-to-end 55ms
+ ✓ ../../..<scratch>/gate.neg.test.ts > test-assembly routes > validates input 9ms
+ ✓ ../../..<scratch>/gate.neg.test.ts > test-assembly routes > is disabled in production by default 4ms
+ × ../../..<scratch>/gate.neg.test.ts > test-assembly routes > enforces tenant gating when ALLOWED_TEST_ASSEMBLY_TENANTS is set 7ms
+   → expected 403 "Forbidden", got 200 "OK"
+ ✓ ../../..<scratch>/gate.neg.test.ts > test-assembly routes > exports a docx file for a docId 48ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../..<scratch>/gate.neg.test.ts > test-assembly routes > enforces tenant gating when ALLOWED_TEST_ASSEMBLY_TENANTS is set
+Error: expected 403 "Forbidden", got 200 "OK"
+ ❯ ../../..<scratch>/gate.neg.test.ts:174:12
+    172|           .set(header, '101')
+    173|           .send({ request: 'x' })
+    174|           .expect(403);
+       |            ^
+    175|       }
+    176|
+ ❯ Test._assertStatus node_modules/supertest/lib/test.js:309:14
+ ❯ node_modules/supertest/lib/test.js:365:13
+ ❯ Test._assertFunction node_modules/supertest/lib/test.js:342:13
+ ❯ Test.assert node_modules/supertest/lib/test.js:195:23
+ ❯ localAssert node_modules/supertest/lib/test.js:138:14
+ ❯ Server.<anonymous> node_modules/supertest/lib/test.js:152:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  05:05:04
+   Duration  867ms (transform 217ms, setup 96ms, import 346ms, tests 126ms, environment 0ms)
+
