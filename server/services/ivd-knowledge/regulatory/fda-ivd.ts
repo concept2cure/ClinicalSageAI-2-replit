@@ -109,7 +109,7 @@ export const FDA_IVD_KNOWLEDGE: KnowledgeEntry[] = [
     summary:
       'De Novo (FD&C Act §513(f)(2)) provides a risk-based route to Class I/II for novel devices that lack a predicate but are low-to-moderate risk, creating a new classification, product code, and special controls that subsequent devices can use as a predicate.',
     detail:
-      'When a device has no legally marketed predicate it is automatically Class III, but De Novo lets a sponsor request down-classification to Class I or II by demonstrating that general (and, for Class II, special) controls provide reasonable assurance of safety and effectiveness. The granted De Novo establishes a new device type: a classification regulation, a product code, and a set of special controls (the performance, labeling, and sometimes clinical/PMS requirements) that define the type. This is strategically powerful for first-of-kind IVDs (novel biomarkers, NGS oncology panels, AI-based diagnostics) because it both authorizes the device and becomes the predicate/benchmark for competitors.\n\nThe core deliverables are a device description, a risk-and-mitigation analysis (the special controls are essentially the mitigations), and analytical + clinical performance establishing the benefit-risk profile. The 21st Century Cures Act and the De Novo final rule (21 CFR 860 subpart D, effective 2021) formalized content and process. A pre-submission (Q-Sub) to align on the proposed classification, special controls, and study design is strongly advised because the sponsor is, in effect, writing the regulation for the new device type.',
+      'When a device has no legally marketed predicate it is automatically Class III, but De Novo lets a sponsor request down-classification to Class I or II by demonstrating that general (and, for Class II, special) controls provide reasonable assurance of safety and effectiveness. The granted De Novo establishes a new device type: a classification regulation, a product code, and a set of special controls (the performance, labeling, and sometimes clinical/PMS requirements) that define the type. This is strategically powerful for first-of-kind IVDs (novel biomarkers, NGS oncology panels, AI-based diagnostics) because it both authorizes the device and becomes the predicate/benchmark for competitors.\n\nThe core deliverables are a device description, a risk-and-mitigation analysis (the special controls are essentially the mitigations), and analytical + clinical performance establishing the benefit-risk profile. The 21st Century Cures Act and the De Novo final rule (21 CFR 860 subpart D; published 2021-10-05 at 86 FR 54826, FR Doc. 2021-21677; effective 2022-01-03) formalized content and process. A pre-submission (Q-Sub) to align on the proposed classification, special controls, and study design is strongly advised because the sponsor is, in effect, writing the regulation for the new device type.',
     keyPoints: [
       'Route to Class I/II for novel devices with no predicate but low-to-moderate risk.',
       'Creates a new classification + product code + special controls = future predicate.',
@@ -118,12 +118,16 @@ export const FDA_IVD_KNOWLEDGE: KnowledgeEntry[] = [
     ],
     citations: [
       { label: 'FD&C Act §513(f)(2) (De Novo)', source: 'FDA' },
-      { label: '21 CFR 860 subpart D (De Novo final rule, 2021)', source: 'FDA' },
+      {
+        label: '21 CFR 860 subpart D (De Novo final rule, FR Doc. 2021-21677; published 2021-10-05, effective 2022-01-03)',
+        source: 'FDA',
+        url: 'https://www.federalregister.gov/documents/2021/10/05/2021-21677/medical-device-de-novo-classification-process',
+      },
       { label: 'Guidance: De Novo Classification Process', source: 'FDA' },
     ],
     related: ['fda.ivd.classification', 'fda.ivd.510k-pathway', 'fda.ivd.special-controls-and-standards'],
     tags: ['de-novo', 'novel', 'special-controls', 'classification'],
-    lastReviewed: '2026-06-09',
+    lastReviewed: '2026-10-05',
   },
   {
     id: 'fda.ivd.pma',
@@ -247,21 +251,26 @@ export const FDA_IVD_KNOWLEDGE: KnowledgeEntry[] = [
     summary:
       'FDA offers expedited interaction (Breakthrough, STeP) for high-impact diagnostics and now authorizes Predetermined Change Control Plans so AI/ML-enabled IVDs can update within pre-agreed bounds without a new submission.',
     detail:
-      'The Breakthrough Devices Program (FD&C Act §515B) grants priority review and intensive FDA interaction for devices that provide more effective treatment/diagnosis of life-threatening or irreversibly debilitating conditions and meet one of several criteria (breakthrough technology, no approved alternative, significant advantages, or best interest of patients). The Safer Technologies Program (STeP) extends similar engagement to non-life-threatening conditions where the device meaningfully improves safety. Both accelerate alignment but do not lower the approval standard.\n\nFor AI/ML-enabled diagnostics, the Predetermined Change Control Plan (PCCP) — codified by the FDORA 2022 amendment (FD&C Act §515C) and the 2024 final PCCP guidance — lets a sponsor pre-specify and get authorization for future modifications (the "what" via a Modification Protocol and the "how" via the SACP/impact assessment), so that in-scope model updates can be deployed without a new 510(k)/De Novo/PMA supplement. This is the maintenance backbone for adaptive algorithms and pairs with the IMDRF/Good Machine Learning Practice principles.',
+      'The Breakthrough Devices Program (FD&C Act §515B) grants priority review and intensive FDA interaction for devices that provide more effective treatment/diagnosis of life-threatening or irreversibly debilitating conditions and meet one of several criteria (breakthrough technology, no approved alternative, significant advantages, or best interest of patients). The Safer Technologies Program (STeP) extends similar engagement to non-life-threatening conditions where the device meaningfully improves safety. Both accelerate alignment but do not lower the approval standard.\n\nFor AI/ML-enabled diagnostics, the Predetermined Change Control Plan (PCCP) — codified by the FDORA 2022 amendment (FD&C Act §515C) and FDA\'s final guidance of 2024-12-04 on PCCPs for AI-enabled device software functions — lets a sponsor pre-specify and get authorization for future modifications, so that in-scope model updates can be deployed without a new 510(k)/De Novo/PMA supplement. The final guidance gives a PCCP three components: a Description of Modifications (the specific planned modifications and their specifications), a Modification Protocol (the verification and validation activities, with pre-defined acceptance criteria, that support each modification) and an Impact Assessment (the benefits and risks the planned modifications introduce and how the Modification Protocol keeps the device safe and effective). This is the maintenance backbone for adaptive algorithms and pairs with the IMDRF/Good Machine Learning Practice principles.',
     keyPoints: [
       'Breakthrough (§515B): priority + intensive interaction for high-impact diagnostics.',
       'STeP: similar engagement for safety-improving, non-life-threatening devices.',
-      'PCCP (§515C / 2024 guidance): pre-authorized AI/ML changes without a new submission.',
+      'PCCP (§515C / final guidance 2024-12-04): pre-authorized AI/ML changes without a new submission.',
+      'A PCCP has three components: Description of Modifications, Modification Protocol, Impact Assessment.',
       'Expedited status speeds engagement; it does not lower the evidence bar.',
     ],
     citations: [
       { label: 'FD&C Act §515B (Breakthrough Devices)', source: 'FDA' },
       { label: 'FD&C Act §515C (PCCP, FDORA 2022)', source: 'FDA' },
-      { label: 'Guidance: Marketing Submission Recommendations for a PCCP (2024)', source: 'FDA' },
+      {
+        label: 'Guidance: Marketing Submission Recommendations for a PCCP for AI-Enabled Device Software Functions (final, 2024-12-04)',
+        source: 'FDA',
+        url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/marketing-submission-recommendations-predetermined-change-control-plan-artificial-intelligence',
+      },
       { label: 'Guidance: Safer Technologies Program (STeP)', source: 'FDA' },
     ],
     related: ['fda.ivd.cdx', 'std.iec-62304', 'eu.ivdr.performance-evaluation'],
     tags: ['breakthrough', 'step', 'pccp', 'ai-ml', 'samd'],
-    lastReviewed: '2026-06-09',
+    lastReviewed: '2026-10-05',
   },
 ];

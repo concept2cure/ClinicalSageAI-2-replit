@@ -1,0 +1,40 @@
+Route to Class I/II for novel devices with no predicate but low-to-moderate risk.
+Creates a new classification + product code + special controls = future predicate.
+Special controls are the documented risk mitigations.
+Pre-Sub alignment is high-value because you are defining the device type.
+FD&C Act §513(f)(2) (De Novo) 
+21 CFR 860 subpart D (De Novo final rule, 2021) 
+Guidance: De Novo Classification Process "
+
+ ❯ server/services/ivd-knowledge/__tests__/fda-ivd-facts.test.ts:71:36
+     69|   it('never says the rule took effect in 2021', () => {
+     70|     for (const e of FDA_IVD_KNOWLEDGE) {
+     71|       expect(allText(e), e.id).not.toMatch(/effective 2021|De Novo fin…
+       |                                    ^
+     72|     }
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/ivd-knowledge/__tests__/fda-ivd-facts.test.ts > FDA IVD corpus: De Novo final rule dates (FR 2021-21677) > cites the Federal Register document by number with a regulator-hosted URL
+AssertionError: expected '21 CFR 860 subpart D (De Novo final r…' to contain '2021-21677'
+
+Expected: "2021-21677"
+Received: "21 CFR 860 subpart D (De Novo final rule, 2021)"
+
+ ❯ server/services/ivd-knowledge/__tests__/fda-ivd-facts.test.ts:78:22
+     76|     const c = deNovo.citations.find((x) => /860 subpart D/.test(x.labe…
+     77|     expect(c, '21 CFR 860 subpart D citation').toBeDefined();
+     78|     expect(c!.label).toContain('2021-21677');
+       |                      ^
+     79|     expect(c!.url ?? '').toMatch(/^https:\/\/(www\.)?(federalregister\…
+     80|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  12:50:13
+   Duration  1.51s (transform 488ms, setup 267ms, import 251ms, tests 57ms, environment 0ms)
+
