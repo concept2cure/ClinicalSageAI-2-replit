@@ -299,7 +299,9 @@ export function studyDesignToStatisticalInput(design: StudyDesign): DesignAdapte
   if (endpointType === 'continuous' && typeof pa.variance !== 'number') {
     gaps.push({
       field: 'variance',
-      message: 'No variance in the power assumptions; the engine will treat the effect size as standardised (SD = effect).',
+      // Must match ComputationEngine.continuousSigma: no variance ⇒ SD = 1, so the
+      // effect size is read as a standardised difference (Cohen's d).
+      message: 'No variance in the power assumptions; the engine will treat the effect size as a standardised difference (SD = 1).',
       severity: 'defaulted',
       designPath: 'statisticalPlan.powerAssumptions.variance',
     });
