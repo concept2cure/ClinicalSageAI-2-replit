@@ -1,0 +1,13 @@
+Mutant G05-held-not-checked: a held draft reaches the person unchecked, as before GRD-2
+
+--- server/routes/ana-ri/stream.ts
+- const check = checkProposal(params, [...turnContextSources, ...toolEvidenceCorpus]);
++ const check = null as ReturnType<typeof checkProposal>;
+
+Tests run: server/routes/ana-ri/__tests__/stream-proposal-check.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > the approval frame and the held approval carry the check of the draft against what AnA consulted 45ms
+ × server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a draft written before anything was consulted is not checked — never found 9ms
+      Tests  2 failed | 1 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

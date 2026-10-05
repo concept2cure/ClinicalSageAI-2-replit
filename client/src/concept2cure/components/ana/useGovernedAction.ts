@@ -15,6 +15,7 @@
 import { useState, useCallback } from 'react';
 import { extractApiError } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../../utils/authToken';
+import { readAnswerCheck, type AnswerCheckView } from './anaAnswerCheck';
 
 /**
  * The three ways a person takes an action AnA proposed (the server's
@@ -72,6 +73,13 @@ export interface PendingSignoff {
    */
   runId?: string;
   toolUseId?: string;
+  /**
+   * The server's check of the prose this proposal would store, against what
+   * AnA consulted before she wrote it (GRD-2): shown in the dialog before the
+   * person approves. Absent when the proposal stores no prose, on a frame
+   * from an older server, or when the check arrived malformed.
+   */
+  check?: AnswerCheckView;
 }
 
 /** An `approval_required` frame, as the stream sends one. */
@@ -88,6 +96,7 @@ interface ApprovalRequiredEvent {
     signatureMeaning?: unknown;
     retry?: { command?: string; params?: Record<string, unknown> };
   };
+  check?: unknown;
 }
 
 /**
@@ -109,6 +118,8 @@ export function pendingSignoffFromApproval(event: ApprovalRequiredEvent): Pendin
   if (typeof toolUseId !== 'string' || !toolUseId) return null;
   const tier = tierOf(event.data);
   const signatureMeaning = fixedMeaningOf(event.data);
+  // The strip's own reader: a malformed check is no check, never a guess.
+  const check = readAnswerCheck(event.check);
   return {
     command,
     params: event.data?.retry?.params ?? {},
@@ -118,6 +129,7 @@ export function pendingSignoffFromApproval(event: ApprovalRequiredEvent): Pendin
     message: typeof event.message === 'string' ? event.message : defaultMessageFor(tier),
     runId,
     toolUseId,
+    ...(check && { check }),
   };
 }
 
@@ -140,6 +152,8 @@ interface ExecutedCommandResult {
     signatureMeaning?: unknown;
     retry?: { command?: string; params?: Record<string, unknown> };
   };
+  /** The server's check of the proposal's prose (GRD-2), unread until readAnswerCheck. */
+  check?: unknown;
 }
 
 /** The two envelopes a blocked command answers with: the Part 11 gate's, and the proposal gate's. */
@@ -164,6 +178,8 @@ export function extractPendingSignoffs(
     if (typeof command !== 'string' || command.length === 0) continue;
     const tier = tierOf(r.data);
     const signatureMeaning = fixedMeaningOf(r.data);
+    // The server's check of the proposal's prose (GRD-2); malformed is none.
+    const check = readAnswerCheck(r.check);
     out.push({
       command,
       params: r.data?.retry?.params ?? {},
@@ -171,6 +187,7 @@ export function extractPendingSignoffs(
       tier,
       ...(signatureMeaning && { signatureMeaning }),
       message: typeof r.message === 'string' ? r.message : defaultMessageFor(tier),
+      ...(check && { check }),
     });
   }
   return out;

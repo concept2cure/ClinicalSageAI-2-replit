@@ -1,0 +1,13 @@
+Mutant G09-audit-without-check: the sign-off row does not say what the approver was shown
+
+--- server/routes/ana-ri/governed-execution-audit.ts
+- ...(pending?.check && { proposalCheck: proposalCheckOf(pending.check) }),
++ 
+
+Tests run: server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts > the sign-off row names what the approver was shown about the draft > carries the check of the draft: its counts, what was not found, and the verdicts it states 9ms
+ × server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts > the sign-off row names what the approver was shown about the draft > keeps the row bounded: at most twenty texts of each list, each at most 200 characters 2ms
+      Tests  2 failed | 1 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

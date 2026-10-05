@@ -1,0 +1,14 @@
+Mutant S91-not-found-unquoted: what was not found is counted but not quoted
+
+--- client/src/concept2cure/components/ana/AnswerCheckRows.tsx
+- <Listed items={notFound} />
++ {null}
+
+Tests run: client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says how many specific claims were not found in this turn's sources, and quotes them by kind 46ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > lists three claims and counts the rest 8ms
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > quotes what was not found in this turn's sources, and names the verdict 64ms
+      Tests  3 failed | 26 passed (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

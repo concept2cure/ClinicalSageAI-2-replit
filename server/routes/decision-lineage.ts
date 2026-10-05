@@ -201,7 +201,16 @@ async function chainVerdictFor(req: Request): Promise<ChainVerdict | null> {
   }
   const orgId = authedOrgId(req);
   if (!orgId) return null;
-  const v = await verifyTenantChainOnAdminScope(orgId);
+  let v: Awaited<ReturnType<typeof verifyTenantChainOnAdminScope>>;
+  try {
+    v = await verifyTenantChainOnAdminScope(orgId);
+  } catch (err) {
+    // The store could not be walked: nothing was verified and nothing failed
+    // verification. Said so, as the estate branch and walkTenantChain
+    // (audited-export.ts) do, rather than a 500 that also hides every
+    // verdict the compliance report could still give.
+    return { scope: 'organization', ran: false, reason: err instanceof Error ? err.message : String(err) };
+  }
   if (v.ok === null) return { scope: 'organization', ran: false, reason: v.head?.reason ?? 'the chain head could not be checked' };
   return {
     scope: 'organization',

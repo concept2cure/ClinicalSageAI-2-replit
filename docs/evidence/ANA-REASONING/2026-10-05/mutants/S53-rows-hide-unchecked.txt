@@ -1,0 +1,12 @@
+Mutant S53-rows-hide-unchecked: the rows do not say which claims a source the check cannot read may hold
+
+--- client/src/concept2cure/components/ana/AnswerCheckRows.tsx
+- {unchecked.length > 0 && (
++ {false && (
+
+Tests run: client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > names a source the check could not read, and leaves what it may hold unchecked (HS-4) 21ms
+      Tests  1 failed | 28 passed (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
