@@ -14,20 +14,38 @@ vi.hoisted(() => {
 import express from 'express';
 import request from 'supertest';
 
-const { queryMock, state } = vi.hoisted(() => ({
-  queryMock: vi.fn(),
-  state: { role: 'super_admin' as string },
-}));
+// Platform standing is an active platform_role_grants row, as in production —
+// never the request role, which behind server/auth.ts is the TENANT membership
+// role (D6, 2026-10-05, docs/evidence/D6/2026-10-05-platform-standing/).
+// `state.role` is that membership role; `state.platformGrant` is the role on
+// user 1's grant row (null: no grant). The guard's grant lookup is answered
+// apart from queryMock so it never consumes a test's queued results.
+const { queryMock, grantLookup, state } = vi.hoisted(() => {
+  const state = { role: 'admin' as string, platformGrant: 'super_admin' as string | null };
+  return {
+    queryMock: vi.fn(),
+    state,
+    grantLookup: (params?: unknown[]) => {
+      const asked = Array.isArray(params?.[1]) ? (params![1] as string[]) : [];
+      const holds = params?.[0] === 1 && state.platformGrant !== null && asked.includes(state.platformGrant);
+      return Promise.resolve({ rows: holds ? [{ '?column?': 1 }] : [] });
+    },
+  };
+});
 
-vi.mock('../../db', () => ({ query: queryMock }));
+vi.mock('../../db', () => ({
+  query: (sql: string, params?: unknown[]) =>
+    /FROM platform_role_grants/.test(sql) ? grantLookup(params) : queryMock(sql, params),
+}));
 vi.mock('../../auth', () => ({
-  authMiddleware: (req: { user?: unknown }, _res: unknown, next: () => void) => {
+  authMiddleware: (req: { user?: unknown; userId?: number }, _res: unknown, next: () => void) => {
     (req as { user?: unknown }).user = {
       id: 1,
       role: state.role,
       roles: [state.role],
       organizationId: 1,
     };
+    req.userId = 1; // as server/auth.ts sets it; the grant lookup is keyed on it
     next();
   },
 }));
@@ -36,7 +54,9 @@ let app: express.Express;
 
 beforeEach(async () => {
   vi.clearAllMocks();
-  state.role = 'super_admin';
+  // A platform super_admin grant holder whose tenant membership role is admin.
+  state.role = 'admin';
+  state.platformGrant = 'super_admin';
   const router = (await import('../../routes/admin/scim-tenants')).default;
   app = express();
   app.use(express.json());
@@ -46,6 +66,14 @@ beforeEach(async () => {
 describe('admin SCIM-tenants API', () => {
   it('forbids non-admins (403)', async () => {
     state.role = 'member';
+    state.platformGrant = null;
+    const res = await request(app).get('/api/admin/scim-tenants');
+    expect(res.status).toBe(403);
+  });
+
+  it('forbids a tenant membership role of super_admin with no platform grant (403)', async () => {
+    state.role = 'super_admin';
+    state.platformGrant = null;
     const res = await request(app).get('/api/admin/scim-tenants');
     expect(res.status).toBe(403);
   });

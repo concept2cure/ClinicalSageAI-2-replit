@@ -19,8 +19,10 @@ const logger = createScopedLogger('admin-scim-tenants');
 const router = Router();
 
 router.use(authMiddleware);
-// DB-authoritative platform gate (roles + PLATFORM_ADMIN_EMAILS +
-// platform_role_grants, fail-closed) — the same gate as /api/admin/master.
+// DB-authoritative platform gate (PLATFORM_ADMIN_EMAILS on the owner's own
+// sign-in, or an active platform_role_grants row, fail-closed; never the
+// request role, which is the tenant membership role, D6 2026-10-05) — the
+// same gate as /api/admin/master.
 // requireRole was unusable here: its legacy org-'admin' bypass let every
 // customer org admin reach this cross-tenant router.
 const requireAdmin = requirePlatformAdmin;
