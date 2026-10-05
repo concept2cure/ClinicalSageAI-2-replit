@@ -56,9 +56,7 @@ beforeEach(() => {
 
 describe("Module 3 routers — another organization's project", () => {
   it.each([
-    ['post', '/source-objects/foreign-proj', { sourceType: 'batch_record', sourceKey: 'k', sourcePayload: { a: 1 } }],
     ['post', '/compile/foreign-proj', {}],
-    ['post', '/source-changed/foreign-proj', {}],
     ['get', '/sections/foreign-proj', undefined],
     ['get', '/sections/foreign-proj/3.2.P.5', undefined],
     ['get', '/provenance/foreign-proj/3.2.P.5', undefined],

@@ -1,12 +1,8 @@
 import express from 'express';
 import { z } from 'zod';
 import { getPool } from '../../db';
-import {
-  markStaleSections,
-  summarizeSectionDiff,
-  createSourceHash,
-} from '../../services/cmc-module3-compiler';
-import { CMC_SOURCE_TYPES, impactedSectionsForSourceType, renderComposedSectionMarkdown } from '../../services/module3Composer';
+import { summarizeSectionDiff } from '../../services/cmc-module3-compiler';
+import { renderComposedSectionMarkdown } from '../../services/module3Composer';
 import { compiledRecordOf, composeProjectModule3, persistComposedSection } from '../../services/cmc/module3-compile';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
@@ -51,14 +47,6 @@ const logger = createScopedLogger('cmc-module3-os');
    caller's organization (PF-15): the shared guard, module3-project-guard.ts. */
 guardModule3Project(router, logger);
 
-const upsertSourceObjectSchema = z.object({
-  /* Derived from the composer's own list — the enum here used to be a
-     hand-copied subset that refused five types the composer requires. */
-  sourceType: z.enum(CMC_SOURCE_TYPES),
-  sourceKey: z.string().min(1),
-  sourcePayload: z.record(z.any()),
-  version: z.number().int().positive().optional(),
-});
 
 /**
  * Why an approval is refused on an incomplete compiled record, in the signer's
@@ -77,47 +65,18 @@ function incompleteSectionRefusal(sectionKey: string, record: CompiledRecordStat
   return verdict + remedy;
 }
 
-router.post('/source-objects/:projectId', async (req, res) => {
-  try {
-    const orgId = module3OrgId(req);
-    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
-    const data = upsertSourceObjectSchema.parse(req.body);
-    const pool = getPool();
-    const sourceHash = createSourceHash(data.sourcePayload as Record<string, any>);
-    const version = data.version || 1;
-
-    const inserted = await pool.query(
-      `INSERT INTO cmc_source_objects (organization_id, project_id, source_type, source_key, source_payload, source_hash, version)
-       VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7)
-       ON CONFLICT (organization_id, project_id, source_type, source_key, version)
-       DO UPDATE SET source_payload = excluded.source_payload, source_hash = excluded.source_hash, updated_at = NOW()
-       RETURNING id, source_type as "sourceType", source_key as "sourceKey", source_hash as "sourceHash", version`,
-      [orgId, projectId, data.sourceType, data.sourceKey, JSON.stringify(data.sourcePayload), sourceHash, version]
-    );
-
-    await pool.query(
-      `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-       VALUES ($1,$2,'source_object',$3,'upserted',$4::jsonb,$5)`,
-      [
-        orgId,
-        projectId,
-        inserted.rows[0].id,
-        JSON.stringify({ sourceType: data.sourceType, sourceKey: data.sourceKey, version }),
-        (req as any).user?.id || 'system',
-      ]
-    );
-
-    return res.status(201).json({ success: true, data: inserted.rows[0] });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: 'Invalid source object payload', details: error.errors });
-    }
-    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
-    return serverError(res, logger, 'saving source objects', error);
-  }
-});
+/* POST /source-objects/:projectId and POST /source-changed/:projectId are
+   gone (2026-10-05, D2). The first upserted any payload into
+   cmc_source_objects with a caller-chosen version, marked no section stale,
+   and named the actor 'system' when it had none; the second marked sections
+   stale for a body-supplied source type with no record behind it. Neither had
+   a client caller. Canonical sources are written by the CMC registers only:
+   every register route (server/api/cmc/routes.ts, specificationRoutes.ts,
+   batchRecordRoutes.ts) projects through cmc-write-through.ts
+   (writeThroughToCanonicalSource), which also marks the impacted sections
+   stale — reachable from the CMC screens and pinned by the staff simulation
+   (scripts/dev/cmc-staff-simulation.sh, steps 3-8i then 11) and by
+   server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts. */
 
 router.get('/sections/:projectId', async (req, res) => {
   try {
@@ -174,7 +133,7 @@ router.post('/compile/:projectId', async (req, res) => {
       return res.status(409).json({
         success: false,
         error: 'No canonical source objects for this project — nothing to compile.',
-        hint: 'Upsert source objects via POST /api/cmc/module3-os/source-objects/:projectId first.',
+        hint: 'Record the program\'s CMC data in the registers (substance, product, methods, specifications, batches, stability); each record reaches Module 3 as a canonical source.',
       });
     }
 
@@ -227,38 +186,6 @@ router.post('/compile/:projectId', async (req, res) => {
     return serverError(res, logger, 'compiling', error);
   } finally {
     client.release();
-  }
-});
-
-router.post('/source-changed/:projectId', async (req, res) => {
-  try {
-    const orgId = module3OrgId(req);
-    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
-    const { changedSourceType, reason } = req.body;
-    const pool = getPool();
-    const sectionsRes = await pool.query(
-      `SELECT section_key as "sectionKey", section_path as "sectionPath", deterministic_json as "deterministicJson", compiled_hash as "compiledHash"
-       FROM cmc_module3_sections WHERE organization_id=$1 AND project_id=$2`,
-      [orgId, projectId]
-    );
-    const staleSections = impactedSectionsForSourceType(changedSourceType);
-    const stale = markStaleSections(
-      sectionsRes.rows.map((r: any) => ({ ...r, lineage: [], stale: false, staleReason: null })),
-      changedSourceType,
-      reason || 'Source changed'
-    );
-    for (const s of stale.filter((x) => x.stale && staleSections.includes(x.sectionKey))) {
-      await pool.query(
-        `UPDATE cmc_module3_sections SET stale = true, stale_reason = $1, updated_at = now() WHERE organization_id=$2 AND project_id=$3 AND section_key=$4`,
-        [s.staleReason, orgId, projectId, s.sectionKey]
-      );
-    }
-    res.json({ success: true, staleSections: stale.filter((s) => s.stale).map((s) => s.sectionKey) });
-  } catch (error) {
-    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
-    return serverError(res, logger, 'saving source changed', error);
   }
 });
 
