@@ -41,11 +41,19 @@ f457478c87a6bc557da7683c7b591b829fee4896:_test_neon.cjs:c2c-neon-password:2
 3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:test-api-key.js:huggingface-access-token:8
 3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:test-embeddings.js:huggingface-access-token:7
 
-# status: live until confirmed — founder (P0-17)
+# status: not a secret — closed 2026-10-05 (D6; decided: no JWT_SECRET rotation)
 # reason: an HS256 session-shaped token (id, role, tenantId; no exp) hard-coded
-#   in VaultMarketingPage.jsx (3e1dcf8f0; deleted). It verifies against none of
-#   the 57 JWT-secret defaults committed then or now, so its signing secret is
-#   unknown. Confirm no environment's JWT_SECRET is that secret, or rotate it.
+#   in VaultMarketingPage.jsx (3e1dcf8f0; deleted). Its signing secret is still
+#   unknown (none of the 57 committed JWT-secret defaults), but the TOKEN opens
+#   nothing whatever signed it, so it is not a credential:
+#   - both required authenticators (server/auth.ts, middleware/auth.ts) demand
+#     `type: 'access'` (tokenType.requireAccessTokenReason); it has no type,
+#     and no userId/organizationId either;
+#   - the optional authenticator runs verifyLiveToken, whose absolute session
+#     lifetime (session-inactivity.ts sessionLifetimeExceeded, from iat) ends
+#     it: iat is 1516239022, 2018-01-18 — jwt.io's sample timestamp.
+#   Rotating JWT_SECRET for it would sign every user out and close nothing.
+#   Evidence docs/evidence/D6/2026-10-05-pm-decisions/.
 3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:client/src/pages/VaultMarketingPage.jsx:jwt:32
 3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:src/pages/VaultMarketingPage.jsx:jwt:32
 
