@@ -94,6 +94,7 @@ const TF = [true, false];
 function compare(combo: Any[]): void {
   const [[sName, st], ragReq, ragExec, extReq, extExec, [cName, crit], [xName, extra], [gName, g], [eName, e], [rName, r]] = combo;
   const p: Any = clone(REAL);
+  // nosemgrep: insecure-object-assign -- an offline differential over fixed state combinations; no request data reaches it
   Object.assign(p, st);
   p.components.rag.required = ragReq;
   p.components.rag.executable = ragExec;
