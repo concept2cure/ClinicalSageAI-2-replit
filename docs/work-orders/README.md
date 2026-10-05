@@ -1250,6 +1250,10 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
       to PDUFA, 210-day or PMDA clocks, forms, module map) beside the reasoning
       engine's own structure and clock, and the two can disagree. **Fix:** the
       deterministic structure is the plan; mark or drop the model's figures.
+      **Done 2026-10-05 by `…01YZFCXR`** (`docs/evidence/RULE2/2026-10-05-submission-plan/`):
+      the plan is `deterministicStructure`; the model narrates gaps and
+      dependencies over it (prompt v1.1) under a fixed label, its module map,
+      forms and timeline are dropped, and the plan stands without it.
 22. **→ the governed-action lane (D5), unclaimed, 2026-10-04 — MC-RL-4, high.**
     - An `ana-action` block becomes `create_artifact` with the model's text as
       content, through `POST /api/ana-ri/governed-action`, with no
