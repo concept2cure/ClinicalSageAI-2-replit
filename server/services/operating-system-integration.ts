@@ -52,15 +52,21 @@ export interface SapAssumptionContext {
   createdById?: number;
 }
 
+/**
+ * A deterministic defensibility verdict (statistical-defensibility-service.ts,
+ * the ana-biostats judgment engine). Until 2026-10-05 this carried a model's
+ * 0-100 score, rating and issue counts.
+ */
 export interface DefensibilityDecisionContext {
   organizationId: number;
   projectId: number;
-  overallScore: number;
-  overallRating: string;
-  criticalIssueCount: number;
-  majorIssueCount: number;
-  reviewerRiskLevel: string;
-  recommendations: string[];
+  overallVerdict: 'adequate' | 'marginal' | 'inadequate' | 'insufficient_information';
+  overallRisk: 'low' | 'moderate' | 'high' | 'critical';
+  actionRecommendation: 'proceed' | 'proceed_with_conditions' | 'revise' | 'escalate';
+  /** Dimensions the engine judged inadequate, and marginal. */
+  inadequateDimensions: string[];
+  marginalDimensions: string[];
+  escalationReasons: string[];
   relatedArtifactId?: number;
   domainTrack?: DomainTrack;
   regulatorBody?: string;
@@ -269,45 +275,42 @@ export class OperatingSystemIntegration {
    */
   async captureFromDefensibilityAssessment(ctx: DefensibilityDecisionContext) {
     const confidence =
-      ctx.overallRating === 'strong'
+      ctx.overallVerdict === 'adequate'
         ? ('strong' as const)
-        : ctx.overallRating === 'adequate'
+        : ctx.overallVerdict === 'marginal'
         ? ('moderate' as const)
-        : ctx.overallRating === 'weak'
-        ? ('provisional' as const)
         : ('uncertain' as const);
 
     const actionState =
-      ctx.criticalIssueCount > 0
-        ? ('recommended_only' as const)
-        : ctx.majorIssueCount > 0
-        ? ('recommended_only' as const)
-        : ('prepared' as const);
+      ctx.actionRecommendation === 'proceed' ? ('prepared' as const) : ('recommended_only' as const);
 
     const approvalState =
-      ctx.criticalIssueCount > 0 ? ('pending_review' as const) : ('not_required' as const);
+      ctx.actionRecommendation === 'escalate' || ctx.inadequateDimensions.length > 0
+        ? ('pending_review' as const)
+        : ('not_required' as const);
+
+    const named = (label: string, list: string[]) => (list.length > 0 ? `${label}: ${list.join(', ')}. ` : '');
 
     const decision = await this.decisionService.createDecision({
       organizationId: ctx.organizationId,
       projectId: ctx.projectId,
       contextType: 'regulatory_analysis',
-      contextDescription: `Statistical defensibility assessment — score ${ctx.overallScore}/100 (${ctx.overallRating})`,
+      contextDescription: `Statistical defensibility assessment — ${ctx.overallVerdict} (${ctx.overallRisk} risk)`,
       // See the note in captureFromSapGeneration: a defensibility assessment
       // rates the study design, which is the type the column accepts.
       recommendationType: 'study_design',
       analysisKind: 'defensibility_assessment',
       recommendationSummary:
-        `Study design rated as "${ctx.overallRating}" (${ctx.overallScore}/100). ` +
-        `${ctx.criticalIssueCount} critical, ${ctx.majorIssueCount} major issues. ` +
-        `Reviewer risk: ${ctx.reviewerRiskLevel}.`,
+        `Study design judged "${ctx.overallVerdict}", risk ${ctx.overallRisk}; ` +
+        `recommended action: ${ctx.actionRecommendation}. ` +
+        named('Inadequate', ctx.inadequateDimensions) +
+        named('Marginal', ctx.marginalDimensions),
       recommendationDetail:
-        ctx.recommendations.length > 0
-          ? `Recommended actions:\n${ctx.recommendations
-              .map((r, i) => `${i + 1}. ${r}`)
-              .join('\n')}`
-          : 'No specific recommendations generated.',
+        ctx.escalationReasons.length > 0
+          ? `Escalation reasons:\n${ctx.escalationReasons.map((r, i) => `${i + 1}. ${r}`).join('\n')}`
+          : 'No escalation reasons.',
       confidence,
-      evidenceSources: ['statistical_defensibility_service', 'ai_review'],
+      evidenceSources: ['statistical_defensibility_service', 'deterministic_judgment_engine'],
       actionState,
       approvalState,
       relatedArtifactId: ctx.relatedArtifactId,
@@ -315,7 +318,7 @@ export class OperatingSystemIntegration {
       regulatorBody: ctx.regulatorBody,
       jurisdiction: ctx.jurisdiction,
       governanceBoundary: 'advisory',
-      notes: `Reviewer risk level: ${ctx.reviewerRiskLevel}`,
+      notes: `Overall risk: ${ctx.overallRisk}`,
       createdById: ctx.createdById,
     });
 

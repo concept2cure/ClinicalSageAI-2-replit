@@ -14,6 +14,7 @@
  * - Literature search services
  */
 
+import { toBiostatsInput as mapToBiostatsInput } from '../ana-biostats/request-input.js';
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
 import { frameToolOutput } from './tool-output-frame.js';
 import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
@@ -5283,50 +5284,7 @@ registerToolHandler('check_numerical_integrity', async (input: Record<string, un
 // Shared parser: map a raw tool-input record onto the engine's StatisticalInput
 // shape. Used by every biostats tool so they speak the same parameter language.
 function toBiostatsInput(input: Record<string, unknown>, ctx?: ToolContext): Record<string, unknown> {
-  const num = (v: unknown): number | undefined => {
-    if (v === undefined || v === null || v === '') return undefined;
-    const n = Number(v);
-    return Number.isFinite(n) ? n : undefined;
-  };
-  const str = (v: unknown): string | undefined =>
-    typeof v === 'string' && v.length > 0 ? v : undefined;
-
-  return {
-    clientTrack: str(input.clientTrack),
-    studyType: str(input.studyType),
-    objectiveType: str(input.objectiveType),
-    endpointType: str(input.endpointType),
-    effectSize: num(input.effectSize),
-    controlRate: num(input.controlRate),
-    treatmentRate: num(input.treatmentRate),
-    alpha: num(input.alpha),
-    powerTarget: num(input.powerTarget),
-    attritionRate: num(input.attritionRate),
-    allocationRatio: num(input.allocationRatio),
-    nonInferiorityMargin: num(input.nonInferiorityMargin),
-    equivalenceMargin: num(input.equivalenceMargin),
-    comparatorType: str(input.comparatorType),
-    numberOfGroups: num(input.numberOfGroups),
-    followUpDuration: num(input.followUpDuration),
-    interimAnalyses: num(input.interimAnalyses),
-    sensitivity: num(input.sensitivity),
-    specificity: num(input.specificity),
-    prevalence: num(input.prevalence),
-    aucTarget: num(input.aucTarget),
-    aucNull: num(input.aucNull),
-    agreementTarget: num(input.agreementTarget),
-    crossoverPeriods: num(input.crossoverPeriods),
-    withinSubjectCorrelation: num(input.withinSubjectCorrelation),
-    numberOfEndpoints: num(input.numberOfEndpoints),
-    multiplicityMethod: str(input.multiplicityMethod),
-    estimandStrategy: str(input.estimandStrategy),
-    missingDataMethod: str(input.missingDataMethod),
-    expectedMissingRate: num(input.expectedMissingRate),
-    regulatoryBody: str(input.regulatoryBody),
-    indication: str(input.indication),
-    phase: str(input.phase),
-    projectId: num(input.projectId) ?? (ctx?.projectId ?? undefined),
-  };
+  return mapToBiostatsInput(input, ctx?.projectId ?? null);
 }
 
 const NEEDS_PARAMS_MESSAGE =
