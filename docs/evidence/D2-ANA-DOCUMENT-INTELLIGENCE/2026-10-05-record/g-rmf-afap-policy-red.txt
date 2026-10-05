@@ -1,0 +1,442 @@
+# g-rmf-afap-policy — RED: the final (fix round 1) test files run against the HEAD copies of the three implementation files, 2026-10-05T03:04:28Z
+# Method: the working copies of risk-management-structure.ts, flows/risk-management.ts and war-game/auditors/risk-management-auditor.ts were saved to the scratchpad, replaced with 'git show HEAD:<file>', the tests run, and the working copies restored (cmp-verified).
+# Command: npx vitest run server/services/market-specs/__tests__/risk-management-structure.test.ts server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts --reporter=verbose
+# Supersedes the round-0 red (19 failed | 5 passed (24)); every one of the 31 final tests has now been run against HEAD. The 5 that pass at HEAD are the 4 pre-existing RMF-structure tests and the negative 'US-only or clean AFAP text raises no EU finding' test (no such rule existed at HEAD).
+# Round-1 red against the round-0 implementation: g-rmf-afap-policy-red.round1.txt
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > offers AFAP and no ALARP option 6ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > relabels the stale "ISO 14971 Annex D" option to ISO/TR 24971:2020, keeping its stored value 2ms
+   → expected 'ISO 14971 Annex D Guidance' to be 'ISO/TR 24971:2020 guidance' // Object.is equality
+ × server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > does not claim ISO 14971:2019 requires ALARP, and carries the EU policy text 1ms
+   → riskAcceptabilityPolicy is not a function
+ × server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > keeps the alarp_demonstration field id but relabels it, and its issue check, without ALARP 1ms
+   → expected 'ALARP Demonstration' to be 'Residual-risk reduction demonstration' // Object.is equality
+ × server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > raises a critical regulatory_alignment finding for an EU program stating ALARP or cost 1ms
+   → expected undefined to be defined
+ × server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > flags a legacy ich_q9_alarp acceptability criterion for an EU program 1ms
+   → expected undefined to be defined
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > does not raise the EU finding for a US-only program, or for clean AFAP text 0ms
+ × server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > does not raise the EU device finding for a pharmaceutical programme, whose RMF is not under MDR/IVDR 1ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > no auditor text says ALARP is central to EU MDR or justifies stopping on cost-benefit 1ms
+   → expected 'No Hazard Identification Process The …' not to match /ALARP|reasonably practicable|cost-be…/i
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > has the core RMF sections with reviewer questions 2ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > asks about pre-defined acceptability criteria and foreseeable misuse 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > assesses completeness deterministically 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > looks up a section 0ms
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > EU MDR and EU IVDR require AFAP with no economic justification, citing Annex I §2 5ms
+   → riskAcceptabilityPolicy is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA follows the manufacturer-defined ISO 14971:2019 criteria (clauses 4.2 and 4.4) 1ms
+   → riskAcceptabilityPolicy is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > OTHER is not modelled and says so, asserting no economic permission it does not model 0ms
+   → riskAcceptabilityPolicy is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA basis says ISO 14971:2019 leaves economic considerations to the manufacturer 0ms
+   → riskAcceptabilityPolicy is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > the EU statement is scoped to devices 0ms
+   → riskAcceptabilityPolicy is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > every basis is well formed and none is presented as checked regulator text 0ms
+   → riskAcceptabilityPolicy is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > is exported from the default export 3ms
+   → expected 'undefined' to be 'function' // Object.is equality
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags ALARP with a cost justification for the EU 0ms
+   → checkRmfAcceptabilityLanguage is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags the spelled-out phrase once, not again as "reasonably practicable" 0ms
+   → checkRmfAcceptabilityLanguage is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags "reasonably practicable" on its own 0ms
+   → checkRmfAcceptabilityLanguage is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags economic or disproportionate stopping rules near residual risk 0ms
+   → checkRmfAcceptabilityLanguage is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag AFAP language that rules economics out 0ms
+   → checkRmfAcceptabilityLanguage is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag the EU policy statement itself 0ms
+   → riskAcceptabilityPolicy is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag a cost stated as a fact, with no stopping or justification cue 0ms
+   → checkRmfAcceptabilityLanguage is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag ALARP that the sentence says was not applied 0ms
+   → checkRmfAcceptabilityLanguage is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags ALARP used as a criterion even when a negation sits earlier in the sentence 0ms
+   → checkRmfAcceptabilityLanguage is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > returns [] for FDA and OTHER, where ISO 14971:2019 leaves the criteria to the manufacturer 1ms
+   → checkRmfAcceptabilityLanguage is not a function
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > returns [] for empty input 0ms
+   → checkRmfAcceptabilityLanguage is not a function
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 26 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > EU MDR and EU IVDR require AFAP with no economic justification, citing Annex I §2
+TypeError: riskAcceptabilityPolicy is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:48:17
+     46|   it('EU MDR and EU IVDR require AFAP with no economic justification, …
+     47|     for (const j of ['EU_MDR', 'EU_IVDR'] as const) {
+     48|       const p = riskAcceptabilityPolicy(j);
+       |                 ^
+     49|       expect(p.jurisdiction).toBe(j);
+     50|       expect(p.principle).toBe('AFAP');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA follows the manufacturer-defined ISO 14971:2019 criteria (clauses 4.2 and 4.4)
+TypeError: riskAcceptabilityPolicy is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:62:15
+     60|
+     61|   it('FDA follows the manufacturer-defined ISO 14971:2019 criteria (cl…
+     62|     const p = riskAcceptabilityPolicy('FDA');
+       |               ^
+     63|     expect(p.principle).toBe('manufacturer-defined');
+     64|     expect(p.basis.some((b) => /ISO 14971:2019/.test(b.ref) && /4\.2/.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > OTHER is not modelled and says so, asserting no economic permission it does not model
+TypeError: riskAcceptabilityPolicy is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:68:15
+     66|
+     67|   it('OTHER is not modelled and says so, asserting no economic permiss…
+     68|     const p = riskAcceptabilityPolicy('OTHER');
+       |               ^
+     69|     expect(p.modelled).toBe(false);
+     70|     expect(p.economicJustificationPermitted).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA basis says ISO 14971:2019 leaves economic considerations to the manufacturer
+TypeError: riskAcceptabilityPolicy is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:75:15
+     73|
+     74|   it('FDA basis says ISO 14971:2019 leaves economic considerations to …
+     75|     const p = riskAcceptabilityPolicy('FDA');
+       |               ^
+     76|     expect(p.basis.map((b) => b.note ?? '').join(' ')).toMatch(/silent…
+     77|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > the EU statement is scoped to devices
+TypeError: riskAcceptabilityPolicy is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:80:12
+     78|
+     79|   it('the EU statement is scoped to devices', () => {
+     80|     expect(riskAcceptabilityPolicy('EU_MDR').statement).toMatch(/^For …
+       |            ^
+     81|   });
+     82|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > every basis is well formed and none is presented as checked regulator text
+TypeError: riskAcceptabilityPolicy is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:85:23
+     83|   it('every basis is well formed and none is presented as checked regu…
+     84|     for (const j of ['EU_MDR', 'EU_IVDR', 'FDA', 'OTHER'] as const) {
+     85|       for (const b of riskAcceptabilityPolicy(j).basis) {
+       |                       ^
+     86|         expect(basisProblems(b)).toEqual([]);
+     87|         expect(b.confidence).not.toBe('regulator-text');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > is exported from the default export
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:93:44
+     91|
+     92|   it('is exported from the default export', () => {
+     93|     expect(typeof riskAcceptabilityPolicy).toBe('function');
+       |                                            ^
+     94|     expect(typeof checkRmfAcceptabilityLanguage).toBe('function');
+     95|     expect(riskManagementStructure.riskAcceptabilityPolicy).toBe(riskA…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags ALARP with a cost justification for the EU
+TypeError: checkRmfAcceptabilityLanguage is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:102:15
+    100| describe('checkRmfAcceptabilityLanguage', () => {
+    101|   it('flags ALARP with a cost justification for the EU', () => {
+    102|     const f = checkRmfAcceptabilityLanguage('Residual risks were reduc…
+       |               ^
+    103|     expect(f.length).toBeGreaterThanOrEqual(1);
+    104|     expect(f.map((x) => x.rule)).toEqual(expect.arrayContaining(['alar…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags the spelled-out phrase once, not again as "reasonably practicable"
+TypeError: checkRmfAcceptabilityLanguage is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:108:15
+    106|
+    107|   it('flags the spelled-out phrase once, not again as "reasonably prac…
+    108|     const f = checkRmfAcceptabilityLanguage('Risks are reduced as low …
+       |               ^
+    109|     expect(f.map((x) => x.rule)).toEqual(['as-low-as-reasonably-practi…
+    110|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags "reasonably practicable" on its own
+TypeError: checkRmfAcceptabilityLanguage is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:113:15
+    111|
+    112|   it('flags "reasonably practicable" on its own', () => {
+    113|     const f = checkRmfAcceptabilityLanguage('No further control is rea…
+       |               ^
+    114|     expect(f.map((x) => x.rule)).toEqual(['reasonably-practicable']);
+    115|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags economic or disproportionate stopping rules near residual risk
+TypeError: checkRmfAcceptabilityLanguage is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:124:14
+    122|     ];
+    123|     for (const t of texts) {
+    124|       expect(checkRmfAcceptabilityLanguage(t, 'EU_MDR').map((x) => x.r…
+       |              ^
+    125|     }
+    126|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag AFAP language that rules economics out
+TypeError: checkRmfAcceptabilityLanguage is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:130:12
+    128|   it('does not flag AFAP language that rules economics out', () => {
+    129|     const t = 'Risks were reduced as far as possible without adversely…
+    130|     expect(checkRmfAcceptabilityLanguage(t, 'EU_MDR')).toEqual([]);
+       |            ^
+    131|   });
+    132|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag the EU policy statement itself
+TypeError: riskAcceptabilityPolicy is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:134:42
+    132|
+    133|   it('does not flag the EU policy statement itself', () => {
+    134|     expect(checkRmfAcceptabilityLanguage(riskAcceptabilityPolicy('EU_M…
+       |                                          ^
+    135|     expect(checkRmfAcceptabilityLanguage('Costs are not considered whe…
+    136|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag a cost stated as a fact, with no stopping or justification cue
+TypeError: checkRmfAcceptabilityLanguage is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:139:12
+    137|
+    138|   it('does not flag a cost stated as a fact, with no stopping or justi…
+    139|     expect(checkRmfAcceptabilityLanguage('The risk control was impleme…
+       |            ^
+    140|   });
+    141|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag ALARP that the sentence says was not applied
+TypeError: checkRmfAcceptabilityLanguage is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:143:12
+    141|
+    142|   it('does not flag ALARP that the sentence says was not applied', () …
+    143|     expect(checkRmfAcceptabilityLanguage('ALARP was not applied; AFAP …
+       |            ^
+    144|     expect(checkRmfAcceptabilityLanguage('The ALARP principle is not u…
+    145|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags ALARP used as a criterion even when a negation sits earlier in the sentence
+TypeError: checkRmfAcceptabilityLanguage is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:148:12
+    146|
+    147|   it('flags ALARP used as a criterion even when a negation sits earlie…
+    148|     expect(checkRmfAcceptabilityLanguage('Risks are not acceptable unl…
+       |            ^
+    149|   });
+    150|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > returns [] for FDA and OTHER, where ISO 14971:2019 leaves the criteria to the manufacturer
+TypeError: checkRmfAcceptabilityLanguage is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:153:12
+    151|   it('returns [] for FDA and OTHER, where ISO 14971:2019 leaves the cr…
+    152|     const t = 'Residual risks were reduced ALARP considering cost';
+    153|     expect(checkRmfAcceptabilityLanguage(t, 'FDA')).toEqual([]);
+       |            ^
+    154|     expect(checkRmfAcceptabilityLanguage(t, 'OTHER')).toEqual([]);
+    155|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/26]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > returns [] for empty input
+TypeError: checkRmfAcceptabilityLanguage is not a function
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:158:12
+    156|
+    157|   it('returns [] for empty input', () => {
+    158|     expect(checkRmfAcceptabilityLanguage('', 'EU_MDR')).toEqual([]);
+       |            ^
+    159|   });
+    160| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/26]⎯
+
+ FAIL  server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > offers AFAP and no ALARP option
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts:39:84
+     37|   it('offers AFAP and no ALARP option', () => {
+     38|     const opts = field('risk_evaluation', 'risk_acceptability_criteria…
+     39|     expect(opts.some((o) => /ALARP/i.test(o.label) || o.value === 'ich…
+       |                                                                                    ^
+     40|     const afap = opts.find((o) => o.value === 'mdr_ivdr_afap');
+     41|     expect(afap?.label).toBe('AFAP — EU MDR/IVDR Annex I §2');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/26]⎯
+
+ FAIL  server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > relabels the stale "ISO 14971 Annex D" option to ISO/TR 24971:2020, keeping its stored value
+AssertionError: expected 'ISO 14971 Annex D Guidance' to be 'ISO/TR 24971:2020 guidance' // Object.is equality
+
+Expected: "ISO/TR 24971:2020 guidance"
+Received: "ISO 14971 Annex D Guidance"
+
+ ❯ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts:47:22
+     45|     const opts = field('risk_evaluation', 'risk_acceptability_criteria…
+     46|     const o = opts.find((x) => x.value === 'iso_14971_annex_d');
+     47|     expect(o?.label).toBe('ISO/TR 24971:2020 guidance');
+       |                      ^
+     48|   });
+     49|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/26]⎯
+
+ FAIL  server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > does not claim ISO 14971:2019 requires ALARP, and carries the EU policy text
+TypeError: riskAcceptabilityPolicy is not a function
+ ❯ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts:51:16
+     49|
+     50|   it('does not claim ISO 14971:2019 requires ALARP, and carries the EU…
+     51|     const eu = riskAcceptabilityPolicy('EU_MDR').statement;
+       |                ^
+     52|     for (const id of ['risk_evaluation', 'risk_acceptability']) {
+     53|       const n = node(id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/26]⎯
+
+ FAIL  server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > keeps the alarp_demonstration field id but relabels it, and its issue check, without ALARP
+AssertionError: expected 'ALARP Demonstration' to be 'Residual-risk reduction demonstration' // Object.is equality
+
+Expected: "Residual-risk reduction demonstration"
+Received: "ALARP Demonstration"
+
+ ❯ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts:63:21
+     61|   it('keeps the alarp_demonstration field id but relabels it, and its …
+     62|     const f = field('risk_acceptability', 'alarp_demonstration');
+     63|     expect(f.label).toBe('Residual-risk reduction demonstration');
+       |                     ^
+     64|     expect(f.helpText ?? '').not.toMatch(/ALARP|reasonably practicable…
+     65|     expect(f.helpText ?? '').toMatch(/AFAP/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/26]⎯
+
+ FAIL  server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > raises a critical regulatory_alignment finding for an EU program stating ALARP or cost
+AssertionError: expected undefined to be defined
+ ❯ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts:86:15
+     84|   it('raises a critical regulatory_alignment finding for an EU program…
+     85|     const f = run({ ...alarpCost, target_markets: ['eu'] }).find((x) =…
+     86|     expect(f).toBeDefined();
+       |               ^
+     87|     expect(f!.severity).toBe('critical');
+     88|     expect(f!.dimension).toBe('regulatory_alignment');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/26]⎯
+
+ FAIL  server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > flags a legacy ich_q9_alarp acceptability criterion for an EU program
+AssertionError: expected undefined to be defined
+ ❯ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts:102:15
+    100|       alarp_demonstration: 'All risks reduced as far as possible.',
+    101|     }).find((x) => x.id === euRule);
+    102|     expect(f).toBeDefined();
+       |               ^
+    103|     expect(f!.relatedFields).toContain('risk_acceptability_criteria');
+    104|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/26]⎯
+
+ FAIL  server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > does not raise the EU device finding for a pharmaceutical programme, whose RMF is not under MDR/IVDR
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts:123:82
+    121|     // Device categories, and an unanswered category, stay in scope.
+    122|     for (const product_category of ['medical_device', 'samd', 'combina…
+    123|       expect(run({ ...answers, product_category }).some((x) => x.id ==…
+       |                                                                                  ^
+    124|     }
+    125|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/26]⎯
+
+ FAIL  server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > no auditor text says ALARP is central to EU MDR or justifies stopping on cost-benefit
+AssertionError: expected 'No Hazard Identification Process The …' not to match /ALARP|reasonably practicable|cost-be…/i
+
+- Expected:
+/ALARP|reasonably practicable|cost-benefit/i
+
++ Received:
+"No Hazard Identification Process The risk management file does not include a systematic hazard identification process. How does the manufacturer claim to have identified all reasonably foreseeable hazards as required by ISO 14971:2019 Clause 5.4? No hazard identification process or hazard list is documented in the risk management file. ISO 14971:2019 Clause 5.4 requires the manufacturer to identify known and foreseeable hazards associated with the medical device in both normal and fault conditions. Implement a systematic hazard identification process using techniques such as preliminary hazard analysis, brainstorming with cross-functional teams, and review of predicate device adverse event data.
+Risk Estimation Matrix Missing No risk estimation matrix is provided in the risk management file. Without defined severity and probability scales, how does the manufacturer assign consistent risk levels across all identified hazardous situations? The risk management file does not contain a risk estimation matrix with defined severity and probability scales. ISO 14971:2019 Clause 5.5 requires risk estimation for each identified hazardous situation using defined severity of harm and probability of occurrence categories. Develop a risk estimation matrix with clearly defined severity levels (e.g., negligible, marginal, critical, catastrophic) and probability categories supported by available data.
+Risk Evaluation Criteria Not Defined The risk management plan does not establish criteria for risk acceptability. How does the manufacturer determine whether a risk is acceptable, requires reduction, or is unacceptable without pre-defined evaluation criteria? No risk acceptability criteria (acceptable / ALARP / unacceptable thresholds) are defined in the risk management plan. ISO 14971:2019 Clause 4.4 requires the risk management plan to include criteria for risk acceptability based on the state of the art and known stakeholder concerns. Define explicit risk acceptability criteria in the risk management plan, including the boundary between acceptable and unacceptable risk regions and the ALARP zone.
+No FMEA or FTA Performed The file does not reference any Failure Mode and Effects Analysis (FMEA) or Fault Tree Analysis (FTA). Can the manufacturer demonstrate that all potential failure modes and their effects have been systematically analyzed? Neither FMEA, FTA, nor any other systematic risk analysis technique is documented in the risk management file. ISO 14971:2019 Clause 5.4 requires systematic techniques for hazard identification. ISO/TR 24971 recommends FMEA, FTA, HAZOP, or equivalent methods. Conduct at least one systematic risk analysis (FMEA, FTA, or HAZOP) covering design, manufacturing, and use-related failure modes. Document the methodology, participants, and outputs.
+Probability Estimates Not Supported by Data Probability of occurrence estimates appear to be assigned without supporting evidence from clinical data, complaint history, or literature. What data sources justify the chosen probability levels? Probability estimates in the risk analysis are not substantiated by clinical data, complaint trending, literature review, or predicate device history. ISO 14971:2019 Clause 5.5 requires that probability of occurrence be estimated using available data. Where data are unavailable, the rationale for the estimate shall be documented. Support probability estimates with quantitative data from complaint databases (MAUDE), published literature, bench testing, or clinical study data. Where data are insufficient, clearly document assumptions.
+Risk Controls Not Traced to Hazards Risk control measures are listed but not clearly traced back to specific identified hazards. How does the manufacturer demonstrate that each identified hazard has been addressed and that no hazard lacks a corresponding risk control? The risk management file does not contain a traceability matrix linking risk control measures to their corresponding identified hazards. ISO 14971:2019 Clause 7.1 requires implementation of risk control measures for each risk requiring reduction, with traceability to the hazardous situation being addressed. Create a comprehensive traceability matrix mapping each identified hazard to its risk control measures, verification activities, and resulting residual risk level.
+ISO 14971:2019 Not Referenced The risk management file does not reference ISO 14971:2019 as the governing standard. Under which standard was this risk management process conducted, and how does the manufacturer claim compliance with current regulatory expectations? ISO 14971:2019 is not cited as the governing standard for the risk management process. ISO 14971:2019 is the harmonized standard for medical device risk management recognized by FDA (via the RHTF) and under EU MDR 2017/745. Compliance is a regulatory expectation. Explicitly reference ISO 14971:2019 in the risk management plan and ensure all process steps align with its clauses.
+ALARP Principle Not Demonstrated The risk management file does not demonstrate that residual risks have been reduced to as low as reasonably practicable (ALARP). How does the manufacturer justify that no further risk reduction is feasible for risks in the ALARP region? No evidence of ALARP demonstration is provided for risks falling in the conditionally acceptable region. ISO 14971:2019 Clause 7.4 requires that when further risk reduction is practicable, it shall be implemented regardless of whether the risk is in an acceptable region. The ALARP principle is central to EU MDR expectations. For each risk in the ALARP region, document the analysis of further risk reduction options, including why additional measures were deemed not reasonably practicable (cost-benefit analysis, state of the art review).
+No MDR Annex I GSPR Mapping The risk management file does not map identified risks to the General Safety and Performance Requirements (GSPRs) of MDR 2017/745 Annex I. How does the manufacturer demonstrate that risk controls satisfy the essential requirements for the device? No mapping from risk management outputs to MDR 2017/745 Annex I GSPRs is provided. MDR 2017/745 Article 10(2) and Annex I require that the risk management process address all applicable GSPRs. A traceability matrix linking risks to GSPRs is expected in technical documentation. Create a GSPR checklist mapping each applicable requirement from MDR Annex I to the corresponding risk control measures and verification evidence in the risk management file.
+No Benefit-Risk Analysis per ISO 14971 Clause 8 The file does not contain an overall benefit-risk analysis as required by ISO 14971:2019 Clause 8. How does the manufacturer conclude that the medical benefits of the device outweigh the overall residual risk? No overall benefit-risk analysis evaluating whether the medical benefits outweigh the overall residual risk is documented. ISO 14971:2019 Clause 8 requires that when individual residual risks are judged acceptable but the overall residual risk has not been evaluated, a benefit-risk analysis shall be performed. Conduct a documented benefit-risk analysis that identifies clinical benefits, weighs them against overall residual risks, and concludes with a justified determination that benefits outweigh risks.
+Failure Modes Not Systematically Identified The failure mode analysis appears ad hoc and does not follow a structured methodology. How does the manufacturer ensure that all critical failure modes -- including single-fault and combination-fault conditions -- have been captured? No structured methodology for failure mode identification is documented. The analysis may be incomplete if failure modes were identified without a systematic approach. ISO 14971:2019 Clause 5.4 requires systematic techniques for hazard identification. IEC 60812 provides a standardized methodology for FMEA. Apply a recognized structured methodology (e.g., process FMEA, design FMEA, FTA) with documented worksheets, severity-occurrence-detection ratings, and cross-functional team participation.
+No State of the Art Review The risk management file does not reference a state-of-the-art review. How does the manufacturer demonstrate awareness of current risk mitigation techniques and safety standards applicable to this device type? No state-of-the-art review is documented to support risk evaluation and risk control decisions. ISO 14971:2019 defines \"state of the art\" and references it throughout. MDR 2017/745 Annex I Section 2 requires risk reduction reflecting the state of the art. Conduct and document a state-of-the-art review covering relevant standards, literature, competitor device labeling, regulatory guidance, and clinical best practices for the device type.
+Risk Control Effectiveness Verification Missing The file does not provide evidence that risk control measures have been verified for effectiveness. How does the manufacturer confirm that implemented controls actually reduce risk to the intended level? No verification evidence is provided to demonstrate the effectiveness of implemented risk control measures. ISO 14971:2019 Clause 7.2 requires verification that risk control measures have been implemented and are effective. This is a mandatory step in the risk management process. For each risk control measure, document the verification method (testing, analysis, inspection), acceptance criteria, results, and conclusion on effectiveness. Cross-reference design verification and validation records.
+No Residual Risk Review After implementing risk controls, the manufacturer has not conducted a documented review of residual risk. How does the manufacturer confirm that residual risks are acceptable and that no new hazards were introduced by the controls? No documented review of residual risks after implementation of risk control measures is provided. ISO 14971:2019 Clause 7.3 requires evaluation of residual risk after each risk control is implemented, including assessment of whether new hazards or hazardous situations have been introduced. Conduct and document a residual risk review for every controlled hazard. Evaluate whether new hazards are introduced by controls, confirm residual risk levels against acceptability criteria, and update the risk analysis accordingly.
+Risk Control Option Analysis Hierarchy Not Followed The risk management file does not demonstrate that risk control measures were selected following the priority order mandated by ISO 14971:2019. Can the manufacturer show that inherent safety by design was considered before protective measures and information for safety? No evidence that the three-tier risk control hierarchy (inherent safety, protective measures, information for safety) was systematically applied. ISO 14971:2019 Clause 7.1 mandates a prioritized sequence: (a) inherent safety by design, (b) protective measures in the device or manufacturing process, (c) information for safety. Skipping to lower-priority controls without justification is a non-conformity. For each risk control measure, document why higher-priority options were considered first. If inherent safety by design was not feasible, state the rationale before adopting protective measures or labeling-based controls.
+Risk Management Plan Missing The risk management file does not contain a risk management plan. Without a plan defining scope, responsibilities, and criteria, how was the risk management process initiated and governed? No risk management plan is present in the risk management file. ISO 14971:2019 Clause 4.4 requires a documented risk management plan that includes scope, assignment of responsibilities, review requirements, risk acceptability criteria, verification and validation activities, and collection of production and post-production information. Create a risk management plan covering: scope of the risk management activities, roles and responsibilities, review milestones, acceptability criteria, lifecycle phases, and reference to applicable standards.
+Risk Management Report Missing The risk management file lacks a risk management report summarizing the results. How does the manufacturer provide top management with evidence that the risk management process has been completed and the overall residual risk is acceptable? No risk management report is provided as the concluding document of the risk management process. ISO 14971:2019 Clause 9 requires a risk management report that reviews the risk management plan, confirms all planned activities have been completed, and states whether the overall residual risk is acceptable. Prepare a risk management report that summarizes: completeness of the risk management plan execution, overall residual risk evaluation, benefit-risk conclusion, and any open items requiring post-market surveillance.
+Risk Management Traceability Gaps The risk management file contains traceability gaps between hazard identification, risk analysis, risk evaluation, risk controls, verification, and residual risk. How does the manufacturer demonstrate end-to-end traceability through the risk management process? No traceability matrix or equivalent mechanism links hazards through risk analysis, controls, verification, and residual risk documentation. ISO 14971:2019 Clause 4.5 requires that the risk management file provide traceability for each identified hazard to the risk analysis, risk evaluation, risk control, and residual risk evaluation. Develop a comprehensive traceability matrix that links each hazard ID through risk estimation, risk evaluation decision, risk control measure, verification evidence, and post-control residual risk level.
+Risk Management File Incomplete The risk management file is missing one or more mandatory components. Per ISO 14971:2019 Clause 4.5, the file shall contain or reference the risk management plan, risk analysis records, risk evaluation records, risk control records, residual risk evaluation, and the risk management report. Which components are absent? The risk management file is missing 6 of 6 key components. This constitutes a substantially incomplete risk management file. ISO 14971:2019 Clause 4.5 specifies the required contents of the risk management file. All elements must be present or referenced for the file to be considered complete. Conduct a gap analysis against ISO 14971:2019 Clause 4.5 requirements. Systematically create or reference all missing components before the file can be considered audit-ready.
+No Post-Production Monitoring Plan The risk management file does not include a plan for post-production monitoring. How does the manufacturer intend to collect and evaluate real-world information on risks after the device is placed on the market? No post-production monitoring plan or post-market surveillance strategy is linked to the risk management process. ISO 14971:2019 Clause 10 requires establishment and documentation of a system to collect and review production and post-production information relevant to the device safety. Develop a post-production monitoring plan that defines data sources (complaint handling, vigilance reports, literature review, registry data), review frequency, and criteria for triggering risk management file updates.
+No Systematic Use Error Analysis (IEC 62366) The risk analysis does not systematically address use errors and human factors. Given that use error is a leading contributor to medical device adverse events, how does the manufacturer identify and mitigate use-related risks? No systematic use error analysis or usability engineering process (per IEC 62366-1) is linked to the risk management file. IEC 62366-1:2015 requires a usability engineering process that identifies use errors and integrates with the risk management process per ISO 14971. Use-related risks must be systematically addressed. Conduct a use-related risk analysis per IEC 62366-1, including use scenarios, task analysis, known use problems, and integration of findings into the ISO 14971 risk management process.
+Emerging Risks Not Addressed The risk management file does not address emerging risks such as cybersecurity threats, software-related hazards, or interoperability risks. Has the manufacturer evaluated whether newly recognized risk categories apply to this device? No evaluation of emerging or newly recognized risk categories (e.g., cybersecurity, AI/ML-related risks, interoperability, supply chain) is documented. ISO 14971:2019 Clause 10.3 requires that new or revised information be evaluated for its impact on previously identified risks and for identification of new hazards. Evaluate emerging risk categories applicable to the device type (cybersecurity, AI/ML, interoperability, supply chain disruptions) and document the assessment, even if such risks are determined to be not applicable.
+Known Hazards from Similar Devices Not Reviewed The risk management file does not reference adverse event data or known hazards from similar or predicate devices. How does the manufacturer ensure that lessons learned from the market history of comparable devices have been incorporated into the hazard identification? No review of adverse events, recalls, or known hazards from similar or predicate devices is documented in the risk management file. ISO 14971:2019 Clause 5.4 requires consideration of hazards associated with similar medical devices. ISO/TR 24971 recommends review of adverse event databases and field safety corrective actions. Conduct a review of adverse event databases (MAUDE, BfArM, MHRA), recall databases, and published literature for similar devices. Incorporate identified hazards into the risk analysis."
+
+ ❯ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts:130:22
+    128|     const blank = run({});
+    129|     const text = blank.map((f) => `${f.title} ${f.question} ${f.observ…
+    130|     expect(text).not.toMatch(/ALARP|reasonably practicable|cost-benefi…
+       |                      ^
+    131|     // The EU rule names ALARP as the thing it rejects; every other ru…
+    132|     const titles = auditor.rules.filter((r) => r.id !== euRule).map((r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/26]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  26 failed | 5 passed (31)
+   Start at  03:04:16
+   Duration  478ms (transform 266ms, setup 135ms, import 190ms, tests 39ms, environment 0ms)
+

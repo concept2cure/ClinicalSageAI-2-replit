@@ -1,0 +1,552 @@
+# g-rmf-afap-policy green after review round 2 (2026-10-05)
+# command: npx vitest run server/services/market-specs/__tests__/risk-management-structure.test.ts server/services/ana/intelligence-questions/__tests__/ server/services/ana/__tests__/intelligence-flow-sessions.test.ts server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts server/services/market-specs/__tests__/device-readiness-scorecard.test.ts server/services/market-specs/__tests__/device-blueprint.test.ts tests/ana-intelligence/
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > recommends the 510(k) pathway from FDA facts 1ms
+ × server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > pulls the 510(k) required documents and forms 5ms
+   → expected [ …(2) ] to include 'eSTAR 510(k) template'
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > marks risk management, biocompatibility and software applicable (CER/PER not) 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > classifies software Class B with architecture (not detailed design) 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > includes the biocompatibility endpoints for a permanent implant 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > attaches the FDA 510(k) reviewer checklist 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > classifies the device IIb (implantable) 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > marks clinical evaluation applicable and gap-checks it 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > uses the Notified Body CER reviewer checklist 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > evidenceReady is false while assessed modules are incomplete 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — IVDR companion diagnostic > classifies the IVD Class C 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — IVDR companion diagnostic > marks performance evaluation applicable (not clinical evaluation) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > exposes a non-empty set of flows and every definition resolves 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > every section.nodeIds entry references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > every non-null defaultNext references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > every section.nodeIds entry references a real node 2ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > every predicate field references a field defined somewhere in the flow 3ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > has at least one terminal path (a node with defaultNext === null) 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: protocol_development > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: csr_report > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: ind_submission > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: sop_development > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: device_510k > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: cer_report > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: nda_submission > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: bla_submission > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: device_pma > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: cmc_specification > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: risk_management > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: safety_narrative > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: labeling > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: briefing_book > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: stability_study > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: project_setup > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > documents the current per-flow vocabularies (informational snapshot) 2ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > has the core RMF sections with reviewer questions 2ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > asks about pre-defined acceptability criteria and foreseeable misuse 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > assesses completeness deterministically 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > looks up a section 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > EU MDR and EU IVDR require AFAP with no economic justification, citing Annex I §2 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA follows the manufacturer-defined ISO 14971:2019 criteria (clauses 4.2 and 4.4) 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > OTHER is not modelled and says so, asserting no economic permission it does not model 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA basis says clause 4.2 NOTE 1 lets the manufacturer's policy adopt ALARP, so economics are the manufacturer's choice 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > never states that ISO 14971:2019 does not use ALARP: clause 4.2 NOTE 1 lists ALARP, ALARA and AFAP as policy options 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA statement is labelled recall and calls ISO 14971:2019 a recognised consensus standard, not an FDA rule 2ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > the EU statement is scoped to devices 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > every basis is well formed and none is presented as checked regulator text 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > is exported from the default export 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags ALARP with a cost justification for the EU 3ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags the spelled-out phrase once, not again as "reasonably practicable" 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags "reasonably practicable" on its own 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags economic or disproportionate stopping rules near residual risk 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag AFAP language that rules economics out 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag the EU policy statement itself 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags an economic stopping rule stated as a reason, as cost-effectiveness or as an absent budget: Further mitigation of the residual risk was not implemented for economic reasons. 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags an economic stopping rule stated as a reason, as cost-effectiveness or as an absent budget: The residual risk is accepted; additional controls are not cost-effective. 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags an economic stopping rule stated as a reason, as cost-effectiveness or as an absent budget: Risk reduction was stopped as there was no budget for a redesign. 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > still does not flag a sentence that rules a budget out as a reason 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag a cost stated as a fact, with no stopping or justification cue 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag ALARP that the sentence says was not applied 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags ALARP used as a criterion even when a negation sits earlier in the sentence 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > returns [] for FDA and OTHER, where ISO 14971:2019 leaves the criteria to the manufacturer 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > returns [] for empty input 0ms
+stdout | server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts
+{
+  "timestamp": "2026-10-05T03:23:50.013Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:23:50.015Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts
+{
+  "timestamp": "2026-10-05T03:23:50.015Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts
+{
+  "timestamp": "2026-10-05T03:23:50.020Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:23:50.021Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts
+{
+  "timestamp": "2026-10-05T03:23:50.021Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > produces a report with overallScore in [0,100] 9ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > scores 100 across all dimensions with no findings 1ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > applies per-severity penalties to the affected dimension (critical=-25, warning=-15, info=-5) 0ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > stacks multiple findings on the same dimension and floors at 0 1ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > overallAssessment thresholds > >=85 => audit_ready / low 0ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > overallAssessment thresholds > computes overall as the rounded mean of the seven dimension scores 0ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > overallAssessment thresholds > derives assessment + risk from the score, then caps by finding severity 0ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > overallAssessment thresholds > a SINGLE critical finding caps a 96-score filing off "audit_ready / low" 0ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > overallAssessment thresholds > an unresolved WARNING (no critical) caps off "audit_ready", down to needs_work / moderate 1ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > overallAssessment thresholds > info-only findings do NOT cap the verdict (still audit_ready / low) 0ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > sorts critical findings ahead of warnings and info in topPriorities 0ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (real auditors) > real ind auditor produces findings on empty answers and a valid score band 5ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (real auditors) > real csr auditor produces findings on empty answers and a valid score band 2ms
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > offers AFAP and no ALARP option 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > relabels the stale "ISO 14971 Annex D" option to ISO/TR 24971:2020, keeping its stored value 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > does not claim ISO 14971:2019 requires ALARP, and carries the EU policy text 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > keeps the alarp_demonstration field id but relabels it, and its issue check, without ALARP 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > raises a critical regulatory_alignment finding for an EU program stating ALARP or cost 5ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > flags a legacy ich_q9_alarp acceptability criterion for an EU program 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > does not raise the EU finding for a US-only program, or for clean AFAP text 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > does not raise the EU device finding for a pharmaceutical programme, whose RMF is not under MDR/IVDR 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > no auditor text says ALARP is central to EU MDR or justifies stopping on cost-benefit 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > startFlow > returns initial state with entry node, empty answers, and section progress 3ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > startFlow > filters a field whose visibleWhen is not met (empty answers at start) 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > startFlow > throws for an unknown category 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — answer storage & progression > stores answers, marks node complete, and advances currentNodeId 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — answer storage & progression > returns validation issues and does NOT advance on a missing required field 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — branch resolution > routes to the branch goto target when the predicate matches 0ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — branch resolution > falls back to defaultNext when no branch matches 0ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — completion > produces a complete event with start_war_game suggested action at a terminal node 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > resumeFlow > returns the current node event for an in-progress state 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > resumeFlow > returns the complete event for a completed state 0ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > visibleWhen filtering with accumulated answers > keeps a conditional field once a prior answer satisfies its predicate 0ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > visibleWhen filtering with accumulated answers > filters the conditional field when the prior answer does not satisfy it 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is 100 / ready when everything is complete 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is not_ready / low when nothing is done, and surfaces gaps 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > scores partial evidence via present/total 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > weights normalise when a dimension is absent (no requirements assessed) 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > derives the scorecard from a blueprint (CER partially authored) 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > credits a fully-authored CER 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > eq > matches strictly equal values 1ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > eq > is false when values differ 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > eq > is false for a missing field 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > eq > does not coerce number vs string 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > neq > is true when values differ 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > neq > is false when values are equal 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > neq > is true for a missing field (undefined !== value) 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > in > is true when the stringified actual is in the list 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > in > is false when actual not in the list 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > in > stringifies the actual value before comparison 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > in > is false when the predicate value is not an array 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > in > is false for a missing field 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > not_in > is true when actual not in the list 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > not_in > is false when actual is in the list 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > not_in > is false when the predicate value is not an array 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > not_in > is true for a missing field 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > gt > is true when actual number is greater 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > gt > is false when actual number is not greater 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > gt > is false for equal values (strictly greater) 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > gt > coerces a numeric-string answer (the AnA tool surface sends numbers as strings) 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > gt > is false when the predicate value is non-numeric 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > gt > is false for a missing field 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > lt > is true when actual number is less 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > lt > is false when actual number is not less 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > lt > coerces a numeric-string answer (the AnA tool surface sends numbers as strings) 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > lt > is false for a missing field 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > contains > is true when the actual string contains the substring 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > contains > is case-insensitive on both sides 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > contains > is false when the substring is absent 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > contains > is false when actual is not a string 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > contains > is false when the predicate value is not a string 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > contains > is false for a missing field 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > exists > is true for a non-empty string 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > exists > is true for a number (including 0) 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > exists > is false for null 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > exists > is false for undefined / missing field 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > exists > is false for the empty string 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > exists > is false for an empty array 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > exists > is true for a non-empty array 0ms
+ ✓ tests/ana-intelligence/predicate.test.ts > evaluatePredicate > unknown operator > returns false for an unrecognized operator 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > required fields > flags a missing required field 2ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > required fields > flags an empty string required field 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > required fields > flags an empty-array required multi_select 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > required fields > passes when a required field is provided 1ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > string length + pattern > enforces minLength 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > string length + pattern > enforces maxLength 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > string length + pattern > enforces pattern with a custom message 1ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > numeric min/max > enforces min 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > numeric min/max > enforces max 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > option validity > rejects an out-of-vocabulary select value 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > option validity > rejects an out-of-vocabulary multi_select item 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > visibleWhen skipping > skips validation for a required field hidden by visibleWhen 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > visibleWhen skipping > honors prior-node answers when resolving visibleWhen 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > validateDate > warns when a submission date is in the past 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > validateDate > does not warn for a future submission date 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > validateDate > flags an invalid date format 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > validateDate > enforces start/end consistency (start after end) 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > validateDate > accepts a start date before the end date 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > runCrossFieldValidation > flags "none" combined with other multi-select selections 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > runCrossFieldValidation > does not flag a lone "none" selection 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > runCrossFieldValidation > flags less than one subject per site (enrollment-per-site sanity) 0ms
+ ✓ tests/ana-intelligence/validators.test.ts > validateAnswers > runCrossFieldValidation > does not flag a reasonable enrollment-per-site ratio 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > evaluatePredicate — numeric gates fire on string-encoded number answers > a string "7" satisfies `gt 10`? no — but "12" does (the vigilance-report gate fires) 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > evaluatePredicate — numeric gates fire on string-encoded number answers > a string "3" satisfies `lt 5` (evaluator-underqualified gate fires) 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > evaluatePredicate — numeric gates fire on string-encoded number answers > the real number path is unchanged 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > evaluatePredicate — numeric gates fire on string-encoded number answers > a non-numeric or empty answer never triggers a numeric gate (no false positive) 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > validateAnswers — min/max is enforced on a number field answered as a string > flags a string "200" as exceeding max 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > validateAnswers — min/max is enforced on a number field answered as a string > flags a string "0" as below min 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > validateAnswers — min/max is enforced on a number field answered as a string > accepts a string "50" within range 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > validateAnswers — min/max is enforced on a number field answered as a string > still accepts a real number within range (unchanged path) 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/visible-when-deadlock.test.ts > visibleWhen over a prior node’s answer — render and validation agree > a node whose every field is hidden can be passed with an empty answer (no deadlock) 4ms
+ ✓ server/services/ana/intelligence-questions/__tests__/visible-when-deadlock.test.ts > visibleWhen over a prior node’s answer — render and validation agree > a required field the renderer SHOWS because of a prior answer is still validated 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/predicate-yes-no-coercion.test.ts > evaluatePredicate — yes_no answers coerce against boolean predicates > a string "no" satisfies the critical gate `eq false` (gate fires) 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/predicate-yes-no-coercion.test.ts > evaluatePredicate — yes_no answers coerce against boolean predicates > a string "yes" does NOT satisfy `eq false` (gate does not fire when mapping is done) 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/predicate-yes-no-coercion.test.ts > evaluatePredicate — yes_no answers coerce against boolean predicates > a string "yes" satisfies a visibility predicate `eq true` 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/predicate-yes-no-coercion.test.ts > evaluatePredicate — yes_no answers coerce against boolean predicates > the real boolean path is unchanged (false eq false, true eq true) 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/predicate-yes-no-coercion.test.ts > evaluatePredicate — yes_no answers coerce against boolean predicates > non-boolean eq predicates keep strict identity (no accidental coercion) 0ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > cer_report post-flow suggested actions > completes and suggests actions 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > cer_report post-flow suggested actions > names only actionTypes that resolve to registered tool handlers 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > cer_report post-flow suggested actions > no longer advertises the dead generate_cer / generate_lit_search labels 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > protocol_development 2ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > csr_report 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > ind_submission 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > nda_submission 2ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > bla_submission 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > sop_development 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > device_510k 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > device_pma 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > cer_report 0ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > briefing_book 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > safety_narrative 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > labeling 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > risk_management 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > cmc_specification 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > stability_study 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > project_setup 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > the CMC interview’s first suggestion is the register commit (commit_intelligence_flow) 0ms
+ ✓ server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts > every flow’s suggested actions resolve to registered tool handlers > every flow still offers the War Game 7ms
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > persists the session for the caller’s org and returns its id
+{
+  "timestamp": "2026-10-05T03:23:55.897Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] INTELLIGENCE_FLOW_STARTED intelligence_flow",
+  "context": {
+    "userId": 7,
+    "tenantId": 42,
+    "resourceId": "5f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e"
+  }
+}
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > persists the session for the caller’s org and returns its id
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > persists the session for the caller’s org and returns its id
+{
+  "timestamp": "2026-10-05T03:23:55.903Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > persists the session for the caller’s org and returns its id
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > without an organization it runs stateless, persists nothing, and says so
+{
+  "timestamp": "2026-10-05T03:23:55.912Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] INTELLIGENCE_FLOW_STARTED intelligence_flow",
+  "context": {
+    "userId": null,
+    "resourceId": "cmc-specification-v1"
+  }
+}
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > without an organization it runs stateless, persists nothing, and says so
+{
+  "timestamp": "2026-10-05T03:23:55.921Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Database operation blocked because tenant scope is missing",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/services/auditService.ts:435:35",
+    "enforcement": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > without an organization it runs stateless, persists nothing, and says so
+{
+  "timestamp": "2026-10-05T03:23:55.921Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > without an organization it runs stateless, persists nothing, and says so
+{
+  "timestamp": "2026-10-05T03:23:55.923Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Database operation blocked because tenant scope is missing",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/lib/tamper-proof-audit.ts:470:36",
+    "enforcement": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > without an organization it runs stateless, persists nothing, and says so
+{
+  "timestamp": "2026-10-05T03:23:55.923Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > commits every plan entry through the register creates under the session tenant and project, and marks the session committed
+{
+  "timestamp": "2026-10-05T03:23:56.001Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] INTELLIGENCE_FLOW_COMMITTED intelligence_flow",
+  "context": {
+    "userId": 7,
+    "tenantId": 42,
+    "resourceId": "5f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e"
+  }
+}
+
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > persists the session for the caller’s org and returns its id 110ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > refuses a project the organization does not hold — the interview is not started and nothing is written (PF-15) 5ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > without an organization it runs stateless, persists nothing, and says so 13ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > fails closed when the session cannot be persisted — the interview is not started 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > with a session_id: loads the state from the session (org-scoped), saves the step, ignores flow_state 3ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a validation failure returns the same question and saves nothing 5ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a session id of another organization is refused and nothing is written 2ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a session_id without an organization context is refused before the database 4ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a session that is already complete refuses further answers 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a step that cannot be recorded does not count 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > without a session_id the stateless flow_state contract still works, touching no session 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > with neither a session_id nor a flow_state it says what is missing 0ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > resume_intelligence_flow > reads the session back and returns the current question 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > resume_intelligence_flow > requires a session_id 5ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > dry_run returns the plan — register, write path, body — and writes nothing 40ms
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > a refused entry stops the commit with the refusal, leaves the session complete, and reports what did land
+{
+  "timestamp": "2026-10-05T03:23:56.006Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] INTELLIGENCE_FLOW_COMMIT_REFUSED intelligence_flow",
+  "context": {
+    "userId": 7,
+    "tenantId": 42,
+    "resourceId": "5f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e"
+  }
+}
+
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > refuses a session that is not complete
+{
+  "timestamp": "2026-10-05T03:23:56.007Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] INTELLIGENCE_FLOW_COMMIT_REFUSED intelligence_flow",
+  "context": {
+    "userId": 7,
+    "tenantId": 42,
+    "resourceId": "5f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e"
+  }
+}
+
+stdout | server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > refuses a session with no project when none is supplied
+{
+  "timestamp": "2026-10-05T03:23:56.008Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] INTELLIGENCE_FLOW_COMMIT_REFUSED intelligence_flow",
+  "context": {
+    "userId": 7,
+    "tenantId": 42,
+    "resourceId": "5f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e"
+  }
+}
+
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > commits every plan entry through the register creates under the session tenant and project, and marks the session committed 11ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > a refused entry stops the commit with the refusal, leaves the session complete, and reports what did land 3ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > refuses a session that is not complete 1ms
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > refuses a session with no project when none is supplied 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > pulls the 510(k) required documents and forms
+AssertionError: expected [ …(2) ] to include 'eSTAR 510(k) template'
+ ❯ server/services/market-specs/__tests__/device-blueprint.test.ts:22:30
+     20|
+     21|   it('pulls the 510(k) required documents and forms', () => {
+     22|     expect(bp.requiredForms).toContain('eSTAR 510(k) template');
+       |                              ^
+     23|     expect(bp.requiredDocuments.some((d) => d.templateId === 'k510_sum…
+     24|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 13 passed (14)
+      Tests  1 failed | 326 passed (327)
+   Start at  03:23:47
+   Duration  8.89s (transform 12.26s, setup 475ms, import 18.77s, tests 446ms, environment 1ms)
+
