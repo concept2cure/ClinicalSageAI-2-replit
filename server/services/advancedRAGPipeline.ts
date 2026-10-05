@@ -44,6 +44,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { EnhancedEmbeddingService, getEmbeddingService } from './enhancedEmbeddingService.js';
 import { assertTenantIsCurrent } from '../db/currentTenant.js';
 import { getTenantScope } from '../db/tenantStore.js';
+import { refuseModelCallHere } from './ai-gateway/model-call-scope.js';
 import { getOrgPlacementResolver } from './ai-gateway/providers/org-placement.js';
 import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from './aiProviderRouter.js';
 import { getOpenAIClient } from './openai-client.js';
@@ -1475,6 +1476,9 @@ export class AdvancedRAGPipeline {
    * round-trip. The final answer generation does NOT use this.
    */
   private async routeCached(request: AIRequest): Promise<AIResponse> {
+    // A cache hit is model output served without a call: refused where a
+    // model may not be called, before the lookup (row 74, S5c).
+    await refuseModelCallHere('RAG response cache');
     // The tenant and its placement policy are part of the key. The pipeline is
     // a process singleton, and until 2026-09-26 the key was the request shape
     // alone: a hit served one tenant another tenant's model output, produced

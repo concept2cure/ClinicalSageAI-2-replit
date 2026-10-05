@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-05T07:12:34.965Z",
+  "generatedAt": "2026-10-05T11:22:33.253Z",
   "git": {
-    "sha": "76e7528cdaaea0549bf0c5467da71f851dc47738",
+    "sha": "d2fbe38874f966f1bde02b44f78cac8cf74f9447",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2636,7 +2636,7 @@
       },
       {
         "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 1660
+        "lines": 1664
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
