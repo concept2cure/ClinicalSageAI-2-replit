@@ -9,8 +9,10 @@
  * descriptor per market that spans BOTH devices and IVDs with honest platform
  * capability flags. This registry is that single comparable view.
  *
- * HONEST BY CONSTRUCTION: `canTransmit` is true for the 12 markets that have a live
- * gateway; false for TW/SA/ZA and the cross-market MDSAP entry. `canAssemble`
+ * HONEST BY CONSTRUCTION: `canTransmit` is true for the 11 markets that have a live
+ * gateway; false for JP (no device e-application path; the PMDA gateway's
+ * protocol is unsourced and refuses before the wire), TW/SA/ZA and the
+ * cross-market MDSAP entry. `canAssemble`
  * is true only where the platform already produces the artifact (eCTD backbone,
  * FDA eSTAR mapper, EU CE technical documentation / CER packager).
  *
@@ -203,9 +205,18 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     ],
     canAssemble: false,
     assembleNote:
-      'No PMDA STED assembler in the platform; descriptive + readiness only.',
-    canTransmit: true,
-    gatewayRegion: 'pmda',
+      'No PMDA STED assembler in the platform; descriptive + readiness only. ' +
+      'Japanese device/IVD applications are not eCTD (STED); no PMDA device e-application path is built.',
+    // 2026-10-05 (D2 record, step g-pmda-transmit-unverified): was `true` with
+    // gatewayRegion 'pmda', which routed a Japanese device/IVD application to
+    // the drug eCTD gateway — whose protocol is itself unsourced and now
+    // refuses before the wire (submission-gateways/pmda-gateway.ts).
+    // Basis of the assembleNote: 'not eCTD (STED)' is recall, not yet verified
+    // against PMDA STED material. 'No device e-application path is built' is a
+    // statement about this platform: PMDA's own device channel is DWAP
+    // (www.dwap.pmda.go.jp), whose output goes online via the gateway system
+    // (g-pmda-transmit-unverified-facts.md, facts 5 and 7).
+    canTransmit: false,
     citations: [
       'Pharmaceuticals and Medical Devices Act (PMD Act)',
       'MHLW Ordinance No. 169 (QMS, ISO 13485-aligned); MDSAP acceptance in Japan',

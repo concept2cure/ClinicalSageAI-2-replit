@@ -11,8 +11,8 @@
  * HONEST BY CONSTRUCTION:
  *   - No LLM calls, no fabrication. Every finding is derived from the registries /
  *     readiness scorers above.
- *   - `canTransmit` is carried from the registry — true for 12 markets with a
- *     live gateway, false for TW/SA/ZA/MDSAP.
+ *   - `canTransmit` is carried from the registry — true for 11 markets with a
+ *     live gateway, false for JP/TW/SA/ZA/MDSAP.
  *   - When a submission is not producible, the advisory says so and why.
  *
  * PURE + DETERMINISTIC: static composition + pure shaping. No DB, no network.

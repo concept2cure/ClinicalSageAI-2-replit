@@ -170,21 +170,24 @@ describe('adviseGlobalMarketStrategy', () => {
     expect(advice.headline).toContain('FDA');
   });
 
-  it('reports transmission capability honestly — true for markets with live gateways', () => {
+  it('reports transmission capability honestly — true only for markets with live gateways', () => {
     const advice = adviseGlobalMarketStrategy({
       profile: { isIvd: true, availableArtifacts: [] },
       candidateMarkets: ['us-fda', 'jp-pmda'],
     });
 
-    // Both markets now have real gateways — transmitCapableMarkets is non-empty.
+    // FDA has a gateway. Japan does not: device/IVD applications there are not
+    // eCTD (STED) and no PMDA device e-application path is built (2026-10-05,
+    // g-pmda-transmit-unverified).
     expect(advice.transmitCapableMarkets).toContain('us-fda');
-    expect(advice.transmitCapableMarkets).toContain('jp-pmda');
+    expect(advice.transmitCapableMarkets).not.toContain('jp-pmda');
     // Ranked markets report canTransmit from the registry.
-    expect(advice.rankedMarkets.every((m) => m.canTransmit === true)).toBe(true);
-    // No cannot-transmit blocker for gateway-capable markets.
-    for (const m of advice.rankedMarkets) {
-      expect(m.blockers.every((b) => !/cannot transmit/i.test(b))).toBe(true);
-    }
+    const byId = new Map(advice.rankedMarkets.map((m) => [m.marketId, m]));
+    expect(byId.get('us-fda')!.canTransmit).toBe(true);
+    expect(byId.get('jp-pmda')!.canTransmit).toBe(false);
+    // The cannot-transmit blocker appears exactly where the capability is absent.
+    expect(byId.get('us-fda')!.blockers.every((b) => !/cannot transmit/i.test(b))).toBe(true);
+    expect(byId.get('jp-pmda')!.blockers.some((b) => /cannot transmit/i.test(b))).toBe(true);
   });
 
   it('reports which markets the platform can assemble and which need a local rep', () => {

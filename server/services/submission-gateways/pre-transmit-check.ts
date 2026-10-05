@@ -9,7 +9,9 @@
  *   1. Gateway size limit — HARD, always. A package over the region gateway's
  *      ceiling cannot be transmitted via the gateway (FDA Form 5640 v2.0: ESG
  *      for ≤10 GB, physical media above). This is a fact about the channel, not
- *      a policy toggle, so it always blocks.
+ *      a policy toggle, so it always blocks — where the figure has a source.
+ *      JP is exempt (a warning) until a PMDA size source is filed: its 1 GB
+ *      figure is unsourced (see SIZE_LIMIT_UNSOURCED).
  *   2. PDF/A submission grade — blocks in production when ECTD_REQUIRE_PDFA and
  *      the bundle shows unconverted PDF leaves.
  *   3. DTD self-containment — blocks in production when ECTD_REQUIRE_DTD and the
@@ -59,6 +61,20 @@ const REGION_TO_REGULATORY: Record<Region, RegulatoryRegion> = {
   in: 'IN',
   kr: 'KR',
   sg: 'SG',
+};
+
+/**
+ * Gateway regions whose size figure (getGatewaySizeLimit) has no regulator
+ * source. Exceeding it is reported as a warning, never as a blocker: refusing a
+ * send on a number nobody sourced is a fabricated verdict.
+ *
+ * 2026-10-05 (D2 record, step g-pmda-transmit-unverified): JP's 1 GB comes from
+ * ectd-regional-rules PMDA-003, which cites a "PMDA eCTD Submission Manual v2.0
+ * §4.2" not found on pmda.go.jp, and is itself only a warning there; this gate
+ * turned it into a hard blocker. Remove an entry only when the source is filed.
+ */
+const SIZE_LIMIT_UNSOURCED: Partial<Record<Region, string>> = {
+  pmda: 'no PMDA source for the 1 GB figure has been filed (ectd-regional-rules PMDA-003 cites a manual not found on pmda.go.jp)',
 };
 
 export interface PreTransmitCheck {
@@ -208,18 +224,26 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   const checks: PreTransmitCheck[] = [];
   const isProd = input.environment === 'production';
 
-  // 1. Size limit — hard, always.
+  // 1. Size limit — hard, always, where the figure is sourced; a warning where
+  // it is not (SIZE_LIMIT_UNSOURCED).
   const limit = getGatewaySizeLimit(REGION_TO_REGULATORY[input.region]);
   const sizeOk = input.bundle.sizeBytes <= limit;
+  const unsourced = SIZE_LIMIT_UNSOURCED[input.region];
   checks.push({
     name: 'gateway-size-limit',
     passed: sizeOk,
     detail: `${
       input.bundle.sizeBytes
-    } bytes vs ${limit} byte limit for ${input.region.toUpperCase()}`,
+    } bytes vs ${limit} byte limit for ${input.region.toUpperCase()}` +
+      (unsourced ? ` (not enforced: ${unsourced})` : ''),
   });
-  if (!sizeOk) {
-    const gb = (n: number) => (n / 1024 ** 3).toFixed(2);
+  const gb = (n: number) => (n / 1024 ** 3).toFixed(2);
+  if (!sizeOk && unsourced) {
+    warnings.push(
+      `Package is ${gb(input.bundle.sizeBytes)} GB, over the ${gb(limit)} GB figure recorded for the ` +
+        `${input.region.toUpperCase()} gateway. Not enforced: ${unsourced}.`
+    );
+  } else if (!sizeOk) {
     blockers.push(
       `Package is ${gb(
         input.bundle.sizeBytes

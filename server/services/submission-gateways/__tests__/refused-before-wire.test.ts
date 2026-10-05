@@ -169,6 +169,22 @@ describe('refusedBeforeWire — refusals inside a gateway that PROVE nothing was
     expect(refusedBeforeWire(err)).toBe(true);
   });
 
+  // 2026-10-05 (D2 record, step g-pmda-transmit-unverified): the PMDA gateway's
+  // REST/mTLS/HMAC protocol had no regulator source; transmit now refuses with
+  // the typed UnverifiedTransportError before any row or socket. The full
+  // suite (credentials set, no wire, status not polled) is
+  // pmda-gateway-unverified.test.ts.
+  it('is true for the PMDA refusal over its unsourced protocol', async () => {
+    dbCalls.length = 0;
+    const err = await failureOf(getGateway('pmda', 'pmda_gateway').transmit(request({
+      bundle: { ...bundle, format: 'pmda_ectd' },
+      metadata: { applicationId: 'JP-2026-0001', sequence: '0001', environment: 'staging' },
+    })));
+    expect(err).toBeInstanceOf(UnverifiedTransportError);
+    expect(dbCalls.some((t) => /INSERT INTO submission_transmittals/.test(t))).toBe(false);
+    expect(refusedBeforeWire(err)).toBe(true);
+  });
+
   it('requiredAgencyMetadata marks both of its refusals, and only those', () => {
     const noSeq = (() => { try { requiredAgencyMetadata(request({ metadata: {} })); } catch (e) { return e; } })();
     const noType = (() => { try { requiredAgencyMetadata(request({ submissionType: '' })); } catch (e) { return e; } })();
@@ -232,7 +248,9 @@ describe('refusedBeforeWire — CredentialError and the proof-carrying Transport
       'server/services/submission-gateways/mfds-gateway.ts': 1,
       'server/services/submission-gateways/mhra-gateway.ts': 1,
       'server/services/submission-gateways/nmpa-gateway.ts': 1,
-      'server/services/submission-gateways/pmda-gateway.ts': 1,
+      // pmda-gateway.ts: 0 since 2026-10-05 (g-pmda-transmit-unverified) — it no
+      // longer reads the invented credential variables; it refuses every
+      // transmit with UnverifiedTransportError (pinned above).
       'server/services/submission-gateways/swissmedic-egateway.ts': 1,
       'server/services/submission-gateways/tga-ebs-gateway.ts': 1,
     };
