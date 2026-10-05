@@ -1,0 +1,14 @@
+Mutant G11-frame-check-unread: the client drops the check the approval frame carries
+
+--- client/src/concept2cure/components/ana/useGovernedAction.ts
+- // The strip's own reader: a malformed check is no check, never a guess.
+  const check = readAnswerCheck(event.check);
++ const check = undefined as AnswerCheckView | undefined;
+
+Tests run: client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > reads it with the strip's own reader 8ms
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > quotes what was not found in this turn's sources, and names the verdict 50ms
+      Tests  2 failed | 5 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
