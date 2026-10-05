@@ -564,6 +564,10 @@ interface ReadinessAssessment {
    *  (signingNowResolvesRelease: the resolver's spine precedence lives there),
    *  and this client never re-derives it. */
   dispatchGateOnSigning: { cleared: boolean; blockers: string[] };
+  /** Whether THIS user may sign the freeze and dispatch, from the lookup the
+   *  sign step enforces (separation of duties: the sequence's creator cannot).
+   *  Informational — the server still decides at signing. */
+  signer?: { state: 'independent' | 'author' | 'unresolved' | 'unverified'; sources: string[] };
   /** §11.70 state. Informational — the blocking happens in the gates. */
   releaseSignature?: {
     required: boolean;
@@ -1216,6 +1220,12 @@ export function DispatchWorkspace({
   // The gate blocks, and its only blocker is the release signature that the
   // dispatch e-signature itself records. See the header state that reads this.
   const awaitingOwnSignature = !!a && !a.gate.cleared && dispatchOpen;
+  // Separation of duties, told in advance. The sign step refuses the sequence's
+  // creator, and used to say so only after a password and code were typed. The
+  // buttons are not offered to someone the server will refuse; 'unverified'
+  // (the lookup failed) hides nothing — unknown is not "you cannot".
+  const signerState = a?.signer?.state;
+  const cannotSign = signerState === 'author' || signerState === 'unresolved';
   const [qc, setQc] = React.useState<{
     phase: 'idle' | 'running' | 'done' | 'error';
     data?: DispatchQcResult;
@@ -1332,6 +1342,26 @@ export function DispatchWorkspace({
                 gate blocks. Dispatch is not permitted until it has been adversarially reviewed.
               </div>
             )}
+            {seq.status !== 'dispatched' && signerState === 'author' && (
+              <div className="sc-verdict tone-warn" role="status">
+                You created this sequence, so you cannot sign its freeze or dispatch. Separation of
+                duties requires a different colleague with signing rights to sign both steps — arrange
+                who that is before the sequence is ready.
+              </div>
+            )}
+            {seq.status !== 'dispatched' && signerState === 'unresolved' && (
+              <div className="sc-verdict tone-warn" role="status">
+                No creator is recorded for this sequence, so nobody can show they are independent of it
+                and its freeze and dispatch cannot be signed. Ask an administrator to establish who
+                created it.
+              </div>
+            )}
+            {seq.status !== 'dispatched' && signerState === 'unverified' && (
+              <div className="scaf-note sc-mb">
+                Whether you may sign this sequence could not be checked just now. The check runs again
+                when you sign.
+              </div>
+            )}
             <div className="sc-disp-actions">
               {/* FREEZE reads `freezeGate`, not `gate`. `gate` is the dispatch
                   verdict and for IND / NDA / BLA / MAA it requires a §11.70
@@ -1347,7 +1377,7 @@ export function DispatchWorkspace({
                   and white-screen the workspace (hostilePayloadProbe). Missing
                   is treated as NOT cleared — fail closed. It never falls back
                   to `gate`, which is the defect this line is fixing. */}
-              {freezeOpen && seq.status === 'validated' && (
+              {freezeOpen && !cannotSign && seq.status === 'validated' && (
                 <button
                   type="button"
                   className="sp-primary sc-btn"
@@ -1368,7 +1398,7 @@ export function DispatchWorkspace({
                   here. When the signature is what this click supplies, the label
                   says so: the signer is applying the release, not only moving a
                   status (§11.50 — the meaning of the act must be clear). */}
-              {dispatchOpen && seq.status === 'frozen' && (
+              {dispatchOpen && !cannotSign && seq.status === 'frozen' && (
                 <button
                   type="button"
                   className="sp-primary sc-btn"

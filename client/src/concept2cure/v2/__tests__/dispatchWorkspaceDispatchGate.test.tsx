@@ -176,3 +176,51 @@ describe('DispatchWorkspace — no sentence contradicts the control under it', (
     expect(text()).not.toMatch(/stay locked/);
   });
 });
+
+/**
+ * Separation of duties, told in advance. The sign step refuses the sequence's
+ * creator; before this the creator found out only after typing a password and
+ * code. The tab now says so as soon as the sequence exists, and does not offer
+ * a button the server will refuse.
+ */
+describe('DispatchWorkspace — the sequence creator is told before signing', () => {
+  it('the creator sees why they cannot sign, and is not offered Freeze', async () => {
+    await mount('validated', assessmentAt('validated', { signer: { state: 'author', sources: ['sequence creator'] } }));
+    expect(text()).toMatch(/You created this sequence, so you cannot sign its freeze or dispatch/);
+    expect(button(/Freeze sequence/), 'a button the server will refuse after a password').toBeFalsy();
+  });
+
+  it('the creator is warned while the sequence is still a draft — early enough to arrange a signer', async () => {
+    await mount('draft', assessmentAt('draft', { signer: { state: 'author', sources: ['sequence creator'] } }));
+    expect(text()).toMatch(/arrange\s+who that is/);
+  });
+
+  it('the creator is not offered Dispatch on a frozen sequence', async () => {
+    await mount('frozen', assessmentAt('frozen', { signer: { state: 'author', sources: ['sequence creator'] } }));
+    expect(dispatchButton()).toBeFalsy();
+  });
+
+  it('an independent colleague sees no warning and keeps both controls', async () => {
+    await mount('frozen', assessmentAt('frozen', { signer: { state: 'independent', sources: ['sequence creator'] } }));
+    expect(text()).not.toMatch(/You created this sequence/);
+    expect(dispatchButton()).toBeTruthy();
+  });
+
+  it('no recorded creator: nobody can sign, and it says so', async () => {
+    await mount('validated', assessmentAt('validated', { signer: { state: 'unresolved', sources: [] } }));
+    expect(text()).toMatch(/No creator is recorded/);
+    expect(button(/Freeze sequence/)).toBeFalsy();
+  });
+
+  it('a failed check hides nothing — unknown is not "you cannot"', async () => {
+    await mount('validated', assessmentAt('validated', { signer: { state: 'unverified', sources: [] } }));
+    expect(text()).toMatch(/could not be checked just now/);
+    expect(button(/Freeze sequence/)).toBeTruthy();
+  });
+
+  it('a payload without `signer` behaves as before', async () => {
+    await mount('validated', assessmentAt('validated'));
+    expect(button(/Freeze sequence/)).toBeTruthy();
+    expect(text()).not.toMatch(/You created this sequence|No creator is recorded|could not be checked/);
+  });
+});
