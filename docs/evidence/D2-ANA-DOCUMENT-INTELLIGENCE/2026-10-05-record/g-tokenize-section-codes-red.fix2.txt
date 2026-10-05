@@ -1,0 +1,40 @@
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > every expected tool is in the launch-scoped pool (so the cases cannot pass vacuously) 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a single-number annex key is a code token too ("ii.6" is not inside "iii.6.1" or "ii.61")
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:141:39
+    139|     ];
+    140|     const chosen = pick(pool, 'II.6', 10);
+    141|     expect(chosen.has('annex_three')).toBe(false);
+       |                                       ^
+    142|     expect(chosen.has('annex_sixty_one')).toBe(false);
+    143|     expect(chosen.has('annex_two_six')).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 27 passed (28)
+   Start at  03:53:31
+   Duration  4.73s (transform 3.14s, setup 96ms, import 4.25s, tests 74ms, environment 0ms)
+

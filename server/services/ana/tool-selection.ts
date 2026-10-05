@@ -45,7 +45,8 @@ export const ALWAYS_ON_TOOLS: ReadonlySet<string> = new Set([
   // Application" and "How to Draft"/review) ORDERS her to call these before
   // drafting or reviewing any section, on acceptance questions, and after
   // database lock. Relevance scoring cannot be trusted to keep them: the
-  // tokenizer drops dotted section codes ("2.7.4"), "iss" substring-matches
+  // tokenizer dropped dotted section codes ("2.7.4") until 2026-10-05, and a
+  // turn need not name a code at all; "iss" substring-matches
   // "submission", and "rejected" does not match "rejection" — so for "what goes
   // in the ISS" or "will my submission be rejected" the tool was cut and she
   // answered from memory. All three are deterministic and read-only; the
@@ -126,22 +127,89 @@ interface NamedTool {
   description?: string;
 }
 
-/** Salient lowercase terms from the turn text (≥3 chars, no stopwords, deduped). */
-function tokenize(query: string): string[] {
+/**
+ * A section code, annex key or eSTAR chapter token, taken whole:
+ *   - a dotted CTD/CSR section code — "2.7.3", "5.3.5.3", "12.2" — including a
+ *     CTD Module 3 code with single-letter segments: "3.2.S.4.1", "3.2.P.8"
+ *     (lowercased to "3.2.s.4.1", "3.2.p.8");
+ *   - an annex key — "II.6.1" (lowercased to "ii.6.1");
+ *   - an eSTAR CH token — "CH3.05.06".
+ * The lookarounds are the code boundary: no letter, digit or dot before it, no
+ * letter or digit after it, and no ".<letter or digit>" after it. So "2.5" is
+ * never read out of "12.5" or "2.5.1", "3.2" is never read out of "3.2.S.4.1"
+ * (it would score on "21 CFR 3.2(e)"), "05.06" is never read out of
+ * "ch3.05.06", and a code ending a sentence ("5.3.5.3.") loses only the full
+ * stop. Where the whole code cannot be taken, nothing is emitted for it.
+ */
+const CODE_TOKEN =
+  /(?<![a-z0-9.])(?:\d+(?:\.\d+)+(?:\.[a-z](?:\.\d+)*)*|[ivx]+\.\d+(?:\.\d+)*|ch\d+(?:\.\d+)+)(?![a-z0-9]|\.[a-z0-9])/g;
+
+/**
+ * A term is a code token when it has a CODE_TOKEN shape: a digit-dot-digit
+ * (section codes and eSTAR CH tokens always carry one), or an annex key, which
+ * can be a single number ("ii.6"). Word runs never contain a dot, so neither
+ * test can catch a word term. Without the annex test, "ii.6" fell back to +1
+ * substring scoring and hit inside "iii.6.1" and "ii.61".
+ */
+function isCodeToken(term: string): boolean {
+  return /\d\.\d|^[ivx]+\.\d/.test(term);
+}
+
+/**
+ * Salient lowercase terms from the turn text (deduped): word runs of ≥3 chars
+ * that are not stopwords, plus whole section codes, annex keys and eSTAR CH
+ * tokens (CODE_TOKEN), which the word runs used to discard entirely.
+ *
+ * Region acronyms ('eu', 'us', 'jp') are deliberately not terms: 'us' is a
+ * stopword, and scoring matches words by substring, so a two-letter term would
+ * hit "queue", "status" and "focus".
+ *
+ * Known limit: CODE_TOKEN cannot tell a section code from any other dotted
+ * number, so a plain decimal or version in the turn ("p < 0.05", "version
+ * 1.2", "312.32") is also a code token, worth +2 on a description carrying the
+ * same number on a code boundary. For a CFR section number that is the wanted
+ * match; for a p-value or a version it is noise. Measured on 2026-10-05: no
+ * description carries "0.05", and "1.2" scores only on review_trial_schema
+ * (through "ICH M11 §1.2").
+ */
+export function tokenize(query: string): string[] {
+  const lower = query.toLowerCase();
   const seen = new Set<string>();
-  for (const raw of (query.toLowerCase().match(/[a-z0-9]{3,}/g) ?? [])) {
+  for (const raw of (lower.match(/[a-z0-9]{3,}/g) ?? [])) {
     if (!STOPWORDS.has(raw)) seen.add(raw);
   }
+  for (const code of (lower.match(CODE_TOKEN) ?? [])) seen.add(code);
   return [...seen];
 }
 
-/** Relevance score: name matches weigh more than description matches. */
+/** Whether `code` occurs in `text` on a code boundary (see CODE_TOKEN). */
+function containsCode(text: string, code: string): boolean {
+  for (let at = text.indexOf(code); at >= 0; at = text.indexOf(code, at + 1)) {
+    const before = text.charAt(at - 1);
+    const after = text.slice(at + code.length, at + code.length + 2);
+    if (!/[a-z0-9.]/.test(before) && !/^[a-z0-9]/.test(after) && !/^\.[a-z0-9]/.test(after)) return true;
+  }
+  return false;
+}
+
+/**
+ * Relevance score: name matches weigh more than description matches. A word
+ * term scores +3 in the name, else +1 anywhere in the text (substring). A code
+ * token scores +3 in the name, else +2 in the description, on a code boundary:
+ * a section code names one tool's subject outright, where one shared word does
+ * not, and at +1 "write the 2.7.3 for our EU MAA" still left the 2.7 composer
+ * outside the cap.
+ */
 function scoreTool(tool: NamedTool, terms: string[]): number {
   const name = (tool.name ?? '').toLowerCase();
-  const text = `${name} ${(tool.description ?? '').toLowerCase()}`;
+  const description = (tool.description ?? '').toLowerCase();
+  const text = `${name} ${description}`;
   let score = 0;
   for (const term of terms) {
-    if (name.includes(term)) score += 3;
+    if (isCodeToken(term)) {
+      if (containsCode(name, term)) score += 3;
+      else if (containsCode(description, term)) score += 2;
+    } else if (name.includes(term)) score += 3;
     else if (text.includes(term)) score += 1;
   }
   return score;
