@@ -50,6 +50,7 @@ for (let n = from; n <= to; n++) {
   const saved = JSON.parse(fs.readFileSync(path.join(dir, `${String(n).padStart(4, '0')}.json`), 'utf8'));
   const headers = { 'content-type': 'application/json', 'anthropic-version': '2023-06-01' };
   if (saved.beta) headers['anthropic-beta'] = saved.beta;
+  // nosemgrep: react-insecure-request -- the stand-in model server this harness started on loopback; nothing leaves the host
   const res = await fetch('http://127.0.0.1:8798/v1/messages', { method: 'POST', headers, body: JSON.stringify(saved.body) });
   await res.text();
 }

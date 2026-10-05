@@ -64,6 +64,7 @@ describe('submissionContextBlockFor', () => {
     ['BLA', 'Biologics License Application (BLA)'],
   ])('a %s block is headed as a %s, never as an IND', (type, label) => {
     const block = blockFor(type);
+    // nosemgrep: detect-non-literal-regexp -- a test: type is one of the literal submission types in the table
     expect(block).toMatch(new RegExp(`^## ${type} submission context`, 'm'));
     expect(block).not.toMatch(/IND Submission Context|This is an IND/);
     expect(block).toContain(label);

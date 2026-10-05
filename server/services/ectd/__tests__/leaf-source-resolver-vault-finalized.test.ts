@@ -135,6 +135,7 @@ describe('a vault leaf is finalized only when its version is approved, current, 
   it.each(['authoring', 'in_review'])('a version at %s is not finalized', async stage => {
     const out = await run(await seedVersion({ label: `at-${stage}`, stage }));
     expect(out.unfinalized).toBe(1);
+    // nosemgrep: detect-non-literal-regexp -- a test: stage is one of two literal stage names
     expect(out.unfinalizedSections[0].status).toMatch(new RegExp(`${stage}, not approved`));
   });
 

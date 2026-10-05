@@ -221,6 +221,7 @@ function likeToRegex(pattern: string): RegExp {
     else if (ch === '_') re += '[\\s\\S]';
     else re += ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
+  // nosemgrep: detect-non-literal-regexp -- a test fixture: every character of re is escaped or one of two fixed classes
   return new RegExp(`^${re}$`, 'i');
 }
 

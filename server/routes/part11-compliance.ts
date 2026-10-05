@@ -29,6 +29,7 @@ import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service'
 import { verifyChainHead } from '../services/audit/chain-anchor';
 import { requestPgClient } from '../db/requestDb';
 import { clientEventRefusal, requireAuditRecorder } from '../services/audit/audit-api-authority';
+import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 import { VerificationUnavailableError, describeFailure } from '../lib/verification-outcome';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
@@ -1266,8 +1267,6 @@ router.get('/health', (_req: Request, res: Response) => {
  * `head` says the verdict is the walk only. An unreadable anchor is a 500.
  */
 router.get('/audit-trail/seal-integrity', async (req: Request, res: Response) => {
-  const user = (req as any).user;
-  const roles: string[] = user?.roles || (user?.role ? [user.role] : []);
   /* `admin` is an ORG-scoped role, not a platform one. server/middleware/auth.ts
      states it directly: self-service signup mints `admin` for the first user of
      every new organization, so an org admin is an ordinary customer. This route
@@ -1279,7 +1278,14 @@ router.get('/audit-trail/seal-integrity', async (req: Request, res: Response) =>
      platform guard is server/middleware/requirePlatformAdmin.ts, which also
      honours PLATFORM_ADMIN_EMAILS; wiring it here needs a mount-order change
      that belongs with the connection work below. */
-  if (!roles.includes('super_admin') && !roles.includes('platform_admin')) {
+  /* 2026-10-05 (D6, docs/evidence/D6/2026-10-05-cross-tenant-staff/): the
+     roles above were req.user.role / roles, which behind the auth gate are the
+     tenant MEMBERSHIP role (organization_users.role, no CHECK). So a membership
+     row naming super_admin or platform_admin received estate-wide hash
+     material, while a real grant holder was refused. Standing is now
+     holdsPlatformRole: the owner's own sign-in on the allowlist, or an active
+     platform_role_grants row for either role. */
+  if (!(await holdsPlatformRole(req, ['super_admin', 'platform_admin']))) {
     return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Platform-admin role required for system audit-integrity verification.' } });
   }
   /* DELIBERATELY NOT CONNECTED, and this one is wrong in BOTH enforcement

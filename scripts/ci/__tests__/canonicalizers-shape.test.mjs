@@ -30,6 +30,7 @@ const shapes = {
   forOf: `for (const k of ${KEYS}(v).sort()) {\n  out[k] = normalize(v[k]);\n}\nreturn JSON.stringify(out);`,
   keyList: `return JSON.stringify(manifest, ${KEYS}(manifest).sort());`,
   boundThenMapAcrossAComment: `const keys = ${KEYS}(obj).sort();\nconst body = keys\n  // drop undefined, as JSON.stringify does\n  .filter((k) => obj[k] !== undefined)\n  .map((k) => k + ':' + enc(obj[k]));\nreturn '{' + body.join(',') + '}';`,
+  boundToADollarName: `const $keys = ${KEYS}(obj).sort();\nconst body = $keys.map((k) => k + ':' + enc(obj[k]));\nreturn '{' + body.join(',') + '}';`,
   boundThenIndexed: `const keys = ${KEYS}(obj).sort();\nlet s = '{';\nfor (let i = 0; i < keys.length; i++) s += JSON.stringify(keys[i]);`,
 };
 for (const [name, src] of Object.entries(shapes)) {

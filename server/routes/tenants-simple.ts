@@ -6,7 +6,7 @@ import { z } from 'zod';
 import postgres from 'postgres';
 import { authMiddleware } from '../auth';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
-import { requirePlatformAdmin, isPlatformAdmin } from '../middleware/requirePlatformAdmin';
+import { requirePlatformAdmin, resolvePlatformAdmin } from '../middleware/requirePlatformAdmin';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
 import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
@@ -27,15 +27,16 @@ const router = Router();
 // SECURITY: All tenant management endpoints require authentication
 router.use(authMiddleware);
 
-// Platform-operator (cross-tenant) authorization uses the STRICT isPlatformAdmin
-// from ../middleware/requirePlatformAdmin, which has NO org-`admin` bypass
-// (PLATFORM_ROLES = super_admin / platform_admin / support only). A file-local
-// helper previously counted org `admin` as a platform operator, so GET /api/tenants
-// leaked the full cross-tenant organization directory to any tenant admin — the
-// exact bypass the write routes (requirePlatformAdmin) already exclude. The read
-// path now shares that strict check. (The sync helper omits the platform_role_grants
-// DB fallback the middleware has, so a grant-only platform admin whose JWT lacks a
-// platform role falls to the member-scoped view — an under-privilege, safe direction.)
+// Platform-operator (cross-tenant) authorization uses resolvePlatformAdmin from
+// ../middleware/requirePlatformAdmin, the decision the write routes'
+// requirePlatformAdmin makes: the owner's own sign-in on the allowlist, or an
+// active platform_role_grants row, with NO org-`admin` bypass. A file-local helper
+// previously counted org `admin` as a platform operator, so GET /api/tenants
+// leaked the full cross-tenant organization directory to any tenant admin. The
+// read path then used the synchronous isPlatformAdmin, which skipped the grant
+// lookup (a designated staff member got the member-scoped view) and, until
+// 2026-10-05, read the request role, which is the tenant membership role (D6,
+// docs/evidence/D6/2026-10-05-cross-tenant-staff/).
 
 /**
  * Clean a database URL by removing common wrapper artifacts
@@ -124,7 +125,7 @@ router.get('/', async (req, res) => {
     // slugs, domains, tiers) to any authenticated user. Platform admins still
     // get the full list for tenant management.
     const userId = Number((req as any).user?.id ?? (req as any).user?.userId ?? 0);
-    const result = isPlatformAdmin(req)
+    const result = (await resolvePlatformAdmin(req))
       ? await sql`
           SELECT id, name, slug, domain, logo, tier, max_users as "maxUsers",
                  max_projects as "maxProjects", max_storage as "maxStorage",
@@ -315,7 +316,7 @@ router.get('/:tenantId/users', async (req, res) => {
     // SECURITY: only a platform admin, or a member of the tenant, may list its
     // users (emails, names, roles). Otherwise any authenticated user could read
     // any tenant's directory by changing the path id.
-    if (!isPlatformAdmin(req) && authedOrgId(req) !== tenantId) {
+    if (authedOrgId(req) !== tenantId && !(await resolvePlatformAdmin(req))) {
       return res.status(403).json({ error: 'Tenant context mismatch' });
     }
 

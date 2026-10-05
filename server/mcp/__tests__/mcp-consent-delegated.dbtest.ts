@@ -253,7 +253,7 @@ afterAll(async () => {
   await new Promise<void>((resolve) => (server ? server.close(() => resolve()) : resolve()));
   if (runtimePool) await runtimePool.end().catch(() => {});
   if (!owner) return;
-  await cleanup().catch((err) => console.warn(`[${TAG}] cleanup left rows:`, err?.message));
+  await cleanup().catch((err) => console.warn('[%s] cleanup left rows:', TAG, err?.message));
   for (let attempt = 1; ; attempt++) {
     try {
       await owner.query(`REASSIGN OWNED BY ${runtimeRole} TO CURRENT_USER; DROP OWNED BY ${runtimeRole}`);
@@ -261,7 +261,7 @@ afterAll(async () => {
       break;
     } catch (err) {
       if (attempt >= 5) {
-        console.warn(`[${TAG}] runtime role left behind:`, (err as Error).message);
+        console.warn('[%s] runtime role left behind:', TAG, (err as Error).message);
         break;
       }
       await new Promise((r) => setTimeout(r, 250 * attempt));

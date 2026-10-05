@@ -197,12 +197,14 @@ describe('resolveMasterAdmin — in-app designations', () => {
 
   it('loses the grant at once when the last platform standing is revoked — no window', async () => {
     granted();
-    const req = reqOf({ userId: 77, userRole: 'admin' });
-    expect(await resolveMasterAdmin(req)).toBe(true);
+    expect(await resolveMasterAdmin(reqOf({ userId: 77, userRole: 'admin' }))).toBe(true);
 
-    // The owner designation is cached; platform administration is not.
+    // The owner designation is cached; platform administration is not, beyond
+    // the one request that asked. holdsPlatformRole memoises per request object
+    // (D6, 2026-10-05) so a guard and its handler cost one lookup; the next
+    // request is a new object and asks again. This used one object for both.
     noGrant();
-    expect(await resolveMasterAdmin(req)).toBe(false);
+    expect(await resolveMasterAdmin(reqOf({ userId: 77, userRole: 'admin' }))).toBe(false);
   });
 
   it('caches per user, not globally', async () => {
