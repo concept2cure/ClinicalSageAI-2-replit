@@ -1,0 +1,229 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > 510(k) (useEStar=true) names neither Form FDA 3514 nor eCopy 6ms
+   → expected 'Administrative / Cover Letter, CDRH P…' not to match /3514|ecopy/i
+ × server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > 510(k) (useEStar=false) names neither Form FDA 3514 nor eCopy 1ms
+   → expected 'Administrative / Cover Letter, CDRH P…' not to match /3514|ecopy/i
+ × server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > 510(k) (useEStar=undefined) names neither Form FDA 3514 nor eCopy 1ms
+   → expected 'Administrative / Cover Letter, CDRH P…' not to match /3514|ecopy/i
+ × server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > De Novo (useEStar=true) names neither Form FDA 3514 nor eCopy 1ms
+   → expected 'Administrative / Cover Letter, CDRH P…' not to match /3514|ecopy/i
+ × server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > De Novo (useEStar=false) names neither Form FDA 3514 nor eCopy 1ms
+   → expected 'Administrative / Cover Letter, CDRH P…' not to match /3514|ecopy/i
+ × server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > De Novo (useEStar=undefined) names neither Form FDA 3514 nor eCopy 1ms
+   → expected 'Administrative / Cover Letter, CDRH P…' not to match /3514|ecopy/i
+ × server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > the 510(k) plan carries every always-required eSTAR slot, by id and label 1ms
+   → cover-letter: expected undefined to be defined
+ × server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > the De Novo plan carries every always-required eSTAR slot, by id and label 1ms
+   → cover-letter: expected undefined to be defined
+ × server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > an IVD 510(k) is planned against the IVD eSTAR, which asks for analytical performance 2ms
+   → expected [ 'admin', 'iface', 'risk', …(3) ] to include 'ivd-analytical-performance'
+ × server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > the plan names exactly the eSTAR sections — no parallel hand-written list beside them 4ms
+   → expected [ 'admin', 'iface', 'risk', …(4) ] to deeply equal []
+ × server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > a conditional section follows the device answer, and an unanswered one says it is undetermined 5ms
+   → .toMatch() expects to receive a string, but got undefined
+ ✓ server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > HDE keeps the CDRH cover sheet (Form FDA 3514) and the eCopy 0ms
+ × server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > HDE is not told to pay a MDUFA user fee (HDE applications are fee-exempt) 1ms
+   → expected 'Cover letter, Form FDA 3514, MDUFA us…' not to match /user[- ]fee payment/i
+ × server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > a device-led BLA names Form FDA 356h, not the CDRH cover sheet 1ms
+   → expected 'Administrative / Cover Letter, CDRH P…' to match /356h/
+ × server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > an undetermined pathway does not pick a form for the client 1ms
+   → expected 'Cover letter, Form FDA 3514, MDUFA us…' to match /depends on the pathway/i
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > 510(k) (useEStar=true) names neither Form FDA 3514 nor eCopy
+ FAIL  server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > 510(k) (useEStar=false) names neither Form FDA 3514 nor eCopy
+ FAIL  server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > 510(k) (useEStar=undefined) names neither Form FDA 3514 nor eCopy
+AssertionError: expected 'Administrative / Cover Letter, CDRH P…' not to match /3514|ecopy/i
+
+- Expected:
+/3514|ecopy/i
+
++ Received:
+"Administrative / Cover Letter, CDRH Premarket Review Submission Cover Sheet, user fee Cover letter, Form FDA 3514, MDUFA user-fee payment confirmation, applicant/contact info, and (if used) eCopy/eSTAR packaging. 21 CFR 807.87(a) Administrative information.
+Indications for Use & Device Description Indications-for-use statement (Form FDA 3881), device description, principles of operation, components, and proposed labeling/IFU. 21 CFR 807.87(e)-(f) Device description and labeling.
+Risk Management ISO 14971 risk management summary/file (hazard analysis, risk controls, residual-risk evaluation). ISO 14971:2019 Risk management.
+Non-Clinical / Bench Performance Testing Performance bench testing per design specifications and recognized consensus standards; declarations of conformity to standards as applicable. 21 CFR 807.87(g) Performance data.
+Substantial Equivalence Discussion Predicate identification, side-by-side comparison (intended use, technological characteristics, performance), and the substantial-equivalence rationale; 510(k) summary or statement (21 CFR 807.92/.93). 21 CFR 807.92 510(k) summary; SE comparison."
+
+ ❯ server/services/medical-device/__tests__/plan-device-submission.test.ts:37:25
+     35|       it(`${usPathway} (useEStar=${String(useEStar)}) names neither Fo…
+     36|         const out = text(plan({ usPathway, useEStar }).usSections);
+     37|         expect(out).not.toMatch(/3514|ecopy/i);
+       |                         ^
+     38|       });
+     39|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > De Novo (useEStar=true) names neither Form FDA 3514 nor eCopy
+ FAIL  server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > De Novo (useEStar=false) names neither Form FDA 3514 nor eCopy
+ FAIL  server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > De Novo (useEStar=undefined) names neither Form FDA 3514 nor eCopy
+AssertionError: expected 'Administrative / Cover Letter, CDRH P…' not to match /3514|ecopy/i
+
+- Expected:
+/3514|ecopy/i
+
++ Received:
+"Administrative / Cover Letter, CDRH Premarket Review Submission Cover Sheet, user fee Cover letter, Form FDA 3514, MDUFA user-fee payment confirmation, applicant/contact info, and (if used) eCopy/eSTAR packaging. 21 CFR 807.87(a) Administrative information.
+Indications for Use & Device Description Indications-for-use statement (Form FDA 3881), device description, principles of operation, components, and proposed labeling/IFU. 21 CFR 807.87(e)-(f) Device description and labeling.
+Risk Management ISO 14971 risk management summary/file (hazard analysis, risk controls, residual-risk evaluation). ISO 14971:2019 Risk management.
+Non-Clinical / Bench Performance Testing Performance bench testing per design specifications and recognized consensus standards; declarations of conformity to standards as applicable. 21 CFR 807.87(g) Performance data.
+Classification Summary & Proposed Special Controls Reason for De Novo (no predicate), risk-to-health analysis, proposed device classification (I or II), and proposed special controls that mitigate the identified risks. 21 CFR 860.93 / FD&C Act §513(f)(2) De Novo classification content.
+Benefit-Risk Assessment Benefit-risk determination per FDA factors guidance supporting the proposed classification. FDA Benefit-Risk Factors Guidance (2019) Benefit-risk for De Novo."
+
+ ❯ server/services/medical-device/__tests__/plan-device-submission.test.ts:37:25
+     35|       it(`${usPathway} (useEStar=${String(useEStar)}) names neither Fo…
+     36|         const out = text(plan({ usPathway, useEStar }).usSections);
+     37|         expect(out).not.toMatch(/3514|ecopy/i);
+       |                         ^
+     38|       });
+     39|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > the 510(k) plan carries every always-required eSTAR slot, by id and label
+AssertionError: cover-letter: expected undefined to be defined
+ ❯ server/services/medical-device/__tests__/plan-device-submission.test.ts:46:28
+     44|     for (const slot of estarSlots('510k').filter((s) => s.necessity ==…
+     45|       const hit = sections.find((s) => s.sectionId === slot.id);
+     46|       expect(hit, slot.id).toBeDefined();
+       |                            ^
+     47|       expect(hit!.title).toBe(slot.label);
+     48|       expect(hit!.citation.source).toBe(slot.authority);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > the De Novo plan carries every always-required eSTAR slot, by id and label
+AssertionError: cover-letter: expected undefined to be defined
+ ❯ server/services/medical-device/__tests__/plan-device-submission.test.ts:56:28
+     54|     for (const slot of estarSlots('de_novo').filter((s) => s.necessity…
+     55|       const hit = sections.find((s) => s.sectionId === slot.id);
+     56|       expect(hit, slot.id).toBeDefined();
+       |                            ^
+     57|       expect(hit!.title).toBe(slot.label);
+     58|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > an IVD 510(k) is planned against the IVD eSTAR, which asks for analytical performance
+AssertionError: expected [ 'admin', 'iface', 'risk', …(3) ] to include 'ivd-analytical-performance'
+ ❯ server/services/medical-device/__tests__/plan-device-submission.test.ts:63:17
+     61|   it('an IVD 510(k) is planned against the IVD eSTAR, which asks for a…
+     62|     const ids = plan({ usPathway: '510(k)', isIVD: true }).usSections.…
+     63|     expect(ids).toContain('ivd-analytical-performance');
+       |                 ^
+     64|     const nonIvd = plan({ usPathway: '510(k)' }).usSections.map((s) =>…
+     65|     expect(nonIvd).not.toContain('ivd-analytical-performance');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > the plan names exactly the eSTAR sections — no parallel hand-written list beside them
+AssertionError: expected [ 'admin', 'iface', 'risk', …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "admin",
++   "iface",
++   "risk",
++   "bench",
++   "sterile",
++   "se",
++   "clinical",
++ ]
+
+ ❯ server/services/medical-device/__tests__/plan-device-submission.test.ts:71:80
+     69|     const sections = plan({ usPathway: '510(k)', sterile: true, hasSof…
+     70|     const registry = new Set(estarSlots('510k').map((s) => s.id));
+     71|     expect(sections.map((s) => s.sectionId).filter((id) => !registry.h…
+       |                                                                                ^
+     72|   });
+     73|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — eSTAR pathways do not ask for the retired cover sheet > a conditional section follows the device answer, and an unanswered one says it is undetermined
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/medical-device/__tests__/plan-device-submission.test.ts:76:31
+     74|   it('a conditional section follows the device answer, and an unanswer…
+     75|     const sterile = plan({ usPathway: '510(k)', sterile: true }).usSec…
+     76|     expect(sterile?.contents).toMatch(/^Required\b/);
+       |                               ^
+     77|
+     78|     const notSterile = plan({ usPathway: '510(k)', sterile: false }).u…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > HDE is not told to pay a MDUFA user fee (HDE applications are fee-exempt)
+AssertionError: expected 'Cover letter, Form FDA 3514, MDUFA us…' not to match /user[- ]fee payment/i
+
+- Expected:
+/user[- ]fee payment/i
+
++ Received:
+"Cover letter, Form FDA 3514, MDUFA user-fee payment confirmation, applicant/contact info, and (if used) eCopy/eSTAR packaging."
+
+ ❯ server/services/medical-device/__tests__/plan-device-submission.test.ts:101:33
+     99|     const admin = plan({ usPathway: 'HDE' }).usSections.find((s) => s.…
+    100|     expect(admin).toBeDefined();
+    101|     expect(admin!.contents).not.toMatch(/user[- ]fee payment/i);
+       |                                 ^
+    102|   });
+    103|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > a device-led BLA names Form FDA 356h, not the CDRH cover sheet
+AssertionError: expected 'Administrative / Cover Letter, CDRH P…' to match /356h/
+
+- Expected:
+/356h/
+
++ Received:
+"Administrative / Cover Letter, CDRH Premarket Review Submission Cover Sheet, user fee Cover letter, Form FDA 3514, MDUFA user-fee payment confirmation, applicant/contact info, and (if used) eCopy/eSTAR packaging. 21 CFR 807.87(a) Administrative information.
+Indications for Use & Device Description Indications-for-use statement (Form FDA 3881), device description, principles of operation, components, and proposed labeling/IFU. 21 CFR 807.87(e)-(f) Device description and labeling.
+Risk Management ISO 14971 risk management summary/file (hazard analysis, risk controls, residual-risk evaluation). ISO 14971:2019 Risk management.
+Non-Clinical / Bench Performance Testing Performance bench testing per design specifications and recognized consensus standards; declarations of conformity to standards as applicable. 21 CFR 807.87(g) Performance data.
+Biologic CMC & Clinical Biologic chemistry/manufacturing/controls and clinical data per the BLA. PHS Act §351 / 21 CFR 601 BLA content."
+
+ ❯ server/services/medical-device/__tests__/plan-device-submission.test.ts:106:17
+    104|   it('a device-led BLA names Form FDA 356h, not the CDRH cover sheet',…
+    105|     const out = text(plan({ usPathway: 'BLA' }).usSections);
+    106|     expect(out).toMatch(/356h/);
+       |                 ^
+    107|     expect(out).not.toMatch(/3514/);
+    108|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  server/services/medical-device/__tests__/plan-device-submission.test.ts > planDeviceSubmission — non-eSTAR pathways > an undetermined pathway does not pick a form for the client
+AssertionError: expected 'Cover letter, Form FDA 3514, MDUFA us…' to match /depends on the pathway/i
+
+- Expected:
+/depends on the pathway/i
+
++ Received:
+"Cover letter, Form FDA 3514, MDUFA user-fee payment confirmation, applicant/contact info, and (if used) eCopy/eSTAR packaging."
+
+ ❯ server/services/medical-device/__tests__/plan-device-submission.test.ts:113:29
+    111|     const admin = plan({ usPathway: 'undetermined' }).usSections.find(…
+    112|     expect(admin).toBeDefined();
+    113|     expect(admin!.contents).toMatch(/depends on the pathway/i);
+       |                             ^
+    114|   });
+    115| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  14 failed | 1 passed (15)
+   Start at  03:39:53
+   Duration  537ms (transform 153ms, setup 77ms, import 105ms, tests 32ms, environment 0ms)
+

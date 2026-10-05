@@ -34,8 +34,12 @@
  *
  * This module is intentionally self-contained and exhaustive; every decision
  * branch carries a citation so the output can be audited against the source.
- * Its only sibling dependency is `medical-device-knowledge-data.ts`, which
- * holds the verbatim reference tables and citation lists this engine applies.
+ * Its sibling dependency is `medical-device-knowledge-data.ts`, which holds the
+ * verbatim reference tables and citation lists this engine applies. The one
+ * cross-service import is the eSTAR slot registry
+ * (`pathway-engines/estar/estar-mapper.ts`, equally pure): the 510(k) and De
+ * Novo content list belongs to that registry, which the readiness engine scores
+ * against, and is read from it rather than restated here.
  *
  * @module server/services/medical-device/medical-device-knowledge
  */
@@ -55,6 +59,15 @@ import {
   type Citation,
   type StandardRef,
 } from './medical-device-knowledge-data.js';
+
+import {
+  estarSlots,
+  slotApplicability,
+  type DeviceFlags,
+  type EstarSlot,
+  type EstarType,
+} from '../pathway-engines/estar/estar-mapper.js';
+import { DEVICE_FLAGS } from '../../../shared/constants/domain/device-classification';
 
 export type { Citation } from './medical-device-knowledge-data.js';
 
@@ -1654,16 +1667,132 @@ export interface PlanDeviceSubmissionResult {
   citations: Citation[];
 }
 
-function commonUSSections(params: PlanDeviceSubmissionParams): SubmissionSection[] {
-  const sections: SubmissionSection[] = [];
-  sections.push({
+/*
+ * THE eSTAR PATHWAYS (510(k), De Novo) ARE PLANNED FROM THE eSTAR REGISTRY.
+ *
+ * This used to hand every US pathway one administrative section asking for
+ * "Form FDA 3514 ... and (if used) eCopy/eSTAR packaging". For 510(k) and De
+ * Novo that is wrong twice: eSTAR is mandatory (510(k) from 2023-10-01, De Novo
+ * from 2025-10-01), it is filed through the CDRH Portal rather than as an
+ * eCopy, and FDA's eSTAR page says no separate 3514 is needed because the
+ * template carries the cover-sheet data. estar-mapper.ts had already struck the
+ * 3514 slot (see "WHY THERE IS NO cdrh-cover-sheet SLOT" there); this plan had
+ * not, so AnA's plan and the readiness verdict disagreed about what a filing
+ * needs. The plan also omitted the truthful-and-accurate statement, which the
+ * registry requires of every 510(k) and De Novo.
+ *
+ * The section list for these two pathways is therefore the registry itself, via
+ * `estarSlots`, one plan section per slot: a slot added or relabelled there
+ * reaches this plan without an edit here. Necessity is the mapper's, decided by
+ * `slotApplicability` from the device answers this plan is given; an answer the
+ * plan was not given leaves the section on the plan marked undetermined, never
+ * dropped. (Biocompatibility is `always` there, deliberately: patient contact is
+ * not an intake flag. `patientContacting` therefore no longer removes it.)
+ */
+
+const ESTAR_TYPE: Partial<Record<USPathway, EstarType>> = { '510(k)': '510k', 'De Novo': 'de_novo' };
+
+const FLAG_LABEL: Record<string, string> = Object.fromEntries(DEVICE_FLAGS.map((f) => [f.id, f.label]));
+
+/** The device answers this plan's inputs carry, in the intake's flag vocabulary. Unasked stays undefined. */
+function planDeviceFlags(params: PlanDeviceSubmissionParams): DeviceFlags {
+  return {
+    sterile: params.sterile,
+    softwareAiMl: params.hasSoftware,
+    clinicalData: params.clinicalDataIncluded,
+    // CLIA categorisation applies only to IVDs, so a device stated not to be
+    // one is answered; an unstated one is not.
+    cliaWaived: params.isIVD === false ? false : undefined,
+  };
+}
+
+function estarSlotSection(slot: EstarSlot, flags: DeviceFlags, type: EstarType): SubmissionSection | null {
+  const applicability = slotApplicability(slot, flags);
+  if (applicability === 'not-applicable') return null;
+  const flagLabel = slot.flag ? FLAG_LABEL[slot.flag] ?? slot.flag : '';
+  const contents =
+    applicability === 'required'
+      ? 'Required' + (slot.necessity === 'conditional' ? ' (' + flagLabel + ': yes).' : '.')
+      : applicability === 'undetermined'
+        ? 'Undetermined: required if "' + flagLabel + '" applies to this device, which this plan was not ' +
+          'told. Answer that question; until then the section stays on the plan.'
+        : 'Required when ' + slot.appliesWhen + '.';
+  return {
+    sectionId: slot.id,
+    title: slot.label,
+    contents,
+    citation: {
+      source: slot.authority,
+      note: 'FDA eSTAR ' + (type === '510k' ? '510(k)' : 'De Novo') + ' section (estar-mapper slot ' + slot.id + ').',
+    },
+  };
+}
+
+function estarUSSections(params: PlanDeviceSubmissionParams, type: EstarType): SubmissionSection[] {
+  const flags = planDeviceFlags(params);
+  /* The IVD eSTAR asks its own performance questions. The registry models them
+     for 510(k) only; an IVD De Novo falls to the nIVD set there, so its IVD
+     performance content is named below rather than silently left out. */
+  const variant = type === '510k' && params.isIVD ? 'ivd' : 'device';
+  const sections = estarSlots(type, variant)
+    .map((slot) => estarSlotSection(slot, flags, type))
+    .filter((s): s is SubmissionSection => s !== null);
+  if (type === 'de_novo' && params.isIVD) sections.push(IVD_PERFORMANCE_SECTION);
+  return sections;
+}
+
+const IVD_PERFORMANCE_SECTION: SubmissionSection = {
+  sectionId: 'ivd-perf',
+  title: 'IVD Analytical & Clinical Performance',
+  contents:
+    'Analytical performance (precision, linearity, LoD/LoQ, interference, method comparison per CLSI EP) and ' +
+    'clinical performance (sensitivity/specificity, predictive values) with reference/comparator method.',
+  citation: { source: 'CLSI EP-series / ISO 20916', note: 'IVD performance.' },
+};
+
+/**
+ * The administrative section of a non-eSTAR US filing. The form differs by
+ * pathway, so it is stated per pathway rather than assumed:
+ *   HDE  — the CDRH Premarket Review Submission Cover Sheet (FDA 3514) and an
+ *          eCopy; no MDUFA user fee (HDE applications are fee-exempt).
+ *   BLA  — Form FDA 356h, the BLA's own application form and cover sheet.
+ *   undetermined — no form is named; it depends on the pathway.
+ */
+function nonEstarAdminSection(pathway: USPathway): SubmissionSection {
+  if (pathway === 'HDE') {
+    return {
+      sectionId: 'admin',
+      title: 'Administrative / Cover Letter and CDRH Premarket Review Submission Cover Sheet',
+      contents:
+        'Cover letter, CDRH Premarket Review Submission Cover Sheet (Form FDA 3514), applicant/contact info, and ' +
+        'the eCopy. HDE applications are exempt from MDUFA user fees.',
+      citation: { source: '21 CFR 814.104; FD&C Act §745A(b) (eCopy); FD&C Act §738(a)(2)(B)', note: 'HDE administrative content.' },
+    };
+  }
+  if (pathway === 'BLA') {
+    return {
+      sectionId: 'admin',
+      title: 'Administrative / Cover Letter and Form FDA 356h',
+      contents:
+        'Cover letter, Form FDA 356h (the application form and cover sheet for a BLA), applicant/contact and ' +
+        'establishment information, and user-fee payment confirmation.',
+      citation: { source: '21 CFR 601.2', note: 'BLA application form.' },
+    };
+  }
+  return {
     sectionId: 'admin',
-    title: 'Administrative / Cover Letter, CDRH Premarket Review Submission Cover Sheet, user fee',
+    title: 'Administrative / Cover Letter',
     contents:
-      'Cover letter, Form FDA 3514, MDUFA user-fee payment confirmation, applicant/contact info, and (if used) ' +
-      'eCopy/eSTAR packaging.',
-    citation: { source: '21 CFR 807.87(a)', note: 'Administrative information.' },
-  });
+      'Cover letter and applicant/contact info. The application form depends on the pathway: a 510(k) or De Novo ' +
+      'is an eSTAR, which carries the cover-sheet data; an HDE or PMA uses the CDRH cover sheet (FDA 3514); a BLA ' +
+      'uses Form FDA 356h. Determine the pathway first.',
+    citation: { source: 'FDA eSTAR Program', note: 'Administrative content depends on the pathway.' },
+  };
+}
+
+/** HDE, device-led BLA and an undetermined pathway: not eSTAR submissions. */
+function nonEstarUSSections(params: PlanDeviceSubmissionParams): SubmissionSection[] {
+  const sections: SubmissionSection[] = [nonEstarAdminSection(params.usPathway)];
   sections.push({
     sectionId: 'iface',
     title: 'Indications for Use & Device Description',
@@ -1712,17 +1841,14 @@ function commonUSSections(params: PlanDeviceSubmissionParams): SubmissionSection
       citation: { source: 'FDA Premarket Software / Cybersecurity Guidance', note: 'Software documentation.' },
     });
   }
-  if (params.isIVD) {
-    sections.push({
-      sectionId: 'ivd-perf',
-      title: 'IVD Analytical & Clinical Performance',
-      contents:
-        'Analytical performance (precision, linearity, LoD/LoQ, interference, method comparison per CLSI EP) and ' +
-        'clinical performance (sensitivity/specificity, predictive values) with reference/comparator method.',
-      citation: { source: 'CLSI EP-series / ISO 20916', note: 'IVD performance.' },
-    });
-  }
+  if (params.isIVD) sections.push(IVD_PERFORMANCE_SECTION);
   return sections;
+}
+
+/** The US content sections for a pathway that uses them (not PMA, not exempt). */
+function commonUSSections(params: PlanDeviceSubmissionParams): SubmissionSection[] {
+  const estarType = ESTAR_TYPE[params.usPathway];
+  return estarType ? estarUSSections(params, estarType) : nonEstarUSSections(params);
 }
 
 /**
@@ -1744,40 +1870,14 @@ export function planDeviceSubmission(params: PlanDeviceSubmissionParams): PlanDe
     submissionFormat = params.useEStar
       ? 'FDA eSTAR-formatted 510(k) (Traditional / Special / Abbreviated)'
       : '510(k) premarket notification (Traditional / Special / Abbreviated)';
+    // The eSTAR registry carries the 510(k) Summary/Statement, the SE comparison
+    // and performance testing (bench / animal / clinical) as slots.
     usSections.push(...commonUSSections(params));
-    usSections.push({
-      sectionId: 'se',
-      title: 'Substantial Equivalence Discussion',
-      contents:
-        'Predicate identification, side-by-side comparison (intended use, technological characteristics, ' +
-        'performance), and the substantial-equivalence rationale; 510(k) summary or statement (21 CFR 807.92/.93).',
-      citation: { source: '21 CFR 807.92', note: '510(k) summary; SE comparison.' },
-    });
-    if (params.clinicalDataIncluded) {
-      usSections.push({
-        sectionId: 'clinical',
-        title: 'Clinical Performance Data',
-        contents: 'Clinical study report(s) supporting SE where bench data are insufficient.',
-        citation: { source: '21 CFR 807.87(g)', note: 'Clinical performance data in a 510(k).' },
-      });
-    }
   } else if (pathway === 'De Novo') {
     submissionFormat = params.useEStar ? 'FDA eSTAR-formatted De Novo request' : 'De Novo classification request';
+    // The eSTAR registry carries the classification request with its
+    // risk-to-benefit analysis and the proposed special controls as slots.
     usSections.push(...commonUSSections(params));
-    usSections.push({
-      sectionId: 'denovo-class',
-      title: 'Classification Summary & Proposed Special Controls',
-      contents:
-        'Reason for De Novo (no predicate), risk-to-health analysis, proposed device classification (I or II), ' +
-        'and proposed special controls that mitigate the identified risks.',
-      citation: { source: '21 CFR 860.93 / FD&C Act §513(f)(2)', note: 'De Novo classification content.' },
-    });
-    usSections.push({
-      sectionId: 'benefit-risk',
-      title: 'Benefit-Risk Assessment',
-      contents: 'Benefit-risk determination per FDA factors guidance supporting the proposed classification.',
-      citation: { source: 'FDA Benefit-Risk Factors Guidance (2019)', note: 'Benefit-risk for De Novo.' },
-    });
   } else if (pathway === 'PMA' || pathway === 'IDE-then-PMA') {
     submissionFormat = 'PMA application (modular or traditional) per 21 CFR 814.20';
     usSections.push({
