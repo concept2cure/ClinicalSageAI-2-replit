@@ -2978,6 +2978,16 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D7/2026-10-01-gateway-account-choice/.
   'migrations/20261001g_organization_gateway_accounts.sql',
 
+  // ── The six core CMC registers carry their program (2026-10-05, D2, CMC/
+  //    Module 3 lane) ───────────────────────────────────────────────────────
+  // drug_substances, drug_products, stability_studies, analytical_methods,
+  // process_validation and cmc_change_control gain a nullable project_id and an
+  // index; a backfill fills NULLs only where cmc_source_objects names exactly
+  // one program for the row. ADD COLUMN IF NOT EXISTS + NULL-only backfill, no
+  // DROP, replay-safe. The tables already carry organization_id and their
+  // tenant policy. Evidence docs/evidence/CMC-M3-GA/2026-10-05/05-registers-carry-their-program/.
+  'migrations/20261005_cmc_core_registers_project.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

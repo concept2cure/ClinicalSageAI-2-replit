@@ -1,0 +1,7 @@
+substance 38 filed under A=e9c841f2-22d2-4aa6-90fe-6f3772c573e4; editing it with B=1400cad7-b74c-4405-ba70-8393e6e52945 named in the body
+before: e9c841f2-22d2-4aa6-90fe-6f3772c573e4 | source objects: e9c841f2-22d2-4aa6-90fe-6f3772c573e4
+{"success":true,"project":"e9c841f2-22d2-4aa6-90fe-6f3772c573e4","module3Linked":true}
+after:  e9c841f2-22d2-4aa6-90fe-6f3772c573e4 | source objects: e9c841f2-22d2-4aa6-90fe-6f3772c573e4
+-- list under B shows A's substance? 0
+-- create naming a program that is not this org's:
+{"success":false,"error":"The program named is not one of this organisation’s programs, so the record was not filed under it."} [409]
