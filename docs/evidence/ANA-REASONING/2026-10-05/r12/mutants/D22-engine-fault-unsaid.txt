@@ -1,0 +1,12 @@
+Mutant D22-engine-fault-unsaid: a check that could not run leaves no word of it in the record
+
+--- server/services/ana/turn-record-draft.ts
+- this.recorder.warn('The draft could not be checked against its sources.');
++ 
+
+Tests run: server/services/ana/__tests__/turn-record-draft.pglite.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/turn-record-draft.pglite.test.ts > the draft door’s turn > a check that could not run is recorded as not run, never as an empty check 19ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

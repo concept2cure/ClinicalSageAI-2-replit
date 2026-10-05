@@ -1,0 +1,12 @@
+Mutant D03-refusal-unfiled: a gateway refusal leaves no record
+
+--- server/routes/authoring.router.ts
+- await fileFailedDraftTurn(draftTurn, `The AI gateway refused this draft (${code}).`);
++ 
+
+Tests run: server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a gateway refusal is filed as a failed turn 35ms
+      Tests  1 failed | 8 passed (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

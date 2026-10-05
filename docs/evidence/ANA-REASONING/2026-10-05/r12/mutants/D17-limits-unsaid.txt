@@ -1,0 +1,12 @@
+Mutant D17-limits-unsaid: the record does not say its labels reading is void for this door
+
+--- server/services/ana/turn-record-draft.ts
+- recorder.warn(DOOR_LIMITS);
++ 
+
+Tests run: server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > files one record holding the prompt sent, the draft returned, the model and the gateway request 122ms
+      Tests  1 failed | 10 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

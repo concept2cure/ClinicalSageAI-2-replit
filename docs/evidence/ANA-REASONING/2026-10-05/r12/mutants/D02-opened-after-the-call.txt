@@ -1,0 +1,30 @@
+Mutant D02-opened-after-the-call: the record is opened after the model answered, and a refusal leaves none
+
+--- server/routes/authoring.router.ts
+- draftTurn = openDraftTurn(pool, {
+      orgId: tenantId,
+      userId: getActorId(req),
+      sectionId: String(sectionId),
+      request: { tone, region, context: context ?? null, requirements: requirements ?? null },
+      prompt,
+      audit: { ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined },
+    });
++ 
+--- server/routes/authoring.router.ts
+- draftTurn?.served(gwResponse);
++ draftTurn = openDraftTurn(pool, {
+      orgId: tenantId,
+      userId: getActorId(req),
+      sectionId: String(sectionId),
+      request: { tone, region, context: context ?? null, requirements: requirements ?? null },
+      prompt,
+      audit: { ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined },
+    });
+    draftTurn?.served(gwResponse);
+
+Tests run: server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a gateway refusal is filed as a failed turn 29ms
+      Tests  1 failed | 8 passed (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

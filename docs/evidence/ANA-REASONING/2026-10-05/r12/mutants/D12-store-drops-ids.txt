@@ -1,0 +1,15 @@
+Mutant D12-store-drops-ids: the store drops both ids between park and accept
+
+--- server/services/clinical-regulatory-evidence/draft-candidate-store.ts
+- requestId: stringOrNull(g.requestId),
+      turnRecordId: stringOrNull(g.turnRecordId),
++ 
+
+Tests run: server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > does not half-populate a generator it cannot read 10ms
+ × server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store — the turn and the request a draft came from (round 12, RT-6) > carries the gateway request id and the turn record id from park to accept 5ms
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the record follows the draft to its accept > the accept’s trail row names the turn record and the gateway request the draft came from 117ms
+      Tests  3 failed | 16 passed (19)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

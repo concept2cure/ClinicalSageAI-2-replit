@@ -306,15 +306,23 @@ await step(
     urs: ['URS-AUTH-012'],
     title: 'AI drafting produces a governed draft candidate',
     action: 'POST /api/authoring/sections/:id/ai/draft with a configured provider',
-    expected: 'A draft candidate with provenance is returned for human acceptance',
+    expected:
+      'A draft candidate with provenance is returned for human acceptance: the model that wrote it, its filed AnA turn record, and the answer check of the draft against the evidence the model was shown',
     dependsOn: ['OQ-AUTH-04'],
+    /* Amended 2026-10-05 (AnA reasoning round 12, RT-6): the step recorded a
+       deviation on EVERY answer, a correct 200 included, so it could never
+       pass. A 5xx is still the deviation (no provider in this environment);
+       a 200 is now held to the provenance the door returns. Re-execute with a
+       PQ-passed model configured. */
+    note: 'The turn record (services/ana/turn-record-draft.ts) holds the prompt sent, the model, the gateway request and the check; the parked candidate names it, and the accept\'s trail row carries both ids (generator.turnRecordId, generator.requestId).',
   },
-  async ({ api, deviation }) => {
+  async ({ api, expect, deviation }) => {
     const r = await api('POST', `/api/authoring/sections/${state.sectionOther.id}/ai/draft`, { prompt: 'Draft a one-paragraph summary.' });
-    if (r.status >= 500 || r.status === 503) {
-      deviation('AnA unavailable: no provider configured (ANTHROPIC_API_KEY / OPENAI_API_KEY unset in this environment). Re-execute with a PQ-passed model configured.', r.json);
-    }
-    deviation('AnA unavailable: no provider configured; unexpected non-5xx answer recorded for review.', r.json);
+    if (r.status >= 500) deviation('AnA unavailable: no provider configured (ANTHROPIC_API_KEY / OPENAI_API_KEY unset in this environment). Re-execute with a PQ-passed model configured.', r.json);
+    const d = r.status === 200 ? r.json?.draft : undefined;
+    const seen = { status: r.status, draftId: d?.draftId, model: d?.metadata?.model, record: d?.turnRecord?.status, check: d?.check?.engine };
+    expect(Boolean(seen.draftId && seen.model && seen.record === 'recorded' && seen.check), 'expected 200 with a parked candidate, its model, its recorded turn and its answer check', seen);
+    return `draft ${seen.draftId} by ${seen.model}; turn record ${d.turnRecord.id}; check ${seen.check}`;
   },
 );
 
