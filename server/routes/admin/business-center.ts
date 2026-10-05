@@ -330,18 +330,20 @@ router.get('/metering-coverage', async (req: Request, res: Response) => {
 // ─── Access roster — "who are my designated personnel?" ──────────────────────
 // Read-only audit of who can reach the Business Center, from the SAME source of
 // truth requireBusinessAdmin enforces: the BUSINESS_CENTER_EMAILS allowlist plus
-// any user holding a business role. Lets the owner verify access without DB/env
-// spelunking. Does NOT grant/revoke — role changes stay an explicit, separate op.
+// every active platform_role_grants row for a business role. Lets the owner
+// verify access without DB/env spelunking. Does NOT grant/revoke — role changes
+// stay an explicit, separate op. It listed tenant membership roles until
+// 2026-10-05, which the guard no longer honours (D6,
+// docs/evidence/D6/2026-10-05-business-center-standing/).
 
 router.get('/access', async (_req: Request, res: Response) => {
   try {
     const roles = [...BUSINESS_ROLES];
     const roleHolders = await query(
-      `SELECT u.id, u.email, u.name, u.status, ou.role, o.name AS organization_name
-         FROM organization_users ou
-         JOIN users u ON u.id = ou.user_id
-         LEFT JOIN organizations o ON o.id = ou.organization_id
-        WHERE LOWER(ou.role) = ANY($1)
+      `SELECT u.id, u.email, u.name, u.status, g.role, g.granted_at, g.granted_by
+         FROM platform_role_grants g
+         JOIN users u ON u.id = g.user_id
+        WHERE g.revoked_at IS NULL AND LOWER(g.role) = ANY($1)
         ORDER BY u.email`,
       [roles]
     );

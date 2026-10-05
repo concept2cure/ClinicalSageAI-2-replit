@@ -34,11 +34,25 @@ export interface ShadowFinding {
   leafRef?: string | null;
 }
 
+/**
+ * What the model returns: findings and a one-line summary. No score. Until
+ * 2026-10-05 it also returned rtf/crl "likelihoods" in [0,1], and the run kept
+ * the higher of those and the severity aggregate; Rule 2 says the model
+ * narrates, so a figure it reports is no longer read (prompt v1.1 stops asking).
+ */
 export interface ShadowReviewOutput {
-  rtfRiskScore: number;
-  crlRiskScore: number;
   summary: string;
   findings: ShadowFinding[];
+}
+
+/** Where a run's RTF/CRL score comes from. v1.0 runs recorded the model's own figure. */
+export type ShadowScoreBasis = 'severity_aggregate' | 'model_reported';
+
+export const SHADOW_REVIEW_PROMPT_VERSION = 'shadow-review@v1.1';
+
+/** The basis of a stored run's score, by the prompt version that produced it. */
+export function scoreBasisOf(promptVersion: string | null | undefined): ShadowScoreBasis {
+  return promptVersion === 'shadow-review@v1.0' ? 'model_reported' : 'severity_aggregate';
 }
 
 const SEVERITIES: ReadonlySet<string> = new Set<FindingSeverity>(['critical', 'major', 'minor', 'info']);
@@ -89,8 +103,6 @@ export function parseShadowReviewOutput(
     output: {
       findings,
       summary: typeof o.summary === 'string' ? o.summary : '',
-      rtfRiskScore: o.rtfRiskScore as number,
-      crlRiskScore: o.crlRiskScore as number,
     },
   };
 }
@@ -105,9 +117,10 @@ export class ShadowReviewError extends Error {
 const SEVERITY_WEIGHT: Record<FindingSeverity, number> = { critical: 1, major: 0.6, minor: 0.25, info: 0 };
 
 /**
- * Deterministic fallback risk from findings, used to sanity-bound the model's
- * self-reported scores. Pure. Returns 0..1 per dimension (rtf = administrative
- * gate: format + rtf findings; crl = substantive gate: crl + nb findings).
+ * A run's RTF/CRL gate score, from its findings' severities. Pure, and the only
+ * score a run records (Rule 2): 0..1 per dimension (rtf = administrative gate:
+ * format + rtf findings; crl = substantive gate: crl + nb findings). The
+ * severities are the reviewer model's; the arithmetic is not.
  */
 export function aggregateRisk(findings: ShadowFinding[]): { rtf: number; crl: number } {
   const score = (dims: string[]): number => {
@@ -121,13 +134,24 @@ export function aggregateRisk(findings: ShadowFinding[]): { rtf: number; crl: nu
   return { rtf: score(['rtf', 'format']), crl: score(['crl', 'nb']) };
 }
 
-function clamp01(n: unknown, fallback: number): number {
-  const v = typeof n === 'number' && Number.isFinite(n) ? n : fallback;
-  return Math.max(0, Math.min(1, v));
-}
+/**
+ * A sequence with no leaves cannot be filed. That is a fact about the sequence,
+ * so the server records it as a critical refuse-to-file finding of its own;
+ * it used to rest on the prompt asking the model for scores "near 1.0", and a
+ * model that answered 0 recorded an empty sequence as fileable.
+ */
+export const EMPTY_SEQUENCE_FINDING: ShadowFinding = {
+  dimension: 'rtf',
+  severity: 'critical',
+  title: 'The sequence has no leaves',
+  detail: 'An assembled sequence with no documents cannot be filed. Recorded by the server, not the reviewer model.',
+  basis: null,
+  recommendation: 'Place the sequence\'s documents before running a shadow review or dispatching it.',
+  leafRef: null,
+};
 
 async function loadPrompt(): Promise<string> {
-  return fs.readFile(path.join(PROMPTS_DIR, 'shadow-review', 'v1.0.md'), 'utf8');
+  return fs.readFile(path.join(PROMPTS_DIR, 'shadow-review', 'v1.1.md'), 'utf8');
 }
 
 export interface RunShadowReviewParams {
@@ -143,6 +167,8 @@ export interface RunShadowReviewResult {
   crlRiskScore: number;
   summary: string;
   findingCount: number;
+  /** Always 'severity_aggregate' for a new run (Rule 2). */
+  scoreBasis: ShadowScoreBasis;
   /** Whether the run's §11.10(e) AI_GENERATE row was written. The run stands
    *  either way; the route answers this result verbatim, so the caller sees it. */
   auditTrail: AuditRowOutcome;
@@ -171,7 +197,7 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
       sequenceId,
       region: sequence.region,
       lens,
-      promptVersion: 'shadow-review@v1.0',
+      promptVersion: SHADOW_REVIEW_PROMPT_VERSION,
       status: 'running',
       organizationId,
       createdBy: userId,
@@ -198,7 +224,7 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
       jsonMode: true,
       temperature: 0.2,
       maxTokens: 4096,
-      promptVersion: 'shadow-review@v1.0',
+      promptVersion: SHADOW_REVIEW_PROMPT_VERSION,
       organizationId,
       userId,
       callerModule: 'shadow-review-service',
@@ -219,11 +245,9 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
     throw new ShadowReviewError('PROVIDER_UNAVAILABLE', 'Shadow review could not be completed.');
   }
 
-  const findings = output.findings;
-  // Bound the model's self-reported risk by the deterministic aggregate (use the higher).
-  const agg = aggregateRisk(findings);
-  const rtfRiskScore = Math.max(clamp01(output.rtfRiskScore, agg.rtf), agg.rtf);
-  const crlRiskScore = Math.max(clamp01(output.crlRiskScore, agg.crl), agg.crl);
+  const findings = leaves.length === 0 ? [EMPTY_SEQUENCE_FINDING, ...output.findings] : output.findings;
+  // The gate score is the severity aggregate and nothing else (Rule 2).
+  const { rtf: rtfRiskScore, crl: crlRiskScore } = aggregateRisk(findings);
 
   if (findings.length > 0) {
     await db.insert(shadowReviewFindings).values(
@@ -254,11 +278,12 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
     action: 'AI_GENERATE',
     resourceType: 'shadow_review_run',
     resourceId: run.id,
-    details: { task: 'shadow-review', promptVersion: 'shadow-review@v1.0', lens, sequenceId, findingCount: findings.length, rtfRiskScore, crlRiskScore },
+    details: { task: 'shadow-review', promptVersion: SHADOW_REVIEW_PROMPT_VERSION, lens, sequenceId, findingCount: findings.length, rtfRiskScore, crlRiskScore },
   });
 
   logger.info('Shadow review complete', { runId: run.id, sequenceId, organizationId, findings: findings.length });
-  return { runId: run.id, rtfRiskScore, crlRiskScore, summary: output.summary ?? '', findingCount: findings.length, auditTrail };
+  const summary = output.summary ?? '';
+  return { runId: run.id, rtfRiskScore, crlRiskScore, summary, findingCount: findings.length, scoreBasis: 'severity_aggregate', auditTrail };
 }
 
 export default { runShadowReview, aggregateRisk, parseShadowReviewOutput, ShadowReviewError };

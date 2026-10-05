@@ -1,0 +1,8 @@
+$ node measure-stripper-vs-typescript.mjs <old lib = scripts/ci/lib/strip-comments.mjs at 69bb475bc>
+{"scanned":8186,"linesWithCodeBlanked":10,"files":3}
+  scripts/build-investor-brief.mjs: 160,161,162,395,396,406… (8)
+  scripts/ci/check-unapproved-model-pins.mjs: 181 (1)
+  scripts/ci/check-unreferenced-modules.mjs: 280 (1)
+
+$ node measure-stripper-vs-typescript.mjs scripts/ci/lib/strip-comments.mjs   # this change
+{"scanned":8288,"linesWithCodeBlanked":0,"files":0}

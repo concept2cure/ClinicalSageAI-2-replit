@@ -1,0 +1,26 @@
+$ npm run ci:dependency-risk
+  GHSA-5P2G-FCMC-QVQQ image-size high: unreachable
+  GHSA-W3RX-R6R6-PGPR image-size high: unreachable
+
+$ npm run ci:trivyignore-hygiene
+[ci:trivyignore-hygiene] OK — 3 suppression(s) in /home/user/ClinicalSageAI-2-replit/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+
+$ npm run ci:committed-secrets:selftest
+    - not caught: a GitHub ghr_ refresh token
+[ci:committed-secrets:selftest] 16 passed — the gate fails on what it exists to catch.
+
+$ npm run ci:canonicalizers
+Local canonicalizers: 7 (baseline 7)
+OK: no new canonicalizers.
+
+$ npm run ci:check-pdf-runtime
+[ci:pdf-runtime-canonicality] OK — no new PDF entry points outside the approved list
+
+$ npm run ci:unverified-verdicts
+   Duration  6.44s (transform 7.13s, setup 397ms, import 4.52s, tests 11.47s, environment 1ms)
+[ci:unverified-verdicts] ✅ no surface reports a verdict for a check that did not run
+
+$ npm run test:ci-scripts
+# tests 188
+# pass 188
+# fail 0

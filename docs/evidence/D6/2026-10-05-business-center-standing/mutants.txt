@@ -1,0 +1,6 @@
+# Each mutant applied alone to the fix; the three suites must go red.
+$ npx vitest run server/middleware/__tests__/requireBusinessAdmin.test.ts server/routes/admin/__tests__/business-center.test.ts server/routes/admin/__tests__/access-management.test.ts
+M1 the guard reads the request role again → Tests  7 failed | 49 passed (56)
+M2 standing ignores the platform grant → Tests  19 failed | 37 passed (56)
+M3 the roster lists tenant roles again → Tests  1 failed | 55 passed (56)
+M4 Access Management uses the allowlist-only check → Tests  2 failed | 54 passed (56)
