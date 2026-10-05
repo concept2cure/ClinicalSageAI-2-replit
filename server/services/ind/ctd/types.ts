@@ -21,6 +21,8 @@
  * @module server/services/ind/ctd/types
  */
 
+import type { RegulatoryBasis, RegulatoryConfidence } from '../../../../shared/regulatory/regulatory-basis';
+
 /** The FDA marketing/investigational applications that share the CTD spine. */
 export type SubmissionFamily = 'IND' | 'NDA' | 'BLA';
 
@@ -176,31 +178,25 @@ export const CTD_SECTION_KEYS: (keyof CtdSection)[] = [
 // ── ICH E3 clinical study report ─────────────────────────────────────────────
 
 /**
- * How strongly a statement in the E3 overlay is evidenced. Kept per statement
- * so a reader — and AnA — can tell the guideline's text from the platform's
- * practice.
+ * Provenance for the E3 overlay and every other regulatory fact in this
+ * directory. The one declaration lives in
+ * shared/regulatory/regulatory-basis.ts (with `REGULATOR_HOSTS`,
+ * `basisProblems` and `basisLabel`); it is re-exported here so imports from
+ * `ind/ctd` keep working.
  *
- * - `regulator-text`: wording confirmed on a regulator-hosted copy (FDA, EMA,
- *   TGA, HHS) on the date in `checked`, with its URL;
- * - `recall`: ICH E3 (Step 4, 1995) as known to the author. Its numbering and
- *   headings have not changed since 1995, but the primary text could not be
- *   fetched when this was written (fda.gov / ich.org refused by the
- *   environment's egress policy on 2026-10-04), so a verbatim check is owed;
- * - `platform-convention`: how this platform recommends doing it (for example
- *   which CDISC dataset usually feeds a table). Not a regulatory requirement:
- *   the SAP, define.xml and the sponsor's standards decide.
+ * - `regulator-text`: wording confirmed on a regulator-hosted copy (or a
+ *   vendored regulator artifact) on the date in `checked`;
+ * - `recall`: known to the author, not checked against the regulator's text;
+ * - `platform-convention`: how this platform recommends doing it. Not a
+ *   regulatory requirement.
  */
-export type E3Confidence = 'regulator-text' | 'recall' | 'platform-convention';
+export type { RegulatoryBasis, RegulatoryConfidence } from '../../../../shared/regulatory/regulatory-basis';
 
-export interface E3Basis {
-  /** Short citation ("ICH E3 §12.2.4", "21 CFR 314.50(f)(2)"). */
-  ref: string;
-  confidence: E3Confidence;
-  /** The regulator-hosted copy the wording was checked against. */
-  url?: string;
-  /** ISO date the wording was checked (regulator-text only). */
-  checked?: string;
-}
+/** Alias of `RegulatoryConfidence` (was a separate declaration until 2026-10-05). */
+export type E3Confidence = RegulatoryConfidence;
+
+/** Alias of `RegulatoryBasis` (was a separate declaration until 2026-10-05). */
+export type E3Basis = RegulatoryBasis;
 
 /**
  * Whether a section is expected in every CSR, only when the study produced
