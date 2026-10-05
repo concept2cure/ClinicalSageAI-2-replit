@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-05T01:48:04.989Z",
+  "generatedAt": "2026-10-05T02:05:51.606Z",
   "git": {
-    "sha": "c10caf1bf0566203b7331f3624c232269bb14e5e",
+    "sha": "a425d1dead5520d73f7d78a16ca0f1d04c43eea0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2050,7 +2050,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1114992
+        "bytes": 1115461
       },
       {
         "file": "shared/schema.ts",
@@ -2058,11 +2058,11 @@
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
-        "bytes": 478031
+        "bytes": 478271
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "bytes": 342132
+        "bytes": 356794
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2098,7 +2098,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 164892
+        "bytes": 166154
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2252,7 +2252,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21508
+        "lines": 21519
       },
       {
         "file": "shared/schema.ts",
@@ -2276,7 +2276,7 @@
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
-        "lines": 5544
+        "lines": 5546
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2320,7 +2320,11 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3279
+        "lines": 3299
+      },
+      {
+        "file": "server/services/ind/ctd/lifecycle-document-types.ts",
+        "lines": 3274
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2337,10 +2341,6 @@
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "lines": 3119
-      },
-      {
-        "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "lines": 3116
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
