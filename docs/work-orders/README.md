@@ -1254,6 +1254,11 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
     - With no run id, that route reads command and params from the request
       body and stamps `servingModel` and `gatewayRequestId` null. So an
       AnA-drafted governed artifact loses its model provenance.
+    - **Done 2026-10-05 by `…01YZFCXR`** (`docs/evidence/D5/2026-10-05-proposal-provenance/`):
+      a model-text proposal from an unqualified model is refused; every other
+      proposal carries a server-signed seal of its model, gateway request and
+      params, which the route verifies (same org, person, command and params)
+      before running it; `send-message.ts` now passes its model. Red 4 of 6, green 6/6.
 23. **→ the security lane, unclaimed, 2026-10-04 — tool output reaches the
     model as unframed user-role prose** (`stream.ts` result staging,
     `AnaToolExecutor.ts` loop). The screen context and steers are fenced as

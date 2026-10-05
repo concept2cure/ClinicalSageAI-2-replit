@@ -49,6 +49,7 @@ import {
   extractRequestContext,
 } from './shared.js';
 import { clientIpOf } from '../../utils/client-ip';
+import { proposalAsConfirmed } from './proposal-as-confirmed.js';
 
 const log = createScopedLogger('ana-ri/utility');
 
@@ -305,6 +306,20 @@ async function declineHeldAction(
 }
 
 /** Register utility endpoints on the given router. */
+/**
+ * resolveAuthorisedAction, with the params opened and the proposing model
+ * named (proposal-as-confirmed.ts, D5 MC-RL-4): model-authored text from a
+ * model not qualified for high-risk drafting is refused here, before the route
+ * reads anything.
+ */
+async function resolveConfirmedAction(req: Request, body: Record<string, any>, organizationId: number, userId: number) {
+  const authorised = await resolveAuthorisedAction(req, body);
+  if ('error' in authorised) return authorised;
+  const { params, proposer, refused } = proposalAsConfirmed(authorised, organizationId, userId);
+  if (refused) return { error: refused, status: 403, code: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE' };
+  return { ...authorised, params, proposer };
+}
+
 export function mountUtilityRoutes(router: Router): void {
   // ─────────────────────────────────────────────────────────────────────────
   // GET /api/ana-ri/health — AnA runtime readiness snapshot
@@ -566,12 +581,11 @@ export function mountUtilityRoutes(router: Router): void {
 
     // What is being authorised. When the client names a run, this is read from
     // the ROW rather than the body — see resolveAuthorisedAction.
-    const authorised = await resolveAuthorisedAction(req, body);
+    const authorised = await resolveConfirmedAction(req, body, numericOrgId, userId);
     if ('error' in authorised) {
       return sendError(res, authorised.status, authorised.error, null, authorised.code);
     }
-    const { pendingForRun, runId, toolUseId, command, params } = authorised;
-
+    const { pendingForRun, runId, toolUseId, command, params, proposer } = authorised;
     // A person's no to an action AnA is holding a turn on. Checked before any
     // tier rule: declining asks for nothing, whatever the tier.
     if (body.decision === 'decline') {
@@ -660,11 +674,9 @@ export function mountUtilityRoutes(router: Router): void {
       userId,
       organizationId: numericOrgId,
       part11Enforce: true,
-      // The model call that proposed the action, from the held ROW, never the
-      // body: agentAuditDetails writes its gateway request id and model into the
-      // Part 11 row (D6). A command posted without its run has no recorded
-      // proposer, and records null rather than a claim.
-      servingModel: pendingForRun?.proposedBy ?? null,
+      // The proposing model call, into the Part 11 row (D6): the held row's or the
+      // server's seal's (proposal-as-confirmed.ts), never the body's; else null.
+      servingModel: proposer,
       // ONE OF THE TWO ASSIGNMENTS OF THIS FIELD, BOTH IN THIS ROUTE (the other
       // is runConfirmedTool's, for the tools that write on their own handlers).
       //
