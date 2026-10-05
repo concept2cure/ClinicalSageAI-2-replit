@@ -278,7 +278,9 @@ const TRANSMIT_FORM = (def: string | undefined, packages: PackageOption[] | null
       { value: 'approval', label: 'Approval — I approve this package for submission' },
       { value: 'responsibility', label: 'Responsibility — I take responsibility for this package' },
       { value: 'review', label: 'Review — I reviewed this package' },
-      { value: 'authorship', label: 'Authorship — I authored this package' },
+      // No "Authorship": transmitting is a release, and the server refuses a
+      // transmission signed as author (assertTransmitterIndependent). Offering
+      // it would only lead to a refusal after the password was typed.
     ] },
     { key: 'password', label: 'Password (re-authentication)', type: 'password', required: true, half: true },
     { key: 'totp', label: 'Authentication code (if enabled)', type: 'text', half: true },

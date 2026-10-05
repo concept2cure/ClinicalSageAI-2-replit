@@ -367,6 +367,11 @@ describe('POST /api/mdx/gateways/:region/:gateway/transmit', () => {
       if (typeof sql === 'string' && sql.includes('password_hash')) {
         return Promise.resolve({ rows: [{ password_hash: 'hashed' }], rowCount: 1 });
       }
+      // The creator lookup: a colleague (4242) built the package, so the acting
+      // user (777) transmits as an independent signer.
+      if (typeof sql === 'string' && sql.includes('SELECT created_by_id FROM c2c_submission_packages')) {
+        return Promise.resolve({ rows: [{ created_by_id: 4242 }], rowCount: 1 });
+      }
       if (typeof sql === 'string' && sql.includes('FROM c2c_submission_packages')) {
         return Promise.resolve({ rows: [{ metadata: { bundle: STORED } }], rowCount: 1 });
       }

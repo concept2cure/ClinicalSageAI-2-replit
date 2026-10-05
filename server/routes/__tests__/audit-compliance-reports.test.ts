@@ -94,8 +94,19 @@ describe('GET /api/audit/reports — the catalog', () => {
 
   it('an administrator can run them; a platform administrator too', async () => {
     expect((await request(app()).get('/api/audit/reports')).body.canRun).toBe(true);
+    // A platform administrator is the owner allowlist, never a request role
+    // (fe916edf4). A tenant role named 'support' is a member's role and does not run them.
     user = { id: 13, organizationId: ORG, role: 'support' };
-    expect((await request(app()).get('/api/audit/reports')).body.canRun).toBe(true);
+    expect((await request(app()).get('/api/audit/reports')).body.canRun).toBe(false);
+    const before = process.env.PLATFORM_ADMIN_EMAILS;
+    process.env.PLATFORM_ADMIN_EMAILS = 'owner@example.invalid';
+    try {
+      user = { id: 14, organizationId: ORG, role: 'member', email: 'owner@example.invalid' };
+      expect((await request(app()).get('/api/audit/reports')).body.canRun).toBe(true);
+    } finally {
+      if (before === undefined) delete process.env.PLATFORM_ADMIN_EMAILS;
+      else process.env.PLATFORM_ADMIN_EMAILS = before;
+    }
   });
 
   it('no organisation, no catalog', async () => {

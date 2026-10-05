@@ -55,6 +55,7 @@ import {
   agencyMetadata,
   assertNoActiveTransmittal,
   assertSequenceNotFiledAsAnotherBundle,
+  assertTransmitterIndependent,
 } from './governed-transmit-checks';
 import { getBundle } from '../submission-bundle-storage';
 import { recordFiledSequence } from '../ectd/package-content-change';
@@ -637,6 +638,17 @@ export async function executeGovernedTransmit(
   const metadata = agencyMetadata(input, bundle);
   assertSequenceNotFiledAsAnotherBundle(input, bundle);
   await assertNoActiveTransmittal(input, bundle);
+
+  // Separation of duties, as the last check before anything is sent: the
+  // package's creator does not transmit it, and no transmission is signed as
+  // author. Here and not at the top: by now the package is known to exist in
+  // this organization and to carry a valid bundle, so a missing or foreign
+  // package keeps its own refusal rather than reading "no creator recorded".
+  // A caller-supplied descriptor (dev/test only — refused above in every other
+  // environment) names no package, so there is no record to check.
+  if (input.packageId != null) {
+    await assertTransmitterIndependent(input.packageId, organizationId, userId, input.meaning);
+  }
 
   const gw = getGateway(region, gateway);
   const result = await gw.transmit({

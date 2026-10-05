@@ -37,7 +37,10 @@ export type GovernedTransmitRefusalCode =
   | 'BUNDLE_CONTENT_UNPROVEN'
   | 'METADATA_DESCRIPTOR_MISMATCH'
   | 'SEQUENCE_ALREADY_FILED'
-  | 'ACTIVE_TRANSMITTAL';
+  | 'ACTIVE_TRANSMITTAL'
+  | 'SIGNER_IS_AUTHOR'
+  | 'AUTHORSHIP_NOT_A_RELEASE'
+  | 'SIGNER_INDEPENDENCE_UNRESOLVED';
 
 /** A refusal the caller should surface verbatim to the operator. */
 export class GovernedTransmitRefusal extends Error {
@@ -46,7 +49,7 @@ export class GovernedTransmitRefusal extends Error {
     readonly code: GovernedTransmitRefusalCode,
     message: string,
     /** HTTP status the pre-existing route used for this refusal. */
-    readonly httpStatus: 409 | 422,
+    readonly httpStatus: 403 | 409 | 422,
     readonly details?: Record<string, unknown>,
   ) {
     super(message);
@@ -192,4 +195,58 @@ export async function assertNoActiveTransmittal(input: GovernedTransmitInput, bu
     409,
     { transmittalId: active.id, status: active.status },
   );
+}
+
+/**
+ * Separation of duties for a transmission to an agency: whoever created the
+ * package does not send it, and a transmission is never signed "as author".
+ *
+ * Transmit re-authenticated the human and recorded the meaning they declared,
+ * but never asked whether they were independent of the package — so the person
+ * who assembled a package could send it to FDA themselves, under any meaning,
+ * the "Authorship" one included. The submissions spine refuses exactly this at
+ * freeze, dispatch and transmit (Gate 1); this is the same rule on the gateway
+ * path, through the same canonical check (assertSignerIsNotAuthor), so the two
+ * paths to an agency cannot disagree about who may release.
+ *
+ * Runs before any byte is read or sent. A failed authorship lookup is not
+ * independence: it surfaces as an internal error and nothing is transmitted.
+ */
+export async function assertTransmitterIndependent(
+  packageId: number,
+  organizationId: number,
+  userId: number,
+  meaning: string,
+): Promise<void> {
+  const { requiresIndependence, assertSignerIsNotAuthor, SeparationOfDutiesError, SeparationOfDutiesAuthorUnresolvedError } =
+    await import('../governance/separation-of-duties');
+  if (!requiresIndependence('sign', meaning)) {
+    throw new GovernedTransmitRefusal(
+      'AUTHORSHIP_NOT_A_RELEASE',
+      `A transmission to the agency is a release, not an authorship attestation; it cannot be signed with the meaning '${meaning}'. ` +
+        'Sign it as release, approval or responsibility. Nothing was transmitted.',
+      422,
+    );
+  }
+  try {
+    await assertSignerIsNotAuthor(`submission-package:${packageId}`, organizationId, userId, { meaning });
+  } catch (err) {
+    if (err instanceof SeparationOfDutiesError) {
+      throw new GovernedTransmitRefusal(
+        'SIGNER_IS_AUTHOR',
+        'You created this package, so you cannot transmit it. Separation of duties requires a different colleague with ' +
+          'signing rights to transmit it. Nothing was transmitted.',
+        403,
+      );
+    }
+    if (err instanceof SeparationOfDutiesAuthorUnresolvedError) {
+      throw new GovernedTransmitRefusal(
+        'SIGNER_INDEPENDENCE_UNRESOLVED',
+        'No creator is recorded for this package, so nobody can be shown to be independent of it and it cannot be ' +
+          'transmitted. Nothing was transmitted.',
+        409,
+      );
+    }
+    throw new GovernedTransmitInternalError('transmit-separation-of-duties', err);
+  }
 }

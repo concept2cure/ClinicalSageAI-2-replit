@@ -147,7 +147,10 @@ function makeApp(orgId = CALLER_ORG) {
  * BOTH the id and the org_id bind params match, mirroring the tenant-scoped
  * WHERE clause the route issues.
  */
-type StoredPackage = { id: number; orgId: number; bundle: unknown; regulatory?: Record<string, unknown>; filedSequences?: unknown[] };
+/** `createdBy` is the package's recorded creator (separation of duties: the
+ *  creator may not transmit it). Defaults to 4242 — a colleague of the acting
+ *  user (777), so these cases exercise an independent transmitter. */
+type StoredPackage = { id: number; orgId: number; bundle: unknown; regulatory?: Record<string, unknown>; filedSequences?: unknown[]; createdBy?: number | null };
 let packages: StoredPackage[] = [];
 const packageSelects: Array<unknown[]> = [];
 
@@ -204,6 +207,15 @@ function installDb() {
   queryFn.mockImplementation((sql: string, params: unknown[] = []) => {
     if (typeof sql === 'string' && sql.includes('password_hash')) {
       return Promise.resolve({ rows: [{ password_hash: 'hashed' }], rowCount: 1 });
+    }
+    // The creator lookup (assertTransmitterIndependent → resolveTargetAuthors),
+    // answered with the same tenant scoping. Its id arrives as text ($1::int).
+    if (typeof sql === 'string' && sql.includes('SELECT created_by_id FROM c2c_submission_packages')) {
+      const [id, orgId] = params as [unknown, number];
+      const row = packages.find((p) => p.id === Number(id) && p.orgId === orgId);
+      return Promise.resolve(row
+        ? { rows: [{ created_by_id: row.createdBy === undefined ? 4242 : row.createdBy }], rowCount: 1 }
+        : { rows: [], rowCount: 0 });
     }
     if (typeof sql === 'string' && sql.includes('FROM c2c_submission_packages')) {
       packageSelects.push(params);
@@ -535,6 +547,28 @@ describe('POST transmit — cross-tenant packages (C2C-SUB-003)', () => {
 /* ── Positive control ────────────────────────────────────────────── */
 
 describe('POST transmit — legitimate validated package (C2C-SUB-003)', () => {
+  it('refuses the package creator — 403 SIGNER_IS_AUTHOR, and nothing reaches the gateway', async () => {
+    // Separation of duties (2026-10-05): whoever created the package does not
+    // transmit it. Before, transmit re-authenticated the human and never asked.
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor(), createdBy: 777 }];
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
+    expect(res.status).toBe(403);
+    expect(JSON.stringify(res.body)).toMatch(/SIGNER_IS_AUTHOR/);
+    expect(transmitFn, 'bytes went to the agency under the package creator').not.toHaveBeenCalled();
+  });
+
+  it('refuses a package with no recorded creator — 409, never guessed', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor(), createdBy: null }];
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
+    expect(res.status).toBe(409);
+    expect(JSON.stringify(res.body)).toMatch(/SIGNER_INDEPENDENCE_UNRESOLVED/);
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
   it('transmits a tenant-owned, in-namespace, validated package under production', async () => {
     packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor() }];
     transmitFn.mockResolvedValueOnce({

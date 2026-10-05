@@ -163,7 +163,9 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     const cfg = (globalThis as any).__c2cFormConfig;
     const meaning = cfg.fields.find((f: any) => f.key === 'meaning');
     expect(meaning?.required).toBe(true);
-    expect(meaning?.options.map((o: any) => o.value).sort()).toEqual(['approval', 'authorship', 'release', 'responsibility', 'review']);
+    // No "Authorship": a transmission is a release, and the server refuses one
+    // signed as author (assertTransmitterIndependent, 2026-10-05).
+    expect(meaning?.options.map((o: any) => o.value).sort()).toEqual(['approval', 'release', 'responsibility', 'review']);
   });
 
   it('surfaces the 409 active-transmittal lock with the holder id', async () => {
