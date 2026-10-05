@@ -100,3 +100,32 @@ cb158a7f1ff227577302cb9a87f554bc2c0603bd:tests/export-contract/xlsx-export.proof
 #   secret scan went red on them.
 6aa4e70c7d6df567931400881fe9ed222536b36c:client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx:jwt:20
 4b08f26ec3e7ff20de97778c45e74541aaeabcbf:docs/evidence/D6/2026-09-25-p1/IAM-18-6/red/before-fix.txt:jwt:10
+
+# status: not a secret
+# reason: nine evidence-file matches that turned the full-history scan red
+#   (run 37244256821, 2026-10-04; "leaks found: 6" on its walk, all nine on
+#   `gitleaks git … HEAD -- <these files>`). Each was read, not assumed:
+#   - mcp-connector-enablement red/*.txt (four jwt): vitest output quoting MCP
+#     access tokens the suite minted with the unit tests' JWT secret, aud
+#     http://localhost:5300/mcp, userId 3 / org 7 fixtures, expired 2026-09-30
+#     and 2026-10-01. No deployment accepts them.
+#   - pre-auth-narrowing red/before.txt:46 (generic-api-key): the reset_token
+#     of a dbtest fixture user whose password_hash is "not-a-real-password",
+#     in a row dump of a throwaway database.
+#   - gate-selftests/workflow-results.json:781 (private-key, in three commits):
+#     prose in a review record quoting the gate's regex
+#     `(?:RSA |EC |OPENSSH |PGP )?PRIVATE KEY`; no key material.
+#   - gate-selftests/workflow-results.json:119 at 5e9d39be
+#     (c2c-connection-uri-password): the password field is `npg_…`, a
+#     JSON-escaped ellipsis: already elided, and removed from the file by
+#     c9456b0c. Not INF-22's value (compared by hash, not printed).
+#   Recorded by the D6 lane.
+bea4192be4854027f7e23e82b5b8a062cd6e9dcf:docs/evidence/D3/2026-10-04-pre-auth-narrowing/red/before.txt:generic-api-key:46
+59a3c0e50428296c994a3b4262c6081cdc6c412f:docs/evidence/D6/2026-10-01-tranche-4/P1-47-connector-enablement/red/mcp-connector-enablement.test.token-mutant.txt:jwt:57
+59a3c0e50428296c994a3b4262c6081cdc6c412f:docs/evidence/D6/2026-10-01-tranche-4/P1-47-connector-enablement/red/mcp-connector-enablement.test.token-mutant.txt:jwt:82
+59a3c0e50428296c994a3b4262c6081cdc6c412f:docs/evidence/D6/2026-10-01-tranche-4/P1-47-connector-enablement/red/mcp-connector-enablement.test.txt:jwt:203
+59a3c0e50428296c994a3b4262c6081cdc6c412f:docs/evidence/D6/2026-10-01-tranche-4/P1-47-connector-enablement/red/mcp-connector-enablement.test.txt:jwt:229
+59a3c0e50428296c994a3b4262c6081cdc6c412f:docs/evidence/D6/2026-10-01-gate-selftests/workflow-results.json:private-key:781
+5e9d39be4d8679e0bb74637efc9f5d00610888b4:docs/evidence/D6/2026-10-01-gate-selftests/workflow-results.json:c2c-connection-uri-password:119
+5e9d39be4d8679e0bb74637efc9f5d00610888b4:docs/evidence/D6/2026-10-01-gate-selftests/workflow-results.json:private-key:781
+750c16334dfc9c513dc27ca34092004fb2ce6b94:docs/evidence/D6/2026-10-01-gate-selftests/workflow-results.json:private-key:781
