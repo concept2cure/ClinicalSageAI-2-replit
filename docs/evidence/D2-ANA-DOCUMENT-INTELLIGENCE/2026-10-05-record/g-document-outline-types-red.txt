@@ -1,0 +1,45 @@
+# g-document-outline-types red — 2026-10-05, before the change: npx vitest run tests/regulatory/document-outline-render.test.ts
+# 13 failed | 1 passed (14). The one pass is the expectTypeOf block, a no-op at runtime; tsc (below in facts) checks the type contract.
+ × tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — the top level > lists the top-level headings in order, marks a heading-only one, and carries the governing basis 9ms
+ × tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — the top level > treats an empty section the same as none 2ms
+ × tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > renders what the node carries, the headings under it, and every basis through basisLabel 1ms
+ × tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > falls back to the governing basis for a node with none of its own 1ms
+ × tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > a heading-only node says its content is not encoded and renders none of it 2ms
+ × tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > a conditional node names its condition and says it is undetermined until known 13ms
+ × tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > renders the local title beside the title 1ms
+ × tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > normalises the asked-for number and finds an unnumbered node by title 1ms
+ × tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > returns null for a section the outline does not have 1ms
+ × tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > refuses an outline with no governing basis instead of rendering it unsourced 5ms
+ × tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — the cap and the brief mode > drops optional blocks under a cap but never the basis 1ms
+ × tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — the cap and the brief mode > the brief mode renders identity and basis, not the content lists 1ms
+ × tests/regulatory/document-outline-render.test.ts > E3Section is an OutlineNode > the E3 tree renders as an outline without conversion 1ms
+ ✓ tests/regulatory/document-outline-render.test.ts > E3Section is an OutlineNode > keeps E3 applicability narrower than Necessity 0ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — the top level > lists the top-level headings in order, marks a heading-only one, and carries the governing basis
+AssertionError: section-brief.ts exports renderOutlineBrief: expected 'undefined' to be 'function' // Object.is equality
+ FAIL  tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — the top level > treats an empty section the same as none
+AssertionError: section-brief.ts exports renderOutlineBrief: expected 'undefined' to be 'function' // Object.is equality
+ FAIL  tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > renders what the node carries, the headings under it, and every basis through basisLabel
+AssertionError: section-brief.ts exports renderOutlineBrief: expected 'undefined' to be 'function' // Object.is equality
+ FAIL  tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > falls back to the governing basis for a node with none of its own
+AssertionError: section-brief.ts exports renderOutlineBrief: expected 'undefined' to be 'function' // Object.is equality
+ FAIL  tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > a heading-only node says its content is not encoded and renders none of it
+AssertionError: section-brief.ts exports renderOutlineBrief: expected 'undefined' to be 'function' // Object.is equality
+ FAIL  tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > a conditional node names its condition and says it is undetermined until known
+AssertionError: section-brief.ts exports renderOutlineBrief: expected 'undefined' to be 'function' // Object.is equality
+ FAIL  tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > renders the local title beside the title
+AssertionError: section-brief.ts exports renderOutlineBrief: expected 'undefined' to be 'function' // Object.is equality
+ FAIL  tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > normalises the asked-for number and finds an unnumbered node by title
+AssertionError: section-brief.ts exports renderOutlineBrief: expected 'undefined' to be 'function' // Object.is equality
+ FAIL  tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > returns null for a section the outline does not have
+AssertionError: section-brief.ts exports renderOutlineBrief: expected 'undefined' to be 'function' // Object.is equality
+ FAIL  tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > refuses an outline with no governing basis instead of rendering it unsourced
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+ FAIL  tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — the cap and the brief mode > drops optional blocks under a cap but never the basis
+AssertionError: section-brief.ts exports renderOutlineBrief: expected 'undefined' to be 'function' // Object.is equality
+ FAIL  tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — the cap and the brief mode > the brief mode renders identity and basis, not the content lists
+AssertionError: section-brief.ts exports renderOutlineBrief: expected 'undefined' to be 'function' // Object.is equality
+ FAIL  tests/regulatory/document-outline-render.test.ts > E3Section is an OutlineNode > the E3 tree renders as an outline without conversion
+AssertionError: section-brief.ts exports renderOutlineBrief: expected 'undefined' to be 'function' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  13 failed | 1 passed (14)
