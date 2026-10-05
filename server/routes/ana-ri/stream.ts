@@ -1433,6 +1433,8 @@ export function mountStreamRoute(router: Router): void {
         submissionType: orchestration.detectedSubmissionType,
         requestedMaxTokens: resolveOutputBudget(effortUsed),
         requestsGovernedDraft: requestsGovernedDraft(message),
+        // The open section: a Module 2 summary is high-stakes however the question is worded (MC-RL-3).
+        openSectionCode: sectionCode,
       });
 
       const policyHint = await getKernelPolicyHint({

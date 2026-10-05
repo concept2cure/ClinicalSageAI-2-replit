@@ -1,0 +1,8 @@
+ESLint warnings/errors per file touched by round 7: on the round-7 tree (merged with trunk 5debe9af9), and warnings on trunk where the file exists there.
+Command: npx eslint --no-warn-ignored <file>
+(kernel-router.ts's one warning is planKernelExecution's complexity: 29 on trunk, 29 here — the rule is a helper call.)
+
+server/services/kernel-router.ts                                       round7=1/0    trunk=1
+server/routes/ana-ri/stream.ts                                         round7=24/0   trunk=24
+server/services/__tests__/kernel-router-open-section.test.ts           round7=0/0    trunk=new
+server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts        round7=0/0    trunk=new
