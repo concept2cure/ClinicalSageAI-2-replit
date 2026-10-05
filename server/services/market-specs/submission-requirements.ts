@@ -20,6 +20,15 @@
 
 import type { SubmissionFamily } from './market-submission-specs';
 import type { LegacyLowerType } from '../../../shared/regulatory/submission-type-bridge.js';
+import {
+  estarSlots,
+  slotApplicability,
+  type DeviceFlagId,
+  type DeviceFlags,
+  type EstarSlot,
+  type EstarType,
+  type Necessity,
+} from '../pathway-engines/estar/estar-mapper';
 
 export type SubmissionType = Extract<LegacyLowerType,
   | 'ind' | 'nda' | 'bla' | 'anda'
@@ -32,7 +41,26 @@ export interface RequiredDocument {
   /** Links to a document-template-library id where one exists. */
   templateId?: string;
   name: string;
+  /**
+   * Required for EVERY submission of this type. For an eSTAR-derived row this
+   * is `necessity === 'always'`; a `conditional` row is required exactly when
+   * its flag is set, which `assessRequirements` decides per device.
+   */
   required: boolean;
+  /** eSTAR-derived rows only: the estar-mapper slot this row projects. */
+  estarSlotId?: string;
+  /** eSTAR-derived rows only: how necessity is decided (estar-mapper `Necessity`). */
+  necessity?: Necessity;
+  /** For `conditional`: the device flag that decides it. */
+  flag?: DeviceFlagId;
+  /** For `when-applicable`: the device property that decides it, in words. */
+  appliesWhen?: string;
+  /** The regulation, statute, standard or guidance this row answers to. */
+  authority?: string;
+  /** Other document names that satisfy this one requirement. */
+  alsoSatisfiedBy?: string[];
+  /** A form whose presence also satisfies this row (e.g. the FDA 3601 user-fee cover sheet). */
+  satisfiedByForm?: string;
 }
 
 export interface SubmissionRequirement {
@@ -48,6 +76,64 @@ export interface SubmissionRequirement {
 }
 
 const CTD_MODULES = ['1', '2', '3', '4', '5'];
+
+/* ── 510(k) and De Novo: rows from the eSTAR slot registry ──────────────────
+ *
+ * These two rows used to be hand-written here, beside the canonical eSTAR
+ * registry in server/services/pathway-engines/estar/estar-mapper.ts, and they
+ * had drifted from it in the dangerous direction: no proposed labeling (21 CFR
+ * 807.87(e)), no Indications for Use (FDA 3881), no Truthful and Accurate
+ * Statement (807.87(k)), no user fee (FDA 3601), no 510(k) Statement as the
+ * alternative to the Summary — and biocompatibility marked optional while the
+ * mapper requires it. A 510(k) holding none of those assessed ready:true.
+ *
+ * So the rows are now a projection of `estarSlots()`: one row per slot, its
+ * label, necessity, flag / appliesWhen and authority read from the registry.
+ * Nothing about WHAT eSTAR requires is said in this file. What is said here is
+ * only how a row links to things outside the registry: the document-template
+ * library id, the alternative names for the summary-or-statement slot, and the
+ * form that is filed outside the eSTAR PDF.
+ */
+const ESTAR_ROW_LINKS: Record<string, Pick<RequiredDocument, 'templateId' | 'alsoSatisfiedBy' | 'satisfiedByForm'>> = {
+  'cover-letter': { templateId: 'cover_letter' },
+  '510k-summary-or-statement': {
+    templateId: 'k510_summary',
+    alsoSatisfiedBy: ['510(k) Summary', '510(k) Statement'],
+  },
+  /* The 3601 is completed in the FDA user-fee system, which issues the payment
+     identification number the eSTAR then cites; the cover sheet itself is not
+     a section of the eSTAR. It is therefore also a form of the submission. */
+  'user-fee-cover-sheet': { satisfiedByForm: 'FDA 3601' },
+};
+
+/** The container: eSTAR is mandatory for both, and both go through the CDRH Portal. */
+const ESTAR_CONTAINER_FORM = 'eSTAR (submitted via CDRH Portal)';
+
+function estarRow(slot: EstarSlot): RequiredDocument {
+  return {
+    ...ESTAR_ROW_LINKS[slot.id],
+    name: slot.label,
+    required: slot.necessity === 'always',
+    estarSlotId: slot.id,
+    necessity: slot.necessity,
+    ...(slot.flag ? { flag: slot.flag } : {}),
+    ...(slot.appliesWhen ? { appliesWhen: slot.appliesWhen } : {}),
+    authority: slot.authority,
+  };
+}
+
+function estarRows(type: EstarType, variant?: 'device' | 'ivd'): RequiredDocument[] {
+  return estarSlots(type, variant).map(estarRow);
+}
+
+/** The container, then each form an always-required slot is filed as. */
+function estarForms(rows: RequiredDocument[]): string[] {
+  const forms = rows.filter((r) => r.required && r.satisfiedByForm).map((r) => r.satisfiedByForm!);
+  return [ESTAR_CONTAINER_FORM, ...new Set(forms)];
+}
+
+const ROWS_510K = estarRows('510k');
+const ROWS_DE_NOVO = estarRows('de_novo');
 
 export const SUBMISSION_REQUIREMENTS: SubmissionRequirement[] = [
   {
@@ -117,31 +203,18 @@ export const SUBMISSION_REQUIREMENTS: SubmissionRequirement[] = [
     label: '510(k) Premarket Notification',
     market: 'us',
     family: 'estar',
-    requiredDocuments: [
-      { templateId: 'cover_letter', name: 'Cover letter', required: true },
-      { templateId: 'k510_summary', name: '510(k) Summary', required: true },
-      { name: 'Device description', required: true },
-      { name: 'Substantial equivalence / predicate comparison', required: true },
-      { name: 'Performance testing (bench / clinical as applicable)', required: true },
-      { name: 'Biocompatibility evaluation (ISO 10993, as applicable)', required: false },
-    ],
-    requiredForms: ['eSTAR 510(k) template'],
-    basis: 'FDA 21 CFR 807 Subpart E; eSTAR',
+    requiredDocuments: ROWS_510K,
+    requiredForms: estarForms(ROWS_510K),
+    basis: 'FD&C Act §510(k); 21 CFR 807 Subpart E; eSTAR mandatory since 2023-10-01, via the CDRH Portal. Rows: the eSTAR slot registry (estar-mapper.ts)',
   },
   {
     submissionType: 'de_novo',
     label: 'De Novo Classification Request',
     market: 'us',
     family: 'estar',
-    requiredDocuments: [
-      { templateId: 'cover_letter', name: 'Cover letter', required: true },
-      { name: 'Device description', required: true },
-      { name: 'Classification summary / risk-to-health analysis', required: true },
-      { name: 'Special controls proposal', required: true },
-      { name: 'Performance testing', required: true },
-    ],
-    requiredForms: ['eSTAR De Novo template'],
-    basis: 'FDA 21 CFR 860 Subpart D; eSTAR',
+    requiredDocuments: ROWS_DE_NOVO,
+    requiredForms: estarForms(ROWS_DE_NOVO),
+    basis: 'FD&C Act §513(f)(2); 21 CFR 860 Subpart D; eSTAR mandatory since 2025-10-01, via the CDRH Portal. Rows: the eSTAR slot registry (estar-mapper.ts)',
   },
   {
     submissionType: 'pma',
@@ -259,43 +332,93 @@ export interface RequirementsAssessment {
   ready: boolean;
   missingDocuments: string[];
   missingForms: string[];
+  /**
+   * Absent rows whose necessity turns on a device flag that was not supplied.
+   * These block `ready`: not knowing whether a sterile device's sterilization
+   * section is needed is not the same as not needing it. Always empty for
+   * types whose rows are not flag-conditional.
+   */
+  undetermined: string[];
+  /** Absent rows that turn on a device property no flag captures — for a human to confirm; they do not block. */
+  checkApplicability: string[];
   presentRequiredCount: number;
   totalRequiredCount: number;
 }
 
+export interface RequirementsCandidate {
+  templateIds?: string[];
+  documentNames?: string[];
+  forms?: string[];
+  /**
+   * The device's answers to the seven intake flags (eSTAR types only). An
+   * unanswered flag leaves its conditional rows undetermined, and an
+   * undetermined absent row keeps `ready` false.
+   */
+  flags?: DeviceFlags;
+  /** eSTAR family for a 510(k): the IVD eSTAR asks for analytical performance. Omitted means 'device'. */
+  variant?: 'device' | 'ivd';
+}
+
+type RowApplicability = 'required' | 'not-applicable' | 'undetermined' | 'when-applicable';
+
+/** Static rows: `required` decides. eSTAR rows: the mapper's own applicability rule decides. */
+function rowApplicability(d: RequiredDocument, flags: DeviceFlags | undefined): RowApplicability {
+  if (!d.necessity) return d.required ? 'required' : 'not-applicable';
+  return slotApplicability({ necessity: d.necessity, flag: d.flag }, flags);
+}
+
 /**
- * Assess a candidate set against a submission type's requirements. A required
- * document counts as present when its templateId (preferred) or its name is in
- * `present`. Optional documents never block readiness.
+ * Assess a candidate set against a submission type's requirements. A row counts
+ * as present when its templateId (preferred), its eSTAR slot id, its name, one
+ * of its alternative names, or the form it is filed as is in `present`.
+ *
+ * For 510(k) and De Novo the necessity of each row is the eSTAR mapper's: an
+ * always row is required, a conditional row is required when its flag is set
+ * and UNDETERMINED when the flag is not supplied (blocking `ready`), and a
+ * when-applicable row is reported for confirmation without blocking.
  */
-export function assessRequirements(
-  type: string,
-  present: { templateIds?: string[]; documentNames?: string[]; forms?: string[] }
-): RequirementsAssessment | undefined {
-  const req = getRequirements(type);
-  if (!req) return undefined;
+export function assessRequirements(type: string, present: RequirementsCandidate): RequirementsAssessment | undefined {
+  const base = getRequirements(type);
+  if (!base) return undefined;
+  const req: SubmissionRequirement =
+    base.submissionType === '510k' && present.variant === 'ivd'
+      ? { ...base, requiredDocuments: estarRows('510k', 'ivd') }
+      : base;
 
   const presentTemplates = new Set(present.templateIds ?? []);
   const presentNames = new Set((present.documentNames ?? []).map((n) => n.toLowerCase()));
   const presentForms = new Set((present.forms ?? []).map((f) => f.toLowerCase()));
 
-  const requiredDocs = req.requiredDocuments.filter((d) => d.required);
+  const isPresent = (d: RequiredDocument): boolean =>
+    (d.templateId !== undefined && presentTemplates.has(d.templateId)) ||
+    (d.estarSlotId !== undefined && presentTemplates.has(d.estarSlotId)) ||
+    [d.name, ...(d.alsoSatisfiedBy ?? [])].some((n) => presentNames.has(n.toLowerCase())) ||
+    (d.satisfiedByForm !== undefined && presentForms.has(d.satisfiedByForm.toLowerCase()));
+
   const missingDocuments: string[] = [];
-  for (const d of requiredDocs) {
-    const byTemplate = d.templateId ? presentTemplates.has(d.templateId) : false;
-    const byName = presentNames.has(d.name.toLowerCase());
-    if (!byTemplate && !byName) missingDocuments.push(d.name);
+  const undetermined: string[] = [];
+  const checkApplicability: string[] = [];
+  let totalRequiredCount = 0;
+  for (const d of req.requiredDocuments) {
+    const applicability = rowApplicability(d, present.flags);
+    if (applicability === 'required') totalRequiredCount += 1;
+    if (isPresent(d)) continue;
+    if (applicability === 'required') missingDocuments.push(d.name);
+    else if (applicability === 'undetermined') undetermined.push(d.name);
+    else if (applicability === 'when-applicable') checkApplicability.push(d.name);
   }
 
   const missingForms = req.requiredForms.filter((f) => !presentForms.has(f.toLowerCase()));
 
   return {
     submissionType: req.submissionType,
-    ready: missingDocuments.length === 0 && missingForms.length === 0,
+    ready: missingDocuments.length === 0 && missingForms.length === 0 && undetermined.length === 0,
     missingDocuments,
     missingForms,
-    presentRequiredCount: requiredDocs.length - missingDocuments.length,
-    totalRequiredCount: requiredDocs.length,
+    undetermined,
+    checkApplicability,
+    presentRequiredCount: totalRequiredCount - missingDocuments.length,
+    totalRequiredCount,
   };
 }
 
