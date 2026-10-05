@@ -1,0 +1,38 @@
+Red first, for the shapes found by reading trunk's new tools before filing (trunk b2e745744):
+found: 0 (cmc-knowledge-tools.ts), passages: [] (document-passage-tools.ts), the project search's own sentences
+(project_knowledge_search in AnaToolExecutor.ts), and records under a field the reader did not list.
+Each case was pinned in tests/services/tool-outcome.test.ts and run against the first version of the reader.
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run tests/services/tool-outcome.test.ts
+
+Run 1 — found: 0, and records under another field:
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a tool that needs input it was not given 2ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a service that could not be reached 1ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a lookup or search that found nothing 1ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a result that returned something is not a shortfall 1ms
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > a CMC lookup that found nothing indexed says so as found: 0 (cmc-knowledge-tools.ts) 5ms
+   → expected undefined to be 'empty' // Object.is equality
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > records under a field this reader does not know still count as returned 2ms
+   → expected { kind: 'empty' } to be null
+ ✓ tests/services/tool-outcome.test.ts > the note the model reads after the round > names each step that returned nothing usable, and says what to do instead of presenting it as found 1ms
+ ✓ tests/services/tool-outcome.test.ts > the note the model reads after the round > is empty when every step returned something, and ignores failed or held steps 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+
+Run 2 — passages: [], and the project search's sentences. The finding/analysis case passes here; its red is its mutants (T17, T18):
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a tool that needs input it was not given 2ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a service that could not be reached 1ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a lookup or search that found nothing 1ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a result that returned something is not a shortfall 0ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a CMC lookup that found nothing indexed says so as found: 0 (cmc-knowledge-tools.ts) 0ms
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > a vault passage search that matched nothing (document-passage-tools.ts) 6ms
+   → expected undefined to be 'empty' // Object.is equality
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > a project search that answers in a sentence of its own (project_knowledge_search) 2ms
+   → expected null to deeply equal { kind: 'empty', …(1) }
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a sentence that is a finding, or an analysis that opens with one, is a result 0ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > records under a field this reader does not know still count as returned 1ms
+ ✓ tests/services/tool-outcome.test.ts > the note the model reads after the round > names each step that returned nothing usable, and says what to do instead of presenting it as found 1ms
+ ✓ tests/services/tool-outcome.test.ts > the note the model reads after the round > is empty when every step returned something, and ignores failed or held steps 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
