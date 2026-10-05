@@ -2,9 +2,11 @@
  * eSTAR readiness mapper (FDA 510(k) / De Novo — MedTech & IVD)
  *
  * Projects the canonical submission content onto the FDA eSTAR section structure
- * and reports completeness — which required eSTAR sections are present vs missing
- * — so a manufacturer sees CDRH-acceptance readiness (the RTA-style administrative
- * gate) before filling the eSTAR PDF.
+ * and reports completeness — which required eSTAR sections are present vs missing,
+ * and which device answers the authored content contradicts — so a manufacturer
+ * sees what FDA's eSTAR technical screening will check before filling the eSTAR
+ * PDF. An eSTAR 510(k) or De Novo is not expected to go through refuse-to-accept;
+ * FDA screens it instead, and holds one that fails (see `contradictions` below).
  *
  * This is a READINESS / gap mapper. The actual eSTAR PDF-form fill lives in the
  * existing 510k-estar route; this complements it (the "is it complete?" check),
@@ -98,6 +100,20 @@ export interface EstarSlotStatus extends EstarSlot {
   applicability: EstarApplicability;
 }
 
+/**
+ * A device answer that the authored content contradicts: the program answered
+ * the deciding flag "no", which makes this section not applicable, yet a
+ * finished (substantive) section for it exists.
+ */
+export interface EstarContradiction {
+  /** The slot the authored content matched. */
+  section: string;
+  /** The device question that was answered "no". */
+  flag: DeviceFlagId;
+  /** The authored sections that contradict the answer (sectionCode, else title). */
+  sources: string[];
+}
+
 export interface EstarResult {
   type: EstarType;
   sections: EstarSlotStatus[];
@@ -111,6 +127,15 @@ export interface EstarResult {
     undetermined: string[];
     /** Absent sections that turn on a property this model does not capture. */
     checkApplicability: string[];
+    /**
+     * Device answers the authored content contradicts. FDA's eSTAR technical
+     * screening checks that the eSTAR's responses accurately describe the
+     * device, and an inaccurate response can put the submission on a
+     * technical-screening hold. The other half of that screening — a relevant
+     * attachment for every applicable question — is `missingRequired`. These
+     * block `ready`.
+     */
+    contradictions: EstarContradiction[];
     ready: boolean;
   };
 }
@@ -144,7 +169,14 @@ const not = (m: Matcher): Matcher => (l) => !m(l);
  * requirement rather than take this file's word for it.
  */
 
-type SlotDef = EstarSlot & { match: Matcher };
+/**
+ * `contradicts`: which of the slot's matched leaves, when substantive, assert
+ * the opposite of a "no" to the slot's flag. Defaults to the slot's own
+ * matcher. Narrower where the slot also collects content a "no" device still
+ * owes (shelf life on a non-sterile device), and `null` where authored content
+ * cannot contradict the answer at all (cybersecurity on a non-cyber device).
+ */
+type SlotDef = EstarSlot & { match: Matcher; contradicts?: Matcher | null };
 
 const always = (
   id: string, label: string, authority: string, match: Matcher,
@@ -153,6 +185,9 @@ const always = (
 const whenFlag = (
   id: string, label: string, authority: string, flag: DeviceFlagId, match: Matcher,
 ): SlotDef => ({ id, label, authority, flag, match, necessity: 'conditional', required: false });
+
+/** A conditional slot whose contradiction evidence is not its whole matcher (see `SlotDef.contradicts`). */
+const screenedAs = (slot: SlotDef, contradicts: Matcher | null): SlotDef => ({ ...slot, contradicts });
 
 const whenApplicable = (
   id: string, label: string, authority: string, appliesWhen: string, match: Matcher,
@@ -225,22 +260,35 @@ const baseSlots: SlotDef[] = [
      flags the intake collects, so it cannot be resolved conditionally here. It
      stays always-required — the safe direction, since over-asking for a
      biocompatibility section costs a reader a moment and under-asking costs
-     them an RTA hold. Adding a patient-contact flag is an intake change and an
-     SME question, not something to infer. */
+     them a technical-screening hold. For the same reason it cannot be checked
+     for contradictions: there is no "no" answer to contradict. Adding a
+     patient-contact flag is an intake change and an SME question, not
+     something to infer. */
   always('biocompatibility', 'Biocompatibility', 'ISO 10993-1 (contact category and duration)',
     any(dt('biocompatibility'), ti('biocompatibilit'))),
 
   // ── Conditional on the seven device flags ─────────────────────────────────
-  whenFlag('sterilization', 'Sterilization, shelf life and packaging validation',
+  screenedAs(whenFlag('sterilization', 'Sterilization, shelf life and packaging validation',
     'FDA sterility review guidance; ISO 11135 / 11137 / 17665 as applicable', 'sterile',
     any(dt('sterilization'), ti('steriliz', 'shelf life', 'packaging validation'))),
+    /* Only content about sterilization contradicts "not sterile". Shelf life
+       and packaging are owed by non-sterile devices too, and a reprocessing
+       section validates the USER's sterilization of a device supplied
+       non-sterile — neither says the device is supplied sterile. */
+    all(any(dt('sterilization'), ti('steriliz')), not(any(dt('reprocessing'), ti('reprocessing', 'reuse'))))),
   whenFlag('software', 'Software / firmware documentation',
     'FDA premarket software guidance (June 2023): documentation level, architecture, SRS/SDS, V&V, SBOM',
     'softwareAiMl',
     any(dt('software', 'firmware'), ti('software', 'firmware', 'sbom'))),
-  whenFlag('cybersecurity', 'Cybersecurity documentation',
-    'FD&C Act §524B. A cyber device without it is an RTA ground.', 'cyberDevice',
+  screenedAs(whenFlag('cybersecurity', 'Cybersecurity documentation',
+    'FD&C Act §524B — required in a premarket submission for a cyber device. For an eSTAR, FDA\'s ' +
+      'technical screening checks that the attachment is there.', 'cyberDevice',
     any(dt('cybersecurity'), ti('cybersecurity', 'cyber security', 'threat model'))),
+    /* FDA's premarket cybersecurity guidance covers any device with software or
+       programmable logic; §524B cyber devices are a subset. Cybersecurity
+       documentation on a device that is not a cyber device is expected, not an
+       inaccurate answer. */
+    null),
   whenFlag('clinical-financial-disclosure', 'Financial certification or disclosure (FDA 3454 / 3455)',
     '21 CFR Part 54 — required where clinical data are submitted', 'clinicalData',
     any(dt('financial_disclosure', 'form_3454', 'form_3455'),
@@ -398,6 +446,19 @@ export function slotApplicability(
   return value ? 'required' : 'not-applicable';
 }
 
+/** A slot as readers see it: everything but the matchers. A fresh object. */
+function publicSlot(s: SlotDef): EstarSlot {
+  return {
+    id: s.id,
+    label: s.label,
+    required: s.required,
+    necessity: s.necessity,
+    ...(s.flag ? { flag: s.flag } : {}),
+    ...(s.appliesWhen ? { appliesWhen: s.appliesWhen } : {}),
+    authority: s.authority,
+  };
+}
+
 function evalSlot(slot: SlotDef, leaves: EstarInputLeaf[], flags: DeviceFlags | undefined): EstarSlotStatus {
   // A matched-but-non-substantive leaf (a draft/placeholder stub whose title
   // merely matches) never marks a required section present — only a matched
@@ -405,13 +466,30 @@ function evalSlot(slot: SlotDef, leaves: EstarInputLeaf[], flags: DeviceFlags | 
   const matched = leaves.filter((l) => slot.match(l));
   const present = matched.some((l) => l.substantive);
   const sources = matched.filter((l) => l.substantive).map((l) => l.sectionCode || l.title);
-  const { match, ...rest } = slot;
+  const rest = publicSlot(slot);
   const applicability = slotApplicability(slot, flags);
   /* `required` is derived, not authored: it now means "required for THIS
      device", so a sterile device's sterilization section reports required and
      the completeness figures computed from it by five callers are right without
      any of them changing. */
   return { ...rest, required: applicability === 'required', present, sources, applicability };
+}
+
+/**
+ * The device answer this slot's authored content contradicts, if any: a "no"
+ * to the deciding flag beside substantive content that asserts the opposite.
+ * An unanswered flag is undetermined and cannot be contradicted; a draft is not
+ * a claim about the device.
+ */
+function contradictionFor(
+  slot: SlotDef, leaves: EstarInputLeaf[], applicability: EstarApplicability,
+): EstarContradiction | null {
+  if (applicability !== 'not-applicable' || !slot.flag || slot.contradicts === null) return null;
+  const asserts = slot.contradicts ?? slot.match;
+  const sources = leaves
+    .filter((l) => l.substantive && slot.match(l) && asserts(l))
+    .map((l) => l.sectionCode || l.title);
+  return sources.length > 0 ? { section: slot.id, flag: slot.flag, sources } : null;
 }
 
 /* The one place the registry is chosen. De Novo is filed on the same two
@@ -434,15 +512,7 @@ function registryFor(type: EstarType, variant: 'device' | 'ivd' | undefined): Sl
  * reader. Returns fresh objects; mutating them does not touch the registry.
  */
 export function estarSlots(type: EstarType, variant?: 'device' | 'ivd'): EstarSlot[] {
-  return registryFor(type, variant).map((s) => ({
-    id: s.id,
-    label: s.label,
-    required: s.required,
-    necessity: s.necessity,
-    ...(s.flag ? { flag: s.flag } : {}),
-    ...(s.appliesWhen ? { appliesWhen: s.appliesWhen } : {}),
-    authority: s.authority,
-  }));
+  return registryFor(type, variant).map(publicSlot);
 }
 
 export interface MapToEstarInput {
@@ -467,7 +537,11 @@ export interface MapToEstarInput {
 /** Map canonical leaves onto the FDA eSTAR sections + completeness report. */
 export function mapToEstar(input: MapToEstarInput): EstarResult {
   const leaves = Array.isArray(input.leaves) ? input.leaves : [];
-  const sections = registryFor(input.type, input.variant).map((s) => evalSlot(s, leaves, input.flags));
+  const registry = registryFor(input.type, input.variant);
+  const sections = registry.map((s) => evalSlot(s, leaves, input.flags));
+  const contradictions = registry
+    .map((s, i) => contradictionFor(s, leaves, sections[i].applicability))
+    .filter((c): c is EstarContradiction => c !== null);
 
   const absent = sections.filter((s) => !s.present);
   const missingRequired = absent.filter((s) => s.applicability === 'required').map((s) => s.id);
@@ -476,17 +550,18 @@ export function mapToEstar(input: MapToEstarInput): EstarResult {
     .filter((s) => s.applicability === 'when-applicable')
     .map((s) => s.id);
 
-  /* Ready means every section this device needs is present AND there is no
-     section whose necessity is still unanswered. `when-applicable` does not
-     block: the model genuinely cannot decide those, and saying so is honest
-     where blocking on them would be noise — they are reported for a human to
-     confirm instead. */
-  const ready = missingRequired.length === 0 && undetermined.length === 0;
+  /* Ready means every section this device needs is present, there is no
+     section whose necessity is still unanswered, AND no device answer is
+     contradicted by the authored content (a submission FDA's technical
+     screening would hold). `when-applicable` does not block: the model
+     genuinely cannot decide those, and saying so is honest where blocking on
+     them would be noise — they are reported for a human to confirm instead. */
+  const ready = missingRequired.length === 0 && undetermined.length === 0 && contradictions.length === 0;
 
   return {
     type: input.type,
     sections,
-    summary: { missingRequired, undetermined, checkApplicability, ready },
+    summary: { missingRequired, undetermined, checkApplicability, contradictions, ready },
   };
 }
 

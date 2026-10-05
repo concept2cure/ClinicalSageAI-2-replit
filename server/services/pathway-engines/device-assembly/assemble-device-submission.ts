@@ -46,6 +46,7 @@ import {
 import { tryAssessMarketReadiness } from '../../global-markets/market-readiness';
 import type { MarketId, MarketReadinessResult } from '../../global-markets/types';
 import type { DeviceContentClient, DeviceContentSource } from '../estar/estar-content-leaves';
+import { DEVICE_FLAGS } from '../../../../shared/constants/domain/device-classification';
 
 export type DeviceArtifactKind = 'official-estar' | 'content-package-draft' | 'none';
 
@@ -151,7 +152,10 @@ export function assembleDeviceSubmission(
 
   const blockers: string[] = [];
 
-  // Section completeness blockers (RTA-style administrative gate).
+  // Section completeness blockers. For a 510(k) or De Novo this is the
+  // attachment half of FDA's eSTAR technical screening (eSTARs are not expected
+  // to go through refuse-to-accept); for a PMA it is the filing review of the
+  // 21 CFR 814 modules.
   if (estar.summary.missingRequired.length > 0) {
     blockers.push(
       `${estar.summary.missingRequired.length} required eSTAR section(s) missing: ` +
@@ -164,8 +168,8 @@ export function assembleDeviceSubmission(
   // summary.ready; this consumer recomputed readiness from missingRequired
   // alone, so a sterile, software-bearing, network-connected device with none
   // of that documentation — and no deviceFlags supplied, which no route caller
-  // does — was reported canProduceOfficialEstar with an empty error list. An
-  // RTA refusal reported as a submittable eSTAR.
+  // does — was reported canProduceOfficialEstar with an empty error list. A
+  // submission FDA would not accept reported as a submittable eSTAR.
   const undetermined = 'undetermined' in estar.summary ? estar.summary.undetermined : [];
   if (undetermined.length > 0) {
     blockers.push(
@@ -175,14 +179,33 @@ export function assembleDeviceSubmission(
     );
   }
 
+  // The accuracy half of the eSTAR technical screening: a device question
+  // answered "no" while the authored content says otherwise. FDA checks that
+  // the eSTAR's responses accurately describe the device and can hold one that
+  // does not; the mapper folds these into summary.ready, and this names them.
+  const contradictions = 'contradictions' in estar.summary ? estar.summary.contradictions : [];
+  if (contradictions.length > 0) {
+    const detail = contradictions
+      .map((c) => {
+        const question = DEVICE_FLAGS.find((f) => f.id === c.flag)?.label ?? c.flag;
+        return `${c.section} (answered "${question}: no", but authored in ${c.sources.join(', ')})`;
+      })
+      .join('; ');
+    blockers.push(
+      `${contradictions.length} device answer(s) contradict the authored content, which FDA's eSTAR ` +
+        `technical screening checks: ${detail}. Correct the answer, or remove the section if it only ` +
+        `records that it does not apply.`,
+    );
+  }
+
   // Official-template blockers (cannot produce the artifact CDRH ingests).
   for (const b of template.blockers) blockers.push(b);
 
   // Market overlay blockers (honest about transmit/assemble gaps).
   if (market) for (const b of market.blockers) blockers.push(b);
 
-  // The mapper's own verdict: no required section missing AND no section
-  // undetermined. Never recomputed here from part of it.
+  // The mapper's own verdict: no required section missing, no section
+  // undetermined AND no contradicted answer. Never recomputed here from part of it.
   const sectionsComplete = estar.summary.ready;
   const canProduceOfficialEstar = sectionsComplete && template.available;
 
