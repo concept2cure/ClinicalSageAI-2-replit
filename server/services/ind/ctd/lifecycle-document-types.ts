@@ -2972,7 +2972,9 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       "ICH E2A/E2E safety terminology and signal frameworks",
       "FDA Reviewer Guidance: Conducting a Clinical Safety Review of a New Product Application (2005)",
       "FDA Guidance: Premarketing Risk Assessment (2005)",
-      "FDA Guidance: Integrated Summary of Effectiveness (Aug 2015) - companion analytic principles"
+      "FDA Guidance: Integrated Summary of Effectiveness (Aug 2015) - companion analytic principles",
+      "FDA OND Standard Safety Tables and Figures: Integrated Guide and Targeted Analysis Guides (OND reviewer practice for NDA/BLA review)",
+      "FDA OND Custom Medical Queries (OCMQs, formerly FMQs; MAPP 6025.8), voluntary for sponsors"
     ],
     "components": [
       {
@@ -3057,7 +3059,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "required": true,
         "contentType": "mixed",
         "guidance": "The core integrated analyses of common adverse events, serious adverse events, deaths, discontinuations due to AEs, and other significant AEs, presented by SOC/PT with between-treatment comparisons in controlled pools.",
-        "authoringGuidance": "This is the analytic heart of the ISS and the section the medical reviewer scrutinizes most closely; present overall AE incidence, common treatment-emergent AEs by MedDRA SOC and preferred term with between-group comparisons (drug vs. comparator/placebo) in controlled pools, and dedicated analyses of deaths, other serious AEs, and AEs leading to discontinuation or dose modification. Include severity and causality breakdowns, dose- and time-to-onset relationships, and narratives or cross-references for deaths and important SAEs. Use risk differences/relative risks where appropriate and flag adverse events of special interest. Reviewers look for a transparent, consistently-denominated presentation that neither buries nor over-adjusts signals; failing to present the marketed-dose comparison, omitting time-to-onset/duration for key events, inconsistent counting, or inadequate death/SAE narratives are the deficiencies that generate information requests and safety-review findings.",
+        "authoringGuidance": "This is the analytic heart of the ISS and the section the medical reviewer scrutinizes most closely; present overall AE incidence, common treatment-emergent AEs by MedDRA SOC and preferred term with between-group comparisons (drug vs. comparator/placebo) in controlled pools, and dedicated analyses of deaths, other serious AEs, and AEs leading to discontinuation or dose modification. Include severity and causality breakdowns, dose- and time-to-onset relationships, and narratives or cross-references for deaths and important SAEs. Use risk differences/relative risks where appropriate and flag adverse events of special interest. Reviewers look for a transparent, consistently-denominated presentation that neither buries nor over-adjusts signals; failing to present the marketed-dose comparison, omitting time-to-onset/duration for key events, inconsistent counting, or inadequate death/SAE narratives are the deficiencies that generate information requests and safety-review findings. FDA reviewers regenerate these analyses with the Standard Safety Tables and Figures Integrated Guide and the OCMQs, so imbalances those groupings expose should be found and addressed by the sponsor first.",
         "keyContentElements": [
           "Overall incidence of treatment-emergent AEs by pool and treatment group",
           "Common AEs by SOC/PT with between-group comparisons in controlled pools",
@@ -3067,7 +3069,9 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Severity and causality distributions",
           "Dose-response and time-to-onset/duration analyses for key events",
           "Risk difference/relative risk estimates where appropriate",
-          "Common/serious AE tables split for controlled vs. all-exposure pools"
+          "Common/serious AE tables split for controlled vs. all-exposure pools",
+          "AE groupings by OCMQ (Narrow/Broad, and Algorithmic where defined), version-matched to the integrated database's MedDRA version, alongside SMQs and any sponsor-defined groupings",
+          "Common-AE and OCMQ tables anticipating the FDA ST&F layout: by organ system, then decreasing risk difference, with an unadjusted confidence interval"
         ],
         "generationPrompt": "Write the integrated adverse-event analysis section and table shells for the ISS of {{SPONSOR}}'s {{PRODUCT_NAME}} ({{INDICATION}}). Structure overall AE incidence, common AEs by SOC/PT with drug-vs-comparator comparisons, deaths, SAEs, AESIs, discontinuations, and dose/time relationships. Provide table structures and describe WHERE narratives reside; do not invent event rates."
       },
@@ -3086,7 +3090,8 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Vital-sign changes including orthostatic and weight effects",
           "ECG/QTc analyses and outlier/categorical thresholds",
           "Any specialized assessments (renal biomarkers, immunogenicity, etc.)",
-          "Cross-reference to relevant AESIs and AE analyses"
+          "Cross-reference to relevant AESIs and AE analyses",
+          "Kidney- and muscle-injury analyses anticipating the ST&F Targeted Analysis Guides where the program has a renal or CK/rhabdomyolysis signal"
         ],
         "generationPrompt": "Draft the laboratory/vital-signs/ECG safety section and table shells for the ISS of {{SPONSOR}}'s {{PRODUCT_NAME}}. Include central-tendency changes, shift tables, marked-abnormality incidence, a Hy's Law/eDISH hepatotoxicity evaluation, and QTc analyses. Provide table structures with placeholders; do not fabricate laboratory values."
       },
