@@ -10,6 +10,7 @@ import { eq, count, inArray } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { staffCrossOrgScope } from '../middleware/staffCrossOrgScope';
+import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 import { CONNECTOR_NOT_A_GENERAL_SETTING, ConnectorSettingRefusedError, namesClaudeConnector } from '../mcp/auth/connector-enablement';
 import { overlaySettings, writeTenantSettings, type Settings } from '../services/tenant/tenant-settings-writer';
 
@@ -18,15 +19,21 @@ const router = Router();
 router.use(authMiddleware);
 
 /**
- * PLATFORM-STAFF roles only. Deliberately excludes the org-membership role
- * 'admin' (every tenant's own admin carries JWT role 'admin'), which must
- * NOT bypass tenant scoping — that would let any customer admin read and
- * write every other organization. Matches the posture of clients-routes.ts
- * / tenant-users.ts (super_admin only).
+ * PLATFORM STAFF: platform standing for platform_admin or super_admin
+ * (holdsPlatformRole: the owner's own sign-in on the allowlist, or an active
+ * platform_role_grants row). Never the org-membership role. Every tenant's own
+ * admin carries 'admin', which must NOT bypass tenant scoping: that would let
+ * any customer admin read and write every other organization.
+ *
+ * Until 2026-10-05 this read the request role, which behind server/auth.ts IS
+ * the membership role (organization_users.role, no CHECK). So a membership row
+ * naming platform_admin or super_admin listed and wrote every organization,
+ * while a real grant holder was treated as a member (D6,
+ * docs/evidence/D6/2026-10-05-cross-tenant-staff/). The legacy 'superadmin'
+ * spelling is not a grant role, so it is gone with the read.
  */
-function isPlatformStaff(role: unknown): boolean {
-  return role === 'platform_admin' || role === 'superadmin' || role === 'super_admin';
-}
+const ORG_STAFF_ROLES = ['platform_admin', 'super_admin'] as const;
+const isPlatformStaff = (req: any): Promise<boolean> => holdsPlatformRole(req, ORG_STAFF_ROLES);
 
 /**
  * Staff may name any organization here (validateOrgOwnership, requireOrgAdmin).
@@ -36,22 +43,25 @@ function isPlatformStaff(role: unknown): boolean {
  */
 const staffAcrossOrgs = staffCrossOrgScope({
   param: 'id',
-  isStaff: (req: any) => isPlatformStaff(req.userRole ?? req.user?.role),
+  isStaff: (req: any) => isPlatformStaff(req),
 });
 
 /**
  * Validate that the requesting user belongs to the organization in :id param.
  * Platform admins / superadmins bypass the check.
  */
-function validateOrgOwnership(req: any, res: any, next: any) {
+async function validateOrgOwnership(req: any, res: any, next: any) {
   const paramId = parseInt(req.params.id, 10);
   const userOrgId = req.user?.organizationId
     ? parseInt(String(req.user.organizationId))
     : null;
-  const userRole = req.user?.role || req.userRole;
 
-  if (isPlatformStaff(userRole)) {
-    return next();
+  // Own organization first: it needs no standing lookup.
+  if (userOrgId && userOrgId === paramId) return next();
+  try {
+    if (await isPlatformStaff(req)) return next();
+  } catch (err) {
+    return next(err);
   }
 
   if (!userOrgId || userOrgId !== paramId) {
@@ -69,10 +79,15 @@ function validateOrgOwnership(req: any, res: any, next: any) {
  * validateOrgOwnership pinned :id to that org for non-staff — so an org-role
  * check here is a check against the *target* org. Platform staff pass.
  */
-function requireOrgAdmin(req: any, res: any, next: any) {
+async function requireOrgAdmin(req: any, res: any, next: any) {
   const role = req.userRole ?? req.user?.role;
-  if (isPlatformStaff(role) || role === 'admin' || role === 'owner') {
+  if (role === 'admin' || role === 'owner') {
     return next();
+  }
+  try {
+    if (await isPlatformStaff(req)) return next();
+  } catch (err) {
+    return next(err);
   }
   return res.status(403).json({
     success: false,
@@ -90,10 +105,9 @@ function requireOrgAdmin(req: any, res: any, next: any) {
 router.get('/', async (req, res) => {
   try {
     const userId = req.user?.id ? parseInt(String(req.user.id)) : null;
-    const userRole = req.user?.role || req.userRole;
     // Only platform staff may list ALL organizations; a tenant 'admin' sees
     // just their own memberships like any other user (no tenant enumeration).
-    const isAdmin = isPlatformStaff(userRole);
+    const isAdmin = await isPlatformStaff(req);
 
     let orgRows;
 

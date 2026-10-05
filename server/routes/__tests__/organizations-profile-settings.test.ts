@@ -30,13 +30,30 @@ let nextSelectRows: Row[] = [];
 let nextUpdateRows: Row[] = [];
 const lastUpdate: { values?: Row } = {};
 
-function chainableSelect() {
+/** What one select asked for: its projection, its table, whether it was filtered. */
+type SelectCtx = { fields: Record<string, unknown> | undefined; table: string | undefined; filtered: boolean };
+// D6 (2026-10-05): GET /api/organizations reads three different selects
+// (every org / the caller's memberships / the member counts). A test that must
+// tell the all-organizations list from the caller's own may route each select
+// by its shape; null (the default) keeps every other test's one-answer
+// behaviour (nextSelectRows).
+let selectImpl: ((ctx: SelectCtx) => Row[]) | null = null;
+
+function chainableSelect(fields?: Record<string, unknown>) {
+  const ctx: SelectCtx = { fields, table: undefined, filtered: false };
   const ret: any = {};
-  ret.from = () => ret;
+  ret.from = (table: any) => {
+    ctx.table = table?._?.name;
+    return ret;
+  };
   ret.leftJoin = () => ret;
-  ret.where = () => ret;
+  ret.where = () => {
+    ctx.filtered = true;
+    return ret;
+  };
   ret.limit = () => ret;
-  ret.then = (resolve: (v: Row[]) => unknown) => Promise.resolve(resolve(nextSelectRows));
+  ret.then = (resolve: (v: Row[]) => unknown) =>
+    Promise.resolve(resolve(selectImpl ? selectImpl(ctx) : nextSelectRows));
   return ret;
 }
 
@@ -53,11 +70,28 @@ function chainableUpdate() {
 }
 
 const dbMock = {
-  select: () => chainableSelect(),
+  select: (fields?: Record<string, unknown>) => chainableSelect(fields),
   update: () => chainableUpdate(),
 };
 
-vi.mock('../../db', () => ({ db: dbMock }));
+// D6, 2026-10-05 (docs/evidence/D6/2026-10-05-cross-tenant-staff/): platform
+// staff is decided by holdsPlatformRole, which reads platform_role_grants
+// through ../db's `query`, never by the request (membership) role. The REAL
+// decision runs; only the table is faked: a row is answered when params[0] is
+// a user in `grants` holding one of the roles asked (params[1]).
+const grants = new Map<number, string[]>();
+const queryMock = vi.fn(async (sql: string, params?: unknown[]) => {
+  if (/FROM platform_role_grants/.test(sql) && Array.isArray(params)) {
+    const held = grants.get(Number(params[0])) ?? [];
+    const asked = Array.isArray(params[1]) ? (params[1] as string[]) : [];
+    return { rows: held.some(role => asked.includes(role)) ? [{ '?column?': 1 }] : [] };
+  }
+  return { rows: [] };
+});
+const grantLookupsFor = (userId: number) =>
+  queryMock.mock.calls.filter(([sql, params]) => /FROM platform_role_grants/.test(String(sql)) && Number((params as unknown[])?.[0]) === userId).length;
+
+vi.mock('../../db', () => ({ db: dbMock, query: (sql: string, params?: unknown[]) => queryMock(sql, params) }));
 
 // Keep the schema import light — the chainables never inspect the tables.
 vi.mock('@shared/schema', () => {
@@ -132,12 +166,20 @@ function makeApp() {
 const ORG7_ADMIN = JSON.stringify({ id: 1, role: 'admin', organizationId: 7 });
 const ORG7_MEMBER = JSON.stringify({ id: 2, role: 'member', organizationId: 7 });
 const ORG9_ADMIN = JSON.stringify({ id: 3, role: 'admin', organizationId: 9 });
+// Platform staff: user 4 holds an active super_admin platform_role_grants row
+// (beforeEach), which is what makes it staff (D6, 2026-10-05). Its membership
+// role is left as it was and decides nothing; the D6 describe below proves a
+// membership role alone opens nothing.
 const PLATFORM = JSON.stringify({ id: 4, role: 'super_admin', organizationId: 1 });
 
 beforeEach(() => {
   logActionMock.mockReset();
   systemScopeMock.mockClear();
   writerMock.mockReset();
+  queryMock.mockClear();
+  grants.clear();
+  grants.set(4, ['super_admin']);
+  selectImpl = null;
   nextSelectRows = [];
   nextUpdateRows = [];
   lastUpdate.values = undefined;
@@ -444,4 +486,125 @@ describe('organization writes carry the audit-row outcome', () => {
   // Settings: superseded by DP-73 (2026-10-01). The settings door writes
   // through the one settings writer, so a change and its record commit
   // together and there is no lost-row answer; see the settings describe above.
+});
+
+/**
+ * D6, 2026-10-05 (docs/evidence/D6/2026-10-05-cross-tenant-staff/): this
+ * router decided platform staff from the request role, which behind
+ * server/auth.ts IS the tenant membership role (organization_users.role, no
+ * CHECK). So a membership row naming platform_admin or super_admin listed
+ * every organization and read and wrote any of them, while real platform
+ * staff (platform_role_grants) were treated as members. Standing is now
+ * holdsPlatformRole(req, ['platform_admin', 'super_admin']).
+ */
+describe('D6: platform staff is a platform grant, never the membership role', () => {
+  const body = { name: 'Bright Bio', clientType: 'biotech', reason: 'Support correction' };
+  const ORGS: Row[] = [
+    { id: 1, name: 'Staff Home' },
+    { id: 7, name: 'Bright Bio' },
+    { id: 9, name: 'Other Pharma' },
+  ];
+  /** Every organization, and a caller who is a member of org 1 only. */
+  function directory() {
+    selectImpl = ({ fields, table, filtered }) => {
+      if (table === 'organizations') return filtered ? [ORGS[0]] : ORGS;
+      if (table === 'organization_users') return fields && 'count' in fields ? [{ count: 2 }] : [{ organizationId: 1 }];
+      return [];
+    };
+  }
+  function profileRows() {
+    nextSelectRows = [{ name: 'Old', clientType: 'pharma', industryMode: null }];
+    nextUpdateRows = [{ id: 7, name: 'Bright Bio', clientType: 'biotech', industryMode: null, updatedAt: new Date() }];
+  }
+
+  describe.each(['platform_admin', 'super_admin'])('a membership role of %s with no grant', role => {
+    const USER = JSON.stringify({ id: 21, role, organizationId: 1 });
+
+    it('GET /api/organizations lists only its own memberships, not every organization', async () => {
+      directory();
+      const res = await request(makeApp()).get('/api/organizations').set('x-test-user', USER);
+      expect(res.status).toBe(200);
+      expect(res.body.organizations.map((o: { id: string }) => o.id)).toEqual(['1']);
+      // Decided by the grant table answering no, not by nobody asking it.
+      expect(grantLookupsFor(21)).toBeGreaterThan(0);
+    });
+
+    it('cannot read another organization: GET /api/organizations/7 is 403', async () => {
+      nextSelectRows = [{ id: 7, name: 'Bright Bio' }];
+      const res = await request(makeApp()).get('/api/organizations/7').set('x-test-user', USER);
+      expect(res.status).toBe(403);
+      expect(res.body.organization).toBeUndefined();
+    });
+
+    it("cannot patch another organization's profile: 403, nothing written, no system scope", async () => {
+      profileRows();
+      const res = await request(makeApp())
+        .patch('/api/organizations/7/profile')
+        .set('x-test-user', USER)
+        .send(body);
+      expect(res.status).toBe(403);
+      expect(lastUpdate.values).toBeUndefined();
+      expect(logActionMock).not.toHaveBeenCalled();
+      expect(systemScopeMock).not.toHaveBeenCalled();
+    });
+
+    it("cannot patch another organization's settings: 403, the writer is never asked", async () => {
+      writerMock.mockImplementation(async (_req: unknown, _id: number, change: any) => change.next({}, 'standard'));
+      const res = await request(makeApp())
+        .patch('/api/organizations/7/settings')
+        .set('x-test-user', USER)
+        .send({ settings: { branding: { primaryColor: '#000' } }, reason: 'rebrand' });
+      expect(res.status).toBe(403);
+      expect(writerMock).not.toHaveBeenCalled();
+      expect(systemScopeMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe.each(['platform_admin', 'super_admin'])('an active %s grant holder (membership role: member)', role => {
+    const USER = JSON.stringify({ id: 22, role: 'member', organizationId: 1 });
+    beforeEach(() => {
+      grants.set(22, [role]);
+    });
+
+    it('GET /api/organizations lists every organization', async () => {
+      directory();
+      const res = await request(makeApp()).get('/api/organizations').set('x-test-user', USER);
+      expect(res.status).toBe(200);
+      expect(res.body.organizations.map((o: { id: string }) => o.id)).toEqual(['1', '7', '9']);
+    });
+
+    it('reads another organization: GET /api/organizations/7 is 200', async () => {
+      nextSelectRows = [{ id: 7, name: 'Bright Bio' }];
+      const res = await request(makeApp()).get('/api/organizations/7').set('x-test-user', USER);
+      expect(res.status).toBe(200);
+      expect(res.body.organization).toMatchObject({ id: '7', name: 'Bright Bio' });
+    });
+
+    it("patches another organization's profile, in the system scope, audited against that organization", async () => {
+      profileRows();
+      const res = await request(makeApp())
+        .patch('/api/organizations/7/profile')
+        .set('x-test-user', USER)
+        .send(body);
+      expect(res.status).toBe(200);
+      expect(systemScopeMock).toHaveBeenCalledTimes(1);
+      expect(logActionMock).toHaveBeenCalledTimes(1);
+      expect(logActionMock.mock.calls[0][0].tenantId).toBe(7);
+    });
+  });
+
+  it('a grant for a role this router does not accept (support) is not staff', async () => {
+    grants.set(23, ['support']);
+    const USER = JSON.stringify({ id: 23, role: 'member', organizationId: 1 });
+    nextSelectRows = [{ id: 7, name: 'Bright Bio' }];
+    const res = await request(makeApp()).get('/api/organizations/7').set('x-test-user', USER);
+    expect(res.status).toBe(403);
+  });
+
+  it('an org admin reading their OWN organization costs no grant lookup', async () => {
+    nextSelectRows = [{ id: 7, name: 'Bright Bio' }];
+    const res = await request(makeApp()).get('/api/organizations/7').set('x-test-user', ORG7_ADMIN);
+    expect(res.status).toBe(200);
+    expect(grantLookupsFor(1)).toBe(0);
+  });
 });

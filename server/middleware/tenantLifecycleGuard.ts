@@ -51,6 +51,7 @@ import {
 } from '../services/tenant/tenant-lifecycle';
 import { tenantLifecycleDecisions } from './tenantLifecycleMetrics';
 import { requestFullPath } from './request-path';
+import { holdsPlatformRole } from './requirePlatformAdmin';
 
 const logger = createScopedLogger('tenant-lifecycle-guard');
 
@@ -90,12 +91,20 @@ export const LIFECYCLE_CARVE_OUTS: readonly CarveOut[] = [
 ];
 
 /**
- * Roles that act ACROSS tenants. Kept in sync with the platform-admin
- * vocabulary in `middleware/auth.ts`; the org-scoped `admin` role is a
- * *customer* and deliberately absent — an org admin must not be able to shrug
- * off their own organization's suspension.
+ * Platform standing that acts ACROSS tenants: super_admin or platform_admin,
+ * decided by holdsPlatformRole (the owner's own sign-in on the allowlist, or an
+ * active platform_role_grants row). The org-scoped `admin` role is a *customer*
+ * and deliberately absent: an org admin must not be able to shrug off their own
+ * organization's suspension.
+ *
+ * Until 2026-10-05 this read req.user.role / roles, which behind the auth
+ * gate are the tenant MEMBERSHIP role (organization_users.role, no CHECK). So
+ * a member of a suspended tenant whose membership row named super_admin passed
+ * the suspension, while a real grant holder was refused (D6,
+ * docs/evidence/D6/2026-10-05-cross-tenant-staff/). `app_super_admin` is not a
+ * grant role and is gone with the read.
  */
-const PLATFORM_ROLES = new Set(['super_admin', 'app_super_admin', 'platform_admin']);
+const LIFECYCLE_STAFF_ROLES = ['super_admin', 'platform_admin'] as const;
 
 export function isLifecycleCarveOut(fullPath: string): boolean {
   return LIFECYCLE_CARVE_OUTS.some(entry =>
@@ -105,11 +114,10 @@ export function isLifecycleCarveOut(fullPath: string): boolean {
   );
 }
 
-function isPlatformActor(req: Request): boolean {
-  const role = req.user?.role;
-  if (typeof role === 'string' && PLATFORM_ROLES.has(role)) return true;
-  const roles = req.user?.roles;
-  return Array.isArray(roles) && roles.some(r => typeof r === 'string' && PLATFORM_ROLES.has(r));
+/** Platform standing, asked only where an override would apply: a request the
+ *  posture admits never costs a lookup. Fails closed (false) on a lookup error. */
+function isPlatformActor(req: Request): Promise<boolean> {
+  return holdsPlatformRole(req, LIFECYCLE_STAFF_ROLES).catch(() => false);
 }
 
 /**
@@ -188,7 +196,12 @@ function auditPlatformOverride(req: Request, posture: TenantAccessPosture): void
           postureCode: posture.code,
           method: req.method,
           path,
+          // The caller's tenant MEMBERSHIP role, kept for existing readers. It is
+          // not what admitted the override: that is platform standing, the
+          // owner's own sign-in or an active platform_role_grants row
+          // (holdsPlatformRole, D6 2026-10-05).
           actorRole: req.user?.role ?? null,
+          overrideBasis: 'platform_standing',
         },
         ipAddress: req.ip,
         userAgent: req.get?.('user-agent'),
@@ -240,13 +253,12 @@ export function enforceTenantLifecycle(req: Request, res: Response, next: NextFu
   // left no trace, and "who looked at the suspended customer's data, and what
   // did they touch" is exactly the question an access review asks. Resolving the
   // posture first costs one cached lookup and turns the bypass into an audited
-  // override. See auditPlatformOverride below.
-  const platformActor = isPlatformActor(req);
-
+  // override. See auditPlatformOverride below. Platform standing is asked only
+  // on the three paths that would refuse.
   void getTenantAccessPosture(organizationId)
-    .then(posture => {
+    .then(async posture => {
       if (!posture) {
-        if (platformActor) {
+        if (await isPlatformActor(req)) {
           // Staff must be able to act precisely when the platform is unhealthy —
           // refusing them on an unreadable posture would lock out the people
           // whose job is to fix it. Recorded, not blocked.
@@ -284,7 +296,7 @@ export function enforceTenantLifecycle(req: Request, res: Response, next: NextFu
 
       // The posture would refuse this request. Platform staff proceed anyway —
       // that is the bypass working as designed — but the override is recorded.
-      if (platformActor) {
+      if (await isPlatformActor(req)) {
         tenantLifecycleDecisions.inc({
           decision: 'platform_override',
           state: posture.state,
@@ -307,12 +319,12 @@ export function enforceTenantLifecycle(req: Request, res: Response, next: NextFu
       });
       refuse(res, 403, posture.code, posture.reason);
     })
-    .catch(error => {
+    .catch(async error => {
       logger.warn('Tenant lifecycle guard crashed — refusing access (fail-closed)', {
         organizationId,
         error: error instanceof Error ? error.message : String(error),
       });
-      if (platformActor) {
+      if (await isPlatformActor(req)) {
         // Same reasoning as the unreadable-posture arm above: a crash in this
         // guard must not lock staff out of the platform they are there to fix.
         tenantLifecycleDecisions.inc({ decision: 'platform_override', state: 'unknown' });

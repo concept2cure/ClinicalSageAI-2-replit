@@ -22,7 +22,10 @@
  *     to.
  *
  * Its staff test must be exactly the route's own rule for acting on another
- * organization, and it must run after authentication, so it never opens the
+ * organization, decided by platform standing (holdsPlatformRole), never the
+ * request role (D6, 2026-10-05). It may be async, and it is asked only when
+ * the URL names another organization, so an own-organization request costs no
+ * lookup. It must run after authentication, so it never opens the
  * system scope for a caller the route would refuse. It reuses
  * establishRequestSystemScope, which nests the scope and replaces the
  * request's DB client, exactly as the system-prefixed consoles get it.
@@ -35,15 +38,16 @@ export function staffCrossOrgScope(opts: {
   /** The route parameter that names the target organization. */
   param: string;
   /** The router's own platform-staff test. */
-  isStaff: (req: Request<Record<string, string>>) => boolean;
+  isStaff: (req: Request<Record<string, string>>) => boolean | Promise<boolean>;
 }): RequestHandler<Record<string, string>> {
   // Typed on string params: a default-typed handler in a route's chain widens
   // the route's inferred `req.params` to string | string[] for every handler.
   return (req: Request<Record<string, string>>, res: Response, next: NextFunction) => {
-    if (!opts.isStaff(req)) return next();
     const target = Number(req.params[opts.param]);
     const scoped = Number(getTenantScope()?.tenantId);
     if (!Number.isInteger(target) || target === scoped) return next();
-    establishRequestSystemScope(req, res, next);
+    Promise.resolve(opts.isStaff(req))
+      .then(staff => (staff ? establishRequestSystemScope(req, res, next) : next()))
+      .catch(next);
   };
 }
