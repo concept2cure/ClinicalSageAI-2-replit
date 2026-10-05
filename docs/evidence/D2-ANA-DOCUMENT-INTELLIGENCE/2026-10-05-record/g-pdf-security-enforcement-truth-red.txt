@@ -1,0 +1,64 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > every FDA rule the platform enforces maps to a corpus rule that is not "external" 5ms
+   → FDA says 'pdf-no-security' is enforced; corpus PDF_NO_SECURITY says 'external': expected 'external' not to be 'external' // Object.is equality
+ ✓ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > no corpus rule claims a check the FDA registry says nothing runs 1ms
+ × server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > PDF_NO_SECURITY is answered as checked by the platform, not by the agency validator 3ms
+   → expected 'external' to be 'packager' // Object.is equality
+ × server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > PDF_NO_SECURITY names each enforcement point, and each one refuses a secured leaf 1ms
+   → rationale must name regional-packager.ts: expected 'Encrypted or permission-restricted PD…' to contain 'regional-packager.ts'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > every FDA rule the platform enforces maps to a corpus rule that is not "external"
+AssertionError: FDA says 'pdf-no-security' is enforced; corpus PDF_NO_SECURITY says 'external': expected 'external' not to be 'external' // Object.is equality
+ ❯ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts:52:121
+     50|       expect(rule, `corpus has no rule '${corpusId}'`).toBeDefined();
+     51|       expect(rule!.regions, `${corpusId} must apply to FDA`).toContain…
+     52|       expect(rule!.enforcement, `FDA says '${fda.id}' is enforced; cor…
+       |                                                                                                                         ^
+     53|     }
+     54|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > PDF_NO_SECURITY is answered as checked by the platform, not by the agency validator
+AssertionError: expected 'external' to be 'packager' // Object.is equality
+
+Expected: "packager"
+Received: "external"
+
+ ❯ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts:71:31
+     69|     const view = ruleView('PDF_NO_SECURITY');
+     70|     expect(view).not.toBeNull();
+     71|     expect(view!.enforcement).toBe('packager');
+       |                               ^
+     72|     expect(view!.enforcementStatement).toBe(enforcementStatement('pack…
+     73|     expect(view!.enforcementStatement).not.toMatch(/agency validator/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > PDF_NO_SECURITY names each enforcement point, and each one refuses a secured leaf
+AssertionError: rationale must name regional-packager.ts: expected 'Encrypted or permission-restricted PD…' to contain 'regional-packager.ts'
+
+Expected: "regional-packager.ts"
+Received: "Encrypted or permission-restricted PDFs cannot be processed by the agency review tools."
+
+ ❯ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts:80:61
+     78|     for (const rel of PDF_SECURITY_ENFORCERS) {
+     79|       const base = rel.split('/').pop()!;
+     80|       expect(rule.rationale, `rationale must name ${base}`).toContain(…
+       |                                                             ^
+     81|       const src = fs.readFileSync(repoFile(rel), 'utf8');
+     82|       expect(src, `${rel} must judge leaves with assessLeafPdfSecurity…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  02:06:00
+   Duration  415ms (transform 117ms, setup 74ms, import 67ms, tests 14ms, environment 0ms)
+
