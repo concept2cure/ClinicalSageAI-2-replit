@@ -1,0 +1,64 @@
+# g-required-sections-home — GREEN (after the change), 2026-10-05T02:34:26Z, base HEAD 73908e34
+
+## The step's test
+# npx vitest run server/services/ectd/__tests__/required-sections-profile.test.ts --reporter=verbose  (fix round 1)
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > answers for an EU MAA instead of returning null 2ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > answers for a J-NDA from the JP region profile 1ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > infers the home region of a region-specific type when none is given 1ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > keeps the IND, NDA and BLA profiles the validator already enforced 2ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > does not tell an MAA or J-NDA that a conditional appendix (3.2.A) is missing 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > does not demand an EU 1.1 table of contents of an eCTD MAA (known defect: EU region profile) 7ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > is null — not another region’s set — where no profile exists 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > hands out a profile no caller can edit for everyone else 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > ectd4-validator reads the shared profile > assesses an EU MAA package against the EU profile 4ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > ectd4-validator reads the shared profile > cites each profile’s own basis, not the IND regulation, on a missing NDA section 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > ectd4-validator reads the shared profile > does not lend the FDA NDA set to an NDA validated for another region 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > ectd4-validator reads the shared profile > no longer carries its own copy of the profile 0ms
+ Test Files  1 passed (1)
+      Tests  11 passed | 1 expected fail (12)
+
+## Importers' tests (direct: ectd4-validator / required-sections)
+ Fix round 1: 14 files, 197 passed | 1 expected fail (198) — the 15th, tests/regulatory/fda-module1-numbering.test.ts,
+ is being edited by another lane (red-first rule-pack assertions: 6 fail on the live nda/bla/anda:fda packs).
+ Its HEAD version, run against this working copy, passes 15/15, so none of the 6 is this step's.
+ (First round: 15 files, 211 passed.)
+files: server/__tests__/services/submission-orchestrator.test.ts server/services/__tests__/sign-payload-snapshot.test.ts server/services/ectd/__tests__/{ectd4-validator-module1-numbering,ectd4-validator,required-sections-profile,required-sections-unmappable-pack,required-sections,section-code-match,signed-package-export}.test.ts server/services/vault/__tests__/vault-coverage.test.ts tests/regulatory/fda-module1-numbering.test.ts tests/routes/ectd-compile-5xx-containment.test.ts tests/unit/{ectd-export-routes,ectd-validator-hardening-uncovered,ectd4-validator-extensions}.test.ts
+
+## Indirect (region-profile-service / validate_ectd_package / MCP validation / orchestrators)
+ Fix round 1: 11 files, 169 passed (169):
+ server/routes/__tests__/submission-sign-release-authority, server/services/ana/__tests__/submission-center-tools,
+ server/services/ectd/__tests__/{orchestrator-real-package,sequence-gap-tenant-scope},
+ server/services/region-profiles/__tests__/region-profile-service, server/services/submission-gateways/__tests__/regional-backbone-referenced,
+ tests/integration/orchestrator-e2e-ind, tests/regulatory/region-profiles, tests/schema-contract/ectd-sequence-continuity.contract,
+ tests/unit/{orchestrator-regional-skip-reason,submission-sign-release-route}
+ (First round: 13 files, 166 passed.)
+
+## HEAD vs working copy: quickValidate([], type).missing
+IND SAME
+NDA SAME
+BLA SAME
+ANDA SAME
+MAA DIFF
+  head=
+  new =m1.0,m1.1,m1.2,m1.3,m1.3.1,m1.4,m1.4.1,m1.4.2,m1.4.3,m1.6,m1.8,m1.8.1,m1.8.2,m2.2,m2.3,m2.4,m2.5,m2.6,m2.7,m3.2.P,m3.2.S,m4.2.1,m4.2.2,m4.2.3,m5.2,m5.3.5
+  (fix round 1: m3.2.A removed from the shared ICH body; m1.1 is a KNOWN FALSE finding, see facts row 8)
+ind SAME
+nda SAME
+
+## Typecheck
+# flock … npx tsc --noEmit -p . | grep -E "required-sections.ts|ectd4-validator.ts|required-sections-profile.test.ts|ectd4-validator.test.ts|mcp/tools/validation.ts|AnaToolExecutor.ts:96"
+(no lines; grep exit 1): 0 errors in the changed files and their callers.
+
+## Lint (npx eslint, working copy vs HEAD via --stdin)
+required-sections.ts: 0 warnings / 0 errors (HEAD 0/0)
+ectd4-validator.ts: 3 warnings / 0 errors (HEAD 3/0); fix round 1: validatePackage complexity 56 (HEAD 54, round 1 61), length 258 lines (HEAD 258)
+required-sections-profile.test.ts: 0/0
+
+## Fix round 1: final quickValidate([], type).missing (tsx probe)
+IND ["m1.1","m1.2","m1.3","m1.12.14","m1.14","m1.14.4","m1.14.4.1","m1.14.4.2","m1.20","m2.3","m2.4","m2.6","m3.2.S","m3.2.P","m4.2.1","m4.2.2","m4.2.3","m5.3.5"]
+NDA ["m1.1","m1.2","m1.3","m1.3.3","m1.3.4","m1.12.14","m1.14","m1.14.1","m2.2","m2.3","m2.4","m2.5","m2.6","m2.7","m3.2.S","m3.2.P","m3.2.A","m3.2.R","m4.2.1","m4.2.2","m4.2.3","m5.2","m5.3.5"]
+BLA ["m1.1","m1.2","m1.3","m1.3.3","m1.3.4","m1.12.14","m1.14","m1.14.1","m2.2","m2.3","m2.4","m2.5","m2.6","m2.7","m3.2.S","m3.2.P","m3.2.A","m3.2.R","m4.2.1","m4.2.3","m5.2","m5.3.5"]
+ANDA []
+MAA ["m1.0","m1.1","m1.2","m1.3","m1.3.1","m1.4","m1.4.1","m1.4.2","m1.4.3","m1.6","m1.8","m1.8.1","m1.8.2","m2.2","m2.3","m2.4","m2.5","m2.6","m2.7","m3.2.S","m3.2.P","m4.2.1","m4.2.2","m4.2.3","m5.2","m5.3.5"]
+JNDA ["m1.1","m1.2","m1.5","m1.7","m1.8","m1.12","m2.2","m2.3","m2.4","m2.5","m2.6","m2.7","m3.2.S","m3.2.P","m4.2.1","m4.2.2","m4.2.3","m5.2","m5.3.5"]
+IND/NDA/BLA lists, order included, equal HEAD's. tsc (under the lock, filtered to the step files, mcp/tools/validation.ts, routes/ectd-export.ts, AnaToolExecutor 96xx): no lines.
