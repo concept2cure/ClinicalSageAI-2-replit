@@ -8,9 +8,10 @@
  *     business admin
  *   - grants/revokes are governed (reason-for-change) and audited
  *
- * The db mock returns rows[] for the platform_role_grants fallback lookup the
- * guard performs when the sync role check fails — here every authorized caller
- * passes via their role, so that lookup just resolves to "no grant".
+ * The db mock answers the platform_role_grants lookups from GRANTS below:
+ * standing is an active grant row, as in production. The request role is the
+ * tenant membership role and confers nothing (D6, 2026-10-05,
+ * docs/evidence/D6/2026-10-05-platform-standing/).
  */
 
 import express from 'express';
@@ -74,11 +75,25 @@ function makeApp() {
   return app;
 }
 
+// `role` is what the harness puts on the request (the tenant membership role);
+// it opens nothing. Each caller's standing is its row in GRANTS.
 const SUPER = JSON.stringify({ id: 1, role: 'super_admin', email: 'owner@x.io' });
 const SUPPORT = JSON.stringify({ id: 2, role: 'support', email: 's@x.io' });
 const PLATFORM = JSON.stringify({ id: 3, role: 'platform_admin', email: 'p@x.io' });
 const BIZ = JSON.stringify({ id: 4, role: 'business_admin', email: 'finance@x.io' });
 const MEMBER = JSON.stringify({ id: 5, role: 'member', email: 'm@x.io' });
+
+/** Active platform_role_grants rows by user id, as production designates them:
+ *  the owner holds super_admin (platform, business and owner standing); the
+ *  support and platform_admin staff hold platform standing only. BIZ and
+ *  MEMBER hold none. */
+const GRANTS: Record<number, string[]> = { 1: ['super_admin'], 2: ['support'], 3: ['platform_admin'] };
+/** What `SELECT 1 FROM platform_role_grants WHERE user_id = $1 … = ANY($2)` answers. */
+function grantRows(params?: unknown[]) {
+  const held = GRANTS[Number(params?.[0])] ?? [];
+  const wanted = (params?.[1] as string[] | undefined) ?? [];
+  return held.some((r) => wanted.includes(r)) ? [{ ok: 1 }] : [];
+}
 
 beforeEach(() => {
   queryMock.mockReset();
@@ -87,10 +102,9 @@ beforeEach(() => {
   chainedRowMock.mockReset();
   steps.length = 0;
   queryMock.mockImplementation((sql: string, params?: unknown[]) => {
-    // Grant lookups. The owner (SUPER, id 1) holds a super_admin grant, as the
-    // owner does in production: business standing is a platform grant, never
-    // the request role (D6, 2026-10-05). Everyone else holds none.
-    if (/FROM platform_role_grants\s+WHERE user_id/.test(sql)) return Promise.resolve({ rows: params?.[0] === 1 ? [{ ok: 1 }] : [] });
+    // Grant lookups, answered from GRANTS: platform and business standing are
+    // platform grants, never the request role (D6, 2026-10-05).
+    if (/FROM platform_role_grants\s+WHERE user_id/.test(sql)) return Promise.resolve({ rows: grantRows(params) });
     if (/FROM users WHERE email/.test(sql)) return Promise.resolve({ rows: [{ id: 42 }] });
     if (/SELECT g\.id/.test(sql)) return Promise.resolve({ rows: [] });
     if (/INSERT INTO platform_role_grants/.test(sql))
@@ -152,8 +166,9 @@ describe('granting platform/support roles', () => {
   });
 
   it('404s an unknown email', async () => {
-    queryMock.mockImplementation((sql: string) => {
-      if (/FROM platform_role_grants\s+WHERE user_id/.test(sql)) return Promise.resolve({ rows: [] });
+    queryMock.mockImplementation((sql: string, params?: unknown[]) => {
+      // The owner's grant still admits the caller; only the target is unknown.
+      if (/FROM platform_role_grants\s+WHERE user_id/.test(sql)) return Promise.resolve({ rows: grantRows(params) });
       if (/FROM users WHERE email/.test(sql)) return Promise.resolve({ rows: [] });
       return Promise.resolve({ rows: [{}] });
     });
@@ -195,6 +210,8 @@ describe('business-tier grants require a business-admin caller', () => {
       .set('x-test-user', SUPPORT)
       .send({ email: 'finance2@x.io', role: 'business_admin', reason: 'designate finance' });
     expect(res.status).toBe(403);
+    // Past the platform guard on its support grant; refused by the business-tier check.
+    expect(res.body.error).toMatch(/requires the caller to be a business administrator/);
     expect(chainedRowMock).not.toHaveBeenCalled();
   });
 
@@ -204,6 +221,8 @@ describe('business-tier grants require a business-admin caller', () => {
       .set('x-test-user', PLATFORM)
       .send({ email: 'finance2@x.io', role: 'business_admin', reason: 'designate finance' });
     expect(res.status).toBe(403);
+    // Past the platform guard on its platform_admin grant; refused by the business-tier check.
+    expect(res.body.error).toMatch(/requires the caller to be a business administrator/);
   });
 
   it('200s when a super_admin (platform + business) grants business_admin', async () => {
@@ -276,8 +295,9 @@ describe('a grant is recorded in its transaction (DP-75)', () => {
   });
 
   it('a failed grant write is a 500, and no row claims it', async () => {
-    queryMock.mockImplementation((sql: string) => {
-      if (/FROM platform_role_grants\s+WHERE user_id/.test(sql)) return Promise.resolve({ rows: [] });
+    queryMock.mockImplementation((sql: string, params?: unknown[]) => {
+      // The owner's grant still admits the caller; only the write fails.
+      if (/FROM platform_role_grants\s+WHERE user_id/.test(sql)) return Promise.resolve({ rows: grantRows(params) });
       if (/FROM users WHERE email/.test(sql)) return Promise.resolve({ rows: [{ id: 42 }] });
       if (/INSERT INTO platform_role_grants/.test(sql)) return Promise.reject(new Error('insert refused'));
       return Promise.resolve({ rows: [{}] });
@@ -312,8 +332,9 @@ describe('revoke', () => {
   });
 
   it('404s revoking a non-existent / already-revoked grant', async () => {
-    queryMock.mockImplementation((sql: string) => {
-      if (/FROM platform_role_grants\s+WHERE user_id/.test(sql)) return Promise.resolve({ rows: [] });
+    queryMock.mockImplementation((sql: string, params?: unknown[]) => {
+      // The owner's grant still admits the caller; only the revoked row is missing.
+      if (/FROM platform_role_grants\s+WHERE user_id/.test(sql)) return Promise.resolve({ rows: grantRows(params) });
       if (/UPDATE platform_role_grants/.test(sql)) return Promise.resolve({ rows: [] });
       return Promise.resolve({ rows: [{}] });
     });

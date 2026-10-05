@@ -92,6 +92,8 @@ import {
   type Part11Signoff,
 } from './part11-governance';
 import { authorizeCommand, isPrivacyAdmin, isProposeOnlyCommand } from './command-rbac';
+import { carriesModelAuthoredText, sealProposalParams } from './proposal-seal';
+import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
 import { statedReasonOrNull } from '../../routes/governed-reason.js';
 import { recordCommentPosted } from '../../routes/c2c/review-comment-record.js';
 import { ANA_REVIEW_COMMENT_ROLE } from '../../../shared/constants/review-comment.js';
@@ -5541,8 +5543,7 @@ export async function executeCommands(
       // can satisfy by asserting it. Three approve-class commands sit in
       // neither Part 11 set, so this is the only gate that reaches them.
       if (isProposeOnlyCommand(cmd.command) && ctx.humanConfirmed !== true) {
-        results.push(buildHumanConfirmationRequiredResult(cmd.command, cmd.params as Record<string, unknown>));
-        console.log(`[AnA Command] Proposed ${cmd.command}: HUMAN_CONFIRMATION_REQUIRED`);
+        results.push(proposalFor(cmd.command, cmd.params as Record<string, unknown> | undefined, ctx));
         continue;
       }
 
@@ -5564,6 +5565,32 @@ export async function executeCommands(
     }
   }
   return results;
+}
+
+/**
+ * What a propose-only command dispatched without a person's confirmation comes
+ * back as: the proposal, its proposer sealed into its params so the
+ * confirmation records which model wrote it (proposal-seal.ts) — or, for
+ * model-authored text bound for a governed record from a model not qualified
+ * for high-risk drafting (RULE 2), a refusal (D5, MC-RL-4, 2026-10-05; the
+ * same rule AnaToolExecutor applies to tools). A proposal with no serving
+ * model is a person's own command.
+ */
+function proposalFor(command: string, params: Record<string, unknown> | undefined, ctx: CommandContext): CommandResult {
+  const proposed = params ?? {};
+  if (ctx.servingModel && carriesModelAuthoredText(proposed) && !isServedModelApprovedForHighRisk(ctx.servingModel)) {
+    console.info(`[AnA Command] Refused ${command}: MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE`);
+    return {
+      success: false,
+      action: command,
+      error: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE',
+      message:
+        'This proposal holds text written by a model that is not approved for regulatory drafting, so it ' +
+        'cannot become a governed record. Nothing was proposed or saved.',
+    };
+  }
+  console.log(`[AnA Command] Proposed ${command}: HUMAN_CONFIRMATION_REQUIRED`);
+  return buildHumanConfirmationRequiredResult(command, sealProposalParams(command, proposed, ctx));
 }
 
 /**
