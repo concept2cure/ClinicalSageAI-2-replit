@@ -20,8 +20,19 @@ Green: the whole v2 client and AnA hook suites, 430 files / 4,691 tests
 lint fix; `tsc` 0; lint unchanged (`toTurn`'s three repeated empty-list checks
 became one helper, which also kept it under complexity 15).
 
-Still to come in this series: the engine pill names the effort mode, and the
-pill menus get WCAG 2.2 AA menu semantics.
+3. **The engine pill names the effort a mode buys, not a model.** `ANA_MODES`
+   carried the words in a field called `model` ("Balanced", "Maximum",
+   "Instant"), and the rail printed it in each message header as "AnA · Maximum",
+   as if it named the model that answered. "Maximum" and "Instant" overclaimed:
+   high-risk work is served by the flagship whatever the mode (end-to-end
+   finding F4). The field is now `effortLabel`, the words are the server's
+   effort levels (Light, Balanced, Thorough), the header names a model only when
+   the server reported the one that served, and the identity line reads
+   "Balanced effort · in …". Red: `effort-words-red.txt` (2 registry cases).
+   Green: 430 files / 4,693 client tests; `tsc` 0; lint unchanged;
+   `ci:internals-in-copy` and `ci:action-overclaim` pass.
+
+Still to come in this series: WCAG 2.2 AA menu semantics for the two pickers.
 
 Lane disclosure: `ConversationThread.tsx` was changed within 24 hours by
 `ef70b10f4` (answer check). These hunks are additive, away from theirs.

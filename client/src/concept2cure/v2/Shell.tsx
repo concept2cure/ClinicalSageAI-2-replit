@@ -764,7 +764,8 @@ export function AnaRail({
   const readyAttachments = attachments.filter((a) => a.status === 'ready');
   const uploadingAttachments = attachments.filter((a) => a.status === 'uploading');
   const failedAttachments = attachments.filter((a) => a.status === 'error');
-  const model = ANA_MODES.find((m) => m.id === mode)?.model ?? 'Balanced';
+  // The effort the mode buys, never a model (row 74, ADR-0015 §9).
+  const effortLabel = ANA_MODES.find((m) => m.id === mode)?.effortLabel ?? 'Balanced';
   /* AnA's per-surface context is local, and no longer claims otherwise.
    *
    * This used to fetch `GET /api/coauthor?surface=…&segment=…` under a comment
@@ -833,7 +834,7 @@ export function AnaRail({
           <div>
             <div className="ana-id-name">AnA — Co-Author</div>
             <div className="ana-id-model">
-              {model} engine · in {ac.module || 'this workspace'}
+              {effortLabel} effort · in {ac.module || 'this workspace'}
             </div>
           </div>
         </div>
@@ -887,7 +888,7 @@ export function AnaRail({
               project: projectLabel(),
               module: ac.module || null,
               surface: surface.label,
-              engine: model,
+              engine: effortLabel,
             }}
           />
         )}
@@ -1031,7 +1032,9 @@ export function AnaRail({
             <div key={i} className={`ana-msg is-${m.role}`}>
               {m.role === 'ana' && (
                 <div className="who">
-                  AnA · {m.model || model}
+                  {/* The model that answered, only when the server said which:
+                      the mode's effort word is not a model (ADR-0015 §9). */}
+                  {m.model ? `AnA · ${m.model}` : 'AnA'}
                   {m.sample ? ' · sample' : ''}
                 </div>
               )}
@@ -1281,7 +1284,7 @@ export function AnaRail({
               >
                 <span className="ana-modepull-ic">{agent ? I.wand : I.sparkles}</span>
                 <span>
-                  {agent ? 'Agent' : 'Ask'} · {ANA_MODES.find((m) => m.id === mode)?.model}
+                  {agent ? 'Agent' : 'Ask'} · {ANA_MODES.find((m) => m.id === mode)?.effortLabel}
                   {policyLabel ? ` · ${policyLabel}` : null}
                 </span>
                 {I.down}
@@ -1513,7 +1516,7 @@ export function AnaRail({
                   onClick={() => setMode(m.id)}
                 >
                   <span className="ico">{I.zap}</span>
-                  {m.model}
+                  {m.effortLabel}
                   <span className="mh">{m.desc}</span>
                 </button>
               ))}
