@@ -135,6 +135,20 @@ export function collectTracesFromHistory(history: HistoryMessage[], maxEntries =
 }
 
 /**
+ * The tools earlier turns ran successfully, most recent first, each once: what
+ * a follow-up's tool selection carries (TP-RL-3, tool-selection.ts). A step a
+ * person declined is recorded as an error, so it is never carried; neither is
+ * one that failed or was stopped.
+ */
+export function carriedToolsFrom(entries: ToolTraceEntry[]): string[] {
+  const names: string[] = [];
+  for (const e of [...entries].reverse()) {
+    if (e.status === 'success' && e.tool && !names.includes(e.tool)) names.push(e.tool);
+  }
+  return names;
+}
+
+/**
  * Format collected traces into a compact continuity note injected into AnA's
  * context next turn. Returns '' when there is nothing to carry forward.
  *

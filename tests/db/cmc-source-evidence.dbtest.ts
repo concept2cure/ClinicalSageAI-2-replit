@@ -356,7 +356,11 @@ describe('removing a link, and the record it leaves', () => {
     refused(await asRuntime('UPDATE cmc_source_evidence SET reason = $2 WHERE id = $1', [v1Link, 'rewritten'], mine));
     refused(await asRuntime('UPDATE cmc_source_evidence SET unlink_reason = $2 WHERE id = $1', [v1Link, 'rewritten'], mine));
     refused(await asRuntime('DELETE FROM cmc_source_evidence WHERE id = $1', [v1Link], mine));
-    refused(await asRuntime('TRUNCATE cmc_source_evidence', [], mine));
+    // The runtime role never holds TRUNCATE (provision-app-role grants SELECT,
+    // INSERT, UPDATE, DELETE), so PostgreSQL refuses it before the trigger runs.
+    const truncate = await asRuntime('TRUNCATE cmc_source_evidence', [], mine);
+    expect(truncate.ok, 'the table was truncated').toBe(false);
+    if (!truncate.ok) expect(truncate.message).toMatch(/permission denied|IMMUTABILITY_VIOLATION/);
     const asOwner = await owner.query('UPDATE cmc_source_evidence SET reason = $2 WHERE id = $1', [v1Link, 'rewritten']).then(
       () => ({ ok: true as const, rows: [] }),
       (e: Error) => ({ ok: false as const, message: e.message }),

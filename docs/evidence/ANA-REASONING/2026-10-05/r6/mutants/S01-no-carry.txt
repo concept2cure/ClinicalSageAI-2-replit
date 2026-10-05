@@ -1,0 +1,21 @@
+Mutant S01-no-carry: a follow-up is chosen from its own words alone, as before TP-RL-3
+
+--- server/services/ana/tool-selection.ts
+- const carried = carriedFrom(
++ const carried: T[] = [] || carriedFrom(
+
+Tests run: server/services/ana/__tests__/tool-selection-carry-over.test.ts server/services/ana/__tests__/tool-selection-context.test.ts server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and for the EU?" is still offered get_cmc_requirements 16ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and as a victim?" is still offered assess_ddi_risk 17ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "what about with itraconazole?" is still offered assess_ddi_risk 7ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and with 80% power?" is still offered estimate_sample_size 5ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and for the drug product?" is still offered design_stability_study 6ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "now the toxicology part" is still offered draft_nonclinical_overview_m2_4 10ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "go on" is still offered explain_cmc_topic 4ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > a bare continuation is offered the carried tool first, right after the always-on core and the pins 7ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > carries at most 4, in the order carried, inside the cap 3ms
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 42ms
+      Tests  10 failed | 36 passed (46)
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯

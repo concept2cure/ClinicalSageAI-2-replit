@@ -1,0 +1,19 @@
+Mutant K01-no-raise: the tier comes from the words alone again, as before MC-RL-3
+
+--- server/services/kernel-router.ts
+- riskTier = raiseForOpenSection(riskTier, input.openSectionCode, rationale);
++ 
+
+Tests run: server/services/__tests__/kernel-router-open-section.test.ts server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts
+Result: KILLED
+
+ × server/services/__tests__/kernel-router-open-section.test.ts > the open section raises the tier > 2.7.4 (Summary of Clinical Safety) is high-stakes, and the plan says why 8ms
+ × server/services/__tests__/kernel-router-open-section.test.ts > the open section raises the tier > m2.5.5 (Overview of Safety) is high-stakes, and the plan says why 1ms
+ × server/services/__tests__/kernel-router-open-section.test.ts > the open section raises the tier > 2.6.6 (Toxicology Written Summary) is high-stakes, and the plan says why 1ms
+ × server/services/__tests__/kernel-router-open-section.test.ts > the open section raises the tier > 2.3.P.8 (QOS, drug product stability) is high-stakes, and the plan says why 1ms
+ × server/services/__tests__/kernel-router-open-section.test.ts > the open section raises the tier > 2.4 (Nonclinical Overview) is high-stakes, and the plan says why 1ms
+ × server/services/__tests__/kernel-router-open-section.test.ts > the open section raises the tier > 5.3.5.3 (integrated analyses (ISS/ISE)) is high-stakes, and the plan says why 1ms
+ × server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts > the open section decides how a turn is served (MC-RL-3) > a plain question in the Summary of Clinical Safety is served as high-stakes on every call 47ms
+ × server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts > the open section decides how a turn is served (MC-RL-3) > Fast stays fast there: no thinking and low effort, though the gateway is told the turn is high-stakes 11ms
+      Tests  8 failed | 16 passed (24)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯

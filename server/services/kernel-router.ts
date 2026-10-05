@@ -6,6 +6,7 @@
  */
 
 import type { RoutingStrategy, TaskType } from './ai-gateway/types.js';
+import { normalizeCtdCode } from '../../shared/regulatory/section-code';
 
 export type KernelRiskTier = 'low' | 'medium' | 'high';
 
@@ -27,6 +28,41 @@ export interface KernelRoutingInput {
    * the turn high-risk, so the model tier picks a model approved to write it.
    */
   requestsGovernedDraft?: boolean;
+  /**
+   * The section the person has open (authoring context), as the client sent
+   * it: untrusted, read only when it is a CTD code (highStakesSectionOf).
+   */
+  openSectionCode?: unknown;
+}
+
+/**
+ * The CTD sections a reviewer reads as the application's own account of its
+ * data: the Module 2 overviews and summaries (ICH M4 — 2.3 quality, 2.4 and 2.6
+ * nonclinical, 2.5 and 2.7 clinical) and the integrated analyses of safety and
+ * efficacy (5.3.5.3). Harmonised codes, the same in every region. Module 1 is
+ * regional and is not listed: a US 1.14 is labeling, but a US 1.3.1 is contact
+ * details where an EU 1.3.1 is the SmPC (MC-RL-3, AnA reasoning round 7).
+ */
+export const HIGH_STAKES_SECTION_ROOTS: readonly string[] = ['2.3', '2.4', '2.5', '2.6', '2.7', '5.3.5.3'];
+
+/** The open section, normalised, when it is a listed section or under one; otherwise null. */
+export function highStakesSectionOf(openSectionCode: unknown): string | null {
+  if (typeof openSectionCode !== 'string' || openSectionCode.length > 64) return null;
+  const code = normalizeCtdCode(openSectionCode);
+  if (!code) return null;
+  return HIGH_STAKES_SECTION_ROOTS.some(root => code === root || code.startsWith(`${root}.`)) ? code : null;
+}
+
+/**
+ * What is open, not how the question is worded: a turn in a Module 2 summary
+ * is high-stakes however plainly it is asked. It only ever raises the tier,
+ * and says why in the plan's rationale.
+ */
+function raiseForOpenSection(tier: KernelRiskTier, openSectionCode: unknown, rationale: string[]): KernelRiskTier {
+  const section = highStakesSectionOf(openSectionCode);
+  if (!section) return tier;
+  rationale.push(`Open section ${section} is a CTD summary a reviewer reads as the application's account -> approved model required`);
+  return 'high';
 }
 
 export interface KernelRoutingPlan {
@@ -89,6 +125,8 @@ export function planKernelExecution(input: KernelRoutingInput): KernelRoutingPla
     temperature = Math.min(temperature, DEFAULT_REG_REVIEW_TEMPERATURE);
     rationale.push('Governed drafting requested -> approved model required');
   }
+
+  riskTier = raiseForOpenSection(riskTier, input.openSectionCode, rationale);
 
   if (input.hasEvidence) {
     strategy = 'quality_optimized';

@@ -1,0 +1,12 @@
+Mutant K05-no-segment-boundary: '2.30' is read as under '2.3'
+
+--- server/services/kernel-router.ts
+- code === root || code.startsWith(`${root}.`)
++ code.startsWith(root)
+
+Tests run: server/services/__tests__/kernel-router-open-section.test.ts
+Result: KILLED
+
+ × server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for a code that only begins like a listed one 6ms
+      Tests  1 failed | 20 passed (21)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
