@@ -12,6 +12,8 @@
  * @module server/services/sop-generator
  */
 
+import { SUBMISSION_FORMATS } from './global-ri/electronic-submission-format.js';
+
 export type SopRegion = 'FDA' | 'EMA' | 'PMDA';
 
 export type SopProcessType =
@@ -105,7 +107,11 @@ const PROCESS_REFERENCES: Partial<Record<SopProcessType, Partial<Record<SopRegio
   },
   regulatory_submission: {
     FDA: ['FDA ESG (Electronic Submissions Gateway) user guide'],
-    EMA: ['EMA eSubmission Gateway / CESP'],
+    /* The one EMA channel wording (global-ri/electronic-submission-format.ts):
+       eSubmission Gateway / Web Client, CESP for national procedures.
+       2026-10-05 (D2 record, step g-channel-prose-and-us-ectd-format; finding
+       42): this read 'EMA eSubmission Gateway / CESP', as if either served. */
+    EMA: [`EMA ${SUBMISSION_FORMATS.EMA.gateway}`],
     PMDA: ['PMDA submission gateway / FD application'],
   },
 };
