@@ -12,6 +12,7 @@
 
 import type { AnaTool } from '../ai-gateway/types';
 import { PLACEABLE_DOCUMENT_TABLE_LIST } from '../ectd/leaf-document-tables';
+import { DOCUMENT_TEMPLATES } from '../market-specs/document-template-library';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Submission-center tools — give AnA reach over the canonical core + ingestion
@@ -552,10 +553,51 @@ export const GET_MARKET_SUBMISSION_SPEC: AnaTool = {
   },
 };
 
+/**
+ * The get_document_template outlines that are read from a canonical record, and
+ * that record. Every other outline in market-specs/document-template-library.ts is
+ * a heading list kept by hand against its cited basis, and the description says
+ * so. An outline joins this map only when the library derives its sections from
+ * the record — __tests__/document-template-description.test.ts proves each entry
+ * against the record and fails on an entry it cannot prove.
+ */
+export const TEMPLATE_OUTLINES_FROM_RECORD: Readonly<Record<string, string>> = {
+  clinical_study_report: 'the ICH E3 tree',
+  smpc: 'the QRD SmPC record',
+};
+
+/** What a hand-kept outline is, where that needs saying. Kept terse: see the order note below. */
+const HAND_KEPT_OUTLINE_NOTES: Readonly<Record<string, string>> = {
+  pbrer: 'interim copy of the ICH E2C(R2) numbering',
+  cover_letter: "platform headings, not a regulator's text",
+};
+
+const recordDerivedOutlines = DOCUMENT_TEMPLATES
+  .filter((t) => t.id in TEMPLATE_OUTLINES_FROM_RECORD)
+  .map((t) => `${t.id} (from ${TEMPLATE_OUTLINES_FROM_RECORD[t.id]})`)
+  .join('; ');
+
+const handKeptOutlines = DOCUMENT_TEMPLATES
+  .filter((t) => !(t.id in TEMPLATE_OUTLINES_FROM_RECORD))
+  .map((t) => (HAND_KEPT_OUTLINE_NOTES[t.id] ? `${t.id} (${HAND_KEPT_OUTLINE_NOTES[t.id]})` : t.id))
+  .join('; ');
+
+/**
+ * Order matters. OpenAI-compatible providers trim a tool description at 1024
+ * characters (ai-gateway/gateway.ts, OPENAI_MAX_TOOL_DESCRIPTION_CHARS). The
+ * purpose, the presentation rule, the input usage and the record-derived list come
+ * first; the hand-kept list comes last, so a trim can only drop trailing hand-kept
+ * ids — the description then understates where an outline came from, never
+ * overstates it. The test pins both the order and the length.
+ */
 export const GET_DOCUMENT_TEMPLATE: AnaTool = {
   name: 'get_document_template',
   description:
-    "Look up the canonical SECTION STRUCTURE (heading skeleton) of a key submission document — the ordered sections (number + heading + purpose + required) with the regulatory basis. Covers the CTD Module 2 summaries (Quality Overall Summary 2.3, Nonclinical Overview 2.4, Clinical Overview 2.5, Clinical Summary 2.7), the cover letter, the FDA 510(k) Summary (21 CFR 807.92), the EU SmPC, the MDR/IVDR GSPR checklist, the IVDR Performance Evaluation Report, and the CTA IMPD. These are factual document spines from published guidance, not drafted prose — use them to scaffold authoring or to check a document's completeness. Static reference data, read-only. Pass `template_id` for one (e.g. 'clinical_overview', 'k510_summary', 'smpc'), or `family` (ectd|estar|eu_mdr|eu_ivdr|ctis) to list a family's templates.",
+    "Look up the SECTION STRUCTURE of a key submission document: ordered sections (number, heading, purpose, required) and the basis the outline cites. Not drafted prose; use it to scaffold authoring or check completeness. Read-only reference data. " +
+    "Present a hand-kept outline as the platform's outline, not as the guidance's own text, and name its cited basis. " +
+    "Pass `template_id` for one (e.g. 'clinical_overview', 'smpc'), or `family` (ectd|estar|eu_mdr|eu_ivdr|ctis) for a family's templates. " +
+    `Read from a canonical record: ${recordDerivedOutlines}. ` +
+    `Kept by hand against the cited basis, not from a canonical record: ${handKeptOutlines}.`,
   input_schema: {
     type: 'object',
     properties: {
