@@ -21,8 +21,10 @@ import { pool } from '../../db/runtime.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import {
   validateCompletenessEngine,
+  isCompletenessAssessed,
   type ValidateInput,
-  type ValidateCompletenessResult,
+  type AssessedCompletenessResult,
+  type NotAssessedCompletenessResult,
 } from '../validate-completeness-engine.js';
 import {
   featuresForDraft,
@@ -67,7 +69,56 @@ const defaultEmbedFn: EmbedFn = async (text: string) => {
 
 const log = createScopedLogger('regulatory-intelligence');
 
-export const REGULATORY_INTELLIGENCE_VERSION = '1.0.0';
+/*
+ * 1.1.0 (2026-10-05, g-validate-completeness-canonical): the completeness
+ * features changed meaning. See COMPLETENESS_FEATURE_DRIFT.
+ */
+export const REGULATORY_INTELLIGENCE_VERSION = '1.1.0';
+
+/**
+ * Model-version note for the completeness features (DECISIONS.md #13, the
+ * recommendation applied). Predictions and trained weights from before 1.1.0
+ * were built on features that no longer mean the same thing:
+ *   - `missing_critical` counted only missing sections whose module string
+ *     compared <= '3'; it now counts every missing required section of the
+ *     canonical profile (`ectd/required-sections`), Modules 4 and 5 included.
+ *   - `missing_important` counted missing Modules 4-5 (and every device and
+ *     IVDR item); it is now always 0, because every missing required section
+ *     is critical.
+ *   - `completeness_pct` was computed over a hand table with substring
+ *     presence ('3.2.S.1.1' satisfied '1.1'); it is now over the canonical
+ *     profile with exact-or-descendant presence.
+ *   - Types with no profile (510(k), De Novo, PMA, IVDR, ANDA, 505(b)(2), CTA,
+ *     a non-home region) are no longer scored at all; before, they were scored
+ *     on invented or borrowed checklists.
+ * A model trained on pre-1.1.0 vectors should be retrained before its
+ * coefficients are trusted on these features.
+ */
+export const COMPLETENESS_FEATURE_DRIFT =
+  'regulatory-intelligence@1.1.0: completeness features re-based on ectd/required-sections ' +
+  '(missing_critical = every missing required section; missing_important = 0; completeness_pct over the ' +
+  'canonical profile with exact-or-descendant presence); unprofiled types are refused, not scored. ' +
+  'Weights trained on earlier vectors are not comparable.';
+
+/**
+ * scoreSubmissionDraft refuses a draft whose completeness was not assessed.
+ *
+ * A prediction built on a checklist that does not exist is a number with no
+ * basis; before 1.1.0 such a type was scored on an invented table, and an
+ * empty checklist would have divided 0 by 0. The error carries the engine's
+ * not-assessed result (with the engine that does assess the type, when one
+ * exists), and a 422 status so an error handler answers it as the caller's
+ * request, not as a server fault.
+ */
+export class CompletenessNotAssessedError extends Error {
+  readonly code = 'COMPLETENESS_NOT_ASSESSED';
+  readonly statusCode = 422;
+  readonly status = 422;
+  constructor(readonly completeness: NotAssessedCompletenessResult) {
+    super(`Predictive RTF/CRL scoring refused: ${completeness.assessment.reason}`);
+    this.name = 'CompletenessNotAssessedError';
+  }
+}
 
 // ─── Score-time API ──────────────────────────────────────────────────────────
 
@@ -100,7 +151,8 @@ export interface RiskTargetScore {
 
 export interface ScoreDraftResult {
   readonly engineVersion: string;
-  readonly completeness: ValidateCompletenessResult;
+  /** Always an assessed result: a not-assessed type is refused (CompletenessNotAssessedError). */
+  readonly completeness: AssessedCompletenessResult;
   readonly rtf: RiskTargetScore;
   readonly crl: RiskTargetScore;
   readonly firstCycleApproval: RiskTargetScore;
@@ -117,7 +169,7 @@ function probabilityToBand(p: number): RiskTargetScore['band'] {
 }
 
 function buildRecommendations(
-  completeness: ValidateCompletenessResult,
+  completeness: AssessedCompletenessResult,
   rtf: RiskTargetScore,
   crl: RiskTargetScore,
 ): string[] {
@@ -177,6 +229,9 @@ async function scoreOneTarget(params: {
 /**
  * The single call routes use to score a draft. Returns rule-based completeness
  * + predictive CRL/RTF/first-cycle probabilities + a blended readiness score.
+ *
+ * Throws CompletenessNotAssessedError (422) when the submission type has no
+ * canonical required-section profile: nothing is predicted or persisted.
  */
 export async function scoreSubmissionDraft(input: ScoreDraftInput): Promise<ScoreDraftResult> {
   // Step 1: rule-based completeness check.
@@ -188,18 +243,25 @@ export async function scoreSubmissionDraft(input: ScoreDraftInput): Promise<Scor
     openEscalations: input.openEscalations,
     targetAgency: input.targetAgency,
   };
-  const completeness = await validateCompletenessEngine.validate(validateInput);
+  const result = await validateCompletenessEngine.validate(validateInput);
+  // Fail closed: no profile, no checklist, no prediction (DECISIONS.md #13).
+  if (!isCompletenessAssessed(result)) throw new CompletenessNotAssessedError(result);
+  const completeness = result;
+  // The agency the completeness was judged for — the profile's home agency
+  // when the caller named none (an MAA is EMA, not the old 'FDA' default).
+  const agency = completeness.targetAgency;
 
   // Step 2: assemble feature context from completeness output.
   const featureCtx: Omit<FeatureContext,
     'reviewDays' | 'questionsReceived' | 'informationRequests' | 'deficienciesCited' | 'hadAdvisoryCommittee'
   > = {
     submissionType: input.submissionType,
-    agency: input.targetAgency ?? 'FDA',
+    agency,
     therapeuticArea: input.therapeuticArea ?? null,
     readinessPercentage: completeness.summary.readinessPercentage,
     missingCriticalCount: completeness.rtfRisk.missingCritical.length,
-    missingImportantCount: completeness.rtfRisk.missingImportant.length,
+    // Every missing required section is now critical (COMPLETENESS_FEATURE_DRIFT).
+    missingImportantCount: 0,
     weakSectionCount: completeness.rtfRisk.weakSections.length,
     harmonizeIssueCount: input.harmonizeIssueCount ?? 0,
     openEscalations: input.openEscalations ?? 0,
@@ -220,7 +282,7 @@ export async function scoreSubmissionDraft(input: ScoreDraftInput): Promise<Scor
       target: 'rtf',
       features,
       submissionType: input.submissionType,
-      agency: input.targetAgency ?? 'FDA',
+      agency,
       therapeuticArea: input.therapeuticArea ?? null,
       completenessBin,
     }),
@@ -228,7 +290,7 @@ export async function scoreSubmissionDraft(input: ScoreDraftInput): Promise<Scor
       target: 'crl',
       features,
       submissionType: input.submissionType,
-      agency: input.targetAgency ?? 'FDA',
+      agency,
       therapeuticArea: input.therapeuticArea ?? null,
       completenessBin,
     }),
@@ -236,7 +298,7 @@ export async function scoreSubmissionDraft(input: ScoreDraftInput): Promise<Scor
       target: 'first_cycle_approval',
       features,
       submissionType: input.submissionType,
-      agency: input.targetAgency ?? 'FDA',
+      agency,
       therapeuticArea: input.therapeuticArea ?? null,
       completenessBin,
     }),
