@@ -1,0 +1,92 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/authoring/__tests__/authoring-export-xml-figures.test.ts > the XML export carries only the figures the other formats file > an external image URL is not in the file; its placeholder is 749ms
+   → expected '<?xml version="1.0" encoding="UTF-8"?…' not to contain 'collector.example'
+ × server/services/authoring/__tests__/authoring-export-xml-figures.test.ts > the XML export carries only the figures the other formats file > a WebP payload is not printed into the file 3ms
+   → expected '<?xml version="1.0" encoding="UTF-8"?…' not to contain 'UklGRhoAAABXRUJQ'
+ ✓ server/services/authoring/__tests__/authoring-export-xml-figures.test.ts > the XML export carries only the figures the other formats file > a figure is kept as written: a governed reference and an inline PNG 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-export-xml-figures.test.ts > the XML export carries only the figures the other formats file > an external image URL is not in the file; its placeholder is
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8"?…' not to contain 'collector.example'
+
+- Expected
++ Received
+
+- collector.example
++ <?xml version="1.0" encoding="UTF-8"?>
++ <document>
++   <metadata>
++     <id>d1</id>
++     <title>Doc</title>
++     <module>M2</module>
++     <status>draft</status>
++     <created_at>2026-10-05</created_at>
++   </metadata>
++   <sections>
++     <section code="2.5.1">
++       <title>Results</title>
++       <content><![CDATA[<p>Results.</p><img src="https://collector.example/p.png?d=secret">]]></content>
++     </section>
++   </sections>
++   <electronic_signatures count="0">
++     <!-- No electronic signatures are recorded against this document. -->
++   </electronic_signatures>
++ </document>
+
+ ❯ server/services/authoring/__tests__/authoring-export-xml-figures.test.ts:31:21
+     29|   it('an external image URL is not in the file; its placeholder is', a…
+     30|     const xml = await xmlOf('<p>Results.</p><img src="https://collecto…
+     31|     expect(xml).not.toContain('collector.example');
+       |                     ^
+     32|     expect(xml).toContain('[Figure not exported: ');
+     33|     expect(xml).toContain('<p>Results.</p>');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-export-xml-figures.test.ts > the XML export carries only the figures the other formats file > a WebP payload is not printed into the file
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8"?…' not to contain 'UklGRhoAAABXRUJQ'
+
+- Expected
++ Received
+
+- UklGRhoAAABXRUJQ
++ <?xml version="1.0" encoding="UTF-8"?>
++ <document>
++   <metadata>
++     <id>d1</id>
++     <title>Doc</title>
++     <module>M2</module>
++     <status>draft</status>
++     <created_at>2026-10-05</created_at>
++   </metadata>
++   <sections>
++     <section code="2.5.1">
++       <title>Results</title>
++       <content><![CDATA[<p>Results.</p><img src="data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==">]]></content>
++     </section>
++   </sections>
++   <electronic_signatures count="0">
++     <!-- No electronic signatures are recorded against this document. -->
++   </electronic_signatures>
++ </document>
+
+ ❯ server/services/authoring/__tests__/authoring-export-xml-figures.test.ts:38:21
+     36|   it('a WebP payload is not printed into the file', async () => {
+     37|     const xml = await xmlOf(`<p>Results.</p><img src="${WEBP}">`);
+     38|     expect(xml).not.toContain('UklGRhoAAABXRUJQ');
+       |                     ^
+     39|     expect(xml).toContain('[Figure not exported: ');
+     40|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  02:24:31
+   Duration  1.15s (transform 194ms, setup 80ms, import 60ms, tests 756ms, environment 0ms)
+
