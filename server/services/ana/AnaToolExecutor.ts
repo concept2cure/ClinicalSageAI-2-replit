@@ -211,6 +211,7 @@ import { registerDocumentSpineHandlers } from './document-spine.js';
 import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
 import { registerAuthoringReadHandlers } from './authoring-read-tools.js';
 import { registerRegulatoryKnowledgeHandlers } from './regulatory-knowledge-tools.js';
+import { registerCmcQualitySummaryHandler } from './cmc-quality-summary-tool.js';
 import { GOVERNED_REASON_MIN, ReasonNotStatedError, gatedReason, reasonFieldOf, statedReason, type StatedReasonField, REASON_REQUIRED_TOOLS } from './stated-reason-input.js';
 // Re-exported: the set's home is the pure module, so the tool gate and the
 // confirmation route read it without loading this executor.
@@ -5593,37 +5594,8 @@ registerToolHandler('execute_platform_command', async (input: Record<string, unk
 });
 
 // Draft M2.3 Quality Overall Summary — composes Module 3 then builds the QOS
-registerToolHandler('draft_quality_overall_summary_m2_3', async (input: Record<string, unknown>) => {
-  try {
-    const cmcSources = input.cmcSources;
-    if (!Array.isArray(cmcSources) || cmcSources.length === 0) {
-      return JSON.stringify({ status: 'needs_parameters', message: 'cmcSources[] is required to compose the QOS.' });
-    }
-    const { composeModule3FromCanonicalSources } = await import('../module3Composer.js');
-    const { buildM23QualityOverallSummary } = await import('../m2-summary-builders.js');
-     
-    const module3Sections = composeModule3FromCanonicalSources(cmcSources as any);
-    const summary = buildM23QualityOverallSummary({
-      module3Sections,
-      drugSubstanceName: typeof input.drugSubstanceName === 'string' ? input.drugSubstanceName : undefined,
-      drugProductName: typeof input.drugProductName === 'string' ? input.drugProductName : undefined,
-    });
-    return JSON.stringify({
-      status: 'drafted',
-      engine: 'deterministic',
-      sectionKey: summary.sectionKey,
-      title: summary.title,
-      content: summary.narrative,
-      tables: summary.tables,
-      completeness: summary.completeness,
-      gaps: summary.gaps,
-      instruction:
-        'This is a draft the author promotes through the governed authoring flow. State the completeness and the missing Module 3 sections (gaps) honestly.',
-    });
-  } catch (err: any) {
-    return JSON.stringify({ error: `M2.3 QOS composition failed: ${err?.message || 'unknown error'}` });
-  }
-});
+// draft_quality_overall_summary_m2_3 is registered from cmc-quality-summary-tool.ts:
+// it composes the open program's recorded CMC data and refuses data supplied in the call.
 
 registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<string, unknown>) => {
   try {
@@ -15714,6 +15686,8 @@ registerDocumentCatalogHandlers(registerToolHandler);
 registerAuthoringReadHandlers(registerToolHandler);
 // The canonical regulatory record (ind/ctd), read-only — same injected-register pattern.
 registerRegulatoryKnowledgeHandlers(registerToolHandler);
+// The 2.3 QOS of the open program, from its recorded CMC data (no model-supplied figures).
+registerCmcQualitySummaryHandler(registerToolHandler);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop
