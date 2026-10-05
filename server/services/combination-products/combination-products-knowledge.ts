@@ -5,7 +5,9 @@
  * A pure, closed-form regulatory knowledge base for drug-device, biologic-device,
  * and drug-biologic combination products. Every engine in this module is
  * DETERMINISTIC: identical input always yields identical output. There is NO LLM,
- * NO network call, NO database access, and NO import from any other service.
+ * NO network call, NO database access, and NO import from any other service; its
+ * one import is the shared QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts).
+ * Engines that depend on the date take `asOf`, defaulting to today (UTC).
  *
  * The engines implement the FDA and EU regulatory frameworks that govern
  * combination products end-to-end:
@@ -42,6 +44,8 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { QMSR_CROSSWALK, QMSR_EFFECTIVE, citeQms } from '../../../shared/regulatory/qmsr-crosswalk.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 0 — Shared types and citation registry
@@ -1172,7 +1176,8 @@ export function designHumanFactorsStudy(params: HumanFactorsParams): HumanFactor
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 5 — Device-constituent design controls (21 CFR 820.30 / QMSR)
+// SECTION 5 — Device-constituent design controls (QMSR: 21 CFR 820.10(c) →
+// ISO 13485:2016 §7.3; before 2026-02-02 the QSR, 21 CFR 820.30)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** A design-control element with its citation and expected content. */
@@ -1182,69 +1187,94 @@ interface DesignControlElement {
   expectation: string;
 }
 
-/** The 820.30 design-control elements (annotated array, not `as const`). */
-const DESIGN_CONTROL_ELEMENTS: DesignControlElement[] = [
-  {
-    citation: '21 CFR 820.30(b)',
-    element: 'Design and development planning',
-    expectation:
+/**
+ * The combination-product expectation for each design-control element. The
+ * element ids, their order, their names and their citations come from the one
+ * crosswalk, shared/regulatory/qmsr-crosswalk.ts, through `citeQms(id, asOf)`;
+ * only the device-constituent expectation lives here.
+ *
+ * 2026-10-05 (g-design-control-lists-one-home): this list carried its own
+ * '21 CFR 820.30(b)'…'(j)' citations, cited as the requirement on every date,
+ * and required an independent reviewer at design review and a "DHF". Neither
+ * is a QMSR requirement: ISO 13485:2016 §7.3.5 names the review participants
+ * and §7.3.10 is the design and development file (ISO text, recall). The QSR
+ * wording is kept for dates before 2026-02-02.
+ */
+const DESIGN_CONTROL_EXPECTATIONS: Record<
+  'designPlan' | 'designInputs' | 'designOutputs' | 'designReviews' | 'designVerification' |
+  'designValidation' | 'designTransfer' | 'designChanges' | 'traceability',
+  { qmsr: string; qsr?: string }
+> = {
+  designPlan: {
+    qmsr:
       'Establish and maintain plans describing design/development activities, responsibilities, and ' +
       'interfaces; update as the design evolves.',
   },
-  {
-    citation: '21 CFR 820.30(c)',
-    element: 'Design inputs',
-    expectation:
+  designInputs: {
+    qmsr:
       'Define the physical and performance requirements of the device constituent, including ' +
       'user/patient needs, intended use, essential performance, and interface with the drug/biologic.',
   },
-  {
-    citation: '21 CFR 820.30(d)',
-    element: 'Design outputs',
-    expectation:
+  designOutputs: {
+    qmsr:
       'Define outputs in terms that allow adequacy evaluation against inputs; identify outputs ' +
       'essential to proper functioning (acceptance criteria, specifications, drawings).',
   },
-  {
-    citation: '21 CFR 820.30(e)',
-    element: 'Design review',
-    expectation:
-      'Conduct formal, documented design reviews at appropriate stages with an independent reviewer present.',
+  designReviews: {
+    qmsr:
+      'Conduct formal, documented design reviews at planned stages; participants include representatives ' +
+      'of the functions concerned with the stage being reviewed and other specialist personnel.',
+    qsr: 'Conduct formal, documented design reviews at appropriate stages with an independent reviewer present.',
   },
-  {
-    citation: '21 CFR 820.30(f)',
-    element: 'Design verification',
-    expectation:
+  designVerification: {
+    qmsr:
       'Confirm design outputs meet design inputs (e.g., dose accuracy, delivery force, dimensional ' +
       'conformance, container-closure integrity).',
   },
-  {
-    citation: '21 CFR 820.30(g)',
-    element: 'Design validation',
-    expectation:
+  designValidation: {
+    qmsr:
       'Confirm devices conform to defined user needs and intended uses under actual or simulated use, ' +
       'using initial production units/lots; includes human factors validation and, where appropriate, ' +
       'clinical/simulated-use data.',
   },
-  {
-    citation: '21 CFR 820.30(h)',
-    element: 'Design transfer',
-    expectation:
-      'Ensure the device design is correctly translated into production specifications.',
+  designTransfer: {
+    qmsr: 'Ensure the device design is correctly translated into production specifications.',
   },
-  {
-    citation: '21 CFR 820.30(i)',
-    element: 'Design changes',
-    expectation: 'Identify, document, validate/verify, review, and approve design changes before implementation.',
+  designChanges: {
+    qmsr: 'Identify, document, validate/verify, review, and approve design changes before implementation.',
   },
-  {
-    citation: '21 CFR 820.30(j)',
-    element: 'Design History File (DHF)',
-    expectation:
+  traceability: {
+    qmsr:
+      'Maintain a design and development file for each device type or family that includes or references ' +
+      'the records demonstrating conformity to design and development requirements and the records of ' +
+      'design changes.',
+    qsr:
       'Maintain a DHF for each device type that demonstrates the design was developed per the ' +
       'approved design plan and 820.30.',
   },
-];
+};
+
+/** Today's UTC date, YYYY-MM-DD: the default `asOf` at this engine's edge. */
+function utcToday(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * The design-control elements as at `asOf`, in crosswalk order. Throws on a
+ * malformed date (via `citeQms`) rather than guessing which regulation applies.
+ */
+function designControlElements(asOf: string): DesignControlElement[] {
+  const qmsr = asOf >= QMSR_EFFECTIVE;
+  return QMSR_CROSSWALK.filter((r) => /^7\.3\.\d+$/.test(r.iso13485Clause)).map((r): DesignControlElement => {
+    const exp = DESIGN_CONTROL_EXPECTATIONS[r.id as keyof typeof DESIGN_CONTROL_EXPECTATIONS];
+    if (!exp) throw new Error(`combination-products: no expectation for design-control element "${r.id}"`);
+    return {
+      citation: citeQms(r.id, asOf),
+      element: r.title,
+      expectation: qmsr ? exp.qmsr : (exp.qsr ?? exp.qmsr),
+    };
+  });
+}
 
 export interface DeviceConstituentControlsParams {
   /** Device-constituent description, e.g. "prefilled syringe", "on-body injector". */
@@ -1262,10 +1292,15 @@ export interface DeviceConstituentControlsParams {
   containsSoftware?: boolean;
   /** Known/declared essential performance requirements (recorded and supplemented). */
   declaredEssentialPerformance?: string[];
+  /**
+   * Date the program is assessed against (YYYY-MM-DD); defaults to today, UTC.
+   * Before 2026-02-02 the QSR (21 CFR 820.30) applies; on and after, the QMSR.
+   */
+  asOf?: string;
 }
 
 export interface DeviceConstituentControlsResult {
-  /** Full 820.30 design-control program. */
+  /** Full design-control program, cited as at `asOf` (shared/regulatory/qmsr-crosswalk.ts). */
   designControls: DesignControlElement[];
   /** Representative design inputs to capture. */
   designInputs: string[];
@@ -1301,13 +1336,15 @@ export function assessDeviceConstituentControls(
     'The device constituent of a combination product is subject to design controls under ' +
       '21 CFR 820.30 (called out for a drug-cGMP base by 21 CFR 4.4(b)(1)).',
   );
+  const asOf = params.asOf ?? utcToday();
+  const designControls = designControlElements(asOf);
+  const qmsr = asOf >= QMSR_EFFECTIVE;
+
   rationale.push(
     'Design controls trace user needs → design inputs → design outputs → verification ' +
-      '→ validation, all captured in the Design History File (DHF).',
-  );
-
-  const designControls = DESIGN_CONTROL_ELEMENTS.map(
-    (e: DesignControlElement): DesignControlElement => ({ ...e }),
+      (qmsr
+        ? '→ validation, all recorded in the design and development file (ISO 13485:2016 §7.3.10).'
+        : '→ validation, all captured in the Design History File (DHF).'),
   );
 
   // Design inputs.
@@ -1352,7 +1389,7 @@ export function assessDeviceConstituentControls(
 
   // Validation.
   const validationActivities: string[] = [
-    'Design validation on initial production units under actual or simulated use conditions (820.30(g)).',
+    `Design validation on initial production units under actual or simulated use conditions (${citeQms('designValidation', asOf)}).`,
     'Human factors validation (summative) study demonstrating safe and effective use (see HF plan).',
     'Process validation for manufacturing operations affecting the device constituent.',
   ];
@@ -1384,7 +1421,9 @@ export function assessDeviceConstituentControls(
   const designHistoryFileContents: string[] = [
     'Design and development plan(s).',
     'Design input and design output documents with traceability matrix.',
-    'Design review records (with independent reviewer).',
+    qmsr
+      ? 'Design review records, naming the participants and the function each represents.'
+      : 'Design review records (with independent reviewer).',
     'Verification and validation protocols, data, and reports.',
     'Risk management file (ISO 14971) and URRA.',
     'Design transfer records and design change records.',
@@ -1397,8 +1436,8 @@ export function assessDeviceConstituentControls(
     );
   }
   notes.push(
-    'Under the QMSR (effective 2026-02-02), 21 CFR 820.30 design controls map to ISO 13485:2016 §7.3; ' +
-      'maintain the same objective evidence under the ISO clause structure.',
+    `Design controls as at ${asOf}: ${citeQms('design_controls', asOf)}. ` +
+      'Maintain the same objective evidence under the ISO 13485:2016 clause structure.',
   );
   notes.push(
     'For a single-entity combination product, the device design controls and the drug CMC must be ' +
@@ -1709,13 +1748,13 @@ export function listDrugProvisionsForDeviceBase(): Array<{
   );
 }
 
-/** Public view of the 820.30 design-control elements. */
-export function listDesignControlElements(): Array<{
+/** Public view of the design-control elements as at `asOf` (YYYY-MM-DD; defaults to today, UTC). */
+export function listDesignControlElements(asOf: string = utcToday()): Array<{
   citation: string;
   element: string;
   expectation: string;
 }> {
-  return DESIGN_CONTROL_ELEMENTS.map(
+  return designControlElements(asOf).map(
     (e: DesignControlElement): { citation: string; element: string; expectation: string } => ({
       citation: e.citation,
       element: e.element,
