@@ -13,9 +13,18 @@
  *   release_note / anomaly_log / ots_list / sbom / pentest / threat_model /
  *   risk_control / use_error / cybersecurity_label
  *
- * Doc level is 'basic' or 'enhanced' per the FDA 2023 software guidance —
- * the kit's summary card surfaces which deliverables are required given
- * the chosen level. Safety class follows IEC 62304 (A | B | C).
+ * Doc level is 'basic' or 'enhanced' per the FDA 2023 software guidance.
+ * The summary reads the level from the items and reports 'undetermined' (no
+ * percentage) when there are none or they disagree; the required set is
+ * FDA_SOFTWARE_DOCUMENTATION_SET, with cybersecurity documentation added only
+ * for a cyber device (FD&C Act §524B). Safety class follows IEC 62304 (A | B | C)
+ * and does not set the documentation level.
+ *
+ * 2026-10-05 (g-software-summary-fails-closed): the summary used to take the
+ * most recently updated item's level, default to 'basic' with no items, and
+ * keep its own REQUIRED_BASIC / REQUIRED_ENHANCED lists (unit/integration test
+ * records at Basic; SBOM, OTS, threat model, pentest keyed on level). Those
+ * lists are deleted; software-lifecycle.ts is the one set.
  */
 
 import { Router, Request, Response } from 'express';
@@ -26,6 +35,15 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
+import type { RegulatoryBasis } from '../../shared/regulatory/regulatory-basis';
+import { deviceFlagsFromMetadata } from '../services/pathway-engines/estar/program-device-flags';
+import {
+  fdaCybersecurityDocumentation,
+  fdaDocumentationLevel,
+  fdaSoftwareDocumentationSet,
+  type FdaDocumentationLevel,
+  type FdaSubmissionDocumentationItem,
+} from '../services/market-specs/software-lifecycle';
 
 const router = Router();
 const log = createScopedLogger('mdx-software');
@@ -192,35 +210,76 @@ router.patch('/software/:id', async (req: Request, res: Response) => {
 
 /* ─── GET /api/mdx/software-summary/:programId ────────────────────── */
 
-/* Required-deliverable matrix per the FDA 2023 software guidance. Basic
-   documentation level requires the core set; Enhanced adds SDS and the
-   cybersecurity deliverables. The kit's surface uses this to compute
-   "completeness %" against the right denominator. */
-const REQUIRED_BASIC: ReadonlyArray<(typeof ITEM_KIND)[number]> = [
-  'srs', 'arch', 'unit_test', 'integration_test', 'system_test',
-  'release_note', 'anomaly_log', 'ots_list', 'sbom',
-];
-const REQUIRED_ENHANCED: ReadonlyArray<(typeof ITEM_KIND)[number]> = [
-  ...REQUIRED_BASIC, 'sds', 'threat_model', 'pentest', 'cybersecurity_label',
-];
+type ItemKind = (typeof ITEM_KIND)[number];
 
+/* Which lifecycle item kinds evidence each piece of FDA documentation. The
+   documentation itself — which items FDA recommends at which level — is
+   FDA_SOFTWARE_DOCUMENTATION_SET and fdaCybersecurityDocumentation
+   (server/services/market-specs/software-lifecycle.ts); this table only says
+   which records in this register stand for an item. An item with no entry is
+   reported as `untracked`, never counted as present or dropped. This mapping
+   is this register's convention, not FDA text. */
+const LIFECYCLE_KINDS_FOR: Readonly<Record<string, readonly ItemKind[]>> = Object.freeze({
+  srs: ['srs'],
+  architecture_design_chart: ['arch'],
+  system_test_protocol_report: ['system_test'],
+  version_history: ['release_note'],
+  unresolved_anomalies: ['anomaly_log'],
+  sds: ['sds'],
+  unit_integration_test_protocols_reports: ['unit_test', 'integration_test'],
+  sbom: ['sbom'],
+  threat_model: ['threat_model'],
+  cybersecurity_testing: ['pentest'],
+});
+
+function dedupeBasis(list: RegulatoryBasis[]): RegulatoryBasis[] {
+  const seen = new Set<string>();
+  return list.filter((b) => (seen.has(b.ref) ? false : (seen.add(b.ref), true)));
+}
+
+/* The level is read from the items, never assumed: no items, or items filed at
+   more than one level, leave it undetermined and no percentage is computed —
+   a percentage against an undetermined set is a number nobody can defend.
+   Superseded items are history and do not vote. */
 router.get('/software-summary/:programId', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const programId = String(req.params.programId);
   if (!UUID_RE.test(programId)) return clientError(res, 422, 'programId must be a UUID');
 
+  const levelBasis = fdaDocumentationLevel({}).basis;
+
   try {
-    /* Determine the doc level — most recent item wins; defaults to 'basic'
-       when no items exist. */
-    const levelRow = await pool.query<{ doc_level: string | null }>(
-      `SELECT doc_level FROM software_lifecycle_items
+    const levelRows = await pool.query<{ doc_level: string }>(
+      `SELECT DISTINCT doc_level FROM software_lifecycle_items
         WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
-        ORDER BY updated_at DESC LIMIT 1`,
+          AND status <> 'superseded'
+        ORDER BY doc_level`,
       [orgId, programId],
     );
-    const docLevel = (levelRow.rows[0]?.doc_level ?? 'basic') as 'basic' | 'enhanced';
-    const required = docLevel === 'enhanced' ? REQUIRED_ENHANCED : REQUIRED_BASIC;
+    const recordedLevels = levelRows.rows.map((r) => r.doc_level);
+
+    if (recordedLevels.length !== 1 || !(DOC_LEVEL as readonly string[]).includes(recordedLevels[0])) {
+      const reason = recordedLevels.length === 0
+        ? 'No software lifecycle items are recorded for this program, so the FDA Documentation Level (Basic or Enhanced) has not been determined and no completeness is computed.'
+        : recordedLevels.length > 1
+          ? `Lifecycle items are recorded at more than one FDA Documentation Level (${recordedLevels.join(', ')}). The program has one level; correct the items before completeness is computed.`
+          : `Lifecycle items are recorded at a documentation level FDA does not define (${recordedLevels[0]}); the level is Basic or Enhanced. Correct the items before completeness is computed.`;
+      return ok(res, {
+        docLevel: 'undetermined' as const,
+        recordedLevels,
+        reason,
+        completion: null,
+        completionScope: null,
+        required: null,
+        approved: null,
+        matrix: [],
+        untracked: [],
+        cybersecurity: null,
+        basis: levelBasis,
+      });
+    }
+    const docLevel = recordedLevels[0] as FdaDocumentationLevel;
 
     const present = await pool.query<{ item_kind: string; n: number; approved: number }>(
       `SELECT item_kind, COUNT(*)::int AS n,
@@ -231,23 +290,55 @@ router.get('/software-summary/:programId', async (req: Request, res: Response) =
       [orgId, programId],
     );
     const byKind = new Map(present.rows.map((r) => [r.item_kind, r]));
-    const matrix = required.map((kind) => ({
-      kind,
-      required: true,
-      present:  (byKind.get(kind)?.n ?? 0) > 0,
-      approved: (byKind.get(kind)?.approved ?? 0) > 0,
-    }));
+
+    /* Cyber-device status (FD&C Act §524B) comes from the program's intake
+       answers, read by the one parser of them (deviceFlagsFromMetadata). */
+    const programRow = await pool.query<{ metadata: unknown }>(
+      `SELECT metadata FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+      [programId, orgId],
+    );
+    const flags = programRow.rows.length ? deviceFlagsFromMetadata(programRow.rows[0].metadata) : undefined;
+    const cyber = fdaCybersecurityDocumentation({ cyberDevice: flags?.cyberDevice });
+
+    const requiredItems: FdaSubmissionDocumentationItem[] = [...fdaSoftwareDocumentationSet(docLevel), ...cyber.items];
+    const matrix = requiredItems.flatMap((doc) =>
+      (LIFECYCLE_KINDS_FOR[doc.id] ?? []).map((kind) => ({
+        kind,
+        documentation: doc.id,
+        title: doc.title,
+        required: true,
+        present:  (byKind.get(kind)?.n ?? 0) > 0,
+        approved: (byKind.get(kind)?.approved ?? 0) > 0,
+      })),
+    );
+    const untracked = requiredItems
+      .filter((doc) => !LIFECYCLE_KINDS_FOR[doc.id])
+      .map((doc) => ({ id: doc.id, title: doc.title }));
     const approvedCount = matrix.filter((m) => m.approved).length;
-    const completion = required.length === 0
-      ? 0
-      : Math.round((approvedCount / required.length) * 100);
+
+    const reason = cyber.status === 'undetermined'
+      ? 'Whether the device is a cyber device (FD&C Act §524B) is not recorded on the program, so the cybersecurity documentation is not known to be required or not, and no completeness is computed.'
+      : null;
+    const completion = reason !== null || matrix.length === 0
+      ? null
+      : Math.round((approvedCount / matrix.length) * 100);
 
     return ok(res, {
       docLevel,
+      recordedLevels,
+      reason,
       completion,
-      required:    required.length,
+      completionScope: untracked.length
+        ? `Approved lifecycle records over the ${matrix.length} required records this register tracks. ` +
+          `${untracked.length} recommended documents have no lifecycle item kind and are not counted: ` +
+          `${untracked.map((u) => u.title).join('; ')}.`
+        : `Approved lifecycle records over the ${matrix.length} required records.`,
+      required:    matrix.length,
       approved:    approvedCount,
       matrix,
+      untracked,
+      cybersecurity: { status: cyber.status, rationale: cyber.rationale, basis: cyber.basis },
+      basis: dedupeBasis([...levelBasis, ...requiredItems.flatMap((i) => i.basis)]),
     });
   } catch (err) {
     return serverError(res, log, 'summary', err);

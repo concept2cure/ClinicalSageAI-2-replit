@@ -1,0 +1,196 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the documentation level is determined, never assumed > a program with no lifecycle items is undetermined with no percentage, not 0% against Basic 27ms
+   → expected 'basic' to be 'undetermined' // Object.is equality
+ × server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the documentation level is determined, never assumed > items recorded at both levels are undetermined — one Basic item does not shrink the Enhanced denominator 5ms
+   → expected 'basic' to be 'undetermined' // Object.is equality
+ ✓ server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the documentation level is determined, never assumed > a superseded item at the old level does not make the level undetermined 3ms
+ × server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the documentation level is determined, never assumed > carries the Documentation Level basis, with FDA 2023 guidance as regulator text 3ms
+   → Cannot read properties of undefined (reading 'some')
+ × server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the required set is FDA_SOFTWARE_DOCUMENTATION_SET > Basic requires a system_test record and not unit_test or integration_test records 5ms
+   → expected [ 'srs', 'arch', 'unit_test', …(6) ] to not include 'unit_test'
+ × server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the required set is FDA_SOFTWARE_DOCUMENTATION_SET > every matrix row names the FDA documentation item it evidences 3ms
+   → expected undefined to be 'system_test_protocol_report' // Object.is equality
+ × server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the required set is FDA_SOFTWARE_DOCUMENTATION_SET > unit/integration records do not count toward Basic completeness 4ms
+   → expected 2 to be +0 // Object.is equality
+ ✓ server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the required set is FDA_SOFTWARE_DOCUMENTATION_SET > Enhanced adds the SDS and the unit and integration test records 3ms
+ × server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the required set is FDA_SOFTWARE_DOCUMENTATION_SET > names the required documentation no lifecycle item kind records, instead of dropping it silently 5ms
+   → Cannot read properties of undefined (reading 'map')
+ × server/routes/__tests__/mdx-software-summary.test.ts > software-summary: cybersecurity follows cyber-device status (§524B), not the level > a non-cyber device is not asked for SBOM, OTS list, threat model, pentest or cybersecurity label 3ms
+   → expected [ 'srs', 'arch', 'unit_test', …(10) ] to not include 'sbom'
+ × server/routes/__tests__/mdx-software-summary.test.ts > software-summary: cybersecurity follows cyber-device status (§524B), not the level > a cyber device at Basic is asked for SBOM, threat model and cybersecurity testing 5ms
+   → expected [ 'srs', 'arch', 'unit_test', …(6) ] to deeply equal ArrayContaining{…}
+ × server/routes/__tests__/mdx-software-summary.test.ts > software-summary: cybersecurity follows cyber-device status (§524B), not the level > an unrecorded cyber-device status gives no percentage 2ms
+   → Cannot read properties of undefined (reading 'status')
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the documentation level is determined, never assumed > a program with no lifecycle items is undetermined with no percentage, not 0% against Basic
+AssertionError: expected 'basic' to be 'undetermined' // Object.is equality
+
+Expected: "undetermined"
+Received: "basic"
+
+ ❯ server/routes/__tests__/mdx-software-summary.test.ts:128:24
+    126|   it('a program with no lifecycle items is undetermined with no percen…
+    127|     const s = await summary();
+    128|     expect(s.docLevel).toBe('undetermined');
+       |                        ^
+    129|     expect(s.completion).toBeNull();
+    130|     expect(s.required).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the documentation level is determined, never assumed > items recorded at both levels are undetermined — one Basic item does not shrink the Enhanced denominator
+AssertionError: expected 'basic' to be 'undetermined' // Object.is equality
+
+Expected: "undetermined"
+Received: "basic"
+
+ ❯ server/routes/__tests__/mdx-software-summary.test.ts:143:24
+    141|     ];
+    142|     const s = await summary();
+    143|     expect(s.docLevel).toBe('undetermined');
+       |                        ^
+    144|     expect(s.completion).toBeNull();
+    145|     expect(s.recordedLevels).toEqual(['basic', 'enhanced']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the documentation level is determined, never assumed > carries the Documentation Level basis, with FDA 2023 guidance as regulator text
+TypeError: Cannot read properties of undefined (reading 'some')
+ ❯ server/routes/__tests__/mdx-software-summary.test.ts:157:20
+    155|   it('carries the Documentation Level basis, with FDA 2023 guidance as…
+    156|     const s = await summary();
+    157|     expect(s.basis.some((b: any) => b.confidence === 'regulator-text' …
+       |                    ^
+    158|   });
+    159| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the required set is FDA_SOFTWARE_DOCUMENTATION_SET > Basic requires a system_test record and not unit_test or integration_test records
+AssertionError: expected [ 'srs', 'arch', 'unit_test', …(6) ] to not include 'unit_test'
+ ❯ server/routes/__tests__/mdx-software-summary.test.ts:168:23
+    166|     const kinds = s.matrix.map((m: any) => m.kind);
+    167|     expect(kinds).toEqual(expect.arrayContaining(BASIC_TRACKED));
+    168|     expect(kinds).not.toContain('unit_test');
+       |                       ^
+    169|     expect(kinds).not.toContain('integration_test');
+    170|     expect(kinds).not.toContain('sds');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the required set is FDA_SOFTWARE_DOCUMENTATION_SET > every matrix row names the FDA documentation item it evidences
+AssertionError: expected undefined to be 'system_test_protocol_report' // Object.is equality
+
+- Expected:
+"system_test_protocol_report"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/mdx-software-summary.test.ts:180:31
+    178|     const s = await summary();
+    179|     const row = s.matrix.find((m: any) => m.kind === 'system_test');
+    180|     expect(row.documentation).toBe('system_test_protocol_report');
+       |                               ^
+    181|     expect(row.title).toMatch(/system-level test protocol and report/i…
+    182|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the required set is FDA_SOFTWARE_DOCUMENTATION_SET > unit/integration records do not count toward Basic completeness
+AssertionError: expected 2 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 2
+
+ ❯ server/routes/__tests__/mdx-software-summary.test.ts:187:24
+    185|     state.items = [item('basic', 'unit_test'), item('basic', 'integrat…
+    186|     const s = await summary();
+    187|     expect(s.approved).toBe(0);
+       |                        ^
+    188|     expect(s.completion).toBe(0);
+    189|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the required set is FDA_SOFTWARE_DOCUMENTATION_SET > names the required documentation no lifecycle item kind records, instead of dropping it silently
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ server/routes/__tests__/mdx-software-summary.test.ts:201:29
+    199|     state.items = BASIC_TRACKED.map((k) => item('basic', k));
+    200|     const s = await summary();
+    201|     const ids = s.untracked.map((u: any) => u.id);
+       |                             ^
+    202|     expect(ids).toEqual(expect.arrayContaining(['software_description'…
+    203|     expect(s.completionScope).toMatch(/not counted/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/routes/__tests__/mdx-software-summary.test.ts > software-summary: cybersecurity follows cyber-device status (§524B), not the level > a non-cyber device is not asked for SBOM, OTS list, threat model, pentest or cybersecurity label
+AssertionError: expected [ 'srs', 'arch', 'unit_test', …(10) ] to not include 'sbom'
+ ❯ server/routes/__tests__/mdx-software-summary.test.ts:212:111
+    210|     const s = await summary();
+    211|     const kinds = s.matrix.map((m: any) => m.kind);
+    212|     for (const k of ['sbom', 'ots_list', 'threat_model', 'pentest', 'c…
+       |                                                                                                               ^
+    213|     expect(s.cybersecurity.status).toBe('not_required');
+    214|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/routes/__tests__/mdx-software-summary.test.ts > software-summary: cybersecurity follows cyber-device status (§524B), not the level > a cyber device at Basic is asked for SBOM, threat model and cybersecurity testing
+AssertionError: expected [ 'srs', 'arch', 'unit_test', …(6) ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
++ [
++   "srs",
++   "arch",
++   "unit_test",
++   "integration_test",
++   "system_test",
++   "release_note",
++   "anomaly_log",
++   "ots_list",
+    "sbom",
+-   "threat_model",
+-   "pentest",
+  ]
+
+ ❯ server/routes/__tests__/mdx-software-summary.test.ts:222:19
+    220|     expect(s.docLevel).toBe('basic');
+    221|     const kinds = s.matrix.map((m: any) => m.kind);
+    222|     expect(kinds).toEqual(expect.arrayContaining(['sbom', 'threat_mode…
+       |                   ^
+    223|     expect(s.cybersecurity.status).toBe('required');
+    224|     expect(s.required).toBe(BASIC_TRACKED.length + 3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/routes/__tests__/mdx-software-summary.test.ts > software-summary: cybersecurity follows cyber-device status (§524B), not the level > an unrecorded cyber-device status gives no percentage
+TypeError: Cannot read properties of undefined (reading 'status')
+ ❯ server/routes/__tests__/mdx-software-summary.test.ts:234:28
+    232|     const s = await summary();
+    233|     expect(s.docLevel).toBe('basic');
+    234|     expect(s.cybersecurity.status).toBe('undetermined');
+       |                            ^
+    235|     expect(s.completion).toBeNull();
+    236|     expect(s.reason).toMatch(/cyber device/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 2 passed (12)
+   Start at  12:52:14
+   Duration  738ms (transform 154ms, setup 102ms, import 204ms, tests 73ms, environment 0ms)
+
