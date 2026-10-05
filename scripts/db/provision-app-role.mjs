@@ -242,6 +242,11 @@ export const APPEND_ONLY_TABLES = Object.freeze(
     { schema: 'public', name: 'regulatory_audit_logs' },
     { schema: 'public', name: 'c2c_ana_actions' },
     { schema: 'public', name: 'authoring_signatures' },
+    // DP-84, 2026-10-05: the Module 3 signed section snapshots and provenance
+    // trail, append-only by trigger (migrations/20261005c_cmc_module3_history_
+    // append_only.sql); every writer INSERTs only (census in that file).
+    { schema: 'public', name: 'cmc_module3_section_versions' },
+    { schema: 'public', name: 'cmc_provenance_events' },
   ].map((t) => Object.freeze(t)),
 );
 

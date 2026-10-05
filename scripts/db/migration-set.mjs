@@ -3008,6 +3008,15 @@ export const C2C_MIGRATION_FILES = [
   // EXISTS, no DROP. Evidence docs/evidence/CMC-M3-GA/2026-10-05/08-cmc-evidence-from-the-vault/.
   'migrations/20261005b_cmc_source_evidence.sql',
 
+  // ── Module 3 history append-only (2026-10-05, DP-84; rows D2, D5, D6) ──────
+  // The signed section snapshots (cmc_module3_section_versions) and the Module 3
+  // provenance trail (cmc_provenance_events) refuse UPDATE, DELETE and TRUNCATE
+  // for every role, through public.domain_history_append_only() from
+  // 20261001_domain_history_append_only.sql above. Census in the file: every
+  // writer INSERTs only. Creates no table, drops nothing another file creates.
+  // Evidence docs/evidence/CMC-M3-GA/2026-10-05/19-module3-history-append-only/.
+  'migrations/20261005c_cmc_module3_history_append_only.sql',
+
   // ── Module 1 filed where FDA and PMDA file it (2026-10-05, D2) ─────────────
   // nda:fda and bla:fda ich-m4-v2.2, anda:fda fda-anda-21cfr314-94-v1.1 and
   // jnda:pmda ich-m4-v2.2 as NEW versions superseding v2.1 / v1.0: the gates
