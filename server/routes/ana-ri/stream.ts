@@ -18,6 +18,7 @@
  */
 
 import type { Request, Response, Router } from 'express';
+import { frameToolOutput } from '../../services/ana/tool-output-frame.js';
 
 import type { QueryResult, QueryResultRow } from 'pg';
 
@@ -2673,8 +2674,8 @@ export function mountStreamRoute(router: Router): void {
               results
                 .map(
                   tr =>
-                    `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(
-                      tr.content
+                    `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${frameToolOutput(
+                      capToolResultForModel(tr.content)
                     )}`
                 )
                 .join('\n\n') +

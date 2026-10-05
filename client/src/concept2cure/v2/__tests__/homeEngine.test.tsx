@@ -71,8 +71,9 @@ function openMenu(): HTMLElement {
 }
 
 function menuItem(menu: HTMLElement, mode: { effortLabel: string }): HTMLButtonElement {
+  // Each mode is a radio in the engine group (EngineChoices, ADR-0015 §9).
   const btn = within(menu)
-    .getAllByRole('button')
+    .getAllByRole('radio')
     .find((b) => b.querySelector('.lm-label')?.textContent === mode.effortLabel);
   if (!btn) throw new Error(`no menu item for ${mode.effortLabel}`);
   return btn as HTMLButtonElement;
