@@ -1206,6 +1206,9 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
     never an uploaded figure, and stores `<p></p>` for a section that held only
     a non-figure image. The XML export writes raw section content inside CDATA,
     so an older external URL or WebP payload appears verbatim.
+    **Done 2026-10-05 by `…01YZFCXR`** (`docs/evidence/AUTHORING/2026-10-05-machine-draft-figures/`):
+    a machine draft stores no image and an image-only section as a gap; the XML
+    replaces every image DOCX and PDF would not file with the same placeholder.
 19. **→ whoever turns on live co-editing (`ENABLE_LIVE_COEDITING`), 2026-10-04
     — a blocker before the flag.** The undo floor at a recorded accept or
     reject (`f2ab9b3cd`) holds for prosemirror-history (fuzzed 300 × 500).

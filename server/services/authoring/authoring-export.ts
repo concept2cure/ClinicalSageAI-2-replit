@@ -268,7 +268,44 @@ const safeFileStem = (title: string) => title.replace(/[^a-zA-Z0-9]/g, '_');
 // XML
 // ─────────────────────────────────────────────────────────────────────────────
 
-function renderXml(args: RenderExportArgs, shared: SharedRender): { content: Buffer; fileName: string; contentType: string } {
+/**
+ * A section's content as the XML carries it: the stored HTML, with every image
+ * the DOCX and PDF would not file replaced by the same "[Figure not exported:
+ * …]" placeholder they print (unfiledFigureLabel), so the three formats of one
+ * document agree. A figure (a governed reference, or an inline PNG, JPEG or
+ * GIF) is kept as written. A section whose images a browser and the export
+ * read differently files none of them, as in the other formats.
+ *
+ * Until 2026-10-05 the XML wrote the stored HTML verbatim, so an older
+ * section's external image URL or WebP payload appeared in the exported file
+ * though DOCX and PDF refused it (refute-review of the figure rule, round 3:
+ * O3; work-orders item 18).
+ */
+async function xmlSectionContent(content: string | null | undefined): Promise<string> {
+  const html = String(content ?? '');
+  if (!/<img/i.test(html)) return html;
+  const [{ parseSectionHtml }, { unfiledFigureLabel }, { imageReadingsDiffer }, { isFigureSrc }] = await Promise.all([
+    import('../../export/section-html-parse.js'),
+    import('../../export/authoring-images.js'),
+    import('./authoring-html-sanitizer.js'),
+    import('@shared/authoring/figure-refs'),
+  ]);
+  const disagree = (await imageReadingsDiffer(html)) !== null;
+  const root = parseSectionHtml(html);
+  for (const img of root.querySelectorAll('img')) {
+    const src = img.getAttribute('src');
+    if (!disagree && isFigureSrc(src)) continue;
+    const label = unfiledFigureLabel({ src: src ?? undefined, alt: img.getAttribute('alt') ?? undefined });
+    img.replaceWith(`[Figure not exported: ${label}]`.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+  }
+  return root.toString();
+}
+
+function renderXml(
+  args: RenderExportArgs,
+  shared: SharedRender,
+  contents: readonly string[],
+): { content: Buffer; fileName: string; contentType: string } {
   const { doc, sections } = args;
   /* Nothing here was escaped once; signer names carry apostrophes and reasons
      carry ampersands, so every value is escaped and CDATA is split on `]]>`. */
@@ -292,9 +329,9 @@ function renderXml(args: RenderExportArgs, shared: SharedRender): { content: Buf
   <sections>
 ${sections
   .map(
-    (s) => `    <section code="${xe(s.code)}">
+    (s, i) => `    <section code="${xe(s.code)}">
       <title>${xe(s.title)}</title>
-      <content><![CDATA[${cdata(s.content)}]]></content>
+      <content><![CDATA[${cdata(contents[i])}]]></content>
     </section>`,
   )
   .join('\n')}
@@ -477,7 +514,7 @@ export async function renderAuthoringExport(args: RenderExportArgs): Promise<Ren
   const shared = await prepareShared(args);
   const out =
     args.format === 'xml'
-      ? renderXml(args, shared)
+      ? renderXml(args, shared, await Promise.all(args.sections.map((s) => xmlSectionContent(s.content))))
       : args.format === 'docx'
         ? await renderDocx(args, shared)
         : await renderPdf(args, shared);
