@@ -1,0 +1,4 @@
+ × server/services/cmc/__tests__/cmc-analysis-tenancy.pglite.test.ts > runIchComplianceCheck — ICH compliance checker > reads no stage from another organization's program, and the caller's own 7ms
+   → expected { application: 'marketing', …(2) } to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 7 passed (8)

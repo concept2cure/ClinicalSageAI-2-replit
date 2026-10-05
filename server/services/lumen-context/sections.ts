@@ -96,7 +96,7 @@ You are drafting the Drug Substance section per ICH M4Q.
 - **3.2.S.7**: Stability (protocol, results, proposed retest period/storage)
 
 ### ICH Guidelines:
-- **Q2(R1)**: Analytical Validation
+- **Q2(R2)**: Analytical Validation (with Q14, Analytical Procedure Development)
 - **Q3A(R2)**: Impurities in Drug Substances
 - **Q6A**: Specifications for Chemical Substances
 - **Q7**: GMP for APIs
@@ -129,7 +129,7 @@ You are drafting the Drug Product section per ICH M4Q.
 
 ### ICH Guidelines:
 - **Q1A-Q1E**: Stability testing
-- **Q2(R1)**: Analytical validation
+- **Q2(R2)**: Analytical validation
 - **Q3B(R2)**: Impurities in Drug Products
 - **Q6A**: Specifications
 - **Q8(R2)**: Pharmaceutical Development
