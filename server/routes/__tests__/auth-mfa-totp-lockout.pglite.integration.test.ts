@@ -133,6 +133,10 @@ async function seed(mfaMethod: 'totp' | 'email') {
   );
   await holder.pg.exec(`INSERT INTO organizations (id, uuid, name) VALUES (1, gen_random_uuid(), 'Acme');
     INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, 7, 'member');`);
+  // The pre-auth lookup the sign-in starts from (migrations/20260928_users_membership_rls.sql),
+  // without its definer settings: this database has no RLS to step over.
+  await holder.pg.exec(`CREATE OR REPLACE FUNCTION public.user_id_for_email(p_email text) RETURNS integer
+    LANGUAGE sql STABLE AS $body$ SELECT id FROM public.users WHERE email = p_email $body$;`);
 }
 
 async function lockRow() {

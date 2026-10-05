@@ -89,8 +89,12 @@ function sortedKeysFeedOutput(line, after) {
   if (/JSON\.stringify\s*\([^,]+,\s*Object\.keys\s*\(/.test(line)) return true; // key-list argument
   const bound = line.match(/([A-Za-z_$][\w$]*)\s*=\s*Object\.keys\s*\(/);
   if (!bound) return true; // an unfamiliar form: count it, as before
-  const name = bound[1];
-  return new RegExp(`\\b${name}${ITERATE}|\\bof\\s+${name}\\b|\\b${name}\\s*\\[|stringify\\s*\\([^)]*,\\s*${name}\\b`).test(after);
+  // An identifier may hold `$`, a regex anchor, and \b does not bound one, so
+  // it is escaped and bounded by identifier characters (2026-10-05).
+  const id = bound[1].replace(/\$/g, '\\$');
+  const [B, E] = ['(?<![\\w$])', '(?![\\w$])'];
+  // nosemgrep: detect-non-literal-regexp -- id is an escaped identifier; ITERATE, B and E are constants
+  return new RegExp(`${B}${id}${ITERATE}|\\bof\\s+${id}${E}|${B}${id}\\s*\\[|stringify\\s*\\([^)]*,\\s*${id}${E}`).test(after);
 }
 
 function trackedSourceFiles() {
