@@ -18,7 +18,7 @@ import { programInOrganization } from '../c2c/program-access';
 import crypto from 'crypto';
 import { ANA_MACHINE_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
 import { columnState, type Queryable } from './authoring-evidence';
-import { sanitizeAuthoringSectionHtml } from './authoring-html-sanitizer';
+import { sanitizeAuthoringSectionHtml, sanitizeMachineDraftSectionHtml } from './authoring-html-sanitizer';
 import {
   grantCreatorOwnership,
   insertDocumentTx,
@@ -249,7 +249,9 @@ export async function createDocumentFromDraft(
     input.sections.map((s, i) => ({
       code: s.code,
       title: s.title,
-      content: sanitizeAuthoringSectionHtml(s.content),
+      // A machine draft keeps no image: a model's image is never an uploaded
+      // figure (item 18, 2026-10-05). An import or seed keeps its figures.
+      content: isMachineDraft ? sanitizeMachineDraftSectionHtml(s.content) : sanitizeAuthoringSectionHtml(s.content),
       orderIndex: i,
       changeReason: CHANGE_REASON[provenance.source],
       metadata: { provenance, drafted: true },
