@@ -1,0 +1,19 @@
+Red first: round 9's tests against trunk's turn-record.ts and stream.ts (unchanged on trunk from 54a8da76a to f7973d225; last changed by e67c264f9 and a3775bcef).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run server/services/ana/__tests__/turn-record-sent.test.ts server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+All six fail: the recorder has no setRouting or callSent, a call carries neither its request id nor what it was sent, and the stream records none of it.
+
+ × server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > is on the record, call by call, with the gateway request that joins it to the ledger 6ms
+   → r.setRouting is not a function
+ × server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > says plainly what it does not know: no request id, no sent facts, no routing 7ms
+   → expected [ { call: 1, round: 1, …(2) } ] to deeply equal [ { call: 1, round: 1, …(4) } ]
+ × server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > records what was sent, never the tool schemas, and no thinking as none 1ms
+   → callSent is not a function
+ × server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > each call's request, effort, thinking and tools are what the gateway received; the closing call's tool choice too 50ms
+   → expected undefined to be 'req_1' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > a closing call told to call no tool is recorded as told so 10ms
+   → Cannot read properties of undefined (reading 'toolChoice')
+ × server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > and how the turn was routed, and why 8ms
+   → expected undefined to match object { riskTier: 'high', …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  6 failed (6)

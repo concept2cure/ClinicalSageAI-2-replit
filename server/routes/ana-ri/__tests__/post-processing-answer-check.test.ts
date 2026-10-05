@@ -120,7 +120,7 @@ describe('the answer check AnA reports', () => {
     const metadata = saved.calls[0][5];
     expect(metadata.verification.check).toEqual(strip.check);
     expect(sealedAtFiling).toHaveLength(1);
-    expect(sealedAtFiling[0].schema).toBe('ana-turn-record/2');
+    expect(sealedAtFiling[0].schema).toBe('ana-turn-record/3');
     expect(sealedAtFiling[0].verification.check).toEqual(strip.check);
     expect(sealedAtFiling[0].verification.labels).toEqual(strip.evidence);
   });

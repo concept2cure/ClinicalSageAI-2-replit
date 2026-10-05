@@ -76,17 +76,22 @@ export function sealProposalParams(
   const organizationId = Number(ctx.organizationId);
   const userId = Number(ctx.userId);
   if (!served?.provider || !served.model || !Number.isInteger(organizationId) || !Number.isInteger(userId)) return params;
-  const claims: SealClaims = {
-    type: PROPOSAL_SEAL_TYPE,
-    c: command,
-    h: paramsHash(params),
-    o: organizationId,
-    u: userId,
-    p: served.provider,
-    m: served.model,
-    r: served.requestId ?? null,
-  };
-  const seal = jwt.sign(claims, secret, { algorithm: 'HS256', expiresIn: PROPOSAL_SEAL_TTL });
+  // The payload is a literal at the call: session-open-contract reads every
+  // jwt.sign payload to prove no access token is minted without a session.
+  const seal = jwt.sign(
+    {
+      type: PROPOSAL_SEAL_TYPE,
+      c: command,
+      h: paramsHash(params),
+      o: organizationId,
+      u: userId,
+      p: served.provider,
+      m: served.model,
+      r: served.requestId ?? null,
+    } satisfies SealClaims,
+    secret,
+    { algorithm: 'HS256', expiresIn: PROPOSAL_SEAL_TTL },
+  );
   return { ...params, [PROPOSAL_SEAL_KEY]: seal };
 }
 

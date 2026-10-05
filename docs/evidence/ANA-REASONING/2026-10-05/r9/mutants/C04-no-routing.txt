@@ -1,0 +1,13 @@
+Mutant C04-no-routing: the sealed record no longer says how the turn was routed
+
+--- server/services/ana/turn-record.ts
+- routing: this.routing,
++ 
+
+Tests run: server/services/ana/__tests__/turn-record-sent.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > is on the record, call by call, with the gateway request that joins it to the ledger 10ms
+ × server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > says plainly what it does not know: no request id, no sent facts, no routing 2ms
+      Tests  2 failed | 1 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

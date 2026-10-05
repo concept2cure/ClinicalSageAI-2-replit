@@ -127,9 +127,11 @@ import { checkProposal } from '../../services/ana/proposal-check.js';
 import { buildShortfallNote } from '../../services/ana/tool-outcome.js';
 import { runStreamPostProcessing } from './post-processing.js';
 import {
+  callSent,
   canonicalJson,
   openTurnRecorder,
   writeTurnRecordSafely,
+  type CallSent,
   type TurnOutcome,
   type TurnRecorder,
   type TurnRecordStatus,
@@ -429,8 +431,8 @@ export function mountStreamRoute(router: Router): void {
     };
     // Recorder calls from inside the agentic loop, as plain calls.
     const recordStreamed = (chunk: string): void => turnRecorder?.appendStreamed(chunk);
-    const recordServed = (round: number, served: { provider: string | null; model: string | null }): void =>
-      turnRecorder?.addServed(round, served);
+    const recordServed = (round: number, served: { provider: string | null; model: string | null }, sent?: CallSent): void =>
+      turnRecorder?.addServed(round, served, sent);
     const fileTurnRecord = (outcome: TurnOutcome): Promise<TurnRecordStatus> =>
       turnRecorder === undefined
         ? Promise.resolve({ status: 'not_recorded', reason: 'This turn ended before its record was opened.' })
@@ -1436,6 +1438,8 @@ export function mountStreamRoute(router: Router): void {
         // The open section: a Module 2 summary is high-stakes however the question is worded (MC-RL-3).
         openSectionCode: sectionCode,
       });
+      // How the turn was routed, and why, on its record (MC-RL-8).
+      turnRecorder?.setRouting(routingPlan);
 
       const policyHint = await getKernelPolicyHint({
         organizationId: orgId ? Number(orgId) : null,
@@ -1827,7 +1831,7 @@ export function mountStreamRoute(router: Router): void {
       // that wrote it: post-processing runs the blocks from the whole answer,
       // which joins every round's text (commandBlockProposer).
       const commandRounds = commandRoundOf(fullContent, lastServedModel);
-      turnRecorder?.addServed(1, lastServedModel);
+      turnRecorder?.addServed(1, lastServedModel, callSent({ apiEffort, thinking: streamThinkingConfig, tools: streamTools }));
       recordCacheUsage(gwResponse);
       // The first model call is round 1's call; its server tools ran inside it.
       emitServerToolSteps(gwResponse, 1);
@@ -2712,6 +2716,10 @@ export function mountStreamRoute(router: Router): void {
           turnRecorder?.addRoundInput(round, loopMessages.slice(stagedFrom));
         };
 
+        /** What a follow-up round sends, for its record (MC-RL-8): the closing round is told to call no tool. */
+        const roundSent = (thinking: ReturnType<typeof followUpThinking>, includeTools: boolean): CallSent =>
+          callSent({ apiEffort, thinking, tools: streamTools, toolChoice: includeTools ? null : 'none' });
+
         const callModel = async (
           results: ToolResultEntry[],
           priorText: string,
@@ -2736,6 +2744,8 @@ export function mountStreamRoute(router: Router): void {
               : selectedStrategy;
 
           let roundText = '';
+          // What this round sends, kept for its record (MC-RL-8).
+          const roundThinking = followUpThinking();
           const roundResponse = await gw.route({
             taskType: routingPlan.taskType,
             // Every agentic round is bound to the same tenant as the first.
@@ -2764,7 +2774,7 @@ export function mountStreamRoute(router: Router): void {
             // without it they did not reason on the legacy surface, and on the
             // adaptive one their reasoning was never shown or kept. Tool turns
             // travel as prose, so no thinking block needs replaying.
-            thinking: followUpThinking(),
+            thinking: roundThinking,
             // The tools array stays on the request for EVERY round, including
             // the terminal one. Withdrawing it is what the terminal round used
             // to do, and it cost the whole prompt cache once per turn:
@@ -2817,7 +2827,7 @@ export function mountStreamRoute(router: Router): void {
           recordServerToolEvidence(roundResponse);
           lastServedModel = servedModelOf(roundResponse);
           commandRounds.push(...commandRoundOf(roundText, lastServedModel));
-          recordServed(round, lastServedModel);
+          recordServed(round, lastServedModel, roundSent(roundThinking, includeTools));
           const nextUses = (roundResponse as AnaGatewayResponse).toolUses;
           return { text: roundText, toolCalls: (nextUses ?? []).map(toToolCall) };
         };

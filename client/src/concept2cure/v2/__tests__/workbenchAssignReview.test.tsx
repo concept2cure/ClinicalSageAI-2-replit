@@ -102,7 +102,8 @@ describe('DocumentWorkbench — Assign review', () => {
     await waitFor(() => expect(within(dlg).getByRole('option', { name: 'OQ Signer' })).toBeTruthy());
     expect((within(dlg).getByTestId('ar-submit') as HTMLButtonElement).disabled).toBe(true);
     fireEvent.change(within(dlg).getByTestId('ar-assignee'), { target: { value: '42' } });
-    fireEvent.change(within(dlg).getByTestId('ar-due'), { target: { value: '2026-10-05' } });
+    // A date that is never today or past: the row then shows the date itself, not "due today" or "overdue".
+    fireEvent.change(within(dlg).getByTestId('ar-due'), { target: { value: '2099-10-05' } });
     fireEvent.change(within(dlg).getByTestId('ar-instructions'), { target: { value: 'Check the efficacy claims against the SAP.' } });
     fireEvent.click(within(dlg).getByTestId('ar-submit'));
 
@@ -117,7 +118,7 @@ describe('DocumentWorkbench — Assign review', () => {
       moduleData: expect.objectContaining({ authoringDocId: DOC, programId: PID, sectionCode: '2.5.1' }),
     })));
     const sent = apiRequest.mock.calls.find(c => c[0] === 'POST' && c[1] === '/api/tasks/tasks')![2] as Record<string, unknown>;
-    expect(String(sent.dueDate)).toMatch(/^2026-10-05T/);
+    expect(String(sent.dueDate)).toMatch(/^2099-10-05T/);
 
     // The dialog closes and the Tasks rail opens on the created task.
     await waitFor(() => expect(screen.queryByTestId('assign-review-dialog')).toBeNull());
@@ -126,7 +127,7 @@ describe('DocumentWorkbench — Assign review', () => {
     expect(row.textContent).toContain('Review: Module 2.5 Clinical Overview');
     expect(row.textContent).toContain('Assigned');
     expect(row.textContent).toContain('assigned to OQ Signer');
-    expect(row.textContent).toContain('due Oct 5, 2026');
+    expect(row.textContent).toContain('due Oct 5, 2099');
     expect(within(rail).getByText('1 open · 1 total')).toBeTruthy();
   });
 
