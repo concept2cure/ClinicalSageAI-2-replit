@@ -30,6 +30,10 @@ function app(tenantId: string) {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as any).user = { id: 1, email: 'qa@example.test' };
+    (req as any).userRole = 'member'; // a writing role (requireEditorAccessForWrites)
+    // The request's organization, as establishRequestTenantScope publishes it
+    // beside the scope; the write-role gate reads it from the request.
+    (req as any).tenantId = Number(tenantId);
     runWithTenantScope({ tenantId, role: 'admin', source: 'test', caller: 'stab-test' } as any, () => next());
   });
   a.use('/api/stability', router);

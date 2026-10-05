@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { requireEditorAccessForWrites } from '../../middleware/orgMembership';
 import type { PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { getPool } from '../../db';
 import { getTenantScope } from '../../db/tenantStore';
@@ -626,6 +627,10 @@ router.use((req, res, next) => {
   if (!auditActor(req)) return res.status(401).json({ error: 'Actor identity required' });
   return next();
 });
+// A viewer reads stability and writes none of it (the CMC write-role gate's
+// rule, server/api/cmc/cmc-write-role-gate.ts): this router is mounted at
+// /api/stability, outside /api/cmc, so that gate does not cover it.
+router.use(requireEditorAccessForWrites);
 
 // GET /api/stability/studies - List all studies
 router.get('/studies', async (req, res) => {

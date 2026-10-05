@@ -43,6 +43,7 @@ function app(user: unknown = { id: 1, email: 'qa@example.test' }) {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as any).user = user;
+    (req as any).userRole = 'member'; // a writing role (requireEditorAccessForWrites)
     (req as any).tenantId = 1;
     next();
   });
@@ -124,6 +125,7 @@ describe('a write and its audit record commit together or not at all', () => {
     a.use(express.json());
     a.use((req: Request, _res: Response, next: NextFunction) => {
       (req as any).user = user;
+      (req as any).userRole = 'member'; // a writing role (requireEditorAccessForWrites)
       (req as any).tenantId = 1;
       runWithTenantScope({ tenantId: '1', role: 'admin', source: 'test', caller: 'stab-test' } as any, () => next());
     });
@@ -239,6 +241,7 @@ describe('study-scoped writes act only on the tenant\'s own study', () => {
     a.use(express.json());
     a.use((req: Request, _res: Response, next: NextFunction) => {
       (req as any).user = { id: 1, email: 'qa@example.test' };
+      (req as any).userRole = 'member'; // a writing role (requireEditorAccessForWrites)
       (req as any).tenantId = 7;
       runWithTenantScope({ tenantId: '7', role: 'editor', source: 'test', caller: 'stab-test' } as any, () => next());
     });
@@ -312,6 +315,7 @@ describe('child rows and model calls answer for what they are', () => {
     a.use(express.json());
     a.use((req: Request, _res: Response, next: NextFunction) => {
       (req as any).user = { id: 1, email: 'qa@example.test' };
+      (req as any).userRole = 'member'; // a writing role (requireEditorAccessForWrites)
       (req as any).tenantId = 7;
       runWithTenantScope({ tenantId: '7', role: 'editor', source: 'test', caller: 'stab-test' } as any, () => next());
     });

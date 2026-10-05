@@ -18,6 +18,7 @@ import {
   type ReleaseStatus,
   evaluateRecordedRelease,
   evidenceFingerprint,
+  openDeviationCount,
   readRecordedReleaseTests,
 } from '../../services/cmc/batch-release-evidence';
 import { filedProjectOnCreate, RegisterWriteRefusal } from '../../services/cmc/register-writes';
@@ -409,7 +410,7 @@ async function evaluateBatchForRelease(
   const final = batchReleaseRefusal(batch);
   if (final) return { status: 409, refusal: { success: false, error: final, code: 'ALREADY_DISPOSITIONED' } };
   const tests = await readRecordedReleaseTests(pool, orgId, batch);
-  const verdict = evaluateRecordedRelease(decision, tests, String(batch.batch_number ?? id));
+  const verdict = evaluateRecordedRelease(decision, tests, String(batch.batch_number ?? id), openDeviationCount(batch.deviations));
   if ('refusal' in verdict) {
     return { status: 409, refusal: { success: false, error: verdict.refusal, code: 'RELEASE_EVIDENCE' } };
   }

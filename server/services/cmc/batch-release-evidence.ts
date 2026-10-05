@@ -9,7 +9,8 @@
  * results recorded against this batch number (in this batch's program), each
  * one reviewed by a second person (the QC review), none failing.
  *
- * - released: at least one recorded result, every one reviewed, none failing;
+ * - released: at least one recorded result, every one reviewed, none failing,
+ *   and no open deviation on the batch record (21 CFR 211.192);
  * - conditional release: at least one recorded result and none failing (a
  *   result may still await review — that is what makes it conditional);
  * - rejected: may be signed whatever is recorded.
@@ -69,14 +70,42 @@ export async function readRecordedReleaseTests(
   });
 }
 
+/**
+ * How many deviations the batch record holds open. The register stores them
+ * as `{ open: n }` or as a list of entries with a status; anything else is
+ * read as none recorded.
+ */
+export function openDeviationCount(deviations: unknown): number {
+  let d = deviations;
+  if (typeof d === 'string') {
+    try { d = JSON.parse(d); } catch { return 0; }
+  }
+  if (Array.isArray(d)) {
+    return d.filter((e) => !/^(closed|resolved|cancell?ed)$/i.test(String((e as { status?: unknown })?.status ?? 'open'))).length;
+  }
+  const open = Number((d as { open?: unknown } | null)?.open ?? 0);
+  return Number.isFinite(open) && open > 0 ? open : 0;
+}
+
 /** The disposition the recorded results support, or why they do not support it. */
 export function evaluateRecordedRelease(
   decision: ReleaseDecision,
   tests: RecordedReleaseTest[],
   batchNumber: string,
+  openDeviations = 0,
 ): { releaseStatus: ReleaseStatus; allPassed: boolean } | { refusal: string } {
   const allPassed = tests.length > 0 && tests.every((t) => t.passed);
   if (decision === 'rejected') return { releaseStatus: 'rejected', allPassed };
+  /* 21 CFR 211.192: a discrepancy is investigated before the batch is
+     released. A conditional release states what is outstanding; a full
+     release is refused while a deviation is open. */
+  if (decision === 'approved' && openDeviations > 0) {
+    return {
+      refusal:
+        `Batch ${batchNumber} has ${openDeviations} open deviation${openDeviations === 1 ? '' : 's'}. ` +
+        'Close the investigation before a full release, or sign a conditional release that states it.',
+    };
+  }
   if (tests.length === 0) {
     return {
       refusal:

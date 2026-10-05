@@ -26,7 +26,7 @@ const h = vi.hoisted(() => {
   /* The batch's RECORDED QC results, which a release is evaluated over
      (services/cmc/batch-release-evidence). `qcAfter`, when set, is what the
      signing transaction's re-read finds: results that changed mid-signature. */
-  const state = { log: [] as string[], sigFail: null as unknown, qc: [] as unknown[], qcAfter: null as unknown[] | null, qcReads: 0 };
+  const state = { log: [] as string[], sigFail: null as unknown, qc: [] as unknown[], qcAfter: null as unknown[] | null, qcReads: 0, batchDeviations: null as unknown };
   const ROW = { id: 9, status: 'draft', approval_status: 'draft', project_id: null, tenant_id: '7', organization_id: 7, batch_number: 'B-9', release_status: null };
   const client = {
     query: async (sql: string) => {
@@ -40,7 +40,7 @@ const h = vi.hoisted(() => {
         state.log.push('DOMAIN');
         return { rows: [ROW], rowCount: 1 };
       }
-      if (word === 'SELECT') return { rows: [ROW], rowCount: 1 };
+      if (word === 'SELECT') return { rows: [{ ...ROW, deviations: state.batchDeviations }], rowCount: 1 };
       return { rows: [], rowCount: 0 };
     },
     release: () => undefined,
@@ -154,6 +154,7 @@ beforeEach(() => {
   h.qc = [qcRow()];
   h.qcAfter = null;
   h.qcReads = 0;
+  h.batchDeviations = null;
   signerRole.value = 'admin';
   ledgerClients.length = 0;
   signatureClients.length = 0;
@@ -280,6 +281,16 @@ describe('CMC batch release: the signature means what the disposition is', () =>
     const conditional = await release({ decision: 'conditional' });
     expect(conditional.status, JSON.stringify(conditional.body)).toBe(200);
     expect(persistGovernedActionSignature.mock.calls[0][1].payload.meaning).toBe('responsibility');
+  });
+
+  it('an open deviation blocks a full release (21 CFR 211.192) but not a conditional one', async () => {
+    h.batchDeviations = { open: 1 };
+    const full = await release({ decision: 'approved' });
+    expect(full.status, JSON.stringify(full.body)).toBe(409);
+    expect(full.body.error).toMatch(/1 open deviation/);
+    h.qcReads = 0;
+    const conditional = await release({ decision: 'conditional' });
+    expect(conditional.status, JSON.stringify(conditional.body)).toBe(200);
   });
 
   it('the release record carries the RECORDED results, never the ones the request supplies', async () => {

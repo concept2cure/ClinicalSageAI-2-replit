@@ -182,6 +182,16 @@ describe('the retired CMC routers stay retired', () => {
     expect(hits, `Client calls to retired CMC endpoints:\n  ${hits.join('\n  ')}`).toEqual([]);
   });
 
+  it('the Module 3 operating system writes no canonical source of its own', () => {
+    // POST /source-objects and /source-changed (retired 2026-10-05): canonical
+    // sources come from the registers through cmc-write-through.ts alone.
+    const src = read('server/api/cmc/module3OperatingSystemRoutes.ts');
+    const declared = [...src.matchAll(/router\.(get|post|put|patch|delete)\(\s*'([^']+)'/g)].map((m) => `${m[1].toUpperCase()} ${m[2]}`);
+    expect(declared.length, 'no route declarations found — wrong file or parser').toBeGreaterThan(5);
+    expect(declared.filter((d) => /\/source-(objects|changed)\//.test(d))).toEqual([]);
+    expect(src).not.toMatch(/INSERT INTO cmc_source_objects/);
+  });
+
   it('reads the mounts it claims to read', () => {
     // The live CMC family is still found, so the prefix assertions above are
     // looking at the right file and the right syntax.
