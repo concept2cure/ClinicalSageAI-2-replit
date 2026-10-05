@@ -127,13 +127,14 @@ cb158a7f1ff227577302cb9a87f554bc2c0603bd:tests/export-contract/xlsx-export.proof
 #     (c2c-connection-uri-password): the password field is `npg_…`, a
 #     JSON-escaped ellipsis: already elided, and removed from the file by
 #     c9456b0c. Not INF-22's value (compared by hash, not printed).
-#   Recorded by the D6 lane.
+#   Recorded by the D6 lane. The four jwt fingerprints first named 59a3c0e5,
+#   a commit a shallow clone had grafted parentless; on full history (12,818
+#   commits) they enter at 0adb1b3ec, which is what CI's scan reports.
 bea4192be4854027f7e23e82b5b8a062cd6e9dcf:docs/evidence/D3/2026-10-04-pre-auth-narrowing/red/before.txt:generic-api-key:46
-59a3c0e50428296c994a3b4262c6081cdc6c412f:docs/evidence/D6/2026-10-01-tranche-4/P1-47-connector-enablement/red/mcp-connector-enablement.test.token-mutant.txt:jwt:57
-59a3c0e50428296c994a3b4262c6081cdc6c412f:docs/evidence/D6/2026-10-01-tranche-4/P1-47-connector-enablement/red/mcp-connector-enablement.test.token-mutant.txt:jwt:82
-59a3c0e50428296c994a3b4262c6081cdc6c412f:docs/evidence/D6/2026-10-01-tranche-4/P1-47-connector-enablement/red/mcp-connector-enablement.test.txt:jwt:203
-59a3c0e50428296c994a3b4262c6081cdc6c412f:docs/evidence/D6/2026-10-01-tranche-4/P1-47-connector-enablement/red/mcp-connector-enablement.test.txt:jwt:229
-59a3c0e50428296c994a3b4262c6081cdc6c412f:docs/evidence/D6/2026-10-01-gate-selftests/workflow-results.json:private-key:781
+0adb1b3ec0976ad9e38294bf7781500f446af2d7:docs/evidence/D6/2026-10-01-tranche-4/P1-47-connector-enablement/red/mcp-connector-enablement.test.token-mutant.txt:jwt:57
+0adb1b3ec0976ad9e38294bf7781500f446af2d7:docs/evidence/D6/2026-10-01-tranche-4/P1-47-connector-enablement/red/mcp-connector-enablement.test.token-mutant.txt:jwt:82
+0adb1b3ec0976ad9e38294bf7781500f446af2d7:docs/evidence/D6/2026-10-01-tranche-4/P1-47-connector-enablement/red/mcp-connector-enablement.test.txt:jwt:203
+0adb1b3ec0976ad9e38294bf7781500f446af2d7:docs/evidence/D6/2026-10-01-tranche-4/P1-47-connector-enablement/red/mcp-connector-enablement.test.txt:jwt:229
 5e9d39be4d8679e0bb74637efc9f5d00610888b4:docs/evidence/D6/2026-10-01-gate-selftests/workflow-results.json:c2c-connection-uri-password:119
 5e9d39be4d8679e0bb74637efc9f5d00610888b4:docs/evidence/D6/2026-10-01-gate-selftests/workflow-results.json:private-key:781
 750c16334dfc9c513dc27ca34092004fb2ce6b94:docs/evidence/D6/2026-10-01-gate-selftests/workflow-results.json:private-key:781
