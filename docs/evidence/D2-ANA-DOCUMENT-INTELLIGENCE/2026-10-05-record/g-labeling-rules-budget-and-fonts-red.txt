@@ -1,0 +1,30 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana/__tests__/fda-rules-labeling-budget.test.ts > list_fda_technical_rules labeling area leaves headroom under RESULT_BUDGET > renders the labeling area in at most 4500 of the 5000-character budget 4ms
+   → expected 4886 to be less than or equal to 4500
+ ✓ server/services/ana/__tests__/fda-rules-labeling-budget.test.ts > list_fda_technical_rules labeling area leaves headroom under RESULT_BUDGET > still prints every PLR rule with its paragraph, eCFR source and platform note 2ms
+ ✓ server/services/ana/__tests__/fda-rules-labeling-budget.test.ts > list_fda_technical_rules labeling area leaves headroom under RESULT_BUDGET > keeps each verbatim statement inside the rule that requires it 0ms
+ ✓ server/services/ana/__tests__/fda-rules-labeling-budget.test.ts > list_fda_technical_rules labeling area leaves headroom under RESULT_BUDGET > keeps the limits the rules exist to state 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/fda-rules-labeling-budget.test.ts > list_fda_technical_rules labeling area leaves headroom under RESULT_BUDGET > renders the labeling area in at most 4500 of the 5000-character budget
+AssertionError: expected 4886 to be less than or equal to 4500
+ ❯ server/services/ana/__tests__/fda-rules-labeling-budget.test.ts:24:24
+     22|   it('renders the labeling area in at most 4500 of the 5000-character …
+     23|     expect(RESULT_BUDGET).toBe(5000);
+     24|     expect(out.length).toBeLessThanOrEqual(LABELING_HEADROOM);
+       |                        ^
+     25|   });
+     26|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  04:21:17
+   Duration  1.06s (transform 634ms, setup 68ms, import 640ms, tests 10ms, environment 0ms)
+

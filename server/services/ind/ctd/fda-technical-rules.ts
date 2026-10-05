@@ -174,25 +174,28 @@ export const FDA_TECHNICAL_RULES: readonly TechnicalRule[] = Object.freeze<Techn
   },
 ]);
 
-const GUARD_ONLY = 'Only plan_labeling_authoring’s section guard checks it, on a draft passed to it.';
+const GUARD_ONLY = 'Only plan_labeling_authoring’s guard checks it, on a draft.';
 
 /**
  * 21 CFR 201.57 format rules for a US Prescribing Information. Kept out of
  * FDA_TECHNICAL_RULES: list_fda_technical_rules prints that set in brief, and
- * these would carry it past RESULT_BUDGET. Reached by area 'labeling'.
+ * these would carry it past RESULT_BUDGET. Reached by area 'labeling', which
+ * prints every field in full and must stay within 4500 of the 5000 characters
+ * so the next rule fits (fda-rules-labeling-budget.test.ts); a rule that does
+ * not fit is a reason to shorten wording, never to drop its paragraph.
  */
 export const PLR_FORMAT_RULES: readonly TechnicalRule[] = Object.freeze<TechnicalRule[]>([
   {
     id: 'plr-hl-limitation-statement', area: 'labeling',
-    rule: 'Highlights carry the verbatim statement "These highlights do not include all the information needed to use (name of drug product) safely and effectively. See full prescribing information for (name of drug product)."',
-    consequence: 'Does not meet 201.57(a)(1); the reader is not told that Highlights are incomplete.',
+    rule: 'Highlights carry verbatim "These highlights do not include all the information needed to use (name of drug product) safely and effectively. See full prescribing information for (name of drug product)."',
+    consequence: 'The reader is not told that Highlights are incomplete.',
     basis: cfr201_57('(a)(1)'),
     platform: { check: 'partial', note: GUARD_ONLY },
     verbatim: 'These highlights do not include all the information needed to use',
   },
   {
     id: 'plr-hl-initial-approval', area: 'labeling',
-    rule: 'The verbatim statement "Initial U.S. Approval" with the four-digit year of FDA’s first approval of the new molecular entity, new biological product or new combination of active ingredients, on the line immediately beneath the established or proper name.',
+    rule: 'Verbatim "Initial U.S. Approval" and the four-digit year FDA first approved the new molecular entity, new biological product or new combination of active ingredients, on the line immediately beneath the established or proper name.',
     consequence: 'Does not meet 201.57(a)(3).',
     basis: cfr201_57('(a)(3)'),
     platform: { check: 'partial', note: GUARD_ONLY },
@@ -200,48 +203,48 @@ export const PLR_FORMAT_RULES: readonly TechnicalRule[] = Object.freeze<Technica
   },
   {
     id: 'plr-hl-boxed-warning', area: 'labeling',
-    rule: 'A boxed warning in Highlights is a concise summary of not more than 20 lines, boxed and bolded, under an upper-case heading containing "WARNING". The verbatim statement "See full prescribing information for complete boxed warning." immediately follows the heading.',
+    rule: 'A Highlights boxed warning is a concise summary of at most 20 lines, boxed and bolded, under an upper-case heading containing "WARNING"; verbatim "See full prescribing information for complete boxed warning." immediately follows the heading.',
     consequence: 'Does not meet 201.57(a)(4).',
     basis: cfr201_57('(a)(4)'),
-    platform: { check: 'not-checked', note: 'The boxed warning is conditional, so the section guard does not require its statement; nothing counts its lines.' },
+    platform: { check: 'not-checked', note: 'Conditional, so the guard does not require it; nothing counts its lines.' },
     verbatim: 'See full prescribing information for complete boxed warning.',
   },
   {
     id: 'plr-hl-rmc-one-year', area: 'labeling',
-    rule: 'Recent Major Changes lists each substantively changed section among Boxed Warning, Indications and Usage, Dosage and Administration, Contraindications, or Warnings and Precautions, with its number and the month/year of the change. A changed section stays listed for at least 1 year after the labeling change and is removed at the first printing after that year.',
-    consequence: 'Does not meet 201.57(a)(5): a current change not flagged, or a stale one still flagged.',
+    rule: 'Recent Major Changes lists each substantively changed section among Boxed Warning, Indications and Usage, Dosage and Administration, Contraindications, or Warnings and Precautions, with its number and the month/year of the change; listed at least 1 year after the change, then removed at the first printing after that year.',
+    consequence: 'A current change goes unflagged, or a stale one stays flagged.',
     basis: cfr201_57('(a)(5)'),
-    platform: { check: 'not-checked', note: 'Nothing dates or ages Recent Major Changes entries.' },
+    platform: { check: 'not-checked', note: 'Nothing ages Recent Major Changes entries.' },
   },
   {
     id: 'plr-hl-ae-reporting', area: 'labeling',
-    rule: 'Highlights carry the verbatim statement "To report SUSPECTED ADVERSE REACTIONS, contact (manufacturer) at (phone) or FDA at (current FDA phone number and web address for voluntary reporting)"; for a vaccine, VAERS in place of FDA.',
-    consequence: 'Does not meet 201.57(a)(11); the reader is not told where to report.',
+    rule: 'Highlights carry verbatim "To report SUSPECTED ADVERSE REACTIONS, contact (manufacturer) at (phone) or FDA at (current FDA phone number and web address for voluntary reporting)"; for a vaccine, VAERS in place of FDA.',
+    consequence: 'The reader is not told where to report.',
     basis: cfr201_57('(a)(11)'),
     platform: { check: 'partial', note: GUARD_ONLY },
     verbatim: 'To report SUSPECTED ADVERSE REACTIONS',
   },
   {
     id: 'plr-contents', area: 'labeling',
-    rule: '"Full Prescribing Information: Contents" lists each section and subsection heading with its number. Where a required section or subsection is omitted, the Contents heading is followed by an asterisk and Contents ends "* Sections or subsections omitted from the full prescribing information are not listed."',
-    consequence: 'Does not meet 201.57(b), which requires Contents whatever the length.',
+    rule: '"Full Prescribing Information: Contents" lists each section and subsection heading with its number. If a required section or subsection is omitted, the Contents heading is followed by an asterisk and Contents ends "* Sections or subsections omitted from the full prescribing information are not listed."',
+    consequence: 'Contents is required whatever the label’s length.',
     basis: cfr201_57('(b)'),
     platform: { check: 'partial', note: GUARD_ONLY },
     verbatim: 'Full Prescribing Information: Contents',
   },
   {
     id: 'plr-type-size', area: 'labeling',
-    rule: 'All labeling text, headings and subheadings are at least 8-point type; labeling on or within the package from which the drug is dispensed is at least 6-point.',
+    rule: 'All labeling text, headings and subheadings are at least 8-point type; 6-point for labeling on or within the package the drug is dispensed from.',
     consequence: 'Does not meet 201.57(d)(6).',
     basis: cfr201_57('(d)(6)'),
-    platform: { check: 'not-checked', note: 'No check reads type size in a label.' },
+    platform: { check: 'not-checked', note: 'Nothing reads type size.' },
   },
   {
     id: 'plr-hl-length', area: 'labeling',
     rule: 'Highlights, excluding the boxed warning, fit on one-half of an 8½ by 11 inch page printed in 2 columns, single-spaced, in 8-point type with ½-inch margins on all sides and between columns.',
-    consequence: 'Does not meet 201.57(d)(8), unless FDA waives the limit; its PLR guidance says a waiver may be requested.',
+    consequence: 'Nonconforming unless FDA grants a waiver, which its PLR guidance says may be requested.',
     basis: cfr201_57('(d)(8)'),
-    platform: { check: 'not-checked', note: 'No check measures the length of Highlights.' },
+    platform: { check: 'not-checked', note: 'Nothing measures the length of Highlights.' },
   },
 ]);
 
