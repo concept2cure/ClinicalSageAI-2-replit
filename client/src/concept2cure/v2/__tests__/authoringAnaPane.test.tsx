@@ -221,7 +221,14 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
           { type: 'orchestration', orchestration: { detectedIntent: { lens: 'audit' }, suggestedActions: ['Review the citation chain'] } },
           { type: 'tool_use', name: 'check_dossier_consistency', label: 'Checking dossier consistency', round: 1 },
           { type: 'tool_result', name: 'check_dossier_consistency', status: 'success', result: '{"verdict":"clean"}' },
-          { type: 'grounding_strip', evidence: { validated: true, source_count: 2, grounded_claim_count: 3, weak_or_ungrounded_claim_count: 0, missing_support_count: 0 } },
+          {
+            type: 'grounding_strip',
+            evidence: { attempted: true, validated: true, source_count: 2, grounded_claim_count: 3, weak_or_ungrounded_claim_count: 0, missing_support_count: 0 },
+            check: {
+              engine: 'answer-check/2', basis: 'sources', claims: 2, checked: 2, found: 2,
+              notFound: [], unchecked: [], fromPerson: [], fromInput: [], sources: ['tool:check_dossier_consistency'], unreadable: [], verdicts: [],
+            },
+          },
           { type: 'text', content: 'The citation chain is consistent.' },
           { type: 'done', latencyMs: 420 },
           { type: 'post_done', cleanedResponse: 'The citation chain is consistent.' },
@@ -240,9 +247,11 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
     // above it, which names the same step, so a pane-wide query finds two.
     const log = within(pane).getByRole('region', { name: 'AnA conversation' });
     expect(await within(log).findByText('Checking dossier consistency')).toBeTruthy();
-    // The shared grounding verdict (AnaGrounding) — the pane's own copy of an
-    // evidence block is gone, so it reads the same here as in the rail.
-    expect(await within(pane).findByText(/3 of 3 claims grounded · 2 sources/)).toBeTruthy();
+    // The shared strip (AnaGrounding) — the pane's own copy of an evidence
+    // block is gone, so it reads the same here as in the rail: the engine's
+    // check first, AnA's labels as hers.
+    expect(await within(pane).findByText(/All 2 specific claims found in this turn's sources/)).toBeTruthy();
+    expect(within(pane).getByText(/AnA's labels: 3 claims labelled/)).toBeTruthy();
     const followUp = await within(pane).findByRole('button', { name: /Review the citation chain/ });
     expect((followUp as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(followUp);

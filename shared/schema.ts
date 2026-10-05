@@ -3661,6 +3661,9 @@ export const analyticalMethods = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
+    /* The program the record is filed under (migrations/20261005_cmc_core_registers_project.sql).
+       Set at create, never moved by an ordinary edit; NULL is an unfiled legacy row. */
+    projectId: text('project_id'),
     methodCode: text('method_code').notNull(),
     title: text('title').notNull(),
     purpose: text('purpose').notNull(),
@@ -3691,6 +3694,9 @@ export const processValidation = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
+    /* The program the record is filed under (migrations/20261005_cmc_core_registers_project.sql).
+       Set at create, never moved by an ordinary edit; NULL is an unfiled legacy row. */
+    projectId: text('project_id'),
     processName: text('process_name').notNull(),
     stage: text('stage').notNull(), // design, qualification, verification
     batchNumbers: text('batch_numbers').array(),
@@ -3719,6 +3725,9 @@ export const stabilityStudies = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
+    /* The program the record is filed under (migrations/20261005_cmc_core_registers_project.sql).
+       Set at create, never moved by an ordinary edit; NULL is an unfiled legacy row. */
+    projectId: text('project_id'),
     studyTitle: text('study_title'),
     productName: text('product_name').notNull(),
     batchNumber: text('batch_number').notNull(),
@@ -3789,6 +3798,9 @@ export const cmcChangeControl = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
+    /* The program the record is filed under (migrations/20261005_cmc_core_registers_project.sql).
+       Set at create, never moved by an ordinary edit; NULL is an unfiled legacy row. */
+    projectId: text('project_id'),
     changeNumber: text('change_number').notNull(),
     changeType: text('change_type').notNull(), // process, analytical, specification, etc.
     description: text('description').notNull(),
@@ -3816,6 +3828,9 @@ export const drugSubstances = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
+    /* The program the record is filed under (migrations/20261005_cmc_core_registers_project.sql).
+       Set at create, never moved by an ordinary edit; NULL is an unfiled legacy row. */
+    projectId: text('project_id'),
     substanceName: text('substance_name').notNull(),
     structuralFormula: text('structural_formula'),
     molecularFormula: text('molecular_formula'),
@@ -3858,6 +3873,9 @@ export const drugProducts = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
+    /* The program the record is filed under (migrations/20261005_cmc_core_registers_project.sql).
+       Set at create, never moved by an ordinary edit; NULL is an unfiled legacy row. */
+    projectId: text('project_id'),
     productName: text('product_name').notNull(),
     dosageForm: text('dosage_form').notNull(),
     strength: text('strength').notNull(),

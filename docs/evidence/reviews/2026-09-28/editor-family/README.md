@@ -234,6 +234,38 @@ two lanes onto trunk (above) and withdrew one.
   floor is a blocker before `ENABLE_LIVE_COEDITING` is turned on (board
   item 19).
 
+## Round 4 (2026-10-04): the batch-draft door's refute-review, answered
+
+An independent refute-review of round 3's batch-draft change (`283fe08c4`)
+found eleven defects. Round 3 is not closed, and its "Not done here" premise
+was refuted: attribute text is not hidden from every reader. The editor's
+source mode shows it, and the leaf and the export print an alt, a footnote
+and a locator. The worst defect:
+
+- **D2, blocker.** A tag-shaped token (`<b"3 patients died">`) was hidden by a
+  browser and by the comparison form, but printed by the leaf and the export.
+  So a clause showing words AnA never wrote was credited to her.
+
+All eleven are fixed in `fixes/batch-draft-door/r4/`, each red first. They
+reach the live authoring AI-draft accept through the same lineage, and a
+test block pins that door too. The rule now reads:
+
+- A tag is removed for comparison only when a browser and the export's parser
+  read it alike, and its attributes are the presentational ones the editor
+  writes.
+- A clause overlapping an image or a printed attribute is not compared.
+- Everything from the first point the readers may disagree is not compared.
+- Content that opens in source mode, or that holds no known tag, is compared
+  character for character.
+
+22 of 22 mutants are killed. Work went to a background agent with a fixed
+file list, and was reviewed here before commit.
+
+Found while landing it: `batch-draft-accept.test.ts` had pinned, since
+`283fe08c4`, a call that round 3 replaced. The snapshot still takes the
+replaced content, through the transaction's one queryable. The pin is
+updated.
+
 ## Files
 
 - `lenses/`: the 14 lens reports, as returned. Paths to scratch harnesses

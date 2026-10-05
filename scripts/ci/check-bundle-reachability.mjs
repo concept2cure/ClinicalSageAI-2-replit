@@ -46,6 +46,7 @@
 import esbuild from 'esbuild';
 import fs from 'node:fs';
 import path from 'node:path';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const ROOT = process.cwd();
 
@@ -91,14 +92,19 @@ const bundled = new Set(Object.keys(build.metafile.inputs));
  * `import type` is skipped syntactically below; this covers the other spelling,
  * `import { SomeInterface } from './types'`, where the type-ness is not visible
  * at the call site.
+ *
+ * Comments are blanked first, so an `export const` named in prose does not
+ * count as a runtime export. They are found by the shared, string-aware
+ * stripper: the regex this used before read a literal holding `/*` (a route
+ * glob such as '/api/advisory/*') as a comment opener and deleted every line
+ * down to the next real `*` `/`. A module whose runtime exports sat in that
+ * span, with an `export type` outside it, was called type-only and skipped —
+ * so a router that had left the bundle passed as an erased interface file.
  */
 const typeOnlyCache = new Map();
 function isTypeOnlyModule(rel) {
   if (typeOnlyCache.has(rel)) return typeOnlyCache.get(rel);
-  const src = fs
-    .readFileSync(path.join(ROOT, rel), 'utf8')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '');
+  const src = stripComments(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
   const exports = [...src.matchAll(/^\s*export\s+(?!type\b|interface\b)\S/gm)];
   const answer = exports.length === 0 && /^\s*export\s+(type|interface)\b/m.test(src);
   typeOnlyCache.set(rel, answer);

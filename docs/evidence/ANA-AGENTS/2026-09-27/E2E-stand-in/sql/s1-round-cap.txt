@@ -1,0 +1,229 @@
+# s1-round-cap — rows in postgresql://127.0.0.1:5432/ana_e2e_2
+# runs: run_75ee2f2c-1d29-4275-b43f-52dbead60ef7, run_7580ab9b-47f4-4a02-89b6-89f060da2efc
+# threads: ana-ri_1790620417400_ilyrlw49e
+
+## ana_runs
+                    id                    |  status  | stopped_reason | current_round |    surface    | controls | pending_command | decided | decided_by |   created    |   finished   
+------------------------------------------+----------+----------------+---------------+---------------+----------+-----------------+---------+------------+--------------+--------------
+ run_75ee2f2c-1d29-4275-b43f-52dbead60ef7 | finished | max_rounds     |            20 | ana-ri-stream |        0 |                 |         |            | 18:33:37.292 | 18:33:40.368
+ run_7580ab9b-47f4-4a02-89b6-89f060da2efc | finished | no_more_tools  |             0 | ana-ri-stream |        0 |                 |         |            | 18:33:43.490 | 18:33:43.710
+(2 rows)
+
+
+## ana_runs.control_events
+                    id                    | jsonb_pretty 
+------------------------------------------+--------------
+ run_75ee2f2c-1d29-4275-b43f-52dbead60ef7 | [           +
+                                          | ]
+ run_7580ab9b-47f4-4a02-89b6-89f060da2efc | [           +
+                                          | ]
+(2 rows)
+
+
+## chat_messages (the saved turn; metadata fields S1/S4 write)
+ id |   role    |                                          content                                           | stopped_reason | rounds | run_policy | pending_steps 
+----+-----------+--------------------------------------------------------------------------------------------+----------------+--------+------------+---------------
+  1 | user      | Survey every source you can for BX-512 stability evidence.                                 |                |        |            | 
+  2 | assistant | Checking source 1.Checking source 2.Checking source 3.Checking source 4.Checking source 5. | max_rounds     | 20     | auto       | 
+  3 | user      | Continue from where you stopped.                                                           |                |        |            | 
+  4 | assistant | Stand-in answer: picking up from where the previous turn stopped.                          |                |        | auto       | 
+(4 rows)
+
+
+## chat_messages.metadata policyHolds / humanControls / warnings (assistant rows)
+ id |           jsonb_pretty            
+----+-----------------------------------
+  2 | {                                +
+    |     "stoppedReason": "max_rounds"+
+    | }
+  4 | {                                +
+    | }
+(2 rows)
+
+
+## ana_turn_records 316e8d4c-d9d4-45da-b5a7-8b9671cb27a9 (row columns, then the record's own fields)
+                  run_id                  | outcome  |  schema_version   | hash_ok 
+------------------------------------------+----------+-------------------+---------
+ run_75ee2f2c-1d29-4275-b43f-52dbead60ef7 | answered | ana-turn-record/1 | t
+(1 row)
+
+{
+ "model": {
+  "effort": "balanced",
+  "model": "claude-sonnet-5",
+  "calls": 21
+ },
+ "turn": {
+  "runId": "run_75ee2f2c-1d29-4275-b43f-52dbead60ef7",
+  "outcome": "answered",
+  "surface": "conversation-thread"
+ },
+ "warnings": [
+  "The turn stopped at the round limit after 20 rounds, before AnA said she was done. The answer was written from the work done up to that point. Run policy: Auto."
+ ],
+ "controls": [],
+ "steps": [
+  {
+   "round": 1,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 2,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 3,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 4,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 5,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 6,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 7,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 8,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 9,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 10,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 11,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 12,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 13,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 14,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 15,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 16,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 17,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 18,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 19,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 20,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  }
+ ]
+}
+
+## ana_turn_records 28cfa513-3275-40ba-bd6c-6f62675d0937 (row columns, then the record's own fields)
+                  run_id                  | outcome  |  schema_version   | hash_ok 
+------------------------------------------+----------+-------------------+---------
+ run_7580ab9b-47f4-4a02-89b6-89f060da2efc | answered | ana-turn-record/1 | t
+(1 row)
+
+{
+ "model": {
+  "effort": "balanced",
+  "model": "claude-sonnet-5",
+  "calls": 1
+ },
+ "turn": {
+  "runId": "run_7580ab9b-47f4-4a02-89b6-89f060da2efc",
+  "outcome": "answered",
+  "surface": "conversation-thread"
+ },
+ "warnings": [],
+ "controls": [],
+ "steps": []
+}

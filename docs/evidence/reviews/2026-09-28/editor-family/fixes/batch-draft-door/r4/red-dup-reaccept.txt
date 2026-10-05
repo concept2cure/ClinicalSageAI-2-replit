@@ -1,0 +1,94 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stdout | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:11:33.527Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T20:11:33.528Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:11:33.528Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:11:33.798Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D1: a tag inside <pre>: the clause is the accepter's, and the accept does not name AnA
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D2: <b"…">, which the leaf and the export print: the clause is the accepter's, and the accept does not name AnA
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D2: <b/…>: the clause is the accepter's, and the accept does not name AnA
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D4: attribute words, in content the editor opens in source mode: the clause is the accepter's, and the accept does not name AnA
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D4: attribute words, in content the fidelity gate may send to source mode: the clause is the accepter's, and the accept does not name AnA
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D5: an image alt the leaf prints: the clause is the accepter's, and the accept does not name AnA
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D6: a footnote the export prints: the clause is the accepter's, and the accept does not name AnA
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D1 is also closed in the readers since 737c4e67c: the leaf reads <pre> as markup
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words of the record a reader is not shown are not AnA's either (D3) > <template> hides "not" from the eCTD leaf: the clause is the accepter's
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the verifier reads the record as markdown shows it (D8) > record "5*10 mg/kg", claim and content "510 mg/kg": does not verify, nothing is AnA's
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > an inline style: the split does not cut inside the tag: every clause is AnA's, and the accept names AnA
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > "<LLOQ" and a later ">3×ULN" in plain text: every clause is AnA's, and the accept names AnA
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > a markdown draft with an XML example holding <title>: every clause is AnA's, and the accept names AnA
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > the inline-style draft is one clause, not two cut at the ": " inside its tag
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the machine author is the record's (AUTH) > authorId "constructor" is not a machine author: it is dropped, and nothing is credited to it
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the machine author is the record's (AUTH) > a verified claim names the record's author, whatever the claim said
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > the record holds the sentence once; the same claim sent three times credits one of three 108ms
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > nor does accepting the same draft again: the clause carried forward counts against the record 69ms
+   → expected [ 'accepted_machine_draft:ana', …(1) ] to deeply equal [ 'accepted_machine_draft:ana', …(1) ]
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > nor do overlapping claims: three claims each holding the sentence credit one of three 63ms
+ ↓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the figure rule reads <template> as a browser does (FIG, closed at HEAD by 737c4e67c) > an external <img> inside <template> is refused, and nothing is written
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > nor does accepting the same draft again: the clause carried forward counts against the record
+AssertionError: expected [ 'accepted_machine_draft:ana', …(1) ] to deeply equal [ 'accepted_machine_draft:ana', …(1) ]
+
+- Expected
++ Received
+
+  [
+    "accepted_machine_draft:ana",
+-   "author_assertion",
++   "accepted_machine_draft:ana",
+  ]
+
+ ❯ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts:252:53
+    250|       expect(res.status, JSON.stringify(res.body)).toBe(200);
+    251|     }
+    252|     expect((await spansOf(id)).map((s) => s.whose)).toEqual(['accepted…
+       |                                                     ^
+    253|   });
+    254|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 17 skipped (20)
+   Start at  20:11:31
+   Duration  7.78s (transform 2.11s, setup 110ms, import 4.32s, tests 3.17s, environment 0ms)
+

@@ -19,11 +19,15 @@ const src = fs.readFileSync(
 
 describe('AI gateway fails closed on keyless production', () => {
   it('throws in production when no provider is available, before any demo fallback', () => {
-    // The no-provider branch must guard on production and throw.
-    expect(src).toContain("process.env.NODE_ENV === 'production'");
+    // The no-provider branch must guard on production and throw. Production is
+    // read through isProductionEnv (pii-screen.ts), as every production rule in
+    // the gateway reads it (track GW review [6], 2026-09-28): NODE_ENV
+    // 'Production' boots as production, and must not serve demo content here.
+    // Behaviour: governance-review.test.ts "[6] … a keyless deploy refuses".
+    const branch = src.slice(src.indexOf('if (!selectedModel) {'));
+    expect(branch.slice(0, branch.indexOf('throw new Error'))).toContain('if (isProductionEnv()) {');
     expect(src).toContain('refusing to serve demo-mode content');
     // The throw must come before the demo fallback within the no-provider branch.
-    const branch = src.slice(src.indexOf('if (!selectedModel) {'));
     const throwIdx = branch.indexOf('No AI provider is configured in production');
     const fallbackIdx = branch.indexOf('buildDeterministicResponse');
     expect(throwIdx).toBeGreaterThan(-1);

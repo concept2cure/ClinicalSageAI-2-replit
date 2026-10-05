@@ -1,0 +1,15 @@
+Mutant M03-capture-no-overflow: an over-long capture keeps everything and never says it overflowed
+
+--- server/services/ai-gateway/generation-capture.ts
+- if (c.chars + text.length > GENERATION_CAPTURE_MAX_CHARS) {
+      c.overflow = true;
+      continue;
+    }
++ 
+
+Tests run: server/services/ai-gateway/__tests__/generation-capture.test.ts
+Result: KILLED
+
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture that outgrows its bound says so rather than keeping a part 7ms
+      Tests  1 failed | 7 passed (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

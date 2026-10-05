@@ -1,0 +1,15 @@
+Mutant R77-percent-no-proportion-candidates: a percentage is no longer found as its proportion (47% as 0.47 under a rate)
+
+--- server/services/ana/answer-check-figures.ts
+- if (fig.kind !== 'percent') return same;
++ return same;
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — figures > reads a percentage as its proportion too 15ms
+ × tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a figure the model chose as an input and a tool echoes is AnA's input, not a result (HS-5) 11ms
+ × tests/services/answer-check-r2.test.ts > figures the check reads (F8) > a range checks both ends, and a sign or a proportion is read as written (F8) 3ms
+ × tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a percentage she passed, restated as a proportion, is her input 1ms
+      Tests  4 failed | 85 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯

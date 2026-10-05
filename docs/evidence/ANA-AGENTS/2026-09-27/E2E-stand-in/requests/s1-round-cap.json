@@ -1,0 +1,463 @@
+[
+ {
+  "request": 20,
+  "label": "round-20-with-tools",
+  "refusedByContract": null,
+  "model": "claude-sonnet-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": null,
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 39,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Survey every source you can for BX-512 stability evidence."
+   },
+   {
+    "index": 1,
+    "role": "assistant",
+    "content": "Checking source 1."
+   },
+   {
+    "index": 2,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_1)]:\n{\"ok\":true,\"query\":\"stability evidence source 1\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 3,
+    "role": "assistant",
+    "content": "Checking source 2."
+   },
+   {
+    "index": 4,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_2)]:\n{\"ok\":true,\"query\":\"stability evidence source 2\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 5,
+    "role": "assistant",
+    "content": "Checking source 3."
+   },
+   {
+    "index": 6,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_3)]:\n{\"ok\":true,\"query\":\"stability evidence source 3\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 7,
+    "role": "assistant",
+    "content": "Checking source 4."
+   },
+   {
+    "index": 8,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_4)]:\n{\"ok\":true,\"query\":\"stability evidence source 4\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 9,
+    "role": "assistant",
+    "content": "Checking source 5."
+   },
+   {
+    "index": 10,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_5)]:\n{\"ok\":true,\"query\":\"stability evidence source 5\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 11,
+    "role": "assistant",
+    "content": "Checking source 6."
+   },
+   {
+    "index": 12,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_6)]:\n{\"ok\":true,\"query\":\"stability evidence source 6\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 13,
+    "role": "assistant",
+    "content": "Checking source 7."
+   },
+   {
+    "index": 14,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_7)]:\n{\"ok\":true,\"query\":\"stability evidence source 7\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 15,
+    "role": "assistant",
+    "content": "Checking source 8."
+   },
+   {
+    "index": 16,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_8)]:\n{\"ok\":true,\"query\":\"stability evidence source 8\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 17,
+    "role": "assistant",
+    "content": "Checking source 9."
+   },
+   {
+    "index": 18,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_9)]:\n{\"ok\":true,\"query\":\"stability evidence source 9\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 19,
+    "role": "assistant",
+    "content": "Checking source 10."
+   },
+   {
+    "index": 20,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_10)]:\n{\"ok\":true,\"query\":\"stability evidence source 10\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 21,
+    "role": "assistant",
+    "content": "Checking source 11."
+   },
+   {
+    "index": 22,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_11)]:\n{\"ok\":true,\"query\":\"stability evidence source 11\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 23,
+    "role": "assistant",
+    "content": "Checking source 12."
+   },
+   {
+    "index": 24,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_12)]:\n{\"ok\":true,\"query\":\"stability evidence source 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 25,
+    "role": "assistant",
+    "content": "Checking source 13."
+   },
+   {
+    "index": 26,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_13)]:\n{\"ok\":true,\"query\":\"stability evidence source 13\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 27,
+    "role": "assistant",
+    "content": "Checking source 14."
+   },
+   {
+    "index": 28,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_14)]:\n{\"ok\":true,\"query\":\"stability evidence source 14\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 29,
+    "role": "assistant",
+    "content": "Checking source 15."
+   },
+   {
+    "index": 30,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_15)]:\n{\"ok\":true,\"query\":\"stability evidence source 15\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 31,
+    "role": "assistant",
+    "content": "Checking source 16."
+   },
+   {
+    "index": 32,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_16)]:\n{\"ok\":true,\"query\":\"stability evidence source 16\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 33,
+    "role": "assistant",
+    "content": "Checking source 17."
+   },
+   {
+    "index": 34,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_17)]:\n{\"ok\":true,\"query\":\"stability evidence source 17\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 35,
+    "role": "assistant",
+    "content": "Checking source 18."
+   },
+   {
+    "index": 36,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_18)]:\n{\"ok\":true,\"query\":\"stability evidence source 18\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 37,
+    "role": "assistant",
+    "content": "Checking source 19."
+   },
+   {
+    "index": 38,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_19)]:\n{\"ok\":true,\"query\":\"stability evidence source 19\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   }
+  ]
+ },
+ {
+  "request": 21,
+  "label": "closing-call-tools-withdrawn",
+  "refusedByContract": null,
+  "model": "claude-sonnet-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": null,
+  "tool_choice": {
+   "type": "none"
+  },
+  "tools": 50,
+  "messages": 41,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Survey every source you can for BX-512 stability evidence."
+   },
+   {
+    "index": 1,
+    "role": "assistant",
+    "content": "Checking source 1."
+   },
+   {
+    "index": 2,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_1)]:\n{\"ok\":true,\"query\":\"stability evidence source 1\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 3,
+    "role": "assistant",
+    "content": "Checking source 2."
+   },
+   {
+    "index": 4,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_2)]:\n{\"ok\":true,\"query\":\"stability evidence source 2\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 5,
+    "role": "assistant",
+    "content": "Checking source 3."
+   },
+   {
+    "index": 6,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_3)]:\n{\"ok\":true,\"query\":\"stability evidence source 3\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 7,
+    "role": "assistant",
+    "content": "Checking source 4."
+   },
+   {
+    "index": 8,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_4)]:\n{\"ok\":true,\"query\":\"stability evidence source 4\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 9,
+    "role": "assistant",
+    "content": "Checking source 5."
+   },
+   {
+    "index": 10,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_5)]:\n{\"ok\":true,\"query\":\"stability evidence source 5\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 11,
+    "role": "assistant",
+    "content": "Checking source 6."
+   },
+   {
+    "index": 12,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_6)]:\n{\"ok\":true,\"query\":\"stability evidence source 6\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 13,
+    "role": "assistant",
+    "content": "Checking source 7."
+   },
+   {
+    "index": 14,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_7)]:\n{\"ok\":true,\"query\":\"stability evidence source 7\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 15,
+    "role": "assistant",
+    "content": "Checking source 8."
+   },
+   {
+    "index": 16,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_8)]:\n{\"ok\":true,\"query\":\"stability evidence source 8\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 17,
+    "role": "assistant",
+    "content": "Checking source 9."
+   },
+   {
+    "index": 18,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_9)]:\n{\"ok\":true,\"query\":\"stability evidence source 9\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 19,
+    "role": "assistant",
+    "content": "Checking source 10."
+   },
+   {
+    "index": 20,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_10)]:\n{\"ok\":true,\"query\":\"stability evidence source 10\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 21,
+    "role": "assistant",
+    "content": "Checking source 11."
+   },
+   {
+    "index": 22,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_11)]:\n{\"ok\":true,\"query\":\"stability evidence source 11\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 23,
+    "role": "assistant",
+    "content": "Checking source 12."
+   },
+   {
+    "index": 24,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_12)]:\n{\"ok\":true,\"query\":\"stability evidence source 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 25,
+    "role": "assistant",
+    "content": "Checking source 13."
+   },
+   {
+    "index": 26,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_13)]:\n{\"ok\":true,\"query\":\"stability evidence source 13\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 27,
+    "role": "assistant",
+    "content": "Checking source 14."
+   },
+   {
+    "index": 28,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_14)]:\n{\"ok\":true,\"query\":\"stability evidence source 14\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 29,
+    "role": "assistant",
+    "content": "Checking source 15."
+   },
+   {
+    "index": 30,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_15)]:\n{\"ok\":true,\"query\":\"stability evidence source 15\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 31,
+    "role": "assistant",
+    "content": "Checking source 16."
+   },
+   {
+    "index": 32,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_16)]:\n{\"ok\":true,\"query\":\"stability evidence source 16\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 33,
+    "role": "assistant",
+    "content": "Checking source 17."
+   },
+   {
+    "index": 34,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_17)]:\n{\"ok\":true,\"query\":\"stability evidence source 17\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 35,
+    "role": "assistant",
+    "content": "Checking source 18."
+   },
+   {
+    "index": 36,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_18)]:\n{\"ok\":true,\"query\":\"stability evidence source 18\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 37,
+    "role": "assistant",
+    "content": "Checking source 19."
+   },
+   {
+    "index": 38,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_19)]:\n{\"ok\":true,\"query\":\"stability evidence source 19\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 39,
+    "role": "assistant",
+    "content": "Checking source 20."
+   },
+   {
+    "index": 40,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_20)]:\n{\"ok\":true,\"query\":\"stability evidence source 20\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   }
+  ]
+ },
+ {
+  "request": 22,
+  "label": "continue-carries-the-note",
+  "refusedByContract": null,
+  "model": "claude-sonnet-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": null,
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 3,
+  "stoppedTurnNoteIn": "system prompt",
+  "stoppedTurnNote": "Your previous turn stopped at the round limit (20 rounds) before it was finished. Its answer was written from the work done up to that point. Do not reuse that turn's findings as complete or present its answer as a finished analysis: say what it did not cover, and if the person asks you to continue, pick up where it stopped rather than starting over.",
+  "fromTheAsk": [
+   {
+    "index": 2,
+    "role": "user",
+    "content": "Continue from where you stopped."
+   }
+  ]
+ }
+]

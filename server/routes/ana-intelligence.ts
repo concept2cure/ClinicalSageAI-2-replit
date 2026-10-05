@@ -517,7 +517,9 @@ router.post('/batch', async (req: Request, res: Response) => {
 
 /**
  * POST /api/claude/quick
- * Quick completion using Claude Sonnet (fast, cost-effective).
+ * Quick completion using Claude Sonnet (fast, cost-effective). With a
+ * `framework` it is regulatory drafting and is governed as such: an approved
+ * model, and in production a PQ-passed one (quickComplete).
  */
 router.post('/quick', async (req: Request, res: Response) => {
   try {

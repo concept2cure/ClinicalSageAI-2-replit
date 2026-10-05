@@ -1,0 +1,250 @@
+# RED, track H (row 74). Three records. ANSI stripped; each test line and its first failure reason kept.
+# Command for every part: npx vitest run --config vitest.config.ts server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts
+# Swaps were written from `git show HEAD:<path>` or from the saved pre-review copies, then every file was
+# restored and its sha256 checked (rerecord.py refuses to restore over a file another writer changed). Never stashed.
+
+
+
+==== PART A. The final test files against HEAD c82c056be source for every track H source file. The three new modules are absent at HEAD.
+Part A: HEAD source for:
+  server/services/intelligence/cross-artifact-consistency.ts: 1ce8a856430b0eb739394de3401cd11c4e67aa3245c9cc141c27bd7dca3aa769
+  server/services/ana/AnaToolExecutor.ts: a6d01551abd4bf0d7882356dfbb224e55a33601e36af222e6cd8e8ad84254762
+  server/services/ana/document-intake-tool-defs.ts: bd255a5dc46ba18e2414a866160eeecfdffecfcc1b0d0f95f4ba5620ff684cee
+  server/services/lumen-context/base-system-prompt.ts: 2e56effa797b1f94d0646805346572013779118a8a7205d6f8cb1928423b8315
+  server/routes/regulatory-workspace-routes.ts: 785bda206716dce3a16245c69d805ab502f020a50b15679912a775352612b531
+  server/services/intelligence/consistency-verdict.ts: (absent)
+  shared/ana/dossier-consistency.ts: (absent)
+  shared/utils/plural.ts: (absent)
+vitest exit 1
+
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > checkDossierConsistency when the project artifacts cannot be read > marks the report unavailable instead of returning a clean empty report
+ × server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > checkDossierConsistency when the project artifacts cannot be read > a read that succeeds and finds nothing is still an ordinary report, not unavailable
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: an early return compares nothing and says so > a project id of 0 is not_assessed ({ projectId: +0 }), never clean, and reads nothing
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: an early return compares nothing and says so > a project id that is not a number is not_assessed ({ projectId: NaN }), never clean, and reads nothing
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: an early return compares nothing and says so > a project id that is not an integer is not_assessed ({ projectId: 1.5 }), never clean, and reads nothing
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: an early return compares nothing and says so > a draft under 100 characters is not_assessed ({ draftContent: 'N = 240 subjects.' }), never clean, and reads nothing
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: an early return compares nothing and says so > a draft with no labelled figures and no CTD section is not_assessed ({ draftContent: 'The applicant describes the overall development programme and the rationale for the proposed indication, in narrative form only, without figures.' }), never clean, and reads nothing
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a read that leaves nothing to compare > a project with no other documents is not_assessed (no_related_artifacts), never clean
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a read that leaves nothing to compare > a draft with a CTD section but no labelled figures is not_assessed (no_figures_in_draft)
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a read that leaves nothing to compare > figures that no other document states under the same label are not_assessed (no_shared_figures)
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a read that leaves nothing to compare > an unreadable project is not clean either (the S3 error path keeps its marker)
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a real comparison keeps its verdict > figures compared with the same labels, none differing, is still clean
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a real comparison keeps its verdict > a figure that differs is still flagged, even beside a document that shares nothing
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a real comparison keeps its verdict > a missing cross-reference is still flagged when no figure was compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > the check_dossier_consistency tool > answers with an error, never a clean verdict, when nothing could be compared
+ × server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > the check_dossier_consistency tool > still reports a verdict when the documents were read
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a draft under 100 characters: verdict not_assessed with the reason, and copy that says nothing was compared
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a draft with no labelled figures: verdict not_assessed with the reason, and copy that says nothing was compared
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a project with no other documents: verdict not_assessed with the reason, and copy that says nothing was compared
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > figures no other document shares: verdict not_assessed with the reason, and copy that says nothing was compared
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a real comparison with no difference is clean, and its copy counts what was compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a disagreement is still a blocker with the divergence
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency definition > names not_assessed among the verdicts the model can receive
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > a project whose only document is the draft itself is not_assessed (only_draft_copies), never clean
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > a copy that differs only in whitespace and line endings is the draft too
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > beside a document that agrees, only that document is counted and compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > beside a document that disagrees, the divergence is still a blocker
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > a document that holds the draft and more is another document, and is compared
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > a reference that only the draft's own copy covers is neither flagged nor counted as checked
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > the tool: the draft alone is not_assessed, and the copy names the draft, not "other" documents
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > the tool: clean beside the copy counts one other document and says the copy was set aside
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [3]/[7]: cross-references that resolved are reported, not denied > no figures, one reference resolved: not_assessed (no_figures_in_draft), with the reference counted
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [3]/[7]: cross-references that resolved are reported, not denied > the tool copy states the resolved reference and limits "not assessed" to the figures
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [3]/[7]: cross-references that resolved are reported, not denied > with no reference checked, the copy still says consistency was not assessed
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id 0 is an input error, with no verdict, and nothing is read
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id -3 is an input error, with no verdict, and nothing is read
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id 1.5 is an input error, with no verdict, and nothing is read
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id null is an input error, with no verdict, and nothing is read
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id 0 is an input error, with no verdict, and nothing is read
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > a positive integer project id sent as a string still runs the check
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > the engine keeps no_project for a direct caller
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [6]: one result vocabulary, in shared/, for the server and any client reader > lists every verdict, and every not-assessed reason has its own copy
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [6]: one result vocabulary, in shared/, for the server and any client reader > every verdict the engine returns in this file is in the shared list
+
+ Test Files  2 failed (2)
+      Tests  37 failed | 6 passed (43)
+
+## Failure reasons (each failing test's first assertion)
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected 'clean' not to be 'clean' // Object.is equality
+   → expected 'clean' not to be 'clean' // Object.is equality
+   → expected 'clean' not to be 'clean' // Object.is equality
+   → expected 'clean' not to be 'clean' // Object.is equality
+   → expected 'clean' not to be 'clean' // Object.is equality
+   → expected 'clean' not to be 'clean' // Object.is equality
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected 'clean' not to be 'clean' // Object.is equality
+   → expected 'clean' not to be 'clean' // Object.is equality
+   → expected undefined to be 3 // Object.is equality
+   → expected undefined to be +0 // Object.is equality
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected undefined to be 3 // Object.is equality
+   → expected 'Cross-check a drafted artifact agains…' to match /not_assessed/
+   → expected 'clean' not to be 'clean' // Object.is equality
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected 2 to be 1 // Object.is equality
+   → expected undefined to be 3 // Object.is equality
+   → expected undefined to be +0 // Object.is equality
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected 2 to be 1 // Object.is equality
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected undefined to be +0 // Object.is equality
+   → .toMatch() expects to receive a string, but got undefined
+   → .toMatch() expects to receive a string, but got undefined
+   → .toMatch() expects to receive a string, but got undefined
+   → .toMatch() expects to receive a string, but got undefined
+   → .toMatch() expects to receive a string, but got undefined
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → Cannot find module '/shared/ana/dossier-consistency' imported from /home/user/ClinicalSageAI-2-replit/server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts
+   → Cannot find module '/shared/ana/dossier-consistency' imported from /home/user/ClinicalSageAI-2-replit/server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts
+
+
+==== PART B. The final test files against the track H build BEFORE the review fixes (the build the objections were raised on). Every failure is a review objection; every pass is a guard or a pre-review behaviour kept.
+Part B: pre-review track H source for:
+  server/services/intelligence/cross-artifact-consistency.ts: 624411efb1aee4082379f40615fa13697d032ae63a803fe8175ff256fe178590
+  server/services/ana/AnaToolExecutor.ts: 0680e7d16c6fa8f503e6070b6bcde332ef662525c12ea2c30c44351c130d6536
+  server/services/ana/document-intake-tool-defs.ts: bf5a051bbd9bdb016f49920e171b2be34b2d9fb29e10f81df4c4362cdd3f08ab
+  server/services/lumen-context/base-system-prompt.ts: d3ed23ae74737622dc47013796762b745e05c4731c587f7a78819f2dc4750758
+  server/routes/regulatory-workspace-routes.ts: 785bda206716dce3a16245c69d805ab502f020a50b15679912a775352612b531
+  server/services/intelligence/consistency-verdict.ts: c97d2c3904db900fd28d784061fe855cf28420a74db34d2ee996ab92871657b5
+  shared/ana/dossier-consistency.ts: (absent)
+  shared/utils/plural.ts: (absent)
+vitest exit 1
+
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > checkDossierConsistency when the project artifacts cannot be read > marks the report unavailable instead of returning a clean empty report
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > checkDossierConsistency when the project artifacts cannot be read > a read that succeeds and finds nothing is still an ordinary report, not unavailable
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: an early return compares nothing and says so > a project id of 0 is not_assessed ({ projectId: +0 }), never clean, and reads nothing
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: an early return compares nothing and says so > a project id that is not a number is not_assessed ({ projectId: NaN }), never clean, and reads nothing
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: an early return compares nothing and says so > a project id that is not an integer is not_assessed ({ projectId: 1.5 }), never clean, and reads nothing
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: an early return compares nothing and says so > a draft under 100 characters is not_assessed ({ draftContent: 'N = 240 subjects.' }), never clean, and reads nothing
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: an early return compares nothing and says so > a draft with no labelled figures and no CTD section is not_assessed ({ draftContent: 'The applicant describes the overall development programme and the rationale for the proposed indication, in narrative form only, without figures.' }), never clean, and reads nothing
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a read that leaves nothing to compare > a project with no other documents is not_assessed (no_related_artifacts), never clean
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a read that leaves nothing to compare > a draft with a CTD section but no labelled figures is not_assessed (no_figures_in_draft)
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a read that leaves nothing to compare > figures that no other document states under the same label are not_assessed (no_shared_figures)
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a read that leaves nothing to compare > an unreadable project is not clean either (the S3 error path keeps its marker)
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a real comparison keeps its verdict > figures compared with the same labels, none differing, is still clean
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a real comparison keeps its verdict > a figure that differs is still flagged, even beside a document that shares nothing
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a real comparison keeps its verdict > a missing cross-reference is still flagged when no figure was compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > the check_dossier_consistency tool > answers with an error, never a clean verdict, when nothing could be compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > the check_dossier_consistency tool > still reports a verdict when the documents were read
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a draft under 100 characters: verdict not_assessed with the reason, and copy that says nothing was compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a draft with no labelled figures: verdict not_assessed with the reason, and copy that says nothing was compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a project with no other documents: verdict not_assessed with the reason, and copy that says nothing was compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > figures no other document shares: verdict not_assessed with the reason, and copy that says nothing was compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a real comparison with no difference is clean, and its copy counts what was compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a disagreement is still a blocker with the divergence
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency definition > names not_assessed among the verdicts the model can receive
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > a project whose only document is the draft itself is not_assessed (only_draft_copies), never clean
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > a copy that differs only in whitespace and line endings is the draft too
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > beside a document that agrees, only that document is counted and compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > beside a document that disagrees, the divergence is still a blocker
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > a document that holds the draft and more is another document, and is compared
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > a reference that only the draft's own copy covers is neither flagged nor counted as checked
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > the tool: the draft alone is not_assessed, and the copy names the draft, not "other" documents
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > the tool: clean beside the copy counts one other document and says the copy was set aside
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [3]/[7]: cross-references that resolved are reported, not denied > no figures, one reference resolved: not_assessed (no_figures_in_draft), with the reference counted
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [3]/[7]: cross-references that resolved are reported, not denied > the tool copy states the resolved reference and limits "not assessed" to the figures
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [3]/[7]: cross-references that resolved are reported, not denied > with no reference checked, the copy still says consistency was not assessed
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id 0 is an input error, with no verdict, and nothing is read
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id -3 is an input error, with no verdict, and nothing is read
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id 1.5 is an input error, with no verdict, and nothing is read
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id null is an input error, with no verdict, and nothing is read
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id 0 is an input error, with no verdict, and nothing is read
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > a positive integer project id sent as a string still runs the check
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > the engine keeps no_project for a direct caller
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [6]: one result vocabulary, in shared/, for the server and any client reader > lists every verdict, and every not-assessed reason has its own copy
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [6]: one result vocabulary, in shared/, for the server and any client reader > every verdict the engine returns in this file is in the shared list
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  16 failed | 27 passed (43)
+
+## Failure reasons (each failing test's first assertion)
+   → expected 'clean' not to be 'clean' // Object.is equality
+   → expected 'clean' not to be 'clean' // Object.is equality
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected 2 to be 1 // Object.is equality
+   → expected undefined to be +0 // Object.is equality
+   → expected 1 to be +0 // Object.is equality
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected 2 to be 1 // Object.is equality
+   → expected 'The draft states no labelled figures …' to match /\b1 cross-reference resolved against …/
+   → .toMatch() expects to receive a string, but got undefined
+   → .toMatch() expects to receive a string, but got undefined
+   → .toMatch() expects to receive a string, but got undefined
+   → .toMatch() expects to receive a string, but got undefined
+   → .toMatch() expects to receive a string, but got undefined
+   → Cannot find module '/shared/ana/dossier-consistency' imported from /home/user/ClinicalSageAI-2-replit/server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts
+   → Cannot find module '/shared/ana/dossier-consistency' imported from /home/user/ClinicalSageAI-2-replit/server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts
+
+
+==== PART 0. The first red: the review tests as first written, run against the pre-review build before any fix was made.
+# The test file then differed from the final one in three places: one copy regex (the reference sentence, reworded with the fix),
+# no engine row for project id 1.5 (added with the integer rule), and a shorter header. Tests written first, red first.
+
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: an early return compares nothing and says so > a project id of 0 is not_assessed ({ projectId: +0 }), never clean, and reads nothing
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: an early return compares nothing and says so > a project id that is not a number is not_assessed ({ projectId: NaN }), never clean, and reads nothing
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: an early return compares nothing and says so > a draft under 100 characters is not_assessed ({ draftContent: 'N = 240 subjects.' }), never clean, and reads nothing
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: an early return compares nothing and says so > a draft with no labelled figures and no CTD section is not_assessed ({ draftContent: 'The applicant describes the overall development programme and the rationale for the proposed indication, in narrative form only, without figures.' }), never clean, and reads nothing
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a read that leaves nothing to compare > a project with no other documents is not_assessed (no_related_artifacts), never clean
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a read that leaves nothing to compare > a draft with a CTD section but no labelled figures is not_assessed (no_figures_in_draft)
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a read that leaves nothing to compare > figures that no other document states under the same label are not_assessed (no_shared_figures)
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a read that leaves nothing to compare > an unreadable project is not clean either (the S3 error path keeps its marker)
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a real comparison keeps its verdict > figures compared with the same labels, none differing, is still clean
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a real comparison keeps its verdict > a figure that differs is still flagged, even beside a document that shares nothing
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a real comparison keeps its verdict > a missing cross-reference is still flagged when no figure was compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a draft under 100 characters: verdict not_assessed with the reason, and copy that says nothing was compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a draft with no labelled figures: verdict not_assessed with the reason, and copy that says nothing was compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a project with no other documents: verdict not_assessed with the reason, and copy that says nothing was compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > figures no other document shares: verdict not_assessed with the reason, and copy that says nothing was compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a real comparison with no difference is clean, and its copy counts what was compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency tool > a disagreement is still a blocker with the divergence
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > the check_dossier_consistency definition > names not_assessed among the verdicts the model can receive
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > a project whose only document is the draft itself is not_assessed (only_draft_copies), never clean
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > a copy that differs only in whitespace and line endings is the draft too
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > beside a document that agrees, only that document is counted and compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > beside a document that disagrees, the divergence is still a blocker
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > a document that holds the draft and more is another document, and is compared
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > a reference that only the draft's own copy covers is neither flagged nor counted as checked
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > the tool: the draft alone is not_assessed, and the copy names the draft, not "other" documents
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [1]: a saved copy of the draft is the draft, not another document > the tool: clean beside the copy counts one other document and says the copy was set aside
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [3]/[7]: cross-references that resolved are reported, not denied > no figures, one reference resolved: not_assessed (no_figures_in_draft), with the reference counted
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [3]/[7]: cross-references that resolved are reported, not denied > the tool copy states the resolved reference and limits "not assessed" to the figures
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [3]/[7]: cross-references that resolved are reported, not denied > with no reference checked, the copy still says consistency was not assessed
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id 0 is an input error, with no verdict, and nothing is read
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id -3 is an input error, with no verdict, and nothing is read
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id 1.5 is an input error, with no verdict, and nothing is read
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id null is an input error, with no verdict, and nothing is read
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > project_id 0 is an input error, with no verdict, and nothing is read
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > a positive integer project id sent as a string still runs the check
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [4]: the tool asks for a valid project instead of answering > the engine keeps no_project for a direct caller
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [6]: one result vocabulary, in shared/, for the server and any client reader > lists every verdict, and every not-assessed reason has its own copy
+ × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > review [6]: one result vocabulary, in shared/, for the server and any client reader > every verdict the engine returns in this file is in the shared list
+
+ Test Files  1 failed (1)
+      Tests  15 failed | 23 passed (38)
+
+## Failure reasons (each failing test's first assertion)
+   → expected 'clean' not to be 'clean' // Object.is equality
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected 2 to be 1 // Object.is equality
+   → expected undefined to be +0 // Object.is equality
+   → expected 1 to be +0 // Object.is equality
+   → expected 'clean' to be 'not_assessed' // Object.is equality
+   → expected 2 to be 1 // Object.is equality
+   → expected 'The draft states no labelled figures …' to match /\b1 cross-reference to another projec…/
+   → .toMatch() expects to receive a string, but got undefined
+   → .toMatch() expects to receive a string, but got undefined
+   → .toMatch() expects to receive a string, but got undefined
+   → .toMatch() expects to receive a string, but got undefined
+   → .toMatch() expects to receive a string, but got undefined
+   → Cannot find module '/shared/ana/dossier-consistency' imported from /home/user/ClinicalSageAI-2-replit/server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts
+   → Cannot find module '/shared/ana/dossier-consistency' imported from /home/user/ClinicalSageAI-2-replit/server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts
+
+
+# The two "Cannot find module /shared/ana/dossier-consistency" failures are review [6]'s tests, which import the new shared
+# module dynamically inside the test so that only they fail when it is absent. Every other failure is an assertion.

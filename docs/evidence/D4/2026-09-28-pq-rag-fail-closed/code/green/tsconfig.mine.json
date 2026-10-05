@@ -1,0 +1,11 @@
+{
+  "extends": "/home/user/ClinicalSageAI-2-replit/tsconfig.json",
+  "compilerOptions": { "noEmit": true, "incremental": false },
+  "include": [
+    "/home/user/ClinicalSageAI-2-replit/server/eval/pq/pq-verdict.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/eval/pq/run-pq.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/eval/pq/__tests__/pq-verdict-rag.test.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/eval/pq/__tests__/run-pq.test.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/eval/pq/__tests__/pq-verdict.test.ts"
+  ]
+}

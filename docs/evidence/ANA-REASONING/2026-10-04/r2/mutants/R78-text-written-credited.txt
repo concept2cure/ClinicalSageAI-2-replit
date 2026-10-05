@@ -1,0 +1,13 @@
+Mutant R78-text-written-credited: an identifier or regulation a model wrote inside the tool call is credited (successor of M06)
+
+--- server/services/ana/answer-grounding.ts
+- return Boolean(surface && found(surface)) && !(s.written && found(s.written));
++ return Boolean(surface && found(surface));
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > does not credit an identifier a model wrote inside the tool call 9ms
+ × tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a regulation a model wrote inside the tool call is not credited by it 2ms
+      Tests  2 failed | 87 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

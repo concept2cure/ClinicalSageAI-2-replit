@@ -1,0 +1,6 @@
+ × server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > names each tool result, carries what a model wrote inside it, and drops a failed step 64ms
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > the person's message and the project data are sources; AnA's memory is not 13ms
+   → expected undefined to be 'What shelf life do we have on file?' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed (2)

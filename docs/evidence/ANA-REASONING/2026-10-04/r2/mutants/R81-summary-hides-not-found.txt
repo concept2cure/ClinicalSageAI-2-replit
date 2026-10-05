@@ -1,0 +1,13 @@
+Mutant R81-summary-hides-not-found: the summary line does not count the claims not found (successor of M13)
+
+--- server/services/ana-ri/response-contract.ts
+- if (check.notFound.length > 0) parts.push(`${check.notFound.length} not found`);
++ 
+
+Tests run: server/services/__tests__/ana-trust-summary.test.ts server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+Result: KILLED
+
+ × server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > leads with the engine's check when there is one 6ms
+ × server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels 3161ms
+      Tests  2 failed | 8 passed (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

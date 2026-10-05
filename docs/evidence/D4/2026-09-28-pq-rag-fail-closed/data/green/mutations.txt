@@ -1,0 +1,25 @@
+# node docs/evidence/D4/2026-09-28-pq-rag-fail-closed/data/mutations.mjs server/eval/rag/gold-dataset.json server/eval/rag/guidance-corpus-manifest.json /tmp/gold-at-base.json
+RED as intended exit=1  [4] US-Code entries pin two editions  [expects: US-Code entries pin more than one edition]
+RED as intended exit=1  [5] two verified entries share one sha256 (E6(R3) Annex 2 under the E6(R2) file)  [expects: shares sha256]
+RED as intended exit=1  [7] an entry names its publisher as issuer  [expects: issuer EU-PublicationsOffice is not in issuers]
+RED as intended exit=1  [7] an entry has no publisher  [expects: publisher undefined is not in publishers]
+RED as intended exit=1  [8] an EU-CONS entry pinned to the unamended OJ text  [expects: does not match versionScheme EU-CONS]
+RED as intended exit=1  [8] the EU-CONS scheme is undescribed  [expects: versionScheme.EU-CONS is not described]
+RED as intended exit=1  [10] keysProvisional dropped while versions are unverified  [expects: keysProvisional must be true]
+RED as intended exit=1  [11] quotation marks back in an unfetched terms summary  [expects: carries quotation marks]
+RED as intended exit=1  [11] terms filled in while unverified  [expects: terms set while termsVerified is not true]
+RED as intended exit=1  [12] a gold item keyed to the UNPINNED EMA entry  [expects: names an UNPINNED entry]
+RED as intended exit=1  [6] a gold item keyed to an unread supporting entry  [expects: names a supporting entry, not an answer-source]
+RED as intended exit=1  a key matching no manifest entry  [expects: matches no manifest entry]
+RED as intended exit=1  an original field changed  [expects: original field expectedAnswerContains changed]
+RED as intended exit=1  a key on a negative control  [expects: has expected source keys]
+RED as intended exit=1  expectedSourceIds filled before the resolver exists  [expects: expectedSourceIds must stay []]
+RED as intended exit=1  verified:true without URL, sha256, date or verified terms  [expects: verified without sourceUrl]
+RED as intended exit=1  a new item without an evidence quote  [expects: lacks evidence]
+RED as intended exit=1  a new item quoting an UNVERIFIED text  [expects: evidence quotes an unverified entry]
+RED as intended exit=1  a new item whose expected substring is not in its quote  [expects: 'intermediate' is not in the quote]
+RED as intended exit=1  --ready on the real data  [expects: positivesReady 0]
+GREEN as intended exit=0  positive control: one verified, quoted item passes --ready
+
+all 21 cases as intended
+exit=0

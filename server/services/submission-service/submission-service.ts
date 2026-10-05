@@ -44,6 +44,7 @@ import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outco
 import { deriveGovernedTargetBinding, BINDING_BASIS, isSignatureWithdrawn } from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
 import { programInOrganization } from '../c2c/program-access';
+import { requiresIndependence } from '../governance/separation-of-duties';
 import {
   validateSectionCode,
   vocabularyForApplicationType,
@@ -514,6 +515,22 @@ async function governedSignatureVerdict(
   const intent = typeof payload?.intent === 'string' ? payload.intent : null;
   if (intent !== step) {
     return refuse(`the sign action declares intent '${intent ?? 'none'}', not '${step}'; sign this step with its own meaning`);
+  }
+
+  // Freeze, dispatch and transmit are approval and release acts, never an
+  // author attesting authorship. The sign route skips separation of duties
+  // for an authorship meaning (requiresIndependence — correct for a document
+  // author signing as author), so a signature declaring one was never checked
+  // for independence. Accepting it here let the sequence's creator choose
+  // "Authorship" in the signing dialog and release their own submission, and
+  // the release resolver then counted that signature as the §11.70 release.
+  // Refused at the step itself, so it holds whichever client signed it.
+  if (!requiresIndependence('sign', payload?.meaning)) {
+    return refuse(
+      `the signature declares the meaning '${String(payload?.meaning)}'; ${step} is an approval or release step, ` +
+        'so it must be signed with an approval, responsibility or release meaning by someone other than the ' +
+        'sequence\'s creator',
+    );
   }
 
   const sequenceId = target.slice(target.indexOf(':') + 1);

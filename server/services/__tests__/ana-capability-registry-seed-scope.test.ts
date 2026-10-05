@@ -117,7 +117,7 @@ import {
 } from '../ana-capability-registry';
 
 const SET_CONFIG_RE = /set_config\('app\.current_tenant_id'/;
-const SYSTEM_SCOPE_PARAMS = ['0', '', 'app_super_admin'];
+const SYSTEM_SCOPE_PARAMS = ['0', '', 'app_super_admin', ''];
 
 const priorEnforce = process.env.RLS_ENFORCE;
 beforeEach(() => {

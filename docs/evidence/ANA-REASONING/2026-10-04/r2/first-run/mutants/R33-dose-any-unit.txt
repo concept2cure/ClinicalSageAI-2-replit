@@ -1,0 +1,10 @@
+Mutant R33-dose-any-unit: "240 mg" is found through any 240
+
+--- server/services/ana/answer-check-figures.ts
+- o.value === value && (unitAfter(DOSE_UNITS, DOSE_UNIT_RE, o.after) === fig.unit || keyHasUnit(DOSE_UNITS, o.key, fig.unit ?? '')),
++ o.value === value,
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: SURVIVED
+
+      Tests  75 passed (75)

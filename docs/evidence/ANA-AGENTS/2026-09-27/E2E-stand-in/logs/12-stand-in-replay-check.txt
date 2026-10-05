@@ -1,0 +1,70 @@
+# Review correction (2026-09-28): the stand-in was edited and restarted at 18:38:15, and the pre-edit file was not kept, so its hash cannot be recorded.
+# This replays all 52 saved request bodies (the full ~100-170 KB bodies the server sent, kept in the scratch folder, not filed) through the FILED stand-in-e2e.mjs (sha256 c35d7072…) and compares its log line for each (settings read, ask, last result, notes, stopped-turn note, scripted reply) with the capture's line in logs/09.
+# It compares what the script decided, not the SSE bytes; the wire half is not compared.
+$ API_CONTRACT=$SNAP/docs/evidence/W1/2026-09-28-ana-drive/harness/api-contract.mjs node harness/replay-log-check.mjs <scratch>/final/requests logs/09-stand-in-request-log.txt 1 52
+{
+ "replayed": "#1–#52",
+ "identical": 50,
+ "differ": [
+  {
+   "n": 43,
+   "fields": {
+    "reply": {
+     "capture": {
+      "tool": "execute_platform_command",
+      "input": {
+       "command": "create_task",
+       "params": {
+        "title": "E2E stand-in: review the stability protocol",
+        "description": "Proposed by the scripted stand-in model.",
+        "priority": "medium"
+       }
+      }
+     },
+     "filedStandIn": {
+      "tool": "execute_platform_command",
+      "input": {
+       "command": "create_task",
+       "params": {
+        "projectId": 1,
+        "title": "E2E stand-in: review the stability protocol",
+        "description": "Proposed by the scripted stand-in model.",
+        "priority": "medium"
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "n": 46,
+   "fields": {
+    "reply": {
+     "capture": {
+      "tool": "execute_platform_command",
+      "input": {
+       "command": "create_task",
+       "params": {
+        "title": "E2E stand-in: review the stability protocol",
+        "description": "Proposed by the scripted stand-in model.",
+        "priority": "medium"
+       }
+      }
+     },
+     "filedStandIn": {
+      "tool": "execute_platform_command",
+      "input": {
+       "command": "create_task",
+       "params": {
+        "projectId": 1,
+        "title": "E2E stand-in: review the stability protocol",
+        "description": "Proposed by the scripted stand-in model.",
+        "priority": "medium"
+       }
+      }
+     }
+    }
+   }
+  }
+ ]
+}

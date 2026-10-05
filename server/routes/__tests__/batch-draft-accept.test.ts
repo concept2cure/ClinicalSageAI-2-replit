@@ -151,8 +151,12 @@ describe('the acceptance write stays reversible, attributable, and atomic', () =
     expect(acceptRoute).toMatch(/versionReplacedCoauthorContent\(/);
     // The snapshot must carry the content being REPLACED. Writing the new
     // content instead would leave the history describing a state that never
-    // preceded anything, and the accept would not be undoable.
-    expect(acceptRoute).toMatch(/versionReplacedCoauthorContent\(queryableFromDrizzle\(rdb\), \{[^}]*\bpreviousContent,/);
+    // preceded anything, and the accept would not be undoable. Since 283fe08c4
+    // (round 3) the lineage, the version, the content and the audit row share
+    // one queryable over the transaction, `client`; this pin still read the
+    // call it replaced.
+    expect(acceptRoute).toMatch(/const client = queryableFromDrizzle\(rdb\);/);
+    expect(acceptRoute).toMatch(/versionReplacedCoauthorContent\(client, \{[^}]*\bpreviousContent,/);
   });
 
   it('locks the row it is about to read-then-overwrite', () => {

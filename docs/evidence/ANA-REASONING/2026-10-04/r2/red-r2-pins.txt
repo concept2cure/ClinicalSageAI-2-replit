@@ -1,0 +1,93 @@
+The third red of round 2: tests that pin the rules the first mutation run left unpinned (first-run/mutants), run before the three fixes they found.
+Every other pinning test passed at once: its red is its mutant (mutants/R08, R09, R13, R17, R21, R23, R29–R33, R35–R37, R43, R54).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run tests/services/answer-check-r2.test.ts client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx
+
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a date, an age or a page does not find a fabricated figure 23ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > the figures the record does hold are found by their measure 8ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a p-value is not a percentage, and a percentage is not a p-value 3ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > an outage envelope finds nothing through its percent-encoded URL (F3) 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a figure in a returned abstract is found, though the model searched for it (HS-5) 9ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a figure the model chose as an input and a tool echoes is AnA's input, not a result (HS-5) 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "The response rate was 47 percent." 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "hazard ratio, 0.31; 95% CI, 0.50 to 0.77" 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "The p-value = 0.0003." 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "A P value of 0.0003 was reported." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Enrollment was 212 pts." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "A total of 212 randomized patients." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "212 women were enrolled." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Median OS was 31.2 mo." 3ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Treatment lasted 48 h." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Dosed at 100 μg daily." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "95% CI [0.41, 0.77]" 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "HR (95% CI) 0.62 (0.50–0.77)" 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Responses ranged from 38–56%." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > a range checks both ends, and a sign or a proportion is read as written (F8) 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > "or" in prose is not an odds ratio (HS-7) 1ms
+ ✓ tests/services/answer-check-r2.test.ts > the person's own message is never a source (F1, HS-3) > a claim found only in the question is reported as theirs, not found 1ms
+ ✓ tests/services/answer-check-r2.test.ts > the person's own message is never a source (F1, HS-3) > with nothing consulted, a claim in the question is still the person's, and the rest unchecked 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a citation check that did not find the PMID does not find it 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a verified citation confirms the identifier it matched, not what the model packed beside it 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > an identifier in a fetched URL is not found; the page must hold it 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a tool that searches text the model supplied returns only the model's words 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > echoes nested under other keys, in bare lists or in a not-found list find nothing 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a registry record about the identifier the model searched for confirms it 0ms
+ ✓ tests/services/answer-check-r2.test.ts > identifiers and regulations are matched as themselves (F7) > an ICH code is not found inside another word or beside an unrelated number 1ms
+ ✓ tests/services/answer-check-r2.test.ts > identifiers and regulations are matched as themselves (F7) > a labelled submission number needs its label in the source, not any equal number 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a source the check cannot read leaves its claims unchecked (HS-4) > claims not found elsewhere are not checked, naming the unread source 0ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts (F9, HS-6) > names the verdicts stated 2ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts (F9, HS-6) > does not name a verdict declined, made conditional, or about a workflow step 0ms
+ ✓ tests/services/answer-check-r2.test.ts > cost and shape (F10) > long whitespace runs in an answer stay linear 1ms
+ ✓ tests/services/answer-check-r2.test.ts > cost and shape (F10) > a deeply nested result does not throw 2ms
+ ✓ tests/services/answer-check-r2.test.ts > cost and shape (F10) > names the round-2 engine 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a proportion she passed, restated as a percentage, is her input 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a percentage she passed, restated as a proportion, is her input 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a figure she searched for is still found in a passage the source returns (HS-5 holds) 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a figure one tool restates from her input is found in another tool that returns it 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an identifier the citation tool verified is found (probe p5 G1) > a labelled PMID the tool verified is found 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an identifier the citation tool verified is found (probe p5 G1) > what the model packed beside it is still not found 0ms
+ ✓ tests/services/answer-check-r2.test.ts > regulations cited as a list are each read (probe p9 I7) > reads "21 CFR Parts 50 and 56" as two parts 1ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts, re-run (probes p8 and probe-verdicts) > names the verdicts round 2 still missed 1ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts, re-run (probes p8 and probe-verdicts) > does not name a verdict asked, doubted, or made conditional after it 0ms
+ ✓ tests/services/answer-check-r2.test.ts > cost at scale (probe p6) > 200 identifiers and 200 figures against 25 sources of 60k characters take well under two seconds 297ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a p-value needs p: alpha is not a p-value 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a hazard ratio needs its name: a dose is not a hazard ratio 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > n and a count need what they count: a page number is neither 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a dose needs its unit: a duration in days is not a dose in mg 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a date is not a count, even in a field named for a cohort or a sample 0ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > "or" in a source's prose is not an odds ratio 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > two bounds far apart in one text are not an interval 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > two numbers that are not a CI are not an interval 0ms
+ × tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > bounds from two different records are not one interval 9ms
+   → expected [] to deeply equal [ '95% CI 0.50 to 0.77' ]
+ × tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > an interval returned as a pair of numbers is found 2ms
+   → expected [ { kind: 'figure', …(1) } ] to deeply equal []
+ ✓ tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record that says it was not found confirms nothing it names 0ms
+ ✓ tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record holding only the model's own identifier and a position confirms nothing 0ms
+ ✓ tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record whose own value is a figure ("47%") does confirm the identifier it is about 0ms
+ × tests/services/answer-check-r2.test.ts > a malformed identifier is flagged, not skipped (round-2 mutants) > a nine-digit NCT number is a claim of its own, not the trial inside it 1ms
+   → expected [] to deeply equal [ 'NCT025786801' ]
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says how many specific claims were not found in this turn's sources, and quotes them by kind 46ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > names what it checked against 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says every claim was found, and still earns no check mark: found is not verified (HS-2) 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says a figure is AnA's own input to a tool, not a result (HS-5) 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says a claim found only in the person's message is theirs, never found (HS-3) 12ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > with no source consulted, the claims are not checked — never found, never a pass 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > with no source consulted, a claim only in the person's message is said to be theirs (F1) 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > nothing to check is not a pass 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > names a verdict the answer states, and says where verdicts come from 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > names a source the check could not read, and leaves what it may hold unchecked (HS-4) 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > names an unread source on its own when nothing was left unchecked 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says nothing about what it checked against when there was nothing to check (HS-9) 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > lists three claims and counts the rest 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > reports labels as labelled, never as grounded, and never as sources 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > names the flags by kind and quotes the first 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > a label check that ran and failed shows what failed — it is not "not assessed" 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > a failed label check with no counts still shows what failed, beside the engine's check 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > clean labels carry no check mark: a label is not verification 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > with no check either, says the answer was not assessed and shows no count 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > with a check, the unassessed labels add nothing to it 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > renders nothing when the turn carries no verdict at all 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > never states a verdict in colour alone 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  3 failed | 80 passed (83)

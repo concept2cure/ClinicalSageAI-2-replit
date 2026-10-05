@@ -1,0 +1,14 @@
+Mutant R01-person-is-source: the person's own message confirms the claims it asks about (F1, HS-3)
+
+--- server/services/ana/answer-grounding.ts
+- const sources = readable.filter((e) => e.source !== 'person').map(readSource);
++ const sources = readable.map(readSource);
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — the basis > with only the person's own message, claims are unchecked or theirs, never "not found" 6ms
+ × tests/services/answer-check-r2.test.ts > the person's own message is never a source (F1, HS-3) > a claim found only in the question is reported as theirs, not found 12ms
+ × tests/services/answer-check-r2.test.ts > the person's own message is never a source (F1, HS-3) > with nothing consulted, a claim in the question is still the person's, and the rest unchecked 3ms
+      Tests  3 failed | 86 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

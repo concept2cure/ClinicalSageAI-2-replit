@@ -1,0 +1,12 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/routes/legacy-digest-routes-removed.contract.test.ts > the legacy digest routes stay removed (D3) > the module and its file-backed logger are gone 2ms
+ ✓ tests/routes/legacy-digest-routes-removed.contract.test.ts > the legacy digest routes stay removed (D3) > no server source registers a route that takes the target user from the request on these paths 235ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  23:39:57
+   Duration  639ms (transform 75ms, setup 83ms, import 10ms, tests 241ms, environment 0ms)
+

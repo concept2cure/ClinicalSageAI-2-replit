@@ -110,16 +110,24 @@ Data Origins panel and its PDF would say so.
     `../known-tag-rule/`. Making it shared exposed a quadratic in it, now
     linear.
 
+- **Round 4** (2026-10-04): `r4/`. An independent refute-review of round 3
+  found eleven defects, among them a blocker (D2): a tag-shaped token a
+  browser hides and the leaf prints. It also refuted the round-3 premise
+  below, that attribute text is hidden from every reader. Each defect is
+  fixed red first: 22 of 22 mutants are killed. The rule is now that every
+  reader shows the same words, and the round-4 README tells it whole.
+
 ## Not done here
 
 - Formatting is not attributed. A strike (`<del>`, `<s>`) put over one of
   AnA's words leaves the words AnA's, though the strike changes what a reader
   takes them to say. This is the same limit as the editor's (formatting-only
   changes are not tracked).
-- Attribute text (`<b 3 patients died>` as HTML) is hidden from every reader
-  that parses HTML, and is not compared. It is in the stored content. Every
-  reader that shows content parses it as HTML or as plain text, and in plain
-  text such a clause is never AnA's.
-
-Round 3 was self-reviewed in this lane. An independent refute-review is
-recorded in the editor-family README when it returns.
+- ~~Attribute text is hidden from every reader that parses HTML.~~
+  Refuted in round 4: the editor's source mode shows it, and the leaf and the
+  export print an alt, a footnote and a locator. A tag is now removed only
+  when its attributes are the presentational ones the editor writes. A clause
+  holding any other attribute keeps the tag in the comparison, or is not
+  compared (`r4/`).
+- The rest of what round 4 leaves open (the AI-draft accept's unmasked split,
+  table foster parenting) is in `r4/README.md`, "Not done".

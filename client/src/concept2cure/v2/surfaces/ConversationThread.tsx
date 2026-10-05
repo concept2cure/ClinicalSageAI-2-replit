@@ -4,6 +4,7 @@ import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { AnaActionChips } from '../AnaActionChips';
 import { LiveDriveSwitch } from '../LiveDriveSwitch';
+import { RunPolicySwitch } from '../RunPolicySwitch';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
 import { useChatUpload, readyAttachmentLabel, composeTurn, type SentAttachment } from '../../hooks/useChatUpload';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
@@ -12,6 +13,7 @@ import { apiCall, apiErrorText } from '../apiCall';
 import { downloadBlob, safeFileName } from '../download';
 import { readShellProject, shellProgramName } from '../shellProject';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
+import { RunControlStrip } from '../AnaWorkSections';
 import { useAgentActivity } from '../useAgentActivity';
 import { AnaActivity, activityPropsFor, hasReportableWork, type AnaActivityProps } from '../AnaActivity';
 import { CONTINUE_PROMPT, continueTurnIndex } from '../anaWorkModel';
@@ -21,6 +23,7 @@ import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import { AnaMarkdown } from '../AnaMarkdown';
+import { AnaGrounding } from '../AnaGrounding';
 import { DocumentCanvas } from '../editor/DocumentCanvas';
 import type { EditorBridge } from '../editor/DocumentWorkbench';
 import { isProgramId, openDraftAsDocument } from '../editor/draftToDocument';
@@ -48,12 +51,12 @@ const STARTER_ASKS = [
 
 /* Adapt one real AnA turn (useAnaChat → /api/ana-ri/stream) into the CtTurn
    shape this surface renders — the model's answer, the record of how she got
-   there, and the grounding sources she actually used. Never a fabricated tool
-   trace or a Math.random()-"audited" artifact; unpopulated fields are simply
-   omitted. */
+   there, what was checked about it, and the context layers she was given.
+   Never a fabricated tool trace or a Math.random()-"audited" artifact;
+   unpopulated fields are simply omitted. */
 function toTurn(m: AnaChatMessage): CtTurn {
   if (m.role === 'user') return { role: 'user', text: m.text };
-  const grounding = (m.groundingSources || []).map((s) => ({ src: s, ok: true }));
+  const contextUsed = m.groundingSources || [];
   const authoringDoc = authoringDocOf(m);
   /* Everything the turn reported about how it was answered, through the one
      mapping every host uses (AnaActivity.activityPropsFor). A second copy of
@@ -65,7 +68,8 @@ function toTurn(m: AnaChatMessage): CtTurn {
     answer: m.text || undefined,
     settled: !m.streaming,
     sourceRecord: m.turnRecord?.status === 'recorded' ? m.turnRecord.id : undefined,
-    grounding: grounding.length ? grounding : undefined,
+    contextUsed: contextUsed.length ? contextUsed : undefined,
+    evidence: m.evidence,
     /* Present while the turn is in flight — the phase line IS the waiting
        state — and, once settled, only when there is real work to show for it.
        A settled turn that ran nothing carries no record rather than an empty
@@ -297,6 +301,11 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, inser
             markdown renderer (marked → DOMPurify → React elements, no
             innerHTML); the person's own turn above stays as typed. */}
         {turn.answer && <AnaMarkdown text={turn.answer} className="ct-ana-text ana-md" />}
+        {/* What was checked about the answer, directly under it: the engine's
+            check of its specific claims against this turn's sources, then
+            AnA's labels, the same strip as the rail and the editor. Never under
+            the document canvas, whose drafted figures it does not check. */}
+        {turn.settled && <AnaGrounding evidence={turn.evidence} />}
         <InsertIntoOpenSection turn={turn} target={insertTarget} />
         {/* The document canvas: the authoring document this turn drafted,
             read from the store and expandable into THE editor in place. */}
@@ -329,10 +338,13 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, inser
             ))}
           </div>
         )}
-        {turn.grounding && (
+        {/* The context layers the platform gave her, by name. Context, not
+            evidence, so no check mark: until 2026-10-04 these read "Grounded
+            in ✓" on every turn, a verification nothing performed. */}
+        {turn.contextUsed && (
           <div className="ct-ground">
-            <span className="ct-ground-l">Grounded in</span>
-            {turn.grounding.map((g, i) => (<span key={i} className="ct-ground-chip" data-ok={g.ok}>{g.ok ? I.check : I.alertTriangle} {g.src}</span>))}
+            <span className="ct-ground-l">Context used</span>
+            {turn.contextUsed.map((src, i) => (<span key={i} className="ct-ground-chip">{src}</span>))}
           </div>
         )}
         {turn.executedActions && (
@@ -1230,6 +1242,8 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
             ref={dock.chipRef}
             messages={anaChat.messages}
             streaming={anaChat.isStreaming}
+            runStatus={anaChat.runStatus}
+            runHold={anaChat.runHold}
             open={dock.open}
             onToggle={dock.toggle}
             controls={dock.panelId}
@@ -1298,6 +1312,20 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
             </div>
           </div>
 
+          {/* Mid-run control, where the person types: this screen has no rail,
+              so a Manual hold is answered here (Run this step / Do this
+              instead / Stop). Pause, resume and steer only once the run is
+              controllable, as the shell gates the rail's; Stop always. */}
+          <RunControlStrip
+            streaming={anaChat.isStreaming}
+            runStatus={anaChat.runStatus}
+            runHold={anaChat.runHold}
+            runPolicy={anaChat.turnRunPolicy}
+            onPause={anaChat.runStatus ? () => void anaChat.pause() : undefined}
+            onResume={anaChat.runStatus ? () => void anaChat.resume() : undefined}
+            onStop={() => void anaChat.stop()}
+            onSteer={anaChat.runStatus ? (m) => anaChat.interject(m) : undefined}
+          />
           <div className="ct-composer-wrap">
             <div className="ct-composer">
               <input
@@ -1364,7 +1392,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
               </div>
             )}
             <span className="sr-only" aria-live="polite">{statusMessage}</span>
-            <div className="ct-comp-foot"><LiveDriveSwitch /></div>
+            <div className="ct-comp-foot"><LiveDriveSwitch /><RunPolicySwitch variant="foot" /></div>
             <div className="ct-comp-foot">{I.lock} Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
           </div>
         </div>
@@ -1391,6 +1419,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                 messages={anaChat.messages}
                 streaming={anaChat.isStreaming}
                 runStatus={anaChat.runStatus}
+                runHold={anaChat.runHold}
                 pendingSteers={anaChat.pendingSteers}
                 queue={agentActivity}
                 onClose={dock.close}

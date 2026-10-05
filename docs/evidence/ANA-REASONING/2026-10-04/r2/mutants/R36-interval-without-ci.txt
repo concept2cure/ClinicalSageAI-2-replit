@@ -1,0 +1,12 @@
+Mutant R36-interval-without-ci: an interval is found through any two nearby numbers, not beside CI
+
+--- server/services/ana/answer-check-figures.ts
+- if (close && (CI_WORDS.test(`${a.before} ${a.key}`) || CI_WORDS.test(`${b.before} ${b.key}`))) return true;
++ if (close) return true;
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > two numbers that are not a CI are not an interval 9ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,14 @@
+Mutant M16-stream-raw-corpus: the stream hands the check no tool entries
+
+--- server/routes/ana-ri/stream.ts
+- const entry = r
+              ? toolEvidence(r.toolUse.name, {
++ const entry = r && false
+              ? toolEvidence(r.toolUse.name, {
+
+Tests run: server/routes/ana-ri/__tests__/stream-answer-sources.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > names each tool result, carries what a model wrote inside it, and drops a failed step 62ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

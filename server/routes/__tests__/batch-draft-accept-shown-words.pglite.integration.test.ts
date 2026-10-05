@@ -21,6 +21,11 @@
  *     comparison and shown to the reader;
  *   - an accepted clause carried forward into a raw-text region a later save
  *     opened before it kept AnA's name over words that region now shows.
+ * Round 4 (the refute-review of round 3) refuted the premise that attribute
+ * text is hidden from every reader: the editor opens content in source mode.
+ * So `<b 3 patients died …>` is no longer removed for the comparison, a claim
+ * holding it no longer verifies, and the three tests below that relied on it
+ * say so (batch-draft-accept-readers.pglite.integration.test.ts has the rest).
  *
  * Same harness as batch-draft-accept-lineage.pglite.integration.test.ts (that
  * file is at its length limit): the real router and the real POST
@@ -182,14 +187,15 @@ describe('PROBE-C: a raw-text element whose opening tag is in another clause', (
     expect(await whoseAt(id, content.indexOf(SHOWN)), 'words a reader is shown, typed into AnA\'s sentence, were credited to AnA').toEqual(['author_assertion']);
   });
 
-  it('the claim may be the tampered sentence itself: it verifies, and still credits nothing', async () => {
+  it('the claim may be the tampered sentence itself: it does not verify (round 4), and credits nothing', async () => {
     const turnRecordId = await draftBatch();
     const id = await seedDoc();
     const content = `<xmp>\n\n${TAMPERED}\n\n</xmp>`;
     await accept(id, { content, turnRecordId, acceptedMachineText: [{ authorId: 'ana', text: TAMPERED }] });
 
     const r = await record(id);
-    expect(r.audit.machineText.verified).toHaveLength(1);
+    expect(r.audit.machineText.verified, 'the record never held the token\'s words').toEqual([]);
+    expect(r.audit.machineText.unverified.map((u: { reason: string }) => u.reason)).toEqual(['text_not_in_record']);
     expect(await whoseAt(id, content.indexOf(SHOWN))).toEqual(['author_assertion']);
     expect(r.metadata.lastDraftSource, 'the accept said AnA\'s text was accepted, over none').not.toBe('ana-batch');
     expect(r.audit.model).toBeNull();
@@ -219,10 +225,12 @@ describe('content read as plain text shows every `<…>`', () => {
     const turnRecordId = await draftBatch(plain);
     const id = await seedDoc();
     const content = plain.replace('was met ', 'was met <q 3 patients died of hepatic failure> ');
-    await accept(id, { content, turnRecordId, acceptedMachineText: [{ authorId: 'ana', text: content }] });
+    // The claim is AnA's draft as recorded. The tampered content as the claim
+    // no longer verifies at all (round 4): the record never held those words.
+    await accept(id, { content, turnRecordId, acceptedMachineText: [{ authorId: 'ana', text: plain }] });
 
     const r = await record(id);
-    expect(r.audit.machineText.verified, 'the claim verifies: as HTML its words are AnA\'s').toHaveLength(1);
+    expect(r.audit.machineText.verified, 'AnA\'s draft verifies').toHaveLength(1);
     expect(await whoseAt(id, content.indexOf(SHOWN)), 'shown to the editor\'s reader, credited to AnA').toEqual(['author_assertion']);
     expect(await whoseAt(id, content.indexOf('No new safety')), 'the untouched sentence is still AnA\'s').toEqual(['accepted_machine_draft:ana']);
   });
@@ -230,20 +238,22 @@ describe('content read as plain text shows every `<…>`', () => {
 
 describe('a clause accepted as AnA\'s, carried into a raw-text region by a later save', () => {
   it('loses AnA\'s name: the words the region now shows were never compared', async () => {
-    // As HTML, `<b 3 patients died …>` is a tag a reader does not see, so the
-    // first accept credits the sentence to AnA, correctly for what is shown.
+    // As HTML, `<b>` is a tag no reader shows, so the first accept credits the
+    // sentence to AnA, correctly for what is shown. (Round 3 used
+    // `<b 3 patients died …>` here; round 4 no longer credits that at all.)
+    const MARKED = 'The primary endpoint was met <b>at week twelve</b> in the intent-to-treat population.';
     const turnRecordId = await draftBatch();
     const id = await seedDoc();
-    const first = `<p>${TAMPERED}</p>`;
+    const first = `<p>${MARKED}</p>`;
     await accept(id, { content: first, turnRecordId, acceptedMachineText: [{ authorId: 'ana', text: DRAFT }] });
     expect(await whoseAt(id, first.indexOf('primary'))).toEqual(['accepted_machine_draft:ana']);
 
     // A later save puts an <xmp> before the same characters: a reader now sees
-    // the token as text. The clause's hash is unchanged, so carry-forward used
+    // the `<b>` as text. The clause's hash is unchanged, so carry-forward used
     // to keep AnA's name on it.
-    const second = `<p>Reviewer note.</p><xmp>\n\n${TAMPERED}\n\n</xmp>`;
+    const second = `<p>Reviewer note.</p><xmp>\n\n<p>${MARKED}</p>\n\n</xmp>`;
     await accept(id, { content: second });
-    expect(await whoseAt(id, second.indexOf(SHOWN))).toEqual(['author_assertion']);
+    expect(await whoseAt(id, second.indexOf('<b>at week'))).toEqual(['author_assertion']);
   });
 });
 

@@ -62,6 +62,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const ROOT = path.resolve(new URL('../..', import.meta.url).pathname);
 const BASELINE = path.join(ROOT, 'scripts/ci/empty-state-honesty-baseline.json');
@@ -257,14 +258,6 @@ function prose(branch) {
     .trim();
 }
 
-function stripComments(text) {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
-    .split('\n')
-    .map((l) => l.replace(/(^|[^:'"`])\/\/.*$/, '$1'))
-    .join('\n');
-}
-
 function scanSource(code, label) {
   const hits = [];
   const lineOf = (i) => code.slice(0, i).split('\n').length;
@@ -442,6 +435,9 @@ function scanIfChains(code, label) {
 }
 
 function scanFile(rel) {
+  // The shared stripper is string-aware: a literal holding `/*` or `//` (a
+  // route glob, a URL) cannot open a phantom comment that hides the code after
+  // it, and comments are blanked in place, so reported lines are true lines.
   const code = stripComments(readFileSync(path.join(ROOT, rel), 'utf8'));
   return [...scanSource(code, rel), ...scanIfChains(code, rel)];
 }

@@ -167,9 +167,19 @@ export function verifyLedger(rowsOldestFirst: LedgerRow[]): LedgerVerdict {
  */
 export const ANA_MACHINE_AUTHOR_ID = 'ana';
 
-export const MACHINE_AUTHOR_IDS: Readonly<Record<string, string>> = Object.freeze({
-  [ANA_MACHINE_AUTHOR_ID]: 'AnA (AI draft)',
-});
+/**
+ * A null-prototype object: every ordinary object inherits "constructor",
+ * "toString", "__proto__" and the rest, and a lookup by truthiness let them
+ * through as machine authors. "constructor" verified and was written to the
+ * lineage as the machine that drafted the words (periodic review 2026-09-28,
+ * editor family, the batch-draft accept, round 4: AUTH). Nothing is inherited
+ * now, so no reader of this vocabulary can be handed a name it does not hold.
+ */
+export const MACHINE_AUTHOR_IDS: Readonly<Record<string, string>> = Object.freeze(
+  Object.assign(Object.create(null) as Record<string, string>, {
+    [ANA_MACHINE_AUTHOR_ID]: 'AnA (AI draft)',
+  }),
+);
 
 export interface MachineContributor {
   id: string;
@@ -231,7 +241,8 @@ export function acceptedMachineText(raw: unknown): AcceptedMachineTextEntry[] {
   for (const entry of raw.slice(0, 32)) {
     const authorId = (entry as { authorId?: unknown })?.authorId;
     const text = (entry as { text?: unknown })?.text;
-    if (typeof authorId !== 'string' || !MACHINE_AUTHOR_IDS[authorId]) continue;
+    // Own keys only (round 4, AUTH): the vocabulary is null-prototype as well.
+    if (typeof authorId !== 'string' || !Object.hasOwn(MACHINE_AUTHOR_IDS, authorId)) continue;
     if (typeof text !== 'string' || text.trim().length === 0) continue;
     if (text.length > MAX_ACCEPTED_MACHINE_TEXT_CHARS) continue;
     out.push({ authorId, text });

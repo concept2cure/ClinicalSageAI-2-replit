@@ -8,19 +8,21 @@
  * working-memory write-back, and finally the `post_done` / `grounding_strip`
  * SSE events. Fire-and-forget: callers invoke it with `void` — it owns its own
  * error handling and always closes the stream.
+ *
+ * What a person is told was checked about the answer is the engine's check
+ * (services/ana/turn-verification.ts, 2026-10-04): the strip, `post_done`,
+ * the stored message and the sealed turn record all carry the same one.
  */
 
 import type { Response } from 'express';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import type { UserRole } from '../../services/ana-ri/persona.js';
 import { buildAssistantMetadata, withTurnEnding, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
-import type { HumanControlEvent, TurnStoppedReason } from '../../services/ana/run-status.js';
+import type { AnaRunPolicy, HumanControlEvent, PolicyHold, TurnStoppedReason } from '../../services/ana/run-status.js';
 import {
   checkEvidenceDiscipline,
   validateResponseStructure,
 } from '../../services/ana-ri/enforcement.js';
-import { validateEvidence } from '../../services/ana-ri/evidence-validation.js';
-import { detectUnsupportedClaims } from '../../services/clinical-regulatory-evidence/governance.js';
 import { buildTrustSummary } from '../../services/ana-ri/response-contract.js';
 import { buildQueueMeta } from '../../services/ana-ri/response-contract.js';
 import { saveChatMessage as saveMessage } from '../../services/chat-thread-helpers.js';
@@ -28,7 +30,8 @@ import { persistProvenance } from '../../services/evidence/persist-provenance.js
 import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
-import { verifyAnswerGrounding } from '../../services/ana/answer-grounding.js';
+import { groundingResultOf, type EvidenceEntry } from '../../services/ana/answer-grounding.js';
+import { verifyTurnAnswer } from '../../services/ana/turn-verification.js';
 import { computeRimClaimMetrics } from '../../services/ana/rim-claim-metrics.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
 import { blocksOnlyAnswer, settleActionBlocks } from '../../services/ana-guidance-executor.js';
@@ -97,8 +100,20 @@ export interface StreamPostProcessingContext {
    */
   stoppedReason?: TurnStoppedReason;
   rounds?: number;
-  /** Raw tool output this turn — evidence corpus for the grounding round. */
-  toolEvidenceCorpus: string[];
+  /**
+   * The run policy the turn ran under, the steps a stop left unrun, and AnA's
+   * own Manual holds (row 74) — persisted with the message beside the stop, so
+   * the dossier can tell her holds from a person's controls.
+   */
+  runPolicy?: AnaRunPolicy | null;
+  pendingSteps?: string[];
+  policyHolds?: PolicyHold[];
+  /**
+   * What AnA had this turn, as the answer check reads it: each successful
+   * tool result not written by a model, each web step, the person's message
+   * and the project context she was given (answer-grounding.ts).
+   */
+  toolEvidenceCorpus: EvidenceEntry[];
   /** Provenance envelopes from evidence tools this turn — persisted to the lineage trail. */
   collectedProvenance: ProvenanceRecord[];
   /**
@@ -304,6 +319,9 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     plan,
     stoppedReason,
     rounds,
+    runPolicy,
+    pendingSteps,
+    policyHolds,
     toolEvidenceCorpus,
     collectedProvenance,
     collectedNavigation,
@@ -412,15 +430,20 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
           ? blocksOnlyAnswer(executedCommands)
           : contentForCommandProcessing || fullContent;
 
-    // Self-verification round (computed before persistence so its verdict can
-    // be stored on the assistant message): check the answer's specific claims
-    // (trial ids, quoted source text) against the tool evidence actually
-    // gathered. No-op when no tools ran. It is a fast CPU pass, so running it
-    // ahead of the DB roundtrip does not move the latency tail.
+    // What was checked about the answer (computed before persistence so it is
+    // stored on the assistant message): the engine's check of its identifiers,
+    // regulations, quotes and figures against what AnA had this turn, the
+    // verdicts it states, and her own evidence labels. One CPU pass, so running
+    // it ahead of the DB roundtrip does not move the latency tail. The older
+    // grounding summary (RIM metrics, the timeline) is the check, when AnA
+    // consulted something.
+    const verification = finalAssistantContent ? verifyTurnAnswer(finalAssistantContent, toolEvidenceCorpus) : null;
     const streamGrounding =
-      finalAssistantContent && toolEvidenceCorpus.length > 0
-        ? verifyAnswerGrounding(finalAssistantContent, toolEvidenceCorpus.join('\n'))
-        : null;
+      verification && verification.check.basis === 'sources' ? groundingResultOf(verification.check) : null;
+    const assistantMetadata = withTurnEnding(
+      buildAssistantMetadata(toolTrace, streamGrounding, reasoning, humanControls, plan),
+      { stoppedReason, rounds, runPolicy, pendingSteps, policyHolds },
+    ) as Record<string, unknown> | undefined;
 
     // Run persistence concurrent with the synchronous evidence / structure
     // checks. saveMessage is a DB roundtrip (tens to hundreds of ms); the
@@ -433,10 +456,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       orgId && threadId && fullContent
         ? saveMessage(
             threadId, 'assistant', finalAssistantContent, undefined, undefined,
-            withTurnEnding(
-              buildAssistantMetadata(toolTrace, streamGrounding, reasoning, humanControls, plan),
-              { stoppedReason, rounds },
-            ) as Record<string, unknown> | undefined,
+            verification ? { ...(assistantMetadata ?? {}), verification } : assistantMetadata,
           )
             .then((id) => {
               assistantMessageId = id;
@@ -470,28 +490,16 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     const streamStructureCheck = finalAssistantContent
       ? validateResponseStructure(finalAssistantContent)
       : null;
-    const streamEvidenceVerdict = finalAssistantContent
-      ? validateEvidence(finalAssistantContent, 'ana-ri')
-      : null;
+    const streamEvidenceVerdict = verification?.labels ?? null;
 
-    // §14 unsupported-claim linter (clinical-regulatory-evidence governance):
-    // a distinct, phrase-shaped prohibition set — "N% approval probability",
-    // "FDA usually accepts", "will be approved", "guaranteed approval",
-    // "three PPQ batches resolve" — complementary to the evidence-discipline and
-    // grounding checks above. Detection-only here: the turn's tokens have already
-    // streamed to the client, and these phrase patterns can legitimately appear
-    // outside a regulatory-prediction context (e.g. "the change will be approved"
-    // in QMS), so it is surfaced on post_done for the client/monitoring to flag,
-    // never a hard block that could suppress a valid reply.
-    const streamUnsupportedClaims = finalAssistantContent
-      ? detectUnsupportedClaims(finalAssistantContent)
-      : [];
-    if (streamUnsupportedClaims.length > 0) {
-      console.warn(
-        `[AnA RI Stream] ${streamUnsupportedClaims.length} unsupported claim(s) detected in reply:`,
-        streamUnsupportedClaims.map((v) => v.match).join(' | '),
-      );
-    }
+    // The verdicts the answer states — the §14 prohibitions ("will be
+    // approved", "85% approval probability") and the verdict shapes ("ready
+    // to file", "fully compliant") — are in the check, and so on the strip
+    // the person reads. Named, never blocked: the tokens have already
+    // streamed, and a phrase can be legitimate in context ("the change will
+    // be approved" in QMS). Before 2026-10-04 they reached only a log line and
+    // a `post_done` field no client read.
+    const statedVerdicts = verification?.check.verdicts ?? [];
 
     // RIM interception — fire sync, non-blocking, on the cleaned content.
     // Claim metrics blend the structure + evidence checks with the direct
@@ -561,6 +569,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       turnRecorder?.setMessageIds({ assistant: assistantMessageId });
       turnRecorder?.setControls(humanControls);
       turnRecorder?.setOutputs({ drafts: collectedDrafts, executedActions, executedCommands });
+      turnRecorder?.setVerification(verification);
       if (persistenceFailed) turnRecorder?.warn('The conversation could not save this turn; the record holds it.');
       turnRecord = await fileTurnRecord(turnOutcome);
     }
@@ -578,14 +587,15 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       persistenceFailed,
     });
 
-    // Send grounding strip (evidence verdict summary for client UI), with a
-    // human-readable one-line trust summary so the user can gauge reliability.
-    if (streamEvidenceVerdict) {
+    // The strip the person reads: the engine's check, AnA's own labels beside
+    // it, and one line saying both.
+    if (verification) {
       res.write(
         `data: ${JSON.stringify({
           type: 'grounding_strip',
-          evidence: streamEvidenceVerdict,
-          trust_summary: buildTrustSummary(streamEvidenceVerdict),
+          evidence: verification.labels,
+          check: verification.check,
+          trust_summary: buildTrustSummary(verification.labels, verification.check),
         })}\n\n`
       );
     }
@@ -610,6 +620,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
         enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
         enrichmentMeta: (enrichment as any).enrichmentMeta || undefined,
         evidence: streamEvidenceVerdict || undefined,
+        check: verification?.check,
         evidenceDiscipline: streamEvidenceCheck
           ? {
               compliant: streamEvidenceCheck.compliant,
@@ -633,9 +644,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
               }
             : undefined,
         unsupportedClaims:
-          streamUnsupportedClaims.length > 0
-            ? streamUnsupportedClaims.map((v) => ({ match: v.match, reason: v.reason }))
-            : undefined,
+          statedVerdicts.length > 0 ? statedVerdicts.map((v) => ({ match: v.text, reason: v.reason })) : undefined,
         reliability: streamReliability || undefined,
         queueMeta: streamQueueMeta,
         turnRecord,

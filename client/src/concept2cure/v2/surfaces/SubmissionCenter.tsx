@@ -1587,6 +1587,10 @@ export function SubmissionCenter({
               : 'records dispatch; wire transmission stays behind the governed transmit path'
           }`}
           defaultMeaning={flow.kind === 'freeze' ? 'approval' : 'release'}
+          // Freeze and dispatch are approval and release acts. "Authorship"
+          // is not offered: the sign route skips separation of duties for it,
+          // and the step refuses a signature that declares it (Gate 1).
+          meanings={flow.kind === 'freeze' ? ['approval', 'responsibility'] : ['release', 'approval', 'responsibility']}
           signer={authUser ? { name: authUser.displayName || `${authUser.firstName} ${authUser.lastName ?? ''}`.trim() || authUser.email, email: authUser.email } : undefined}
           // The server's re-authentication demands the authenticator code
           // whenever the signer has one enrolled; without this the modal never

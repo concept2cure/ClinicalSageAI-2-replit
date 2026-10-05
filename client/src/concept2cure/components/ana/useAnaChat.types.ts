@@ -18,9 +18,11 @@
  */
 
 import type { PendingSignoff } from './useGovernedAction';
+import type { AnaGroundingEvidence } from './anaAnswerCheck';
 import type { BriefingBookPremortemResult } from './BriefingBookPanel';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 import type { DetectedDocumentTemplatePayload } from '../../../../../shared/types/ana-document-detection';
+import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
 
 /** Shape of an action chip produced by the server's guidance/command executors. */
 export interface AnaChatAction {
@@ -181,10 +183,11 @@ export type AnaTurnRecordStatus =
  *   duplicate_thrash  she was repeating the same step, and was stopped
  *   cancelled         the run was stopped between rounds
  *
- * RESERVED, produced by nothing yet: budget_exhausted, approval_timeout,
- * hold_expired, hold_unavailable. Named so the run-policy work does not
- * reshape this type; the hook does not accept them until a server writes them
- * and a surface has words for them (`readTurnEnding`).
+ * The run policy's (row 74; named in S1, produced since S4):
+ *   budget_exhausted  Auto reached its time limit
+ *   approval_timeout  nobody answered an approval; that change was not made
+ *   hold_expired      Manual waited for the person, who did not come back
+ *   hold_unavailable  Manual could not hold this turn, so she stopped
  *
  * Distinct from `stopped` (the person's Stop, seen by this client) and
  * `interrupted` (the stream failed): a round-limit stop is neither, and must
@@ -366,21 +369,11 @@ export interface AnaChatMessage {
    */
   interjections?: string[];
   /**
-   * Evidence grounding summary from the server's validateEvidence pipeline.
-   * Surfaced as a small chip on the reply: a shield-check icon + "N sources"
-   * when grounded, or an alert icon + "N weak" when claims are unsupported.
+   * What was checked about the answer: the engine's check of its specific
+   * claims against this turn's sources, and AnA's own evidence labels
+   * (anaAnswerCheck.ts). Rendered under the reply by AnaGrounding.
    */
-  evidence?: {
-    validated: boolean;
-    sourceCount: number;
-    groundedClaims: number;
-    weakClaims: number;
-    missingSupport: number;
-    /** One-line reviewer risk summary from the server verdict. */
-    riskSummary?: string;
-    /** The specific claims the verdict flagged, so the chip can drill down. */
-    flaggedClaims?: { kind: 'ungrounded' | 'overclaim' | 'contradiction'; text: string }[];
-  };
+  evidence?: AnaGroundingEvidence;
   /**
    * Context layers ANA drew on this turn (from the server's enrichment step,
    * e.g. 'governance', 'precedent', 'safety'). Surfaced in the evidence panel
@@ -420,6 +413,15 @@ export interface AnaChatMessage {
   stoppedReason?: AnaStoppedReason;
   /** Tool rounds the turn ran, as the server counted them. */
   rounds?: number;
+  /** The run policy the turn ran under (row 74). Absent for a turn that sent none. */
+  runPolicy?: AnaRunPolicy;
+  /** The steps she had chosen that a Manual stop left unrun, by label. */
+  pendingSteps?: string[];
+  /**
+   * The steps a steer REPLACED during a Manual hold ("Do this instead"): they
+   * never ran. From `interjected.replaced`; captured with the steer.
+   */
+  replacedSteps?: string[];
   /**
    * Draft produced by a document-generating tool this turn. The rail reads
    * `title` only; nothing routes `content` anywhere, so this is NOT
@@ -608,6 +610,13 @@ export interface UseAnaChatOptions {
    */
   liveDrive?: boolean;
   /**
+   * What AnA does between steps (row 74): 'manual' — she takes one step, then
+   * waits for the person before each further one; 'auto' — she keeps going
+   * within Auto's ceilings. Sent as `run_policy`; omitted when unset, so a
+   * host that passes nothing keeps today's effort-bounded turn.
+   */
+  runPolicy?: AnaRunPolicy | null;
+  /**
    * Drive mode for opted-in turns: 'demo' marks an explicitly started
    * demonstration (larger applied budgets + the demo prompt block server-side,
    * same entitlement). Omitted/anything else → the server's default 'assist'.
@@ -714,6 +723,7 @@ export interface AnaSendOptions {
   toolsOverride?: string[];
   liveDrive?: boolean;
   driveMode?: 'assist' | 'demo';
+  runPolicy?: AnaRunPolicy | null;
   /**
    * The document the person has open, for THIS turn only. For a host whose
    * chat was created without one: the conversation thread runs on the shell's
@@ -726,6 +736,18 @@ export interface AnaSendOptions {
 
 /** Control status of an in-flight AnA run (null when no run is active). */
 export type RunControlStatus = 'running' | 'paused' | 'cancelled' | null;
+
+/**
+ * Why the in-flight run is held, and what it is waiting to do (row 74).
+ *   manual   AnA stopped herself before `next` (Manual): Run this step,
+ *            Do this instead, or Stop
+ *   person   the person paused it
+ *   expired  a Manual hold nobody answered ended the turn; `next` did not run
+ */
+export interface AnaRunHold {
+  reason: 'manual' | 'person' | 'expired';
+  next: string[];
+}
 export interface UseAnaChatReturn {
   messages: AnaChatMessage[];
   isStreaming: boolean;
@@ -744,6 +766,18 @@ export interface UseAnaChatReturn {
   stop: () => void;
   /** Control status of the in-flight run (drives the pause/resume UI). */
   runStatus: RunControlStatus;
+  /**
+   * Why the run is held, when it is (the strip's Manual copy reads it). The
+   * hook always sets it; optional so a host's stand-in chat (a test double,
+   * an embed) that predates it still types — absent reads as not held.
+   */
+  runHold?: AnaRunHold | null;
+  /**
+   * The run policy the turn in flight was sent with (null when none, or when
+   * nothing is in flight) — not the preference now, which applies to the next
+   * message. Optional for the same stand-ins as `runHold`.
+   */
+  turnRunPolicy?: AnaRunPolicy | null;
   /** Pause AnA at the next agentic-round boundary. */
   pause: () => Promise<boolean>;
   /** Resume a paused run. */

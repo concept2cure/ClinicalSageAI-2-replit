@@ -28,6 +28,12 @@
  * re-qualify each production drafting prompt; a prompt change in production is
  * not covered by a PQ run that predates it.
  *
+ * It has NO rag phase. The record says so (`rag: { ran: false, … }`), and
+ * computeVerdict turns that into INCOMPLETE whenever the protocol marks rag
+ * required and executable — so flipping `components.rag.executable` cannot
+ * produce a PASS on a component nothing ran (D4 evidence
+ * docs/evidence/D4/2026-09-28-pq-rag-unblock-misdescribed/, E6).
+ *
  * Exit 0 only on PASS.
  */
 
@@ -52,6 +58,7 @@ import {
   type PqExtractionResult,
   type PqGenerationResult,
   type PqProtocol,
+  type PqRagRecord,
   type PqRecord,
 } from './pq-verdict.js';
 
@@ -156,6 +163,33 @@ async function runExtractionPhase(
   return out;
 }
 
+/**
+ * What this runner records for the rag component: that it did not run it.
+ *
+ * A rag phase needs run-eval to take a tenant (its retrieval is empty by
+ * construction without one), a guidance corpus in that tenant's vault, a gold
+ * set whose items name expected source documents, the served model returned
+ * through the RAG path, and retrieval pinned to strategy 'basic' with reranking
+ * off. Until those land, the honest record is "not run", in words.
+ */
+const RAG_NOT_RUN_REASON =
+  'run-pq has no rag phase: the RAG PQ needs a tenant-scoped run-eval, an evaluation corpus, ' +
+  'a gold set keyed to expected source documents and served-model attribution on the RAG path, ' +
+  'none of which this runner has (docs/evidence/D4/2026-09-28-pq-rag-unblock-misdescribed/)';
+
+function ragNotRun(): PqRagRecord {
+  return { ran: false, notRunReason: RAG_NOT_RUN_REASON, itemsScored: 0, items: [] };
+}
+
+/**
+ * There is deliberately no protocol option: run-pq reads ./pq-protocol.json and
+ * nothing else. An injectable protocol path would let a caller write a
+ * genuine-looking PASS record — the right model, gold-bank hash and git sha —
+ * against an approved copy of its own making (one with rag not required, say),
+ * and verifyPqClaim does not compare a record's protocolSha256 with the repo's.
+ * Tests exercise protocol changes as data by redirecting that one read
+ * (server/eval/pq/__tests__/run-pq.test.ts), not through a seam here.
+ */
 export interface RunPqOptions {
   modelId: string;
   /** Write the record. The CLI's --record. */
@@ -171,6 +205,7 @@ export interface RunPqResult {
   reasons: string[];
   generation: PqGenerationResult[];
   extraction: PqExtractionResult[];
+  rag: PqRagRecord;
   recordPath: string | null;
 }
 
@@ -239,8 +274,9 @@ export async function runPq(opts: RunPqOptions): Promise<RunPqResult> {
   }
 
   const extraction = await runExtractionPhase(protocol, bank.tasks, gateway, entry);
+  const rag = ragNotRun();
 
-  const { verdict, reasons } = computeVerdict(protocol, generation, extraction);
+  const { verdict, reasons } = computeVerdict(protocol, generation, extraction, rag);
   console.info(`${'─'.repeat(72)}\nVerdict: ${verdict}`);
   for (const r of reasons) console.info(`  - ${r}`);
 
@@ -262,6 +298,7 @@ export async function runPq(opts: RunPqOptions): Promise<RunPqResult> {
       finishedAt: new Date().toISOString(),
       generation,
       extraction,
+      rag,
       verdict,
       reasons,
     };
@@ -271,7 +308,7 @@ export async function runPq(opts: RunPqOptions): Promise<RunPqResult> {
     writeFileSync(recordPath, `${JSON.stringify(rec, null, 2)}\n`);
     console.info(`\nrecord: ${path.relative(REPO_ROOT, recordPath)}`);
   }
-  return { verdict, reasons, generation, extraction, recordPath };
+  return { verdict, reasons, generation, extraction, rag, recordPath };
 }
 
 /* CLI. Only when invoked directly — the tests import runPq. */

@@ -77,10 +77,28 @@ beforeEach(() => {
 });
 
 describe('post-processing stores how the turn ended — behavioural', () => {
+  // The first call pays post-processing's cold imports (about 5 s alone, past
+  // the 10 s default on a loaded machine). Timed out, it went on to save into
+  // the NEXT case's capture and turned that one red too (S4 evidence, review
+  // objection 35), so it gets room rather than a warm-up that hides the cost.
   it('a round-limit stop and its rounds reach the saved assistant message', async () => {
     await runStreamPostProcessing(ctx({ stoppedReason: 'max_rounds', rounds: 12 }));
     expect(saved.metadata).toHaveLength(1);
     expect(saved.metadata[0]).toMatchObject({ stoppedReason: 'max_rounds', rounds: 12 });
+  }, 60_000);
+
+  it('a run-policy turn stores its policy, the steps it did not run and her own holds (S4)', async () => {
+    const hold = { round: 2, reason: 'manual' as const, next: ['Searching the literature'], outcome: 'expired' as const, at: '2026-09-28T10:00:00.000Z' };
+    await runStreamPostProcessing(
+      ctx({ stoppedReason: 'hold_expired', rounds: 1, runPolicy: 'manual', pendingSteps: ['Searching the literature'], policyHolds: [hold] }),
+    );
+    expect(saved.metadata[0]).toMatchObject({
+      stoppedReason: 'hold_expired',
+      rounds: 1,
+      runPolicy: 'manual',
+      pendingSteps: ['Searching the literature'],
+      policyHolds: [hold],
+    });
   });
 
   it('an answer that was cut off is stored as one', async () => {
@@ -104,14 +122,16 @@ describe('stream.ts carries the loop outcome — carriage', () => {
     expect(src).toMatch(/loopRounds = loopResult\.rounds;/);
   });
 
-  it("the turn's done frame carries stoppedReason, rounds and a null runPolicy", () => {
+  it("the turn's done frame carries stoppedReason, rounds and the run policy", () => {
     // The main done frame — the one that carries the model — not the
     // intelligence fast path's, which runs no loop.
     const m = src.match(/type: 'done',\s*\n\s*model: gwResponse\.model,[\s\S]{0,2500}?\}\)\}\\n\\n`/);
     expect(m, 'main done frame not found').not.toBeNull();
     expect(m![0]).toMatch(/stoppedReason: loopStoppedReason,/);
     expect(m![0]).toMatch(/rounds: loopRounds,/);
-    expect(m![0]).toMatch(/runPolicy: null,/);
+    // S4 (row 74) fills the policy: the parsed run_policy, null when none was
+    // sent (stream-run-policy.test.ts drives both through the route).
+    expect(m![0]).toMatch(/runPolicy,/);
   });
 
   it('hands both to post-processing', () => {

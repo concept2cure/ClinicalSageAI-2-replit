@@ -1,0 +1,12 @@
+Mutant R13-not-found-record-read: a record that says it was not found or not verified confirms what it names (F2)
+
+--- server/services/ana/answer-check-sources.ts
+- if (depth > MAX_DEPTH || saysNotFound(rec)) return;
++ if (depth > MAX_DEPTH) return;
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record that says it was not found confirms nothing it names 12ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

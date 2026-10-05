@@ -20,6 +20,7 @@
 import type { AnaChatAction } from '../../components/ana/useAnaChat';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AnaActivityProps } from '../AnaActivity';
+import type { AnaGroundingEvidence } from '../../components/ana/anaAnswerCheck';
 
 /* ---- Types ---- */
 
@@ -36,11 +37,6 @@ export interface CtLink {
   kind: string;
 }
 
-export interface CtGrounding {
-  src: string;
-  ok: boolean;
-}
-
 export interface CtTurn {
   role: string;
   text?: string;
@@ -50,7 +46,15 @@ export interface CtTurn {
   /** The retained turn record that produced the answer, when the server confirmed one. */
   sourceRecord?: string;
   links?: CtLink[];
-  grounding?: CtGrounding[];
+  /**
+   * The context layers the platform added to the prompt this turn (names
+   * only, e.g. 'claim-grounding', 'scope-guard'). Context, not evidence: they
+   * were rendered as "Grounded in ✓" with a check every turn, a verification
+   * nothing performed (2026-10-04). What was checked is `evidence`.
+   */
+  contextUsed?: string[];
+  /** What was checked about the answer (AnaGrounding): the engine's check and AnA's labels. */
+  evidence?: AnaGroundingEvidence;
   doc?: any;
   /**
    * Governed actions the turn executed, and signatures it is WAITING for.

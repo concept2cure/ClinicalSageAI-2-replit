@@ -90,6 +90,15 @@ function isModelNotApprovedError(error: unknown): boolean {
   return (error as { code?: unknown } | null)?.code === 'MODEL_NOT_APPROVED_FOR_HIGH_RISK';
 }
 
+/**
+ * Is this the gateway refusing production high-risk drafting because no
+ * approved model has passed its PQ (ModelNotQualifiedError, ADR-0015 §3)?
+ * Matched by code, for the reason above.
+ */
+function isModelNotPqQualifiedError(error: unknown): boolean {
+  return (error as { code?: unknown } | null)?.code === 'MODEL_NOT_PQ_QUALIFIED';
+}
+
 export type FallbackReason =
   | 'empty_input'
   | 'empty_response'
@@ -109,6 +118,13 @@ export type FallbackReason =
    * working exactly as designed.
    */
   | 'model_not_approved'
+  /**
+   * The gateway REFUSED in production: the models are approved, but none has
+   * passed its PQ, so none may serve high-risk regulatory drafting there
+   * (ADR-0015 §3). Not `model_not_approved`: the audit reader would count an
+   * approved model as unapproved. Nothing changes until a PQ is executed.
+   */
+  | 'model_not_pq_qualified'
   | 'gateway_error';
 
 export interface RefineSectionOutput {
@@ -460,12 +476,22 @@ export async function refineSectionWithAI(
        regulatory drafting right now, and the gateway declined to substitute an
        unapproved one — the control working. Recording it as 'gateway_error'
        told the author, and the audit reader, that the platform had failed. */
-    const notApproved = isModelNotApprovedError(error);
+    const fallbackReason: FallbackReason = isModelNotPqQualifiedError(error)
+      ? 'model_not_pq_qualified'
+      : isModelNotApprovedError(error)
+        ? 'model_not_approved'
+        : 'gateway_error';
+    const outcome =
+      fallbackReason === 'model_not_pq_qualified'
+        ? 'refused (no performance-qualified model)'
+        : fallbackReason === 'model_not_approved'
+          ? 'refused (no approved model)'
+          : 'failed';
     // Deliberately do NOT log the prompt payload or source content — only the failure shape.
     logger.warn(
-      `refineSectionWithAI ${notApproved ? 'refused (no approved model)' : 'failed'} for section ${
-        input.sectionKey
-      }: ${error instanceof Error ? error.message : 'unknown error'}`,
+      `refineSectionWithAI ${outcome} for section ${input.sectionKey}: ${
+        error instanceof Error ? error.message : 'unknown error'
+      }`,
     );
     return {
       refinedNarrative: input.deterministicNarrative,
@@ -473,7 +499,7 @@ export async function refineSectionWithAI(
       model: '',
       tokenCost: 0,
       fallback: true,
-      fallbackReason: notApproved ? 'model_not_approved' : 'gateway_error',
+      fallbackReason,
     };
   }
 }
@@ -522,6 +548,13 @@ export interface BuildModule3Result {
    * tells the author the platform is broken when it is doing its job.
    */
   modelNotApprovedFallbackCount: number;
+  /**
+   * Count of sections the gateway refused in production because no approved
+   * model has passed its PQ (ADR-0015 §3). Not folded into the count above:
+   * the models are approved, and what would change it is a PQ run, not an
+   * approval.
+   */
+  modelNotPqQualifiedFallbackCount: number;
 }
 
 /**
@@ -594,6 +627,7 @@ export async function buildModule3WithNarrative(
       totalTokenCost: 0,
       gatewayErrorFallbackCount: 0,
       modelNotApprovedFallbackCount: 0,
+      modelNotPqQualifiedFallbackCount: 0,
     };
   }
 
@@ -666,5 +700,8 @@ export async function buildModule3WithNarrative(
     totalTokenCost,
     gatewayErrorFallbackCount,
     modelNotApprovedFallbackCount,
+    modelNotPqQualifiedFallbackCount: refinementMeta.filter(
+      (m) => m.fallback && m.fallbackReason === 'model_not_pq_qualified',
+    ).length,
   };
 }

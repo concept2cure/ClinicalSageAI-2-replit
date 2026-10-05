@@ -14,6 +14,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   acceptedMachineText,
+  machineContributors,
   MAX_ACCEPTED_MACHINE_TEXT_CHARS,
   MACHINE_AUTHOR_IDS,
 } from '../revision-ledger';
@@ -43,6 +44,26 @@ describe('acceptedMachineText', () => {
     for (const raw of [undefined, null, 'ana', 1, {}, { authorId: 'ana', text: 'x' }]) {
       expect(acceptedMachineText(raw)).toEqual([]);
     }
+  });
+
+  /* AUTH, periodic review 2026-09-28, editor family, the batch-draft accept,
+     round 4: the check read MACHINE_AUTHOR_IDS[authorId] by truthiness, and
+     every object inherits "constructor", "toString" and the rest. So
+     "constructor" passed, verified, and was written to the lineage as the
+     machine that drafted the words. */
+  it.each(['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf', 'isPrototypeOf'])(
+    'drops %j, a name every object inherits',
+    (authorId) => {
+      expect(acceptedMachineText([{ authorId, text: 'The primary endpoint was met.' }])).toEqual([]);
+    },
+  );
+
+  it('the vocabulary inherits nothing, so no reader of it can be handed a name it does not hold', () => {
+    expect(Object.getPrototypeOf(MACHINE_AUTHOR_IDS)).toBeNull();
+    expect(Object.isFrozen(MACHINE_AUTHOR_IDS)).toBe(true);
+    expect(MACHINE_AUTHOR_IDS.constructor).toBeUndefined();
+    expect(machineContributors([{ id: 'constructor' }, { id: 'toString' }])).toEqual([]);
+    expect(machineContributors([{ id: 'ana' }])).toEqual([{ id: 'ana', name: 'AnA (AI draft)' }]);
   });
 
   it('caps the list and drops an entry whose text exceeds the cap rather than truncating it', () => {

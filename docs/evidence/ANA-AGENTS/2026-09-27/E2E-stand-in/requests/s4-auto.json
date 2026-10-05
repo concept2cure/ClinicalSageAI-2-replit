@@ -1,0 +1,341 @@
+[
+ {
+  "request": 37,
+  "label": "round-8",
+  "refusedByContract": null,
+  "model": "claude-sonnet-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": null,
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 15,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Work through twelve checks on the Vorelinib program."
+   },
+   {
+    "index": 1,
+    "role": "assistant",
+    "content": "Check 1 of 12."
+   },
+   {
+    "index": 2,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_30)]:\n{\"ok\":true,\"query\":\"readiness check 1 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 3,
+    "role": "assistant",
+    "content": "Check 2 of 12."
+   },
+   {
+    "index": 4,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_31)]:\n{\"ok\":true,\"query\":\"readiness check 2 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 5,
+    "role": "assistant",
+    "content": "Check 3 of 12."
+   },
+   {
+    "index": 6,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_32)]:\n{\"ok\":true,\"query\":\"readiness check 3 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 7,
+    "role": "assistant",
+    "content": "Check 4 of 12."
+   },
+   {
+    "index": 8,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_33)]:\n{\"ok\":true,\"query\":\"readiness check 4 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 9,
+    "role": "assistant",
+    "content": "Check 5 of 12."
+   },
+   {
+    "index": 10,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_34)]:\n{\"ok\":true,\"query\":\"readiness check 5 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 11,
+    "role": "assistant",
+    "content": "Check 6 of 12."
+   },
+   {
+    "index": 12,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_35)]:\n{\"ok\":true,\"query\":\"readiness check 6 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 13,
+    "role": "assistant",
+    "content": "Check 7 of 12."
+   },
+   {
+    "index": 14,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_36)]:\n{\"ok\":true,\"query\":\"readiness check 7 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   }
+  ]
+ },
+ {
+  "request": 38,
+  "label": "round-9-past-the-old-ceiling",
+  "refusedByContract": null,
+  "model": "claude-sonnet-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": null,
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 17,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Work through twelve checks on the Vorelinib program."
+   },
+   {
+    "index": 1,
+    "role": "assistant",
+    "content": "Check 1 of 12."
+   },
+   {
+    "index": 2,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_30)]:\n{\"ok\":true,\"query\":\"readiness check 1 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 3,
+    "role": "assistant",
+    "content": "Check 2 of 12."
+   },
+   {
+    "index": 4,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_31)]:\n{\"ok\":true,\"query\":\"readiness check 2 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 5,
+    "role": "assistant",
+    "content": "Check 3 of 12."
+   },
+   {
+    "index": 6,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_32)]:\n{\"ok\":true,\"query\":\"readiness check 3 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 7,
+    "role": "assistant",
+    "content": "Check 4 of 12."
+   },
+   {
+    "index": 8,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_33)]:\n{\"ok\":true,\"query\":\"readiness check 4 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 9,
+    "role": "assistant",
+    "content": "Check 5 of 12."
+   },
+   {
+    "index": 10,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_34)]:\n{\"ok\":true,\"query\":\"readiness check 5 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 11,
+    "role": "assistant",
+    "content": "Check 6 of 12."
+   },
+   {
+    "index": 12,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_35)]:\n{\"ok\":true,\"query\":\"readiness check 6 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 13,
+    "role": "assistant",
+    "content": "Check 7 of 12."
+   },
+   {
+    "index": 14,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_36)]:\n{\"ok\":true,\"query\":\"readiness check 7 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 15,
+    "role": "assistant",
+    "content": "Check 8 of 12."
+   },
+   {
+    "index": 16,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_37)]:\n{\"ok\":true,\"query\":\"readiness check 8 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   }
+  ]
+ },
+ {
+  "request": 42,
+  "label": "closing-after-12",
+  "refusedByContract": null,
+  "model": "claude-sonnet-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": null,
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 25,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Work through twelve checks on the Vorelinib program."
+   },
+   {
+    "index": 1,
+    "role": "assistant",
+    "content": "Check 1 of 12."
+   },
+   {
+    "index": 2,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_30)]:\n{\"ok\":true,\"query\":\"readiness check 1 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 3,
+    "role": "assistant",
+    "content": "Check 2 of 12."
+   },
+   {
+    "index": 4,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_31)]:\n{\"ok\":true,\"query\":\"readiness check 2 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 5,
+    "role": "assistant",
+    "content": "Check 3 of 12."
+   },
+   {
+    "index": 6,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_32)]:\n{\"ok\":true,\"query\":\"readiness check 3 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 7,
+    "role": "assistant",
+    "content": "Check 4 of 12."
+   },
+   {
+    "index": 8,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_33)]:\n{\"ok\":true,\"query\":\"readiness check 4 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 9,
+    "role": "assistant",
+    "content": "Check 5 of 12."
+   },
+   {
+    "index": 10,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_34)]:\n{\"ok\":true,\"query\":\"readiness check 5 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 11,
+    "role": "assistant",
+    "content": "Check 6 of 12."
+   },
+   {
+    "index": 12,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_35)]:\n{\"ok\":true,\"query\":\"readiness check 6 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 13,
+    "role": "assistant",
+    "content": "Check 7 of 12."
+   },
+   {
+    "index": 14,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_36)]:\n{\"ok\":true,\"query\":\"readiness check 7 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 15,
+    "role": "assistant",
+    "content": "Check 8 of 12."
+   },
+   {
+    "index": 16,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_37)]:\n{\"ok\":true,\"query\":\"readiness check 8 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 17,
+    "role": "assistant",
+    "content": "Check 9 of 12."
+   },
+   {
+    "index": 18,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_38)]:\n{\"ok\":true,\"query\":\"readiness check 9 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 19,
+    "role": "assistant",
+    "content": "Check 10 of 12."
+   },
+   {
+    "index": 20,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_39)]:\n{\"ok\":true,\"query\":\"readiness check 10 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 21,
+    "role": "assistant",
+    "content": "Check 11 of 12."
+   },
+   {
+    "index": 22,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_40)]:\n{\"ok\":true,\"query\":\"readiness check 11 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "index": 23,
+    "role": "assistant",
+    "content": "Check 12 of 12."
+   },
+   {
+    "index": 24,
+    "role": "user",
+    "content": "[Tool Result for global_search (toolu_fake_41)]:\n{\"ok\":true,\"query\":\"readiness check 12 of 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   }
+  ]
+ }
+]

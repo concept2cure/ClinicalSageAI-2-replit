@@ -1,0 +1,26 @@
+Mutant C2b-plain-region: The not-compared region applies to plain text too.
+Result: KILLED (vitest exit 1, 7 failing tests)
+Tests run: server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts, server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts, server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/clinical-regulatory-evidence/machine-attribution.ts
++++ b/server/services/clinical-regulatory-evidence/machine-attribution.ts
+@@ -512,3 +512,3 @@
+   const html = looksLikeHtml(content);
+-  const ranges = html ? notComparedRanges(content) : [];
++  const ranges = notComparedRanges(content);
+   const everyCharacterShown = !html || opensInSourceMode(content);
+
+--- failing tests ---
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > a "<style guide>" before AnA's clause leaves it AnA's 10ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > a markdown draft with an XML example is AnA's, every clause of it 3ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > "<LLOQ" and a later ">3×ULN" (the weaker case) are AnA's 1ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > a clause accepted earlier is carried forward past a "<style guide>" 2ms
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > "<LLOQ" and a later ">3×ULN" in plain text: every clause is AnA's, and the accept names AnA 47ms
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > a markdown draft with an XML example holding <title>: every clause is AnA's, and the accept names AnA 37ms
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > content read as plain text shows every `<…>` > a tag-shaped token typed into AnA's sentence, in content with no known tag, is not AnA's 43ms
+
+--- summary ---
+ Test Files  3 failed | 1 passed (4)
+      Tests  7 failed | 140 passed (147)

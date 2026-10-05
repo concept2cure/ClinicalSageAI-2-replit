@@ -65,6 +65,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SCAN_ROOTS = ['server'].map((d) => path.join(repoRoot, d));
@@ -165,10 +166,17 @@ function walk(dir, out = []) {
   return out;
 }
 
-/** Strip comments so prose about this very rule does not trip it. */
-function stripComments(src) {
-  return src.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' ')).replace(/\/\/[^\n]*/g, '');
-}
+/*
+ * Comments are stripped (lib/strip-comments.mjs) so prose about this very rule
+ * does not trip it. The shared stripper is string-aware. Block comments are
+ * blanked and line comments dropped ({ lineComments: 'drop' }): line numbers
+ * stay true, and WINDOW and ALIAS_LOOKBACK are spent on code, not on a note,
+ * as they were when this gate deleted // comments itself. This gate's former regex stripper was
+ * not string-aware: a route glob ('/files/*') above a leak opened a "comment"
+ * that ran to the next real closer, and a URL in a body's own string
+ * ('… https://api.fda.gov …') deleted the rest of that line, err.message
+ * included.
+ */
 
 /**
  * Index just past the response statement beginning at `window[0]`.
@@ -201,7 +209,7 @@ for (const root of SCAN_ROOTS) {
   for (const file of walk(root)) {
     const rel = path.relative(repoRoot, file).split(path.sep).join('/');
     const raw = fs.readFileSync(file, 'utf8');
-    const src = stripComments(raw);
+    const src = stripComments(raw, { lineComments: 'drop' });
     STATUS_5XX.lastIndex = 0;
     let m;
     while ((m = STATUS_5XX.exec(src)) !== null) {

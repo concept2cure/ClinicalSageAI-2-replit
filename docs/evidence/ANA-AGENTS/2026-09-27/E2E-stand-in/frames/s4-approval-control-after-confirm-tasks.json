@@ -1,0 +1,10 @@
+{
+ "taskRowsWithTheTitle": {
+  "project_tasks (name = title)": 1,
+  "project_tasks (all rows)": 1,
+  "concept2cure_review_tasks (title = title)": 0,
+  "regulatory_tasks (title = title)": 0,
+  "unified_tasks (title = title)": 1,
+  "submission_tasks (title = title)": 0
+ }
+}

@@ -173,25 +173,18 @@ describe('load_nonclinical_program handler', () => {
 });
 
 describe('draft_quality_overall_summary_m2_3 handler', () => {
-  it('composes the QOS from CMC sources via the Module 3 convergence engine', async () => {
+  // The composition from the open program's recorded data is proven in
+  // cmc-quality-summary-tool.test.ts; here, that the registered handler is
+  // the one that refuses model-supplied CMC data.
+  it('refuses CMC data supplied in the call, rather than composing from it', async () => {
     const handler = getToolHandler('draft_quality_overall_summary_m2_3')!;
     const out = JSON.parse(
       await handler({
-        cmcSources: [
-          { id: 'ds1', sourceType: 'drug_substance', sourcePayload: { name: 'BX-115', manufacturer: 'Acme' } },
-          { id: 'dp1', sourceType: 'drug_product', sourcePayload: { dosageFormDescription: 'tablet', composition: 'x', strength: '50 mg' } },
-        ],
-        drugSubstanceName: 'BX-115',
+        cmcSources: [{ id: 'ds1', sourceType: 'drug_substance', sourcePayload: { name: 'BX-115' } }],
       }),
     );
-    expect(out.status).toBe('drafted');
-    expect(out.sectionKey).toBe('2.3');
-    expect(Array.isArray(out.tables)).toBe(true);
-  });
-  it('returns needs_parameters without cmcSources', async () => {
-    const handler = getToolHandler('draft_quality_overall_summary_m2_3')!;
-    const out = JSON.parse(await handler({ cmcSources: [] }));
-    expect(out.status).toBe('needs_parameters');
+    expect(out.error).toMatch(/never from data supplied in the call/);
+    expect(out.engine).toBeUndefined();
   });
 });
 

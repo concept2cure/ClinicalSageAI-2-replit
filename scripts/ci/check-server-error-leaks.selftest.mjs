@@ -70,21 +70,17 @@
  * check-rls-allowlist-sync.selftest.mjs). A probe prints CLOSED once the gate
  * gets it right — the signal to promote it to a case above. Each needs a GATE
  * change and is escalated to the gate's owner, not fixed here:
- *   1. stripComments() is not string-aware. A `/*` or `//` INSIDE a string
- *      literal is taken for a comment and blanks real code, so the leak under
- *      it is never seen. Two ordinary shapes: an Express route glob
- *      (`router.use('/files/*', …)`) above a leak opens a "comment" that runs
- *      to the next `*\/` in the file; a URL in the 5xx body's own string
- *      (`'… at https://api.fda.gov …'`) turns the rest of the line, err.message
- *      included, into a "comment". Latent, not historical: on 2026-10-01
- *      server/routes/cortex-unified.ts — a baselined file — has
- *      `legacyPath: '/api/cortex/advisory/*'` at :196, and the gate is blind to
- *      lines 196–234 of it; no 5xx sits there today. Each probe has a CONTROL
- *      case above (the same file without the marker), asserted, so the probe
- *      measures the marker and nothing else. The fix: skip string and template
- *      literals in stripComments() with the quote tracking
- *      responseStatementEnd() already has; it must keep comment prose with an
- *      apostrophe in it quiet (the COMMENT_PROSE case below pins that).
+ *   1. CLOSED 2026-10-05. The gate's stripComments() was not string-aware: an
+ *      Express route glob (`router.use('/files/*', …)`) above a leak opened a
+ *      "comment" running to the next `*\/`, and a URL in the 5xx body's own
+ *      string (`'… at https://api.fda.gov …'`) deleted the rest of the line,
+ *      err.message included. The gate now uses the shared, string-aware
+ *      scripts/ci/lib/strip-comments.mjs. Both former probes are asserted
+ *      cases above ("FAILS on a leak below a route glob …", "FAILS on a leak
+ *      after a URL …"), each beside its CONTROL (the same file without the
+ *      marker), and a quiet case pins that leaks only inside real comments
+ *      below the same glob stay quiet; COMMENT_PROSE pins comment prose with
+ *      an apostrophe in it. Numbering of 2 is kept so references hold.
  *   2. The alias lookback has no notion of scope. A handler's logger-only
  *      alias (`const message = err.message` → `log.error(…, { message })`)
  *      makes a LATER handler's own static `const message = '…'`, sent as
@@ -156,6 +152,9 @@ const patched = gateSrc
   .replace(BASELINE_DECL, `const BASELINE_FILE = ${JSON.stringify(baselinePath)};`);
 const gatePath = path.join(tmp, 'gate.mjs');
 fs.writeFileSync(gatePath, patched);
+/* The gate imports ./lib/strip-comments.mjs relative to itself. */
+fs.mkdirSync(path.join(tmp, 'lib'), { recursive: true });
+fs.copyFileSync(path.join(repoRoot, 'scripts', 'ci', 'lib', 'strip-comments.mjs'), path.join(tmp, 'lib', 'strip-comments.mjs'));
 
 const sha = (p) => (fs.existsSync(p) ? crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex') : null);
 const realBaselineBefore = sha(REAL_BASELINE);
@@ -756,7 +755,7 @@ const PENDING_STORE = `router.post('/projects', async (req, res) => {
 
 /**
  * Prose about this very rule, in both comment styles — with apostrophes in it,
- * so a string-aware comment stripper (KNOWN GAPS, 1) that let a comment's `'`
+ * so a string-aware comment stripper (KNOWN GAPS, 1 — closed) that let a comment's `'`
  * open a string would turn the prose back into code and fail here.
  */
 const COMMENT_PROSE = `/**
@@ -772,7 +771,7 @@ const LEAK_LINE = `res.status(500).json({ error: err.message });\n`;
 
 /* ── Fixtures: KNOWN GAPS (header) and their controls ───────────────────── */
 
-/** KNOWN GAPS 1: a route glob's `/*` opens a "comment" that runs to the doc comment's `*\/`. */
+/** Formerly KNOWN GAPS 1: a route glob's `/*` opened a "comment" that ran to the doc comment's `*\/`. */
 const routeGlob = (mountPath) => `import { Router } from 'express';
 
 const router = Router();
@@ -796,7 +795,7 @@ router.post('/files', async (req, res) => {
 });
 `;
 
-/** KNOWN GAPS 1: a URL in the body's own string turns the rest of the line into a "comment". */
+/** Formerly KNOWN GAPS 1: a URL in the body's own string turned the rest of the line into a "comment". */
 const gatewayStatus = (sentence) => `router.get('/agency/fda/status', async (req, res) => {
   try {
     res.json(await pollFdaGateway());
@@ -804,6 +803,31 @@ const gatewayStatus = (sentence) => `router.get('/agency/fda/status', async (req
     res.status(502).json({ error: '${sentence}', detail: err.message });
   }
 });
+`;
+
+/**
+ * The route glob again, but every leak below it is inside a real comment — a
+ * line comment, a block comment, a trailing comment after a URL string — and
+ * the handler itself answers through serverError(). Must stay quiet.
+ */
+const GLOB_THEN_COMMENTED_LEAKS = `import { Router } from 'express';
+
+const router = Router();
+router.use('/files/*', requireAuth);
+
+// Never: res.status(500).json({ error: 'FILE_READ_FAILED', detail: err.message });
+/* nor res.status(502).send(String(upstreamErr)); */
+router.get('/files/:id', async (req, res) => {
+  try {
+    res.json(await readStoredFile(req.params.id));
+  } catch (err) {
+    const runbook = 'https://wiki.internal/errors'; // not res.status(500).json({ detail: err.message })
+    return serverError(res, log, 'reading the file', err);
+  }
+});
+
+/** Store an uploaded file in the vault. */
+router.post('/files', async (req, res) => res.status(201).json(await storeFile(req.body)));
 `;
 
 /* ── Cases ───────────────────────────────────────────────────────────────── */
@@ -913,10 +937,14 @@ const cases = [
     'server/common/exportFormats.mjs': HANDLER_FACTORY,
     'server/validation/export-handler.mts': HANDLER_FACTORY,
   }),
-  fail1('FAILS on the route-glob file with no glob (control for KNOWN GAPS 1 — the probe differs by `/*` only)',
+  fail1('FAILS on the route-glob file with no glob (control for the next case — they differ by `/*` only)',
     'server/routes/files.ts', ROUTE_GLOB_CONTROL, '.status(500)'),
-  fail1('FAILS on the gateway 502 with no URL in its sentence (control for KNOWN GAPS 1 — the probe differs by the URL only)',
+  fail1("FAILS on a leak below a route glob — router.use('/files/*', …) does not open a comment (formerly KNOWN GAPS 1)",
+    'server/routes/files.ts', ROUTE_GLOB, '.status(500)'),
+  fail1('FAILS on the gateway 502 with no URL in its sentence (control for the next case — they differ by the URL only)',
     'server/routes/fda-gateway.ts', GATEWAY_CONTROL, '.status(502)', '502'),
+  fail1("FAILS on a leak after a URL in the 5xx body's own string — 'https://…' does not end the line (formerly KNOWN GAPS 1)",
+    'server/routes/fda-gateway.ts', GATEWAY_URL, '.status(502)', '502'),
 
   /* — quiet: the near-misses — */
   quiet('quiet — the canonical serverError() and its current body (detail goes to the logger only)', {
@@ -951,6 +979,9 @@ const cases = [
   }),
   quiet('quiet — prose about the rule inside comments (apostrophes included)', {
     'server/routes/README-rule.ts': COMMENT_PROSE,
+  }),
+  quiet('quiet — leaks only inside real comments below a route glob, one trailing a URL string', {
+    'server/routes/files.ts': GLOB_THEN_COMMENTED_LEAKS,
   }),
   quiet('quiet — tests, specs, mocks, build output, dependencies, .d.ts and code outside server/ are out of scope', {
     'server/routes/__tests__/leak.ts': LEAK_LINE,
@@ -1066,16 +1097,6 @@ const cases = [
  * assert. A probe never sets the exit code.
  */
 const knownGaps = [
-  {
-    ...fail1('', 'server/routes/files.ts', ROUTE_GLOB, '.status(500)'),
-    name: "a route glob's '/*' in a string above a leak (KNOWN GAPS 1)",
-    note: "router.use('/files/*', …) opens a \"comment\" that runs to the next */ — the doc comment below the leak",
-  },
-  {
-    ...fail1('', 'server/routes/fda-gateway.ts', GATEWAY_URL, '.status(502)', '502'),
-    name: 'a URL inside the 5xx body\'s own string (KNOWN GAPS 1)',
-    note: "'… at https://api.fda.gov …' makes the rest of the line, err.message included, a \"// comment\"",
-  },
   {
     ...quiet('', { 'server/routes/register-admin.ts': `${LOGGER_ONLY_HANDLER}\n${STATIC_MESSAGE_HANDLER}` }),
     name: "a later handler's own static `message`, within ALIAS_LOOKBACK of a logger-only alias (KNOWN GAPS 2)",

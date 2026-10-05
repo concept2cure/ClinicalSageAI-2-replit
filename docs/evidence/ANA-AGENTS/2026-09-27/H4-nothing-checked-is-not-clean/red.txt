@@ -1,0 +1,651 @@
+# RED, track NC (row 74; ADR-0014 §7). Four records. ANSI stripped; each test line, each failed test's first failure reason, and the summary kept.
+# Command for parts A, B and 0: npx vitest run --config vitest.config.ts --maxWorkers=2 server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts server/services/intelligence/__tests__/figure-agreement.test.ts server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts
+# Parts A and B: red.py swapped every track NC source file for the reference version (git show HEAD:<path>, or the saved
+# pre-review build), ran the final test files, and restored each file only after checking its sha256 was the one it wrote.
+# Every restore was then checked against tree.sha256 (sha256sum -c: all OK). Never stashed.
+
+
+==== PART A. The final test files against HEAD eb62b566c source for all 11 track NC source files.
+# 59 failed / 18 passed (77). Every failure is an assertion on the missing behaviour, or a read of a shared list or constant that
+# does not exist at HEAD (a TypeError inside the test, never an import failure). The 18 passes are guards: agreement stays clean,
+# a disagreement stays a blocker / needs_review / likely_inconsistency / review_candidates / a candidate, an empty figure list is
+# still a parameter error, no documents is still not_found / 404, a conflict keeps its instruction, and the device description fits the trim.
+#   HEAD shared/ana/dossier-consistency.ts: b5c29341fb24849efdcad7a93a095e4cfee6fcaa808b9ca1bf7cd6094672741d
+#   HEAD shared/utils/plural.ts: f0b579745f809f98382da403d1e92f071267fbab610cd719577ccc8dfb3ffc97
+#   HEAD server/services/intelligence/consistency-verdict.ts: 43e0a93e0cf977dc47bdcff6ff46ae34b5fecade7848e7fb4eed97456b2fe9d6
+#   HEAD server/services/intelligence/cross-artifact-consistency.ts: d165b0016678bc08a8ac3dd70c63524f11ee63527fb62efd1909a00c6f0b1fa4
+#   HEAD server/services/reconciliation/dossier-number-reconciler.ts: 11581ab3a4bb3621855e3cd3abc242be94d4b09c646ea6747b69c7ac7534b637
+#   HEAD server/services/reconciliation/device-document-reconciler.ts: 843e978d5e3a594c30579c0b330ffb95a1aedeaaadeac8a5598766e720a822f6
+#   HEAD server/services/ana/AnaToolExecutor.ts: b72d2d24403ec9f50fd9a36a1959df4ada674f5303fcc157fcaecdd804b8f6ba
+#   HEAD server/services/ana/document-intake-tool-defs.ts: 1421a88c0a9b18a4aeffc17c7900f3e841186aa4b65d29fb491a730c3a5ea784
+#   HEAD server/services/ana/changePropagationTools.ts: 71ec0701b7078c75c66ba2c0c1607473975ce68ee6a84a5684420a46fae89468
+#   HEAD server/services/ana/reconciliationTools.ts: 364122502e74fe7c6bf2553b54152058355104af9bdb74c784d377c2fd8f7fcd
+#   HEAD server/services/lumen-context/base-system-prompt.ts: d3ed23ae74737622dc47013796762b745e05c4731c587f7a78819f2dc4750758
+
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a single figure is not_assessed (no_shared_quantities), never clean
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a quantity stated twice in the same document is not a cross-document comparison
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > two documents that state different quantities compare nothing
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > an empty figure set is still a parameter error, not a verdict
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a quantity stated in two documents with one value is clean
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > clean counts the quantities compared across documents and carries no reason
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > two modules of one file are two places in the dossier: compared
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > one document stated with and without its module is one place: not_assessed, never clean
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a module-less figure in one document and a moduled one in another are two places (the overcorrection guard)
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a disagreement across documents is still a blocker
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a high-severity disagreement across documents is still needs_review (the shared severity ladder)
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a disagreement inside one document is still flagged, though nothing was compared across documents
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > every verdict the engine returns is in the shared list
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > documents that state no labelled figure are not_assessed (no_figures), never clean
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > only one document with figures is not_assessed (no_shared_quantities)
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two documents that restate one sensitivity are still clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two documents that disagree are still a blocker
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > a programme with no documents is still not_found, not a report
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a superseded version and its verbatim successor are one document: not_assessed, never clean
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a version another document names as its predecessor is set aside even if its status was not updated
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a value corrected in the successor is not a conflict with the superseded version
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a withdrawn document is set aside
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > two current documents with a superseded third still compare, and a real conflict is still a blocker
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > every document superseded or withdrawn is not_assessed (no_current_documents), not "no figures"
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft with no labelled figures is not_assessed (no_figures), never clean
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft whose labelled quantities are each stated once is not_assessed (no_repeated_figures)
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > content under the extractor minimum is not_assessed (content_too_short), not "no figures"
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > the minimum is one shared constant, and content at it is read
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a quantity stated twice with one value is clean
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > clean counts the quantities compared and carries no reason
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > one value written with and without a thousands separator is a comparison that agreed
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > values inside the 0.5% spread are a comparison that agreed: clean, counted
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a critical quantity stated with two values is still likely_inconsistency
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a high-severity quantity stated with two values is still review_candidates
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a candidate is reported with its comparison counted, beside quantities stated once
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > every verdict the engine returns is in the shared list
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > no labelled figures: not_assessed with the reason, and no "No numerical inconsistencies detected"
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > content too short to read: the copy states the minimum, and claims nothing about the content
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > each quantity stated once: not_assessed, and the copy counts what was found
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > a real agreement is still clean, and the copy counts what was compared
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > a disagreement keeps its copy and its candidates
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > every reason has its own copy, and no copy is the clean one
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the tool description names not_assessed and says it is not clean, within the 1024-character trim
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the base system prompt tells AnA never to call not_assessed numbers consistent
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: not_assessed, and the instruction says nothing was reconciled instead of "report each conflict"
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: the instruction names what was read, and claims nothing about the rest of the documents
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a superseded version and its copy: not_assessed, and the instruction says the version was set aside
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > every document retired: the instruction says there was no current document
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > one document with figures: not_assessed, and the instruction counts what was found
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a real agreement is clean, and the instruction counts what was compared
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a conflict keeps its instruction
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > figures from one document: not_assessed, and the instruction is not "report these conflicts"
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > a real agreement is clean with a counted instruction; a conflict keeps its instruction
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > every reason has its own copy, and no copy is the clean one
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents names not_assessed and says it is not clean
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures names not_assessed and says it is not clean, before the trim
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures states the engine's definition: two documents, or two modules of one document
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents says superseded and withdrawn versions are not compared
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents fits the trim whole, so its grounding note is not cut
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: the same lower CI bound with a different upper bound is a candidate, never clean
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: an age range whose upper bound differs is a candidate
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: a range stated twice with both bounds equal is clean (the overcorrection guard)
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > dossier: a CI whose upper bound differs from another document is a divergence, not clean
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > dossier: the same CI in another document is clean
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: N = 1000 against N = 1004 in one document is a likely inconsistency
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: the same N written with a thousands separator still agrees (the overcorrection guard)
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: a batch count stated as 3 and as 4 is a candidate
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > dossier: N = 1000 in the draft against N = 1004 in another document is a blocker
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > the spread is one shared constant, 0.5%
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: a measured value inside the shared spread agrees, and one just outside it does not
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > dossier: a measured value inside the shared spread agrees across documents
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > the clean copy states the rule the check applied (reviews [5], [7]) > names exact matching for counts and the shared spread, not a hard-coded 0.5%
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > the clean copy states the rule the check applied (reviews [5], [7]) > the dossier check's clean copy states the same rule, from the same place
+ × server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > documents with no labelled figure: 200, verdict not_assessed with the reason, never clean
+ × server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > two documents that agree: 200, still clean
+ × server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > a superseded version and its verbatim successor: 200, not_assessed, never clean
+ ✓ server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > no documents: still 404 not_found
+
+First failure reason of each failed test:
+FAIL  server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > documents with no labelled figure: 200, verdict not_assessed with the reason, never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > two documents that agree: 200, still clean
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > a superseded version and its verbatim successor: 200, not_assessed, never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: the same lower CI bound with a different upper bound is a candidate, never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: an age range whose upper bound differs is a candidate
+    -> AssertionError: expected 'clean' to be 'review_candidates' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: a range stated twice with both bounds equal is clean (the overcorrection guard)
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > dossier: a CI whose upper bound differs from another document is a divergence, not clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: N = 1000 against N = 1004 in one document is a likely inconsistency
+    -> AssertionError: expected 'clean' to be 'likely_inconsistency' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > dossier: N = 1000 in the draft against N = 1004 in another document is a blocker
+    -> AssertionError: expected 'clean' to be 'blocker' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > the spread is one shared constant, 0.5%
+    -> AssertionError: expected undefined to be 0.005 // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: a measured value inside the shared spread agrees, and one just outside it does not
+    -> AssertionError: expected 'clean' to be 'review_candidates' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > the clean copy states the rule the check applied (reviews [5], [7]) > names exact matching for counts and the shared spread, not a hard-coded 0.5%
+    -> TypeError: integrityRecommendationFor is not a function
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > the clean copy states the rule the check applied (reviews [5], [7]) > the dossier check's clean copy states the same rule, from the same place
+    -> TypeError: integrityRecommendationFor is not a function
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft with no labelled figures is not_assessed (no_figures), never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft whose labelled quantities are each stated once is not_assessed (no_repeated_figures)
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > content under the extractor minimum is not_assessed (content_too_short), not "no figures"
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > the minimum is one shared constant, and content at it is read
+    -> AssertionError: expected undefined to be 20 // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > clean counts the quantities compared and carries no reason
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > one value written with and without a thousands separator is a comparison that agreed
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > values inside the 0.5% spread are a comparison that agreed: clean, counted
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a candidate is reported with its comparison counted, beside quantities stated once
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > every verdict the engine returns is in the shared list
+    -> TypeError: NUMERICAL_INTEGRITY_VERDICTS is not iterable
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > no labelled figures: not_assessed with the reason, and no "No numerical inconsistencies detected"
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > content too short to read: the copy states the minimum, and claims nothing about the content
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > each quantity stated once: not_assessed, and the copy counts what was found
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > a real agreement is still clean, and the copy counts what was compared
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > every reason has its own copy, and no copy is the clean one
+    -> TypeError: Cannot read properties of undefined (reading 'map')
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the tool description names not_assessed and says it is not clean, within the 1024-character trim
+    -> AssertionError: expected 'Scan a single drafted artifact for sa…' to match /not_assessed/
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the base system prompt tells AnA never to call not_assessed numbers consistent
+    -> AssertionError: expected '- Drafted an artifact that reports nu…' to match /not_assessed/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a single figure is not_assessed (no_shared_quantities), never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a quantity stated twice in the same document is not a cross-document comparison
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > two documents that state different quantities compare nothing
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > clean counts the quantities compared across documents and carries no reason
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > two modules of one file are two places in the dossier: compared
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > one document stated with and without its module is one place: not_assessed, never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a module-less figure in one document and a moduled one in another are two places (the overcorrection guard)
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a disagreement across documents is still a blocker
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > documents that state no labelled figure are not_assessed (no_figures), never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > only one document with figures is not_assessed (no_shared_quantities)
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two documents that restate one sensitivity are still clean
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a superseded version and its verbatim successor are one document: not_assessed, never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a version another document names as its predecessor is set aside even if its status was not updated
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a value corrected in the successor is not a conflict with the superseded version
+    -> AssertionError: expected 'blocker' to be 'clean' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a withdrawn document is set aside
+    -> AssertionError: expected 'blocker' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > two current documents with a superseded third still compare, and a real conflict is still a blocker
+    -> AssertionError: expected 3 to be 2 // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > every document superseded or withdrawn is not_assessed (no_current_documents), not "no figures"
+    -> AssertionError: expected 'blocker' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: not_assessed, and the instruction says nothing was reconciled instead of "report each conflict"
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: the instruction names what was read, and claims nothing about the rest of the documents
+    -> AssertionError: expected 'Report each conflict verbatim: the qu…' to match /Read: the summary, risks-identified a…/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a superseded version and its copy: not_assessed, and the instruction says the version was set aside
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > every document retired: the instruction says there was no current document
+    -> AssertionError: expected undefined to be 'no_current_documents' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > one document with figures: not_assessed, and the instruction counts what was found
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a real agreement is clean, and the instruction counts what was compared
+    -> AssertionError: expected 'Report each conflict verbatim: the qu…' to match /^No cross-document conflicts: 1 quant…/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > figures from one document: not_assessed, and the instruction is not "report these conflicts"
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > a real agreement is clean with a counted instruction; a conflict keeps its instruction
+    -> AssertionError: expected 'Report these conflicts and values ver…' to match /^No cross-document conflicts: 1 quant…/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > every reason has its own copy, and no copy is the clean one
+    -> TypeError: Cannot read properties of undefined (reading 'map')
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents names not_assessed and says it is not clean
+    -> AssertionError: expected 'Reconcile the numeric governed quanti…' to match /not_assessed/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures names not_assessed and says it is not clean, before the trim
+    -> AssertionError: expected 'Reconcile already-EXTRACTED, structur…' to match /not_assessed/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures states the engine's definition: two documents, or two modules of one document
+    -> AssertionError: expected 'Reconcile already-EXTRACTED, structur…' to match /two documents, or two modules of one …/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents says superseded and withdrawn versions are not compared
+    -> AssertionError: expected 'Reconcile the numeric governed quanti…' to match /[Ss]uperseded or withdrawn versions a…/
+
+ Test Files  4 failed (4)
+      Tests  59 failed | 18 passed (77)
+
+
+==== PART B. The final test files against the track NC build before the review fixes (the build's 11 source files, saved before any fix).
+# 31 failed / 46 passed (77). Each failure is a review objection: [1] x10 (engine 6, tool 2, route 1, description 1),
+# [2] x6, [3] x3, [4]/[6] x6 (engine 1, copy 4, description 1), [5]/[7] x6 (both prose checks, the constant, both copies).
+   a9f46a2c80d8323721ce3b3f0864e07e0a488d338082070ffd404fa401cf5d64  build server/services/ana/AnaToolExecutor.ts
+   1988bbc1d303e01286d02cbecece670c834d8915b752cf7f562ccc1fe469d177  build server/services/ana/changePropagationTools.ts
+   d09489fb1566cba064034494b220f187de2cc9856c55d492cf408cea2eac7721  build server/services/ana/document-intake-tool-defs.ts
+   ce6dd9316135c0f0c36715184b6dc2c0aef953238c3cea86f5a87d5084f66037  build server/services/ana/reconciliationTools.ts
+   ccdfe3a9f70e044f890682896890413e625207f7436d0a4164f7d1c01efa2fec  build server/services/intelligence/consistency-verdict.ts
+   1723d3b8af46b3c3b5e2fabac77dcc93e6bc7ac1e42263fb99c594a19c4053ac  build server/services/intelligence/cross-artifact-consistency.ts
+   bf5c03222908f4fb5a890508afdcd6e4585c5186dd02bed5ecce78c7e6d41220  build server/services/lumen-context/base-system-prompt.ts
+   49ba17eea09f058a75eb89d3a6105189be05238defd641fb264eb769b51ac4bd  build server/services/reconciliation/device-document-reconciler.ts
+   a753e4f5820151dc28482830221322201e5e36bc701f487ce48580073125c24c  build server/services/reconciliation/dossier-number-reconciler.ts
+   8b5f8fc3c4ff8c9c2db2c620174a6949f8cf6d8c44ab20b4da0bba926c388897  build shared/ana/dossier-consistency.ts
+   66243f5bab416415a25c5ecd89b2109649d3a1f34ee2551dd83c37c6100f9a5a  build shared/utils/plural.ts
+
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft with no labelled figures is not_assessed (no_figures), never clean
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft whose labelled quantities are each stated once is not_assessed (no_repeated_figures)
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > content under the extractor minimum is not_assessed (content_too_short), not "no figures"
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > the minimum is one shared constant, and content at it is read
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a quantity stated twice with one value is clean
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > clean counts the quantities compared and carries no reason
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > one value written with and without a thousands separator is a comparison that agreed
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > values inside the 0.5% spread are a comparison that agreed: clean, counted
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a critical quantity stated with two values is still likely_inconsistency
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a high-severity quantity stated with two values is still review_candidates
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a candidate is reported with its comparison counted, beside quantities stated once
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > every verdict the engine returns is in the shared list
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a single figure is not_assessed (no_shared_quantities), never clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a quantity stated twice in the same document is not a cross-document comparison
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > two documents that state different quantities compare nothing
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > an empty figure set is still a parameter error, not a verdict
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a quantity stated in two documents with one value is clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > clean counts the quantities compared across documents and carries no reason
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > two modules of one file are two places in the dossier: compared
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > one document stated with and without its module is one place: not_assessed, never clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a module-less figure in one document and a moduled one in another are two places (the overcorrection guard)
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a disagreement across documents is still a blocker
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a high-severity disagreement across documents is still needs_review (the shared severity ladder)
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a disagreement inside one document is still flagged, though nothing was compared across documents
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > every verdict the engine returns is in the shared list
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > documents that state no labelled figure are not_assessed (no_figures), never clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > only one document with figures is not_assessed (no_shared_quantities)
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two documents that restate one sensitivity are still clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two documents that disagree are still a blocker
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > a programme with no documents is still not_found, not a report
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a superseded version and its verbatim successor are one document: not_assessed, never clean
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a version another document names as its predecessor is set aside even if its status was not updated
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a value corrected in the successor is not a conflict with the superseded version
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a withdrawn document is set aside
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > two current documents with a superseded third still compare, and a real conflict is still a blocker
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > every document superseded or withdrawn is not_assessed (no_current_documents), not "no figures"
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > no labelled figures: not_assessed with the reason, and no "No numerical inconsistencies detected"
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > content too short to read: the copy states the minimum, and claims nothing about the content
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > each quantity stated once: not_assessed, and the copy counts what was found
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > a real agreement is still clean, and the copy counts what was compared
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > a disagreement keeps its copy and its candidates
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > every reason has its own copy, and no copy is the clean one
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the tool description names not_assessed and says it is not clean, within the 1024-character trim
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the base system prompt tells AnA never to call not_assessed numbers consistent
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: not_assessed, and the instruction says nothing was reconciled instead of "report each conflict"
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: the instruction names what was read, and claims nothing about the rest of the documents
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a superseded version and its copy: not_assessed, and the instruction says the version was set aside
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > every document retired: the instruction says there was no current document
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > one document with figures: not_assessed, and the instruction counts what was found
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a real agreement is clean, and the instruction counts what was compared
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a conflict keeps its instruction
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > figures from one document: not_assessed, and the instruction is not "report these conflicts"
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > a real agreement is clean with a counted instruction; a conflict keeps its instruction
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > every reason has its own copy, and no copy is the clean one
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents names not_assessed and says it is not clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures names not_assessed and says it is not clean, before the trim
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures states the engine's definition: two documents, or two modules of one document
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents says superseded and withdrawn versions are not compared
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents fits the trim whole, so its grounding note is not cut
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: the same lower CI bound with a different upper bound is a candidate, never clean
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: an age range whose upper bound differs is a candidate
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: a range stated twice with both bounds equal is clean (the overcorrection guard)
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > dossier: a CI whose upper bound differs from another document is a divergence, not clean
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > dossier: the same CI in another document is clean
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: N = 1000 against N = 1004 in one document is a likely inconsistency
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: the same N written with a thousands separator still agrees (the overcorrection guard)
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: a batch count stated as 3 and as 4 is a candidate
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > dossier: N = 1000 in the draft against N = 1004 in another document is a blocker
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > the spread is one shared constant, 0.5%
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: a measured value inside the shared spread agrees, and one just outside it does not
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > dossier: a measured value inside the shared spread agrees across documents
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > the clean copy states the rule the check applied (reviews [5], [7]) > names exact matching for counts and the shared spread, not a hard-coded 0.5%
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > the clean copy states the rule the check applied (reviews [5], [7]) > the dossier check's clean copy states the same rule, from the same place
+ ✓ server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > documents with no labelled figure: 200, verdict not_assessed with the reason, never clean
+ ✓ server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > two documents that agree: 200, still clean
+ × server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > a superseded version and its verbatim successor: 200, not_assessed, never clean
+ ✓ server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > no documents: still 404 not_found
+
+First failure reason of each failed test:
+FAIL  server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > a superseded version and its verbatim successor: 200, not_assessed, never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: the same lower CI bound with a different upper bound is a candidate, never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: an age range whose upper bound differs is a candidate
+    -> AssertionError: expected 'clean' to be 'review_candidates' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > dossier: a CI whose upper bound differs from another document is a divergence, not clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: N = 1000 against N = 1004 in one document is a likely inconsistency
+    -> AssertionError: expected 'clean' to be 'likely_inconsistency' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > dossier: N = 1000 in the draft against N = 1004 in another document is a blocker
+    -> AssertionError: expected 'clean' to be 'blocker' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > the spread is one shared constant, 0.5%
+    -> AssertionError: expected undefined to be 0.005 // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: a measured value inside the shared spread agrees, and one just outside it does not
+    -> AssertionError: expected 'not_assessed' to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > the clean copy states the rule the check applied (reviews [5], [7]) > names exact matching for counts and the shared spread, not a hard-coded 0.5%
+    -> AssertionError: expected 'No numerical inconsistencies detected…' to match /counts .*exactly/
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > the clean copy states the rule the check applied (reviews [5], [7]) > the dossier check's clean copy states the same rule, from the same place
+    -> AssertionError: expected 'No consistency issues detected: 1 oth…' to match /\((counts and other whole numbers exa…/
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > content under the extractor minimum is not_assessed (content_too_short), not "no figures"
+    -> AssertionError: expected 'no_figures' to be 'content_too_short' // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > the minimum is one shared constant, and content at it is read
+    -> AssertionError: expected undefined to be 20 // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > no labelled figures: not_assessed with the reason, and no "No numerical inconsistencies detected"
+    -> AssertionError: expected 'The content states no labelled figure…' to match /^No labelled figure \(such as N =, a …/
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > content too short to read: the copy states the minimum, and claims nothing about the content
+    -> AssertionError: expected 'no_figures' to be 'content_too_short' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > one document stated with and without its module is one place: not_assessed, never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a superseded version and its verbatim successor are one document: not_assessed, never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a version another document names as its predecessor is set aside even if its status was not updated
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a value corrected in the successor is not a conflict with the superseded version
+    -> AssertionError: expected 'blocker' to be 'clean' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a withdrawn document is set aside
+    -> AssertionError: expected 'blocker' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > two current documents with a superseded third still compare, and a real conflict is still a blocker
+    -> AssertionError: expected 3 to be 2 // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > every document superseded or withdrawn is not_assessed (no_current_documents), not "no figures"
+    -> AssertionError: expected 'blocker' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: not_assessed, and the instruction says nothing was reconciled instead of "report each conflict"
+    -> AssertionError: expected 'No document states a labelled numeric…' to match /^No labelled numeric figure was found…/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: the instruction names what was read, and claims nothing about the rest of the documents
+    -> AssertionError: expected 'No document states a labelled numeric…' not to match /No document states/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a superseded version and its copy: not_assessed, and the instruction says the version was set aside
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > every document retired: the instruction says there was no current document
+    -> AssertionError: expected 'no_shared_quantities' to be 'no_current_documents' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > one document with figures: not_assessed, and the instruction counts what was found
+    -> AssertionError: expected '1 figure found, but no quantity is st…' to match /^1 figure found, but no quantity is s…/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a real agreement is clean, and the instruction counts what was compared
+    -> AssertionError: expected 'No cross-document conflicts: 1 quanti…' to match /^No cross-document conflicts: 1 quant…/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > figures from one document: not_assessed, and the instruction is not "report these conflicts"
+    -> AssertionError: expected '2 figures found, but no quantity is s…' to match /^2 figures found, but no quantity is …/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > a real agreement is clean with a counted instruction; a conflict keeps its instruction
+    -> AssertionError: expected 'No cross-document conflicts: 1 quanti…' to match /^No cross-document conflicts: 1 quant…/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures states the engine's definition: two documents, or two modules of one document
+    -> AssertionError: expected 'Reconcile already-EXTRACTED, structur…' to match /two documents, or two modules of one …/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents says superseded and withdrawn versions are not compared
+    -> AssertionError: expected 'Reconcile the numeric governed quanti…' to match /[Ss]uperseded or withdrawn versions a…/
+
+ Test Files  4 failed (4)
+      Tests  31 failed | 46 passed (77)
+
+
+==== PART 0. The review tests as first written, against the pre-review build, before any review fix. Tests first, red first.
+# 30 failed / 45 passed (75). One more review test was written later, before its own fix: "the dossier check's clean copy states
+# the same rule, from the same place" (reviews [5]/[7]). It was run alone and failed (1 failed / 13 passed in figure-agreement.test.ts)
+# before AGREEMENT_RULE existed; its red against the pre-review build is in Part B above.
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft with no labelled figures is not_assessed (no_figures), never clean
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft whose labelled quantities are each stated once is not_assessed (no_repeated_figures)
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > content under the extractor minimum is not_assessed (content_too_short), not "no figures"
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > the minimum is one shared constant, and content at it is read
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a quantity stated twice with one value is clean
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > clean counts the quantities compared and carries no reason
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > one value written with and without a thousands separator is a comparison that agreed
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > values inside the 0.5% spread are a comparison that agreed: clean, counted
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a critical quantity stated with two values is still likely_inconsistency
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a high-severity quantity stated with two values is still review_candidates
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a candidate is reported with its comparison counted, beside quantities stated once
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > every verdict the engine returns is in the shared list
+ ✓ server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > documents with no labelled figure: 200, verdict not_assessed with the reason, never clean
+ ✓ server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > two documents that agree: 200, still clean
+ × server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > a superseded version and its verbatim successor: 200, not_assessed, never clean
+ ✓ server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > no documents: still 404 not_found
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: the same lower CI bound with a different upper bound is a candidate, never clean
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: an age range whose upper bound differs is a candidate
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: a range stated twice with both bounds equal is clean (the overcorrection guard)
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > dossier: a CI whose upper bound differs from another document is a divergence, not clean
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > dossier: the same CI in another document is clean
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: N = 1000 against N = 1004 in one document is a likely inconsistency
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: the same N written with a thousands separator still agrees (the overcorrection guard)
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: a batch count stated as 3 and as 4 is a candidate
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > dossier: N = 1000 in the draft against N = 1004 in another document is a blocker
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > the spread is one shared constant, 0.5%
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: a measured value inside the shared spread agrees, and one just outside it does not
+ ✓ server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > dossier: a measured value inside the shared spread agrees across documents
+ × server/services/intelligence/__tests__/figure-agreement.test.ts > the clean copy states the rule the check applied (reviews [5], [7]) > names exact matching for counts and the shared spread, not a hard-coded 0.5%
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a single figure is not_assessed (no_shared_quantities), never clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a quantity stated twice in the same document is not a cross-document comparison
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > two documents that state different quantities compare nothing
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > an empty figure set is still a parameter error, not a verdict
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a quantity stated in two documents with one value is clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > clean counts the quantities compared across documents and carries no reason
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > two modules of one file are two places in the dossier: compared
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > one document stated with and without its module is one place: not_assessed, never clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a module-less figure in one document and a moduled one in another are two places (the overcorrection guard)
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a disagreement across documents is still a blocker
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a high-severity disagreement across documents is still needs_review (the shared severity ladder)
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a disagreement inside one document is still flagged, though nothing was compared across documents
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > every verdict the engine returns is in the shared list
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > documents that state no labelled figure are not_assessed (no_figures), never clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > only one document with figures is not_assessed (no_shared_quantities)
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two documents that restate one sensitivity are still clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two documents that disagree are still a blocker
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > a superseded version and its verbatim successor are one document: not_assessed, never clean
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > a version another document names as its predecessor is set aside even if its status was not updated
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > a value corrected in the successor is not a conflict with the superseded version
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > a withdrawn document is set aside
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two current documents with a superseded third still compare, and a real conflict is still a blocker
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > every document superseded or withdrawn is not_assessed (no_current_documents), not "no figures"
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > a programme with no documents is still not_found, not a report
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > no labelled figures: not_assessed with the reason, and no "No numerical inconsistencies detected"
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > content too short to read: the copy states the minimum, and claims nothing about the content
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > each quantity stated once: not_assessed, and the copy counts what was found
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > a real agreement is still clean, and the copy counts what was compared
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > a disagreement keeps its copy and its candidates
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > every reason has its own copy, and no copy is the clean one
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the tool description names not_assessed and says it is not clean, within the 1024-character trim
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the base system prompt tells AnA never to call not_assessed numbers consistent
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: not_assessed, and the instruction says nothing was reconciled instead of "report each conflict"
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: the instruction names what was read, and claims nothing about the rest of the documents
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a superseded version and its copy: not_assessed, and the instruction says the version was set aside
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > every document retired: the instruction says there was no current document
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > one document with figures: not_assessed, and the instruction counts what was found
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a real agreement is clean, and the instruction counts what was compared
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a conflict keeps its instruction
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > figures from one document: not_assessed, and the instruction is not "report these conflicts"
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > a real agreement is clean with a counted instruction; a conflict keeps its instruction
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > every reason has its own copy, and no copy is the clean one
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents names not_assessed and says it is not clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures names not_assessed and says it is not clean, before the trim
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures states the engine's definition: two documents, or two modules of one document
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents says superseded and withdrawn versions are not compared
+
+First failure reason of each failed test:
+FAIL  server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > a superseded version and its verbatim successor: 200, not_assessed, never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: the same lower CI bound with a different upper bound is a candidate, never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: an age range whose upper bound differs is a candidate
+    -> AssertionError: expected 'clean' to be 'review_candidates' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > dossier: a CI whose upper bound differs from another document is a divergence, not clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: N = 1000 against N = 1004 in one document is a likely inconsistency
+    -> AssertionError: expected 'clean' to be 'likely_inconsistency' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > dossier: N = 1000 in the draft against N = 1004 in another document is a blocker
+    -> AssertionError: expected 'clean' to be 'blocker' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > the spread is one shared constant, 0.5%
+    -> AssertionError: expected undefined to be 0.005 // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: a measured value inside the shared spread agrees, and one just outside it does not
+    -> AssertionError: expected 'not_assessed' to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/figure-agreement.test.ts > the clean copy states the rule the check applied (reviews [5], [7]) > names exact matching for counts and the shared spread, not a hard-coded 0.5%
+    -> AssertionError: expected 'No numerical inconsistencies detected…' to match /counts .*exactly/
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > content under the extractor minimum is not_assessed (content_too_short), not "no figures"
+    -> AssertionError: expected 'no_figures' to be 'content_too_short' // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > the minimum is one shared constant, and content at it is read
+    -> AssertionError: expected undefined to be 20 // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > no labelled figures: not_assessed with the reason, and no "No numerical inconsistencies detected"
+    -> AssertionError: expected 'The content states no labelled figure…' to match /^No labelled figure \(such as N =, a …/
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > content too short to read: the copy states the minimum, and claims nothing about the content
+    -> AssertionError: expected 'no_figures' to be 'content_too_short' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > one document stated with and without its module is one place: not_assessed, never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > a superseded version and its verbatim successor are one document: not_assessed, never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > a version another document names as its predecessor is set aside even if its status was not updated
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > a value corrected in the successor is not a conflict with the superseded version
+    -> AssertionError: expected 'blocker' to be 'clean' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > a withdrawn document is set aside
+    -> AssertionError: expected 'blocker' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two current documents with a superseded third still compare, and a real conflict is still a blocker
+    -> AssertionError: expected 3 to be 2 // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > every document superseded or withdrawn is not_assessed (no_current_documents), not "no figures"
+    -> AssertionError: expected 'blocker' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: not_assessed, and the instruction says nothing was reconciled instead of "report each conflict"
+    -> AssertionError: expected 'No document states a labelled numeric…' to match /^No labelled numeric figure was found…/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: the instruction names what was read, and claims nothing about the rest of the documents
+    -> AssertionError: expected 'No document states a labelled numeric…' not to match /No document states/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a superseded version and its copy: not_assessed, and the instruction says the version was set aside
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > every document retired: the instruction says there was no current document
+    -> AssertionError: expected 'no_shared_quantities' to be 'no_current_documents' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > one document with figures: not_assessed, and the instruction counts what was found
+    -> AssertionError: expected '1 figure found, but no quantity is st…' to match /^1 figure found, but no quantity is s…/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a real agreement is clean, and the instruction counts what was compared
+    -> AssertionError: expected 'No cross-document conflicts: 1 quanti…' to match /^No cross-document conflicts: 1 quant…/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > figures from one document: not_assessed, and the instruction is not "report these conflicts"
+    -> AssertionError: expected '2 figures found, but no quantity is s…' to match /^2 figures found, but no quantity is …/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > a real agreement is clean with a counted instruction; a conflict keeps its instruction
+    -> AssertionError: expected 'No cross-document conflicts: 1 quanti…' to match /^No cross-document conflicts: 1 quant…/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures states the engine's definition: two documents, or two modules of one document
+    -> AssertionError: expected 'Reconcile already-EXTRACTED, structur…' to match /two documents, or two modules of one …/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents says superseded and withdrawn versions are not compared
+    -> AssertionError: expected 'Reconcile the numeric governed quanti…' to match /superseded or withdrawn/
+
+ Test Files  4 failed (4)
+      Tests  30 failed | 45 passed (75)
+
+
+==== PART C. The track NC build's own red (recorded by the build pass, HEAD 39b3027cc, only the three first NC test files present).
+# 33 failed / 12 passed (45). Kept here so the whole track's red is in one place; the raw record is the build pass's red-tests-first.txt.
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a single figure is not_assessed (no_shared_quantities), never clean
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a quantity stated twice in the same document is not a cross-document comparison
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > two documents that state different quantities compare nothing
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > an empty figure set is still a parameter error, not a verdict
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a quantity stated in two documents with one value is clean
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > clean counts the quantities compared across documents and carries no reason
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > two modules of one file are two places in the dossier: compared
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a disagreement across documents is still a blocker
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a disagreement inside one document is still flagged, though nothing was compared across documents
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > every verdict the engine returns is in the shared list
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > documents that state no labelled figure are not_assessed (no_figures), never clean
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > only one document with figures is not_assessed (no_shared_quantities)
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two documents that restate one sensitivity are still clean
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two documents that disagree are still a blocker
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > a programme with no documents is still not_found, not a report
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft with no labelled figures is not_assessed (no_figures), never clean
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft whose labelled quantities are each stated once is not_assessed (no_repeated_figures)
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > content under the extractor minimum is not_assessed too
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a quantity stated twice with one value is clean
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > clean counts the quantities compared and carries no reason
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > one value written with and without a thousands separator is a comparison that agreed
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > values inside the 0.5% spread are a comparison that agreed: clean, counted
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a critical quantity stated with two values is still likely_inconsistency
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a high-severity quantity stated with two values is still review_candidates
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a candidate is reported with its comparison counted, beside quantities stated once
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > every verdict the engine returns is in the shared list
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: not_assessed, and the instruction says nothing was reconciled instead of "report each conflict"
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > one document with figures: not_assessed, and the instruction counts what was found
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a real agreement is clean, and the instruction counts what was compared
+ ✓ server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a conflict keeps its instruction
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > figures from one document: not_assessed, and the instruction is not "report these conflicts"
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > a real agreement is clean with a counted instruction; a conflict keeps its instruction
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > every reason has its own copy, and no copy is the clean one
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents names not_assessed and says it is not clean
+ × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures names not_assessed and says it is not clean, before the trim
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > no labelled figures: not_assessed with the reason, and no "No numerical inconsistencies detected"
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > each quantity stated once: not_assessed, and the copy counts what was found
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > a real agreement is still clean, and the copy counts what was compared
+ ✓ server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > a disagreement keeps its copy and its candidates
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > every reason has its own copy, and no copy is the clean one
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the tool description names not_assessed and says it is not clean, within the 1024-character trim
+ × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the base system prompt tells AnA never to call not_assessed numbers consistent
+ × server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > documents with no labelled figure: 200, verdict not_assessed with the reason, never clean
+ × server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > two documents that agree: 200, still clean
+ ✓ server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > no documents: still 404 not_found
+
+First failure reason of each failed test:
+FAIL  server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > documents with no labelled figure: 200, verdict not_assessed with the reason, never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > two documents that agree: 200, still clean
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft with no labelled figures is not_assessed (no_figures), never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft whose labelled quantities are each stated once is not_assessed (no_repeated_figures)
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > content under the extractor minimum is not_assessed too
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > clean counts the quantities compared and carries no reason
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > one value written with and without a thousands separator is a comparison that agreed
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > values inside the 0.5% spread are a comparison that agreed: clean, counted
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a candidate is reported with its comparison counted, beside quantities stated once
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > every verdict the engine returns is in the shared list
+    -> TypeError: NUMERICAL_INTEGRITY_VERDICTS is not iterable
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > no labelled figures: not_assessed with the reason, and no "No numerical inconsistencies detected"
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > each quantity stated once: not_assessed, and the copy counts what was found
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > a real agreement is still clean, and the copy counts what was compared
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > every reason has its own copy, and no copy is the clean one
+    -> TypeError: Cannot read properties of undefined (reading 'map')
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the tool description names not_assessed and says it is not clean, within the 1024-character trim
+    -> AssertionError: expected 'Scan a single drafted artifact for sa…' to match /not_assessed/
+FAIL  server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the base system prompt tells AnA never to call not_assessed numbers consistent
+    -> AssertionError: expected '- Drafted an artifact that reports nu…' to match /not_assessed/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a single figure is not_assessed (no_shared_quantities), never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a quantity stated twice in the same document is not a cross-document comparison
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > two documents that state different quantities compare nothing
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > clean counts the quantities compared across documents and carries no reason
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > two modules of one file are two places in the dossier: compared
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a disagreement across documents is still a blocker
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > documents that state no labelled figure are not_assessed (no_figures), never clean
+    -> AssertionError: expected 'clean' not to be 'clean' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > only one document with figures is not_assessed (no_shared_quantities)
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two documents that restate one sensitivity are still clean
+    -> AssertionError: expected undefined to be 1 // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: not_assessed, and the instruction says nothing was reconciled instead of "report each conflict"
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > one document with figures: not_assessed, and the instruction counts what was found
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a real agreement is clean, and the instruction counts what was compared
+    -> AssertionError: expected 'Report each conflict verbatim: the qu…' to match /^No cross-document conflicts: 1 quant…/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > figures from one document: not_assessed, and the instruction is not "report these conflicts"
+    -> AssertionError: expected 'clean' to be 'not_assessed' // Object.is equality
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > a real agreement is clean with a counted instruction; a conflict keeps its instruction
+    -> AssertionError: expected 'Report these conflicts and values ver…' to match /^No cross-document conflicts: 1 quant…/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > every reason has its own copy, and no copy is the clean one
+    -> TypeError: Cannot read properties of undefined (reading 'map')
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents names not_assessed and says it is not clean
+    -> AssertionError: expected 'Reconcile the numeric governed quanti…' to match /not_assessed/
+FAIL  server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures names not_assessed and says it is not clean, before the trim
+    -> AssertionError: expected 'Reconcile already-EXTRACTED, structur…' to match /not_assessed/
+
+ Test Files  3 failed (3)
+      Tests  33 failed | 12 passed (45)

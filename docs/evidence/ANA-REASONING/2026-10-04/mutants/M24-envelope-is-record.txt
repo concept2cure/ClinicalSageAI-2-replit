@@ -1,0 +1,14 @@
+Mutant M24-envelope-is-record: a top-level envelope field (a note, a suggestion) counts as a returned record
+
+--- server/services/ana/answer-grounding.ts
+- } else if ((typeof v === 'string' || typeof v === 'number') && (inArray || depth >= 2 || topLevelIsRecord)) {
++ } else if ((typeof v === 'string' || typeof v === 'number') && (inArray || depth >= 1 || topLevelIsRecord)) {
+
+Tests run: tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > an outage envelope that echoes the query finds nothing 10ms
+ × tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a regulation looked up is found in the record the lookup returns, not in the echo of a miss 2ms
+ × tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a citation formatted from what the model gave, and not verified, finds nothing 2ms
+      Tests  3 failed | 25 passed (28)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

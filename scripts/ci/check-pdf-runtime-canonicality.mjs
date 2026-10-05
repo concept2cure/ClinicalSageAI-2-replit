@@ -105,6 +105,11 @@ const APPROVED = new Set([
   //                              DOCX/HTML→PDF converter) cannot reconstruct XFA.
   //   templateExtractor.ts     — READS PDFs (PDFDocument.load) to extract formatting.
   'server/services/ectd/leaf-pdf-renderer.ts',
+  // typeset-leaf-pdf.ts — leaf-pdf-renderer's sibling for Module 3 sections
+  //   (headings, wrapped paragraphs, ruled tables). Same byte-identical
+  //   contract, held by module3-leaf-typeset.test.ts "is byte-deterministic";
+  //   pdf-converter.ts cannot give that. Added 2026-10-05 for af3df074c (D2).
+  'server/services/ectd/typeset-leaf-pdf.ts',
   'server/services/ectd/pdf-bookmark-generator.ts',
   'server/services/forms/fill-official-pdf.ts',
   'server/services/ind-forms/ind-form-fill-service.ts',

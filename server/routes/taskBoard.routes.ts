@@ -80,6 +80,7 @@ import {
 } from '../services/unified-work/unified-work-view';
 import { getSecureOrgId } from '../utils/tenantContext';
 import { unifiedTasks, taskDependencies, users, organizationUsers } from '../../shared/schema';
+import { memberLabels } from '../../shared/utils/member-labels';
 
 const logger = createScopedLogger('task-board-routes');
 
@@ -479,7 +480,12 @@ export default function createTaskBoardRoutes(): Router {
    * picker. Scoped exactly like getOptimalAssignee (users ⨝ organization_users
    * on organizationId), so no cross-org user can appear. Real rows only; fails
    * closed to an empty roster when the store is unprovisioned.
-   * Response: { success: true, data: { id: string; name: string }[], total }
+   * Response: { success: true, data: { id: string; name: string; label: string }[], total }
+   *
+   * `label` is what a picker shows: the name, with the address beside it only
+   * where another member holds the same name (shared/utils/member-labels.ts).
+   * Names alone offered two identical "JM Smith" choices with nothing saying
+   * which account either was (W1/D2, 2026-10-05). `name` is unchanged.
    */
   router.get('/assignees', async (req: Request, res: Response) => {
     const orgRaw = getSecureOrgId(req);
@@ -497,9 +503,11 @@ export default function createTaskBoardRoutes(): Router {
         .where(eq(organizationUsers.organizationId, organizationId))
         .orderBy(asc(users.name));
 
+      const labels = memberLabels(rows);
       const data = rows.map(row => ({
         id: String(row.id),
         name: row.name || (row.email ? row.email.split('@')[0] : 'User'),
+        label: labels.get(String(row.id)) ?? String(row.id),
       }));
       return res.json({ success: true, data, total: data.length });
     } catch (error) {

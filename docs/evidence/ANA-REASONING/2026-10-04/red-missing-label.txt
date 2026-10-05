@@ -1,0 +1,19 @@
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > surfaces ungrounded regulatory claims with their text 7ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > surfaces overclaims using strong language without [KNOWN] backing 3ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > surfaces internal contradictions 1ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > omits flagged_claims when claims are grounded by nearby labels 1ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > reports a short response as UNASSESSED, not as verified 1ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > a short response carrying a real regulatory claim is not called verified 0ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > says the check was not run, in the words the user actually sees 1ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > still verifies a long, well-grounded answer — the working path 0ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > bounds the flagged list and trims long claims 1ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > does not flag the same claim text twice 0ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > does NOT validate a self-contradictory response even when claims are grounded 0ms
+ × server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — a declared gap is not grounding > a claim whose only label is [MISSING] is not grounded, and is counted as missing support 10ms
+   → expected 2 to be +0 // Object.is equality
+ × server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — a declared gap is not grounding > [MISSING] is not counted as a source, and the labels are reported as AnA wrote them 2ms
+   → expected 1 to be +0 // Object.is equality
+ × server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — a declared gap is not grounding > a [KNOWN] claim beside it is still grounded 1ms
+   → expected 2 to be 1 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 11 passed (14)

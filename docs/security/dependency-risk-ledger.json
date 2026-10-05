@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-01T06:53:00.199Z",
+  "generatedAt": "2026-10-05T00:53:49.658Z",
   "scanner": {
     "name": "npm audit",
     "npmVersion": "10.9.7",
@@ -9,7 +9,7 @@
     "resultArtifact": "dependency-audit-results.json"
   },
   "lockfileVersion": 3,
-  "lockfileSha256": "429eacd4439530868381ce1e243a3f0b9cc1a1a71aa8ac50b8601778a211a1f1",
+  "lockfileSha256": "35931d2ae5265c2b863407d51e2eb41c756b14ad3dc9b38d65252ff15d50d2c1",
   "rootPackageVersion": "1.0.0",
   "findings": [
     {
@@ -77,6 +77,40 @@
       "owner": "Security Engineering (human owner required if disposition changes to exception)",
       "reviewDate": "2026-08-25",
       "expiresAt": "2026-11-25T00:00:00.000Z"
+    },
+    {
+      "advisory": "GHSA-vfj7-8cjw-p6xm",
+      "advisoryUrl": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "severity": "high",
+      "affectedRange": "<=3.0.3",
+      "installedVersion": "3.0.3",
+      "fixedVersion": null,
+      "dependencyType": "transitive",
+      "disposition": "unreachable",
+      "evidence": {
+        "packagePaths": [
+          "concept2cure-riai > jest@29.7.0 > @jest/core@29.7.0 > micromatch@4.0.8 > braces@3.0.3 (devDependency)",
+          "concept2cure-riai > danger@13.0.10 > micromatch@4.0.8 > braces@3.0.3 (devDependency)"
+        ],
+        "entryPoints": [
+          "None in production. `npm ls braces --omit=dev --all` is empty: the only production path was http-proxy-middleware, a declared dependency nothing imported, removed in the same change. braces runs only inside the jest test runner and the danger PR bot, which expand glob patterns written in this repository's config, never a request value."
+        ],
+        "runtimeProof": [
+          "The advisory is a stack-exhaustion DoS when braces expands a deeply nested PATTERN (CVE-2026-93687, CWE-674). An attacker must control the pattern string.",
+          "After removing http-proxy-middleware, `npm ls braces --omit=dev --all` prints `(empty)`: the production install (npm ci --omit=dev, the Dockerfile's runtime stage) does not contain braces or micromatch.",
+          "In dev, the patterns come from jest.config / vitest-adjacent config and danger's dangerfile, all committed in this repository; neither tool takes a pattern from an HTTP request, a document or a user."
+        ],
+        "commands": [
+          "npm ls braces --omit=dev --all",
+          "npm ls braces --all",
+          "git grep -nE \"http-proxy-middleware|micromatch|braces\" -- server shared client scripts"
+        ]
+      },
+      "action": "Keep braces out of the production tree: a new runtime dependency that pulls micromatch/braces must re-review this row. Drop the row when braces ships a release above 3.0.3.",
+      "owner": "Security Engineering (human owner required if disposition changes to exception)",
+      "reviewDate": "2026-10-05",
+      "expiresAt": "2026-11-05T00:00:00.000Z"
     }
   ]
 }

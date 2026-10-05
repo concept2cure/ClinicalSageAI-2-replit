@@ -37,6 +37,7 @@ import { createHash } from 'crypto';
 // multi-provider service and the council's bespoke per-provider circuit breakers.
 import { getGateway } from './ai-gateway/gateway.js';
 import { isTenantPlacementRefusal, isTerminalGatewayError } from './ai-gateway/gateway-outcome.js';
+import { NO_PQ_QUALIFIED_MODEL } from './ai-gateway/model-governance.js';
 import type { TaskType } from './ai-gateway/types.js';
 import {
   getPromptInjectionProtection,
@@ -165,6 +166,11 @@ export function councilTaskType(operation: string): TaskType {
 
 /** Code the gateway's ModelNotApprovedError carries (ai-gateway/gateway.ts). */
 const MODEL_NOT_APPROVED = 'MODEL_NOT_APPROVED_FOR_HIGH_RISK';
+/**
+ * Code the gateway's ModelNotQualifiedError carries: production high-risk
+ * drafting, and no approved model has passed its PQ (ADR-0015 §3).
+ */
+const MODEL_NOT_PQ_QUALIFIED = 'MODEL_NOT_PQ_QUALIFIED';
 
 /**
  * Normalized result of a council LLM call. Mirrors the fields the council
@@ -319,7 +325,21 @@ export class MultiAgentCouncilService {
 
       // A governance refusal is not an outage: no provider failed, and retrying
       // cannot change the answer. The gateway has already audited it.
-      if ((error as { code?: unknown } | null)?.code === MODEL_NOT_APPROVED) {
+      const refusalCode = (error as { code?: unknown } | null)?.code;
+      if (refusalCode === MODEL_NOT_PQ_QUALIFIED) {
+        // Every drafting agent is document_drafting, so in production this is
+        // what the council meets until a model passes PQ. Said as it is: the
+        // models are approved; none is performance-qualified, and nothing
+        // changes until a PQ is executed.
+        throw new CouncilError(
+          `${NO_PQ_QUALIFIED_MODEL} The council did not run.`,
+          MODEL_NOT_PQ_QUALIFIED,
+          undefined,
+          correlationId,
+          false
+        );
+      }
+      if (refusalCode === MODEL_NOT_APPROVED) {
         throw new CouncilError(
           'No model approved for regulatory drafting and review is available right now, ' +
             'so the council did not run on one that is not approved for it.',

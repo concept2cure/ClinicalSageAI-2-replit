@@ -1,0 +1,1273 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > keeps an entry whose author is a known machine author and whose text is non-empty 16ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops an author id the server does not name, rather than letting a caller attribute text to anyone 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops empty, whitespace-only and non-string text 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > returns nothing for anything that is not an array 0ms
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "constructor", a name every object inherits 32ms
+   → expected [ { authorId: 'constructor', …(1) } ] to deeply equal []
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "__proto__", a name every object inherits 7ms
+   → expected [ { authorId: '__proto__', …(1) } ] to deeply equal []
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "toString", a name every object inherits 2ms
+   → expected [ { authorId: 'toString', …(1) } ] to deeply equal []
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "hasOwnProperty", a name every object inherits 6ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "valueOf", a name every object inherits 2ms
+   → expected [ { authorId: 'valueOf', …(1) } ] to deeply equal []
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "isPrototypeOf", a name every object inherits 6ms
+   → expected [ { authorId: 'isPrototypeOf', …(1) } ] to deeply equal []
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > the vocabulary inherits nothing, so no reader of it can be handed a name it does not hold 1ms
+   → expected { …(12) } to be null
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > caps the list and drops an entry whose text exceeds the cap rather than truncating it 6ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts
+{
+  "timestamp": "2026-10-04T20:00:26.008Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T20:00:26.010Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts
+{
+  "timestamp": "2026-10-04T20:00:26.010Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-10-04T20:00:26.023Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T20:00:26.024Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-10-04T20:00:26.024Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+[database] Database connection successful
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts
+[database] Database connection successful
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-10-04T20:00:26.233Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts
+{
+  "timestamp": "2026-10-04T20:00:26.234Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > attributes BOTH to the machine, not just the one in the first accepted text 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > still leaves a genuinely human clause alone 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > bounds by occurrence WITHIN each accepted text, so one repeated clause is not over-claimed 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > claims two when the author genuinely accepted it twice 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside < … > added is not the machine's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside an <xmp>, which shows its inside as text added is not the machine's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside a <textarea>, which shows its inside as text added is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words after a <plaintext>, which shows the rest as text added is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > the machine's words inside the markup the editor writes are still the machine's 1ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > removes a tag every reader hides, and keeps every other `<` as written 7ms
+   → expected 'the endpoint was met.' to be 'the <strong class="x">endpoint was me…' // Object.is equality
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > reads markdown only when asked, as the turn record's side is: `\|` is `|` and `*` is dropped 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > scans a run of `<a` with no `>` once, not once for every `<` 2ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds <xmp> 4ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds upper case 1ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds an attribute 1ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds an attribute after a space 0ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds a self-closing slash 0ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds a line break after the name 0ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds a CDATA section 0ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in another tag 1ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in a longer name 1ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in a space before the name 0ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in a closing tag alone 0ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in escaped text 0ms
+   → notComparedFrom is not a function
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > xmp, paragraph breaks: the clause holding the shown words is not the machine's 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > plaintext, a paragraph break: the clause holding the shown words is not the machine's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > textarea, a comma clause break: the clause holding the shown words is not the machine's 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > CDATA in SVG, paragraph breaks: the clause holding the shown words is not the machine's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > plaintext with an attribute (N1): the clause holding the shown words is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > xmp with a class, and a space in its end tag (N1): the clause holding the shown words is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > textarea with rows, and a space in its end tag (N1): the clause holding the shown words is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > plaintext with an attribute, inside the one clause: not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > xmp with a class, inside the one clause: not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > textarea with rows, inside the one clause: not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > a clause before the first opener is still compared (guard) 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > content read as plain text shows every `<…>` > with no known tag in the content, a clause holding a tag-shaped token is not the machine's 0ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > content read as plain text shows every `<…>` > with a known tag elsewhere, its attribute words are not the machine's either: source mode shows them (round 4, D4) 8ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > content read as plain text shows every `<…>` > an asterisk added to the machine's clause makes it not the machine's: content is never read as markdown (N5) 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > carry-forward meets a raw-text region in HTML content > an accepted clause a later save put inside one is not carried: its words were matched with tags removed 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > carry-forward meets a raw-text region in HTML content > an unaccepted machine draft is carried: it was never compared, every character is the machine's (guard) 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > carry-forward meets a raw-text region in HTML content > outside any region, an accepted clause is carried as before (guard) 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > inAcceptedText: what this save accepted, not what the content carries > a clause carried forward and accepted again is in it, under its original acceptor 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > inAcceptedText: what this save accepted, not what the content carries > a clause carried forward and not accepted again is not; a one-word claim accepts no clause 1ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > a double quote after the tag name: the leaf and the export print it, so the clause is not AnA's 19ms
+   → words the leaf prints were credited to AnA: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > a slash after the tag name: the leaf and the export print it, so the clause is not AnA's 3ms
+   → words the leaf prints were credited to AnA: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > a comma after the tag name: the leaf and the export print it, so the clause is not AnA's 2ms
+   → words the leaf prints were credited to AnA: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > a parenthesis after the tag name: the leaf and the export print it, so the clause is not AnA's 2ms
+   → words the leaf prints were credited to AnA: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > an equals sign after the tag name: the leaf and the export print it, so the clause is not AnA's 2ms
+   → words the leaf prints were credited to AnA: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > any ASCII punctuation right after the tag name: not AnA's 1ms
+   → "!": expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > outside the region it does not compare, node-html-parser and a browser show the same text, and the comparison drops only what neither shows 72ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > template: not AnA's 2ms
+   → a clause whose words the leaf drops was credited to AnA: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > head: not AnA's 2ms
+   → a clause whose words the leaf drops was credited to AnA: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > a template opened in an earlier clause: not AnA's 2ms
+   → a clause whose words the leaf drops was credited to AnA: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > a comment opened in an earlier clause hides a later one from every reader: not AnA's 2ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds <template> in HTML content 1ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds <head> in HTML content 1ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a comment in HTML content 0ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds <svg> in HTML content 1ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds <math> in HTML content 1ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a raw-text element in HTML content 1ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a `<` a browser may read as markup and node-html-parser as text in HTML content 0ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a `<` the leaf reads as a mark and a browser as text in HTML content 1ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds nothing in plain text, where every reader shows every character 0ms
+   → notComparedFrom is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > attribute text that could read as prose is not removed (a figure later in the content): not AnA's 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > attribute text that could read as prose is not removed (no figure (the fidelity gate may still call it lossy)): not AnA's 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > attribute text that could read as prose is not removed (a data attribute): not AnA's 13ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > attribute text that could read as prose is not removed (a class): not AnA's 1ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > the attributes the canonical producers write are removed: TipTap's table cells and comment anchors 1ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > content that opens in source mode is read as plain text: a clause holding a tag the comparison removes is not AnA's 1ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > in content that opens in source mode, a clause holding no tag is still AnA's (guard) 0ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D5: an image prints its alt, or a label, in the leaf > an inline figure with an alt: not AnA's 2ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D5: an image prints its alt, or a label, in the leaf > an uploaded figure with no alt: not AnA's 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D5: an image prints its alt, or a label, in the leaf > not even when AnA's record holds the same image 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a footnote: not AnA's 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a citation locator: not AnA's 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a cross-reference: not AnA's 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a title: not AnA's 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a suggestion's author: not AnA's 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a list's start number: not AnA's 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a cross-reference whose words run into a later clause: the export prints something else over them, so no clause of it is AnA's 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a footnote whose words run into a later clause: the export prints something else over them, so no clause of it is AnA's 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a citation whose words run into a later clause: the export prints something else over them, so no clause of it is AnA's 1ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a clause after the element has closed is compared again (guard) 0ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D7: an inline tag joins tokens and a block tag separates them, on both sides > "At Week 2<b>4</b> patients" is not AnA's "At Week 2 4 patients" 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D7: an inline tag joins tokens and a block tag separates them, on both sides > the comparison form 2ms
+   → expected 'at week 2 4 patients' to be 'at week 24 patients' // Object.is equality
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D7: an inline tag joins tokens and a block tag separates them, on both sides > markup AnA's record also has is AnA's (guard) 0ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D8: the turn record read as markdown drops only what markdown hides > a lone asterisk stays: "5*10" is not "510" 1ms
+   → expected 'the starting dose was 510 mg/kg.' to be 'the starting dose was 5*10 mg/kg.' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D8: the turn record read as markdown drops only what markdown hides > paired emphasis, list markers, a thematic break and escapes read as markdown shows them 1ms
+   → expected 'a \ b | c' to be 'a * b | c' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > a "<style guide>" before AnA's clause leaves it AnA's 1ms
+   → expected [] to deeply equal [ Array(1) ]
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > a markdown draft with an XML example is AnA's, every clause of it 3ms
+   → expected [ Array(1) ] to have a length of 3 but got 1
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > "<LLOQ" and a later ">3×ULN" (the weaker case) are AnA's 1ms
+   → expected [] to have a length of 2 but got +0
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > a clause accepted earlier is carried forward past a "<style guide>" 1ms
+   → expected [] to deeply equal [ [ …(2) ] ]
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > DUP: a clause is credited no more times than the record holds it > the same claim three times credits one of three repeated clauses 2ms
+   → expected [ { charStart: +0, …(5) }, …(2) ] to have a length of 1 but got 3
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  shared/authoring/__tests__/source-mode.test.ts [ shared/authoring/__tests__/source-mode.test.ts ]
+Error: Cannot find module '../source-mode' imported from <repo>/shared/authoring/__tests__/source-mode.test.ts
+ ❯ shared/authoring/__tests__/source-mode.test.ts:14:1
+     12| import fs from 'node:fs';
+     13| import path from 'node:path';
+     14| import { opensInSourceMode } from '../source-mode';
+       | ^
+     15|
+     16| describe('opensInSourceMode', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/68]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 67 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "constructor", a name every object inherits
+AssertionError: expected [ { authorId: 'constructor', …(1) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "authorId": "constructor",
++     "text": "The primary endpoint was met.",
++   },
++ ]
+
+ ❯ server/services/authoring/__tests__/accepted-machine-text.test.ts:57:90
+     55|     'drops %j, a name every object inherits',
+     56|     (authorId) => {
+     57|       expect(acceptedMachineText([{ authorId, text: 'The primary endpo…
+       |                                                                                          ^
+     58|     },
+     59|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/68]⎯
+
+ FAIL  server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "__proto__", a name every object inherits
+AssertionError: expected [ { authorId: '__proto__', …(1) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "authorId": "__proto__",
++     "text": "The primary endpoint was met.",
++   },
++ ]
+
+ ❯ server/services/authoring/__tests__/accepted-machine-text.test.ts:57:90
+     55|     'drops %j, a name every object inherits',
+     56|     (authorId) => {
+     57|       expect(acceptedMachineText([{ authorId, text: 'The primary endpo…
+       |                                                                                          ^
+     58|     },
+     59|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/68]⎯
+
+ FAIL  server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "toString", a name every object inherits
+AssertionError: expected [ { authorId: 'toString', …(1) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "authorId": "toString",
++     "text": "The primary endpoint was met.",
++   },
++ ]
+
+ ❯ server/services/authoring/__tests__/accepted-machine-text.test.ts:57:90
+     55|     'drops %j, a name every object inherits',
+     56|     (authorId) => {
+     57|       expect(acceptedMachineText([{ authorId, text: 'The primary endpo…
+       |                                                                                          ^
+     58|     },
+     59|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/68]⎯
+
+ FAIL  server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "hasOwnProperty", a name every object inherits
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "authorId": "hasOwnProperty",
++     "text": "The primary endpoint was met.",
++   },
++ ]
+
+ ❯ server/services/authoring/__tests__/accepted-machine-text.test.ts:57:90
+     55|     'drops %j, a name every object inherits',
+     56|     (authorId) => {
+     57|       expect(acceptedMachineText([{ authorId, text: 'The primary endpo…
+       |                                                                                          ^
+     58|     },
+     59|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/68]⎯
+
+ FAIL  server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "valueOf", a name every object inherits
+AssertionError: expected [ { authorId: 'valueOf', …(1) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "authorId": "valueOf",
++     "text": "The primary endpoint was met.",
++   },
++ ]
+
+ ❯ server/services/authoring/__tests__/accepted-machine-text.test.ts:57:90
+     55|     'drops %j, a name every object inherits',
+     56|     (authorId) => {
+     57|       expect(acceptedMachineText([{ authorId, text: 'The primary endpo…
+       |                                                                                          ^
+     58|     },
+     59|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/68]⎯
+
+ FAIL  server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "isPrototypeOf", a name every object inherits
+AssertionError: expected [ { authorId: 'isPrototypeOf', …(1) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "authorId": "isPrototypeOf",
++     "text": "The primary endpoint was met.",
++   },
++ ]
+
+ ❯ server/services/authoring/__tests__/accepted-machine-text.test.ts:57:90
+     55|     'drops %j, a name every object inherits',
+     56|     (authorId) => {
+     57|       expect(acceptedMachineText([{ authorId, text: 'The primary endpo…
+       |                                                                                          ^
+     58|     },
+     59|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/68]⎯
+
+ FAIL  server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > the vocabulary inherits nothing, so no reader of it can be handed a name it does not hold
+AssertionError: expected { …(12) } to be null
+
+- Expected:
+null
+
++ Received:
+{}
+
+ ❯ server/services/authoring/__tests__/accepted-machine-text.test.ts:62:55
+     60|
+     61|   it('the vocabulary inherits nothing, so no reader of it can be hande…
+     62|     expect(Object.getPrototypeOf(MACHINE_AUTHOR_IDS)).toBeNull();
+       |                                                       ^
+     63|     expect(Object.isFrozen(MACHINE_AUTHOR_IDS)).toBe(true);
+     64|     expect(MACHINE_AUTHOR_IDS.constructor).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > a double quote after the tag name: the leaf and the export print it, so the clause is not AnA's
+AssertionError: words the leaf prints were credited to AnA: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <b\"3 patients died\"> tolerated in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:65:77
+     63|     expect(leaf(content)).toContain(SHOWN);
+     64|     expect(exported(content)).toContain(SHOWN);
+     65|     expect(credited(content), 'words the leaf prints were credited to …
+       |                                                                             ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > a slash after the tag name: the leaf and the export print it, so the clause is not AnA's
+AssertionError: words the leaf prints were credited to AnA: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <b/3 patients died> tolerated in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:65:77
+     63|     expect(leaf(content)).toContain(SHOWN);
+     64|     expect(exported(content)).toContain(SHOWN);
+     65|     expect(credited(content), 'words the leaf prints were credited to …
+       |                                                                             ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > a comma after the tag name: the leaf and the export print it, so the clause is not AnA's
+AssertionError: words the leaf prints were credited to AnA: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <b,3 patients died> tolerated in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:65:77
+     63|     expect(leaf(content)).toContain(SHOWN);
+     64|     expect(exported(content)).toContain(SHOWN);
+     65|     expect(credited(content), 'words the leaf prints were credited to …
+       |                                                                             ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > a parenthesis after the tag name: the leaf and the export print it, so the clause is not AnA's
+AssertionError: words the leaf prints were credited to AnA: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <i(3 patients died)> tolerated in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:65:77
+     63|     expect(leaf(content)).toContain(SHOWN);
+     64|     expect(exported(content)).toContain(SHOWN);
+     65|     expect(credited(content), 'words the leaf prints were credited to …
+       |                                                                             ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > an equals sign after the tag name: the leaf and the export print it, so the clause is not AnA's
+AssertionError: words the leaf prints were credited to AnA: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <u=3 patients died> tolerated in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:65:77
+     63|     expect(leaf(content)).toContain(SHOWN);
+     64|     expect(exported(content)).toContain(SHOWN);
+     65|     expect(credited(content), 'words the leaf prints were credited to …
+       |                                                                             ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > any ASCII punctuation right after the tag name: not AnA's
+AssertionError: "!": expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <b!3 patients died> tolerated in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:71:52
+     69|     for (const c of '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~') {
+     70|       const content = `<p>The study drug was well <b${c}${SHOWN}> tole…
+     71|       expect(credited(content), JSON.stringify(c)).toEqual([]);
+       |                                                    ^
+     72|     }
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > outside the region it does not compare, node-html-parser and a browser show the same text, and the comparison drops only what neither shows
+TypeError: notComparedFrom is not a function
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:88:11
+     86|       for (let k = 0; k < len; k++) token += ALPHABET[Math.floor(next(…
+     87|       const content = `<p>x${token}y</p>`;
+     88|       if (notComparedFrom(content) !== -1) continue;
+       |           ^
+     89|       compared++;
+     90|       div.innerHTML = content;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > template: not AnA's
+AssertionError: a clause whose words the leaf drops was credited to AnA: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was <template>not </template>effective in reducing mortality.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:112:99
+    110|   ])('%s: not AnA\'s', (_, content) => {
+    111|     expect(leaf(content)).not.toContain('not effective');
+    112|     expect(credited(content, NEGATED), 'a clause whose words the leaf …
+       |                                                                                                   ^
+    113|   });
+    114|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > head: not AnA's
+AssertionError: a clause whose words the leaf drops was credited to AnA: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was <head>not </head>effective in reducing mortality.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:112:99
+    110|   ])('%s: not AnA\'s', (_, content) => {
+    111|     expect(leaf(content)).not.toContain('not effective');
+    112|     expect(credited(content, NEGATED), 'a clause whose words the leaf …
+       |                                                                                                   ^
+    113|   });
+    114|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > a template opened in an earlier clause: not AnA's
+AssertionError: a clause whose words the leaf drops was credited to AnA: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "The study drug was not effective in reducing mortality.</template></p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:112:99
+    110|   ])('%s: not AnA\'s', (_, content) => {
+    111|     expect(leaf(content)).not.toContain('not effective');
+    112|     expect(credited(content, NEGATED), 'a clause whose words the leaf …
+       |                                                                                                   ^
+    113|   });
+    114|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > a comment opened in an earlier clause hides a later one from every reader: not AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "The study drug was not effective in reducing mortality;",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:119:39
+    117|     const content = '<p>Reviewer note <!-- draft; The study drug was n…
+    118|     expect(leaf(content)).toBe('Reviewer note enrolment stopped early.…
+    119|     expect(credited(content, record)).toEqual([]);
+       |                                       ^
+    120|   });
+    121|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds <template> in HTML content
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds <head> in HTML content
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a comment in HTML content
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds <svg> in HTML content
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds <math> in HTML content
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a raw-text element in HTML content
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a `<` a browser may read as markup and node-html-parser as text in HTML content
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a `<` the leaf reads as a mark and a browser as text in HTML content
+TypeError: notComparedFrom is not a function
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:132:12
+    130|     ['a `<` the leaf reads as a mark and a browser as text', '<p>a</p>…
+    131|   ])('notComparedFrom finds %s in HTML content', (_, content) => {
+    132|     expect(notComparedFrom(content)).toBe(8);
+       |            ^
+    133|   });
+    134|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds nothing in plain text, where every reader shows every character
+TypeError: notComparedFrom is not a function
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:136:12
+    134|
+    135|   it('notComparedFrom finds nothing in plain text, where every reader …
+    136|     expect(notComparedFrom('a <xmp>b <template>c <!-- d')).toBe(-1);
+       |            ^
+    137|   });
+    138| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > attribute text that could read as prose is not removed (a figure later in the content): not AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <b 3 patients died>tolerated</b> in all cohorts.</p><figure></figure>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:147:31
+    145|     ['a class', `<p>The study drug was well <b class="${SHOWN}">tolera…
+    146|   ])('attribute text that could read as prose is not removed (%s): not…
+    147|     expect(credited(content)).toEqual([]);
+       |                               ^
+    148|   });
+    149|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > attribute text that could read as prose is not removed (no figure (the fidelity gate may still call it lossy)): not AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <b 3 patients died>tolerated</b> in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:147:31
+    145|     ['a class', `<p>The study drug was well <b class="${SHOWN}">tolera…
+    146|   ])('attribute text that could read as prose is not removed (%s): not…
+    147|     expect(credited(content)).toEqual([]);
+       |                               ^
+    148|   });
+    149|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > attribute text that could read as prose is not removed (a data attribute): not AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <span data-x=\"3 patients died\">tolerated</span> in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:147:31
+    145|     ['a class', `<p>The study drug was well <b class="${SHOWN}">tolera…
+    146|   ])('attribute text that could read as prose is not removed (%s): not…
+    147|     expect(credited(content)).toEqual([]);
+       |                               ^
+    148|   });
+    149|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > attribute text that could read as prose is not removed (a class): not AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <b class=\"3 patients died\">tolerated</b> in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:147:31
+    145|     ['a class', `<p>The study drug was well <b class="${SHOWN}">tolera…
+    146|   ])('attribute text that could read as prose is not removed (%s): not…
+    147|     expect(credited(content)).toEqual([]);
+       |                               ^
+    148|   });
+    149|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > content that opens in source mode is read as plain text: a clause holding a tag the comparison removes is not AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well tolerated in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:158:65
+    156|
+    157|   it('content that opens in source mode is read as plain text: a claus…
+    158|     expect(credited(`<figure></figure>\n\n<p>${SENTENCE}</p>`)).toEqua…
+       |                                                                 ^
+    159|   });
+    160|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D5: an image prints its alt, or a label, in the leaf > an inline figure with an alt: not AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <img src=\"data:image/png;base64,iVBORw0KGgo=\" alt=\"3 patients died\"> tolerated in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:172:31
+    170|   ])('%s: not AnA\'s', (_, content) => {
+    171|     expect(leaf(content)).toContain('[Figure:');
+    172|     expect(credited(content)).toEqual([]);
+       |                               ^
+    173|   });
+    174|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D5: an image prints its alt, or a label, in the leaf > an uploaded figure with no alt: not AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <img src=\"/api/authoring/images/file_1727500000000_abc123\"> tolerated in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:172:31
+    170|   ])('%s: not AnA\'s', (_, content) => {
+    171|     expect(leaf(content)).toContain('[Figure:');
+    172|     expect(credited(content)).toEqual([]);
+       |                               ^
+    173|   });
+    174|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D5: an image prints its alt, or a label, in the leaf > not even when AnA's record holds the same image
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <img src=\"data:image/png;base64,iVBORw0KGgo=\" alt=\"3 patients died\"> tolerated in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:177:40
+    175|   it('not even when AnA\'s record holds the same image', () => {
+    176|     const content = `<p>The study drug was well <img src="data:image/p…
+    177|     expect(credited(content, content)).toEqual([]);
+       |                                        ^
+    178|   });
+    179| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a footnote: not AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <sup data-note=\"3 patients died\">tolerated</sup> in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:190:31
+    188|     ['a list\'s start number', `<ol start="3"><li>${SENTENCE}</li></ol…
+    189|   ])('%s: not AnA\'s', (_, content) => {
+    190|     expect(credited(content)).toEqual([]);
+       |                               ^
+    191|   });
+    192|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a citation locator: not AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well tolerated<a data-cite=\"src-1\" data-cite-locator=\"3 patients died\"></a> in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:190:31
+    188|     ['a list\'s start number', `<ol start="3"><li>${SENTENCE}</li></ol…
+    189|   ])('%s: not AnA\'s', (_, content) => {
+    190|     expect(credited(content)).toEqual([]);
+       |                               ^
+    191|   });
+    192|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a cross-reference: not AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well tolerated<a data-xref=\"sec-2\" data-xref-display=\"code\"></a> in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:190:31
+    188|     ['a list\'s start number', `<ol start="3"><li>${SENTENCE}</li></ol…
+    189|   ])('%s: not AnA\'s', (_, content) => {
+    190|     expect(credited(content)).toEqual([]);
+       |                               ^
+    191|   });
+    192|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a title: not AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <span title=\"3 patients died\">tolerated</span> in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:190:31
+    188|     ['a list\'s start number', `<ol start="3"><li>${SENTENCE}</li></ol…
+    189|   ])('%s: not AnA\'s', (_, content) => {
+    190|     expect(credited(content)).toEqual([]);
+       |                               ^
+    191|   });
+    192|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a suggestion's author: not AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>The study drug was well <ins data-author-name=\"3 patients died\">tolerated</ins> in all cohorts.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:190:31
+    188|     ['a list\'s start number', `<ol start="3"><li>${SENTENCE}</li></ol…
+    189|   ])('%s: not AnA\'s', (_, content) => {
+    190|     expect(credited(content)).toEqual([]);
+       |                               ^
+    191|   });
+    192|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a list's start number: not AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<ol start=\"3\"><li>The study drug was well tolerated in all cohorts.</li></ol>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:190:31
+    188|     ['a list\'s start number', `<ol start="3"><li>${SENTENCE}</li></ol…
+    189|   ])('%s: not AnA\'s', (_, content) => {
+    190|     expect(credited(content)).toEqual([]);
+       |                               ^
+    191|   });
+    192|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a cross-reference whose words run into a later clause: the export prints something else over them, so no clause of it is AnA's
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a citation whose words run into a later clause: the export prints something else over them, so no clause of it is AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "The study drug was well tolerated in all cohorts.</a></p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:199:31
+    197|   ])('%s whose words run into a later clause: the export prints someth…
+    198|     expect(detectSpans(content, 'clause').length, 'the element spans t…
+    199|     expect(credited(content)).toEqual([]);
+       |                               ^
+    200|   });
+    201|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a footnote whose words run into a later clause: the export prints something else over them, so no clause of it is AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "the study drug was well tolerated in all cohorts.</sup></p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:199:31
+    197|   ])('%s whose words run into a later clause: the export prints someth…
+    198|     expect(detectSpans(content, 'clause').length, 'the element spans t…
+    199|     expect(credited(content)).toEqual([]);
+       |                               ^
+    200|   });
+    201|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D7: an inline tag joins tokens and a block tag separates them, on both sides > "At Week 2<b>4</b> patients" is not AnA's "At Week 2 4 patients"
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "<p>At Week 2<b>4</b> patients reported headache.</p>",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:212:74
+    210|     const content = '<p>At Week 2<b>4</b> patients reported headache.<…
+    211|     expect(leaf(content)).toBe('At Week 24 patients reported headache.…
+    212|     expect(credited(content, 'At Week 2 4 patients reported headache.'…
+       |                                                                          ^
+    213|   });
+    214|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D7: an inline tag joins tokens and a block tag separates them, on both sides > the comparison form
+AssertionError: expected 'at week 2 4 patients' to be 'at week 24 patients' // Object.is equality
+
+Expected: "at week 24 patients"
+Received: "at week 2 4 patients"
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:216:58
+    214|
+    215|   it('the comparison form', () => {
+    216|     expect(comparableText('At Week 2<b>4</b> patients')).toBe('at week…
+       |                                                          ^
+    217|     expect(comparableText('<p>Week 2</p><p>4 patients</p>')).toBe('wee…
+    218|     expect(comparableText('Week 2<br>4 patients')).toBe('week 2 4 pati…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D8: the turn record read as markdown drops only what markdown hides > a lone asterisk stays: "5*10" is not "510"
+AssertionError: expected 'the starting dose was 510 mg/kg.' to be 'the starting dose was 5*10 mg/kg.' // Object.is equality
+
+Expected: "the starting dose was 5*10 mg/kg."
+Received: "the starting dose was 510 mg/kg."
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:229:85
+    227| describe('D8: the turn record read as markdown drops only what markdow…
+    228|   it('a lone asterisk stays: "5*10" is not "510"', () => {
+    229|     expect(comparableText('The starting dose was 5*10 mg/kg.', { markd…
+       |                                                                                     ^
+    230|   });
+    231|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D8: the turn record read as markdown drops only what markdown hides > paired emphasis, list markers, a thematic break and escapes read as markdown shows them
+AssertionError: expected 'a \ b | c' to be 'a * b | c' // Object.is equality
+
+Expected: "a * b | c"
+Received: "a \ b | c"
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:236:65
+    234|     expect(comparableText('* First item\n* Second item', { markdown: t…
+    235|     expect(comparableText('Above\n\n***\n\nBelow', { markdown: true })…
+    236|     expect(comparableText('A \\* B \\| C', { markdown: true })).toBe('…
+       |                                                                 ^
+    237|   });
+    238| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > a "<style guide>" before AnA's clause leaves it AnA's
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "The sponsor will submit the cover letter in Module 1.",
+- ]
++ []
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:245:34
+    243|   it('a "<style guide>" before AnA\'s clause leaves it AnA\'s', () => {
+    244|     const content = `Per the <style guide> each section stays short.\n…
+    245|     expect(credited(content, M)).toEqual([M]);
+       |                                  ^
+    246|   });
+    247|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > a markdown draft with an XML example is AnA's, every clause of it
+AssertionError: expected [ Array(1) ] to have a length of 3 but got 1
+
+- Expected
++ Received
+
+- 3
++ 1
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:250:36
+    248|   it('a markdown draft with an XML example is AnA\'s, every clause of …
+    249|     const draft = `The eCTD backbone lists each leaf with a title elem…
+    250|     expect(credited(draft, draft)).toHaveLength(detectSpans(draft, 'cl…
+       |                                    ^
+    251|   });
+    252|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > "<LLOQ" and a later ">3×ULN" (the weaker case) are AnA's
+AssertionError: expected [] to have a length of 2 but got +0
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:255:36
+    253|   it('"<LLOQ" and a later ">3×ULN" (the weaker case) are AnA\'s', () =…
+    254|     const draft = 'Plasma concentrations were <LLOQ at 72 hours in all…
+    255|     expect(credited(draft, draft)).toHaveLength(2);
+       |                                    ^
+    256|   });
+    257|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > a clause accepted earlier is carried forward past a "<style guide>"
+AssertionError: expected [] to deeply equal [ [ …(2) ] ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "The sponsor will submit the cover letter in Module 1.",
+-     "user-3",
+-   ],
+- ]
++ []
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:272:58
+    270|     };
+    271|     const spans = attributeMachineSpans(detectSpans(content, 'clause')…
+    272|     expect(spans.map((s) => [s.spanText, s.assertedBy])).toEqual([[M, …
+       |                                                          ^
+    273|   });
+    274| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > DUP: a clause is credited no more times than the record holds it > the same claim three times credits one of three repeated clauses
+AssertionError: expected [ { charStart: +0, …(5) }, …(2) ] to have a length of 1 but got 3
+
+- Expected
++ Received
+
+- 1
++ 3
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts:286:51
+    284|       recordOccurrences: (needle: string) => (comparableText(RECORD).i…
+    285|     });
+    286|     expect(spans.filter((s) => s.inAcceptedText)).toHaveLength(1);
+       |                                                   ^
+    287|   });
+    288| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > removes a tag every reader hides, and keeps every other `<` as written
+AssertionError: expected 'the endpoint was met.' to be 'the <strong class="x">endpoint was me…' // Object.is equality
+
+Expected: "the <strong class="x">endpoint was met."
+Received: "the endpoint was met."
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts:198:87
+    196|     // source mode shows it (round 4, D4). So do the raw-text elements…
+    197|     // and the tags inside them.
+    198|     expect(comparableText('<p>The <strong class="x">endpoint</strong> …
+       |                                                                                       ^
+    199|     expect(comparableText('a <xmp><b x></xmp> c')).toBe('a <xmp><b x><…
+    200|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds <xmp>
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds upper case
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds an attribute
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds an attribute after a space
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds a self-closing slash
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds a line break after the name
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds a CDATA section
+TypeError: notComparedFrom is not a function
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts:245:12
+    243|     ['a CDATA section', '<p>a</p><![CDATA[b'],
+    244|   ])('finds %s', (_, content) => {
+    245|     expect(notComparedFrom(content)).toBe(8);
+       |            ^
+    246|   });
+    247|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in another tag
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in a longer name
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in a space before the name
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in a closing tag alone
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in escaped text
+TypeError: notComparedFrom is not a function
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts:255:12
+    253|     ['escaped text', '<p>a</p>&lt;xmp&gt;b'],
+    254|   ])('finds nothing in %s', (_, content) => {
+    255|     expect(notComparedFrom(content)).toBe(-1);
+       |            ^
+    256|   });
+    257| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/68]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > content read as plain text shows every `<…>` > with a known tag elsewhere, its attribute words are not the machine's either: source mode shows them (round 4, D4)
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "The primary endpoint was met <q 3 patients died of hepatic failure> at week twelve in the trial population.",
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts:293:69
+    291|
+    292|   it('with a known tag elsewhere, its attribute words are not the mach…
+    293|     expect(machineClausesOf(`${TOKENED}\n\n<p>Reviewer note.</p>`)).to…
+       |                                                                     ^
+    294|   });
+    295|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/68]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  67 failed | 38 passed (105)
+   Start at  20:00:23
+   Duration  5.38s (transform 3.40s, setup 467ms, import 8.25s, tests 341ms, environment 0ms)
+
