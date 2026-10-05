@@ -1,0 +1,272 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is 100 / ready when everything is complete 3ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is not_ready / low when nothing is done, and surfaces gaps 9ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > scores partial evidence via present/total 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > weights normalise when a dimension is absent (no requirements assessed) 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > derives the scorecard from a blueprint (CER partially authored) 6ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > credits a fully-authored CER 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > scores an MDR classification with a missing deciding fact as not started, naming the fact 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > scores an IVDR classification with a missing deciding fact as not started 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > still credits a determined class 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > recommends the 510(k) pathway from FDA facts 2ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > pulls the 510(k) required documents and forms 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > marks risk management, biocompatibility and software applicable (CER/PER not) 6ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > classifies software Class B with architecture (not detailed design) 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > includes the biocompatibility endpoints for a permanent implant 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > attaches the FDA 510(k) reviewer checklist 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > classifies the device IIb (implantable) 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > marks clinical evaluation applicable and gap-checks it 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > uses the Notified Body CER reviewer checklist 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > evidenceReady is false while assessed modules are incomplete 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — IVDR companion diagnostic > classifies the IVD Class C 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — IVDR companion diagnostic > marks performance evaluation applicable (not clinical evaluation) 0ms
+
+ Test Files  2 passed (2)
+      Tests  21 passed (21)
+   Start at  13:43:50
+   Duration  1.35s (transform 871ms, setup 286ms, import 833ms, tests 54ms, environment 0ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > states no class below III for any device whose invasiveness was never given: an implant would be Rule 8 56ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > never drops a qualifier given without the fact it qualifies: names that fact instead of stating a lower class 6ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a non-invasive device is Class I 11ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses a qualifier whose own fact is stated false, rather than picking one reading 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a transient surgically invasive device is IIa; a short-term one is also IIa (Rule 7 default) 8ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > states no class for an active device whose invasiveness was never given: Rule 13 is a default, too 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a transient surgically invasive device that is absorbed is IIb under Rule 6 (not III, not "Rule 8/17") 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses a fact it does not know, rather than ignoring it and stating the class of a device without it 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a short-term absorbed device is III under Rule 7; an implantable absorbed one is III under Rule 8 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses a fact of the wrong type or outside its values ("true" is not true; "long" is not a duration) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > an implantable device is IIb, or IIa when placed in the teeth 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses contradictory invasiveness rather than picking one reading 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > an implantable device contacting the CNS/central circulation is III 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a pacemaker (active implantable) is III under Rule 8 21ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — a fact names the device it describes > a device that is active by a Rule 9/10 fact is an active implantable when implanted (Rule 8 → III, not IIb) 13ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > breast implants, surgical meshes, joint replacements and spinal implants are III under Rule 8 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — a fact names the device it describes > never drops administrationPotentiallyHazardous on a device no rule reads it for (only Rules 6 and 12 do) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a device incorporating a medicinal substance is III (Rule 14) 11ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR classification (Annex VIII Rules 1–7) > blood-donation screening is Class D (Rule 1, first indent) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > software in an implant makes it an active implantable (Article 2(4)), the fail-closed reading 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR classification (Annex VIII Rules 1–7) > Rule 1 is cited by indent, never by a letter it does not have (the citation form MDCG 2020-16 uses) 9ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > takes the HIGHEST applicable class and traces every rule that fired 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 11 has IIa, IIb and III tiers 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > blood grouping with no marker named states no class: the most common devices (ABO/RhD) are D 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 10: an active diagnostic device for a patient in immediate danger is IIb; the trace says why 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > refuses contradictory Rule 2 facts rather than picking one reading 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 12: an active device administering a medicine is IIa, IIb only when potentially hazardous 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > blood grouping is C, and D only for a listed Rule 2 marker 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 17 is X-ray image recording (IIa); Rule 22 closed-loop diagnostic function is III 5ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > reads the Annex's own system names, the ISBT codes and the usual aliases of a listed Rule 2 marker as Class D 3ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > a recognised marker outside the Rule 2 list stays Class C 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses to state a class when the facts that decide it are missing 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > refuses a blood-grouping marker it cannot read rather than stating Class C 2ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > states no class for an empty fact set: Rule 1 is not a verdict on facts never given 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > reads a hostile marker in linear time and refuses an over-long one (no catastrophic backtracking) 2ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a companion diagnostic is Class C under Rule 3(f) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > Rule 3 sub-points are cited by letter 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > reads a Rule 3 sub-point however it is written: one string or a list, any letter case, with or without "Rule 3" 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses a Rule 3 sub-point it cannot read rather than falling through to Rule 6 (Class B) 11ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > self-testing is Class C under Rule 4(a) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a self-test for an enumerated Rule 4(a) analyte is Class B, however the analyte is written 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses a self-test analyte it cannot read rather than guessing B or C 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a control without an assigned value is Class B under Rule 7 21ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a general lab reagent/instrument is Class A 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > gives Class B (Rule 6) only when the facts given say each higher-class rule does not apply 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > states no class when no IVDR fact was given at all: Rule 6 is not a verdict on facts never given 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > one false fact is not a statement that no other rule applies: Rule 6 names the facts still unstated 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses contradictory Rule 3 facts rather than picking one reading 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses an IVDR fact it does not know, or of the wrong type 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > takes the highest class (infectious + self-test → C) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > the EU rule tables are the one record, each row with a basis > MDR table covers Rules 1–22 and IVDR table Rules 1–7 13ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > the EU rule tables are the one record, each row with a basis > every row carries a well-formed basis, labelled recall with the EUR-Lex URL until checked 36ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > the EU rule tables are the one record, each row with a basis > the trace says the wording is recall, never checked regulator text 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > exempt device → exempt 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > Class III → PMA 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > predicate available → 510(k) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > novel low-to-moderate risk, no predicate → De Novo 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > no predicate and risk unestablished → PMA (conservative default) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > every recommendation carries a confirm caveat 0ms
+ ✓ server/services/ana/__tests__/classify-device-description.test.ts > classify_device describes a class the engine could not determine > says class may be null with missingFacts, and that no class is then stated 10ms
+ ✓ server/services/ana/__tests__/classify-device-description.test.ts > classify_device describes a class the engine could not determine > says unknown keys, unreadable values and contradictions are refused 0ms
+ ✓ server/services/ana/__tests__/classify-device-description.test.ts > classify_device describes a class the engine could not determine > lists every fact key the MDR and IVDR engines read 16ms
+ ✓ server/services/ana/__tests__/classify-device-description.test.ts > classify_device describes a class the engine could not determine > fits under the provider description trim 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance 6ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them 11ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the input contract 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is 100 / ready when everything is complete 4ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is not_ready / low when nothing is done, and surfaces gaps 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > scores partial evidence via present/total 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > weights normalise when a dimension is absent (no requirements assessed) 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > derives the scorecard from a blueprint (CER partially authored) 3ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > credits a fully-authored CER 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > scores an MDR classification with a missing deciding fact as not started, naming the fact 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > scores an IVDR classification with a missing deciding fact as not started 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > still credits a determined class 1ms
+stdout | server/services/ana/__tests__/rmf-jurisdiction-input.test.ts
+{
+  "timestamp": "2026-10-05T13:46:00.999Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T13:46:01.000Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/rmf-jurisdiction-input.test.ts
+{
+  "timestamp": "2026-10-05T13:46:01.000Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/rmf-jurisdiction-input.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/rmf-jurisdiction-input.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/rmf-jurisdiction-input.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana/__tests__/submission-center-tools.test.ts
+{
+  "timestamp": "2026-10-05T13:46:01.128Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T13:46:01.129Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/submission-center-tools.test.ts
+{
+  "timestamp": "2026-10-05T13:46:01.130Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/submission-center-tools.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/submission-center-tools.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/submission-center-tools.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > declares an optional jurisdiction input whose values are exactly the RMF jurisdictions 15ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns the EU AFAP policy beside the RMF structure for an EU MDR file 7ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns the policy beside the assessment when sections are given (EU IVDR) 4ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(EU_MDR) unchanged, with no restated copy 1ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(EU_IVDR) unchanged, with no restated copy 3ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(FDA) unchanged, with no restated copy 1ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(OTHER) unchanged, with no restated copy 0ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > states the FDA policy as manufacturer-defined, not AFAP 0ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns no policy when no jurisdiction is given, rather than assuming one 1ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > refuses an unknown jurisdiction instead of ignoring it 1ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > refuses a jurisdiction for a CER or PER, where no acceptability policy is modelled 4ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > registers a handler for every submission-center tool 57ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > exposes every submission-center tool in ALL_ANA_TOOLS with a valid schema 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > diffs prior vs desired and assigns operations 48ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > forwards the prior leaf ID + backbone and prior_sequence_prefix so a replace names the leaf it supersedes 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > never names a prior leaf by its file path: listed with only an href, a replace carries no pointer 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > refuses to auto-load a prior sequence without tenant context (org from ToolContext only) 21ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > does NOT engage auto-load when explicit prior_leaves are supplied (org not required) 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > maps v3 operations to RPS and emits one document + CoU per leaf 1034ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > points relatedContextOfUse at the prior sequence for a lifecycle op 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > returns serialized RPS message XML when include_xml is set 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > produces one stf-<study-id>.xml per study, pointing at index.xml leaf IDs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a leaf has no index.xml leaf ID 13ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a tagged leaf is missing its file-tag 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > check_ectd_cross_references (pure) > resolves present references and flags missing targets 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > validate_ectd_package (pure) > returns a verdict, score, and findings for a leaf set 6ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission refuses without org/user context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > explain_validation_findings refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > cross_region_gap_analysis validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > dispatch_qc_check refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > trace_provenance refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence refuses without org/user context (upsertLeaf is tenant-scoped) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence validates required inputs before touching the core 155ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > check_consistency validates required inputs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules returns the corpus without tenant context 14ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules validates the region enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec returns a single spec by id 36ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec filters by market without tenant context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec validates the family enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template returns a document spine by id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template lists a family without tenant context 9ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting enforces a spec and flags a bad name 46ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting errors on an unknown spec 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_submission_requirements returns and assesses a type 51ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility checks all-criteria-met 17ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility errors on an unknown designation 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change recommends a category from flags 19ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change lists the catalog without flags 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure gap-checks a CER 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device applies the MDR rules 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_reviewer_checklist returns the 510(k) reviewer questions 12ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device validates the framework 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_biocompatibility_endpoints returns endpoints for a permanent implant 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure now handles rmf 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint assembles the reverse-workflow view 10ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint validates the submission type 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer refuses without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer requires a report_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy maps device evidence across regions 66ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy validates the kind 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_regulatory_timeline returns the 510(k) RTA + decision goal 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint now includes a readiness scorecard 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_udi computes the GS1 check digit 27ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_electrical_standards adds collaterals from facts 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_sterilization_requirements resolves the method standard 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_regulatory_capabilities enumerates the layer 14ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product maps PMOA to the lead center 13ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product validates components 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_qms returns the clause structure and gap-checks 25ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_labeling adds sterile elements for a sterile device 37ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document refuses without org/user context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document requires a numeric document_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document validates required inputs 1ms
+
+ Test Files  6 passed (6)
+      Tests  159 passed (159)
+   Start at  13:45:51
+   Duration  26.40s (transform 28.54s, setup 1.71s, import 48.39s, tests 2.22s, environment 1ms)
+

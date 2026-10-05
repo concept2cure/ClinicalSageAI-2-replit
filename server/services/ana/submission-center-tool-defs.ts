@@ -14,6 +14,7 @@ import type { AnaTool } from '../ai-gateway/types';
 import { PLACEABLE_DOCUMENT_TABLE_LIST } from '../ectd/leaf-document-tables';
 import { DOCUMENT_TEMPLATES } from '../market-specs/document-template-library';
 import type { RmfJurisdiction } from '../market-specs/risk-management-structure';
+import { MDR_FACT_VOCABULARY, IVDR_FACT_VOCABULARY } from '../market-specs/device-classification';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Submission-center tools — give AnA reach over the canonical core + ingestion
@@ -726,13 +727,19 @@ export const ASSESS_DEVICE_EVIDENCE_STRUCTURE: AnaTool = {
 
 export const CLASSIFY_DEVICE: AnaTool = {
   name: 'classify_device',
+  // The engine fails closed (2026-10-05): a class a missing fact decides comes back
+  // null with missingFacts, and bad facts are refused. The fact vocabulary is the
+  // engine's own key list, so the two cannot drift.
   description:
-    "Determine a device/IVD risk classification or FDA pathway from structured facts. `framework: 'mdr'` applies the EU MDR Annex VIII principal rules (facts like invasive, surgicallyInvasive, implantable, active, softwareDecisionSupport, contactsCnsOrCentralCirculation, incorporatesMedicinalSubstance, duration) → Class I/IIa/IIb/III with the rule that drove it. `framework: 'ivdr'` applies IVDR Annex VIII (facts like bloodDonationScreening, companionDiagnostic, infectiousOrCancerOrGenetic, selfTesting) → Class A/B/C/D. `framework: 'fda'` recommends a pathway (facts: fdaClass, predicateAvailable, exempt, novelLowModerateRisk) → exempt/510k/de_novo/pma. Each result carries a caveat to confirm against the full Annex / FDA classification database. Deterministic.",
+    "Determine an EU MDR or IVDR risk class, or an FDA pathway, from structured facts. `framework: 'mdr'` applies Regulation (EU) 2017/745 Annex VIII Rules 1–22 → Class I/IIa/IIb/III with the rule(s) that gave it. `framework: 'ivdr'` applies Regulation (EU) 2017/746 Annex VIII Rules 1–7 → Class A/B/C/D. `framework: 'fda'` recommends a pathway (exempt/510k/de_novo/pma). Unknown fact keys, unreadable values and facts that contradict each other are refused with an error naming them. When a fact that decides the class was not supplied, class is null and missingFacts names it: say the class is not determined, ask the user for those facts, and never state a class. The rule wording is a recall paraphrase; each result carries a caveat to confirm against the Annex text or the FDA classification database. Deterministic.",
   input_schema: {
     type: 'object',
     properties: {
       framework: { type: 'string', enum: ['mdr', 'ivdr', 'fda'], description: 'The classification framework.' },
-      facts: { type: 'object', description: 'Structured device facts (see description for the keys per framework).' },
+      facts: {
+        type: 'object',
+        description: `Structured device facts; a bare key is true/false, otherwise its values are shown. MDR: ${MDR_FACT_VOCABULARY}. IVDR: ${IVDR_FACT_VOCABULARY}. FDA: fdaClass (I|II|III), predicateAvailable, exempt, novelLowModerateRisk.`,
+      },
     },
     required: ['framework', 'facts'],
   },
