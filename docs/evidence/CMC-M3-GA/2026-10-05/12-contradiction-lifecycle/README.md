@@ -60,8 +60,12 @@ the resolution while the data stays the same.
   anything is resolved. A member resolves under their own id with their note.
   The service's refusal is returned with its status.
 - **Staff simulation, real server.** New step 12c re-runs the sweep after QA's
-  step 12b resolutions. On trunk code (`red-simulation-before.txt`) the
-  resolutions are erased and the findings reopen. With this change
-  (`green-simulation-after.txt`) they stay resolved and none reopen.
+  step 12b resolutions.
+  - On trunk code (`red-simulation-before.txt`), **2 open again, 0 still
+    resolved (of 2)**. The harm cascaded: with the critical findings reopened,
+    the export gate refused, placement into the IND failed, and the eCTD
+    compile rendered nothing. The run scored 125 passed, 6 failed.
+  - With this change (`green-simulation-after.txt`), **2 still resolved, none
+    reopened**, and the run scores 131 passed, 0 failed.
 - **Wider runs.** The CMC services, all CMC route suites and the board's client
   writes pass: 56 files, 606 tests.
