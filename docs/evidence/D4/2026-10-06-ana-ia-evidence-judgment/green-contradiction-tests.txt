@@ -1,0 +1,39 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > flags same subject + metric values 0.45 vs 0.20 as numerical_mismatch major 2ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > does not flag 0.45 vs 0.46 (within default tolerance) 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > classifies a difference beyond tolerance but ≤ 0.25 as minor 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > respects a custom relativeTolerance 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > does not pair values across DIFFERENT metrics 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > treats both-near-zero values as equal (no mismatch) 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — direct_conflict > flags opposite polarity (positive vs negative) as direct_conflict critical 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — direct_conflict > does not flag positive vs neutral 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — direct_conflict > matches subjects case-insensitively 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — temporal_inconsistency > reports opposite polarity + differing dates as an unresolved temporal_inconsistency 1ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — temporal_inconsistency > treats opposite polarity with identical dates as a plain direct_conflict 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — claim selection & counting > ignores claims missing a subject; checkedClaims counts only considered claims 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — claim selection & counting > uses the array index as the ref id when id is absent 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — clean & empty > returns an empty contradictions array and empty subjects when consistent 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — clean & empty > handles empty input → empty report 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — clean & empty > always carries the honest structural-only caveat in notes 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — determinism & ordering > is deterministic: same input twice deep-equals 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — determinism & ordering > orders findings by subject then type precedence (stable) 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — determinism & ordering > orders multiple finding types within a subject by precedence 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > CONTRADICTION_TYPES > exposes the three known types in precedence order 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > does not claim that a newer dated finding replaces the older finding 1ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > does not declare 1 mg and 1000 micrograms contradictory without an explicit conversion 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > keeps a same-unit numerical mismatch and its unit provenance 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > does not treat efficacy benefit and a safety signal as contradictory endpoints 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > unlabelled numerical values cannot establish a mismatch of the same metric 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > a unit missing on one side does not become an assumed equal unit 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > a structural mismatch with both units unspecified carries that limitation 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > invalid dates cannot establish temporal ordering 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > empty input is explicitly unassessed, not evidence of consistency 0ms
+
+ Test Files  1 passed (1)
+      Tests  29 passed (29)
+   Start at  12:30:51
+   Duration  378ms (transform 92ms, setup 63ms, import 52ms, tests 14ms, environment 0ms)
+

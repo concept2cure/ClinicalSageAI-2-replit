@@ -21,13 +21,13 @@
  *
  * Detection rules (pairwise, within the SAME subject, case-insensitive subject/metric):
  *   1. numerical_mismatch — same subject + same metric, both finite numeric `value`,
- *      relative difference beyond tolerance. severity major if relative diff > 0.25,
+ *      matching case-sensitive units (or both unspecified with a caveat), relative difference beyond tolerance. severity major if relative diff > 0.25,
  *      else minor.
  *   2. direct_conflict — same subject, opposite polarity (positive vs negative).
  *      severity critical.
  *   3. temporal_inconsistency — same subject, opposite polarity AND both dated with
- *      DIFFERING dates → the later-dated claim is treated as superseding; severity
- *      major (a dated supersession is softer than a bare direct conflict).
+ *      DIFFERING dates → chronology is reported without resolving the conflict; severity major.
+ *      A newer date alone cannot establish source supersession.
  *
  * @module server/services/ana/evidence-contradiction-detector
  */
@@ -77,6 +77,8 @@ export interface ContradictionClaimRef {
   metric?: string;
   /** The numeric value, if present. */
   value?: number;
+  /** The unit, as supplied; no implicit conversion. */
+  unit?: string;
   /** The polarity, if present. */
   polarity?: 'positive' | 'negative' | 'neutral';
   /** The date, if present. */
@@ -135,7 +137,12 @@ function isFiniteNumber(v: unknown): v is number {
 }
 
 function normalize(s: string | undefined): string {
-  return (s ?? '').trim().toLowerCase();
+  return typeof s === 'string' ? s.trim().toLowerCase() : '';
+}
+
+/** Unit symbols are case-sensitive; no alias inference or conversion. */
+function unitKey(unit: string | undefined): string {
+  return typeof unit === 'string' ? unit.trim() : '';
 }
 
 function toRef(ic: IndexedClaim): ContradictionClaimRef {
@@ -144,6 +151,7 @@ function toRef(ic: IndexedClaim): ContradictionClaimRef {
   if (claim.source !== undefined) ref.source = claim.source;
   if (claim.metric !== undefined) ref.metric = claim.metric;
   if (isFiniteNumber(claim.value)) ref.value = claim.value;
+  if (typeof claim.unit === 'string') ref.unit = claim.unit;
   if (claim.polarity !== undefined) ref.polarity = claim.polarity;
   if (claim.date !== undefined) ref.date = claim.date;
   return ref;
@@ -176,8 +184,10 @@ function detectNumericalMismatch(
   const ca = a.claim;
   const cb = b.claim;
   if (!isFiniteNumber(ca.value) || !isFiniteNumber(cb.value)) return null;
-  // Require the SAME metric (case-insensitive). Treat both-absent as the same metric.
-  if (normalize(ca.metric) !== normalize(cb.metric)) return null;
+  // An unlabelled number cannot establish which endpoint it measures.
+  if (!normalize(ca.metric) || normalize(ca.metric) !== normalize(cb.metric)) return null;
+  // No implicit conversion or assumed unit on just one side.
+  if (unitKey(ca.unit) !== unitKey(cb.unit)) return null;
   const rel = relativeDifference(ca.value, cb.value);
   if (rel <= relativeTolerance) return null;
   const severity: Contradiction['severity'] = rel > MAJOR_RELATIVE_DIFF ? 'major' : 'minor';
@@ -194,9 +204,20 @@ function detectNumericalMismatch(
   };
 }
 
+/** Calendar-valid ISO dates only; no clock or inferred source precedence. */
+function validClaimDate(date: unknown): boolean {
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  return Number.isFinite(parsed.valueOf()) && parsed.toISOString().slice(0, 10) === date;
+}
+
+function hasInvalidDate(claim: EvidenceClaim): boolean {
+  return claim.date !== undefined && !validClaimDate(claim.date);
+}
+
 /**
  * Detect a polarity conflict for a pair, or null if none. Returns either a
- * temporal_inconsistency (opposite polarity + differing dates → later supersedes,
+ * temporal_inconsistency (opposite polarity + differing valid dates, unresolved,
  * major) or a direct_conflict (opposite polarity, critical).
  */
 function detectPolarityConflict(
@@ -208,10 +229,8 @@ function detectPolarityConflict(
   const cb = b.claim;
   if (!oppositePolarity(ca, cb)) return null;
 
-  const bothDated = typeof ca.date === 'string' && typeof cb.date === 'string';
+  const bothDated = validClaimDate(ca.date) && validClaimDate(cb.date);
   if (bothDated && ca.date !== cb.date) {
-    const aIsLater = (ca.date as string) > (cb.date as string);
-    const later = aIsLater ? a : b;
     return {
       type: 'temporal_inconsistency',
       severity: 'major',
@@ -219,9 +238,9 @@ function detectPolarityConflict(
       claimA: toRef(a),
       claimB: toRef(b),
       detail:
-        `Opposite polarity assertions for "${subject}" on different dates ` +
-        `(${ca.polarity} @ ${ca.date} vs ${cb.polarity} @ ${cb.date}); ` +
-        `the later-dated claim (${later.refId} @ ${later.claim.date}) supersedes.`,
+        `Unresolved opposite polarity assertions for "${subject}" on different dates ` +
+        `(${a.refId}: ${ca.polarity} @ ${ca.date} vs ${b.refId}: ${cb.polarity} @ ${cb.date}); ` +
+        'dates alone do not establish which claim controls. Verify scope, population, methods and source authority before resolving the disagreement.',
     };
   }
 
@@ -235,6 +254,29 @@ function detectPolarityConflict(
       `Directly conflicting polarity for "${subject}": ` +
       `${ca.polarity} (${a.refId}) vs ${cb.polarity} (${b.refId}).`,
   };
+}
+
+/** Record why a pair can or cannot support a structural comparison. */
+function comparablePair(a: IndexedClaim, b: IndexedClaim, display: string, notes: Set<string>): boolean {
+  const metricA = normalize(a.claim.metric);
+  const metricB = normalize(b.claim.metric);
+  const pair = `${a.refId} / ${b.refId} on "${display}"`;
+  if (metricA !== metricB) {
+    notes.add(!metricA || !metricB
+      ? `Metric missing for ${pair}; endpoints were not compared.`
+      : `Different metrics for ${pair}; endpoints were not compared.`);
+    return false;
+  }
+  if (isFiniteNumber(a.claim.value) && isFiniteNumber(b.claim.value)) {
+    const unitA = unitKey(a.claim.unit);
+    const unitB = unitKey(b.claim.unit);
+    if (!metricA) notes.add(`Metric missing for ${pair}; numerical values were not compared.`);
+    else if (unitA !== unitB) notes.add(!unitA || !unitB
+      ? `Unit missing on one side for ${pair}; numerical values were not compared.`
+      : `Different units for ${pair}; numerical values were not compared. Supply an explicit verified conversion if comparison is needed.`);
+    else if (!unitA) notes.add(`Units unspecified for ${pair}; any numerical mismatch is preliminary until the units and scale are verified.`);
+  }
+  return true;
 }
 
 const TYPE_ORDER: Record<ContradictionType, number> = {
@@ -280,6 +322,13 @@ export function detectContradictions(
     else groups.set(key, { display: ic.claim.subject, members: [ic] });
   }
 
+  const notes = new Set<string>([STRUCTURAL_NOTE,
+    'Matching subjects and metrics do not establish comparable populations, methods, timepoints or source authority. ' +
+    'Verify applicability and ask for consequential missing context before resolving a scientific disagreement.']);
+  if (considered.length === 0) notes.add('Assessment not performed: no usable claims were supplied. This is not evidence of consistency.');
+  for (const { claim, refId } of considered) {
+    if (hasInvalidDate(claim)) notes.add(`Invalid claim date for ${refId}; temporal ordering was not inferred.`);
+  }
   const contradictions: Contradiction[] = [];
   const subjectsWithConflicts = new Set<string>();
 
@@ -288,6 +337,7 @@ export function detectContradictions(
       for (let j = i + 1; j < members.length; j++) {
         const a = members[i];
         const b = members[j];
+        if (!comparablePair(a, b, display, notes)) continue;
         const numeric = detectNumericalMismatch(a, b, display, relativeTolerance);
         if (numeric) {
           contradictions.push(numeric);
@@ -314,7 +364,7 @@ export function detectContradictions(
     contradictions,
     checkedClaims: considered.length,
     subjectsWithConflicts: Array.from(subjectsWithConflicts).sort(),
-    notes: [STRUCTURAL_NOTE],
+    notes: [...notes],
   };
 }
 

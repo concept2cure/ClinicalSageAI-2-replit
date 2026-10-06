@@ -217,3 +217,24 @@ describe('Anna knows which conversation context was omitted', () => {
     expect(transcript()).toHaveLength(3);
   });
 });
+
+it('passes unresolved evidence judgments to the real streaming follow-up request', async () => {
+  const { detectContradictions } = await import('../../../services/ana/evidence-contradiction-detector.js');
+  h.handlers.detect_evidence_contradictions = async input => JSON.stringify(detectContradictions(input.claims));
+  try {
+    h.state.script = [[{ id: 'judgment-1', name: 'detect_evidence_contradictions', input: { claims: [
+      { id: 'study-old', subject: 'product', metric: 'efficacy', polarity: 'positive', date: '2024-01-01' },
+      { id: 'study-new', subject: 'product', metric: 'efficacy', polarity: 'negative', date: '2026-01-01' },
+    ] } }], 'Controlled fixture response.'];
+    await ask();
+    expect(h.state.requests).toHaveLength(2);
+    const followup = JSON.stringify(h.state.requests[1].messages);
+    expect(followup).toContain('dates alone do not establish which claim controls');
+    expect(followup).toContain('study-old');
+    expect(followup).toContain('study-new');
+    expect(followup).toContain('Verify scope, population, methods and source authority');
+    expect(followup).not.toContain('supersedes');
+  } finally {
+    delete h.handlers.detect_evidence_contradictions;
+  }
+});

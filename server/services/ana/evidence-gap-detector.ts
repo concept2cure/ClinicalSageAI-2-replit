@@ -25,11 +25,11 @@
  *   1. geographic — any requested region absent (case-insensitive) from evidence
  *      regions → one gap listing the missing regions.        severity: major
  *   2. population — `query.population` set and NO evidence item's population matches it
- *      (case-insensitive substring) → gap.                   severity: major
+ *      (case-insensitive exact structured label) → gap.                   severity: major
  *   3. outcome — any requested outcomeType absent from evidence outcomeTypes → one gap
  *      listing the missing outcome types.                    severity: major
  *   4. temporal — `recencyYears` + `asOfYear` set and NO evidence item has
- *      `year >= asOfYear - recencyYears` → gap.              severity: minor
+ *      `asOfYear - recencyYears <= year <= asOfYear` → gap.              severity: minor
  *
  * @module server/services/ana/evidence-gap-detector
  */
@@ -86,8 +86,10 @@ export interface GapReport {
   gaps: EvidenceGap[];
   /** Number of evidence items considered. */
   evidenceCount: number;
-  /** True iff there are no gaps. */
+  /** True only when requested dimensions were assessed and no metadata gap was found. */
   complete: boolean;
+  /** False when no dimensions were requested or a requested recency check is invalid. */
+  assessed: boolean;
   /** Honest caveats about the scope and basis of this report. */
   notes: string[];
 }
@@ -97,6 +99,45 @@ function norm(value: string): string {
   return value.trim().toLowerCase();
 }
 
+function validRecency(query: GapQuery): boolean {
+  return Number.isFinite(query.recencyYears) && (query.recencyYears as number) >= 0 &&
+    Number.isInteger(query.asOfYear) && (query.asOfYear as number) > 0;
+}
+
+function recentYear(year: unknown, threshold: number, asOfYear: number): boolean {
+  return typeof year === 'number' && Number.isInteger(year) && year >= threshold && year <= asOfYear;
+}
+
+function nonemptyLabel(value: unknown): value is string {
+  return typeof value === 'string' && value.trim() !== '';
+}
+
+/** Evaluate recency without treating an invalid request as a successful check. */
+function assessRecency(query: GapQuery, items: EvidenceItem[], gaps: EvidenceGap[], notes: string[]): 'assessed' | 'invalid' | 'not_requested' {
+  if (query.recencyYears !== undefined || query.asOfYear !== undefined) {
+    if (!validRecency(query)) {
+      notes.push('Recency was not assessed: provide a finite non-negative recency window and a valid positive integer reference year.');
+      return 'invalid';
+    } else {
+      const asOfYear = query.asOfYear as number;
+      const threshold = asOfYear - (query.recencyYears as number);
+      const hasRecent = items.some((e) => recentYear(e.year, threshold, asOfYear));
+      if (!hasRecent) {
+        gaps.push({
+          type: 'temporal',
+          severity: 'minor',
+          description:
+            `The supplied structured years do not confirm evidence within the last ${query.recencyYears} year(s) ` +
+            `(from ${threshold} through ${asOfYear}).`,
+          suggestedQuery: `Search for evidence published from ${threshold} through ${asOfYear}.`,
+        });
+      }
+      return 'assessed';
+    }
+  }
+  return 'not_requested';
+}
+
 /**
  * Detect the gaps between what a question asked for and what the gathered evidence
  * covers. Pure and deterministic: identical input always yields identical output, and
@@ -104,18 +145,21 @@ function norm(value: string): string {
  *
  * @param query    the coverage the answer should span
  * @param evidence the evidence actually gathered
- * @returns a {@link GapReport}; `complete` is true iff `gaps` is empty
+ * @returns a {@link GapReport}; `complete` requires an assessed query with no metadata gaps
  */
 export function detectEvidenceGaps(query: GapQuery, evidence: EvidenceItem[]): GapReport {
-  const items = Array.isArray(evidence) ? evidence : [];
+  const items = Array.isArray(evidence) ? evidence.filter(item => item && typeof item === 'object') : [];
   const gaps: EvidenceGap[] = [];
+  const notes: string[] = [];
+  let checkedDimensions = 0;
 
   // 1. geographic
   if (query.regions && query.regions.length > 0) {
+    checkedDimensions++;
     const present = new Set(
       items
         .map((e) => e.region)
-        .filter((r): r is string => typeof r === 'string' && r.trim() !== '')
+        .filter((r): r is string => nonemptyLabel(r))
         .map(norm),
     );
     const missing = query.regions.filter((r) => !present.has(norm(r)));
@@ -123,7 +167,7 @@ export function detectEvidenceGaps(query: GapQuery, evidence: EvidenceItem[]): G
       gaps.push({
         type: 'geographic',
         severity: 'major',
-        description: `Evidence does not cover requested region(s): ${missing.join(', ')}.`,
+        description: `The supplied structured fields do not confirm coverage of requested region(s): ${missing.join(', ')}.`,
         missing,
         suggestedQuery: `Search for evidence covering region(s): ${missing.join(', ')}.`,
       });
@@ -131,16 +175,18 @@ export function detectEvidenceGaps(query: GapQuery, evidence: EvidenceItem[]): G
   }
 
   // 2. population
-  if (query.population && query.population.trim() !== '') {
+  if (nonemptyLabel(query.population)) {
+    checkedDimensions++;
+    notes.push('Population coverage uses exact normalized structured labels; a broader or negated label requires applicability verification, not a substring assumption.');
     const wanted = norm(query.population);
     const covered = items.some(
-      (e) => typeof e.population === 'string' && norm(e.population).includes(wanted),
+      (e) => typeof e.population === 'string' && norm(e.population) === wanted,
     );
     if (!covered) {
       gaps.push({
         type: 'population',
         severity: 'major',
-        description: `No evidence covers the requested population: ${query.population}.`,
+        description: `The supplied structured fields do not confirm coverage of the requested population: ${query.population}.`,
         missing: [query.population],
         suggestedQuery: `Search for evidence in the ${query.population} population.`,
       });
@@ -149,6 +195,7 @@ export function detectEvidenceGaps(query: GapQuery, evidence: EvidenceItem[]): G
 
   // 3. outcome
   if (query.outcomeTypes && query.outcomeTypes.length > 0) {
+    checkedDimensions++;
     const present = new Set(
       items
         .map((e) => e.outcomeType)
@@ -159,28 +206,18 @@ export function detectEvidenceGaps(query: GapQuery, evidence: EvidenceItem[]): G
       gaps.push({
         type: 'outcome',
         severity: 'major',
-        description: `Evidence does not cover requested outcome type(s): ${missing.join(', ')}.`,
+        description: `The supplied structured fields do not confirm coverage of requested outcome type(s): ${missing.join(', ')}.`,
         missing,
         suggestedQuery: `Search for ${missing.join(' and ')} evidence.`,
       });
     }
   }
 
-  // 4. temporal
-  if (typeof query.recencyYears === 'number' && typeof query.asOfYear === 'number') {
-    const threshold = query.asOfYear - query.recencyYears;
-    const hasRecent = items.some((e) => typeof e.year === 'number' && e.year >= threshold);
-    if (!hasRecent) {
-      gaps.push({
-        type: 'temporal',
-        severity: 'minor',
-        description:
-          `No evidence is from within the last ${query.recencyYears} year(s) ` +
-          `(on/after ${threshold}, as of ${query.asOfYear}).`,
-        suggestedQuery: `Search for evidence published in ${threshold} or later.`,
-      });
-    }
-  }
+  const recency = assessRecency(query, items, gaps, notes);
+  checkedDimensions += recency === 'assessed' ? 1 : 0;
+  const invalidRecency = recency === 'invalid';
+  if (checkedDimensions === 0 && !invalidRecency) notes.push('No coverage dimensions were requested; evidence completeness was not assessed.');
+  const assessed = checkedDimensions > 0 && !invalidRecency;
 
   // Stable ordering by gap type (defensive; insertion order already matches GAP_TYPES).
   gaps.sort((a, b) => GAP_TYPES.indexOf(a.type) - GAP_TYPES.indexOf(b.type));
@@ -188,8 +225,11 @@ export function detectEvidenceGaps(query: GapQuery, evidence: EvidenceItem[]): G
   return {
     gaps,
     evidenceCount: items.length,
-    complete: gaps.length === 0,
+    complete: assessed && gaps.length === 0,
+    assessed,
     notes: [
+      ...notes,
+      'Coverage dimensions are checked independently; their union does not prove all requested populations, markets and outcomes are jointly supported by applicable evidence.',
       'Advisory only: gaps are inferred from the structured fields supplied on each ' +
         'evidence item (region/population/outcomeType/year), not from full text. A reported ' +
         'gap means the structured fields do not show coverage — not that the underlying ' +

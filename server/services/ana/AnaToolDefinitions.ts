@@ -2402,9 +2402,10 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   {
     name: 'detect_evidence_contradictions',
     description:
-      'Deterministically flag contradictions across gathered evidence (no LLM): same-subject numeric mismatches and ' +
-      'opposing positive/negative assertions. Pass structured claims (subject required; optional metric/value/polarity/date). ' +
-      'Use before stating a synthesized conclusion to catch self-contradicting sources.',
+      'Check supplied structured evidence for potential disagreements (no LLM). Use observed source fields, never invented metadata. ' +
+      'Numeric comparisons require matching endpoints and compatible units; unspecified units remain preliminary. ' +
+      'Different dates alone do not establish authority or supersession. Read all notes: skipped comparisons do not prove consistency. ' +
+      'Verify scope, population, methods and source authority before synthesizing; retrieve available context and ask targeted questions only for consequential remaining gaps.',
     input_schema: {
       type: 'object',
       properties: {
@@ -2417,9 +2418,9 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
               id: { type: 'string' },
               source: { type: 'string' },
               subject: { type: 'string', description: 'Entity the claim is about (required to pair claims).' },
-              metric: { type: 'string' },
+              metric: { type: 'string', description: 'Observed endpoint or quantity; different endpoints are not directly compared.' },
               value: { type: 'number' },
-              unit: { type: 'string' },
+              unit: { type: 'string', description: 'Observed measurement unit; incompatible units require explicit verified conversion before comparison.' },
               polarity: { type: 'string', enum: ['positive', 'negative', 'neutral'] },
               date: { type: 'string' },
               text: { type: 'string' },
@@ -2438,9 +2439,10 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   {
     name: 'detect_evidence_gaps',
     description:
-      'Deterministically detect what the gathered evidence is MISSING relative to the question (no LLM): geographic, ' +
-      'population, outcome, and temporal/recency gaps. Returns gaps with suggested follow-up queries. Use to decide whether ' +
-      'to answer now or first offer to broaden the search.',
+      'Check requested geographic, population, outcome and recency coverage against supplied structured metadata (no LLM). ' +
+      'Use observed source fields, never invented metadata. Population labels match exactly after normalization. ' +
+      'Read assessed, complete and notes: complete covers only assessed metadata dimensions, not scientific sufficiency or joint applicability. ' +
+      'A metadata gap does not prove evidence is absent. Retrieve available context or ask targeted questions about consequential remaining uncertainty before synthesizing.',
     input_schema: {
       type: 'object',
       properties: {

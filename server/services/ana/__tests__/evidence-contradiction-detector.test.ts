@@ -115,7 +115,7 @@ describe('detectContradictions — direct_conflict', () => {
 });
 
 describe('detectContradictions — temporal_inconsistency', () => {
-  it('reports opposite polarity + differing dates as temporal_inconsistency, later supersedes', () => {
+  it('reports opposite polarity + differing dates as an unresolved temporal_inconsistency', () => {
     const claims: EvidenceClaim[] = [
       { id: 'old', subject: 'DrugX', polarity: 'positive', date: '2020-01-01' },
       { id: 'new', subject: 'DrugX', polarity: 'negative', date: '2023-06-01' },
@@ -125,9 +125,9 @@ describe('detectContradictions — temporal_inconsistency', () => {
     const c = report.contradictions[0];
     expect(c.type).toBe('temporal_inconsistency');
     expect(c.severity).toBe('major');
-    expect(c.detail).toContain('supersedes');
-    // The later-dated claim ('new' @ 2023-06-01) is named as the superseding one.
-    expect(c.detail).toContain('new @ 2023-06-01');
+    expect(c.detail).toContain('Unresolved');
+    expect(c.detail).not.toContain('supersedes');
+    expect(c.detail).toContain('new: negative @ 2023-06-01');
   });
 
   it('treats opposite polarity with identical dates as a plain direct_conflict', () => {
@@ -240,3 +240,76 @@ describe('CONTRADICTION_TYPES', () => {
     ]);
   });
 });
+
+// IA: structured differences must not silently become unsupported conclusions.
+describe('scientific comparability and unresolved chronology', () => {
+  it('does not claim that a newer dated finding replaces the older finding', () => {
+    const report = detectContradictions([
+      { id: 'old', source: 'Study A', subject: 'DrugX', metric: 'safety', polarity: 'positive', date: '2020-01-01' },
+      { id: 'new', source: 'Study B', subject: 'DrugX', metric: 'safety', polarity: 'negative', date: '2023-06-01' },
+    ]);
+    expect(report.contradictions).toHaveLength(1);
+    expect(report.contradictions[0].detail).not.toMatch(/supersedes/i);
+    expect(report.contradictions[0].detail).toMatch(/unresolved/i);
+    expect(report.contradictions[0].detail).toMatch(/dates alone/i);
+  });
+  it('does not declare 1 mg and 1000 micrograms contradictory without an explicit conversion', () => {
+    const report = detectContradictions([
+      { id: 'a', subject: 'DrugX', metric: 'dose', value: 1, unit: 'mg' },
+      { id: 'b', subject: 'DrugX', metric: 'dose', value: 1000, unit: 'micrograms' },
+    ]);
+    expect(report.contradictions).toEqual([]);
+    expect(report.notes.join(' ')).toMatch(/units.*not compared/i);
+    expect(report.notes.join(' ')).toContain('a');
+    expect(report.notes.join(' ')).toContain('b');
+  });
+  it('keeps a same-unit numerical mismatch and its unit provenance', () => {
+    const report = detectContradictions([
+      { id: 'a', subject: 'DrugX', metric: 'dose', value: 1, unit: ' mg ' },
+      { id: 'b', subject: 'DrugX', metric: 'DOSE', value: 10, unit: 'mg' },
+    ]);
+    expect(report.contradictions).toHaveLength(1);
+    expect(report.contradictions[0].claimA).toHaveProperty('unit', ' mg ');
+    expect(report.contradictions[0].claimB).toHaveProperty('unit', 'mg');
+  });
+  it('does not treat efficacy benefit and a safety signal as contradictory endpoints', () => {
+    const report = detectContradictions([
+      { id: 'efficacy', subject: 'DrugX', metric: 'efficacy', polarity: 'positive' },
+      { id: 'safety', subject: 'DrugX', metric: 'safety', polarity: 'negative' },
+    ]);
+    expect(report.contradictions).toEqual([]);
+    expect(report.notes.join(' ')).toMatch(/different metrics.*not compared/i);
+  });
+  it('unlabelled numerical values cannot establish a mismatch of the same metric', () => {
+    const report = detectContradictions([{ subject: 'DrugX', value: 1 }, { subject: 'DrugX', value: 10 }]);
+    expect(report.contradictions).toEqual([]);
+    expect(report.notes.join(' ')).toMatch(/metric.*missing/i);
+  });
+  it('a unit missing on one side does not become an assumed equal unit', () => {
+    const report = detectContradictions([{ subject: 'DrugX', metric: 'dose', value: 1, unit: 'mg' }, { subject: 'DrugX', metric: 'dose', value: 10 }]);
+    expect(report.contradictions).toEqual([]);
+    expect(report.notes.join(' ')).toMatch(/unit.*missing/i);
+  });
+  it('a structural mismatch with both units unspecified carries that limitation', () => {
+    const report = detectContradictions([{ subject: 'DrugX', metric: 'dose', value: 1 }, { subject: 'DrugX', metric: 'dose', value: 10 }]);
+    expect(report.contradictions).toHaveLength(1);
+    expect(report.notes.join(' ')).toMatch(/units.*unspecified/i);
+  });
+  it('invalid dates cannot establish temporal ordering', () => {
+    const report = detectContradictions([
+      { subject: 'DrugX', polarity: 'positive', date: '2026-02-30' },
+      { subject: 'DrugX', polarity: 'negative', date: 'yesterday' },
+    ]);
+    expect(report.contradictions[0].type).toBe('direct_conflict');
+    expect(report.notes.join(' ')).toMatch(/invalid.*date/i);
+  });
+  it('empty input is explicitly unassessed, not evidence of consistency', () => {
+    expect(detectContradictions([]).notes.join(' ')).toMatch(/assessment not performed/i);
+  });
+});
+
+ it('preserves case-sensitive unit symbols instead of treating molar and milli symbols as equivalent', () => {
+   const report = detectContradictions([{ subject: 'Product', metric: 'concentration', value: 1, unit: 'M' }, { subject: 'Product', metric: 'concentration', value: 1000, unit: 'm' }]);
+   expect(report.contradictions).toEqual([]);
+   expect(report.notes.join(' ')).toMatch(/different units/i);
+ });

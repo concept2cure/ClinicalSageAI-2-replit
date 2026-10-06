@@ -1,0 +1,28 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — geographic > flags requested regions missing from evidence 2ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — geographic > matches regions case-insensitively 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — population > flags a population gap when only adult evidence is present 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — population > matches an exact population label case-insensitively 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — outcome > flags requested outcome types missing from evidence 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — temporal > flags a temporal gap when newest evidence is too old 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — temporal > no temporal gap when an item is within the recency window 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — full coverage > reports complete with no gaps when everything requested is covered 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — empty evidence > reports gaps for everything requested with no evidence 1ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — empty evidence > reports no gaps for an empty query regardless of evidence 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — ordering and determinism > orders gaps stably by GAP_TYPES 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — ordering and determinism > is deterministic across repeated identical calls 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > does not treat negated pediatric coverage as pediatric evidence 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > a broader cohort label requires applicability confirmation instead of a substring pass 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > future-dated evidence does not clear the requested recency window 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > an empty query is unassessed rather than complete 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > recency with no reference year remains unassessed 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > a geographic gap describes metadata coverage, not proof that evidence does not exist 0ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  12:31:21
+   Duration  442ms (transform 78ms, setup 82ms, import 25ms, tests 10ms, environment 0ms)
+

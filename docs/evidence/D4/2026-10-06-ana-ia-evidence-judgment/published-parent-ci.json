@@ -1,0 +1,39 @@
+{
+  "priorPublishedHead": "8212d3c693454709062fa08860efb3675b5192e5",
+  "runId": 37495717875,
+  "jobs": [
+    {
+      "name": "Secret scan (full history)",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "name": "Security Scan",
+      "status": "completed",
+      "conclusion": "failure",
+      "failedSteps": [
+        "Run lockfile audit and dependency-risk ledger gate",
+        "Trivy filesystem scan (deps + secrets)"
+      ]
+    },
+    {
+      "name": "Security Contract Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "name": "Lint",
+      "status": "in_progress",
+      "conclusion": null,
+      "failedSteps": []
+    },
+    {
+      "name": "Nightly Governance Strict",
+      "status": "completed",
+      "conclusion": "skipped",
+      "failedSteps": []
+    }
+  ]
+}
