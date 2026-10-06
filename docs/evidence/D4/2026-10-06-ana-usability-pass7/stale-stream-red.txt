@@ -1,0 +1,79 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores queued events after a conversation reset
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores queued events after a conversation switch
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores queued events after a conversation reset 35ms
+   → expected 'old-thread' to be null // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores queued events after a conversation switch 7ms
+   → expected 'old-thread' to be 'selected' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > gives two turns in the same millisecond distinct message identities 5ms
+   → expected 2 to be 4 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores queued events after a conversation reset
+AssertionError: expected 'old-thread' to be null // Object.is equality
+
+- Expected:
+null
+
++ Received:
+"old-thread"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts:44:37
+     42|       await oldTurn;
+     43|     });
+     44|     expect(result.current.threadId).toBe(action === 'reset' ? null : '…
+       |                                     ^
+     45|     expect(result.current.isStreaming).toBe(true);
+     46|     expect(onDriveEvent).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores queued events after a conversation switch
+AssertionError: expected 'old-thread' to be 'selected' // Object.is equality
+
+Expected: "selected"
+Received: "old-thread"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts:44:37
+     42|       await oldTurn;
+     43|     });
+     44|     expect(result.current.threadId).toBe(action === 'reset' ? null : '…
+       |                                     ^
+     45|     expect(result.current.isStreaming).toBe(true);
+     46|     expect(onDriveEvent).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > gives two turns in the same millisecond distinct message identities
+AssertionError: expected 2 to be 4 // Object.is equality
+
+- Expected
++ Received
+
+- 4
++ 2
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts:63:66
+     61|     await act(async () => { await result.current.send('First'); });
+     62|     await act(async () => { await result.current.send('Second'); });
+     63|     expect(new Set(result.current.messages.map(m => m.id)).size).toBe(…
+       |                                                                  ^
+     64|   });
+     65| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  22:15:09
+   Duration  1.02s (transform 244ms, setup 134ms, import 287ms, tests 50ms, environment 420ms)
+

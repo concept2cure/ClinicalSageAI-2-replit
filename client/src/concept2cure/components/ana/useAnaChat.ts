@@ -452,6 +452,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
      is new, so AnA answered a fresh conversation inside the last one. `reset`
      and `loadThread` write it as they replace the transcript. */
   const messagesRef = useRef<AnaChatMessage[]>(messages);
+  // Date.now alone collides when consecutive turns start within one clock tick.
+  const turnSequenceRef = useRef(0);
   messagesRef.current = messages;
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoadingThread, setIsLoadingThread] = useState(false);
@@ -886,14 +888,15 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       const haltThisTurn = () => options.onDriveEvent?.({ type: 'drive_stopped' }, driveControls);
 
       const sentAt = Date.now();
+      const messageKey = `${sentAt}-${++turnSequenceRef.current}`;
       const userMsg: AnaChatMessage = {
-        id: `u-${sentAt}`,
+        id: `u-${messageKey}`,
         role: 'user',
         text,
         sentAt,
         attachments: attachments && attachments.length > 0 ? attachments : undefined,
       };
-      const assistantId = `a-${sentAt}`;
+      const assistantId = `a-${messageKey}`;
 
       // Insert placeholder immediately so the user sees a progress indicator
       // before the first token arrives (status phases fill in the label).
@@ -1120,6 +1123,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           body,
           signal: abortCtl.signal,
         });
+        abortCtl.signal.throwIfAborted();
 
         if (!res.ok || !res.body) {
           /* Carry the server's own reason. A 503 GATEWAY_UNAVAILABLE means the
@@ -1151,6 +1155,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         let turnClosed = false;
         while (true) {
           const { done, value } = await reader.read();
+          // A queued read may settle after reset, switch, or Stop. It must not
+          // restore the old thread/run or forward moves into the next turn.
+          abortCtl.signal.throwIfAborted();
           if (done) break;
           // Live activity — reset the idle watchdog.
           armIdleTimer();
@@ -1159,6 +1166,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           buffer = lines.pop() || '';
 
           for (const line of lines) {
+            // A drive callback can reset the conversation synchronously;
+            // ignore the remaining events in that same network chunk too.
+            abortCtl.signal.throwIfAborted();
             if (!line.startsWith('data: ')) continue;
             const payload = line.slice(6).trim();
             if (!payload) continue;
@@ -1760,7 +1770,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       } catch (err: any) {
         // The run this turn was served under, while it is still known: the
         // record of an interrupted turn is looked up by it.
-        const interruptedRunId = runIdRef.current;
+        const interruptedRunId = turnRunId;
         if (interruptedRunId && !serverStatedRecord) confirmTurnRecordByRun(interruptedRunId, assistantId);
         if (err?.name === 'AbortError' && didTimeout) {
           // Idle timeout — the stream went silent. Seal any partial tokens and
