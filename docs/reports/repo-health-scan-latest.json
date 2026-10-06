@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-06T06:48:38.862Z",
+  "generatedAt": "2026-10-06T06:53:13.745Z",
   "git": {
-    "sha": "eb8fd2bf95996639f1c9575c0f0ddcb8984af634",
+    "sha": "bb691af06006e637d652e96d68c25fcea44918f9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2499,12 +2499,12 @@
         "lines": 1973
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 1956
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "lines": 1964
       },
       {
-        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 1950
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 1956
       },
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
