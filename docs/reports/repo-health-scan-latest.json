@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-06T02:18:30.406Z",
+  "generatedAt": "2026-10-06T02:30:53.049Z",
   "git": {
-    "sha": "07ed9282834caad83f03ece32d3cafd65efe5caf",
+    "sha": "c7acab3414c687f76ec6e8de17e4ca4a33d63fbd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2086,7 +2086,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 168634
+        "bytes": 169270
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2312,7 +2312,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3340
+        "lines": 3347
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2516,7 +2516,7 @@
       },
       {
         "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 1920
+        "lines": 1922
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
