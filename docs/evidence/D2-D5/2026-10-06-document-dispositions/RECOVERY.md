@@ -5,7 +5,7 @@ Updated 2026-10-06. Continue from the committed implementation; do not restart i
 - Canonical repository: `concept2cure/ClinicalSageAI-2-replit`.
 - Authorized branch: `concept2cure-v2`; publish directly on this branch after its required checks. No alternate branch or PR is needed.
 - Current verified source checkpoint: `a4bbc261921ce2f5b5dcd7827e9b73ac8670dd41`, following the implementation in `8af2676ac8636e1715584abfae252ecb615ab9c5`, recovery/spelling update and final type/role-query corrections. Existing unpublished MCP SDK security work is included in its ancestry and must be preserved.
-- Last fetched remote baseline: `ed6b79a5b0c83019bec04c4602c50abb4b192042`. Fetch again before publishing and preserve any intervening remote work.
+- Prior implementation published as `616d96b507c8b45a6b74c1c58983aea45bf8c06b`; its tree exactly matched the verified local source tree. The subsequent Repo Health bot checkpoint is `0d8a33caeec1c232c44baffd123e286524d475a7`. Continue from Git HEAD and preserve intervening remote work, rather than republishing the original source checkpoints.
 
 ## Completed
 
@@ -28,3 +28,7 @@ The evidence index is [README.md](README.md). Exact historical command output re
 In the current execution workspace, the clone is `/workspace/scratch/bd36ee581acd/concept2cure`; the native cache is `node_modules/.cache/typecheck-no-regression/tsconfig.tsbuildinfo`. If temporary scripts or cache are lost, use the portable copies and commands in [typecheck-memory/README.md](typecheck-memory/README.md), then complete the unchanged canonical gate again. Cache preparation is never a substitute for that gate. No library copy is needed for repository-backed work.
 
 Live qualification and feature activation remain blocked by provider access, verified tenant data, and reviewer approval. No live qualification, cloud-object erasure, or deployed activation has been performed.
+
+## Continuation checkpoint
+
+Restricted runtime-role/RLS SQL tests and the disposition folder passed 8 files / 74 tests offline. See the evidence index for scope limits. CI reported additional repository guard failures after the original publication; investigate and repair those before treating CI as green. This note is a durable checkpoint, not a claim of publication or CI completion for subsequent changes.

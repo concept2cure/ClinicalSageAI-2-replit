@@ -1,0 +1,107 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/document-data-disposition/__tests__/route-auth.test.ts > canonical disposition route refuses unproven authority > does not read source impact without verified actor and tenant 34ms
+ ✓ server/services/document-data-disposition/__tests__/route-auth.test.ts > canonical disposition route refuses unproven authority > does not accept client body/header scope or let viewers mutate 25ms
+ ✓ server/services/document-data-disposition/__tests__/route-auth.test.ts > canonical disposition route refuses unproven authority > uses middleware scope and passes stale preview refusal unchanged 20ms
+ ✓ server/services/document-data-disposition/__tests__/route-auth.test.ts > canonical disposition route refuses unproven authority > keeps mutation activation closed unless the exact environment gate is enabled 0ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.test.ts > disposition SQL alias validation > artifactDataEligibleSql accepts a SQL identifier and rejects SQL fragments 3ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.test.ts > disposition SQL alias validation > artifactOriginalFileAvailableSql accepts a SQL identifier and rejects SQL fragments 6ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.test.ts > disposition SQL alias validation > atomDataEligibleSql accepts a SQL identifier and rejects SQL fragments 1ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.test.ts > disposition SQL alias validation > atomOriginalFileAvailableSql accepts a SQL identifier and rejects SQL fragments 0ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.test.ts > disposition SQL alias validation > capturedBinaryAvailableSql accepts a SQL identifier and rejects SQL fragments 1ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.test.ts > disposition SQL alias validation > capturedDataEligibleSql accepts a SQL identifier and rejects SQL fragments 0ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.test.ts > disposition SQL alias validation > capturedDispositionChoiceSql accepts a SQL identifier and rejects SQL fragments 0ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.test.ts > disposition SQL alias validation > ragDataEligibleSql accepts a SQL identifier and rejects SQL fragments 8ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.test.ts > disposition SQL alias validation > ragOriginalFileAvailableSql accepts a SQL identifier and rejects SQL fragments 1ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.test.ts > disposition SQL alias validation > uploadedBinaryAvailableSql accepts a SQL identifier and rejects SQL fragments 1ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.test.ts > disposition SQL alias validation > vaultBinaryAvailableSql accepts a SQL identifier and rejects SQL fragments 0ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.test.ts > disposition SQL alias validation > vaultDataEligibleSql accepts a SQL identifier and rejects SQL fragments 0ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.test.ts > disposition SQL alias validation > vaultDispositionChoiceSql accepts a SQL identifier and rejects SQL fragments 0ms
+stderr | server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-06T19:17:09.902Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > keep_data withdraws captured and vault binaries while preserving extracted data 149ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > remove_data excludes current data and binaries without deleting historical identities 78ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > supersede excludes the predecessor and keeps the named successor eligible 79ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > projects the later terminal decision by sequence when chained decisions share a timestamp 118ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > keeps matching bytes eligible in another organization or another program 56ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > document disposition impact preview > counts the complete captured, vault, extraction and lineage set within the program 102ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > document disposition impact preview > refuses unavailable impact instead of reporting a missing store as zero 29ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > document disposition impact preview > refuses an unknown aggregate count returned by the database seam 27ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > document disposition impact preview > denies source and project reads across both organization and program boundaries 41ms
+ ✓ server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts > dispositions under the deployed integer RLS sweep and runtime role > establishes a negative control and proves the role cannot bypass forced RLS 16ms
+ ✓ server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts > dispositions under the deployed integer RLS sweep and runtime role > refuses cross-tenant reads, updates, deletes and inserts at the database boundary 11ms
+ ✓ server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts > dispositions under the deployed integer RLS sweep and runtime role > runs preview, audit append, retain and terminal withdrawal without elevated privileges 200ms
+ ✓ server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts > dispositions under the deployed integer RLS sweep and runtime role > refuses a foreign source and resets local tenant context after rollback 29ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > document disposition impact preview > blocks active legal holds and governed approval dependencies 103ms
+ ✓ server/services/document-data-disposition/__tests__/artifact-freeze.pglite.integration.test.ts > artifact rendition eligibility and freezing > keep_data governs linked artifacts and refuses late extraction or identity relabeling 225ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > keeps unrelated upload binaries available while excluding linked originals 62ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > keep_data cannot resurrect binary access through a fresh upload ID holding the same bytes 45ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > remove_data cannot resurrect binary access through a fresh upload ID holding the same bytes 53ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > document disposition impact preview > checks approved downstream authoring and document sections even when the original has no approval 104ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > document disposition impact preview > allows a captured source with extracted atoms before it has ever been filed into Vault 71ms
+ ✓ server/services/document-data-disposition/__tests__/artifact-freeze.pglite.integration.test.ts > artifact rendition eligibility and freezing > remove_data governs linked artifacts and refuses late extraction or identity relabeling 115ms
+ ✓ server/services/document-data-disposition/__tests__/artifact-freeze.pglite.integration.test.ts > artifact rendition eligibility and freezing > denies linked artifacts even if their project scope subsequently becomes unavailable 63ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > uses the programme tenant for a legacy NULL-org Vault version and refuses contradictory tenant metadata 60ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > keep_data freezes both RAG metadata and late RAG chunks while projecting retained binary availability 42ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > remove_data freezes both RAG metadata and late RAG chunks while projecting retained binary availability 48ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > document disposition confirmation > keep_data writes one decision and audit receipt while preserving all source and lineage rows 72ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > document disposition confirmation > remove_data writes one decision and audit receipt while preserving all source and lineage rows 72ms
+ ✓ server/services/document-data-disposition/__tests__/artifact-freeze.pglite.integration.test.ts > artifact rendition eligibility and freezing > refuses a fresh artifact identity pointing at a fresh same-byte raw upload 59ms
+ ✓ server/services/document-data-disposition/__tests__/artifact-freeze.pglite.integration.test.ts > frozen extraction deletion > keep_data preserves related extraction and citation rows while unrelated DELETE remains available 88ms
+ ✓ server/services/document-data-disposition/__tests__/artifact-freeze.pglite.integration.test.ts > frozen extraction deletion > remove_data preserves related extraction and citation rows while unrelated DELETE remains available 91ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > recognizes every supported atom alias and tolerates malformed numeric source IDs 55ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > refuses reparenting a disposed atom, chunk, catalog row or citation into an eligible identity 98ms
+stderr | server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-06T19:17:11.155Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > document disposition confirmation > requires explicit activation and project mutation authority 68ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > replays with one trigger of each kind and blocks update, delete and truncate 69ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > enforces source identity and a monotonic disposition chain at the database door 75ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > retained data lifecycle and transaction safety > appends keep_data → remove_data without rewriting the first decision or retained lineage 156ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > keep_data freezes linked OCR, atoms, chunks and catalog writes and refuses same-byte resurrection 89ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > remove_data freezes linked OCR, atoms, chunks and catalog writes and refuses same-byte resurrection 98ms
+ ✓ server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts > source and catalog consumers of an actual recorded disposition > starts with a readable file and an eligible, identifiable source 74ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > retained data lifecycle and transaction safety > appends keep_data → supersede without rewriting the first decision or retained lineage 175ms
+ ✓ server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts > source and catalog consumers of an actual recorded disposition > retains extracted text and lineage while refusing original-file pins 138ms
+ ✓ server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts > source and catalog consumers of an actual recorded disposition > resolves retained Vault text through the programme tenant for legacy null organization metadata 75ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > retained data lifecycle and transaction safety > binds supersession to the named verified direct successor with usable extraction 132ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > retained data lifecycle and transaction safety > binds Vault supersession to its indexed direct successor and refuses a same-file replacement 65ms
+ ✓ server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts > source and catalog consumers of an actual recorded disposition > withdraws new grounding without rewriting the historical captured identity 70ms
+ ✓ server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts > source and catalog consumers of an actual recorded disposition > detects the original-file leak if the binary-availability predicate is removed 55ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > retained data lifecycle and transaction safety > invalidates a supersession preview when replacement extraction content changes 46ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > retained data lifecycle and transaction safety > refuses a tampered, expired, replayed or cross-actor preview 76ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > retained data lifecycle and transaction safety > rejects both count changes and content changes that leave the count unchanged 79ms
+ ✓ server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > retained data lifecycle and transaction safety > rolls back an audit write when audit creation fails or returns an invalid receipt 79ms
+ ✓ server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts > canonical citation write eligibility > allows new citations and refreshes against retained extracted data 117ms
+ ✓ server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts > canonical citation write eligibility > refuses withdrawn data before creating a new canonical citation 47ms
+ ✓ server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts > canonical citation write eligibility > refuses reciting or refreshing terminal data while preserving its historical citation 48ms
+ ✓ server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts > canonical citation write eligibility > refuses predecessor grounding after supersession and permits its verified replacement 56ms
+ ✓ server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts > canonical citation write eligibility > the database refuses direct citation INSERT and UPDATE after remove_data 50ms
+ ✓ server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts > canonical citation write eligibility > the database refuses direct citation INSERT and UPDATE after supersede 48ms
+ ✓ server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts > canonical citation write eligibility > fails closed when eligibility cannot be read 10ms
+
+ Test Files  8 passed (8)
+      Tests  74 passed (74)
+   Start at  15:17:06
+   Duration  6.28s (transform 2.60s, setup 655ms, import 4.50s, tests 25.58s, environment 1ms)
+

@@ -81,3 +81,11 @@ The normal complete pre-push hook remains mandatory before publication. These co
 - No live provider qualification was run. Provider access, verified tenant data and named reviewer/owner approval remain blockers to live qualification and activation. No CI, typecheck, build or deployment verdict should be inferred from implementation or a focused test result.
 
 The implementation contract and deployment notes are in [DOCUMENT_DATA_LIFECYCLE_2026-10-06.md](../../../architecture/DOCUMENT_DATA_LIFECYCLE_2026-10-06.md).
+
+## Restricted runtime-role verification (2026-10-06 continuation)
+
+`server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts` applies the actual deploy integer-tenant isolation sweep twice, then executes SQL and the service as a NOSUPERUSER/NOBYPASSRLS role with ordinary table/sequence access. Four tests establish forced RLS on the disposition table, a shadow-mode negative control, refusal of foreign reads and mutations, complete preview/retain/withdraw/audit append, append-only guards, denied TRUNCATE, and transaction-local tenant context restoration after commit and rollback.
+
+The offline disposition folder rerun passed **8 files / 74 tests**, including these four new cases; [runtime-role-offline.txt](runtime-role-offline.txt) records the output. This rerun overlaps prior regressions and is not added to their total. The initial run caught an incorrect expected SQLSTATE in the new immutability assertions; those now assert the migration's actual `55000`.
+
+This qualifies the fixture's public integer-tenant RLS policies under a restricted role. It does not qualify production Vault UUID policies, the deployed audit chain, two-connection lock timing, or any provider. Native PostgreSQL concurrency and live tenant/provider/reviewer qualification remain open. Feature activation remains off.
