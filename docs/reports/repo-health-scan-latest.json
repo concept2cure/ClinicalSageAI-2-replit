@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-06T01:23:25.804Z",
+  "generatedAt": "2026-10-06T01:53:10.952Z",
   "git": {
-    "sha": "4997ed619236ffccf202c472e5a1c426e6eda465",
+    "sha": "38c4ce10161b3163567e75acd59b971dafe6e82b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2531,6 +2531,10 @@
         "lines": 1878
       },
       {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1870
+      },
+      {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
         "lines": 1869
       },
@@ -2543,16 +2547,16 @@
         "lines": 1864
       },
       {
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "lines": 1858
+      },
+      {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 1857
       },
       {
         "file": "server/routes/ivdr-routes.ts",
         "lines": 1855
-      },
-      {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1854
       },
       {
         "file": "server/services/ana/citation-engine.ts",
@@ -2577,10 +2581,6 @@
       {
         "file": "server/services/compliance/globalComplianceEngine.ts",
         "lines": 1824
-      },
-      {
-        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 1821
       },
       {
         "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
