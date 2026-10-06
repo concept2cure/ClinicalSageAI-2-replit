@@ -20,7 +20,7 @@ const h = vi.hoisted(() => {
     /** One entry per model call: tool calls to make, words then tool calls, or the answer text. */
     script: [] as Array<ToolUse[] | { say: string; tools: ToolUse[] } | string>,
     /** Each model request: who made it, and the tools it offered. */
-    gatewayCalls: [] as Array<{ callerModule?: string; tools: string[] }>,
+    gatewayCalls: [] as Array<{ callerModule?: string; tools: string[]; messages: Array<{ role: string; content: unknown }> }>,
     /** What each checkpoint drain returns, in order; empty after. */
     drains: [] as Array<Array<{ kind: 'steer' | 'screen_report' | 'move_landed'; text: string; moveId?: string }>>,
     /** Called with each wait the checkpoint makes (the run handle's wake). */
@@ -31,6 +31,8 @@ const h = vi.hoisted(() => {
     history: [] as Array<{ role: string; content: string; metadata?: unknown }>,
     /** What each held governed call asked the run row to record. */
     approvals: [] as any[],
+    guardedInputs: [] as string[],
+    encapsulateInput: false,
   };
   const pool = {
     query: async () => ({ rows: [], rowCount: 0 }),
@@ -43,7 +45,7 @@ const h = vi.hoisted(() => {
     getEnabledProviders: () => ['anthropic'],
     getModels: () => [],
     route: async (req: any) => {
-      state.gatewayCalls.push({ callerModule: req.callerModule, tools: (req.tools ?? []).map((t: { name: string }) => t.name) });
+      state.gatewayCalls.push({ callerModule: req.callerModule, tools: (req.tools ?? []).map((t: { name: string }) => t.name), messages: req.messages.slice() });
       const step = state.script.shift();
       if (Array.isArray(step)) {
         return { content: '', toolUses: step, model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
@@ -176,7 +178,10 @@ vi.mock('../../../services/chat-thread-helpers.js', () => ({
 vi.mock('../../../services/ana-session-bootstrap.js', () => ({ sessionBootstrapBlockFor: async () => '' }));
 vi.mock('../../../services/kernel-adaptive-policy.js', () => ({ getKernelPolicyHint: async () => null }));
 vi.mock('../../../services/ana/ana-input-guard.js', () => ({
-  guardUserInput: async (text: string) => ({ encapsulated: false, text }),
+  guardUserInput: async (text: string) => {
+    h.state.guardedInputs.push(text);
+    return { encapsulated: h.state.encapsulateInput, text: h.state.encapsulateInput ? `GUARDED\n${text}` : text };
+  },
   PromptInjectionError: class PromptInjectionError extends Error {},
 }));
 vi.mock('../../../services/auditService.js', () => ({ default: { logAction: async () => {} } }));
@@ -219,6 +224,8 @@ beforeEach(() => {
   h.state.post = null;
   h.state.history = [];
   h.state.approvals = [];
+  h.state.guardedInputs = [];
+  h.state.encapsulateInput = false;
 });
 
 /** The stream's frames, parsed. */
@@ -259,6 +266,39 @@ function thread(steps: Array<{ tool: string; status: string }>, question: string
 }
 
 describe('a follow-up keeps the tools its conversation used (TP-RL-3)', () => {
+  it('Continue receives the visible partial draft even when stored history lacks it', async () => {
+    const message = 'Continue from where you stopped.';
+    h.state.history = [
+      { role: 'user', content: 'Compare the endpoints' },
+      { role: 'user', content: message },
+    ];
+    await turn(message, 'thorough', { continuation_context: { question: 'Compare the endpoints', partialResponse: 'The primary endpoint is' } });
+    const first = h.state.gatewayCalls[0].messages;
+    const handoff = first.find(m => typeof m.content === 'string' && m.content.includes('client-reported unfinished draft'));
+    expect(handoff?.role).toBe('user');
+    expect(handoff?.content).toContain('The primary endpoint is');
+    expect(handoff?.content).toContain('not evidence that a tool ran');
+    expect(first.at(-1)).toMatchObject({ role: 'user', content: message });
+    expect(h.state.guardedInputs).toHaveLength(1);
+    expect(h.state.guardedInputs[0]).toContain('The primary endpoint is');
+  });
+
+  it('encapsulates the handoff with the request and never sends an unguarded duplicate', async () => {
+    h.state.encapsulateInput = true;
+    await turn('Continue from where you stopped.', 'thorough', {
+      continuation_context: { question: 'Compare the endpoints', partialResponse: 'The primary endpoint is' },
+    });
+    const matching = h.state.gatewayCalls[0].messages.filter(m => typeof m.content === 'string' && m.content.includes('client-reported unfinished draft'));
+    expect(matching).toHaveLength(1);
+    expect(matching[0].role).toBe('user');
+    expect(matching[0].content).toMatch(/^GUARDED\n/);
+  });
+
+  it('does not attach a continuation draft to an unrelated request', async () => {
+    await turn('Start another topic', 'thorough', { continuation_context: { question: 'Old topic', partialResponse: 'Old draft' } });
+    expect(h.state.gatewayCalls[0].messages.some(m => typeof m.content === 'string' && m.content.includes('client-reported unfinished draft'))).toBe(false);
+  });
+
   it('the tool the previous turn ran is offered on the first call and on every round after it', async () => {
     thread([{ tool: 'get_cmc_requirements', status: 'success' }], 'and for the EU?');
     h.state.script = [[{ id: 'tu_1', name: 'search_literature', input: { query: 'EU CMC' } }], 'Done.'];

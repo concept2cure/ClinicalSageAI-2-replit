@@ -1,0 +1,5 @@
+Pre-commit security check: check-security-patterns: 0 violations across 3046 files.
+ci:untracked-imports: every relative import in 7 changed files resolves to a tracked file.
+ci:pushed-lint-errors: no ESLint errors in 7 changed files.
+ci:pushed-lint-warnings: no file changed its warning count since 4f9797c4b144d2a99120b105a9e015e2c98cfdf4.
+Full repository TypeScript: not run locally under the founder-approved memory exception; GitHub CI remains required.

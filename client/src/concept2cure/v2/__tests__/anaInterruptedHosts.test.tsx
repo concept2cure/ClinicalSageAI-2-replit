@@ -133,6 +133,7 @@ describe.each<HostKind>(['rail', 'conversation'])('%s partial response recovery'
     await act(async () => { fireEvent.click(continueButton()!); });
     expect(requests()).toHaveLength(2);
     expect(requests()[1]).toMatchObject({ message: CONTINUE_PROMPT, thread_id: 'thread-selected' });
+    expect(requests()[1].continuation_context).toEqual({ question: 'Compare the endpoints', partialResponse: PARTIAL });
     expect(requests()[1].conversation_history).toContainEqual({ role: 'assistant', content: PARTIAL });
     // The old response remains visibly incomplete, but it is no longer the
     // latest turn and cannot offer another Continue.

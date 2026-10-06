@@ -211,7 +211,7 @@ export function isContinuable(reason: AnaStoppedReason | undefined, interruptedW
  * over — there is nothing to resume — and the next turn is told its
  * predecessor did not finish (server: formatStoppedTurnNote).
  */
-export const CONTINUE_PROMPT = 'Continue from where you stopped.';
+export { CONTINUE_PROMPT } from '@shared/ana/continuation-context';
 
 /**
  * The one turn a host may offer Continue on: the last message, when it is an

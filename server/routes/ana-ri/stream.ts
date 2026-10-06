@@ -140,6 +140,7 @@ import { DOCUMENT_ACTIONS } from '../../services/ana-ri/document-actions.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { selectToolsForTurn, SELF_DRIVE_TOOLS } from '../../services/ana/tool-selection.js';
 import { recentTurns } from '../../services/ana/history-window.js';
+import { continuationContextMessage } from '../../../shared/ana/continuation-context.js';
 import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
 import { buildContextUsedEvent, type ContextUpload } from '../../services/ana/turn-context-used.js';
 import { guardUserInput, PromptInjectionError } from '../../services/ana/ana-input-guard.js';
@@ -565,9 +566,10 @@ export function mountStreamRoute(router: Router): void {
       // Runs before the SSE headers are written so an enforced block returns a
       // clean 400 rather than a mid-stream error.
       const { orgId: guardOrgId, userId: guardUserId } = extractRequestContext(req);
+      const continuation = continuationContextMessage(message, req.body.continuation_context);
       let injectionGuard;
       try {
-        injectionGuard = await guardUserInput(message, {
+        injectionGuard = await guardUserInput(continuation ? `${continuation.content}\n\n${message}` : message, {
           organizationId: guardOrgId,
           userId: guardUserId,
           route: '/api/ana-ri/stream',
@@ -1353,6 +1355,11 @@ export function mountStreamRoute(router: Router): void {
       // Default path uses `effectiveMessage` unchanged. Only when
       // PROMPT_INJECTION_ENCAPSULATE is enabled does the guard hand back the
       // injection-resistant encapsulated form for the model to see as data.
+      // An interrupted stream's visible words may never have been persisted.
+      // Explicit Continue carries them as client draft text, never tool evidence.
+      // When encapsulation is enabled the guarded text already includes the
+      // handoff; do not also add an unencapsulated copy alongside it.
+      if (continuation && !injectionGuard.encapsulated) messages.push(continuation);
       messages.push({
         role: 'user',
         content: injectionGuard.encapsulated ? injectionGuard.text : effectiveMessage,

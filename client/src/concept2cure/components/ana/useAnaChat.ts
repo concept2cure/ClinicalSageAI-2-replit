@@ -80,6 +80,7 @@ import {
 } from './anaProgress';
 import { getAnaLockedScreens } from './anaLockedScreens';
 import { isAnaRunPolicy, stepLabels } from '@shared/ana/run-policy';
+import { clientContinuationContext } from '@shared/ana/continuation-context';
 import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
 import { readGroundingStrip, readStoredVerification } from './anaAnswerCheck';
 
@@ -1037,6 +1038,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
 
       const body = JSON.stringify({
         message: text,
+        continuation_context: clientContinuationContext(text, messagesRef.current),
         thread_id: threadIdRef.current || undefined,
         file_ids: attachedFileIds.length > 0 ? attachedFileIds : undefined,
         // Data Room sources pinned as context for this turn. Omitted when the
