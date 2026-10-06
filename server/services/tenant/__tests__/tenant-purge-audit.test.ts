@@ -39,13 +39,14 @@ function orgRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function makePool(opts: { refuseAudit?: boolean } = {}) {
+function makePool(opts: { refuseAudit?: boolean; deleteError?: Error } = {}) {
   const statements: Statement[] = [];
   const respond = (via: Statement['via']) => async (text: string, params?: unknown[]) => {
     statements.push({ via, text, params });
     if (opts.refuseAudit && /INSERT INTO audit_logs/.test(text)) {
       throw Object.assign(new Error('audit store refused the row'), { code: '42501' });
     }
+    if (opts.deleteError && /^DELETE FROM documents/.test(text)) throw opts.deleteError;
     if (/FROM tenant_export_receipts/.test(text)) {
       return {
         rows: [
@@ -153,6 +154,40 @@ describe('fail closed', () => {
       expect(pool.connect).not.toHaveBeenCalled();
     }
     await expect(purge(makePool(), 0)).rejects.toBeInstanceOf(OffboardingStateError);
+  });
+});
+
+describe('document disposition retention conflicts', () => {
+  it('rolls back before returning an actionable conflict without status changes or a purge receipt', async () => {
+    const databaseError = Object.assign(new Error('DOCUMENT_DISPOSITION_WRITE_REFUSED: original withdrawn; confirmed derived data and lineage are retained'), { code: '55000' });
+    const pool = makePool({ deleteError: databaseError });
+    const refusal = purge(pool);
+    await expect(refusal).rejects.toBeInstanceOf(OffboardingStateError);
+    await expect(refusal).rejects.toMatchObject({
+      code: 'DOCUMENT_DISPOSITION_RETENTION_CONFLICT',
+      message: 'Document disposition retention prevents this tenant purge. Request governed retention review before retrying physical erasure. Nothing was purged.',
+    });
+    const s: Statement[] = pool.statements;
+    expect(indexOf(s, /^ROLLBACK$/)).toBeGreaterThan(indexOf(s, /^DELETE FROM documents/));
+    expect(indexOf(s, /^COMMIT$/)).toBe(-1);
+    expect(indexOf(s, /UPDATE organizations/)).toBe(-1);
+    expect(indexOf(s, /INSERT INTO audit_logs/)).toBe(-1);
+  });
+
+  it.each([
+    ['55000', 'IMMUTABILITY_VIOLATION: unrelated retained record'],
+    ['55000', 'Unknown failure: DOCUMENT_DISPOSITION_WRITE_REFUSED: details'],
+    ['42501', 'DOCUMENT_DISPOSITION_WRITE_REFUSED: wrong SQLSTATE'],
+    ['55000', 'document_disposition_write_refused: wrong case'],
+  ])('preserves the original %s error when its message is %s', async (code, message) => {
+    const databaseError = Object.assign(new Error(message), { code });
+    const pool = makePool({ deleteError: databaseError });
+    await expect(purge(pool)).rejects.toBe(databaseError);
+    const s: Statement[] = pool.statements;
+    expect(indexOf(s, /^ROLLBACK$/)).toBeGreaterThan(indexOf(s, /^DELETE FROM documents/));
+    expect(indexOf(s, /^COMMIT$/)).toBe(-1);
+    expect(indexOf(s, /UPDATE organizations/)).toBe(-1);
+    expect(indexOf(s, /INSERT INTO audit_logs/)).toBe(-1);
   });
 });
 

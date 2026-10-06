@@ -1,0 +1,38 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ↓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT
+ ↓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > names who purged which organisation, when, the export it relied on, and what it deleted
+ ↓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > returns the counts it recorded
+ ↓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > a refused audit row rolls the purge back: ROLLBACK, no COMMIT, and the purge rejects
+ ↓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > refuses a purge it cannot attribute to a person, before anything is touched
+ × server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > rolls back before returning an actionable conflict without status changes or a purge receipt 8ms
+   → expected Error: DOCUMENT_DISPOSITION_WRITE_REFUSED… { code: '…' } to be an instance of OffboardingStateError
+ ↓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > preserves the original 55000 error when its message is IMMUTABILITY_VIOLATION: unrelated retained record
+ ↓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > preserves the original 55000 error when its message is Unknown failure: DOCUMENT_DISPOSITION_WRITE_REFUSED: details
+ ↓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > preserves the original 42501 error when its message is DOCUMENT_DISPOSITION_WRITE_REFUSED: wrong SQLSTATE
+ ↓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > preserves the original 55000 error when its message is document_disposition_write_refused: wrong case
+ ↓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge cannot reach its own record > lists neither the audit trail nor the export receipt it relied on
+ ↓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge cannot reach its own record > refuses a table-list expansion that would erase retained disposition receipts before touching the database
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > rolls back before returning an actionable conflict without status changes or a purge receipt
+AssertionError: expected Error: DOCUMENT_DISPOSITION_WRITE_REFUSED… { code: '…' } to be an instance of OffboardingStateError
+ ❯ server/services/tenant/__tests__/tenant-purge-audit.test.ts:165:25
+    163|     const pool = makePool({ deleteError: databaseError });
+    164|     const refusal = purge(pool);
+    165|     await expect(refusal).rejects.toBeInstanceOf(OffboardingStateError…
+       |                         ^
+    166|     await expect(refusal).rejects.toMatchObject({
+    167|       code: 'DOCUMENT_DISPOSITION_RETENTION_CONFLICT',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  15:37:43
+   Duration  1.59s (transform 695ms, setup 91ms, import 1.23s, tests 10ms, environment 0ms)
+

@@ -1,0 +1,210 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > moves an active organization to pending_deletion and starts the clock
+{
+  "timestamp": "2026-10-06T19:38:22.073Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant offboarding requested",
+  "context": {
+    "organizationId": 42,
+    "requestedByUserId": 7,
+    "retentionDays": 30,
+    "purgeEligibleAt": {}
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > clamps a short retention request up to the minimum
+{
+  "timestamp": "2026-10-06T19:38:22.075Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant offboarding requested",
+  "context": {
+    "organizationId": 42,
+    "requestedByUserId": 7,
+    "retentionDays": 7,
+    "purgeEligibleAt": null
+  }
+}
+
+stdout | server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > is idempotent — a second request does NOT reset or shorten the window
+{
+  "timestamp": "2026-10-06T19:38:22.076Z",
+  "level": "info",
+  "message": "[tenant-offboarding] Deletion re-requested for an organization already pending deletion; no change",
+  "context": {
+    "organizationId": 42,
+    "purgeEligibleAt": {}
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > returns a pending_deletion organization to active and clears the evidence
+{
+  "timestamp": "2026-10-06T19:38:22.079Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant offboarding cancelled",
+  "context": {
+    "organizationId": 42,
+    "cancelledByUserId": 7
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > permits an early purge ONLY with an explicit override reason
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > permits an early purge ONLY with an explicit override reason
+{
+  "timestamp": "2026-10-06T19:38:22.085Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": "regulator-ordered immediate destruction",
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {},
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > purges once the window has closed
+{
+  "timestamp": "2026-10-06T19:38:22.086Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {},
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > KEEPS the organization row, in status purged, carrying the evidence
+{
+  "timestamp": "2026-10-06T19:38:22.087Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {},
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > clears commercial identifiers so a purged tenant cannot be re-billed
+{
+  "timestamp": "2026-10-06T19:38:22.088Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {},
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes child tables inside a transaction
+{
+  "timestamp": "2026-10-06T19:38:22.088Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 0,
+      "documents": 0
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > moves an active organization to pending_deletion and starts the clock 4ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > clamps a short retention request up to the minimum 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > is idempotent — a second request does NOT reset or shorten the window 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > refuses for an unknown organization 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > refuses for an already-purged organization 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > returns a pending_deletion organization to active and clears the evidence 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > refuses when the organization is not scheduled for deletion 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > refuses to restore a purged organization 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses without a final export digest 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > VERIFIES the digest — a fabricated string does not open the gate 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > scopes the receipt lookup to THIS organization 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > checks the digest BEFORE reading the organization — cheapest refusal first 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses while the retention window is still open 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses to purge a tenant that was never scheduled for deletion 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > permits an early purge ONLY with an explicit override reason 3ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > purges once the window has closed 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > KEEPS the organization row, in status purged, carrying the evidence 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > clears commercial identifiers so a purged tenant cannot be re-billed 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes child tables inside a transaction 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > rejects an unsafe table name rather than interpolating it 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > lists every table a purge door erases, since a door opens only for a listed table 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > ships a frozen child-table list that excludes the audit trail and billing 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > names the vault tables where they actually live 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes chunks before the documents their scoping predicate reads 0ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > erases every vault document the tenant owns, including one on a soft-deleted programme 10ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > erases the chunks of those documents too 4ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > never reaches another tenant's documents 5ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > the old organization_id-only predicate leaves the bytes behind (why this changed) 5ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > scopes chunks through the same document predicate, not a weaker one 2ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > keeps the predicate map frozen and free of request-derived input 2ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the database's purge door deletes exactly the predicate's rows (VR-07) > for every tenant: removes the rows the predicate selects, returns one row per version, and spares the rest 14ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the database's purge door deletes exactly the predicate's rows (VR-07) > refuses an organization that is not pending deletion, and deletes nothing 8ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > exports the document on a soft-deleted programme that the purge will erase 22ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > for every tenant: the purge set is a subset of the export set — exactly equal here 20ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > never exports another tenant's document 21ms
+
+ Test Files  2 passed (2)
+      Tests  35 passed (35)
+   Start at  15:38:20
+   Duration  4.66s (transform 952ms, setup 94ms, import 2.12s, tests 2.01s, environment 0ms)
+

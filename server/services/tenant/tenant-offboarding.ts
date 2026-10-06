@@ -705,6 +705,13 @@ async function markPurged(
   return rows[0]?.purged_at ?? null;
 }
 
+function isDocumentDispositionRetentionConflict(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const failure = error as { code?: unknown; message?: unknown };
+  return failure.code === '55000' && typeof failure.message === 'string'
+    && failure.message.startsWith('DOCUMENT_DISPOSITION_WRITE_REFUSED:');
+}
+
 /**
  * The legal-hold check, the deletes, the status change and the purge's audit
  * row, on ONE checked-out client: all of it commits, or none of it does.
@@ -748,6 +755,12 @@ async function purgeInOneTransaction(
       return tally;
     } catch (error) {
       await client.query('ROLLBACK').catch(() => {});
+      if (isDocumentDispositionRetentionConflict(error)) {
+        throw new OffboardingStateError(
+          'DOCUMENT_DISPOSITION_RETENTION_CONFLICT',
+          'Document disposition retention prevents this tenant purge. Request governed retention review before retrying physical erasure. Nothing was purged.'
+        );
+      }
       throw error;
     }
   } finally {
