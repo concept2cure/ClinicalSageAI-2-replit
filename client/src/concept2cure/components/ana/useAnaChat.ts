@@ -146,6 +146,17 @@ function historyDeadline(loading: AbortController) {
   };
 }
 
+/** Use the HTTP outcome for recovery, without showing raw history-service errors. */
+function historyRecoveryText(status: number): string | undefined {
+  const guidance: Record<number, string> = {
+    401: 'Sign in again, then retry loading this conversation.',
+    403: 'You do not have access to this conversation. Select another conversation or ask an administrator to review your access.',
+    404: 'This conversation is no longer available. Select another conversation or start a new one.',
+    429: 'Too many conversation requests. Wait a moment, then retry loading this conversation.',
+  };
+  return guidance[status] ? `${guidance[status]} Your question has not been sent.` : undefined;
+}
+
 function fetchHistoryHeaders(threadId: string, signal: AbortSignal) {
   return fetch(`/api/chat/threads/${encodeURIComponent(threadId)}/messages?limit=100`, {
     method: 'GET',
@@ -759,6 +770,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     setMessages([]);
     setIsLoadingThread(true);
     const deadline = historyDeadline(loading);
+    let recoveryMessage: string | undefined;
     try {
       const res = await Promise.race([deadline.promise, fetchHistoryHeaders(threadId, loading.signal)]);
       if (threadLoadRef.current !== loading) return;
@@ -768,6 +780,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         // state: the user was told their conversation was empty when the read
         // had failed. An error is never an empty result.
         console.warn('[useAnaChat] loadThread non-ok:', res.status);
+        recoveryMessage = historyRecoveryText(res.status);
         throw new Error(`loadThread ${res.status}`);
       }
       const body = (await Promise.race([deadline.promise, res.json()])) as {
@@ -786,7 +799,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         }>;
       };
       if (threadLoadRef.current !== loading) return;
-      const rows = Array.isArray(body.messages) ? body.messages : [];
+      if (!Array.isArray(body?.messages)) throw new Error('Incomplete conversation history response');
+      const rows = body.messages;
       const hydrated: AnaChatMessage[] = rows
         .filter(
           m =>
@@ -846,7 +860,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       if (threadLoadRef.current !== loading) return;
       threadLoadErrorRef.current = {
         threadId,
-        message: deadline.failureMessage(),
+        message: recoveryMessage ?? deadline.failureMessage(),
       };
       setThreadLoadError(threadLoadErrorRef.current);
       console.warn('[useAnaChat] loadThread failed:', err?.message);
