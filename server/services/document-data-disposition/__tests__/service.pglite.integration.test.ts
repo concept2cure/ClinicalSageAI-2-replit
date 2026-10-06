@@ -2,6 +2,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { PGlite } from '@electric-sql/pglite';
+import type { DocumentDispositionRecord } from '../../../../shared/document-data-disposition';
 import { createDocumentDispositionService } from '../service';
 import {
   createDispositionHarness, insertCapturedSuccessor, insertVaultSuccessor, DISPOSITION_TEST_CLOCK,
@@ -10,7 +11,15 @@ import {
 
 let harness: DispositionHarness;
 let pg: PGlite;
-const setup: DispositionHarness['seed'] = options => harness.seed(options);
+interface RecordedDispositionRow {
+  id: string;
+  audit_receipt: DocumentDispositionRecord['auditReceipt'];
+  replacement_captured_source_id: number | null;
+}
+const setup = async (options?: Parameters<DispositionHarness['seed']>[0]) => {
+  const f = await harness.seed(options);
+  return { ...f, records: async () => (await f.pg.query<RecordedDispositionRow>('SELECT * FROM document_data_dispositions WHERE organization_id=$1', [f.org])).rows };
+};
 beforeAll(async () => { harness = await createDispositionHarness(); pg = harness.pg; });
 afterAll(async () => { await harness.close(); });
 const HASH = 'a'.repeat(64);
@@ -42,7 +51,7 @@ describe('document disposition impact preview', () => {
   it('refuses an unknown aggregate count returned by the database seam', async () => {
     const f = await setup();
     const query = async (sql: string, params?: unknown[]) => {
-      const result = await harness.db.query(sql, params);
+      const result = { rows: (await harness.pg.query<Record<string, unknown>>(sql, params)).rows };
       return sql.startsWith('SELECT count(*)::int AS n') && sql.includes('FROM lumen_data_atoms')
         ? { rows: result.rows.map(row => ({ ...row, n: null })) } : result;
     };

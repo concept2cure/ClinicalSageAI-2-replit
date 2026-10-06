@@ -99,7 +99,7 @@ describe('binary scope and late RAG writes', () => {
     await f.apply(choice);
     const newUpload=randomUUID();
     await h.pg.query(`INSERT INTO file_uploads (id,organization_id,checksum_sha256,storage_path,status) VALUES ($1,$2,$3,$4,'uploaded')`,[newUpload,f.org,HASH,`uploads/org-${f.org}/${newUpload}`]);
-    const rows=(await h.pg.query(`SELECT id,${uploadedBinaryAvailableSql('u')} AS binary FROM file_uploads u WHERE u.id=ANY($1::text[])`,[[newUpload,other.upload]])).rows;
+    const rows=(await h.pg.query<{id:string;binary:boolean}>(`SELECT id,${uploadedBinaryAvailableSql('u')} AS binary FROM file_uploads u WHERE u.id=ANY($1::text[])`,[[newUpload,other.upload]])).rows;
     expect(rows.find(r=>r.id===newUpload)).toMatchObject({binary:false});
     expect(rows.find(r=>r.id===other.upload)).toMatchObject({binary:true});
   });
@@ -151,7 +151,7 @@ describe('binary scope and late RAG writes', () => {
         [f.org, kind, id, '{}'])).rows[0].id);
     }
     await f.apply('remove_data');
-    const rows = (await h.pg.query(`SELECT ${atomDataEligibleSql('a')} AS data FROM lumen_data_atoms a WHERE id = ANY($1::integer[]) ORDER BY id`, [ids])).rows;
+    const rows = (await h.pg.query<{data:boolean}>(`SELECT ${atomDataEligibleSql('a')} AS data FROM lumen_data_atoms a WHERE id = ANY($1::integer[]) ORDER BY id`, [ids])).rows;
     expect(rows.map(row => row.data)).toEqual([...excluded.map(() => false), true, true, true]);
   });
 });

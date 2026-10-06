@@ -10,6 +10,9 @@ vi.mock('../../../db.js', () => ({ pool: {
 } }));
 
 let harness: Awaited<ReturnType<typeof createDispositionHarness>>;
+const sourceExecutor = {
+  query: async <R = Record<string, unknown>>(sql: string, params?: unknown[]) => ({ rows: (await harness.pg.query<R>(sql, params)).rows }),
+};
 let spine: typeof import('../../clinical-regulatory-evidence/evidence-spine.service');
 let catalog: typeof import('../../vault/document-catalog.service');
 let retained: typeof import('../../clinical-regulatory-evidence/retained-source-context');
@@ -63,7 +66,7 @@ describe('source and catalog consumers of an actual recorded disposition', () =>
     ]);
     expect(await retained.readRetainedSourceContexts(f.org, randomUUID(), [f.capture])).toEqual([]);
     expect(await retained.readRetainedSourceContexts(f.org + 1, f.program, [f.capture])).toEqual([]);
-    expect((await links.resolveEvidenceSourceIdsByArtifact(f.org, [`cre_source:${f.capture}`], harness.db)).get(`cre_source:${f.capture}`)).toBe(f.capture);
+    expect((await links.resolveEvidenceSourceIdsByArtifact(f.org, [`cre_source:${f.capture}`], sourceExecutor)).get(`cre_source:${f.capture}`)).toBe(f.capture);
   });
 
   it('resolves retained Vault text through the programme tenant for legacy null organization metadata', async () => {
@@ -84,7 +87,7 @@ describe('source and catalog consumers of an actual recorded disposition', () =>
     expect(await retained.readRetainedSourceContexts(f.org, f.program, [f.capture])).toEqual([]);
     expect(await catalog.loadDocumentForOrg(f.vault, f.org, { includeText: true })).toBeNull();
     expect((await catalog.listProjectDocuments(f.org, { programId: f.program })).documents).toEqual([]);
-    expect(await links.resolveEvidenceSourceIdsByArtifact(f.org, [`cre_source:${f.capture}`], harness.db)).toEqual(new Map());
+    expect(await links.resolveEvidenceSourceIdsByArtifact(f.org, [`cre_source:${f.capture}`], sourceExecutor)).toEqual(new Map());
     expect(await spine.getSource(f.org, f.capture)).toMatchObject({ id: f.capture, checksum: 'a'.repeat(64), dataEligible: false });
     expect((await harness.pg.query('SELECT * FROM document_span_lineage WHERE organization_id=$1', [f.org])).rows).toHaveLength(1);
   });
