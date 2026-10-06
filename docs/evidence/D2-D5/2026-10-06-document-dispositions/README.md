@@ -109,3 +109,5 @@ This continuation now has **12 unique Vitest files / 102 tests**, plus **2 MCP N
 ## Final continuation publication gate
 
 The unchanged full pre-push hook passed at final source checkpoint `a4bb5a3c2`, exit 0, including canonical TypeScript exit 0 with zero errors against the unchanged zero baseline, import tracking, and pushed ESLint with no error or warning growth. [Exact hook transcript](continuation-prepush.txt). The final combined Semgrep scan covered 11 explicit changed production/test/verification targets with 210 rules: zero findings/errors, approximately 100% parsed lines, exit 0. [JSON](continuation-all-semgrep.json) and [text](continuation-all-semgrep.txt). The remaining commit records only this evidence and recovery state.
+
+The next offboarding error-path continuation is recorded in [offboarding-conflict/README.md](offboarding-conflict/README.md): exact disposition-retention refusal becomes an actionable 409 after rollback, with private handling for unrelated errors.
