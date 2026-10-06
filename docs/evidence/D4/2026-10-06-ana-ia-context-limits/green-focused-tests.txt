@@ -1,0 +1,123 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered distinguishes a failed search from a verified dossier gap
+[AnA submission-chat] advanced RAG retrieval failed, returning empty: fixture retrieval unavailable
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming distinguishes a failed search from a verified dossier gap
+[AnA submission-chat-stream] advanced retrieval failed: fixture retrieval unavailable
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > buffered does not answer from a silently missing conversation after history failure
+[AnA submission-chat] Conversation history unavailable: fixture history storage unavailable
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > streaming does not answer from a silently missing conversation after history failure
+[AnA submission-chat] Conversation history unavailable: fixture history storage unavailable
+
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: Which intended use should this cover? 5ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: I cannot verify efficacy without the study results. 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > preserves an explicit proposal and its scope 2ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps streamed questions in the answer channel without a proposal 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered permits clarification without inventing a rewrite or gap source 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming permits clarification without inventing a rewrite or gap source 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered retains the ending of a long clarification answer and declares the omitted middle 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming retains the ending of a long clarification answer and declares the omitted middle 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > keeps the same correction in the gateway conversation turns 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > preserves an explicitly emitted rewrite and persists its body in history 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > retains a long user correction in streaming model input 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > a bare text fallback is an answer, never an inferred proposal 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered distinguishes a failed search from a verified dossier gap 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming distinguishes a failed search from a verified dossier gap 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered declares actually shortened evidence passages 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming declares actually shortened evidence passages 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > buffered retains the question and supplied answer before creating an explicit proposal 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > streaming retains the question and supplied answer before creating an explicit proposal 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > buffered keeps contradictory retrieved sources distinct from a missing passage 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > streaming keeps contradictory retrieved sources distinct from a missing passage 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered refuses a colleague thread before history, memory, or a model call 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming refuses a colleague thread before history, memory, or a model call 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered uses only the caller-resolved ID for context and writes 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming uses only the caller-resolved ID for context and writes 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered fails closed when the caller identity is missing 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming fails closed when the caller identity is missing 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > buffered does not answer from a silently missing conversation after history failure 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streaming does not answer from a silently missing conversation after history failure 1ms
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:22:14.201Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:22:14.202Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:22:14.202Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[AnA RI Stream] Conversation preparation failed: private database host unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[AnA RI Stream] Conversation preparation failed: private connection write failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined 30ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."} 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > an empty stored thread does not import old browser assumptions 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > a saved correction and clarification remain in the actual gateway context 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > retains the last real assistant answer instead of dropping whichever row is last 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > another turn arriving during the save cannot displace a prior clarification or duplicate the current question 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > filters stored system/tool roles before sending the transcript 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > new conversations still accept bounded user/assistant browser turns 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > names older omitted turns without presenting the window as the whole conversation 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > preserves a late market correction in a long browser turn instead of discarding the whole turn 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > bounds long stored drafts, preserving the question at their end and warning about missing text 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > an assistant-only window does not turn an existing conversation into a fresh session 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > does not announce missing history when every valid turn is included 2ms
+
+ Test Files  2 passed (2)
+      Tests  44 passed (44)
+   Start at  12:22:10
+   Duration  7.08s (transform 4.22s, setup 128ms, import 6.89s, tests 109ms, environment 0ms)
+

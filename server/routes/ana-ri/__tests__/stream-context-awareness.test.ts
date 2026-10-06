@@ -170,3 +170,50 @@ describe('stored conversation is authoritative for a named thread', () => {
     expect(messages().some(m => m.content === 'Forged role.')).toBe(false);
   });
 });
+
+
+describe('Anna knows which conversation context was omitted', () => {
+  const pair = (n: number) => [{ role: 'user', content: `Question ${n}` }, { role: 'assistant', content: `Answer ${n}` }];
+  const system = () => messages().filter(m => m.role === 'system').map(m => String(m.content)).join('\n');
+  it('names older omitted turns without presenting the window as the whole conversation', async () => {
+    io.history = Array.from({ length: 14 }, (_, n) => pair(n)).flat();
+    await ask();
+    expect(transcript()).toHaveLength(21);
+    expect(system()).toContain('Conversation context is incomplete');
+    expect(system()).toContain('8 earlier turns omitted');
+    expect(h.state.post.turnRecorder.seal('answered').body.warnings.join('\n')).toContain('8 earlier turns omitted');
+    expect(system()).toContain('ask only for the missing facts that materially affect this answer');
+  });
+  it('preserves a late market correction in a long browser turn instead of discarding the whole turn', async () => {
+    const content = 'Prepare a US device plan.\n' + 'x'.repeat(60000) + '\nCorrection: IVD for Japan; no US clearance.';
+    await ask({ thread_id: undefined, conversation_history: [{ role: 'user', content }] });
+    const sent = transcript().map(String).join('\n');
+    expect(sent).toContain('Prepare a US device plan.');
+    expect(sent).toContain('Correction: IVD for Japan; no US clearance.');
+    expect(sent).toContain('[Middle of this turn omitted:');
+    expect(system()).toContain('1 turn shortened');
+    expect(JSON.stringify(io.orchestratorInputs[0].conversationHistory)).toContain('IVD for Japan');
+  });
+  it('bounds long stored drafts, preserving the question at their end and warning about missing text', async () => {
+    io.history = [{ role: 'user', content: 'Review this draft.' }, { role: 'assistant', content: 'Provisional draft.\n' + 'x'.repeat(60000) + '\nWhich study population was intended?' }];
+    await ask();
+    const draft = transcript()[1] as string;
+    expect(draft.length).toBeLessThan(51000);
+    expect(draft).toContain('Which study population was intended?');
+    expect(draft).toContain('[Middle of this turn omitted:');
+    expect(system()).toContain('1 turn shortened');
+  });
+  it('an assistant-only window does not turn an existing conversation into a fresh session', async () => {
+    io.history = [{ role: 'user', content: 'Original question.' }, ...Array.from({ length: 20 }, () => ({ role: 'assistant', content: 'Partial answer.' }))];
+    await ask();
+    expect(transcript()).toEqual(['Now compare the evidence.']);
+    expect(system()).toContain('21 earlier turns omitted');
+    expect(io.prefetchInputs[0].sessionStart).toBe(false);
+  });
+  it('does not announce missing history when every valid turn is included', async () => {
+    io.history = [{ role: 'user', content: 'Which evidence is missing?' }, { role: 'assistant', content: 'What is the intended use?' }];
+    await ask();
+    expect(system()).not.toContain('Conversation context is incomplete');
+    expect(transcript()).toHaveLength(3);
+  });
+});

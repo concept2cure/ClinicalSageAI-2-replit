@@ -38,6 +38,8 @@ import {
 } from './submission-chat-metrics.js';
 import { resolveEvidenceSourceIdsByArtifact } from '../clinical-regulatory-evidence/retrieval-source-link.js';
 import { ANA_PERSONALITY_BRIEF } from '../ana-ri/personality-core.js';
+import { excerptTurnContent as excerptSubmissionTurn } from './history-window.js';
+export { excerptSubmissionTurn };
 
 // Cross-encoder relevance threshold for retrieval — matches the chat default
 // so submission-chat doesn't surface lower-quality matches than the section
@@ -744,13 +746,6 @@ function renderPriorCitationsBlock(priorCitations: PriorCitation[]): string {
  * correction or question. Omitted middle text is explicitly marked; an
  * excerpt must not be mistaken for the complete conversation or evidence.
  */
-export function excerptSubmissionTurn(content: string, limit: number): string {
-  if (content.length <= limit) return content;
-  const head = Math.ceil(limit / 2);
-  const tail = Math.floor(limit / 2);
-  return `${content.slice(0, head)}\n[Middle of this turn omitted: ${content.length - limit} characters]\n${content.slice(-tail)}`;
-}
-
 export function submissionConversationTurns(history: ConversationTurn[]): ConversationTurn[] {
   return history.map(turn => ({ role: turn.role, content: excerptSubmissionTurn(turn.content, 1500) }));
 }

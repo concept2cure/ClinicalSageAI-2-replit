@@ -139,7 +139,7 @@ import {
 import { DOCUMENT_ACTIONS } from '../../services/ana-ri/document-actions.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { selectToolsForTurn, SELF_DRIVE_TOOLS } from '../../services/ana/tool-selection.js';
-import { recentTurns } from '../../services/ana/history-window.js';
+import { recentTurnWindow, conversationWindowNotice } from '../../services/ana/history-window.js';
 import { continuationContextMessage } from '../../../shared/ana/continuation-context.js';
 import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
 import { buildContextUsedEvent, type ContextUpload } from '../../services/ana/turn-context-used.js';
@@ -958,13 +958,15 @@ export function mountStreamRoute(router: Router): void {
 
       // One bounded transcript drives both routing and the model. Browser
       // turns are accepted only when starting without a named conversation.
-      const browserTurns = Array.isArray(conversation_history)
-        ? recentTurns(conversation_history.filter((msg: any) =>
-            typeof msg?.content === 'string' && msg.content.length <= 50000), 20)
-        : [];
-      const conversationTurns = (threadId && (thread_id || previousMsgs.length > 0)
-        ? recentTurns(previousMsgs, 20)
-        : browserTurns).map(msg => ({ ...msg, role: msg.role as 'user' | 'assistant' }));
+      const browserTurns = Array.isArray(conversation_history) ? conversation_history : [];
+      const historyWindow = recentTurnWindow(
+        threadId && (thread_id || previousMsgs.length > 0) ? previousMsgs : browserTurns,
+        20,
+        50000,
+      );
+      const conversationTurns = historyWindow.turns.map(msg => ({ ...msg, role: msg.role as 'user' | 'assistant' }));
+      const historyNotice = conversationWindowNotice(historyWindow);
+      if (historyNotice) turnRecorder?.warn(historyNotice);
 
       // Org/project intelligence is independent of route prefetch; overlap
       // their existing budgets instead of paying both waits in sequence.
@@ -980,7 +982,7 @@ export function mountStreamRoute(router: Router): void {
         userId: typeof userId === 'number' ? userId : Number(userId) || null,
         targetAgency:
           typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
-        sessionStart: conversationTurns.length === 0,
+        sessionStart: historyWindow.totalTurns === 0,
       });
       const streamDecisionContext = prefetchedStreamContext.decisionContext;
       const streamFeedbackContext = prefetchedStreamContext.feedbackContext;
@@ -1152,10 +1154,11 @@ export function mountStreamRoute(router: Router): void {
         messages.push({ role: 'system', content: streamVolatileSuffix });
       }
 
-      const streamPriorTurns = conversationTurns.length;
+      const streamPriorTurns = historyWindow.totalTurns;
       for (const msg of conversationTurns) {
         messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
       }
+      if (historyNotice) messages.push({ role: 'system', content: historyNotice });
       // Only stored metadata can attest to tools previously run or a turn
       // stopped early. Browser turns carry no such provenance.
       let carriedTools: string[] = [];
