@@ -1,0 +1,42 @@
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] FAIL — tsc did not complete.
+  exit status : 134
+  heap cap    : 7168 MB (override with TYPECHECK_HEAP_MB)
+  The error count below is NOT trustworthy — the compiler died before finishing.
+  Last 40 lines of output:
+    npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+    
+    <--- Last few GCs --->
+    
+    [42:0x3de31000]   583471 ms: Scavenge 7059.7 (7206.5) -> 7053.3 (7206.5) MB, pooled: 0 MB, 16.66 / 0.00 ms  (average mu = 0.530, current mu = 0.442) allocation failure; 
+    [42:0x3de31000]   583505 ms: Scavenge 7060.2 (7206.5) -> 7054.1 (7207.5) MB, pooled: 0 MB, 19.31 / 0.00 ms  (average mu = 0.530, current mu = 0.442) allocation failure; 
+    [42:0x3de31000]   583540 ms: Scavenge 7061.3 (7207.5) -> 7055.0 (7224.3) MB, pooled: 0 MB, 19.91 / 0.00 ms  (average mu = 0.530, current mu = 0.442) allocation failure; 
+    
+    
+    <--- JS stacktrace --->
+    
+    FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
+    ----- Native stack trace -----
+    
+     1: 0xe13fde node::OOMErrorHandler(char const*, v8::OOMDetails const&) [node]
+     2: 0x11d5070 v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]
+     3: 0x11d5347 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]
+     4: 0x1402c05  [node]
+     5: 0x141c499 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [node]
+     6: 0x13f0b48 v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [node]
+     7: 0x13f1a75 v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [node]
+     8: 0x13cdaf3 v8::internal::Factory::NewContextInternal(v8::internal::Handle<v8::internal::Map>, int, int, v8::internal::AllocationType) [node]
+     9: 0x13ce680 v8::internal::Factory::NewBlockContext(v8::internal::Handle<v8::internal::Context>, v8::internal::Handle<v8::internal::ScopeInfo>) [node]
+    10: 0x1849985 v8::internal::Runtime_PushBlockContext(int, unsigned long*, v8::internal::Isolate*) [node]
+    11: 0x7f5c1feac476 
+    Aborted
+    
+
+  If this host cannot supply the heap, the gate has NOT run — do not
+  report the diff as typechecked. Options, in order of soundness:
+    1. Run it on a host with the memory, or in CI.
+    2. Raise/lower the cap: TYPECHECK_HEAP_MB=<mb> npm run ci:typecheck:no-regression
+    3. Scoped, NOT equivalent: npx tsc --noEmit --skipLibCheck <changed files>
+       — catches within-file errors only; blind to callers. A narrow
+       tsconfig include is not a substitute either: it double-loads the
+       global .d.ts augmentations and invents errors in untouched files.

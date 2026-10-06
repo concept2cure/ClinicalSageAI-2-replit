@@ -1,0 +1,79 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument 12ms
+   → expected 1200 to be 200 // Object.is equality
+ × server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice 1ms
+   → expected undefined to be defined
+ × server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled catalog feature lookup without reading gated records 2ms
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > distinguishes a failed source from an empty source and consumes late rejections 10001ms
+   → Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > keeps disabled recall and disabled catalog gates intact 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument
+AssertionError: expected 1200 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 1200
+
+ ❯ server/services/__tests__/ana-session-bootstrap-latency.test.ts:68:32
+     66|     const text = await result;
+     67|     // Six 200 ms I/O sources cost 200 ms together, not 1,200 ms in se…
+     68|     expect(Date.now() - start).toBe(200);
+       |                                ^
+     69|     for (const value of ['Earlier endpoint discussion', 'Project fact'…
+     70|       expect(text).toContain(value);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice
+AssertionError: expected undefined to be defined
+ ❯ server/services/__tests__/ana-session-bootstrap-latency.test.ts:85:18
+     83|     void buildSessionBootstrapContext(input).then(value => { text = va…
+     84|     await vi.advanceTimersByTimeAsync(1500);
+     85|     expect(text).toBeDefined();
+       |                  ^
+     86|     expect(text).toContain('Project fact');
+     87|     expect(text).toContain('Study report');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled catalog feature lookup without reading gated records
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ server/services/__tests__/ana-session-bootstrap-latency.test.ts:98:18
+     96|     void buildSessionBootstrapContext(input).then(value => { text = va…
+     97|     await vi.advanceTimersByTimeAsync(1500);
+     98|     expect(text).toContain('Session recall incomplete');
+       |                  ^
+     99|     expect(text).toContain('Project fact');
+    100|     expect(sources.vault).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > distinguishes a failed source from an empty source and consumes late rejections
+Error: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ server/services/__tests__/ana-session-bootstrap-latency.test.ts:104:3
+    102|   });
+    103|
+    104|   it('distinguishes a failed source from an empty source and consumes …
+       |   ^
+    105|     let rejectWorking!: (error: Error) => void;
+    106|     sources.working.mockImplementation(() => new Promise((_, reject) =…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  20:42:39
+   Duration  11.20s (transform 486ms, setup 55ms, import 928ms, tests 10.02s, environment 0ms)
+

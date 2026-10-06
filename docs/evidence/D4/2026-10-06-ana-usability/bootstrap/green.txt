@@ -1,0 +1,50 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' calls sessionBootstrapBlockFor 2ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' calls sessionBootstrapBlockFor 6ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' injects the block it gets back 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' injects the block it gets back 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > neither path carries its own copy of the gate 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' assembles its tools through governedToolsetFor 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' assembles its tools through governedToolsetFor 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' does not assemble the raw tool surface itself 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' does not assemble the raw tool surface itself 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > every composer of the AnA tool surface goes through the helper 2ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the realtime turn runs in the tenant scope its socket was authenticated for 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the helper applies the deny-list and says why it does not apply the allowlist 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' gives IND/NDA/BLA chats the one submission context block 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' gives IND/NDA/BLA chats the one submission context block 3ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > neither path carries its own copy of the submission context 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the helper still owns the gate, the kill-switch and the failure path 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > rewards importance, verification, and confidence 3ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > defaults unknown importance to a middle weight 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > orders by score then recency and respects the limit 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > breaks ties by createdAt recency 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > fires only at session start with an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire mid-conversation 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire without an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > respects the disable flag 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > renders all sections when present 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > returns empty string when there is nothing to recall 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > omits lessons with no lessonsLearned text 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls project files with their filed location and what each is for 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls files the client sent in past conversations, with the id that reopens them 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > says honestly when a file has not been studied or failed extraction 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > says how many files it is NOT showing, and forbids answering from the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > counts what needs attention across the whole scope, not across the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > claims completeness only when the listing really is complete 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > says when more chat uploads were attached than it is showing 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > does not invent a "there is more" claim when there is not 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument 13ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled catalog feature lookup without reading gated records 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > distinguishes a failed source from an empty source and consumes late rejections 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > keeps disabled recall and disabled catalog gates intact 1ms
+
+ Test Files  3 passed (3)
+      Tests  40 passed (40)
+   Start at  20:46:14
+   Duration  1.54s (transform 899ms, setup 519ms, import 1.26s, tests 58ms, environment 0ms)
+

@@ -110,6 +110,9 @@ import type {
  */
 const STREAM_IDLE_TIMEOUT_MS = 90_000;
 
+/** A control request must not leave Stop (and a queued replacement demo) waiting forever. */
+const CONTROL_REQUEST_TIMEOUT_MS = 5_000;
+
 /** When to ask the server, by run id, for the record of a turn that ended here first. */
 const RECORD_CONFIRM_WAITS_MS = [1_500, 4_000];
 
@@ -476,6 +479,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       moveId?: string,
     ): Promise<boolean> => {
       if (!runId) return false;
+      const controlAbort = new AbortController();
+      const timeout = setTimeout(() => controlAbort.abort(), CONTROL_REQUEST_TIMEOUT_MS);
       try {
         const res = await fetch(
           `/api/ana-ri/stream/${encodeURIComponent(runId)}/control`,
@@ -483,6 +488,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
             credentials: 'include',
+            signal: controlAbort.signal,
             body: JSON.stringify({
               action,
               ...(message !== undefined ? { message } : {}),
@@ -491,6 +497,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           },
         );
         if (!res.ok) return false;
+        // A control response can arrive after its turn ended and another
+        // began. It still succeeded for the old run, but cannot change the
+        // replacement turn's pause/cancel state.
+        if (runIdRef.current !== runId) return true;
         // Optimistic local status; the server also echoes control SSE events.
         if (action === 'pause') setRunStatus('paused');
         else if (action === 'resume') setRunStatus('running');
@@ -500,6 +510,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         return true;
       } catch {
         return false;
+      } finally {
+        clearTimeout(timeout);
       }
     },
     [],
@@ -589,19 +601,24 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     // the cancel then arrived at a run already terminal and was refused. A
     // person pressing Stop was written into the decision lineage as a network
     // event — inverting the one distinction the audit is there to draw. The
-    // cancel already aborts the run server-side, so waiting for it costs
-    // nothing: generation stops on the server's acknowledgement, not on ours.
+    // cancel aborts the run server-side; wait for its acknowledgement,
+    // bounded by the control request timeout so a network stall cannot lock
+    // Stop or a demonstration queued behind it indefinitely.
     // The screen is another matter, so the drive is halted before the wait.
+    const stoppedController = abortRef.current;
+    const stoppedRunId = runIdRef.current;
     haltTurnDrive();
-    if (runIdRef.current) {
+    if (stoppedRunId) {
       try {
-        await control('cancel');
+        await controlRun(stoppedRunId, 'cancel');
       } catch {
         // A failed cancel must not leave the client streaming; abort anyway.
       }
     }
-    abortRef.current?.abort();
-  }, [control, haltTurnDrive]);
+    // The stopped turn may have finished naturally while its cancellation
+    // was in flight. A newly started demo owns a different controller.
+    if (abortRef.current === stoppedController) stoppedController?.abort();
+  }, [controlRun, haltTurnDrive]);
   const stopRef = useRef(stop);
   stopRef.current = stop;
 
@@ -1007,6 +1024,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       let streamedText = '';
 
       try {
+        // Include the wait for response headers: starting this only after
+        // fetch resolved left a stalled initial request in Planning forever.
+        armIdleTimer();
         const res = await fetch('/api/ana-ri/stream', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },

@@ -1,0 +1,323 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts
+{
+  "timestamp": "2026-10-06T00:42:55.158Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T00:42:55.159Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts
+{
+  "timestamp": "2026-10-06T00:42:55.159Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+{
+  "timestamp": "2026-10-06T00:42:55.160Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T00:42:55.161Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+{
+  "timestamp": "2026-10-06T00:42:55.159Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T00:42:55.160Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+{
+  "timestamp": "2026-10-06T00:42:55.161Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+{
+  "timestamp": "2026-10-06T00:42:55.161Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/retry-policy-529.test.ts
+{
+  "timestamp": "2026-10-06T00:42:55.159Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T00:42:55.160Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/retry-policy-529.test.ts
+{
+  "timestamp": "2026-10-06T00:42:55.160Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/retry-policy-529.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > treats 529 (Anthropic Overloaded) and other transients as retryable 2ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > treats hard client errors as non-retryable 1ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > treats a missing status (network error) as retryable but not a hard client error 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > classifies overload statuses (429/503/529) 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > gives overload more non-streaming retries than a generic transient, and none while streaming 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > gateway-error-map — 529 / overloaded classification > maps a 529 provider failure to OVERLOADED (not a generic fault) 1ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > gateway-error-map — 529 / overloaded classification > maps an "overloaded" message to OVERLOADED 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > gateway-error-map — 529 / overloaded classification > still maps 429 to RATE_LIMITED and generic failure to PROVIDER_UNAVAILABLE 0ms
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error
+{
+  "timestamp": "2026-10-06T00:42:55.272Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error
+{
+  "timestamp": "2026-10-06T00:42:55.272Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: upstream 500",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the Anthropic stream — silence is a stall only while text is streaming > text that stops mid-block is still a stall after the text limit, returned as partial
+{
+  "timestamp": "2026-10-06T00:43:30.281Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Stream stalled — no chunk for 35s while text was streaming. Accumulated 13 chars so far. Aborting stream.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the Anthropic stream — silence is a stall only while text is streaming > text that stops mid-block is still a stall after the text limit, returned as partial
+{
+  "timestamp": "2026-10-06T00:43:30.281Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Returning partial response (13 chars) after stream stall",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the Anthropic stream — silence is a stall only while text is streaming > a stream silent past the working limit with nothing produced is an error, not an empty answer
+{
+  "timestamp": "2026-10-06T00:48:00.283Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Stream stalled — no chunk for 305s while the model was working. Accumulated 0 chars so far. Aborting stream.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream
+{
+  "timestamp": "2026-10-06T00:42:55.284Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream
+{
+  "timestamp": "2026-10-06T00:42:55.284Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: anthropic/claude-sonnet-5 went silent for 300s before it produced any text or tool call, so the stream was stopped.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the OpenAI-compatible stream — the same rule > once it is writing, the text limit applies, and nothing produced is an error
+{
+  "timestamp": "2026-10-06T00:43:30.286Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot stream stalled — no chunk for 35s while it was writing. Accumulated 7 chars. Aborting stream.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the OpenAI-compatible stream — the same rule > once it is writing, the text limit applies, and nothing produced is an error
+{
+  "timestamp": "2026-10-06T00:43:30.286Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Returning partial moonshot response (7 chars) after stall",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the OpenAI-compatible stream — the same rule > once it is writing, the text limit applies, and nothing produced is an error
+{
+  "timestamp": "2026-10-06T00:48:00.286Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot stream stalled — no chunk for 305s before it wrote anything. Accumulated 0 chars. Aborting stream.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > still retries a transient non-streaming fallback once and returns its recovery
+{
+  "timestamp": "2026-10-06T00:42:55.286Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the Anthropic stream — silence is a stall only while text is streaming > a model thinking silently for longer than the text limit is not cut off 8ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the Anthropic stream — silence is a stall only while text is streaming > a tool's arguments buffered for longer than the text limit are not cut off 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the Anthropic stream — silence is a stall only while text is streaming > text that stops mid-block is still a stall after the text limit, returned as partial 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the Anthropic stream — silence is a stall only while text is streaming > a stream silent past the working limit with nothing produced is an error, not an empty answer 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the OpenAI-compatible stream — the same rule > a server that reads the prompt or reasons for longer than the text limit is not cut off 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the OpenAI-compatible stream — the same rule > once it is writing, the text limit applies, and nothing produced is an error 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > watchStreamForStall > fires on silence past the limit for the phase, once, and a chunk resets the clock 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > watchStreamForStall > returns to the working limit when text stops 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error 13ms
+ ✓ server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > still retries a transient non-streaming fallback once and returns its recovery 3ms
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T00:42:55.294Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T00:42:55.295Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T00:42:55.295Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 3 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T00:42:55.295Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-4-8 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T00:42:55.295Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 4 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T00:42:55.296Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T00:42:55.296Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 5 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T00:42:55.296Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-4-6 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T00:42:55.296Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 6 failures — recovery in 120s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T00:42:55.297Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-haiku-4-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T00:42:55.297Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T00:42:55.297Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o-mini failed: upstream 503",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > passes the abort signal through to the provider call 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > keeps the text already streamed when the user stops mid-answer 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > never opens a provider call for a run that is already cancelled 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > never falls back to another model 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > never counts against the provider circuit breaker 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > is not retried by the backoff loop 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > an abort that lands mid-call (the SDK error) never counts against the circuit breaker 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > an abort that lands mid-call is not re-run on the next model 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > one Stop leaves Anthropic healthy for everyone — it used to count once per fallback rung 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors 5ms
+
+ Test Files  4 passed (4)
+      Tests  29 passed (29)
+   Start at  20:42:53
+   Duration  2.05s (transform 3.28s, setup 268ms, import 6.75s, tests 80ms, environment 0ms)
+

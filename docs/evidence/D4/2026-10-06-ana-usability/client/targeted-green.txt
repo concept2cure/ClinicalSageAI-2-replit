@@ -1,0 +1,556 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > validateDriveDirective > resolves a well-formed directive through the registry (canonical copy, not the payload) 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > validateDriveDirective > drops unknown targets — the screen never moves to a target the registry refuses 1ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > validateDriveDirective > drops malformed payloads outright 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > validateDriveDirective > drops a directive whose params fail the registry enum 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer > nothing applies before an honest drive_state enable 1ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer > an enabled drive_state engages the turn and clears any previous lock 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer > records only landed navigations and enforces the per-turn cap 1ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer > take over kills application instantly for the rest of the turn 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer > turn end releases the drive and resets the per-turn cap, keeping the trail 1ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer > records landed screen actions on their own budget, tagged as acts in the trail 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer > enforces the assist action budget and kills actions on take-over 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer > a demo turn carries the larger shared budgets for both kinds of move 1ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer — moves that did not land > records the failure with its reason, without touching either budget 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer — moves that did not land > records a failed navigation AS a navigation, so the strip words it as one 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer — moves that did not land > is a no-op outside a live drive — before it engages and after take over 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer — moves that did not land > take over marks the turn as taken over, not merely inactive 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer — a move is charged on arrival and recorded on landing > an arriving navigation is charged to the budget but shows no step 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer — a move is charged on arrival and recorded on landing > the step appears when the navigation lands, without charging it again 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer — a move is charged on arrival and recorded on landing > a move reserved on the last slot still records when it lands 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer — a move is charged on arrival and recorded on landing > a burst is capped at arrival, before any of it has landed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer — a move is charged on arrival and recorded on landing > a failed move keeps its charge — the server counted it when it sent it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > whyNotApply — a refused move is reported back with the real reason > names why, for each gate, and nothing when the move will be made 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > whyNotApply — a refused move is reported back with the real reason > is the one gate the apply checks read 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer — a mid-turn promotion is a mode change, never an engage > switches a live drive to demo and its budgets, keeping this turn’s counts 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer — a mid-turn promotion is a mode change, never an engage > does nothing to a drive the person took over 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDrive.test.ts > driveReducer — a mid-turn promotion is a mode change, never an engage > does nothing when no drive is running 0ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — order > a navigation holds the next move until its screen is showing and settled 7ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — order > runs a batch of navigations strictly in the order AnA made them 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — a navigation that never lands > reports failure after NAV_SHOW_TIMEOUT_MS, never success, and moves on 2ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — an action the screen performs later > waits for the deferred outcome, then reports it as applied with the screen detail 2ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — an action the screen performs later > reports a deferred refusal as a failure with the screen reason, never as applied 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — an action the screen performs later > a screen that never answers is reported unavailable after the belt timeout 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > refuse() short-circuits: the move is reported failed and the screen never moves 2ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > clear() drops every move not yet started; the one in flight finishes 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > a clear with a reason settles each dropped move with that reason 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > once the person has taken over (canApply=false) no move is made at all 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > a move the queue itself fails on is settled as dropped, and the next still runs 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — whenIdle > resolves only after the last queued move has landed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > names what is listed, deduplicated and trimmed, for a refusal AnA can retry from 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > says nothing when nothing is listed — an empty list is never presented as choices 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > lists a long name by its opening words, the ellipsis outside the quotes so the quoted part still matches 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > summarises beyond the cap instead of silently dropping names 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > validateDriveAction > resolves through the registry — the canonical copy, not the payload 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > validateDriveAction > drops unknown actions, malformed payloads, and enum violations 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > performs through the registered handler and reports the handler outcome 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > reports an honest refusal from the handler, never a fabricated success 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a throwing handler is a failure, not a crash 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a mounted surface WITHOUT the handler is unavailable — never performed "at" it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > stashes across the navigate→mount gap and performs on registration (one shot) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > an expired stash never performs, and says so once — never silence 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a stash replaced by a newer one is told it will not run 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a stash for another surface is not consumed by an unrelated registration 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a mounted-but-not-ready surface (retry refusal) holds the directive for the ready signal 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a retry-held directive still dies at the TTL — held is not forever 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > resolves DEEP_LINK_ALIASES: a nav-target directive lands on the v2 surface registration 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > alias stash: an act for an unmounted aliased surface navigates by nav-target id and performs on the v2 registration 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > unregistration clears ownership so a stale unmount cannot swallow actions 0ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn says it reports every move back > declared when the turn asks to drive and its events reach the shell
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn says it reports every move back > not declared by a chat whose drive events reach no one, or a turn that does not drive
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn says it reports every move back > not declared by a chat whose drive events reach no one, or a turn that does not drive
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > a mode changed after mount is the mode sent (no stale closure)
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > per-call overrides win over the hook options for that turn
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > without Live Drive neither field is sent, whatever the mode
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > sends run_policy from the options
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > screens closed to this person ride every turn > sends locked_screens when the shell has published some
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > screens closed to this person ride every turn > omits the field entirely when nothing is locked
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > keeps a live line while the tools are running
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > a send's own policy wins for that turn
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > keeps a live line while the tools are running 69ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn survives the unmount its own navigation causes > is NOT aborted when the hosting panel unmounts mid-drive
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn says it reports every move back > declared when the turn asks to drive and its events reach the shell 25ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn says it reports every move back > not declared by a chat whose drive events reach no one, or a turn that does not drive 8ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > a mode changed after mount is the mode sent (no stale closure) 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > per-call overrides win over the hook options for that turn 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > without Live Drive neither field is sent, whatever the mode 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > screens closed to this person ride every turn > sends locked_screens when the shell has published some 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > screens closed to this person ride every turn > omits the field entirely when nothing is locked 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > sends run_policy from the options 45ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > a send's own policy wins for that turn 29ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > is absent when nothing chose one, so the turn is today’s
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > the tool rows are still captured — the phase does not replace them
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a recorded turn carries its id and hash from post_done 69ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a failed turn keeps the status the error event carried
+[useAnaChat] stream failed: An error occurred while generating the response
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > without a round status, the previous phase would stand over work it does not describe
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > is absent when nothing chose one, so the turn is today’s 29ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > paused with reason manual becomes runHold with the next steps; resumed clears it
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > times out a request that never receives response headers and releases the composer 17ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > bounds a stalled server cancellation so Stop and a replacement demo can finish 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > a delayed cancellation for an ended turn never aborts a replacement demo 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > the tool rows are still captured — the phase does not replace them 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > without a round status, the previous phase would stand over work it does not describe 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn survives the unmount its own navigation causes > is NOT aborted when the hosting panel unmounts mid-drive 79ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn survives the unmount its own navigation causes > an ordinary turn IS aborted on unmount (no orphaned generation) 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a turn that was not recorded carries the reason 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a failed turn keeps the status the error event carried 55ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > once she is answering, the answer is the status
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > once she is answering, the answer is the status 53ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the round emits the status — carriage > executeTools announces the round before the step event 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the round emits the status — carriage > the announced counts are read off the real round, never hardcoded 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the round emits the status — carriage > the round says so when it finishes, rather than leaving "Running…" standing 1ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a person's pause is a person's, with nothing next
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > emits drive_turn_end, with the run controls, once the driving stream ends
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > a turn that never drove never emits drive_turn_end
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > a turn the server declined to drive never emits drive_turn_end
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > paused with reason manual becomes runHold with the next steps; resumed clears it 104ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a person's pause is a person's, with nothing next 79ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn survives the unmount its own navigation causes > a turn the server declined to drive (drive_state disabled) is still aborted on unmount 52ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > emits drive_turn_end, with the run controls, once the driving stream ends 57ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > a turn that never drove never emits drive_turn_end 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > a turn the server declined to drive never emits drive_turn_end 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a server that says nothing leaves nothing on the turn 54ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn that is allowed to drive but has not moved > an operation performed on screen exempts it, not only a navigation
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn that is allowed to drive but has not moved > IS aborted when the panel unmounts, and still releases the shell’s drive 52ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn that is allowed to drive but has not moved > an operation performed on screen exempts it, not only a navigation 76ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a steer that replaced the held step says which step
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > hold_expired ends the run on the client too, and says what did not run 104ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn that is allowed to drive but has not moved > the move is marked before the shell applies it — the unmount it causes finds the turn driving
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a finished turn leaves the run as it was (no stop to clear)
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > moveLanded settles a move by its id, and a report can name the move it is about
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a steer that replaced the held step says which step 52ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a finished turn leaves the run as it was (no stop to clear) 52ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > budget_exhausted
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > moveLanded settles a move by its id, and a report can name the move it is about
+[useAnaChat] stream failed: The stream ended before the turn finished
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn that is allowed to drive but has not moved > the move is marked before the shell applies it — the unmount it causes finds the turn driving 79ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > approval_timeout
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > reportScreen sends a screen_report to this turn’s run, and queues no steer
+[useAnaChat] stream failed: The stream ended before the turn finished
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > budget_exhausted 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > approval_timeout 54ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > hold_expired
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > moveLanded settles a move by its id, and a report can name the move it is about 77ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > reportScreen sends a screen_report to this turn’s run, and queues no steer 77ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a steer typed into the drive strip is the person’s, queued as pending like the composer’s
+[useAnaChat] stream failed: The stream ended before the turn finished
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > hold_unavailable
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > hold_expired 53ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > hold_unavailable 53ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a report about an earlier turn never reaches a newer run
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > ignores an unknown policy and a malformed step list
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > knows the policy of the turn in flight — what it sent, not the preference now
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a report about an earlier turn never reaches a newer run
+[useAnaChat] stream failed: The stream ended before the turn finished
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a steer typed into the drive strip is the person’s, queued as pending like the composer’s 79ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > Manual's unavailable warning is said once — by the turn's stopped note, not again in its warnings
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > ignores an unknown policy and a malformed step list 53ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a reopened thread > restores the policy and the steps a stop left unrun 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > knows the policy of the turn in flight — what it sent, not the preference now 27ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > Manual's unavailable warning is said once — by the turn's stopped note, not again in its warnings 53ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > a reopened thread shows the steps a steer replaced (from the stored holds) 2ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > with no run to address — before run_started, or once the turn ended — it resolves false, sending nothing
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a report about an earlier turn never reaches a newer run 107ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > with no run to address — before run_started, or once the turn ended — it resolves false, sending nothing 54ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a steer accepted as the run ends is not left pending into the next turn
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a steer accepted as the run ends is not left pending into the next turn 80ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn ended from its own chat > Stop tells the shell before the cancel is answered, with this turn’s controls 79ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn ended from its own chat > a new conversation replacing it halts the drive too 53ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > a rate limit reads as one, not as an unreachable network
+[useAnaChat] stream failed: Stream request failed: 429
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > the weekly usage cap reads as the organization’s limit
+[useAnaChat] stream failed: Stream request failed: 429
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > no provider configured still says so, and anything else is unreachable
+[useAnaChat] stream failed: Stream request failed: 503
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > no provider configured still says so, and anything else is unreachable
+[useAnaChat] stream failed: Stream request failed: 502
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn ended from its own chat > a turn the server did not let drive has no drive to halt 78ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > a rate limit reads as one, not as an unreachable network 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > the weekly usage cap reads as the organization’s limit 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > no provider configured still says so, and anything else is unreachable 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > a turn that ended here before the server spoke for it > after Stop, asks for the record by run id and shows what the server filed 1783ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord > drops anything it cannot read, and never reads it as recorded 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord > keeps an unexplained refusal as a refusal 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > keeps a well-formed list, in order, and the status as before 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > drops the whole list when any entry cannot be read, so it reads as unknown, never as approved 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > carries the list from post_done onto the turn 53ms
+
+ Test Files  8 passed (8)
+      Tests  122 passed (122)
+   Start at  20:43:17
+   Duration  3.20s (transform 1.36s, setup 765ms, import 1.87s, tests 4.45s, environment 2.64s)
+

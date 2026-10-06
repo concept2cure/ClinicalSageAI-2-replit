@@ -1,0 +1,110 @@
+[
+  {
+    "gate": "ci:ectd-stubs",
+    "exit": 0
+  },
+  {
+    "gate": "ci:risk-codes",
+    "exit": 0
+  },
+  {
+    "gate": "ci:migration-set-order",
+    "exit": 0
+  },
+  {
+    "gate": "ci:migration-drop-safety",
+    "exit": 0
+  },
+  {
+    "gate": "ci:migration-deploy-path",
+    "exit": 0
+  },
+  {
+    "gate": "ci:column-reachability",
+    "exit": 0
+  },
+  {
+    "gate": "ci:runtime-ddl",
+    "exit": 0
+  },
+  {
+    "gate": "ci:json-operator-types",
+    "exit": 0
+  },
+  {
+    "gate": "db:sync-manifest:check",
+    "exit": 0
+  },
+  {
+    "gate": "ci:drizzle-tenant-scope",
+    "exit": 0
+  },
+  {
+    "gate": "ci:undefined-css-classes",
+    "exit": 0
+  },
+  {
+    "gate": "ci:unauthenticated-fetch",
+    "exit": 0
+  },
+  {
+    "gate": "ci:session-scoped-rls-bypass",
+    "exit": 0
+  },
+  {
+    "gate": "check:catalog-copy",
+    "exit": 0
+  },
+  {
+    "gate": "ci:fixture-fallback",
+    "exit": 0
+  },
+  {
+    "gate": "ci:no-mock-in-prod-routes",
+    "exit": 0
+  },
+  {
+    "gate": "ci:fabricated-identity",
+    "exit": 0
+  },
+  {
+    "gate": "ci:program-ownership-single-source:selftest",
+    "exit": 0
+  },
+  {
+    "gate": "ci:program-ownership-single-source",
+    "exit": 0
+  },
+  {
+    "gate": "ci:discarded-audit-write",
+    "exit": 0
+  },
+  {
+    "gate": "ci:client-ip-single-source",
+    "exit": 0
+  },
+  {
+    "gate": "ci:sign-ceremony",
+    "exit": 0
+  },
+  {
+    "gate": "ci:upload-guards",
+    "exit": 0
+  },
+  {
+    "gate": "ci:trivyignore-hygiene",
+    "exit": 0
+  },
+  {
+    "gate": "ci:server-error-leaks",
+    "exit": 0
+  },
+  {
+    "gate": "ci:untracked-imports",
+    "exit": 0
+  },
+  {
+    "gate": "ledger-check",
+    "exit": 0
+  }
+]

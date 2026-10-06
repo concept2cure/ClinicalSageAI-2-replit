@@ -1572,7 +1572,7 @@ export class AIGateway {
       try {
         log.debug(`[AI Gateway] Falling back to ${fallback.provider}/${fallback.model}`);
         const response = await this.retryWithBackoff(
-          () => this.executeProvider(fallback, request, requestId, startTime), 1, 1000, overloadPolicy
+          () => this.executeProvider(fallback, request, requestId, startTime), primaryRetries, 1000, overloadPolicy
         );
         this.recordSuccess(fallback.provider, response.latencyMs);
         this.recordTenantUsage(request, response, true);
