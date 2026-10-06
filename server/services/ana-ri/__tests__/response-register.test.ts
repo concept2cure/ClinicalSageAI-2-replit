@@ -264,7 +264,8 @@ describe('the other AnA prompt stacks compose the same register, once', () => {
       expect(count(p, ANA_RESPONSE_REGISTER)).toBe(1);
       expect(count(p, '## Personality & Presence')).toBe(1);
       for (const phrase of MEMO_FORCING_PHRASES) expect(p).not.toContain(phrase);
-      expect(p).toContain('**When asked to draft a document:** You draft it.');
+      expect(p).toContain('**When asked to draft a document:** When the decisive context is known');
+      expect(p).toContain('ask for essential inputs');
     }
   });
 
