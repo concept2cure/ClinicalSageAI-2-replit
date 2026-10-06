@@ -144,3 +144,41 @@ describe('project file decision', () => {
     await screen.findByText(/response did not confirm a recorded decision/); expect(changed).not.toHaveBeenCalled(); expect(confirm().disabled).toBe(true);
   });
 });
+
+
+describe('removal context changes', () => {
+  it.each(['project', 'document'])('drops the prior preview and reason when the %s changes', async changed => {
+    const onChanged = vi.fn();
+    const props = { projectId: PROJECT, targetType: 'captured_source' as const, targetId: TARGET, title: 'Protocol.pdf', onChanged };
+    const view = render(<DocumentDisposition {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Review removal of Protocol.pdf' }));
+    await screen.findByText('a'.repeat(64)); choose(/Remove file; retain extracted data/); reason();
+    expect(confirm().disabled).toBe(false);
+    view.rerender(<DocumentDisposition {...props} projectId={changed === 'project' ? 'other-project' : PROJECT}
+      targetId={changed === 'document' ? '13' : TARGET} title="New selection.pdf" />);
+    expect(screen.queryByRole('button', { name: 'Confirm this decision' })).toBeNull();
+    expect(screen.queryByText('a'.repeat(64))).toBeNull();
+    expect(screen.getByRole('button', { name: 'Review removal of New selection.pdf' })).toBeTruthy();
+    expect(posts()).toHaveLength(0);
+  });
+
+  it.each([201, 409])('ignores a pending decision response (%s) after selecting another document', async status => {
+    let finish!: (r: Response) => void;
+    apiRequest.mockImplementation((method: string) => method === 'GET'
+      ? Promise.resolve(reply(200, { preview: preview() }))
+      : new Promise<Response>(resolve => { finish = resolve; }));
+    const onChanged = vi.fn();
+    const props = { projectId: PROJECT, targetType: 'captured_source' as const, targetId: TARGET, title: 'Protocol.pdf', onChanged };
+    const view = render(<DocumentDisposition {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Review removal of Protocol.pdf' }));
+    await screen.findByText('a'.repeat(64)); choose(/Remove file; retain extracted data/); reason(); fireEvent.click(confirm());
+    view.rerender(<DocumentDisposition {...props} targetId="13" title="New selection.pdf" />);
+    await act(async () => { finish(reply(status, status === 201 ? {
+      disposition: { id: 'decision-1', target: preview().target, choice: 'keep_data', auditReceipt: { id: 'receipt-1', sha256Chain: 'b'.repeat(64) } },
+    } : { message: 'Old source changed.' })); });
+    expect(onChanged).not.toHaveBeenCalled();
+    expect(screen.queryByRole('status')).toBeNull(); expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Review removal of New selection.pdf' })).toBeTruthy();
+    expect(posts()).toHaveLength(1);
+  });
+});

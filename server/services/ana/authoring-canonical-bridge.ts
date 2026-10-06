@@ -150,7 +150,7 @@ export async function bridgeAuthoringToCanonical(
     return { bridged: false, reason: 'no reason for change was stated — the canonical revision records the person\'s reason, never one written for them' };
   }
   try {
-    const resolved = deps.resolveProject
+    const resolved: { projectId?: number | null; reason?: string } = deps.resolveProject
       ? await deps.resolveProject(req.docId, req.organizationId, req.projectId)
       : { projectId: req.projectId };
     const projectId = resolved.projectId;

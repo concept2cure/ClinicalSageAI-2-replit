@@ -68,6 +68,10 @@ function recordedDecision(value: unknown, request: DocumentDispositionRequest): 
     r.auditReceipt?.id && hash(r.auditReceipt.sha256Chain));
 }
 
+function displayFailure(error: unknown, fallback: string): string {
+  return redactInternals(error instanceof Error ? error.message : String(error), fallback);
+}
+
 function useDisposition({ projectId, targetType, targetId, onChanged }: Props) {
   const [open, setOpen] = useState(false);
   const [preview, setPreview] = useState<DocumentDispositionPreview | null>(null);
@@ -80,6 +84,7 @@ function useDisposition({ projectId, targetType, targetId, onChanged }: Props) {
   const [expired, setExpired] = useState(false);
   const [note, setNote] = useState<{ error: boolean; text: string } | null>(null);
   const sequence = useRef(0);
+  const pendingWrite = useRef(false);
   const path = `/api/c2c/projects/${encodeURIComponent(projectId)}/document-dispositions`;
 
   useEffect(() => () => { sequence.current++; }, [projectId, targetType, targetId]);
@@ -105,7 +110,7 @@ function useDisposition({ projectId, targetType, targetId, onChanged }: Props) {
       if (!usablePreview(body?.preview, targetType, targetId, replacement)) throw new Error('The impact read was incomplete or did not match this document. Reload it before making a decision.');
       setPreview(body.preview);
     } catch (e) {
-      if (seq === sequence.current) setNote({ error: true, text: redactInternals(e instanceof Error ? e.message : String(e), 'The removal impact could not be read.') });
+      if (seq === sequence.current) setNote({ error: true, text: displayFailure(e, 'The removal impact could not be read.') });
     } finally { if (seq === sequence.current) setLoading(false); }
   };
   const start = () => {
@@ -124,13 +129,16 @@ function useDisposition({ projectId, targetType, targetId, onChanged }: Props) {
   const canConfirm = decisionReady({ preview, choice, reason, replacementDraft, replacementId, busy: saving || loading, expired });
 
   const confirm = async () => {
-    if (!canConfirm || !preview || !choice || Date.parse(preview.expiresAt) <= Date.now()) return;
+    if (pendingWrite.current || !canConfirm || !preview || !choice || Date.parse(preview.expiresAt) <= Date.now()) return;
+    pendingWrite.current = true;
+    const seq = ++sequence.current;
     setSaving(true); setNote(null);
     const request: DocumentDispositionRequest = { targetType, targetId, choice, reason: reason.trim(), previewToken: preview.previewToken,
       ...(choice === 'supersede' ? { replacementId } : {}) };
     try {
       const res = await apiRequest('POST', path, request);
       const body = await res.json().catch(() => null);
+      if (seq !== sequence.current) return;
       if (!res.ok) throw new Error(serverMessage(body) ?? 'The decision was refused. Reload the impact before retrying.');
       if (!recordedDecision(body?.disposition, request)) {
         throw new Error('The response did not confirm a recorded decision. Reload the document before retrying.');
@@ -139,11 +147,15 @@ function useDisposition({ projectId, targetType, targetId, onChanged }: Props) {
       setNote({ error: false, text: `${CHOICES[choice].label} — recorded with your reason and its audit receipt.` });
       onChanged();
     } catch (e) {
+      if (seq !== sequence.current) return;
       // Every refusal invalidates the preview, including a server-side stale
       // token. A repeated click cannot replay a preview the server refused.
       setPreview(null);
-      setNote({ error: true, text: redactInternals(e instanceof Error ? e.message : String(e), 'The decision was not confirmed. Reload the impact before retrying.') });
-    } finally { setSaving(false); }
+      setNote({ error: true, text: displayFailure(e, 'The decision was not confirmed. Reload the impact before retrying.') });
+    } finally {
+      pendingWrite.current = false;
+      if (seq === sequence.current) setSaving(false);
+    }
   };
 
   const editReplacement = (value: string) => { setReplacementDraft(value); sequence.current++; setPreview(null); setLoading(false); };
@@ -200,11 +212,18 @@ function DispositionForm({ actions: a, title, targetType, targetId }: { actions:
     </section>;
 }
 
-export function DocumentDisposition(props: Props) {
+function DocumentDispositionForTarget(props: Props) {
   const a = useDisposition(props);
   return <div style={{ marginTop: 8 }}>
     {!a.open && <button className="sp-ask" onClick={a.start} aria-label={`Review removal of ${props.title}`}>{props.existingChoice === 'keep_data' ? 'Manage retained data' : 'Review file removal'}</button>}
     {a.open && <DispositionForm actions={a} title={props.title} targetType={props.targetType} targetId={props.targetId} />}
     {a.note && <p role={a.note.error ? 'alert' : 'status'} className={a.note.error ? 'sp-tone-warn' : 'sp-tone-ok'}>{a.note.text}</p>}
   </div>;
+}
+
+
+/** A different project/source gets a fresh decision, never the old preview or
+ * reason. The previous request may finish on the server; its response is ignored. */
+export function DocumentDisposition(props: Props) {
+  return <DocumentDispositionForTarget key={JSON.stringify([props.projectId, props.targetType, props.targetId])} {...props} />;
 }

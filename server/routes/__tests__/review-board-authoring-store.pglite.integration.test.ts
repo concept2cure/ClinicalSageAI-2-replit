@@ -312,7 +312,7 @@ describe('formal review submission is atomic and recoverable', () => {
     const r = await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`)).send({ workflow_steps: [] });
     expect(r.status).toBe(400);
     const doc = await jdb.pool.query(`SELECT status FROM authoring_documents WHERE id=$1`, [id]);
-    expect(String(doc.rows[0].status).toLowerCase()).toBe('draft');
+    expect(String((doc.rows[0] as { status: string }).status).toLowerCase()).toBe('draft');
   }, T);
 
   it('refuses retries on a draft or foreign document and malformed workflow inputs', async () => {
@@ -333,8 +333,8 @@ describe('formal review submission is atomic and recoverable', () => {
       const r = await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`)).send({ workflow_steps: reviewSteps });
       expect(r.status).toBe(500);
       const doc = await jdb.pool.query(`SELECT status,current_workflow_id FROM authoring_documents WHERE id=$1`, [id]);
-      expect(String(doc.rows[0].status).toLowerCase()).toBe('draft');
-      expect(doc.rows[0].current_workflow_id).toBeNull();
+      expect(String((doc.rows[0] as { status: string }).status).toLowerCase()).toBe('draft');
+      expect((doc.rows[0] as { current_workflow_id: string | null }).current_workflow_id).toBeNull();
       expect((await jdb.pool.query(`SELECT id FROM authoring_workflow_steps WHERE doc_id=$1`, [id])).rows).toEqual([]);
     } finally {
       await jdb.pool.query(`DROP TRIGGER reject_review_submit ON authoring_audit_trail`);

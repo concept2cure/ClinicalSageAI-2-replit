@@ -73,3 +73,13 @@ Unresolved legacy linkage and UUID-to-numeric actor identity remain visible
 blockers. Peer-review request routes remain separate and unchanged. This does
 not qualify live provider use, tenant data, reviewer approval, deletion UI/API
 enforcement, or an entire IND submission. No production deployment is claimed.
+
+
+## CI follow-up
+
+CI for 79bb9fe3495531f19398bfcf4bf3270c16f599fc found four TypeScript errors:
+three unknown-row property reads in the new PGlite regression tests and an
+inferred union missing the optional reason property in the bridge fallback.
+This follow-up declares the resolver outcome shape and explicitly narrows the
+test query rows. Baselines, compiler configuration and gates are unchanged.
+The original build and runtime test success did not establish type-check success.
