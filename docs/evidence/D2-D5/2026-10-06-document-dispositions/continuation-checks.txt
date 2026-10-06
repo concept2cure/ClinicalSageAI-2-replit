@@ -43,3 +43,5 @@ Normal unmodified full pre-push hook at source 90235bda8 (before purge classific
 ✅ Pre-push checks complete — all gates passed.
 
 Purge continuation: 1 Vitest suite / 7 tests passed. Direct-PGlite alternative: 29 actual SQL/catalog/parser/baseline cases passed; native socket transport blocked EPERM and its connection-failure case excluded. Baseline unchanged. Final production build after runtime guard: client13.93s, server dist/index.js, exit0.
+
+FINAL normal full pre-push hook at source a4bb5a3c2: exit0; all gates passed. Canonical TypeScript exit0, 0 errors against unchanged0baseline. Changed imports resolve, ESLint no errors or warninggrowth. Final Semgrep all11explicit targets: 210rules,0findings,0errors,~100%parsed,exit0. No config/gate/baseline bypass. Exact transcripts: continuation-prepush.txt and continuation-all-semgrep.{txt,json}.

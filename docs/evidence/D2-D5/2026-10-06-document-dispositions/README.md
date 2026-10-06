@@ -105,3 +105,7 @@ The blank-database CI purge gate reported the new `document_data_dispositions` l
 [The purge-retention proof](purge-retention/README.md) records seven runtime tests and 29 direct embedded PostgreSQL catalog/parser/baseline cases. The normal Unix-socket selftest was unavailable locally (`EPERM`); the alternate excludes its native unavailable-server case. Whole-schema CI qualification and native connection timing remain pending. This classifies retained receipt evidence; it does not establish that whole tenant purges succeed with frozen source/extraction lineage. The lineage guards remain enforced.
 
 This continuation now has **12 unique Vitest files / 102 tests**, plus **2 MCP Node tests** and **29 separate purge-gate fixture cases**. Earlier test counts overlap and are not added. The final production build after the offboarding guard passed (13.93s client); existing chunk-size warnings remain.
+
+## Final continuation publication gate
+
+The unchanged full pre-push hook passed at final source checkpoint `a4bb5a3c2`, exit 0, including canonical TypeScript exit 0 with zero errors against the unchanged zero baseline, import tracking, and pushed ESLint with no error or warning growth. [Exact hook transcript](continuation-prepush.txt). The final combined Semgrep scan covered 11 explicit changed production/test/verification targets with 210 rules: zero findings/errors, approximately 100% parsed lines, exit 0. [JSON](continuation-all-semgrep.json) and [text](continuation-all-semgrep.txt). The remaining commit records only this evidence and recovery state.
