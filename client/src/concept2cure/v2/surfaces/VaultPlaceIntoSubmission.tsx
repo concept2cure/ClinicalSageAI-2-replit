@@ -39,9 +39,10 @@
  */
 import React from 'react';
 import { I } from '../icons';
-import { mutateVerbatim } from './SubmissionSeqWorkspaces';
+import { mutateVerbatim, type MutateResult } from './SubmissionSeqWorkspaces';
 import { SC_LIFECYCLE_OPS } from '../fixtures/submission';
 import { useLiveData } from '../dataConnect';
+import { shellProgramId, useShellProject } from '../shellProject';
 import { versionsPath, isVersionsShape, type VersionsShape } from './VaultVersions';
 import { stageLabel } from './VaultLifecycle';
 import {
@@ -52,15 +53,11 @@ import {
   PlacementReasonField,
   placementReasonOk,
   PLACEMENT_REASON_REQUIRED,
+  isLocked,
+  matchingLeafReceipt,
+  placementAuditWarning,
+  type FilingLeafReceipt as PlacedLeaf,
 } from './filingTarget';
-
-/** PUT /sequences/:seqId/leaves → upsertLeaf() row (subset). */
-interface PlacedLeaf {
-  id: number;
-  sectionCode: string;
-  title: string;
-  lifecycleOp: string;
-}
 
 export interface VaultPlaceIntoSubmissionProps {
   /** vault.documents.id — a uuid. This is what the leaf will name. */
@@ -71,6 +68,8 @@ export interface VaultPlaceIntoSubmissionProps {
   onClose: () => void;
   /** Re-read the surface after a successful placement. */
   onPlaced?: () => void;
+  /** Existing Submission Center navigation for confirmation and recovery. */
+  onNav?: (id: string) => void;
   /**
    * vault.documents.mime_type, verified against the file's magic bytes at
    * ingest. Only a PDF can be filed: the packager's vault branch refuses a leaf
@@ -290,11 +289,39 @@ function VerdictLine({ verdict }: { verdict: NonNullable<Verdict> }) {
   );
 }
 
-export function VaultPlaceIntoSubmission({
+function placementAllowed(seq: { status: string } | null, inputsReady: boolean, blocked: boolean): boolean {
+  return Boolean(seq && !isLocked(seq.status) && inputsReady && !blocked);
+}
+
+function vaultPlacementFailure(put: MutateResult<unknown>, sequence: string, section: string) {
+  const unconfirmed = !!put.unconfirmed || put.data != null;
+  return { unconfirmed, verdict: { kind: 'error' as const, message: unconfirmed
+    ? `We cannot confirm whether this document was placed in sequence ${sequence} at ${section}. Check filing status before retrying.`
+    : put.error ?? 'The server refused the placement without a reason.' } };
+}
+
+function confirmedPlacementVerdict(row: PlacedLeaf, sequence: string, refusal: string | null): NonNullable<Verdict> {
+  const auditWarning = placementAuditWarning(row);
+  return { kind: auditWarning ? 'error' : 'ok', message: placedMessage(row.sectionCode, sequence, refusal) + auditWarning };
+}
+
+function FilingRecovery({ placed, uncertain, onNav, onClose }: {
+  placed: boolean; uncertain: boolean; onNav?: (id: string) => void; onClose: () => void;
+}) {
+  if (!onNav || (!placed && !uncertain)) return null;
+  return <div className="de-field">
+    <button className="de-btn ghost" onClick={() => { onClose(); onNav('submission-center'); }}>
+      {placed ? 'Open in Submission Center' : 'Check filing status'}
+    </button>
+  </div>;
+}
+
+function VaultPlaceIntoSubmissionForDocument({
   documentUuid,
   documentTitle,
   onClose,
   onPlaced,
+  onNav,
   mimeType,
   projectId,
   filing,
@@ -312,6 +339,10 @@ export function VaultPlaceIntoSubmission({
   const [reason, setReason] = React.useState('');
   const [placing, setPlacing] = React.useState(false);
   const [placed, setPlaced] = React.useState<PlacedLeaf | null>(null);
+  const [needsReconciliation, setNeedsReconciliation] = React.useState(false);
+  const pending = React.useRef(false);
+  const generation = React.useRef(0);
+  React.useEffect(() => () => { generation.current += 1; }, []);
 
   /* Dialog behaviour the surrounding pattern does not carry. `aria-modal` is a
      claim that everything outside is inert; making it without trapping focus
@@ -383,10 +414,13 @@ export function VaultPlaceIntoSubmission({
   const sectionUsable = judged.placeable;
 
   const reasonOk = placementReasonOk(reason);
-  const canPlace = Boolean(!notPdf && seq && sectionUsable && reasonOk && !placing && !placed);
+  const canPlace = placementAllowed(seq, sectionUsable && reasonOk, notPdf || placing || Boolean(placed) || needsReconciliation);
 
   const place = async () => {
-    if (!seq || !sectionUsable) return;
+    if (!canPlace || !seq || !judged.canonical || pending.current) return;
+    pending.current = true;
+    const started = generation.current;
+    const current = () => started === generation.current;
     setPlacing(true);
     setVerdict(null);
     try {
@@ -400,15 +434,21 @@ export function VaultPlaceIntoSubmission({
         documentUuid,
         reason: reason.trim(),
       });
-      if (put.error || !put.data) {
-        setVerdict({ kind: 'error', message: put.error ?? 'The server refused the placement without a reason.' });
+      if (!current()) return;
+      if (!matchingLeafReceipt(put.data, {
+        sequenceId: seq.id, sectionCode: judged.canonical, lifecycleOp: op,
+        documentTable: 'vault_documents', documentUuid,
+      })) {
+        const failure = vaultPlacementFailure(put, seq.sequenceNumber, judged.canonical);
+        setNeedsReconciliation(failure.unconfirmed);
+        setVerdict(failure.verdict);
         return;
       }
       setPlaced(put.data);
-      setVerdict({ kind: 'ok', message: placedMessage(put.data.sectionCode, seq.sequenceNumber, refusalFor(stage, op)) });
+      setVerdict(confirmedPlacementVerdict(put.data, seq.sequenceNumber, refusalFor(stage, op)));
       onPlaced?.();
     } finally {
-      setPlacing(false);
+      if (current()) { pending.current = false; setPlacing(false); }
     }
   };
 
@@ -456,22 +496,25 @@ export function VaultPlaceIntoSubmission({
             <NotPdfNotice mimeType={mimeType} />
           ) : (
             <>
-              <FilingTargetFields target={target} idPrefix="vpf" />
-              <SectionFields
-                section={section}
-                onSection={(value) => { setSection(value); setVerdict(null); }}
-                vocabulary={vocabulary}
-                judged={judged}
-                op={op}
-                onOp={setOp}
-                confirmedSection={confirmedSection}
-                filing={filing}
-              />
-              <PlacementReasonField value={reason} onChange={setReason} idPrefix="vpf" disabled={placing || Boolean(placed)} />
+              <fieldset disabled={placing || needsReconciliation || Boolean(placed)} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+                <FilingTargetFields target={target} idPrefix="vpf" />
+                <SectionFields
+                  section={section}
+                  onSection={(value) => { setSection(value); setVerdict(null); }}
+                  vocabulary={vocabulary}
+                  judged={judged}
+                  op={op}
+                  onOp={setOp}
+                  confirmedSection={confirmedSection}
+                  filing={filing}
+                />
+                <PlacementReasonField value={reason} onChange={setReason} idPrefix="vpf" />
+              </fieldset>
             </>
           )}
 
           {verdict && <VerdictLine verdict={verdict} />}
+          <FilingRecovery placed={Boolean(placed)} uncertain={needsReconciliation} onNav={onNav} onClose={onClose} />
         </div>
 
         <div className="de-f">
@@ -490,4 +533,12 @@ export function VaultPlaceIntoSubmission({
       </div>
     </div>
   );
+}
+
+
+/** Switching source or project starts a fresh dialog; old receipts cannot confirm the new source. */
+export function VaultPlaceIntoSubmission(props: VaultPlaceIntoSubmissionProps) {
+  const shellProject = useShellProject();
+  const projectId = props.projectId ?? shellProgramId(shellProject);
+  return <VaultPlaceIntoSubmissionForDocument key={JSON.stringify([props.documentUuid, projectId])} {...props} projectId={projectId} />;
 }

@@ -62,6 +62,10 @@ import {
   PLACEMENT_REASON_REQUIRED,
   judgeSectionCode,
   isLocked,
+  validReceiptId,
+  matchingLeafReceipt,
+  placementAuditWarning,
+  type FilingLeafReceipt as PlacedLeaf,
 } from './filingTarget';
 import { mutateVerbatim, type MutateResult } from './SubmissionSeqWorkspaces';
 import { SC_LIFECYCLE_OPS } from '../fixtures/submission';
@@ -80,18 +84,6 @@ interface SavedSection {
   code: string | null;
   title: string | null;
   content: string | null;
-}
-
-/** PUT /sequences/:seqId/leaves → upsertLeaf() row (subset). */
-interface PlacedLeaf {
-  id: number;
-  sectionCode: string;
-  title: string;
-  lifecycleOp: string;
-  sequenceId: number;
-  documentTable: string;
-  documentId: number;
-  auditTrail?: { persisted?: boolean; chained?: boolean } | null;
 }
 
 /**
@@ -252,7 +244,7 @@ function AuthoringPlaceIntoFilingForDocument({
         reason: reason.trim(),
       });
       if (!current()) return;
-      if (!matchingLeafReceipt(put.data, filing.seq.id, sectionCode, snapshotId, op)) {
+      if (!matchingLeafReceipt(put.data, { sequenceId: filing.seq.id, sectionCode, documentTable: 'coauthor_documents', documentId: snapshotId, lifecycleOp: op })) {
         const failure = leafFailure(put, snapshotId, filing.seq.sequenceNumber, sectionCode);
         setNeedsReconciliation(failure.unconfirmed);
         setVerdict(failure.verdict);
@@ -437,20 +429,6 @@ function AuthoringPlaceIntoFilingForDocument({
 export function AuthoringPlaceIntoFiling(props: AuthoringPlaceIntoFilingProps) {
   const project = shellProgramId(useShellProject());
   return <AuthoringPlaceIntoFilingForDocument key={JSON.stringify([props.docId, project])} {...props} />;
-}
-
-function validReceiptId(value: unknown): value is number {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
-}
-function matchingLeafReceipt(row: PlacedLeaf | null, sequenceId: number, sectionCode: string, snapshotId: number, op: string): row is PlacedLeaf {
-  if (!row || !validReceiptId(row.id)) return false;
-  return row.sequenceId === sequenceId && row.sectionCode === sectionCode &&
-    row.documentTable === 'coauthor_documents' && row.documentId === snapshotId && row.lifecycleOp === op;
-}
-function placementAuditWarning(row: PlacedLeaf): string {
-  if (row.auditTrail?.persisted !== true) return ' The placement audit entry was not confirmed. Check the audit history and follow up before treating this as a complete governed filing.';
-  if (row.auditTrail.chained !== true) return ' The placement audit entry is not confirmed in retrievable history. Follow up before treating this as a complete governed filing.';
-  return '';
 }
 
 interface SnapshotRow { id?: number; metadata?: { source?: string; docId?: string } | null }

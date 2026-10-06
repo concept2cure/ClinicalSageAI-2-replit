@@ -1400,6 +1400,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           mimeType={filingIntoSubmission.mimeType}
           projectId={projectId ?? null}
           filing={filingIntoSubmission.filing ?? null}
+          onNav={onNav}
           onClose={() => setFilingIntoSubmission(null)}
         />
       )}

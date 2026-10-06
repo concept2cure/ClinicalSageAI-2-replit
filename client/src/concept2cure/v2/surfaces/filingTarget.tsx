@@ -447,3 +447,44 @@ export function PlacementReasonField({
   );
 }
 
+
+
+/** Confirmation returned by the existing canonical leaf write, shared by both filing dialogs. */
+export interface FilingLeafReceipt {
+  id: number;
+  sequenceId: number;
+  sectionCode: string;
+  lifecycleOp: string;
+  documentTable: string;
+  documentId?: number | null;
+  documentUuid?: string | null;
+  auditTrail?: { persisted?: boolean; chained?: boolean } | null;
+}
+
+export function validReceiptId(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+}
+
+type ExpectedLeaf = { sequenceId: number; sectionCode: string; lifecycleOp: string } & (
+  | { documentTable: 'coauthor_documents'; documentId: number }
+  | { documentTable: 'vault_documents'; documentUuid: string }
+);
+
+/** A nonempty body is not confirmation that the requested document was filed. */
+export function matchingLeafReceipt(value: unknown, expected: ExpectedLeaf): value is FilingLeafReceipt {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as FilingLeafReceipt;
+  if (!validReceiptId(row.id) || row.sequenceId !== expected.sequenceId ||
+      row.sectionCode !== expected.sectionCode || row.lifecycleOp !== expected.lifecycleOp ||
+      row.documentTable !== expected.documentTable) return false;
+  return expected.documentTable === 'vault_documents'
+    ? row.documentUuid === expected.documentUuid
+    : row.documentId === expected.documentId;
+}
+
+/** Placement can stand while its audit write or retrievable history is incomplete. */
+export function placementAuditWarning(row: FilingLeafReceipt): string {
+  if (row.auditTrail?.persisted !== true) return ' The placement audit entry was not confirmed. Check the audit history and follow up before treating this as a complete governed filing.';
+  if (row.auditTrail.chained !== true) return ' The placement audit entry is not confirmed in retrievable history. Follow up before treating this as a complete governed filing.';
+  return '';
+}

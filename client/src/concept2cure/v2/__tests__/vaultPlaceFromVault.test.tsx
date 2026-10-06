@@ -43,11 +43,14 @@ const versionsAnswer = () =>
     },
   });
 
-function mockApi(doc: unknown) {
+function mockApi(doc: unknown, loseReply = false) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return ok(vaultPayload({ tree: cabinetTree([doc]) }));
     if (url === VERSIONS_URL && method === 'GET') return versionsAnswer();
+    if (url === '/api/submissions') return ok([{ id: 4, title: 'Our IND', applicationType: 'ind', primaryRegion: 'us', status: 'open', programId: PID }]);
+    if (url === '/api/submissions/4/sequences') return ok([{ id: 9, sequenceNumber: '0000', type: 'original', status: 'draft', region: 'us' }]);
+    if (method === 'PUT' && loseReply) throw new Error('lost reply');
     return ok({});
   });
 }
@@ -55,8 +58,8 @@ function mockApi(doc: unknown) {
 const versionReads = () => apiRequest.mock.calls.filter(([m, u]) => m === 'GET' && u === VERSIONS_URL).length;
 
 /** Open the dialog from the Vault's control, once the detail pane has made its own read. */
-async function openDialog() {
-  render(<Vault {...props()} />);
+async function openDialog(surfaceProps = props()) {
+  render(<Vault {...surfaceProps} />);
   const control = await screen.findByTestId('vault-place-into-submission');
   // The detail pane's version list reads the same route, so the dialog's read
   // is shown by the count going up after the click, not by the call existing.
@@ -71,6 +74,19 @@ beforeEach(() => { (window as any).C2C_PROJECT = { id: PID, title: 'BX-301' }; }
 afterEach(() => { cleanup(); delete (window as any).C2C_PROJECT; });
 
 describe('Place into submission from the Vault', () => {
+  it('opens the existing Submission Center to check a lost placement reply', async () => {
+    mockApi(filed('confirmed'), true);
+    const surfaceProps = props();
+    const { dialog } = await openDialog(surfaceProps);
+    fireEvent.change(await within(dialog).findByLabelText('Target submission'), { target: { value: '4' } });
+    await within(dialog).findByLabelText('Sequence');
+    fireEvent.change(within(dialog).getByLabelText(/^Reason for this placement/), { target: { value: 'Approved stability summary for IND' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: /^Place into submission$/ }));
+    fireEvent.click(await within(dialog).findByRole('button', { name: 'Check filing status' }));
+    expect(surfaceProps.onNav).toHaveBeenCalledWith('submission-center');
+    expect(screen.queryByRole('dialog', { name: /place into submission/i })).toBeNull();
+  });
+
   it('opens with a confirmed filing\'s section filled in, and reads this version\'s stage', async () => {
     mockApi(filed('confirmed'));
     const { dialog, before } = await openDialog();
