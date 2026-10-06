@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-06T02:12:53.740Z",
+  "generatedAt": "2026-10-06T02:18:30.406Z",
   "git": {
-    "sha": "227dcbe947566375b11fb5577313287f7532be21",
+    "sha": "07ed9282834caad83f03ece32d3cafd65efe5caf",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2516,7 +2516,7 @@
       },
       {
         "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 1910
+        "lines": 1920
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
