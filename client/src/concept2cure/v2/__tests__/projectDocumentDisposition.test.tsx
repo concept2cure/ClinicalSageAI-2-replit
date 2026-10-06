@@ -67,7 +67,7 @@ describe('reachable project document lifecycle controls', () => {
   it('retained Vault data has no download promise for unavailable original bytes', async () => {
     mockVaultApi(apiRequest, () => ok(vaultPayload({ tree: cabinetTree([uploadDoc({ docId: DOC_ID, originalFileAvailable: false, disposition: 'keep_data' })]) })));
     render(<Vault {...props()} />);
-    expect((await screen.findByRole('button', { name: 'Download', exact: true }) as HTMLButtonElement).disabled).toBe(true);
+    expect((await screen.findByRole('button', { name: 'Download' }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByText(/Original file unavailable\. Retained extracted data/)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Review removal of stability-summary-24m' }).textContent).toBe('Manage retained data');
   });
@@ -89,7 +89,7 @@ describe('reachable project document lifecycle controls', () => {
     render(<Vault {...props()} />);
     fireEvent.change(await screen.findByLabelText('Search this vault'), { target: { value: 'retained' } });
     await screen.findByRole('button', { name: 'Review removal of Retained search record' });
-    expect((screen.getByRole('button', { name: 'Download', exact: true }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByRole('button', { name: 'Review removal of Retained search record' }).textContent).toBe('Manage retained data');
   });
 });
