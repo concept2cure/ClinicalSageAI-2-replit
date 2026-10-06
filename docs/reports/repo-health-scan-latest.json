@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-06T14:18:34.632Z",
+  "generatedAt": "2026-10-06T16:18:46.554Z",
   "git": {
-    "sha": "b7984438bc472348b5ed2958f8fd101c97d5a666",
+    "sha": "afe63076cd6078bf7f38be122a9c0a4e5e5788b8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2086,7 +2086,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 170491
+        "bytes": 169712
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2308,7 +2308,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3366
+        "lines": 3353
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
