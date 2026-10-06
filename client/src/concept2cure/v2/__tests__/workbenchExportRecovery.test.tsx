@@ -29,6 +29,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
 const DOC = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
@@ -61,7 +62,12 @@ afterEach(() => {
 });
 
 it('recovers a recorded export through the existing history without creating another export', async () => {
-  render(<DocumentAuthoring surface={{ id: 'document-authoring', label: 'Authoring' } as any} onAsk={vi.fn()} onNav={vi.fn()} />);
+  const props: OwnedSurfaceViewProps = {
+    surface: { id: 'document-authoring', label: 'Authoring' } as OwnedSurfaceViewProps['surface'],
+    onNav: vi.fn(),
+    segment: 'biotech',
+  };
+  render(<DocumentAuthoring {...props} />);
   await screen.findAllByText('Overview');
   fireEvent.click(screen.getByRole('button', { name: /^Word$/ }));
   const recovery = await screen.findByRole('button', { name: /Check export history/ });

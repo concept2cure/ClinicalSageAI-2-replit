@@ -68,7 +68,10 @@ is asserted. No new dependency, schema, model, store, or capability was added.
 
 The first published commit's zero-baseline TypeScript gate found two errors in
 new test fixtures: a partial Response with a rejecting blob method needed the
-existing explicit unknown cast, and the Workbench test supplied a segment prop
-that DocumentAuthoring does not accept. Both fixtures were corrected; application
-behavior is unchanged. The three affected client suites (39 tests) were rerun,
-and the same zero-baseline gate verifies the correction on its published commit.
+existing explicit unknown cast, and the Workbench test supplied onAsk, which
+OwnedSurfaceViewProps excludes. The first correction removed segment instead of
+onAsk, leaving one fixture type error. The final fixture uses an explicitly typed
+OwnedSurfaceViewProps object: required segment restored, excluded onAsk removed.
+Application behavior is unchanged. The three affected client suites (39 tests)
+were rerun after the first correction; the corrected Workbench recovery test was
+rerun again. The same zero-baseline gate verifies the final published correction.
