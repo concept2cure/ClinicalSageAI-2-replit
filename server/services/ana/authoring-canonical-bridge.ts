@@ -23,6 +23,7 @@
 
 import type { CanonicalRevisionRequest, CanonicalRevisionResult } from './document-spine.js';
 import { programInOrganization } from '../c2c/program-access';
+import { readProgramAnchorRow } from '../c2c/program-project-anchor';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('authoring-canonical-bridge');
@@ -107,12 +108,11 @@ export async function resolveAuthoringCanonicalProject(
     if (!(await programInOrganization(q, program, organizationId))) {
       return { projectId: null, reason: 'recorded program is not a live program of this organization' };
     }
-    const linked = await q.query(
-      'SELECT id FROM projects WHERE regulatory_program_id = $1 AND organization_id = $2 ORDER BY id LIMIT 2',
-      [program, organizationId],
-    );
-    if (linked.rows.length !== 1) return { projectId: null, reason: 'recorded program needs one unambiguous legacy project relationship' };
-    const projectId = Number(linked.rows[0].id);
+    const linked = await readProgramAnchorRow(q, {
+      programId: program, orgId: organizationId, context: 'authoring-canonical-bridge', requireUnique: true,
+    });
+    if (!linked) return { projectId: null, reason: 'recorded program needs one unambiguous legacy project relationship' };
+    const projectId = linked.id;
     if (hint != null && hint !== projectId) return { projectId: null, reason: 'client project conflicts with the document recorded program' };
     return { projectId };
   }

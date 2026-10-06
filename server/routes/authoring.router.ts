@@ -3079,11 +3079,33 @@ router.get('/documents/:id/comments', async (req: Request, res: Response) => {
  * retraction is ever wanted, it is a tombstone that retains and renders the
  * original content as retracted — a new capability, not these routes. */
 
+/** Review transitions serialize on their tenant's working document. */
+async function peerReviewDocument(client: Queryable, id: string | string[], tenantId: number, lock = false): Promise<boolean> {
+  const result = await client.query(
+    `SELECT id FROM authoring_documents WHERE id=$1 AND tenant_id=$2${lock ? ' FOR UPDATE' : ''}`, [id, tenantId],
+  );
+  return result.rows.length === 1;
+}
+
+function validPeerReviewers(reviewers: unknown): reviewers is Array<{ id: string | number; name?: string; email?: string }> {
+  if (!Array.isArray(reviewers) || !reviewers.length) return false;
+  const ids = new Set<string>();
+  return reviewers.every(r => {
+    if (!r || !(typeof r.id === 'string' && r.id.trim() || Number.isSafeInteger(r.id) && r.id > 0)) return false;
+    if (r.name !== undefined && typeof r.name !== 'string' || r.email !== undefined && typeof r.email !== 'string') return false;
+    const id = String(r.id).trim();
+    if (ids.has(id)) return false;
+    ids.add(id); return true;
+  });
+}
+
 // GET /api/authoring/documents/:id/reviews - Get review status
 router.get('/documents/:id/reviews', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const tenantId = getTenantId(req);
+
+    if (!(await peerReviewDocument(pool, id, tenantId))) return res.status(404).json({ success: false, error: 'Document not found' });
 
     const result = await pool.query(
       `SELECT id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, review_comments, reviewed_at, requested_at, requested_by, created_at, updated_at, tenant_id FROM authoring_reviews
@@ -3138,55 +3160,60 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
     const reviewerEmail = req.user?.email ?? null;
     const reviewerName = reviewerEmail || reviewerId;
 
-    // Check if reviewer already has a review
-    const existingReview = await pool.query(
-      `SELECT id FROM authoring_reviews
-       WHERE doc_id = $1 AND reviewer_id = $2 AND tenant_id = $3`,
-      [id, reviewerId, tenantId]
-    );
-
-    let result;
-    if (((existingReview.rowCount ?? 0) > 0)) {
-      // Update existing review
-      result = await pool.query(
-        `UPDATE authoring_reviews
-         SET review_status = $1, review_comments = $2, reviewed_at = NOW(), updated_at = NOW()
-         WHERE id = $3 AND tenant_id = $4
-         RETURNING *`,
-        [review_status, reviewComments, existingReview.rows[0].id, tenantId]
+    const savedReview = await inTransaction(async (client) => {
+      if (!(await peerReviewDocument(client, id, tenantId, true))) return null;
+      // Check if reviewer already has a review
+      const existingReview = await client.query(
+        `SELECT id FROM authoring_reviews
+         WHERE doc_id = $1 AND reviewer_id = $2 AND tenant_id = $3`,
+        [id, reviewerId, tenantId]
       );
-    } else {
-      // Create new review
-      const reviewId = crypto.randomUUID();
-      result = await pool.query(
-        `INSERT INTO authoring_reviews
-         (id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, review_comments, reviewed_at, tenant_id, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8, NOW())
-         RETURNING *`,
-        [
-          reviewId,
-          id,
-          reviewerId,
-          reviewerName,
-          reviewerEmail,
-          review_status,
-          reviewComments,
-          tenantId,
-        ]
-      );
-    }
 
-    // Create audit event
-    // The reviewer's comments are the stated reason the route requires for a
-    // rejection or a change request (and accepts for an approval).
-    await createAuditTrail(req, id, null, 'document_reviewed', null, null, reviewComments ?? null, {
-      review_status,
-      review_comments,
+      let result;
+      if (((existingReview.rowCount ?? 0) > 0)) {
+        // Update existing review
+        result = await client.query(
+          `UPDATE authoring_reviews
+           SET review_status = $1, review_comments = $2, reviewed_at = NOW(), updated_at = NOW()
+           WHERE id = $3 AND tenant_id = $4
+           RETURNING *`,
+          [review_status, reviewComments, existingReview.rows[0].id, tenantId]
+        );
+      } else {
+        // Create new review
+        const reviewId = crypto.randomUUID();
+        result = await client.query(
+          `INSERT INTO authoring_reviews
+           (id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, review_comments, reviewed_at, tenant_id, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8, NOW())
+           RETURNING *`,
+          [
+            reviewId,
+            id,
+            reviewerId,
+            reviewerName,
+            reviewerEmail,
+            review_status,
+            reviewComments,
+            tenantId,
+          ]
+        );
+      }
+
+      // Create audit event
+      // The reviewer's comments are the stated reason the route requires for a
+      // rejection or a change request (and accepts for an approval).
+      await createAuditTrail(req, id, null, 'document_reviewed', null, null, reviewComments ?? null, {
+        review_status,
+        review_comments: reviewComments,
+      }, client);
+      return result.rows[0];
     });
+    if (!savedReview) return res.status(404).json({ success: false, error: 'Document not found' });
 
     res.json({
       success: true,
-      review: result.rows[0],
+      review: savedReview,
       message: `Document ${review_status.replace('_', ' ')} successfully`,
     });
   } catch (error) {
@@ -3210,24 +3237,32 @@ router.post('/documents/:id/request-review', async (req: Request, res: Response)
     if (!requestedBy) {
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
-    if (!Array.isArray(reviewers) || reviewers.length === 0) {
-      return res.status(400).json({ success: false, error: 'reviewers must be a non-empty array' });
+    if (!validPeerReviewers(reviewers)) {
+      return res.status(400).json({ success: false, error: 'reviewers must be a non-empty array of distinct reviewer identities with valid optional name and email fields' });
     }
-
-    const createdReviews = [];
-    for (const reviewer of reviewers) {
-      const reviewId = crypto.randomUUID();
-      const result = await pool.query(
-        `INSERT INTO authoring_reviews
-         (id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, requested_by, tenant_id, created_at)
-         VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, NOW())
-         ON CONFLICT (doc_id, reviewer_id, tenant_id)
-         DO UPDATE SET requested_at = NOW(), requested_by = $6
-         RETURNING *`,
-        [reviewId, id, reviewer.id, reviewer.name, reviewer.email, requestedBy, tenantId]
-      );
-      createdReviews.push(result.rows[0]);
-    }
+    const statedReason = optionalGovernedReason(req.body?.reason);
+    if (!statedReason.ok) return res.status(400).json({ success: false, error: statedReason.error, field: 'reason' });
+    const createdReviews = await inTransaction(async (client) => {
+      if (!(await peerReviewDocument(client, id, tenantId, true))) return null;
+      const reviews = [];
+      for (const reviewer of reviewers) {
+        const result = await client.query(
+          `INSERT INTO authoring_reviews
+           (id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, requested_by, tenant_id, created_at)
+           VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, NOW())
+           ON CONFLICT (doc_id, reviewer_id, tenant_id)
+           DO UPDATE SET requested_at = NOW(), requested_by = $6
+           RETURNING *`,
+          [crypto.randomUUID(), id, String(reviewer.id).trim(), reviewer.name, reviewer.email, requestedBy, tenantId],
+        );
+        reviews.push(result.rows[0]);
+      }
+      await createAuditTrail(req, id, null, 'review_requested', null, null, statedReason.reason, {
+        reviewerIds: reviews.map(r => r.reviewer_id), reviewIds: reviews.map(r => r.id),
+      }, client);
+      return reviews;
+    });
+    if (!createdReviews) return res.status(404).json({ success: false, error: 'Document not found' });
 
     res.json({
       success: true,

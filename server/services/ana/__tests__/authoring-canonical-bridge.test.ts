@@ -154,9 +154,9 @@ describe('recorded canonical destination on PostgreSQL', () => {
     await db.exec(`
       CREATE TABLE authoring_documents (id TEXT, tenant_id INT, client_program_id UUID);
       CREATE TABLE regulatory_programs (id UUID, organization_id INT, deleted_at TIMESTAMPTZ);
-      CREATE TABLE projects (id INT, organization_id INT, regulatory_program_id UUID);
+      CREATE TABLE projects (id INT, organization_id INT, regulatory_program_id UUID, client_workspace_id INT);
       INSERT INTO regulatory_programs VALUES ('${program}',1,NULL), ('${foreign}',2,NULL), ('${deleted}',1,NOW());
-      INSERT INTO projects VALUES (22,1,'${program}'), (99,2,'${foreign}'), (23,1,NULL);
+      INSERT INTO projects (id, organization_id, regulatory_program_id) VALUES (22,1,'${program}'), (99,2,'${foreign}'), (23,1,NULL);
       INSERT INTO authoring_documents VALUES ('linked',1,'${program}'), ('legacy',1,NULL),
         ('foreign',1,'${foreign}'), ('deleted',1,'${deleted}');
     `);
@@ -180,7 +180,7 @@ describe('recorded canonical destination on PostgreSQL', () => {
   });
 
   it('refuses ambiguous or missing relationships without falling back to the hint', async () => {
-    await db.exec(`INSERT INTO projects VALUES (24,1,'${program}')`);
+    await db.exec(`INSERT INTO projects (id, organization_id, regulatory_program_id) VALUES (24,1,'${program}')`);
     expect((await resolveAuthoringCanonicalProject(db, 'linked', 1, 22)).projectId).toBeNull();
     await db.exec(`DELETE FROM projects WHERE regulatory_program_id='${program}'`);
     expect((await resolveAuthoringCanonicalProject(db, 'linked', 1, 23)).projectId).toBeNull();

@@ -359,3 +359,74 @@ describe('formal review submission is atomic and recoverable', () => {
     expect((await jdb.pool.query(`SELECT id FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='SUBMIT'`, [id])).rows).toEqual(before.rows);
   }, T);
 });
+
+
+async function rejectPeerAudit(operation: string, work: () => Promise<void>) {
+  await jdb.pool.query(`CREATE FUNCTION reject_peer_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.operation_type = '${operation}' THEN RAISE EXCEPTION 'forced peer audit failure'; END IF; RETURN NEW; END $$`);
+  await jdb.pool.query('CREATE TRIGGER reject_peer_audit BEFORE INSERT ON authoring_audit_trail FOR EACH ROW EXECUTE FUNCTION reject_peer_audit()');
+  try { await work(); } finally {
+    await jdb.pool.query('DROP TRIGGER reject_peer_audit ON authoring_audit_trail');
+    await jdb.pool.query('DROP FUNCTION reject_peer_audit()');
+  }
+}
+const namedReviewers = [{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }];
+
+describe('peer review uses the tenant document and an atomic audit', () => {
+  it('refuses foreign and missing documents on read, request and verdict', async () => {
+    const id = await newReviewDocument();
+    for (const target of [id, '00000000-0000-4000-8000-000000000099']) {
+      const base = `/api/authoring/documents/${target}`;
+      expect((await as(OUTSIDER)(request(app).get(`${base}/reviews`))).status).toBe(404);
+      expect((await as(OUTSIDER)(request(app).post(`${base}/request-review`)).send({ reviewers: namedReviewers })).status).toBe(404);
+      expect((await as(OUTSIDER)(request(app).post(`${base}/review`)).send({ review_status: 'approved' })).status).toBe(404);
+    }
+    expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
+  }, T);
+
+  it('rejects malformed or duplicate reviewers before any request is saved', async () => {
+    const id = await newReviewDocument();
+    for (const reviewers of [[...namedReviewers, null], [...namedReviewers, { id: '', email: REVIEWER.email }], [...namedReviewers, ...namedReviewers]]) {
+      expect((await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers })).status).toBe(400);
+      expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
+    }
+  }, T);
+
+  it('rolls back a multi-reviewer request if its second insert fails', async () => {
+    const id = await newReviewDocument();
+    await jdb.pool.query(`CREATE FUNCTION reject_second_reviewer() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.reviewer_id = '${BYSTANDER.id}' THEN RAISE EXCEPTION 'forced reviewer insert failure'; END IF; RETURN NEW; END $$`);
+    await jdb.pool.query('CREATE TRIGGER reject_second_reviewer BEFORE INSERT ON authoring_reviews FOR EACH ROW EXECUTE FUNCTION reject_second_reviewer()');
+    try {
+      const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({
+        reviewers: [...namedReviewers, { id: BYSTANDER.id, name: BYSTANDER.name, email: BYSTANDER.email }],
+      });
+      expect(r.status).toBe(500);
+      expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
+    } finally {
+      await jdb.pool.query('DROP TRIGGER reject_second_reviewer ON authoring_reviews');
+      await jdb.pool.query('DROP FUNCTION reject_second_reviewer()');
+    }
+  }, T);
+
+  it('records the request audit with its batch and rolls back when that audit fails', async () => {
+    const id = await newReviewDocument();
+    await rejectPeerAudit('review_requested', async () => {
+      const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
+      expect(r.status).toBe(500);
+      expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
+    });
+    expect((await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers })).status).toBe(200);
+    const audit = await jdb.pool.query('SELECT operation_type FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type=$2', [id, 'review_requested']);
+    expect(audit.rows).toHaveLength(1);
+  }, T);
+
+  it('an audit failure preserves the pending review instead of saving a verdict', async () => {
+    const id = await newReviewDocument();
+    await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
+    await rejectPeerAudit('document_reviewed', async () => {
+      const r = await as(REVIEWER)(request(app).post(`/api/authoring/documents/${id}/review`)).send({ review_status: 'changes_requested', review_comments: 'Clarify the IND clinical rationale.' });
+      expect(r.status).toBe(500);
+      const rows = (await jdb.pool.query('SELECT review_status,reviewed_at FROM authoring_reviews WHERE doc_id=$1', [id])).rows;
+      expect(rows).toMatchObject([{ review_status: 'pending', reviewed_at: null }]);
+    });
+  }, T);
+});

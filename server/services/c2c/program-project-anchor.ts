@@ -258,25 +258,33 @@ export interface ProgramAnchorRow {
  * is held by the partial unique index projects_one_anchor_per_program
  * (migrations/20261001b) wherever the data allowed it.
  *
+ * Raw-SQL callers use the same reader on their own connection. requireUnique
+ * refuses duplicate anchors; other existing callers retain lowest-id behavior.
+ *
  * Throws when the read cannot complete; an absent anchor column is the
  * caller's to judge (isMissingAnchorColumn).
  */
 export async function readProgramAnchorRow(
-  db: RequestDb,
-  params: { programId: string; orgId: number; context: string },
+  db: RequestDb | { query(text: string, params?: unknown[]): Promise<{ rows: ProgramAnchorRow[] }> },
+  params: { programId: string; orgId: number; context: string; requireUnique?: boolean },
 ): Promise<ProgramAnchorRow | null> {
-  const rows = await db
+  const rows = 'select' in db ? await db
     .select({ id: projects.id, clientWorkspaceId: projects.clientWorkspaceId })
     .from(projects)
     .where(and(eq(projects.regulatoryProgramId, params.programId), eq(projects.organizationId, params.orgId)))
     .orderBy(asc(projects.id))
-    .limit(2);
+    .limit(2) : (await db.query(
+      `SELECT id, client_workspace_id AS "clientWorkspaceId" FROM projects
+       WHERE regulatory_program_id = $1 AND organization_id = $2 ORDER BY id LIMIT 2`,
+      [params.programId, params.orgId],
+    )).rows;
   if ((rows?.length ?? 0) > 1) {
-    logger.warn('Program has more than one anchor row; reading the lowest id, the row intake links', {
+    logger.warn(params.requireUnique ? 'Program has more than one anchor row; unique anchor required' : 'Program has more than one anchor row; reading the lowest id, the row intake links', {
       context: params.context,
       programId: params.programId,
       projectIds: rows.map((r) => r.id),
     });
+    if (params.requireUnique) return null;
   }
   const row = rows?.[0];
   if (!row) return null;
