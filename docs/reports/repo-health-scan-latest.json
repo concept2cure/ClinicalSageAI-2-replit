@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-06T02:30:53.049Z",
+  "generatedAt": "2026-10-06T02:45:37.855Z",
   "git": {
-    "sha": "c7acab3414c687f76ec6e8de17e4ca4a33d63fbd",
+    "sha": "5d7faedd85cb33d670d76fb74699af65fd844e74",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2086,7 +2086,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 169270
+        "bytes": 169675
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2307,12 +2307,12 @@
         "lines": 3433
       },
       {
-        "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "lines": 3352
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 3353
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3347
+        "file": "server/services/ind/ctd/lifecycle-document-types.ts",
+        "lines": 3352
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
