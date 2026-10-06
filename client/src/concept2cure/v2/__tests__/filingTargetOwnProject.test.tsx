@@ -30,8 +30,8 @@ const sub = (id: number, title: string, programId: string | null) => ({
 function serve(rows: unknown[]) {
   apiRequest.mockImplementation(async (_m: string, url: string) => (url === '/api/submissions' ? ok(rows) : ok([])));
 }
-const open = () =>
-  render(<VaultPlaceIntoSubmission documentUuid="22222222-2222-4222-8222-222222222222" documentTitle="CSR" onClose={vi.fn()} />);
+const open = (projectId?: string) =>
+  render(<VaultPlaceIntoSubmission projectId={projectId} documentUuid="22222222-2222-4222-8222-222222222222" documentTitle="CSR" onClose={vi.fn()} />);
 
 beforeEach(() => {
   apiRequest.mockReset();
@@ -45,6 +45,13 @@ afterEach(() => {
 const offered = () => Array.from(document.querySelectorAll('select option')).map((o) => o.textContent ?? '');
 
 describe('the filing picker and the project', () => {
+  it('uses the document project even when a different shell project is open', async () => {
+    serve([sub(1, 'Shell IND', OPEN), sub(2, 'Document IND', OTHER)]);
+    open(OTHER);
+    await waitFor(() => expect(offered().some((t) => t.startsWith('Document IND'))).toBe(true));
+    expect(offered().some((t) => t.startsWith('Shell IND'))).toBe(false);
+  });
+
   it("offers the open project's submissions and unanchored ones, and says how many it does not offer", async () => {
     serve([sub(1, 'Our IND', OPEN.toUpperCase()), sub(2, 'Their IND', OTHER), sub(3, 'Legacy IND', null)]);
     open();

@@ -17,7 +17,7 @@
  */
 import React from 'react';
 import { liveGetOrNull } from '../dataConnect';
-import { shellProgramId } from '../shellProject';
+import { shellProgramId, useShellProject } from '../shellProject';
 import { SC_SEQ_STATUS } from '../fixtures/submission';
 import { normalizeCtdCode, ctdFolderSlug } from '@shared/regulatory/section-code';
 import {
@@ -100,7 +100,14 @@ export function useFilingTarget(onChange?: () => void, programId?: string | null
   const [seqs, setSeqs] = React.useState<SeqsState>({ state: 'idle', rows: [] });
   const [seqId, setSeqId] = React.useState<number | null>(null);
 
+  const shellProject = useShellProject();
+  const project = (programId ?? shellProgramId(shellProject))?.toLowerCase() ?? null;
+  const reads = React.useRef({ submissions: 0, sequences: 0, active: false });
+
   const reset = React.useCallback(() => {
+    reads.current.submissions += 1;
+    reads.current.sequences += 1;
+    reads.current.active = false;
     setSubId(null);
     setSeqId(null);
     setSeqs({ state: 'idle', rows: [] });
@@ -108,11 +115,15 @@ export function useFilingTarget(onChange?: () => void, programId?: string | null
   }, []);
 
   const load = React.useCallback(() => {
+    const request = ++reads.current.submissions;
+    reads.current.sequences += 1;
+    reads.current.active = true;
     setSubId(null);
     setSeqId(null);
     setSeqs({ state: 'idle', rows: [] });
     setSubs({ state: 'loading', rows: [] });
     void liveGetOrNull<SubmissionRow[]>('/api/submissions').then((r) => {
+      if (request !== reads.current.submissions) return;
       if (r.error || !Array.isArray(r.data)) {
         setSubs({ state: 'error', rows: [], error: r.error ?? 'unexpected response shape' });
         return;
@@ -123,16 +134,29 @@ export function useFilingTarget(onChange?: () => void, programId?: string | null
          project is the one stated, else the open project's. An unanchored
          submission names no project and stays offered; the server cannot
          judge it either. */
-      const project = (programId ?? shellProgramId())?.toLowerCase() ?? null;
       const own = project
         ? r.data.filter((row) => !row.programId || row.programId.toLowerCase() === project)
         : r.data;
       setSubs({ state: 'ready', rows: own, hiddenOtherProjects: r.data.length - own.length });
     });
-  }, [programId]);
+  }, [project]);
+
+  // Clear old choices before another project can use them. A currently open
+  // picker reloads; an idle picker waits for its dialog's existing load action.
+  React.useLayoutEffect(() => {
+    const pendingReads = reads.current;
+    const active = pendingReads.active;
+    reset();
+    if (active) load();
+    return () => {
+      pendingReads.submissions += 1;
+      pendingReads.sequences += 1;
+    };
+  }, [project, reset, load]);
 
   const pickSubmission = React.useCallback(
     (id: number | null) => {
+      const request = ++reads.current.sequences;
       setSubId(id);
       setSeqId(null);
       onChange?.();
@@ -142,6 +166,7 @@ export function useFilingTarget(onChange?: () => void, programId?: string | null
       }
       setSeqs({ state: 'loading', rows: [] });
       void liveGetOrNull<SequenceRow[]>(`/api/submissions/${id}/sequences`).then((r) => {
+        if (request !== reads.current.sequences) return;
         if (r.error || !Array.isArray(r.data)) {
           setSeqs({ state: 'error', rows: [], error: r.error ?? 'unexpected response shape' });
           return;

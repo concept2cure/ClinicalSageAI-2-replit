@@ -302,7 +302,7 @@ export function VaultPlaceIntoSubmission({
   // Refused here, before anything loads (see NotPdfNotice).
   const notPdf = mimeType !== undefined && mimeType !== PDF;
   const [verdict, setVerdict] = React.useState<Verdict>(null);
-  const target = useFilingTarget(() => setVerdict(null));
+  const target = useFilingTarget(() => setVerdict(null), projectId);
   const { seq } = target;
   const stage = useVersionStage(projectId, documentUuid, !notPdf);
 
