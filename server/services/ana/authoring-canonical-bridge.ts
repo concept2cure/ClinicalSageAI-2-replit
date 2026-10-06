@@ -10,32 +10,27 @@
  * canonical version, the Part 11 audit event, the review state, dossier placement
  * and program readiness all move together over concept2cure_artifacts.
  *
- * It is deliberately CONSERVATIVE about integrity rather than forcing a write:
- *   - the canonical artifact is project-scoped (concept2cure_artifacts.project_id
- *     is NOT NULL) but an authoring document is not, so a projectId must be
- *     supplied by the caller — absent it, the bridge SKIPS rather than inventing
- *     a project;
- *   - the governed audit action must be attributed to a real numeric user id;
- *     the authoring surface authenticates with a string subject, so when that
- *     subject is not a numeric users.id the bridge SKIPS rather than mis-
- *     attributing the action to "system".
- * Skipping is always reported (never silent) and never throws, so it can be
- * called fail-soft from a route handler without risk to the primary flow.
- *
- * Fully retiring authoring_documents in favour of the canonical identity (so the
- * bridge is unconditional) is a deliberate schema + UX change — give authoring
- * documents a project linkage and a shared numeric actor identity — tracked
- * separately; this bridge is the safe, correct connection available today.
+ * The working authoring review remains authoritative. This optional projection
+ * uses the document's recorded program and its unique tenant-owned legacy
+ * project relationship. An unlinked legacy document may use a verified project
+ * hint; a hint cannot override a stored program. Missing or ambiguous linkage,
+ * an unattributable actor, or an unstated reason produces a visible receipt.
+ * Projection is separate from the review transaction. An unconfirmed receipt
+ * can be retried on that review; it does not prove no canonical write occurred.
  *
  * @module server/services/ana/authoring-canonical-bridge
  */
 
 import type { CanonicalRevisionRequest, CanonicalRevisionResult } from './document-spine.js';
+import { programInOrganization } from '../c2c/program-access';
+import { createScopedLogger } from '../../utils/logger';
+
+const logger = createScopedLogger('authoring-canonical-bridge');
 
 export interface AuthoringBridgeRequest {
   docId: string;
   organizationId: number;
-  /** Project the canonical artifact belongs to. Required — no project ⇒ skip. */
+  /** Optional legacy hint, subordinate to the recorded program relationship. */
   projectId?: number | null;
   /** Numeric users.id for Part 11 attribution. Non-numeric ⇒ skip. */
   userId?: number | null;
@@ -75,6 +70,11 @@ export interface AuthoringSnapshotQueryable {
 }
 
 export interface AuthoringBridgeDeps {
+  /** Resolve the document's recorded program to its tenant-owned legacy project.
+   * A supplied legacy hint may not override that stored relationship. */
+  resolveProject?(
+    docId: string, organizationId: number, hint?: number | null,
+  ): Promise<{ projectId: number | null; reason?: string }>;
   /** Reads on `q` when given (e.g. the caller's transaction), else on the pool. */
   loadDocumentSnapshot(
     docId: string,
@@ -89,11 +89,49 @@ export interface AuthoringBridgeOutcome {
   /** Why the bridge skipped, when it did (for observability). */
   reason?: string;
   result?: CanonicalRevisionResult;
+  projectId?: number;
+}
+
+/** The bridge's destination is still integer-keyed. Use the existing recorded
+ * relationship, never a program name or an invented legacy project. */
+export async function resolveAuthoringCanonicalProject(
+  q: AuthoringSnapshotQueryable, docId: string, organizationId: number, hint?: number | null,
+): Promise<{ projectId: number | null; reason?: string }> {
+  const doc = await q.query(
+    'SELECT client_program_id FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+    [docId, organizationId],
+  );
+  if (doc.rows.length !== 1) return { projectId: null, reason: 'authoring document not found in this organization' };
+  const program = doc.rows[0].client_program_id;
+  if (program != null) {
+    if (!(await programInOrganization(q, program, organizationId))) {
+      return { projectId: null, reason: 'recorded program is not a live program of this organization' };
+    }
+    const linked = await q.query(
+      'SELECT id FROM projects WHERE regulatory_program_id = $1 AND organization_id = $2 ORDER BY id LIMIT 2',
+      [program, organizationId],
+    );
+    if (linked.rows.length !== 1) return { projectId: null, reason: 'recorded program needs one unambiguous legacy project relationship' };
+    const projectId = Number(linked.rows[0].id);
+    if (hint != null && hint !== projectId) return { projectId: null, reason: 'client project conflicts with the document recorded program' };
+    return { projectId };
+  }
+  if (Number.isSafeInteger(hint) && Number(hint) > 0) {
+    const { projectBelongsToTenant } = await import('../cmc/project-membership');
+    if (await projectBelongsToTenant({ projectId: String(hint), organizationId }, q)) {
+      return { projectId: Number(hint) };
+    }
+  }
+  return { projectId: null, reason: 'unlinked legacy document needs a tenant-owned project context' };
 }
 
 /** Stable per-document thread key so successive submits append canonical versions. */
 export function authoringThreadKey(docId: string): string {
   return `authoring:${docId}`;
+}
+
+function canonicalSection(requested?: string | null, recorded?: string | null): string | null {
+  return requested ?? recorded ?? null;
 }
 
 /**
@@ -104,18 +142,21 @@ export async function bridgeAuthoringToCanonical(
   req: AuthoringBridgeRequest,
   deps: AuthoringBridgeDeps,
 ): Promise<AuthoringBridgeOutcome> {
-  const projectId = req.projectId;
-  if (!Number.isInteger(projectId as number)) {
-    return { bridged: false, reason: 'no project context — authoring document is not project-scoped' };
-  }
   const userId = req.userId;
-  if (!Number.isInteger(userId as number)) {
+  if (!Number.isSafeInteger(userId) || Number(userId) <= 0) {
     return { bridged: false, reason: 'actor is not a numeric users.id — governed action cannot be attributed' };
   }
   if (!req.reason || !req.reason.trim()) {
     return { bridged: false, reason: 'no reason for change was stated — the canonical revision records the person\'s reason, never one written for them' };
   }
   try {
+    const resolved = deps.resolveProject
+      ? await deps.resolveProject(req.docId, req.organizationId, req.projectId)
+      : { projectId: req.projectId };
+    const projectId = resolved.projectId;
+    if (!Number.isSafeInteger(projectId) || Number(projectId) <= 0) {
+      return { bridged: false, reason: resolved.reason ?? 'no project context — canonical destination is unresolved' };
+    }
     const snap = await deps.loadDocumentSnapshot(req.docId, req.organizationId);
     if (!snap || !snap.content.trim()) {
       return { bridged: false, reason: 'no assembled content to canonicalize' };
@@ -129,15 +170,16 @@ export async function bridgeAuthoringToCanonical(
       content: snap.content,
       documentType: 'authoring_document',
       reasonForChange: req.reason,
-      ctdSection: req.ctdSection ?? snap.module ?? null,
+      ctdSection: canonicalSection(req.ctdSection, snap.module),
       aiModelUsed: req.aiModelUsed ?? null,
       triggerReview: req.triggerReview !== false,
     });
-    return { bridged: true, result };
+    return { bridged: true, result, projectId: projectId as number };
   } catch (err) {
+    logger.warn('canonical projection not confirmed', { docId: req.docId, err: err instanceof Error ? err.message : String(err) });
     return {
       bridged: false,
-      reason: `canonical commit failed: ${err instanceof Error ? err.message : String(err)}`,
+      reason: 'canonical projection was not confirmed; retry after resolving its project or service availability',
     };
   }
 }
@@ -145,6 +187,10 @@ export async function bridgeAuthoringToCanonical(
 /** Production deps: load the working doc from Postgres, commit via the real spine. */
 export function defaultAuthoringBridgeDeps(): AuthoringBridgeDeps {
   return {
+    async resolveProject(docId, organizationId, hint) {
+      const q = (await import('../../db.js')).getPool();
+      return resolveAuthoringCanonicalProject(q, docId, organizationId, hint);
+    },
     async loadDocumentSnapshot(docId, organizationId, q) {
       /* 2026-09-23 (W5/D7, co-author final pass): `q` lets a caller read on its
          own transaction. The filing copy (services/coauthor/coauthor-snapshot.ts)

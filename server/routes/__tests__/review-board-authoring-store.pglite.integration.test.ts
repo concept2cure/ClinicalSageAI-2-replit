@@ -297,3 +297,65 @@ describe('the approval chain (authoring_workflow_steps) is shown, owned, and nev
     expect(asAuthor.requestedByMe).toBe(true);
   }, T);
 });
+
+async function newReviewDocument(): Promise<string> {
+  const r = await as(AUTHOR)(request(app).post('/api/authoring/docs'))
+    .send({ title: 'Review handoff regression', module: 'M2', client_program_id: PROGRAM_A });
+  expect(r.status).toBe(201);
+  return r.body.document.id;
+}
+const reviewSteps = [{ role: 'QA', approver_email: REVIEWER.email }];
+
+describe('formal review submission is atomic and recoverable', () => {
+  it('rejects an empty workflow without transitioning the document', async () => {
+    const id = await newReviewDocument();
+    const r = await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`)).send({ workflow_steps: [] });
+    expect(r.status).toBe(400);
+    const doc = await jdb.pool.query(`SELECT status FROM authoring_documents WHERE id=$1`, [id]);
+    expect(String(doc.rows[0].status).toLowerCase()).toBe('draft');
+  }, T);
+
+  it('refuses retries on a draft or foreign document and malformed workflow inputs', async () => {
+    const id = await newReviewDocument();
+    const endpoint = `/api/authoring/docs/${id}/submit`;
+    expect((await as(AUTHOR)(request(app).post(endpoint)).send({ retry_canonical: true })).status).toBe(409);
+    expect((await as(OUTSIDER)(request(app).post(endpoint)).send({ retry_canonical: true })).status).toBe(404);
+    for (const workflow_steps of [{ role: 'QA' }, [null], [{ role: '', approver_email: REVIEWER.email }]]) {
+      expect((await as(AUTHOR)(request(app).post(endpoint)).send({ workflow_steps })).status).toBe(400);
+    }
+  }, T);
+
+  it('an audit failure rolls back the workflow steps and document transition together', async () => {
+    const id = await newReviewDocument();
+    await jdb.pool.query(`CREATE FUNCTION reject_review_submit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.operation_type = 'SUBMIT' THEN RAISE EXCEPTION 'forced submit audit failure'; END IF; RETURN NEW; END $$`);
+    await jdb.pool.query(`CREATE TRIGGER reject_review_submit BEFORE INSERT ON authoring_audit_trail FOR EACH ROW EXECUTE FUNCTION reject_review_submit()`);
+    try {
+      const r = await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`)).send({ workflow_steps: reviewSteps });
+      expect(r.status).toBe(500);
+      const doc = await jdb.pool.query(`SELECT status,current_workflow_id FROM authoring_documents WHERE id=$1`, [id]);
+      expect(String(doc.rows[0].status).toLowerCase()).toBe('draft');
+      expect(doc.rows[0].current_workflow_id).toBeNull();
+      expect((await jdb.pool.query(`SELECT id FROM authoring_workflow_steps WHERE doc_id=$1`, [id])).rows).toEqual([]);
+    } finally {
+      await jdb.pool.query(`DROP TRIGGER reject_review_submit ON authoring_audit_trail`);
+      await jdb.pool.query(`DROP FUNCTION reject_review_submit()`);
+    }
+  }, T);
+
+  it('a projection retry reuses the existing review workflow without new steps or another submit event', async () => {
+    const id = await newReviewDocument();
+    const first = await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`)).send({ workflow_steps: reviewSteps });
+    expect(first.status).toBe(200);
+    expect(first.body.canonical).toMatchObject({ bridged: false, retryable: true });
+    expect((await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`))
+      .send({ workflow_steps: reviewSteps })).status).toBe(400);
+    const before = await jdb.pool.query(`SELECT id FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='SUBMIT'`, [id]);
+    const retry = await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`))
+      .send({ retry_canonical: true, reason: 'Retry the projection after restoring project mapping.' });
+    expect(retry.status).toBe(200);
+    expect(retry.body.workflowId).toBe(first.body.workflowId);
+    expect(retry.body.workflowReused).toBe(true);
+    expect((await jdb.pool.query(`SELECT id FROM authoring_workflow_steps WHERE doc_id=$1`, [id])).rows).toHaveLength(1);
+    expect((await jdb.pool.query(`SELECT id FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='SUBMIT'`, [id])).rows).toEqual(before.rows);
+  }, T);
+});

@@ -5918,134 +5918,105 @@ router.post('/docs/:docId/file-to-vault', async (req: Request, res: Response) =>
 
 // ============= SUBMIT Operations =============
 
-// POST /api/authoring/docs/:docId/submit - Submit document for review
-router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
-  try {
-    const { docId } = req.params;
-    const { workflow_steps = [{ role: 'QA' }, { role: 'RA_CMC' }] } = req.body;
-    const tenantId = getTenantId(req);
-    // SECURITY (21 CFR Part 11): the document submitter recorded in the audit
-    // event must come from the verified JWT, never from x-user-email /
-    // req.body.submitted_by.
-    const submittedBy = getActorEmail(req);
-    if (!submittedBy) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-    // The submitter's own stated reason, if any; none is invented (D5, 2026-09-29).
-    const statedSubmitReason = optionalGovernedReason(req.body?.reason);
-    if (!statedSubmitReason.ok) return res.status(400).json({ success: false, error: statedSubmitReason.error, field: 'reason' });
-
-    // Check document exists and is in DRAFT status
-    const docResult = await pool.query(
-      'SELECT id, title, module, product_code, locale, status, created_at, updated_at, created_by, template_id, submitted_at, current_workflow_id, approved_at, frozen_at, locked_at, locked_by, tenant_id, version FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
-      [docId, tenantId]
+/** Formal review state, workflow steps and the audit row share one transaction.
+ * Projection retries read the existing workflow and never submit a second one. */
+async function submitReviewWorkflow(
+  req: Request, docId: string, tenantId: number,
+  steps: Array<{ role: string; approver_email: string }>,
+  options: { reason: string | null; retryCanonical: boolean },
+) {
+  const { reason, retryCanonical } = options;
+  return inTransaction(async (client) => {
+    const result = await client.query(
+      'SELECT id, status, current_workflow_id FROM authoring_documents WHERE id = $1 AND tenant_id = $2 FOR UPDATE',
+      [docId, tenantId],
     );
-
-    if (((docResult.rowCount ?? 0) === 0)) {
-      return res.status(404).json({ error: 'Document not found' });
+    const doc = result.rows[0];
+    if (!doc) return { done: false as const, status: 404, error: 'Document not found' };
+    if (retryCanonical) {
+      if (doc.status !== 'IN_REVIEW' || !doc.current_workflow_id) {
+        return { done: false as const, status: 409, error: 'Canonical projection retry requires an existing review workflow' };
+      }
+      const count = await client.query(
+        'SELECT count(*)::int AS n FROM authoring_workflow_steps WHERE workflow_id=$1 AND doc_id=$2 AND tenant_id=$3',
+        [doc.current_workflow_id, docId, tenantId],
+      );
+      if (!count.rows[0]?.n) return { done: false as const, status: 409, error: 'Existing review workflow has no steps; it cannot be reused' };
+      return { done: true as const, workflowId: String(doc.current_workflow_id), steps: Number(count.rows[0].n), reused: true };
     }
-
-    const doc = docResult.rows[0];
     if (doc.status !== 'DRAFT' && doc.status !== 'draft') {
-      return res.status(400).json({ error: 'Document must be in DRAFT status to submit' });
+      return { done: false as const, status: 400, error: 'Document must be in DRAFT status to submit' };
     }
-
-    // Every step needs the approver it will be matched against on approval
-    // (`approver_email = $3` in the approve route). Inventing
-    // `qa@company.com` from the role produced a step nobody could approve —
-    // or someone unintended could (ledger L152).
-    const steps = workflow_steps as Array<{ role?: string; approver_email?: unknown }>;
-    const stepWithoutApprover = steps.findIndex(
-      (s) => typeof s?.approver_email !== 'string' || !s.approver_email.trim()
-    );
-    if (stepWithoutApprover >= 0) {
-      return res.status(400).json({
-        error: `Workflow step ${stepWithoutApprover + 1} has no approver_email; every step needs the approver it will be matched against`,
-      });
-    }
-
-    // Create workflow
     const workflowId = crypto.randomUUID();
-
-    // Create workflow steps
-    for (let i = 0; i < workflow_steps.length; i++) {
-      const step = workflow_steps[i];
-      await pool.query(
+    for (const [i, step] of steps.entries()) {
+      await client.query(
         `INSERT INTO authoring_workflow_steps
          (workflow_id, doc_id, step_no, role, approver_email, status, tenant_id, created_at)
-         VALUES ($1, $2, $3, $4, $5, 'PENDING', $6, NOW())`,
-        [
-          workflowId,
-          docId,
-          i + 1,
-          step.role,
-          step.approver_email,
-          tenantId,
-        ]
+         VALUES ($1,$2,$3,$4,$5,'PENDING',$6,NOW())`,
+        [workflowId, docId, i + 1, step.role, step.approver_email, tenantId],
       );
     }
-
-    // Update document status
-    await pool.query(
-      `UPDATE authoring_documents
-       SET status = 'IN_REVIEW', submitted_at = NOW(), current_workflow_id = $1
-       WHERE id = $2 AND tenant_id = $3`,
-      [workflowId, docId, tenantId]
+    await client.query(
+      `UPDATE authoring_documents SET status='IN_REVIEW', submitted_at=NOW(), current_workflow_id=$1
+       WHERE id=$2 AND tenant_id=$3`, [workflowId, docId, tenantId],
     );
+    await createAuditTrail(req, docId, null, 'SUBMIT', null, null, reason, { workflowId, steps }, client);
+    return { done: true as const, workflowId, steps: steps.length, reused: false };
+  });
+}
 
-    // Create audit event
-    await createAuditTrail(req, docId, null, 'SUBMIT', null, null, statedSubmitReason.reason, { workflowId, steps: workflow_steps });
+/** The optional projection has its own receipt; it cannot invalidate the
+ * author's committed review or leak a caught driver error to the caller. */
+async function projectAuthoringReview(req: Request, docId: string, tenantId: number, reason: string | null) {
+  try {
+    const { bridgeAuthoringToCanonical, defaultAuthoringBridgeDeps } = await import('../services/ana/authoring-canonical-bridge.js');
+    const actorRaw = req.user?.id ?? req.user?.userId;
+    const outcome = await bridgeAuthoringToCanonical({
+      docId, organizationId: tenantId,
+      projectId: typeof req.body?.project_id === 'number' ? req.body.project_id : null,
+      userId: Number.isSafeInteger(Number(actorRaw)) ? Number(actorRaw) : null,
+      reason, triggerReview: true,
+    }, defaultAuthoringBridgeDeps());
+    return {
+      bridged: outcome.bridged, retryable: !outcome.bridged, reason: outcome.reason,
+      projectId: outcome.projectId,
+      artifactId: outcome.result?.artifactId, version: outcome.result?.version,
+      contentHash: outcome.result?.contentHash,
+    };
+  } catch (error) {
+    logger.warn('authoring canonical projection not confirmed; review remains committed', { docId, err: error instanceof Error ? error.message : String(error) });
+    return { bridged: false, retryable: true, reason: 'Canonical projection was not confirmed; retry on the existing review workflow.' };
+  }
+}
 
-    // Connect this governed transition to the ONE canonical document spine:
-    // commit the assembled document into concept2cure_artifacts (version + Part 11
-    // audit + review-state + placement + readiness) so the authoring surface and
-    // the canonical record move together. Fail-soft and conservative — it only
-    // writes when a project id and a numeric actor are present (correct scoping +
-    // attribution), and never breaks submit if it cannot. See
-    // authoring-canonical-bridge.ts for why it skips rather than guesses.
-    let canonical: { bridged: boolean; reason?: string } = { bridged: false, reason: 'not attempted' };
-    try {
-      const { bridgeAuthoringToCanonical, defaultAuthoringBridgeDeps } = await import(
-        '../services/ana/authoring-canonical-bridge.js'
-      );
-      const projectId = typeof req.body?.project_id === 'number' ? req.body.project_id : null;
-      const actorRaw = req.user?.id ?? req.user?.userId;
-      const numericActor = Number.isInteger(Number(actorRaw)) ? Number(actorRaw) : null;
-      const outcome = await bridgeAuthoringToCanonical(
-        {
-          docId: String(docId),
-          organizationId: tenantId,
-          projectId,
-          userId: numericActor,
-          reason: statedSubmitReason.reason,
-          triggerReview: true,
-        },
-        defaultAuthoringBridgeDeps(),
-      );
-      canonical = { bridged: outcome.bridged, reason: outcome.reason };
-      if (!outcome.bridged) {
-        logger.info('authoring→canonical bridge skipped on submit', { docId, reason: outcome.reason });
-      }
-    } catch (bridgeErr) {
-      canonical = {
-        bridged: false,
-        reason: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr),
-      };
-      logger.warn('authoring→canonical bridge errored on submit (submit still succeeded)', {
-        docId,
-        err: canonical.reason,
-      });
+// POST /api/authoring/docs/:docId/submit - Submit or explicitly retry its projection.
+router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
+  try {
+    const docId = String(req.params.docId);
+    const tenantId = getTenantId(req);
+    if (!getActorEmail(req)) return res.status(401).json({ error: 'Authentication required' });
+    const statedReason = optionalGovernedReason(req.body?.reason);
+    if (!statedReason.ok) return res.status(400).json({ success: false, error: statedReason.error, field: 'reason' });
+    if (req.body?.retry_canonical !== undefined && typeof req.body.retry_canonical !== 'boolean') {
+      return res.status(400).json({ error: 'retry_canonical must be a boolean' });
     }
-
-    res.json({
-      success: true,
-      message: 'Document submitted for review',
-      workflowId,
-      steps: workflow_steps.length,
-      canonical,
+    const retryCanonical = req.body?.retry_canonical === true;
+    const steps = req.body?.workflow_steps ?? [{ role: 'QA' }, { role: 'RA_CMC' }];
+    if (!retryCanonical) {
+      if (!Array.isArray(steps) || steps.length === 0) return res.status(400).json({ error: 'workflow_steps must be a non-empty array' });
+      const invalid = steps.findIndex((s) => typeof s?.role !== 'string' || !s.role.trim() ||
+        typeof s?.approver_email !== 'string' || !s.approver_email.trim());
+      if (invalid >= 0) return res.status(400).json({ error: `Workflow step ${invalid + 1} needs a role and approver_email` });
+    }
+    const workflow = await submitReviewWorkflow(req, docId, tenantId, steps, { reason: statedReason.reason, retryCanonical });
+    if (!workflow.done) return res.status(workflow.status).json({ error: workflow.error });
+    const canonical = await projectAuthoringReview(req, docId, tenantId, statedReason.reason);
+    return res.json({
+      success: true, reviewSubmitted: true,
+      message: workflow.reused ? 'Review workflow retained; canonical projection checked' : 'Document submitted for review',
+      workflowId: workflow.workflowId, steps: workflow.steps, workflowReused: workflow.reused, canonical,
     });
   } catch (error) {
-    console.error('Submit error:', error);
     return serverError(res, logger, 'submitting docs', error);
   }
 });

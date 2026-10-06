@@ -1,7 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { PGlite } from '@electric-sql/pglite';
 import {
   bridgeAuthoringToCanonical,
   authoringThreadKey,
+  resolveAuthoringCanonicalProject,
   type AuthoringBridgeDeps,
 } from '../authoring-canonical-bridge.js';
 
@@ -41,6 +43,34 @@ const base = {
 };
 
 describe('authoring-canonical-bridge', () => {
+  it('resolves the stored document project when no client project id is supplied', async () => {
+    const commit = vi.fn(deps().commit);
+    const dependencies = {
+      ...deps({ commit }),
+      resolveProject: async () => ({ projectId: 22 }),
+    };
+    const outcome = await bridgeAuthoringToCanonical({ ...base, projectId: null }, dependencies);
+    expect(outcome.bridged).toBe(true);
+    expect(commit.mock.calls[0][0].projectId).toBe(22);
+  });
+
+  it('does not let client project context override a stored program relationship', async () => {
+    const commit = vi.fn(deps().commit);
+    const dependencies = {
+      ...deps({ commit }),
+      resolveProject: async () => ({ projectId: null, reason: 'project conflicts with stored program' }),
+    };
+    const outcome = await bridgeAuthoringToCanonical(base, dependencies);
+    expect(outcome.bridged).toBe(false);
+    expect(commit).not.toHaveBeenCalled();
+  });
+
+  it.each([0, -1, 1.5])('refuses invalid numeric project or actor identities (%s)', async (id) => {
+    const commit = vi.fn(deps().commit);
+    expect((await bridgeAuthoringToCanonical({ ...base, projectId: id }, deps({ commit }))).bridged).toBe(false);
+    expect((await bridgeAuthoringToCanonical({ ...base, userId: id }, deps({ commit }))).bridged).toBe(false);
+    expect(commit).not.toHaveBeenCalled();
+  });
   it('builds a stable per-document thread key', () => {
     expect(authoringThreadKey('doc-1')).toBe('authoring:doc-1');
   });
@@ -108,6 +138,63 @@ describe('authoring-canonical-bridge', () => {
       deps({ async commit() { throw new Error('db down'); } }),
     );
     expect(outcome.bridged).toBe(false);
-    expect(outcome.reason).toMatch(/db down/);
+    expect(outcome.reason).toMatch(/not confirmed/);
+    expect(outcome.reason).not.toContain('db down');
+  });
+});
+
+
+describe('recorded canonical destination on PostgreSQL', () => {
+  const program = 'a0000000-0000-4000-8000-000000000001';
+  const foreign = 'b0000000-0000-4000-8000-000000000001';
+  const deleted = 'c0000000-0000-4000-8000-000000000001';
+  let db: PGlite;
+  beforeAll(async () => {
+    db = new PGlite();
+    await db.exec(`
+      CREATE TABLE authoring_documents (id TEXT, tenant_id INT, client_program_id UUID);
+      CREATE TABLE regulatory_programs (id UUID, organization_id INT, deleted_at TIMESTAMPTZ);
+      CREATE TABLE projects (id INT, organization_id INT, regulatory_program_id UUID);
+      INSERT INTO regulatory_programs VALUES ('${program}',1,NULL), ('${foreign}',2,NULL), ('${deleted}',1,NOW());
+      INSERT INTO projects VALUES (22,1,'${program}'), (99,2,'${foreign}'), (23,1,NULL);
+      INSERT INTO authoring_documents VALUES ('linked',1,'${program}'), ('legacy',1,NULL),
+        ('foreign',1,'${foreign}'), ('deleted',1,'${deleted}');
+    `);
+  }, 60_000);
+  afterAll(async () => { await db.close(); });
+
+  it('resolves the stored live program and refuses an overriding hint', async () => {
+    expect(await resolveAuthoringCanonicalProject(db, 'linked', 1)).toEqual({ projectId: 22 });
+    expect((await resolveAuthoringCanonicalProject(db, 'linked', 1, 23)).projectId).toBeNull();
+    expect((await resolveAuthoringCanonicalProject(db, 'linked', 2, 99)).projectId).toBeNull();
+  });
+
+  it.each(['foreign', 'deleted'])('refuses a non-live tenant program (%s) despite a valid hint', async (doc) => {
+    expect((await resolveAuthoringCanonicalProject(db, doc, 1, 23)).projectId).toBeNull();
+  });
+
+  it('allows only a tenant-owned legacy hint for an unlinked document', async () => {
+    expect(await resolveAuthoringCanonicalProject(db, 'legacy', 1, 23)).toEqual({ projectId: 23 });
+    expect((await resolveAuthoringCanonicalProject(db, 'legacy', 1, 99)).projectId).toBeNull();
+    expect((await resolveAuthoringCanonicalProject(db, 'legacy', 1)).projectId).toBeNull();
+  });
+
+  it('refuses ambiguous or missing relationships without falling back to the hint', async () => {
+    await db.exec(`INSERT INTO projects VALUES (24,1,'${program}')`);
+    expect((await resolveAuthoringCanonicalProject(db, 'linked', 1, 22)).projectId).toBeNull();
+    await db.exec(`DELETE FROM projects WHERE regulatory_program_id='${program}'`);
+    expect((await resolveAuthoringCanonicalProject(db, 'linked', 1, 23)).projectId).toBeNull();
+  });
+
+  it('reports unavailable linkage as unconfirmed without exposing SQL or committing', async () => {
+    await db.exec('DROP TABLE projects');
+    const commit = vi.fn(deps().commit);
+    const outcome = await bridgeAuthoringToCanonical({ ...base, docId: 'linked', projectId: 23 }, deps({
+      commit, resolveProject: (doc, org, hint) => resolveAuthoringCanonicalProject(db, doc, org, hint),
+    }));
+    expect(outcome.bridged).toBe(false);
+    expect(outcome.reason).toMatch(/not confirmed/);
+    expect(outcome.reason).not.toMatch(/SELECT|relation|projects/);
+    expect(commit).not.toHaveBeenCalled();
   });
 });
