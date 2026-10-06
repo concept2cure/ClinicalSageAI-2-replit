@@ -1,0 +1,372 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts tenant-scoped client and project searches before recency resolves 10ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > returns healthy layers after stalled recency reaches the existing 3s deadline 4ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts independent searches while semantic working memory is pending 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps a timeout notice even when every source is unavailable 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps the unavailability notice ahead of content when the prompt budget trims 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > reports rejected reads as errors with a prompt notice, not empty recall 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps healthy empty recall empty, with no fabricated unavailable source 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > does not read tenant memory without an organization 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > skips only project memory when no project is selected 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > keeps recency recall but skips semantic searches without a query 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > still uses recency when semantic recall times out 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > does not misreport a timed-out semantic read with empty recency as empty memory 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > bounds recency fallback too when both working-memory reads stall 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > preserves a rejected semantic read as unavailable if recency returns no summary 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > clears successful deadline timers, preventing false timeout logs 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores a late semantic result while its recency fallback is still pending 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > excludes expired independent sources that finish during the working-memory fallback 4ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores late values and rejections after the final result is returned 1ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "evidence labels" doctrine 1ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "no fabrication" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "constructive dissent" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "context clarity (no hallucinated context)" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "document consequence" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "proactive foresight" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "know your limits / hand off" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "response grounding mode" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > keeps the serious-room floor (no exclamation marks, no emoji where it counts) 1ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > every core doctrine survives into the assembled system prompt 1ms
+stdout | server/services/__tests__/ana-prefetch-deadline.test.ts
+{
+  "timestamp": "2026-10-06T13:59:08.854Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T13:59:08.856Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/ana-prefetch-deadline.test.ts
+{
+  "timestamp": "2026-10-06T13:59:08.856Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/personality-coverage.test.ts
+{
+  "timestamp": "2026-10-06T13:59:08.866Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T13:59:08.868Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/personality-coverage.test.ts
+{
+  "timestamp": "2026-10-06T13:59:08.868Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-prefetch-deadline.test.ts
+[database] Database connection successful
+
+stdout | server/services/ana-ri/__tests__/personality-coverage.test.ts
+[database] Database connection successful
+
+stdout | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+{
+  "timestamp": "2026-10-06T13:59:09.661Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T13:59:09.662Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+{
+  "timestamp": "2026-10-06T13:59:09.662Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+[database] Database connection successful
+
+stdout | server/services/__tests__/ana-personality-core.test.ts
+{
+  "timestamp": "2026-10-06T13:59:09.739Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T13:59:09.742Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/ana-personality-core.test.ts
+{
+  "timestamp": "2026-10-06T13:59:09.743Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/response-register.test.ts
+{
+  "timestamp": "2026-10-06T13:59:09.726Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T13:59:09.729Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/response-register.test.ts
+{
+  "timestamp": "2026-10-06T13:59:09.729Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-personality-core.test.ts
+[database] Database connection successful
+
+stdout | server/services/ana-ri/__tests__/response-register.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-personality-core.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+{
+  "timestamp": "2026-10-06T13:59:10.184Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/response-register.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-personality-core.test.ts
+{
+  "timestamp": "2026-10-06T13:59:10.184Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/response-register.test.ts
+{
+  "timestamp": "2026-10-06T13:59:10.184Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/__tests__/ana-prefetch-deadline.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-prefetch-deadline.test.ts
+{
+  "timestamp": "2026-10-06T13:59:10.186Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/personality-coverage.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/personality-coverage.test.ts
+{
+  "timestamp": "2026-10-06T13:59:10.340Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'caring'" trait 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'kind'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'warm / empathetic'" trait 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'intellectual'" trait 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'warm, and shows it'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'playful'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'serious where it counts'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'self-reflective'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > holds the guardrails that keep warmth from becoming performance 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > keeps play out of every room where it would cost the person 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > makes "cute" charm, never smallness, and never a scripted line 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > reads the humor dial, and no dial loosens a serious room 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_BRIEF > is a compression of the core, carrying the same named traits 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_BRIEF > stays short enough for a prompt already carrying a strict schema 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_BRIEF > subordinates itself to the output contract 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the RI system prompt embeds the full core block 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the RI system prompt keeps her personality under every role overlay 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the submission-chat prompt carries the brief 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the streaming submission-chat prompt carries the brief 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the submission-chat prompts still state their output contract 0ms
+stdout | server/services/__tests__/ana-personality-core.test.ts
+Loaded 0 academic documents
+
+stdout | server/services/__tests__/ana-prefetch-deadline.test.ts
+Loaded 0 academic documents
+
+stdout | server/services/ana-ri/__tests__/response-register.test.ts
+Loaded 0 academic documents
+
+stdout | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > reports a failed summary read without discarding healthy enrichment
+{
+  "timestamp": "2026-10-06T13:59:13.443Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "query failed"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when summary stalls 8ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when workflow stalls 4ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when query stalls 3ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > starts project, workflow and requested claims reads before the project summary resolves 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > preserves slash rewriting when the requested read times out 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > keeps the static claim-grounding guard when natural-language evidence reads time out 24ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > keeps an availability notice even under the optional composer budget 3ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > keeps the invoked app and rewrites its mention when app context times out 3ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > reports a failed summary read without discarding healthy enrichment 3ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > reports a failed workflow read without discarding healthy enrichment 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > retains a slow healthy source inside the budget and preserves common-context ordering 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > preserves the existing greeting rule when common project context is available 12ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > does not confuse healthy empty results with unavailable context 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > does not change the returned snapshot when a query resolves after its deadline 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > keeps projectless guidance without starting scoped reads 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > defines the requested traits 2ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > is composed into the AnA RI system prompt 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > is composed into the cortex prompts (single source of truth) 0ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > injects relational context when provided 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > renders nothing when no relational notes exist yet 0ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Orchestrator — relational + external intelligence injection > injects the pre-fetched relational overlay and external intel block 9ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Orchestrator — relational + external intelligence injection > omits both blocks when not provided 5ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Relational reflection signal detection > fires on emotional and corrective signals 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Relational reflection signal detection > stays quiet on neutral turns 0ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > parses RSS 2.0 items 3ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > parses Atom entries 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > registry covers regulatory agencies and knowledge centers (incl. SCDM) 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > RI receives the shared awareness policy exactly once 2ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > stream orchestration receives the shared awareness policy exactly once 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > cortex receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > compact cortex receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > unified cortex receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > submission buffered receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > submission streaming receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > full preserves the practical boundaries 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > brief preserves the practical boundaries 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > does not let the chat register force a verdict before a blocking question 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > does not let strategy or drafting shortcuts override IA 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > RI carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > stream orchestration carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > cortex carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > compact cortex carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > unified cortex carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > submission buffered carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > submission streaming carries scientific and market-specific critical thinking 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "What does CTD stand for?" 6ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "Draft the supplied clinical overview using these confirmed results." 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "Which market should we target? I have not chosen an intended use yet." 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > allows explicit reconsideration without silently rewriting recorded decisions 3ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > composes chat, artifact and switch blocks, each headed once 2ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > states every chat-register rule the founder asked for 1ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > keeps the artifact register and the chat-voice-interjection rule 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > renders a tool result as a sentence plus the figures, never a section 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > holds the voice floor itself (no exclamation, no emoji) 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > carries the register exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > carries the register under every role and lens overlay 14ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Structure responses with headers, bullets, and bold key terms" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Clear headers and section structure" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Always greet users by name" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "offer 2-3 specific things you can help with" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "After every substantive response" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "suggest the logical next step" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Use bullet points heavily" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Structured responses with clear headings" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Greet them as \"" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Don't just say hello back" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "give them a status check and a recommended next action" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## How to Communicate" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Conversation Style" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Momentum" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Formatting" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Your Voice" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Communication Principles" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Personality & Tone" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "I don't see a specific document status" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "Prefix proactive insights with a subtle marker" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "This recommendation has moderate confidence" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "Only surface if confidence > 70%" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "lead with what's missing before addressing the user's question" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "Would you like me to run an FDA War Game simulation" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "mention you can \"walk through a guided questionnaire\"" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "**Action:** [what was done]" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > says how to talk while working through several steps 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > has one formatting section: no second one survives in the core 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > has one tone section (ANA_PERSONALITY_CORE), not a duplicate in the core 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > keeps the substance the founder wants: warmth, project awareness, one-line risk flags, evidence 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > keeps every governance anchor the register refers to 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > document-state behaviour still reaches the prompt — from the orchestrator, only when a status exists 2ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > the other AnA prompt stacks compose the same register, once > cortex-unified: BASE_SYSTEM_PROMPT 1ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > the other AnA prompt stacks compose the same register, once > ana-cortex: ANA_SYSTEM_PROMPT and ANA_COMPACT_PROMPT 1ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > the other AnA prompt stacks compose the same register, once > lumen-context-builder user-identity overlay no longer forces bullets, headings or a greeting 3ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled feedback source and keeps healthy context 6ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled profile source and keeps healthy context 2ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled rim source and keeps healthy context 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled relational source and keeps healthy context 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled external source and keeps healthy context 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > starts independent reads together and uses one 3s wait when several stall 2ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > does not report healthy empty results as unavailable and clears the deadline timers 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > reports rejection and the existing 1.5s proactive deadline without blocking other context 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > ignores a late source after the turn has received its bounded snapshot 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > does not start project or org reads when their scope is absent 1ms
+
+ Test Files  8 passed (8)
+      Tests  149 passed (149)
+   Start at  09:59:06
+   Duration  8.83s (transform 21.72s, setup 554ms, import 41.70s, tests 233ms, environment 1ms)
+

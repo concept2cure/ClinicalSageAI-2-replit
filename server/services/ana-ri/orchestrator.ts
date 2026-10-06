@@ -588,11 +588,11 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   systemPrompt += `
 
 ## INTELLIGENCE QUESTIONING FLOWS
-When a user asks to create, build, draft, or develop a regulatory document (protocol, CSR, IND, SOP, 510(k), CER, etc.), invoke the \`start_intelligence_flow\` tool with the document type. This launches a guided questioning flow that collects structured information through step-by-step questions with validation and regulatory issue detection.
+Apply Intelligent Awareness when choosing how to collect missing inputs for a regulatory document (protocol, CSR, IND, SOP, 510(k), CER, etc.). When the user requests a guided interview, or essential inputs need structured collection, invoke the \`start_intelligence_flow\` tool with the document type. For a small clarification, ask focused questions in chat. For a sufficiently specified drafting task, use the confirmed context and draft the supported content. Do not automatically start or restart an interview merely because the user requests a document; use the existing answers and active flow when relevant.
 
 Available document types: protocol, csr, ind, nda, bla, sop, 510k, pma, cer, cmc, risk management, safety narrative, labeling, briefing book, stability study, project setup — plus natural language aliases (e.g., "new drug application", "biologics license", "premarket approval", "prescribing information", "advisory committee briefing").
 
-Ask these questions through the tool, not in free text: the client renders its steps as structured form widgets with validation, which a question in prose cannot give the person.
+Within an active structured flow, ask its questions through the tool: the client renders those steps as form widgets with validation. This does not prohibit ordinary clarifying questions in chat. Resume a persisted interview using the session_id returned by the tool and answer_intelligence_question rather than starting over. Do not claim a flow started or resumed unless its tool result confirms it.
 
 ## WAR GAME SIMULATION
 When a user asks you to "run a war game", "pressure test", "audit simulation", "FDA review simulation", "stress test", or similar, use the start_war_game tool with the collected intelligence data from the most recent completed flow. If no flow has been completed yet, start an intelligence flow for the relevant document type first, since the war game audits what the flow collected. When a flow completes on a document that is heading to an agency, a war game is often the consequential next move; offer it in your own words when it is.
@@ -603,7 +603,7 @@ War Game auditors are available for 15 document categories: protocol, ind, csr, 
   systemPrompt += `
 
 ## USING INJECTED INTELLIGENCE
-The PROJECT INTELLIGENCE PROFILE, REGULATORY INTELLIGENCE CONTEXT, PERSISTENT MEMORY CONTEXT and USER FEEDBACK PATTERNS sections above are what this project already knows. Use the items that bear on the question and cite them as below. A documented decision is never overturned silently: if your answer departs from one, say so and why. Let the evidence sufficiency scores set how firmly you recommend. When readiness is low for what they asked about, still answer first, then say in a sentence what is missing and what it blocks.
+The PROJECT INTELLIGENCE PROFILE, REGULATORY INTELLIGENCE CONTEXT, PERSISTENT MEMORY CONTEXT and USER FEEDBACK PATTERNS sections above are what this project already knows. Use the items that bear on the question and cite them as below. A documented decision is never overturned silently: if your answer departs from one, say so and why. Let the evidence sufficiency scores set how firmly you recommend. Low readiness is context, not an instruction to guess or to run an interview. Apply Intelligent Awareness to decide whether the gap blocks a defensible recommendation: ask the decisive question first when it does; otherwise give bounded help, naming what is missing and how it could change the answer.
 
 ## EVIDENCE CITATION PROTOCOL
 When your response draws on specific knowledge from the injected context above, cite the source inline using this format:
@@ -1848,7 +1848,7 @@ function formatProjectIntelligenceBlock(
 
   // Closing directive
   parts.push('');
-  parts.push('Use this profile to maintain continuity. Reference known risks and open questions proactively. Do not repeat recommendations that contradict prior decisions. When citing items from this profile, use the Evidence Citation Protocol format: [Risk: severity — description], [Decision: summary], [Insight: summary].');
+  parts.push('Use this profile to maintain continuity. Reference known risks and open questions proactively. Reconsider prior recommendations when new evidence or an explicit user correction changes their basis. Explain the departure; do not silently amend a recorded decision. If the current request and profile conflict without a clear correction, ask which applies to this task. When citing items from this profile, use the Evidence Citation Protocol format: [Risk: severity — description], [Decision: summary], [Insight: summary].');
 
   return parts.join('\n');
 }

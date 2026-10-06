@@ -67,3 +67,47 @@ describe('IA is subject matter judgment', () => {
     expect(prompt).toContain('only the domain facts that could change this answer');
   });
 });
+
+// Guard late orchestration overlays, where a more specific instruction could
+// otherwise undo the shared IA policy after it was correctly composed.
+describe('IA survives orchestration overlays', () => {
+  it.each([
+    'What does CTD stand for?',
+    'Draft the supplied clinical overview using these confirmed results.',
+    'Which market should we target? I have not chosen an intended use yet.',
+  ])('does not force a verdict or full intake for "%s"', message => {
+    const prompt = orchestrate({ message }).systemPrompt;
+    expect(prompt.includes('still answer first')).toBe(false);
+    expect(prompt.includes('For a small clarification, ask focused questions in chat')).toBe(true);
+    expect(prompt.includes('Do not automatically start or restart an interview')).toBe(true);
+    expect(prompt.includes('Within an active structured flow, ask its questions through the tool')).toBe(true);
+    expect(prompt.includes('Apply Intelligent Awareness to decide whether the gap blocks')).toBe(true);
+    expect(prompt.includes('start_war_game')).toBe(true);
+  });
+
+  it('allows explicit reconsideration without silently rewriting recorded decisions', () => {
+    const profile: NonNullable<Parameters<typeof orchestrate>[0]['_projectIntelligenceProfile']> = {
+      profileId: 1, projectId: 1, organizationId: 1,
+      regulatoryStrategy: 'Original plan targets the United States.',
+      targetIndication: null, targetPopulation: null,
+      riskFactors: [], openQuestions: [], learnedInsights: [],
+      keyDecisions: [{ decision: 'Target the United States', rationale: 'Original plan', date: '2026-10-01' }],
+      documentStats: { totalIngested: 0, totalTokens: 0, lastIngestedAt: null },
+      memoryEntryCount: 0, profileStatus: 'active', lastEnrichedAt: null,
+    };
+    const prompt = orchestrate({
+      message: 'We are now considering Japan. Reconsider the old plan.',
+      _projectIntelligenceProfile: profile,
+      conversationHistory: [
+        { role: 'user', content: 'The original plan targets the United States.' },
+        { role: 'assistant', content: 'Which market should this recommendation cover?' },
+        { role: 'user', content: 'Japan for this task.' },
+      ],
+    }).systemPrompt;
+    expect(prompt.includes('Target the United States')).toBe(true);
+    expect(prompt.includes('Do not repeat recommendations that contradict prior decisions')).toBe(false);
+    expect(prompt.includes('Reconsider prior recommendations when new evidence or an explicit user correction changes their basis')).toBe(true);
+    expect(prompt.includes('Explain the departure; do not silently amend a recorded decision')).toBe(true);
+    expect(prompt.includes('A documented decision is never overturned silently')).toBe(true);
+  });
+});
