@@ -1,0 +1,138 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/__tests__/ana-prefetch-deadline.test.ts
+{
+  "timestamp": "2026-10-06T02:41:22.470Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T02:41:22.472Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/ana-prefetch-deadline.test.ts
+{
+  "timestamp": "2026-10-06T02:41:22.472Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-prefetch-deadline.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/ana-prefetch-deadline.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-prefetch-deadline.test.ts
+{
+  "timestamp": "2026-10-06T02:41:23.453Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-prefetch-deadline.test.ts
+Loaded 0 academic documents
+
+ × server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled feedback source and keeps healthy context 6ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled profile source and keeps healthy context 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled rim source and keeps healthy context 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled relational source and keeps healthy context 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled external source and keeps healthy context 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > starts independent reads together and uses one 3s wait when several stall 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > does not report healthy empty results as unavailable and clears the deadline timers 2ms
+   → expected undefined to deeply equal []
+ × server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > reports rejection and the existing 1.5s proactive deadline without blocking other context 2ms
+   → expected undefined to deeply equal ArrayContaining{…}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled feedback source and keeps healthy context
+ FAIL  server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled profile source and keeps healthy context
+ FAIL  server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled rim source and keeps healthy context
+ FAIL  server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled relational source and keeps healthy context
+ FAIL  server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled external source and keeps healthy context
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/__tests__/ana-prefetch-deadline.test.ts:46:21
+     44|     const pending = prefetchRouteIntelligenceContext(INPUT).then(settl…
+     45|     await vi.advanceTimersByTimeAsync(3_000);
+     46|     expect(settled).toHaveBeenCalledTimes(1);
+       |                     ^
+     47|     await pending;
+     48|     const result = settled.mock.calls[0][0];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > starts independent reads together and uses one 3s wait when several stall
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/__tests__/ana-prefetch-deadline.test.ts:67:21
+     65|     expect(sources.external).toHaveBeenCalledTimes(1);
+     66|     await vi.advanceTimersByTimeAsync(3_000);
+     67|     expect(settled).toHaveBeenCalledTimes(1);
+       |                     ^
+     68|     await pending;
+     69|     expect(settled.mock.calls[0][0].unavailableSources).toHaveLength(3…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > does not report healthy empty results as unavailable and clears the deadline timers
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/services/__tests__/ana-prefetch-deadline.test.ts:74:39
+     72|   it('does not report healthy empty results as unavailable and clears …
+     73|     const result = await prefetchRouteIntelligenceContext(INPUT);
+     74|     expect(result.unavailableSources).toEqual([]);
+       |                                       ^
+     75|     expect(result.contextAvailabilityBlock).toBe('');
+     76|     expect(vi.getTimerCount()).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > reports rejection and the existing 1.5s proactive deadline without blocking other context
+AssertionError: expected undefined to deeply equal ArrayContaining{…}
+
+- Expected:
+ArrayContaining [
+  "project intelligence",
+  "session briefing",
+]
+
++ Received:
+undefined
+
+ ❯ server/services/__tests__/ana-prefetch-deadline.test.ts:86:57
+     84|     await vi.advanceTimersByTimeAsync(1_500);
+     85|     await pending;
+     86|     expect(settled.mock.calls[0][0].unavailableSources).toEqual(expect…
+       |                                                         ^
+     87|   });
+     88| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  22:41:21
+   Duration  7.87s (transform 4.98s, setup 60ms, import 7.60s, tests 18ms, environment 0ms)

@@ -1,0 +1,22 @@
+[
+  {
+    "gate": "ci:untracked-imports",
+    "exit": 0,
+    "output": "[ci:untracked-imports] OK \u2014 every relative import in 4 file(s) resolves to a tracked file.\n"
+  },
+  {
+    "gate": "ci:pushed-lint-errors",
+    "exit": 0,
+    "output": "[ci:pushed-lint-errors] OK \u2014 no ESLint errors in 4 changed file(s) against origin/concept2cure-v2.\n"
+  },
+  {
+    "gate": "ci:pushed-lint-warnings",
+    "exit": 1,
+    "output": "[ci:eslint-warning-ratchet] --since 7c83d0a203648bb7455046b374bc752e9b4d1ebc (7c83d0a20) -- 4 lintable file(s) changed; linting both versions of each...\n\n[ci:eslint-warning-ratchet] FAIL \u2014 refusing to overwrite an existing file at server/routes/ana-ri/__tests__/__eslint_ratchet_prev__.stream-tool-carry-over.test.ts.\n  That path is this mode's scratch name; a leftover means a previous run died.\n  Delete it and re-run.\n"
+  },
+  {
+    "gate": "ci:pushed-lint-warnings retry after preserving stale scratch files",
+    "exit": 0,
+    "output": "[ci:eslint-warning-ratchet] --since 7c83d0a203648bb7455046b374bc752e9b4d1ebc (7c83d0a20) -- 4 lintable file(s) changed; linting both versions of each...\n[ci:eslint-warning-ratchet] no file changed its warning count since 7c83d0a203648bb7455046b374bc752e9b4d1ebc.\n"
+  }
+]

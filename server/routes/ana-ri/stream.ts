@@ -930,6 +930,12 @@ export function mountStreamRoute(router: Router): void {
         _sessionBriefingBlock: prefetchedStreamContext.sessionBriefingBlock,
         _contradictionWatchBlock: prefetchedStreamContext.contradictionWatchBlock,
       });
+      orchestration.systemPrompt += prefetchedStreamContext.contextAvailabilityBlock ?? '';
+      if (prefetchedStreamContext.unavailableSources?.length) {
+        const warning = `Optional context unavailable: ${prefetchedStreamContext.unavailableSources.join(', ')}.`;
+        turnRecorder?.warn(warning);
+        res.write(`data: ${JSON.stringify({ type: 'warning', message: warning })}\n\n`);
+      }
       streamOrchestrationMs = Date.now() - streamPhaseStart;
 
       const streamRouteBlock = buildRouteContextBlock(req.body.context);

@@ -33,6 +33,7 @@ const h = vi.hoisted(() => {
     approvals: [] as any[],
     guardedInputs: [] as string[],
     encapsulateInput: false,
+    prefetch: { unavailableSources: [] as string[], contextAvailabilityBlock: '' },
   };
   const pool = {
     query: async () => ({ rows: [], rowCount: 0 }),
@@ -156,7 +157,7 @@ vi.mock('../../../services/ana-ri/orchestrator.js', () => ({
 }));
 vi.mock('../../../services/ana-ri/chat-context-builder.js', async importOriginal => ({
   ...(await importOriginal<typeof import('../../../services/ana-ri/chat-context-builder.js')>()),
-  prefetchRouteIntelligenceContext: async () => ({}),
+  prefetchRouteIntelligenceContext: async () => h.state.prefetch,
 }));
 vi.mock('../../../services/lumen-context-builder.js', () => ({
   getIntelligencePrefix: async () => '',
@@ -226,6 +227,7 @@ beforeEach(() => {
   h.state.approvals = [];
   h.state.guardedInputs = [];
   h.state.encapsulateInput = false;
+  h.state.prefetch = { unavailableSources: [], contextAvailabilityBlock: '' };
 });
 
 /** The stream's frames, parsed. */
@@ -266,6 +268,16 @@ function thread(steps: Array<{ tool: string; status: string }>, question: string
 }
 
 describe('a follow-up keeps the tools its conversation used (TP-RL-3)', () => {
+  it('reports unavailable optional context to the person and includes it in the model input', async () => {
+    h.state.prefetch = {
+      unavailableSources: ['external intelligence'],
+      contextAvailabilityBlock: '\nOptional external intelligence unavailable; do not infer missing records do not exist.',
+    };
+    const frames = await turn('Review the project');
+    expect(frames).toContainEqual({ type: 'warning', message: 'Optional context unavailable: external intelligence.' });
+    expect(h.state.gatewayCalls[0].messages.some(m => m.role === 'system' && typeof m.content === 'string' && m.content.includes('do not infer missing records do not exist'))).toBe(true);
+  });
+
   it('Continue receives the visible partial draft even when stored history lacks it', async () => {
     const message = 'Continue from where you stopped.';
     h.state.history = [
