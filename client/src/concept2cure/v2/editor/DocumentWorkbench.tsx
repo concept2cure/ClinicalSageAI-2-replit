@@ -5708,6 +5708,11 @@ export function DocumentWorkbench({
             setTasksEpoch(e => e + 1);
             setRail('tasks');
           }}
+          onCheckTasks={() => {
+            setAssignReviewOpen(false);
+            setTasksEpoch(e => e + 1);
+            setRail('tasks');
+          }}
           fireToast={fireToast}
         />
       )}

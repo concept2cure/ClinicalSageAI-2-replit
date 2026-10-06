@@ -20,8 +20,8 @@
  * the regulatory_programs UUID, so the program travels in moduleData and the
  * task cannot be joined to the program by key. Recorded in docs/evidence/WN.
  */
-import React, { useEffect, useState } from 'react';
-import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import React, { useEffect, useRef, useState } from 'react';
+import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
 import type { FireToast } from '../toast';
@@ -42,6 +42,8 @@ export interface AssignReviewDialogProps {
   onClose: () => void;
   onCreated: (task: { taskId: string; assigneeName: string | null }) => void;
   fireToast: FireToast;
+  /** Open the existing task list to reconcile an unconfirmed creation. */
+  onCheckTasks?: () => void;
 }
 
 const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
@@ -49,12 +51,12 @@ type Priority = (typeof PRIORITIES)[number];
 type RosterState = 'loading' | 'ready' | 'error';
 
 /** What POST /api/tasks/tasks answers with, as much of it as this dialog reads. */
-type CreatedTaskEnvelope = { success?: boolean; data?: { taskId?: string; assigneeName?: string | null } } | null;
+type CreatedTaskEnvelope = { success?: boolean; error?: string; data?: { taskId?: string; assigneeName?: string | null; assigneeId?: number | null; sourceEntityType?: string | null; sourceEntityId?: string | null } } | null;
 
 /** The create either produced a server-issued task, or it did not and says why. */
 type AssignOutcome =
   | { ok: true; taskId: string; assigneeName: string | null }
-  | { ok: false; message: string };
+  | { ok: false; message: string; unconfirmed: boolean };
 
 /**
  * Reads the Task board roster once, and abandons the read if the dialog closes
@@ -95,7 +97,7 @@ function useAssigneeRoster(): { roster: Assignee[]; rosterState: RosterState } {
  * the submit path does no validation of its own.
  */
 export function isSubmittableReviewer(assignee: string): boolean {
-  return assignee.trim().length > 0 && Number.isFinite(Number(assignee));
+  return /^[1-9][0-9]*$/.test(assignee) && Number.isSafeInteger(Number(assignee));
 }
 
 /**
@@ -139,11 +141,11 @@ export function buildReviewTaskBody(form: {
 /**
  * The one sentence shown when the server answered but created nothing. Its own
  * function because a refusal has two honest forms — unauthenticated, and
- * declined — and both must end by saying nothing was recorded.
+ * declined — without inferring a rollback from an unconfirmed response.
  */
 function refusalMessage(status: number, json: CreatedTaskEnvelope): string {
   if (status === 401) return 'Not assigned — your session isn’t authenticated. Sign in and retry.';
-  return 'The review task was not created — ' + (serverMessage(json) ?? `the server refused it (HTTP ${status})`) + '. Nothing was recorded.';
+  return 'The review task was not confirmed — ' + (serverMessage(json) ?? `the server returned HTTP ${status}`) + '. Reload the task list before retrying.';
 }
 
 /**
@@ -152,7 +154,19 @@ function refusalMessage(status: number, json: CreatedTaskEnvelope): string {
  * internal text escapes into the UI.
  */
 function unreachableMessage(e: unknown): string {
-  return 'The review task was not created — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '. Nothing was recorded.';
+  return 'The review task outcome is unknown — ' + redactInternals(e instanceof Error ? e.message : '', 'no confirmed response was received') + '. Reload the task list before retrying.';
+}
+
+function assignmentFailure(error: unknown): AssignOutcome {
+  if (error instanceof ApiRequestError && (error.code === 'AUDIT_WRITE_FAILED' || [400, 401, 403, 422].includes(error.status))) {
+    return { ok: false, unconfirmed: false, message: 'The review task was refused — ' + redactInternals(error.message, 'the request was not accepted') };
+  }
+  return { ok: false, message: unreachableMessage(error), unconfirmed: true };
+}
+
+function matchesAssignment(data: NonNullable<CreatedTaskEnvelope>['data'], body: Record<string, unknown>): boolean {
+  return data?.sourceEntityType === body.sourceEntityType && data?.sourceEntityId === body.sourceEntityId &&
+    data?.assigneeId === body.assigneeId;
 }
 
 /**
@@ -164,12 +178,15 @@ async function createReviewTask(body: Record<string, unknown>): Promise<AssignOu
     const res = await apiRequest('POST', '/api/tasks/tasks', body);
     const json = (await res.json().catch(() => null)) as CreatedTaskEnvelope;
     const taskId = json?.data?.taskId;
-    if (res.status === 401 || !res.ok || !json?.success || !taskId) {
-      return { ok: false, message: refusalMessage(res.status, json) };
+    if (!res.ok) {
+      return { ok: false, message: refusalMessage(res.status, json), unconfirmed: res.status >= 500 && json?.error !== 'AUDIT_WRITE_FAILED' || res.status === 408 };
     }
-    return { ok: true, taskId: String(taskId), assigneeName: json.data?.assigneeName ?? null };
+    if (!json?.success || typeof taskId !== 'string' || !taskId.trim() || !matchesAssignment(json.data, body)) {
+      return { ok: false, message: 'The response did not confirm this document’s review assignment. Reload the task list before retrying.', unconfirmed: true };
+    }
+    return { ok: true, taskId, assigneeName: json.data?.assigneeName ?? null };
   } catch (e) {
-    return { ok: false, message: unreachableMessage(e) };
+    return assignmentFailure(e);
   }
 }
 
@@ -238,8 +255,11 @@ function ReviewInstructionsField({ value, onChange, sectionCode }: {
   );
 }
 
-export function AssignReviewDialog({ docId, docTitle, programId, sectionCode, onClose, onCreated, fireToast }: AssignReviewDialogProps) {
+function AssignReviewDialogForSource({ docId, docTitle, programId, sectionCode, onClose, onCreated, fireToast, onCheckTasks }: AssignReviewDialogProps) {
   const [saving, setSaving] = useState(false);
+  const generation = useRef(0);
+  const pendingWrite = useRef(false);
+  useEffect(() => () => { generation.current++; }, []);
   const ref = useDialog(() => {
     if (!saving) onClose();
   });
@@ -249,11 +269,14 @@ export function AssignReviewDialog({ docId, docTitle, programId, sectionCode, on
   const [priority, setPriority] = useState<Priority>('medium');
   const [instructions, setInstructions] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [needsReconciliation, setNeedsReconciliation] = useState(false);
 
-  const canSubmit = !saving && isSubmittableReviewer(assignee);
+  const canSubmit = !saving && !needsReconciliation && isSubmittableReviewer(assignee) && roster.some(a => a.id === assignee);
 
   const submit = async () => {
-    if (!canSubmit) return;
+    if (pendingWrite.current || !canSubmit) return;
+    pendingWrite.current = true;
+    const seq = generation.current;
     setSaving(true);
     setError(null);
     try {
@@ -261,8 +284,10 @@ export function AssignReviewDialog({ docId, docTitle, programId, sectionCode, on
       const outcome = await createReviewTask(
         buildReviewTaskBody({ docId, docTitle, programId, sectionCode, assignee, due, priority, instructions }),
       );
+      if (seq !== generation.current) return;
       if (!outcome.ok) {
         setError(outcome.message);
+        setNeedsReconciliation(outcome.unconfirmed);
         return;
       }
       const assigneeName = outcome.assigneeName ?? chosen?.name ?? null;
@@ -270,9 +295,10 @@ export function AssignReviewDialog({ docId, docTitle, programId, sectionCode, on
       onCreated({ taskId: outcome.taskId, assigneeName });
       onClose();
     } catch (e) {
-      setError(unreachableMessage(e));
+      if (seq === generation.current) { setError(unreachableMessage(e)); setNeedsReconciliation(true); }
     } finally {
-      setSaving(false);
+      pendingWrite.current = false;
+      if (seq === generation.current) setSaving(false);
     }
   };
 
@@ -312,9 +338,10 @@ export function AssignReviewDialog({ docId, docTitle, programId, sectionCode, on
           <div className="de-gov">
             <span className="ico">{I.lock}</span>
             <span className="de-gov-t">
-              The task is written to the task ledger with its origin recorded as this document. The create is audited and the reviewer is notified; completing an approval-gated task requires a §11.50 e-signature on the Task board.
+              The task is written to the task ledger with its origin recorded as this document. The create is audited and an assignment notification is requested; completing an approval-gated task requires a §11.50 e-signature on the Task board.
             </span>
           </div>
+          {needsReconciliation && <button className="de-btn ghost" onClick={onCheckTasks ?? onClose}>Check existing review tasks</button>}
           {error && (
             <div className="de-err" role="alert" data-testid="ar-error">{error}</div>
           )}
@@ -328,4 +355,10 @@ export function AssignReviewDialog({ docId, docTitle, programId, sectionCode, on
       </div>
     </div>
   );
+}
+
+
+/** Each document/program/section gets its own ask and request lifetime. */
+export function AssignReviewDialog(props: AssignReviewDialogProps) {
+  return <AssignReviewDialogForSource key={JSON.stringify([props.programId, props.docId, props.sectionCode])} {...props} />;
 }

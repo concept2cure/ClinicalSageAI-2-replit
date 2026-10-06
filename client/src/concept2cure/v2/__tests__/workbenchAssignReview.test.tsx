@@ -11,7 +11,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { ApiRequestError } from '@/lib/queryClient';
 
 const apiRequest = vi.hoisted(() => vi.fn());
@@ -36,6 +36,8 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
     };
   }
 }
+
+import { AssignReviewDialog, isSubmittableReviewer } from '../editor/AssignReviewDialog';
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 import { tasksForDocument } from '../editor/ReviewTasksPanel';
@@ -222,5 +224,99 @@ describe('DocumentWorkbench — Review tasks, an outcome the server could not co
     fireEvent.click(within(rail).getByTestId('rt-complete'));
     expect(await screen.findByText(/unknown/i)).toBeTruthy();
     expect(screen.queryByText(/Its state is unchanged/)).toBeNull();
+  });
+});
+
+
+const dialogProps = () => ({ docId: DOC, docTitle: 'IND overview', programId: PID, sectionCode: '2.5',
+  onClose: vi.fn(), onCreated: vi.fn(), fireToast: vi.fn(), onCheckTasks: vi.fn() });
+async function readyAssignment() {
+  await screen.findByRole('option', { name: 'OQ Signer' });
+  fireEvent.change(screen.getByTestId('ar-assignee'), { target: { value: '42' } });
+  fireEvent.change(screen.getByTestId('ar-instructions'), { target: { value: 'Check the clinical claims against the SAP.' } });
+}
+
+describe('review assignment confirmation and context', () => {
+  it.each(['0', '-1', '1.5', '9007199254740992', '1e2'])('refuses invalid integer reviewer identity %s', id => {
+    expect(isSubmittableReviewer(id)).toBe(false);
+  });
+
+  it('reports a lost response as unknown and preserves the instructions for reconciliation', async () => {
+    const p = dialogProps();
+    const original = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method, url, body) => method === 'POST' ? Promise.reject(new ApiRequestError('Bad gateway', 502)) : original(method, url, body));
+    render(<AssignReviewDialog {...p} />); await readyAssignment(); fireEvent.click(screen.getByTestId('ar-submit'));
+    expect((await screen.findByRole('alert')).textContent).toMatch(/unknown|not.*confirmed/i);
+    expect(screen.getByRole('alert').textContent).not.toMatch(/Nothing was recorded|not created/);
+    expect((screen.getByTestId('ar-instructions') as HTMLTextAreaElement).value).toContain('clinical claims');
+    expect(p.onCreated).not.toHaveBeenCalled(); expect(p.fireToast).not.toHaveBeenCalled();
+    expect((screen.getByTestId('ar-submit') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Check existing review tasks' }));
+    expect(p.onCheckTasks).toHaveBeenCalledOnce();
+  });
+
+  it('does not confirm a receipt for a different document', async () => {
+    const p = dialogProps(); const original = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method, url, body) => method === 'POST' ? Promise.resolve(ok({ success: true,
+      data: { taskId: 'OTHER-TASK', assigneeId: 42, sourceEntityType: 'authoring_document', sourceEntityId: 'other-document' },
+    })) : original(method, url, body));
+    render(<AssignReviewDialog {...p} />); await readyAssignment(); fireEvent.click(screen.getByTestId('ar-submit'));
+    await screen.findByRole('alert'); expect(p.onCreated).not.toHaveBeenCalled(); expect(p.fireToast).not.toHaveBeenCalled();
+  });
+
+  it('resets the reviewer and instructions when the document changes', async () => {
+    const p = dialogProps(); const view = render(<AssignReviewDialog {...p} />); await readyAssignment();
+    view.rerender(<AssignReviewDialog {...p} docId="other-document" docTitle="Other IND section" />);
+    expect((screen.getByTestId('ar-assignee') as HTMLSelectElement).value).toBe('');
+    expect((screen.getByTestId('ar-instructions') as HTMLTextAreaElement).value).toBe('');
+    expect((screen.getByTestId('ar-submit') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('ignores a delayed assignment receipt after changing documents', async () => {
+    const p = dialogProps(); const original = apiRequest.getMockImplementation()!;
+    let finish!: (value: Response) => void;
+    apiRequest.mockImplementation((method, url, body) => method === 'POST' ? new Promise<Response>(resolve => { finish = resolve; }) : original(method, url, body));
+    const view = render(<AssignReviewDialog {...p} />); await readyAssignment(); fireEvent.click(screen.getByTestId('ar-submit'));
+    view.rerender(<AssignReviewDialog {...p} docId="other-document" docTitle="Other IND section" />);
+    await act(async () => finish(ok({ success: true, data: { taskId: 'OLD-TASK', assigneeId: 42, sourceEntityType: 'authoring_document', sourceEntityId: DOC } })));
+    expect(p.onCreated).not.toHaveBeenCalled(); expect(p.fireToast).not.toHaveBeenCalled(); expect(p.onClose).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('workbench reconciles an unconfirmed review assignment', () => {
+  it('opens the task list after a lost response and shows the task that actually committed', async () => {
+    const original = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method, url, body) => {
+      const result = await original(method, url, body);
+      if (method === 'POST' && url === '/api/tasks/tasks') throw new ApiRequestError('Response lost after commit', 502);
+      return result;
+    });
+    render(<DocumentAuthoring {...props()} />); await screen.findAllByText('Rationale');
+    fireEvent.click(screen.getByTestId('assign-review-open')); await readyAssignment(); fireEvent.click(screen.getByTestId('ar-submit'));
+    await screen.findByTestId('ar-error');
+    expect(ledger).toHaveLength(1);
+    expect((screen.getByTestId('ar-submit') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByTestId('ar-submit'));
+    expect(apiRequest.mock.calls.filter(c => c[0] === 'POST' && c[1] === '/api/tasks/tasks')).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Check existing review tasks' }));
+    const rail = await screen.findByRole('complementary', { name: 'Review tasks' });
+    expect((await within(rail).findByTestId('rt-row')).textContent).toContain('Review: Module 2.5 Clinical Overview');
+    expect(screen.queryByTestId('assign-review-dialog')).toBeNull();
+  });
+});
+
+
+describe('known assignment refusal', () => {
+  it('keeps a confirmed audit rollback distinct from an unknown commit', async () => {
+    const p = dialogProps(); const original = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method, url, body) => method === 'POST'
+      ? Promise.reject(new ApiRequestError('The audit write failed, so nothing was changed.', 500, {}, 'AUDIT_WRITE_FAILED'))
+      : original(method, url, body));
+    render(<AssignReviewDialog {...p} />); await readyAssignment(); fireEvent.click(screen.getByTestId('ar-submit'));
+    expect((await screen.findByRole('alert')).textContent).toMatch(/refused.*nothing was changed/i);
+    expect(screen.queryByRole('button', { name: 'Check existing review tasks' })).toBeNull();
+    expect((screen.getByTestId('ar-submit') as HTMLButtonElement).disabled).toBe(false);
+    expect(p.onCreated).not.toHaveBeenCalled(); expect(p.fireToast).not.toHaveBeenCalled();
   });
 });

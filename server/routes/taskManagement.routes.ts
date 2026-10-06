@@ -101,7 +101,7 @@ const createTaskSchema = z.object({
   // terminal status let it mint an already-completed approval-gated task
   // without the sign-off ceremony (the gate only runs on transitions).
   status: creatableStatusSchema.optional(),
-  assigneeId: z.number().optional(),
+  assigneeId: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
   startDate: z.string().optional(),
   dueDate: z.string().optional(),
   estimatedHours: z.number().optional(),
@@ -179,6 +179,7 @@ const createAutomationSchema = z.object({
 // services/tasking/task-planning (extracted for the repo-health line gate).
 // Create single task
 router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) => {
+  let commitInFlight = false;
   try {
     const ctx = governedWriter(req, res);
     if (!ctx) return;
@@ -234,8 +235,10 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
         },
         reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
       });
+      commitInFlight = true;
       return row;
     });
+    commitInFlight = false;
 
     // Tell the assignee (unless they created it themselves).
     if (assigneeId && assigneeId !== actorUserId) {
@@ -255,6 +258,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
     });
   } catch (error) {
     if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The task');
+    if (commitInFlight) return outcomeUnknown(res);
     console.error('Error creating task:', error);
     res.status(400).json({
       success: false,

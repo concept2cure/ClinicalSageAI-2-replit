@@ -304,3 +304,24 @@ describe('C7 — every dependency edge a batch creates is ledgered with task.lin
     expect(h.log.filter((l) => l === 'BEGIN')).toHaveLength(1);
   });
 });
+
+
+describe('single task creation receipt', () => {
+  it('reports a lost create COMMIT as unknown and sends no assignment notification', async () => {
+    h.failCommit = 1;
+    const res = await request(makeApp()).post(`${BASE}/tasks`).send({ title: 'Review IND overview', moduleType: 'Authoring', assigneeId: 42 });
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('OUTCOME_UNKNOWN');
+    expect(res.body.message).toMatch(/unknown.*reload/i);
+    expect(h.log).toContain('COMMIT-LOST');
+    expect(spies.notifyTaskEvent).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('review task assignee identity', () => {
+  it.each([0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1])('rejects invalid assignee %s before task or audit writes', async assigneeId => {
+    const res = await request(makeApp()).post(`${BASE}/tasks`).send({ title: 'Review IND overview', moduleType: 'Authoring', assigneeId });
+    expect(res.status).toBe(400); expect(wrote()).toEqual([]); expect(h.audits).toEqual([]);
+  });
+});
