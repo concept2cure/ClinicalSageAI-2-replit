@@ -736,9 +736,24 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     };
   }, []);
 
-  const reset = useCallback(() => {
+  // Switching conversations abandons the run immediately. Its stream may
+  // settle later, but its controls must no longer target the selected conversation.
+  const abandonTurn = useCallback(() => {
     haltTurnDrive();
-    abortRef.current?.abort();
+    const abandoned = abortRef.current;
+    runIdRef.current = null;
+    drivingRef.current = false;
+    isStreamingRef.current = false;
+    setIsStreaming(false);
+    setRunStatus(null);
+    setRunHold(null);
+    setTurnRunPolicy(null);
+    setPendingSteers([]);
+    abandoned?.abort();
+  }, [haltTurnDrive]);
+
+  const reset = useCallback(() => {
+    abandonTurn();
     const loading = threadLoadRef.current;
     threadLoadRef.current = null;
     loading?.abort();
@@ -748,16 +763,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     threadIdRef.current = null;
     messagesRef.current = [];
     setMessages([]);
-    isStreamingRef.current = false;
-    setIsStreaming(false);
-  }, [haltTurnDrive]);
+  }, [abandonTurn]);
 
   const loadThread = useCallback(async (threadId: string) => {
     if (!threadId) return;
-    haltTurnDrive();
-    abortRef.current?.abort();
-    isStreamingRef.current = false;
-    setIsStreaming(false);
+    abandonTurn();
     threadLoadRef.current?.abort();
     const loading = new AbortController();
     threadLoadRef.current = loading;
@@ -872,7 +882,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         setIsLoadingThread(false);
       }
     }
-  }, [haltTurnDrive]);
+  }, [abandonTurn]);
 
   const send = useCallback(
     async (
