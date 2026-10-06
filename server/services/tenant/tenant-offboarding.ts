@@ -793,6 +793,8 @@ export async function purgeTenant(
   }
 > {
   const { organizationId, purgedByUserId, preconditions } = params;
+  const childTables = params.childTables ?? PURGE_CHILD_TABLES;
+  assertNoRetainedRecords(childTables);
 
   const { existing, receipt } = await assertPurgePermitted(pool, organizationId, purgedByUserId, preconditions);
 
@@ -801,7 +803,7 @@ export async function purgeTenant(
     receipt,
     purgedByUserId,
     preconditions,
-    childTables: params.childTables ?? PURGE_CHILD_TABLES,
+    childTables,
     auditContext: params.auditContext,
   });
 
@@ -836,6 +838,26 @@ export async function purgeTenant(
     turnRecordErasure: tally.turnRecordErasure,
     artifactRecordErasure: tally.artifactRecordErasure,
   };
+}
+
+/** Immutable evidence of an attributed disposition, retained with its audit trail.
+ * POLICY-DR-007 section 1 keeps audit trails at least as long as their records.
+ * These receipts contain hashes, linked IDs, decisions and chained audit evidence;
+ * they are not the original file or extracted content. No tenant purge may erase
+ * them, including through an injected or accidentally expanded table list.
+ * The coverage gate reads this same literal policy; keep it JSON-shaped.
+ */
+export const PURGE_RETAINED_RECORDS: Readonly<Record<string, string>> = Object.freeze({
+  "document_data_dispositions": "Immutable attributed disposition receipts retained with the audit trail under POLICY-DR-007 section 1; UPDATE, DELETE and TRUNCATE are refused by the 20261006 migration.",
+});
+
+function assertNoRetainedRecords(tables: readonly string[]): void {
+  for (const table of tables) {
+    const name = table.replace(/^public\./, '');
+    if (Object.prototype.hasOwnProperty.call(PURGE_RETAINED_RECORDS, name)) {
+      throw new OffboardingStateError('PURGE_RETAINED_RECORD', `Tenant purge cannot erase retained evidence: ${table}`);
+    }
+  }
 }
 
 /**

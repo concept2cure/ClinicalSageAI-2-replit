@@ -26,6 +26,8 @@
  * but never grow. That last property is the point — the gap reached 615 because
  * new org-keyed tables were added for years with nothing watching whether the
  * purge could reach them.
+ * Explicit immutable receipt retention is read from the same offboarding policy
+ * and reported separately; no name pattern or baseline expansion exempts content.
  *
  * Run against a provisioned database (the blank-db-provisioning CI job).
  */
@@ -106,6 +108,25 @@ function purgeChildTables() {
   return tables;
 }
 
+/** Read the exact named retention policy, including its nonempty justification. */
+function retainedRecords() {
+  const src = stripComments(fs.readFileSync(OFFBOARDING, 'utf8'));
+  const match = src.match(/^export\s+const\s+PURGE_RETAINED_RECORDS\b[^=]*=\s*Object\.freeze\(\{([\s\S]*?)\}\)/m);
+  try {
+    if (!match) throw new Error('missing frozen literal');
+    const policy = JSON.parse(`{${stripComments(match[1]).replace(/,\s*$/, '')}}`);
+    for (const [table, reason] of Object.entries(policy)) {
+      if (!/^[a-z][a-z0-9_]*$/.test(table) || typeof reason !== 'string' || reason.trim().length < 10) {
+        throw new Error('every exact public table needs a nonempty retention reason');
+      }
+    }
+    return policy;
+  } catch (error) {
+    console.error(`❌ purge-coverage: cannot read PURGE_RETAINED_RECORDS — ${error.message}`);
+    process.exit(1);
+  }
+}
+
 const RESIDUE_SQL = `
 WITH RECURSIVE seed(t) AS (
   SELECT unnest($1::text[])::text COLLATE "C"
@@ -165,8 +186,25 @@ try {
   }
 
   const tables = purgeChildTables();
+  const retained = retainedRecords();
+  const retainedNames = Object.keys(retained);
   const { rows } = await client.query(RESIDUE_SQL, [tables]);
-  const residue = rows.map((r) => r.t);
+  const allResidue = rows.map((r) => r.t);
+  const { rows: visibleRetained } = await client.query(
+    `SELECT t.table_name AS t FROM information_schema.tables t
+      WHERE t.table_schema='public' AND t.table_type='BASE TABLE' AND t.table_name=ANY($1::text[])
+        AND EXISTS (SELECT 1 FROM information_schema.columns c WHERE c.table_schema='public'
+          AND c.table_name=t.table_name AND c.column_name='organization_id')`, [retainedNames],
+  );
+  const reachedRetained = visibleRetained.map((r) => r.t).filter((t) => !allResidue.includes(t));
+  if (reachedRetained.length) {
+    console.error(`❌ purge-coverage: retained evidence is reachable by purge: ${reachedRetained.join(', ')}`);
+    process.exit(1);
+  }
+  const retainedHere = allResidue.filter((t) => Object.prototype.hasOwnProperty.call(retained, t));
+  const residue = allResidue.filter((t) => !Object.prototype.hasOwnProperty.call(retained, t));
+  console.info(`   retained immutable evidence (outside customer-content erasure): ${retainedHere.length}`);
+  for (const table of retainedHere) console.info(`     ${table}: ${retained[table]}`);
 
   if (writeBaseline) {
     /* A table that DISAPPEARED from the residue is not automatically a gain.
@@ -186,7 +224,8 @@ try {
       : { tables: [] };
     const previousTables = Array.isArray(previous.tables) ? previous.tables : [];
     const nowInResidue = new Set(residue);
-    const dropped = previousTables.filter((t) => !nowInResidue.has(t));
+    const previouslyRetained = previousTables.filter((t) => Object.prototype.hasOwnProperty.call(retained, t));
+    const dropped = previousTables.filter((t) => !nowInResidue.has(t) && !previouslyRetained.includes(t));
 
     let carried = [];
     if (dropped.length > 0) {
@@ -199,7 +238,7 @@ try {
       carried = dropped.filter((t) => !visible.has(t)).sort();
     }
 
-    const finalTables = [...residue, ...carried].sort();
+    const finalTables = [...new Set([...residue, ...carried, ...previouslyRetained])].sort();
     fs.mkdirSync(path.dirname(baselinePath), { recursive: true });
     fs.writeFileSync(
       baselinePath,
@@ -236,7 +275,7 @@ try {
     : { tables: [] };
   const known = new Set(baseline.tables ?? []);
   const added = residue.filter((t) => !known.has(t));
-  const removed = [...known].filter((t) => !residue.includes(t));
+  const removed = [...known].filter((t) => !residue.includes(t) && !Object.prototype.hasOwnProperty.call(retained, t));
 
   if (added.length > 0) {
     console.error('❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:');

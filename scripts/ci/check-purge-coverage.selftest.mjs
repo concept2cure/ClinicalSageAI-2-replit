@@ -267,7 +267,7 @@ const BASE_ENTRIES = [
   "  'projects',",
 ];
 
-function service(entries = BASE_ENTRIES) {
+function service(entries = BASE_ENTRIES, retained = {}) {
   return [
     "import type { Pool } from 'pg';",
     '',
@@ -291,6 +291,7 @@ function service(entries = BASE_ENTRIES) {
     'export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([',
     ...entries,
     ']);',
+    `export const PURGE_RETAINED_RECORDS: Readonly<Record<string, string>> = Object.freeze(${JSON.stringify(retained)});`,
     '',
   ].join('\n');
 }
@@ -324,7 +325,7 @@ function runGate(args, url) {
 async function arrange(c) {
   fs.rmSync(tree, { recursive: true, force: true });
   fs.mkdirSync(path.dirname(OFFBOARDING), { recursive: true });
-  if (c.source !== null) fs.writeFileSync(OFFBOARDING, c.source ?? service(c.entries));
+  if (c.source !== null) fs.writeFileSync(OFFBOARDING, c.source ?? service(c.entries, c.retained));
   if (c.baseline !== null) {
     fs.mkdirSync(path.dirname(BASELINE), { recursive: true });
     fs.writeFileSync(BASELINE, baselineJson(c.baseline ?? ['audit_logs']));
@@ -342,6 +343,63 @@ const okLine = (residue, known, covered = 0) =>
 // ── Cases ─────────────────────────────────────────────────────────────────────
 
 const cases = [
+  {
+    name: 'FAILS on an immutable receipt that has no explicit retained-record policy',
+    ddl: `${BASE_DDL} CREATE TABLE document_data_dispositions (id uuid PRIMARY KEY, organization_id integer NOT NULL);`,
+    expect: 1,
+    newTables: ['document_data_dispositions'],
+  },
+  {
+    name: 'quiet — explicitly retained immutable receipts are reported separately without expanding the baseline',
+    ddl: `${BASE_DDL} CREATE TABLE document_data_dispositions (id uuid PRIMARY KEY, organization_id integer NOT NULL);`,
+    retained: { document_data_dispositions: 'Immutable attributed receipts retained with the audit trail.' },
+    expect: 0,
+    mustSay: [okLine(1, 1), 'retained immutable evidence (outside customer-content erasure): 1', 'document_data_dispositions: Immutable attributed receipts'],
+  },
+  {
+    name: 'FAILS on unrelated content even beside explicitly retained evidence',
+    ddl: `${BASE_DDL}
+      CREATE TABLE document_data_dispositions (id uuid PRIMARY KEY, organization_id integer NOT NULL);
+      CREATE TABLE customer_uploads (id serial PRIMARY KEY, organization_id integer NOT NULL);`,
+    retained: { document_data_dispositions: 'Immutable attributed receipts retained with the audit trail.' },
+    expect: 1,
+    newTables: ['customer_uploads'],
+  },
+  {
+    name: 'FAILS when a retained record has no meaningful reason',
+    retained: { document_data_dispositions: ' ' },
+    expect: 1,
+    mustSay: ['cannot read PURGE_RETAINED_RECORDS'],
+  },
+  {
+    name: 'FAILS when retained evidence is explicitly listed for erasure',
+    ddl: `${BASE_DDL} CREATE TABLE document_data_dispositions (id uuid PRIMARY KEY, organization_id integer NOT NULL);`,
+    entries: [...BASE_ENTRIES, "'document_data_dispositions',"],
+    retained: { document_data_dispositions: 'Immutable attributed receipts retained with the audit trail.' },
+    expect: 1,
+    mustSay: ['retained evidence is reachable by purge: document_data_dispositions'],
+  },
+  {
+    name: 'FAILS when retained evidence has a cascade path from a purged table',
+    ddl: `${BASE_DDL} CREATE TABLE document_data_dispositions (id uuid PRIMARY KEY, organization_id integer NOT NULL,
+      project_id integer REFERENCES projects(id) ON DELETE CASCADE);`,
+    retained: { document_data_dispositions: 'Immutable attributed receipts retained with the audit trail.' },
+    expect: 1,
+    mustSay: ['retained evidence is reachable by purge: document_data_dispositions'],
+  },
+  {
+    name: 'FAILS closed when the explicit retention policy cannot be parsed',
+    source: service().replace('Object.freeze({})', 'Object.freeze(dynamicPolicy)'),
+    expect: 1,
+    mustSay: ['cannot read PURGE_RETAINED_RECORDS'],
+  },
+  {
+    name: 'FAILS on an unclassified receipt despite a commented-out fake retention declaration',
+    ddl: `${BASE_DDL} CREATE TABLE document_data_dispositions (id uuid PRIMARY KEY, organization_id integer NOT NULL);`,
+    source: '/* export const PURGE_RETAINED_RECORDS = Object.freeze({"document_data_dispositions":"This commented policy must not count."}); */\n' + service(),
+    expect: 1,
+    newTables: ['document_data_dispositions'],
+  },
   // The shapes the gate exists to catch.
   {
     // An org-keyed leaf with no foreign key: collab_presence and

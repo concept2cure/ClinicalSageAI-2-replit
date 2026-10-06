@@ -10,7 +10,7 @@
  * tests/db/tenant-purge-audit.dbtest.ts.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { OffboardingStateError, PURGE_CHILD_TABLES, purgeTenant } from '../tenant-offboarding';
+import { OffboardingStateError, PURGE_CHILD_TABLES, PURGE_RETAINED_RECORDS, purgeTenant } from '../tenant-offboarding';
 
 vi.mock('../../../middleware/orgMembership', () => ({
   invalidateOrgMembershipCache: vi.fn(),
@@ -158,8 +158,20 @@ describe('fail closed', () => {
 
 describe('the purge cannot reach its own record', () => {
   it('lists neither the audit trail nor the export receipt it relied on', () => {
-    for (const kept of ['audit_logs', 'tenant_export_receipts', 'organizations']) {
+    for (const kept of ['audit_logs', 'tenant_export_receipts', 'organizations', ...Object.keys(PURGE_RETAINED_RECORDS)]) {
       expect(PURGE_CHILD_TABLES).not.toContain(kept);
+    }
+  });
+
+  it('refuses a table-list expansion that would erase retained disposition receipts before touching the database', async () => {
+    for (const table of ['document_data_dispositions', 'public.document_data_dispositions']) {
+      const pool = makePool();
+      await expect(purgeTenant(pool, {
+        organizationId: ORG, purgedByUserId: ACTOR,
+        preconditions: { finalExportDigest: DIGEST }, childTables: ['projects', table],
+      })).rejects.toMatchObject({ code: 'PURGE_RETAINED_RECORD' });
+      expect(pool.query).not.toHaveBeenCalled();
+      expect(pool.connect).not.toHaveBeenCalled();
     }
   });
 });

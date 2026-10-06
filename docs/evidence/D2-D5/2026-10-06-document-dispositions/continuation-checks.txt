@@ -30,3 +30,16 @@ Final production build (after tightening)
 ✅ Server build complete → dist/index.js
 
 Final Semgrep 1.177.0: p/default + p/ci, --metrics=off --error --timeout=30; 5 explicit changed production targets, 210 rules, 0 findings, 0 errors, ~100% parsed lines, exit 0. New runtime-role test independently scanned: 1 target, 210 rules, 0 findings/errors, exit 0.
+
+Normal unmodified full pre-push hook at source 90235bda8 (before purge classification continuation): exit 0. TypeScript exit 0, 0 errors against unchanged 0 baseline. Pushed lint: 9 files, 0 errors and no warning-count growth. Initial fixture TS inference failed as intended and was corrected by an explicit RetrievedDocument[] annotation. A retry refused stale verified ESLint gate scratch; only byte-verified baseline copies were removed before the completed rerun. No gate or baseline was altered.
+[ci:eslint-warning-ratchet] no file changed its warning count since 0d8a33caeec1c232c44baffd123e286524d475a7.
+   ✅ The pushed files gained no ESLint warnings.
+   Typechecking (only if this push can change a type)...
+[ci:pushed-typecheck] 9 type-relevant file(s) changed against origin/concept2cure-v2: server/bootstrap/register-inline-routes.ts, server/routes/c2c/document-data-dispositions.ts, server/services/__tests__/rag-context-expansion.test.ts, server/services/__tests__/rag-disposition.pglite.integration.test.ts, server/services/advancedRAGPipeline.ts, +4 more
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+   ✅ Typecheck passed (or nothing type-relevant was pushed).
+✅ Pre-push checks complete — all gates passed.
+
+Purge continuation: 1 Vitest suite / 7 tests passed. Direct-PGlite alternative: 29 actual SQL/catalog/parser/baseline cases passed; native socket transport blocked EPERM and its connection-failure case excluded. Baseline unchanged. Final production build after runtime guard: client13.93s, server dist/index.js, exit0.
