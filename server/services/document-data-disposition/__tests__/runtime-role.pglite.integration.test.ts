@@ -64,7 +64,7 @@ describe('dispositions under the deployed integer RLS sweep and runtime role', (
     // Service transaction-local context must not leak into a reused connection.
     expect((await own.records())).toEqual([]);
     await scope(own.org);
-    const records = await own.records();
+    const records = (await harness.pg.query<{ choice: string }>('SELECT choice FROM document_data_dispositions WHERE organization_id=$1', [own.org])).rows;
     expect(records).toHaveLength(2);
     expect(records.map(record => record.choice)).toEqual(expect.arrayContaining(['keep_data', 'remove_data']));
     expect(await own.audits()).toHaveLength(2);
