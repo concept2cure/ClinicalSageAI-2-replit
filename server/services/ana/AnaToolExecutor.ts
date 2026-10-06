@@ -92,8 +92,8 @@ import {
 } from '../ana-advisory';
 import { GLOBAL_RI_TOOL_NAMES, dispatchGlobalRiTool } from '../global-ri/ana-tools';
 import { getToolPedigree, listDeterministicTools, PEDIGREE_LEVELS } from './tool-pedigree';
-import { detectContradictions, type EvidenceClaim } from './evidence-contradiction-detector';
-import { detectEvidenceGaps, type GapQuery, type EvidenceItem } from './evidence-gap-detector';
+import { detectContradictions } from './evidence-contradiction-detector';
+import { detectEvidenceGaps } from './evidence-gap-detector';
 import {
   recordToolOutcome,
   recordContractViolation,
@@ -2401,16 +2401,12 @@ registerToolHandler('ana_tool_pedigree', async (input) => {
 
 // Evidence self-check — deterministically flag contradictions across claims.
 registerToolHandler('detect_evidence_contradictions', async (input) => {
-  const claims = Array.isArray(input.claims) ? (input.claims as EvidenceClaim[]) : [];
-  const relativeTolerance = typeof input.relativeTolerance === 'number' ? input.relativeTolerance : undefined;
-  return JSON.stringify({ source: 'AnA Evidence-Contradiction Detector', ...detectContradictions(claims, { relativeTolerance }) });
+  return JSON.stringify({ source: 'AnA Evidence-Contradiction Detector', ...detectContradictions(input.claims, { relativeTolerance: input.relativeTolerance }) });
 });
 
 // Evidence sufficiency — deterministically detect coverage gaps vs the question.
 registerToolHandler('detect_evidence_gaps', async (input) => {
-  const query = (input.query && typeof input.query === 'object' ? input.query : {}) as GapQuery;
-  const evidence = Array.isArray(input.evidence) ? (input.evidence as EvidenceItem[]) : [];
-  return JSON.stringify({ source: 'AnA Evidence-Gap Detector', ...detectEvidenceGaps(query, evidence) });
+  return JSON.stringify({ source: 'AnA Evidence-Gap Detector', ...detectEvidenceGaps(input.query, input.evidence) });
 });
 
 // Submission deficiency taxonomy — deterministically surface likely reviewer

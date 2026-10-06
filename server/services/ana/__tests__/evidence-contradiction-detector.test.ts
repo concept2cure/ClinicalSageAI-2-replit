@@ -143,14 +143,17 @@ describe('detectContradictions — temporal_inconsistency', () => {
 });
 
 describe('detectContradictions — claim selection & counting', () => {
-  it('ignores claims missing a subject; checkedClaims counts only considered claims', () => {
+  it('does not assess a silently reduced subset when a supplied subject is missing', () => {
     const claims: EvidenceClaim[] = [
       { id: 'a', subject: 'NCT001', metric: 'ORR', value: 0.45 },
-      { id: 'b', subject: '   ', metric: 'ORR', value: 0.2 }, // blank subject → ignored
-      { subject: undefined as unknown as string, value: 1 }, // missing subject → ignored
+      { id: 'b', subject: '   ', metric: 'ORR', value: 0.2 }, // invalid supplied subject
+      { subject: undefined as unknown as string, value: 1 }, // invalid supplied subject
     ];
     const report = detectContradictions(claims);
-    expect(report.checkedClaims).toBe(1);
+    expect(report.checkedClaims).toBe(0);
+    expect(report.assessed).toBe(false);
+    expect(report.inputIssues).toContain('claims[1].subject must be a non-empty string.');
+    expect(report.inputIssues).toContain('claims[2].subject must be a non-empty string.');
     expect(report.contradictions).toEqual([]);
   });
 

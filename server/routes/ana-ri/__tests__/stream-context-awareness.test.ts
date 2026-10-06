@@ -238,3 +238,23 @@ it('passes unresolved evidence judgments to the real streaming follow-up request
     delete h.handlers.detect_evidence_contradictions;
   }
 });
+
+it('carries unassessed evidence inputs and repair guidance into the next gateway call', async () => {
+  const { detectEvidenceGaps } = await import('../../../services/ana/evidence-gap-detector.js');
+  h.handlers.detect_evidence_gaps = async input => JSON.stringify(detectEvidenceGaps(input.query, input.evidence));
+  try {
+    h.state.script = [[{ id: 'coverage-invalid', name: 'detect_evidence_gaps', input: {
+      query: { regions: 'JP' }, evidence: [{ region: 'JP' }],
+    } }], 'Controlled fixture response.'];
+    await ask();
+    expect(h.state.requests).toHaveLength(2);
+    const followup = JSON.stringify(h.state.requests[1].messages);
+    expect(followup).toContain('\\"assessed\\":false');
+    expect(followup).toContain('\\"complete\\":false');
+    expect(followup).toContain('query.regions');
+    expect(followup).toContain('not assessed');
+    expect(followup).toContain('retry before requesting client clarification');
+  } finally {
+    delete h.handlers.detect_evidence_gaps;
+  }
+});

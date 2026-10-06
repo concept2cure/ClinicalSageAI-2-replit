@@ -105,10 +105,16 @@ export interface Contradiction {
 export interface ContradictionReport {
   /** All detected contradictions, in stable order. */
   contradictions: Contradiction[];
-  /** How many claims were considered (had a non-empty subject). */
+  /** Validated claims considered; zero when supplied input is invalid. */
   checkedClaims: number;
   /** Subjects (original casing) that had at least one contradiction, sorted. */
   subjectsWithConflicts: string[];
+  /** True only when valid input yielded at least one structural comparison. */
+  assessed: boolean;
+  /** Number of pairs with comparable supplied numeric or polarity fields. */
+  comparedPairs: number;
+  /** Invalid supplied fields that prevent assessment of the submitted input. */
+  inputIssues: string[];
   /** Honest caveats about the detection's scope. */
   notes: string[];
 }
@@ -279,40 +285,32 @@ function comparablePair(a: IndexedClaim, b: IndexedClaim, display: string, notes
   return true;
 }
 
-const TYPE_ORDER: Record<ContradictionType, number> = {
-  numerical_mismatch: 0,
-  direct_conflict: 1,
-  temporal_inconsistency: 2,
-};
+function claimInputIssues(raw: unknown, index: number): string[] {
+  const path = `claims[${index}]`;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return [`${path} must be a structured object.`];
+  const claim = raw as Record<string, unknown>;
+  const issues: string[] = [];
+  if (!normalize(claim.subject as string)) issues.push(`${path}.subject must be a non-empty string.`);
+  for (const key of ['id', 'source', 'metric', 'unit', 'date', 'text']) {
+    if (claim[key] !== undefined && typeof claim[key] !== 'string') issues.push(`${path}.${key} must be a string when supplied.`);
+  }
+  if (claim.value !== undefined && !isFiniteNumber(claim.value)) issues.push(`${path}.value must be a finite number when supplied.`);
+  if (claim.polarity !== undefined && !['positive', 'negative', 'neutral'].includes(claim.polarity as string)) issues.push(`${path}.polarity must be positive, negative or neutral.`);
+  return issues;
+}
 
-/**
- * Detect structural contradictions among a set of evidence claims, BEFORE synthesis.
- *
- * Pure / deterministic: claims missing a (trimmed, non-empty) subject are ignored;
- * each unordered pair within the same subject is evaluated once; findings are returned
- * in a stable order (by subject, then type precedence, then claimA id, then claimB id).
- *
- * @param claims  the structured evidence claims to check.
- * @param options.relativeTolerance  numerical_mismatch tolerance (default 0.1).
- */
-export function detectContradictions(
-  claims: EvidenceClaim[],
-  options?: { relativeTolerance?: number },
-): ContradictionReport {
-  const relativeTolerance =
-    options && isFiniteNumber(options.relativeTolerance) && options.relativeTolerance >= 0
-      ? options.relativeTolerance
-      : DEFAULT_RELATIVE_TOLERANCE;
+function contradictionInputIssues(claims: unknown, tolerance: unknown): string[] {
+  const issues = Array.isArray(claims) ? claims.flatMap(claimInputIssues) : ['claims must be an array; unavailable claims are not an empty evidence result.'];
+  if (tolerance !== undefined && (!isFiniteNumber(tolerance) || tolerance < 0)) issues.push('relativeTolerance must be a finite non-negative number when supplied.');
+  return issues;
+}
 
-  // Keep only claims with a usable subject, preserving original index for ref ids.
-  const considered: IndexedClaim[] = [];
-  claims.forEach((claim, index) => {
-    if (!claim || typeof claim.subject !== 'string' || claim.subject.trim() === '') return;
-    const refId =
-      typeof claim.id === 'string' && claim.id.trim() !== '' ? claim.id : `#${index}`;
-    considered.push({ claim, refId, index });
-  });
+function hasComparableFields(a: EvidenceClaim, b: EvidenceClaim): boolean {
+  const numeric = !!normalize(a.metric) && isFiniteNumber(a.value) && isFiniteNumber(b.value) && unitKey(a.unit) === unitKey(b.unit);
+  return numeric || (a.polarity !== undefined && b.polarity !== undefined);
+}
 
+function groupClaims(considered: IndexedClaim[]): Map<string, { display: string; members: IndexedClaim[] }> {
   // Group considered claims by normalized subject, keeping first original casing.
   const groups = new Map<string, { display: string; members: IndexedClaim[] }>();
   for (const ic of considered) {
@@ -322,6 +320,44 @@ export function detectContradictions(
     else groups.set(key, { display: ic.claim.subject, members: [ic] });
   }
 
+  return groups;
+}
+
+const TYPE_ORDER: Record<ContradictionType, number> = {
+  numerical_mismatch: 0,
+  direct_conflict: 1,
+  temporal_inconsistency: 2,
+};
+
+/**
+ * Detect structural contradictions among a set of evidence claims, BEFORE synthesis.
+ *
+ * Pure / deterministic: malformed supplied inputs return an unassessed report;
+ * each unordered pair within the same subject is evaluated once; findings are returned
+ * in a stable order (by subject, then type precedence, then claimA id, then claimB id).
+ *
+ * @param claims  the structured evidence claims to check.
+ * @param options.relativeTolerance  numerical_mismatch tolerance (default 0.1).
+ */
+export function detectContradictions(
+  rawClaims: unknown,
+  options?: { relativeTolerance?: unknown },
+): ContradictionReport {
+  const inputIssues = contradictionInputIssues(rawClaims, options?.relativeTolerance);
+  if (inputIssues.length > 0) return {
+    contradictions: [], checkedClaims: 0, subjectsWithConflicts: [], assessed: false, comparedPairs: 0, inputIssues,
+    notes: [STRUCTURAL_NOTE, 'Evidence contradictions were not assessed because supplied inputs are invalid. Correct the named tool fields using available source context and retry before requesting client clarification.', ...inputIssues],
+  };
+  const claims = rawClaims as EvidenceClaim[];
+  const relativeTolerance = (options?.relativeTolerance ?? DEFAULT_RELATIVE_TOLERANCE) as number;
+
+  // Validated claims retain their original order and fallback reference ids.
+  const considered: IndexedClaim[] = claims.map((claim, index) => ({
+    claim, refId: normalize(claim.id) ? claim.id as string : `#${index}`, index,
+  }));
+
+  const groups = groupClaims(considered);
+
   const notes = new Set<string>([STRUCTURAL_NOTE,
     'Matching subjects and metrics do not establish comparable populations, methods, timepoints or source authority. ' +
     'Verify applicability and ask for consequential missing context before resolving a scientific disagreement.']);
@@ -329,6 +365,7 @@ export function detectContradictions(
   for (const { claim, refId } of considered) {
     if (hasInvalidDate(claim)) notes.add(`Invalid claim date for ${refId}; temporal ordering was not inferred.`);
   }
+  let comparedPairs = 0;
   const contradictions: Contradiction[] = [];
   const subjectsWithConflicts = new Set<string>();
 
@@ -338,6 +375,7 @@ export function detectContradictions(
         const a = members[i];
         const b = members[j];
         if (!comparablePair(a, b, display, notes)) continue;
+        comparedPairs += Number(hasComparableFields(a.claim, b.claim));
         const numeric = detectNumericalMismatch(a, b, display, relativeTolerance);
         if (numeric) {
           contradictions.push(numeric);
@@ -352,6 +390,7 @@ export function detectContradictions(
     }
   }
 
+  if (comparedPairs === 0) notes.add('Evidence contradictions were not assessed: no comparable claim pairs were supplied. An empty findings list is not evidence of consistency.');
   contradictions.sort((x, y) => {
     if (x.subject !== y.subject) return x.subject < y.subject ? -1 : 1;
     if (TYPE_ORDER[x.type] !== TYPE_ORDER[y.type]) return TYPE_ORDER[x.type] - TYPE_ORDER[y.type];
@@ -363,6 +402,9 @@ export function detectContradictions(
   return {
     contradictions,
     checkedClaims: considered.length,
+    assessed: comparedPairs > 0,
+    comparedPairs,
+    inputIssues,
     subjectsWithConflicts: Array.from(subjectsWithConflicts).sort(),
     notes: [...notes],
   };

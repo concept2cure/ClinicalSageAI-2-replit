@@ -2404,7 +2404,8 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
     description:
       'Check supplied structured evidence for potential disagreements (no LLM). Use observed source fields, never invented metadata. ' +
       'Numeric comparisons require matching endpoints and compatible units; unspecified units remain preliminary. ' +
-      'Different dates alone do not establish authority or supersession. Read all notes: skipped comparisons do not prove consistency. ' +
+      'Different dates alone do not establish authority or supersession. Read assessed, comparedPairs, inputIssues and notes: an unassessed or skipped comparison does not prove consistency. ' +
+      'Correct invalid tool fields from available source context and retry before asking the client to repeat known facts. ' +
       'Verify scope, population, methods and source authority before synthesizing; retrieve available context and ask targeted questions only for consequential remaining gaps.',
     input_schema: {
       type: 'object',
@@ -2441,7 +2442,8 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
     description:
       'Check requested geographic, population, outcome and recency coverage against supplied structured metadata (no LLM). ' +
       'Use observed source fields, never invented metadata. Population labels match exactly after normalization. ' +
-      'Read assessed, complete and notes: complete covers only assessed metadata dimensions, not scientific sufficiency or joint applicability. ' +
+      'Read assessed, complete, inputIssues and notes: complete covers only assessed metadata dimensions, not scientific sufficiency or joint applicability. ' +
+      'Correct invalid tool fields from available source context and retry before asking the client to repeat known facts. ' +
       'A metadata gap does not prove evidence is absent. Retrieve available context or ask targeted questions about consequential remaining uncertainty before synthesizing.',
     input_schema: {
       type: 'object',

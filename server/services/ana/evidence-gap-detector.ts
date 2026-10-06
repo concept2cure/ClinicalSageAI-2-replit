@@ -84,12 +84,14 @@ export interface EvidenceGap {
 export interface GapReport {
   /** Detected gaps, stably ordered by {@link GAP_TYPES}. */
   gaps: EvidenceGap[];
-  /** Number of evidence items considered. */
+  /** Validated evidence items considered; zero when supplied input is invalid. */
   evidenceCount: number;
   /** True only when requested dimensions were assessed and no metadata gap was found. */
   complete: boolean;
-  /** False when no dimensions were requested or a requested recency check is invalid. */
+  /** False for invalid input, no requested dimensions, or invalid requested recency. */
   assessed: boolean;
+  /** Invalid supplied fields; no verdict is issued over a silently reduced input. */
+  inputIssues: string[];
   /** Honest caveats about the scope and basis of this report. */
   notes: string[];
 }
@@ -110,6 +112,53 @@ function recentYear(year: unknown, threshold: number, asOfYear: number): boolean
 
 function nonemptyLabel(value: unknown): value is string {
   return typeof value === 'string' && value.trim() !== '';
+}
+
+function recordInput(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function labelList(value: unknown): boolean {
+  return Array.isArray(value) && value.every(nonemptyLabel);
+}
+
+function outcomeList(value: unknown): boolean {
+  return Array.isArray(value) && value.every(item => item === 'efficacy' || item === 'safety');
+}
+
+/** Check supplied fields before generating coverage conclusions. */
+function gapQueryIssues(query: unknown): string[] {
+  if (!recordInput(query)) return ['query must be a structured object.'];
+  const checks: Record<string, (value: unknown) => boolean> = {
+    regions: labelList,
+    population: nonemptyLabel,
+    outcomeTypes: outcomeList,
+    recencyYears: value => typeof value === 'number' && Number.isFinite(value) && value >= 0,
+    asOfYear: value => typeof value === 'number' && Number.isInteger(value) && value > 0,
+  };
+  return Object.entries(query).flatMap(([key, value]) => {
+    if (!Object.hasOwn(checks, key)) return [`query.${key} is not a supported coverage criterion.`];
+    return checks[key](value) ? [] : [`query.${key} has an invalid value or shape.`];
+  });
+}
+
+function evidenceItemIssues(item: unknown, index: number): string[] {
+  const path = `evidence[${index}]`;
+  if (!recordInput(item)) return [`${path} must be a structured object.`];
+  const checks: Record<string, (value: unknown) => boolean> = {
+    region: nonemptyLabel,
+    population: nonemptyLabel,
+    outcomeType: value => ['efficacy', 'safety', 'other'].includes(value as string),
+    year: value => typeof value === 'number' && Number.isInteger(value) && value > 0,
+  };
+  return Object.entries(checks).flatMap(([key, check]) =>
+    item[key] === undefined || check(item[key]) ? [] : [`${path}.${key} has an invalid value or shape.`]);
+}
+
+function gapInputIssues(query: unknown, evidence: unknown): string[] {
+  const issues = gapQueryIssues(query);
+  if (!Array.isArray(evidence)) return [...issues, 'evidence must be an array; unavailable evidence is not an empty search result.'];
+  return [...issues, ...evidence.flatMap(evidenceItemIssues)];
 }
 
 /** Evaluate recency without treating an invalid request as a successful check. */
@@ -147,8 +196,14 @@ function assessRecency(query: GapQuery, items: EvidenceItem[], gaps: EvidenceGap
  * @param evidence the evidence actually gathered
  * @returns a {@link GapReport}; `complete` requires an assessed query with no metadata gaps
  */
-export function detectEvidenceGaps(query: GapQuery, evidence: EvidenceItem[]): GapReport {
-  const items = Array.isArray(evidence) ? evidence.filter(item => item && typeof item === 'object') : [];
+export function detectEvidenceGaps(rawQuery: unknown, rawEvidence: unknown): GapReport {
+  const inputIssues = gapInputIssues(rawQuery, rawEvidence);
+  if (inputIssues.length > 0) return {
+    gaps: [], evidenceCount: 0, assessed: false, complete: false, inputIssues,
+    notes: ['Evidence coverage was not assessed because supplied inputs are invalid. Correct the named tool fields using available source context and retry before requesting client clarification.', ...inputIssues],
+  };
+  const query = rawQuery as GapQuery;
+  const items = rawEvidence as EvidenceItem[];
   const gaps: EvidenceGap[] = [];
   const notes: string[] = [];
   let checkedDimensions = 0;
@@ -225,6 +280,7 @@ export function detectEvidenceGaps(query: GapQuery, evidence: EvidenceItem[]): G
   return {
     gaps,
     evidenceCount: items.length,
+    inputIssues,
     complete: assessed && gaps.length === 0,
     assessed,
     notes: [
