@@ -40,7 +40,7 @@ afterAll(async () => { database.state.query = undefined; await harness.close(); 
 const run = async (f: DispositionFixture, name: string, input: Record<string, unknown>) =>
   JSON.parse(await getToolHandler(name)!(input, { organizationId: f.org, userId: 42 } as never));
 
-describe('legacy Anna artifact tools apply the canonical disposition gate before returning text', () => {
+describe('legacy Ana artifact tools apply the canonical disposition gate before returning text', () => {
   it('reads and lists stored kept text with original-unavailable markers, then excludes a later withdrawal', async () => {
     const f = await harness.seed();
     const original = await run(f, 'read_vault_document', { artifact_id: f.artifactNativeId });
