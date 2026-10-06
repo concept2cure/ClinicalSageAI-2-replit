@@ -29,9 +29,9 @@
  * non-zero when it is empty, when the organization does not exist, or when it
  * cannot be read. An unreadable corpus is reported as unreadable, never as empty.
  *
- * Today no PQ path reads this store: run-pq has no rag phase, and run-eval
- * passes no tenant, so its retrieval is empty by construction (E1, E6). This is
- * the store a rag run WILL read once run-eval is tenant-scoped.
+ * The evaluation paths now carry explicit organization/programme scope and
+ * reviewed source binding. This preflight still establishes only non-empty
+ * live embedded evidence, not source review or a passed qualification.
  *
  * Exit 0 means NON-EMPTY, not complete: at least one embedded chunk exists for
  * the organization. Nothing here checks the corpus against the guidance-corpus
@@ -99,28 +99,31 @@ export const EVAL_CORPUS_PREDICATES = Object.freeze([
   'JOIN vault.documents d ON d.id = c.document_id',
   'c.embedding IS NOT NULL',
   'd.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $1::uuid)',
+  'd.deleted_at IS NULL',
+  'EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id = d.program_id AND p.organization_id = d.organization_id AND p.deleted_at IS NULL)',
 ]);
 
-const [FROM_CHUNKS, JOIN_DOCS, EMBEDDED, IN_ORG] = EVAL_CORPUS_PREDICATES;
+const [FROM_CHUNKS, JOIN_DOCS, EMBEDDED, IN_ORG, LIVE_DOCUMENT, LIVE_PROGRAM] = EVAL_CORPUS_PREDICATES;
 
 const EMBEDDED_SQL = `
   SELECT count(*)::int AS embedded_chunks, count(DISTINCT c.document_id)::int AS documents_with_embedded_chunks
     ${FROM_CHUNKS}
     ${JOIN_DOCS}
    WHERE ${EMBEDDED}
-     AND ${IN_ORG}`;
+     AND ${IN_ORG} AND ${LIVE_DOCUMENT} AND ${LIVE_PROGRAM}`;
 
 const TOTALS_SQL = `
   SELECT
-    (SELECT count(*)::int FROM vault.documents d WHERE ${IN_ORG}) AS documents,
-    (SELECT count(*)::int ${FROM_CHUNKS} ${JOIN_DOCS} WHERE ${IN_ORG}) AS chunks`;
+    (SELECT count(*)::int FROM vault.documents d WHERE ${IN_ORG} AND ${LIVE_DOCUMENT} AND ${LIVE_PROGRAM}) AS documents,
+    (SELECT count(*)::int ${FROM_CHUNKS} ${JOIN_DOCS} WHERE ${IN_ORG} AND ${LIVE_DOCUMENT} AND ${LIVE_PROGRAM}) AS chunks`;
 
 /**
  * Count the evaluation organization's corpus by the vault arm's predicates.
  *
  * `client` is one connection (a pg PoolClient, or anything with the same
  * `query(sql, params) → { rows }`), because the read runs in one read-only
- * transaction with `app.current_org_id` set to the organization — the same GUC
+ * transaction with `app.current_org_id` and the resolved integer
+ * `app.current_tenant_id` set to the organization — the same GUCs
  * the pipeline's withTenantContext sets (advancedRAGPipeline.ts). Whether vault
  * RLS on a non-owner role then admits the same rows is NOT established here:
  * its policies go through core.can_access_program(program_id), which this
@@ -138,13 +141,15 @@ export async function readEvalCorpus(client, orgUuid) {
     const reg = await client.query(
       `SELECT to_regclass('organizations')::text AS organizations,
               to_regclass('vault.documents')::text AS documents,
-              to_regclass('vault.document_chunks')::text AS chunks`
+              to_regclass('vault.document_chunks')::text AS chunks,
+              to_regclass('regulatory_programs')::text AS programs`
     );
     const r0 = reg.rows[0] ?? {};
     const missing = [
       ['organizations', r0.organizations],
       ['vault.documents', r0.documents],
       ['vault.document_chunks', r0.chunks],
+      ['regulatory_programs', r0.programs],
     ]
       .filter(([, v]) => !v)
       .map(([n]) => n);
@@ -155,6 +160,7 @@ export async function readEvalCorpus(client, orgUuid) {
       await client.query("SELECT set_config('app.current_org_id', $1, true)", [orgUuid]);
       const org = await client.query('SELECT id FROM organizations WHERE uuid = $1::uuid', [orgUuid]);
       if (org.rows.length === 0) return { orgUuid, orgId: null };
+      await client.query("SELECT set_config('app.current_tenant_id', $1, true)", [String(org.rows[0].id)]);
       const totals = (await client.query(TOTALS_SQL, [orgUuid])).rows[0];
       const embedded = (await client.query(EMBEDDED_SQL, [orgUuid])).rows[0];
       return {

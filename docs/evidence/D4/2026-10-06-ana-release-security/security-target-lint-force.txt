@@ -1,0 +1,8 @@
+
+/workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/check-dependency-risk.mjs
+  188:1   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  189:1   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  190:39  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 3 problems (0 errors, 3 warnings)
+

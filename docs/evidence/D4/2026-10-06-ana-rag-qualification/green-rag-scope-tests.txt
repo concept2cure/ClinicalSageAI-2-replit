@@ -1,0 +1,89 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > mean > returns 0 for an empty list 4ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > mean > averages values 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 1 when an expected id is within top-k 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 0 when the expected id is below the cutoff 2ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 0 when there are no expected ids 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > recallAtK > is the fraction of expected ids found in top-k 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > recallAtK > respects the k cutoff 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > precisionAtK > is the fraction of top-k that are relevant 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > precisionAtK > is 0 for k <= 0 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 1 when the first result is relevant 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 1/rank of the first relevant result 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 0 when nothing relevant is retrieved 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > answerContainsScore > scores the fraction of expected substrings present, case-insensitively 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > answerContainsScore > is 0 when no expected substrings are given 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > isGroundedRefusal > detects the pipeline refusal phrasing 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > isGroundedRefusal > is false for a substantive answer 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > rejects an out-of-range judge score in a strict qualification assessment 1ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > does not extract a plausible score from arbitrary prose in a strict assessment 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > parses a bare numeric judge response and clamps to [0,1] 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > returns 0 when the judge emits no number 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > reports no gaps when the generator and a different judge are both pinned 2ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses a run with no pinned generator — the answer is unattributable 1ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses a run with no pinned judge — an unpinned model graded it 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses self-grading: the same model cannot answer and judge 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > reports BOTH gaps for a bare run — the default invocation 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > does not treat an empty string as a pin 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > forwards --model to the retrieval/generation call 1ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > omits model entirely when unpinned, rather than sending undefined 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > forwards --judge-model to the judge call 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > omits model from the judge call when unpinned 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > refuses missing tenant before retrieval can be invoked 1ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > refuses missing programme instead of reading another programme in the tenant 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > threads both scopes into the existing vault router and program filter 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > uses reviewed basic retrieval without auxiliary model calls 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > resolves a reviewed exact key only when the ingested bytes match and are embedded 3ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > refuses unverified source before database lookup 1ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > refuses unverified revision before database lookup 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > refuses unpinned revision before database lookup 1ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > refuses revision distractor before database lookup 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > refuses missing source hash before database lookup 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > refuses missing publisher verification before lookup 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > does not quietly choose between duplicate manifest identities 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > requires a reviewed evidence quote and closed official-text checks 1ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > checks that expected answer substrings occur in the reviewed quote 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > does not silently reinterpret unkeyed positive items as controls 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > admits an explicitly declared negative control with no source keys 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > rejects changed bytes instead of scoring the wrong revision 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > rejects an ingested document that the retrieval corpus cannot read as embedded chunks 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > does not preserve a partial binding when another expected source is missing 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > refuses the repository gold positives without touching a database 1ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > retains a failed source binding without copying database diagnostic content 1ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > existing Vault identity SQL remains scoped on owner-role connections > binds organization, programme, code and version in a read-only transaction 1ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > existing Vault identity SQL remains scoped on owner-role connections > fails on inaccessible source and still releases its transaction 1ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > existing Vault identity SQL remains scoped on owner-role connections > rejects malformed scope before opening a database connection 1ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > existing Vault identity SQL remains scoped on owner-role connections > sets both exact integer/UUID LOCAL GUCs and refuses ambient-scope override before checkout 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > retains valid diagnostic scores while explicitly withholding unverified model attribution 5ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > keeps an unresolved positive and makes no retrieval or model call for it 2ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > does not silently omit an item whose judge failed while other items scored 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > preserves retrieval failures as errors instead of returning an honest-looking empty hit 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > records a positive grounded refusal as unjudged rather than dropping its hard item 2ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > does not compare a chunk id to an expected document id 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > rejects malformed judgment instead of clamping an arbitrary number into a passing score 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > retains a failed judge without exporting arbitrary SDK diagnostic content 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > executes a declared negative control only as a reported grounded refusal check 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > refuses absent scope and self-grading before invoking evaluation dependencies 5ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > refuses unverified live tenant/programme binding before a negative control can retrieve or dispatch 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > reports zero-item runs as incomplete and rejects duplicate item ids before evaluating 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > accepts explicit scope and finite thresholds 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --k=NaN before DB acquisition 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --k=0 before DB acquisition 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --min-hit-rate=NaN before DB acquisition 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --min-faithfulness=1.5 before DB acquisition 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --unexpected=value before DB acquisition 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > resolves only the exact organization/programme/version despite neighboring valid sources 11ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > refuses another tenant programme even when its source key and hash match 4ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > refuses a soft-deleted document with otherwise correct binding and embedded chunks 3ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > refuses a live source whose evaluation programme is soft-deleted 3ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > verifies the real id/UUID/live-programme binding before source-less controls 10ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > leaves no integer/UUID session context after its read-only transaction 4ms
+
+ Test Files  5 passed (5)
+      Tests  79 passed (79)
+   Start at  13:17:43
+   Duration  2.14s (transform 582ms, setup 384ms, import 590ms, tests 1.73s, environment 0ms)
+

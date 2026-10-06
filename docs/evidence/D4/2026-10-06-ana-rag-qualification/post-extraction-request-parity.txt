@@ -1,0 +1,42 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/__tests__/rag-generation-request.test.ts
+{
+  "timestamp": "2026-10-06T17:08:59.190Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T17:08:59.192Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-generation-request.test.ts
+{
+  "timestamp": "2026-10-06T17:08:59.192Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-generation-request.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > preserves source numbering, separators and compressed/expanded/raw precedence exactly 1ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > preserves the pre-extraction prompt, task, sampling and token budget exactly 1ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > the actual production generation method sends that exact canonical request 2ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > retains the explicit generator pin while reusing the canonical request 1ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > retains the existing empty-source refusal without calling a model 1ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  13:08:57
+   Duration  2.08s (transform 952ms, setup 75ms, import 1.78s, tests 8ms, environment 0ms)
+

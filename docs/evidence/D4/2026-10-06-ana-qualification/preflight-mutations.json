@@ -1,0 +1,38 @@
+[
+  {
+    "mutation": "self-approved-bank",
+    "exitCode": 1,
+    "status": "INVALID_PREPARATION",
+    "issues": [
+      "supplemental case bank must remain an unapproved reviewer draft"
+    ],
+    "expectedRejected": true
+  },
+  {
+    "mutation": "unknown-source-key",
+    "exitCode": 1,
+    "status": "INVALID_PREPARATION",
+    "issues": [
+      "US-device-predicate: unresolved source reference"
+    ],
+    "expectedRejected": true
+  },
+  {
+    "mutation": "invented-candidate",
+    "exitCode": 1,
+    "status": "INVALID_PREPARATION",
+    "issues": [
+      "US-device-predicate: fabricated candidate or verdict must not be part of this bank"
+    ],
+    "expectedRejected": true
+  },
+  {
+    "mutation": "empty-case-bank",
+    "exitCode": 1,
+    "status": "INVALID_PREPARATION",
+    "issues": [
+      "sources and cases must both be nonempty"
+    ],
+    "expectedRejected": true
+  }
+]

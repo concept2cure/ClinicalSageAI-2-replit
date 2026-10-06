@@ -40,6 +40,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
+import { canonicalPqClaims, supportsPassedPq } from './lib/pq-claim-verification.mjs';
 
 dotenv.config({ quiet: true });
 
@@ -701,36 +702,26 @@ for (const f of ENFORCEMENT_FLAGS) {
 {
   const src = readFile('server/services/ai-governance/approved-models.ts');
   const entries = [];
+  let verifiedClaims;
   if (src) {
     for (const chunk of src.split(/\n\s+id: '/).slice(1)) {
       const id = chunk.slice(0, chunk.indexOf("'"));
       const approved = /\n\s+approvedForHighRisk: true,/.test(chunk);
       const pqMatch = chunk.match(/\n\s+pq: \{ status: '([a-z]+)', reference: (null|'([^']*)') \}/);
       const pinned = (chunk.match(/\n\s+pinnedVersion: '([^']+)'/) ?? [])[1] ?? null;
+      const provider = (chunk.match(/\n\s+provider: '([^']+)'/) ?? [])[1] ?? null;
       let pq = pqMatch ? pqMatch[1] : null;
       let note = '';
-      /* A "passed" claim counts only if the record it cites says so — the same
-         rules as verifyPqClaim in server/eval/pq/pq-verdict.ts, which is the
-         canonical check and runs in CI. Repeated here because this probe runs
-         under plain node, and a green dashboard row on a claim CI would reject
-         is the thing this report exists not to be. */
+      // One canonical verifier recomputes every component against current
+      // approved protocol and gold bytes. An unavailable loader/check blocks
+      // the claim; a header-only PASS never establishes readiness.
       if (pq === 'passed') {
         const ref = pqMatch[3] ?? null;
-        let rec = null;
-        try {
-          rec = ref ? JSON.parse(readFile(ref) ?? 'null') : null;
-        } catch {
-          rec = null;
-        }
-        const ok =
-          rec?.kind === 'pq-record' &&
-          rec.modelId === id &&
-          rec.pinnedVersion === pinned &&
-          rec.verdict === 'PASS' &&
-          rec.protocolStatus === 'approved';
+        verifiedClaims ??= canonicalPqClaims(repoRoot) ?? [];
+        const ok = supportsPassedPq(verifiedClaims, { id, pinnedVersion: pinned, provider });
         if (!ok) {
           pq = 'unverified';
-          note = ref ? ` (claims passed; ${ref} does not support it)` : ' (claims passed; cites no record)';
+          note = ref ? ` (claims passed; canonical evidence verification does not support ${ref})` : ' (claims passed; cites no record)';
         }
       }
       if (/\n\s+approvedForHighRisk: (true|false),/.test(chunk)) entries.push({ id, approved, pq, note });

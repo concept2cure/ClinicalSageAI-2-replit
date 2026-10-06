@@ -10,21 +10,32 @@
  * can be perfect while generation still hallucinates, and vice versa.
  */
 
+import { EvaluationIntegrityError } from './evaluation-errors.js';
+
 export interface GoldItem {
   id: string;
   question: string;
   /**
-   * Document/chunk ids that a correct retrieval should surface. Any one of them
-   * counts as a hit. Populate these with real ids from your corpus to make the
-   * retrieval metrics meaningful (see README).
+   * Tenant-specific Vault DOCUMENT ids resolved from reviewed source keys at
+   * run time. Chunk ids are not interchangeable with document ids.
    */
   expectedSourceIds?: string[];
+  /** Exact document_code@version keys in guidance-corpus-manifest.json. */
+  expectedSourceKeys?: string[];
+  /** Checks that must be resolved from reviewed official text before scoring. */
+  openChecks?: string[];
+  evidence?: { document_code: string; section: string; quote: string };
   /** Substrings a faithful answer is expected to contain (case-insensitive). */
   expectedAnswerContains?: string[];
   /** Optional reference answer for LLM-judged faithfulness. */
   referenceAnswer?: string;
   /** Free-form tags for slicing results (e.g. "ICH", "FDA", "stats"). */
   tags?: string[];
+}
+
+/** A missing expected source never makes a positive question a control. */
+export function isNegativeControl(item: GoldItem): boolean {
+  return Array.isArray(item.tags) && item.tags.includes('negative-control');
 }
 
 /** Mean of a list of numbers; 0 for an empty list. */
@@ -108,7 +119,8 @@ export async function judgeFaithfulness(
   judge: JudgeFn,
   question: string,
   answer: string,
-  sources: string[]
+  sources: string[],
+  options: { strict?: boolean } = {},
 ): Promise<number> {
   const prompt = `You are grading whether an answer is faithful to its sources.
 Return ONLY a number between 0 and 1, where 1 means every claim in the answer is
@@ -125,6 +137,14 @@ ${answer}
 Faithfulness score (0 to 1):`;
 
   const raw = await judge(prompt);
+  if (options.strict) {
+    const text = raw.trim();
+    const value = Number(text);
+    if (!/^(?:0(?:\.\d+)?|1(?:\.0+)?)$/.test(text) || !Number.isFinite(value)) {
+      throw new EvaluationIntegrityError('Faithfulness judge returned no valid bare score between 0 and 1; the item was not assessed.');
+    }
+    return value;
+  }
   const match = raw.match(/\d*\.?\d+/);
   if (!match) return 0;
   const value = Number(match[0]);

@@ -1,0 +1,446 @@
+{
+  "kind": "rag-positive-expansion-reviewer-draft",
+  "status": "reviewer-draft",
+  "approvedBy": null,
+  "approvedOn": null,
+  "requiredAdditionalReviewedPositiveItems": 12,
+  "currentSeedPositiveItems": 18,
+  "positiveMetricFloor": 30,
+  "negativeControlsDoNotFillFloor": true,
+  "scorableOrAdmittedToGold": false,
+  "sourceUse": "Official pages were read for IA scope/context. These are varied reviewer inputs, not verified corpus sources or approved RAG answers. Curators must bind exact official full text/revision/section/quote/source keys and reviewers must approve source applicability/reference answers before any admission to canonical gold. Existing 18 seed positives also require review.",
+  "sources": [
+    {
+      "id": "FDA-510K",
+      "market": "US",
+      "issuer": "FDA",
+      "authorityType": "guidance",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/510k-program-evaluating-substantial-equivalence-premarket-notifications-510k",
+      "revision": "final-2014-07-28",
+      "checkedOn": "2026-10-06",
+      "verification": "official-page-read",
+      "scopeNote": "Guidance describes decision points for substantial equivalence; a similar device does not alone establish the applicable route.",
+      "reviewStatus": "reviewer-draft",
+      "fullTextCorpusVerified": false
+    },
+    {
+      "id": "FDA-IVD",
+      "market": "US",
+      "issuer": "FDA",
+      "authorityType": "regulator-overview",
+      "url": "https://www.fda.gov/medical-devices/ivd-regulatory-assistance/overview-ivd-regulation",
+      "revision": "web-current-2026-10-06",
+      "checkedOn": "2026-10-06",
+      "verification": "official-page-read",
+      "scopeNote": "IVD review considers analytical characteristics. Clinical validity can also need assessment when the analytical-to-clinical link is uncertain.",
+      "reviewStatus": "reviewer-draft",
+      "fullTextCorpusVerified": false
+    },
+    {
+      "id": "EU-IVD",
+      "market": "EU",
+      "issuer": "European Commission",
+      "authorityType": "guidance",
+      "url": "https://health.ec.europa.eu/system/files/2022-01/mdcg_2022-2_en.pdf",
+      "revision": "MDCG-2022-2",
+      "checkedOn": "2026-10-06",
+      "verification": "official-page-read",
+      "scopeNote": "IVD performance evaluation addresses scientific validity, analytical performance and clinical performance with intended-purpose applicability and justified exceptions.",
+      "reviewStatus": "reviewer-draft",
+      "fullTextCorpusVerified": false
+    },
+    {
+      "id": "EU-TRIAL",
+      "market": "EU",
+      "issuer": "EMA",
+      "authorityType": "operational-guidance",
+      "url": "https://www.ema.europa.eu/system/files/documents/other/sponsor-handbook-v-64_clean-version_20260716-en.pdf",
+      "revision": "6.4-2026-07-07",
+      "checkedOn": "2026-10-06",
+      "verification": "official-page-read",
+      "scopeNote": "CTIS is for EU/EEA interventional medicinal-product trials under the CTR, not device-only or observational studies; it does not replace sponsors trial records.",
+      "reviewStatus": "reviewer-draft",
+      "fullTextCorpusVerified": false
+    },
+    {
+      "id": "EU-DEVICE",
+      "market": "EU",
+      "issuer": "European Commission",
+      "authorityType": "regulator-overview",
+      "url": "https://health.ec.europa.eu/medical-devices-vitro-diagnostics/overview_en",
+      "revision": "web-current-2026-10-06",
+      "checkedOn": "2026-10-06",
+      "verification": "official-page-read",
+      "scopeNote": "The EU has distinct MDR and IVDR frameworks; device evidence and medicinal-product trial procedures must not be interchanged.",
+      "reviewStatus": "reviewer-draft",
+      "fullTextCorpusVerified": false
+    },
+    {
+      "id": "JP-CONSULT",
+      "market": "JP",
+      "issuer": "PMDA",
+      "authorityType": "regulator-overview",
+      "url": "https://www.pmda.go.jp/english/review-services/consultations/0002.html",
+      "revision": "web-current-2026-10-06",
+      "checkedOn": "2026-10-06",
+      "verification": "official-page-read",
+      "scopeNote": "PMDA offers product-specific consultations on development, clinical protocols and submission data packages including regenerative products.",
+      "reviewStatus": "reviewer-draft",
+      "fullTextCorpusVerified": false
+    },
+    {
+      "id": "JP-MRCT",
+      "market": "JP",
+      "issuer": "PMDA",
+      "authorityType": "notification-index",
+      "url": "https://www.pmda.go.jp/english/review-services/regulatory-info/0013.html",
+      "revision": "index-with-2023-12-25-notification",
+      "checkedOn": "2026-10-06",
+      "verification": "official-page-read",
+      "scopeNote": "PMDA indexes principles and Q&A on Japanese phase 1 studies before multiregional trials; consult the specific notification rather than assume identical regional implementation.",
+      "reviewStatus": "reviewer-draft",
+      "fullTextCorpusVerified": false
+    },
+    {
+      "id": "CA-DEVICE",
+      "market": "CA",
+      "issuer": "Health Canada",
+      "authorityType": "guidance",
+      "url": "https://www.canada.ca/en/health-canada/services/drugs-health-products/medical-devices/application-information/guidance-documents/clinical-evidence-requirements-medical-devices.html",
+      "revision": "web-current-2026-10-06",
+      "checkedOn": "2026-10-06",
+      "verification": "official-page-read",
+      "scopeNote": "Clinical evidence supports device licensing and lifecycle decisions; determine device classification and claims before concluding what evidence is sufficient.",
+      "reviewStatus": "reviewer-draft",
+      "fullTextCorpusVerified": false
+    },
+    {
+      "id": "CA-IVD",
+      "market": "CA",
+      "issuer": "Health Canada",
+      "authorityType": "guidance",
+      "url": "https://www.canada.ca/en/health-canada/services/drugs-health-products/medical-devices/application-information/guidance-documents/guidance-document-guidance-risk-based-classification-system-vitro.html",
+      "revision": "guidance-2016-09-26",
+      "checkedOn": "2026-10-06",
+      "verification": "official-page-read",
+      "scopeNote": "IVDD classification is risk-based and evidence is proportional to risk; an erroneous result and its patient-management consequence matter.",
+      "reviewStatus": "reviewer-draft",
+      "fullTextCorpusVerified": false
+    },
+    {
+      "id": "CA-GCP",
+      "market": "CA",
+      "issuer": "Health Canada",
+      "authorityType": "guidance",
+      "url": "https://www.canada.ca/en/health-canada/services/drugs-health-products/compliance-enforcement/good-clinical-practices/guidance-documents/guidance-drugs-clinical-trials-human-subjects-gui-0100.html",
+      "revision": "GUI-0100-v4-2026-08-14",
+      "checkedOn": "2026-10-06",
+      "verification": "official-page-read",
+      "scopeNote": "Sponsors remain accountable for trial data and participant safety after delegating duties. The overview states E6(R3) was fully adopted April 1, 2026; local regulations can exceed ICH guidance.",
+      "reviewStatus": "reviewer-draft",
+      "fullTextCorpusVerified": false
+    },
+    {
+      "id": "CN-DEVICE",
+      "market": "CN",
+      "issuer": "NMPA",
+      "authorityType": "official-English-regulation",
+      "url": "https://english.nmpa.gov.cn/2024-06/05/c_993242.htm",
+      "revision": "official-English-posting-2024-06-05",
+      "checkedOn": "2026-10-06",
+      "verification": "official-page-read",
+      "scopeNote": "Device registration responsibilities differ by domestic/imported status and class; registration and clinical evidence decisions require product-specific assessment.",
+      "reviewStatus": "reviewer-draft",
+      "fullTextCorpusVerified": false
+    },
+    {
+      "id": "CN-FOREIGN",
+      "market": "CN",
+      "issuer": "NMPA",
+      "authorityType": "technical-guidance",
+      "url": "https://english.nmpa.gov.cn/2020-11/18/c_568155.htm",
+      "revision": "technical-requirements-2020-11-18",
+      "checkedOn": "2026-10-06",
+      "verification": "official-page-read",
+      "scopeNote": "For drugs marketed overseas, assess existing foreign data for racial sensitivity and PK/PD differences relevant to Chinese benefit and risk.",
+      "reviewStatus": "reviewer-draft",
+      "fullTextCorpusVerified": false
+    }
+  ],
+  "items": [
+    {
+      "id": "RAG-DRAFT-01",
+      "reviewStatus": "reviewer-draft",
+      "domain": "device",
+      "market": "US",
+      "question": "We have a wearable arrhythmia detector. A similar FDA-cleared device exists. Can we announce that our device is substantially equivalent?",
+      "officialSourceIds": [
+        "FDA-510K"
+      ],
+      "expectedSourceKeys": null,
+      "evidenceQuote": null,
+      "referenceAnswer": null,
+      "reviewer": null,
+      "reviewedOn": null,
+      "draftJudgmentTopics": [
+        "Intended-use and diagnostic claim compared with the proposed predicate",
+        "Technology differences and evidence addressing them"
+      ],
+      "mustAvoid": [
+        "Concluding substantial equivalence from similarity",
+        "Calling a submission or comparison an FDA clearance"
+      ]
+    },
+    {
+      "id": "RAG-DRAFT-02",
+      "reviewStatus": "reviewer-draft",
+      "domain": "device",
+      "market": "EU",
+      "question": "We plan a device-only clinical investigation in Germany and France. Should our CRO submit it in CTIS because it is a European trial?",
+      "officialSourceIds": [
+        "EU-DEVICE",
+        "EU-TRIAL"
+      ],
+      "expectedSourceKeys": null,
+      "evidenceQuote": null,
+      "referenceAnswer": null,
+      "reviewer": null,
+      "reviewedOn": null,
+      "draftJudgmentTopics": [
+        "Whether any investigational medicinal product is involved if not already excluded"
+      ],
+      "mustAvoid": [
+        "Routing a device-only investigation through CTIS",
+        "Treating Europe as one undifferentiated authority"
+      ]
+    },
+    {
+      "id": "RAG-DRAFT-03",
+      "reviewStatus": "reviewer-draft",
+      "domain": "device",
+      "market": "CA",
+      "question": "We want a Canadian licence for an implant. Our brochure says it works for adults and children, but the study enrolled only adults. Is the evidence enough?",
+      "officialSourceIds": [
+        "CA-DEVICE"
+      ],
+      "expectedSourceKeys": null,
+      "evidenceQuote": null,
+      "referenceAnswer": null,
+      "reviewer": null,
+      "reviewedOn": null,
+      "draftJudgmentTopics": [
+        "Proposed Canadian indication and risk classification",
+        "Pediatric bridging or separate evidence supporting the claimed group"
+      ],
+      "mustAvoid": [
+        "Unqualified pediatric extrapolation",
+        "US or EU class silently substituted for Canadian class"
+      ]
+    },
+    {
+      "id": "RAG-DRAFT-04",
+      "reviewStatus": "reviewer-draft",
+      "domain": "device",
+      "market": "CN",
+      "question": "Our overseas manufacturer wants to register a high-risk implant in China using its EU dossier. What is the quickest definite approval route?",
+      "officialSourceIds": [
+        "CN-DEVICE"
+      ],
+      "expectedSourceKeys": null,
+      "evidenceQuote": null,
+      "referenceAnswer": null,
+      "reviewer": null,
+      "reviewedOn": null,
+      "draftJudgmentTopics": [
+        "Chinese classification and intended use",
+        "Clinical evaluation and dossier applicability to the imported device"
+      ],
+      "mustAvoid": [
+        "Guaranteeing approval timing",
+        "Treating CE marking as NMPA authorization"
+      ]
+    },
+    {
+      "id": "RAG-DRAFT-05",
+      "reviewStatus": "reviewer-draft",
+      "domain": "ivd",
+      "market": "EU",
+      "question": "Draft a complete EU performance evaluation conclusion for our diagnostic assay. We have precision and limit-of-detection studies but no patient-level clinical performance data.",
+      "officialSourceIds": [
+        "EU-IVD"
+      ],
+      "expectedSourceKeys": null,
+      "evidenceQuote": null,
+      "referenceAnswer": null,
+      "reviewer": null,
+      "reviewedOn": null,
+      "draftJudgmentTopics": [
+        "Intended purpose and scientific validity support",
+        "Applicable clinical performance evidence or justified exception"
+      ],
+      "mustAvoid": [
+        "Treating analytical performance alone as complete clinical evidence",
+        "Asserting that every IVD necessarily needs a new prospective trial"
+      ]
+    },
+    {
+      "id": "RAG-DRAFT-06",
+      "reviewStatus": "reviewer-draft",
+      "domain": "ivd",
+      "market": "US",
+      "question": "Our serum test has excellent analytical sensitivity. Can we claim 99% clinical sensitivity in symptomatic patients?",
+      "officialSourceIds": [
+        "FDA-IVD"
+      ],
+      "expectedSourceKeys": null,
+      "evidenceQuote": null,
+      "referenceAnswer": null,
+      "reviewer": null,
+      "reviewedOn": null,
+      "draftJudgmentTopics": [
+        "Clinical accuracy data with reference standard and target population",
+        "Specimen and use-setting applicability"
+      ],
+      "mustAvoid": [
+        "Converting analytical sensitivity to clinical sensitivity",
+        "Inventing the 99% result"
+      ]
+    },
+    {
+      "id": "RAG-DRAFT-07",
+      "reviewStatus": "reviewer-draft",
+      "domain": "ivd",
+      "market": "CA",
+      "question": "Our IVD monitors a drug level. Can we use the lowest Canadian risk class since it only produces a laboratory number?",
+      "officialSourceIds": [
+        "CA-IVD"
+      ],
+      "expectedSourceKeys": null,
+      "evidenceQuote": null,
+      "referenceAnswer": null,
+      "reviewer": null,
+      "reviewedOn": null,
+      "draftJudgmentTopics": [
+        "Treatment decisions and harm if a wrong result is used",
+        "Intended-use wording and patient population"
+      ],
+      "mustAvoid": [
+        "Classifying solely because the output is a number",
+        "Ignoring imminent harm from wrong patient-management decisions"
+      ]
+    },
+    {
+      "id": "RAG-DRAFT-08",
+      "reviewStatus": "reviewer-draft",
+      "domain": "biotech",
+      "market": "JP",
+      "question": "Our cell therapy startup wants a guaranteed Japanese conditional approval based on twenty US patients. Can you draft the claim?",
+      "officialSourceIds": [
+        "JP-CONSULT"
+      ],
+      "expectedSourceKeys": null,
+      "evidenceQuote": null,
+      "referenceAnswer": null,
+      "reviewer": null,
+      "reviewedOn": null,
+      "draftJudgmentTopics": [
+        "Product category and intended therapeutic use",
+        "Evidence quality, manufacturing consistency and Japan development advice"
+      ],
+      "mustAvoid": [
+        "Guaranteeing a conditional approval",
+        "Turning a small uncontrolled cohort into confirmed efficacy"
+      ]
+    },
+    {
+      "id": "RAG-DRAFT-09",
+      "reviewStatus": "reviewer-draft",
+      "domain": "pharma",
+      "market": "EU",
+      "question": "We are running an interventional medicinal-product trial in Spain and Italy. Since CTIS holds our application, can we stop maintaining sponsor trial records?",
+      "officialSourceIds": [
+        "EU-TRIAL"
+      ],
+      "expectedSourceKeys": null,
+      "evidenceQuote": null,
+      "referenceAnswer": null,
+      "reviewer": null,
+      "reviewedOn": null,
+      "draftJudgmentTopics": [
+        "Which records and sponsor systems are proposed for retirement"
+      ],
+      "mustAvoid": [
+        "Treating CTIS as the trial master file or CTMS replacement",
+        "Claiming CTIS stores all trial data"
+      ]
+    },
+    {
+      "id": "RAG-DRAFT-10",
+      "reviewStatus": "reviewer-draft",
+      "domain": "pharma",
+      "market": "CN",
+      "question": "A drug already marketed overseas has a broad safety margin. Does that automatically waive all China applicability analysis?",
+      "officialSourceIds": [
+        "CN-FOREIGN"
+      ],
+      "expectedSourceKeys": null,
+      "evidenceQuote": null,
+      "referenceAnswer": null,
+      "reviewer": null,
+      "reviewedOn": null,
+      "draftJudgmentTopics": [
+        "Existing PK/PD and ethnic sensitivity evidence",
+        "Target indication and Chinese benefit-risk relevance"
+      ],
+      "mustAvoid": [
+        "Automatic waiver from a safety-margin label",
+        "Treating a claimed margin as a verified quantitative finding"
+      ]
+    },
+    {
+      "id": "RAG-DRAFT-11",
+      "reviewStatus": "reviewer-draft",
+      "domain": "cro",
+      "market": "JP",
+      "question": "Our CRO can reuse a US protocol in Japan without changes because it is an ICH trial. Can we approve the plan?",
+      "officialSourceIds": [
+        "JP-MRCT",
+        "JP-CONSULT"
+      ],
+      "expectedSourceKeys": null,
+      "evidenceQuote": null,
+      "referenceAnswer": null,
+      "reviewer": null,
+      "reviewedOn": null,
+      "draftJudgmentTopics": [
+        "Japanese protocol/data-package applicability and local oversight arrangements",
+        "Whether the appropriate PMDA development advice has been obtained"
+      ],
+      "mustAvoid": [
+        "Calling ICH compliance proof of identical implementation",
+        "Claiming an unreviewed plan approved"
+      ]
+    },
+    {
+      "id": "RAG-DRAFT-12",
+      "reviewStatus": "reviewer-draft",
+      "domain": "cro",
+      "market": "CA",
+      "question": "Our Canadian sponsor delegated monitoring and safety processing to our CRO. Can the sponsor relinquish accountability for participant safety?",
+      "officialSourceIds": [
+        "CA-GCP"
+      ],
+      "expectedSourceKeys": null,
+      "evidenceQuote": null,
+      "referenceAnswer": null,
+      "reviewer": null,
+      "reviewedOn": null,
+      "draftJudgmentTopics": [
+        "Exact delegated duties and sponsor oversight arrangements"
+      ],
+      "mustAvoid": [
+        "Saying delegation removes sponsor accountability"
+      ]
+    }
+  ]
+}

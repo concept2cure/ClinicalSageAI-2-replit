@@ -1,0 +1,244 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > mean > returns 0 for an empty list 3ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > mean > averages values 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 1 when an expected id is within top-k 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 0 when the expected id is below the cutoff 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 0 when there are no expected ids 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > recallAtK > is the fraction of expected ids found in top-k 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > recallAtK > respects the k cutoff 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > precisionAtK > is the fraction of top-k that are relevant 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > precisionAtK > is 0 for k <= 0 1ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 1 when the first result is relevant 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 1/rank of the first relevant result 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 0 when nothing relevant is retrieved 7ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > answerContainsScore > scores the fraction of expected substrings present, case-insensitively 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > answerContainsScore > is 0 when no expected substrings are given 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > isGroundedRefusal > detects the pipeline refusal phrasing 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > isGroundedRefusal > is false for a substantive answer 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > rejects an out-of-range judge score in a strict qualification assessment 2ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > does not extract a plausible score from arbitrary prose in a strict assessment 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > parses a bare numeric judge response and clamps to [0,1] 1ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > returns 0 when the judge emits no number 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > reports no gaps when the generator and a different judge are both pinned 2ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses a run with no pinned generator — the answer is unattributable 1ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses a run with no pinned judge — an unpinned model graded it 1ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses self-grading: the same model cannot answer and judge 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > reports BOTH gaps for a bare run — the default invocation 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > does not treat an empty string as a pin 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > forwards --model to the retrieval/generation call 1ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > omits model entirely when unpinned, rather than sending undefined 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > forwards --judge-model to the judge call 1ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > omits model from the judge call when unpinned 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > refuses missing tenant before retrieval can be invoked 1ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > refuses missing programme instead of reading another programme in the tenant 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > threads both scopes into the existing vault router and program filter 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > uses reviewed basic retrieval without auxiliary model calls 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > resolves a reviewed exact key only when the ingested bytes match and are embedded 6ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > refuses unverified source before database lookup 1ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > refuses unverified revision before database lookup 1ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > refuses unpinned revision before database lookup 1ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > refuses revision distractor before database lookup 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > refuses missing source hash before database lookup 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > refuses missing publisher verification before lookup 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > does not quietly choose between duplicate manifest identities 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > requires a reviewed evidence quote and closed official-text checks 1ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > checks that expected answer substrings occur in the reviewed quote 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > does not silently reinterpret unkeyed positive items as controls 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > admits an explicitly declared negative control with no source keys 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > rejects changed bytes instead of scoring the wrong revision 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > rejects an ingested document that the retrieval corpus cannot read as embedded chunks 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > does not preserve a partial binding when another expected source is missing 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > refuses the repository gold positives without touching a database 2ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > reviewed-key binding to an evaluation corpus > retains a failed source binding without copying database diagnostic content 0ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > existing Vault identity SQL remains scoped on owner-role connections > binds organization, programme, code and version in a read-only transaction 2ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > existing Vault identity SQL remains scoped on owner-role connections > fails on inaccessible source and still releases its transaction 3ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > existing Vault identity SQL remains scoped on owner-role connections > rejects malformed scope before opening a database connection 1ms
+ ✓ server/eval/rag/__tests__/qualification-corpus.test.ts > existing Vault identity SQL remains scoped on owner-role connections > sets both exact integer/UUID LOCAL GUCs and refuses ambient-scope override before checkout 2ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > retains valid diagnostic scores while explicitly withholding unverified model attribution 7ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > keeps an unresolved positive and makes no retrieval or model call for it 5ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > does not silently omit an item whose judge failed while other items scored 5ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > preserves retrieval failures as errors instead of returning an honest-looking empty hit 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > records a positive grounded refusal as unjudged rather than dropping its hard item 2ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > does not compare a chunk id to an expected document id 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > rejects malformed judgment instead of clamping an arbitrary number into a passing score 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > retains a failed judge without exporting arbitrary SDK diagnostic content 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > executes a declared negative control only as a reported grounded refusal check 2ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > refuses absent scope and self-grading before invoking evaluation dependencies 2ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > refuses unverified live tenant/programme binding before a negative control can retrieve or dispatch 1ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > RAG evaluation completeness is measured over every declared gold item > reports zero-item runs as incomplete and rejects duplicate item ids before evaluating 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > accepts explicit scope and finite thresholds 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --k=NaN before DB acquisition 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --k=0 before DB acquisition 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --min-hit-rate=NaN before DB acquisition 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --min-faithfulness=1.5 before DB acquisition 0ms
+ ✓ server/eval/rag/__tests__/run-eval-completeness.test.ts > CLI preflight > refuses unusable --unexpected=value before DB acquisition 0ms
+stdout | server/services/__tests__/ragRouter.test.ts
+{
+  "timestamp": "2026-10-06T17:19:09.552Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T17:19:09.554Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/ragRouter.test.ts
+{
+  "timestamp": "2026-10-06T17:19:09.554Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ragRouter.test.ts
+[database] Database connection successful
+
+stdout | server/services/__tests__/advancedRAGPipeline-mmr.test.ts
+{
+  "timestamp": "2026-10-06T17:19:09.802Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T17:19:09.803Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/advancedRAGPipeline-mmr.test.ts
+{
+  "timestamp": "2026-10-06T17:19:09.804Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/advancedRAGPipeline-mmr.test.ts
+[database] Database connection successful
+
+stdout | server/services/__tests__/rag-generation-request.test.ts
+{
+  "timestamp": "2026-10-06T17:19:09.874Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T17:19:09.876Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-generation-request.test.ts
+{
+  "timestamp": "2026-10-06T17:19:09.876Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-generation-request.test.ts
+[database] Database connection successful
+
+stdout | server/services/__tests__/advancedRAGPipeline-cache.test.ts
+{
+  "timestamp": "2026-10-06T17:19:09.917Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T17:19:09.918Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/advancedRAGPipeline-cache.test.ts
+{
+  "timestamp": "2026-10-06T17:19:09.919Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/advancedRAGPipeline-cache.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/advancedRAGPipeline-cache.test.ts > routeCached > serves an identical request from cache without a second route call 3ms
+ ✓ server/services/__tests__/advancedRAGPipeline-cache.test.ts > routeCached > evicts the least-recently-used entry; a hit refreshes recency 1ms
+ ✓ server/services/__tests__/advancedRAGPipeline-cache.test.ts > routeCached > drops expired entries instead of serving them 1ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > preserves source numbering, separators and compressed/expanded/raw precedence exactly 2ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > preserves the pre-extraction prompt, task, sampling and token budget exactly 1ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > the actual production generation method sends that exact canonical request 2ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > retains the explicit generator pin while reusing the canonical request 1ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > retains the existing empty-source refusal without calling a model 1ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > resolves only the exact organization/programme/version despite neighboring valid sources 9ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > refuses another tenant programme even when its source key and hash match 5ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > refuses a soft-deleted document with otherwise correct binding and embedded chunks 3ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > refuses a live source whose evaluation programme is soft-deleted 3ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > verifies the real id/UUID/live-programme binding before source-less controls 10ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > leaves no integer/UUID session context after its read-only transaction 5ms
+stderr | server/services/__tests__/advancedRAGPipeline-mmr.test.ts > applyMmr > falls back to lexical similarity when embedding the straggler fails
+[RAG] MMR embedding failed for uncarried candidates, using lexical fallback: Error: embedding down
+    at Object.<anonymous> (/workspace/scratch/bd36ee581acd/concept2cure/server/services/__tests__/advancedRAGPipeline-mmr.test.ts:134:13)
+    at Object.Mock [as embedBatch] (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@vitest/spy/dist/index.js:332:34)
+    at AdvancedRAGPipeline.applyMmr (/workspace/scratch/bd36ee581acd/concept2cure/server/services/advancedRAGPipeline.ts:766:54)
+    at /workspace/scratch/bd36ee581acd/concept2cure/server/services/__tests__/advancedRAGPipeline-mmr.test.ts:141:25
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > parsePgVector > parses the pgvector text form 2ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > parsePgVector > accepts an already-parsed numeric array 1ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > parsePgVector > returns undefined for malformed or empty input 1ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > normalize / dotProduct > dot of unit vectors equals cosine similarity 1ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > normalize / dotProduct > maps a zero vector to zeros (no NaN) 0ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > applyMmr > reuses carried vectors without calling the embedding service 2ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > applyMmr > embeds only the candidates that arrive without a carried vector 1ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > applyMmr > falls back to lexical similarity when embedding the straggler fails 9ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > intent defaults > regulatory_qa (and default) uses advanced + rerank + mmr at lambda 0.7 2ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > intent defaults > falls back to regulatory_qa policy when intent is omitted 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > intent defaults > project_scoped favours precision (lambda 0.8) 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > intent defaults > foresight favours diversity (lambda 0.6) 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > intent defaults > enables dense+full-text hybrid (RRF) by default on every intent 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > intent defaults > enables small-to-big context expansion on the document-Q&A intents 4ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > intent defaults > does NOT default the generation-path corrective loop on any intent (stays opt-in) 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > explicit overrides > an explicit false overrides a default true (not truthiness-based) 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > explicit overrides > an explicit useHybrid:false overrides the intent default 1ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > explicit overrides > self-query is opt-in: undefined by default, passed through when set 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > explicit overrides > overrides strategy, mmrLambda, and limit 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > explicit overrides > passes through scope, threshold, filters, persistCitations 1ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > explicit overrides > leaves threshold undefined when not provided (pipeline default applies) 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > corpus selection > defaults corpus to undefined (pipeline reads the vault) 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > corpus selection > passes through corpus rag_chunks + integer organizationId 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > corpus selection > passes through the client_memory corpus + memoryScope 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > corpus selection > passes through the project_memory corpus + project scope 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > corpus selection > the memory shims invoke a pure-similarity policy (basic, rerank/mmr/compression off) 0ms
+
+ Test Files  9 passed (9)
+      Tests  113 passed (113)
+   Start at  13:19:07
+   Duration  2.81s (transform 4.54s, setup 724ms, import 9.34s, tests 2.38s, environment 3ms)
+

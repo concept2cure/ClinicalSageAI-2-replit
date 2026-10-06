@@ -1,0 +1,696 @@
+{
+  "kind": "ia-human-review-template",
+  "status": "pending-not-executed",
+  "bankVersion": "0.1.0-reviewer-draft",
+  "bankSha256": "6af339f3edc102f4c195fa686781864d527e1ec2be0aabfab29f971bfec9fa5b",
+  "captureRecordPath": null,
+  "captureRecordSha256": null,
+  "reviewerQualifications": [],
+  "acceptanceCriteriaApprovalReference": null,
+  "finalDecision": null,
+  "adjudicatedBy": null,
+  "adjudicatedOn": null,
+  "note": "Fill only from actual attributable transcripts and qualified human review. Null means unreviewed, not zero and not passing. Preserve capture records; write adjudication separately. Draft score anchors do not constitute approved acceptance criteria.",
+  "cases": [
+    {
+      "caseId": "US-device-predicate",
+      "domain": "device",
+      "market": "US",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "EU-device-ctis",
+      "domain": "device",
+      "market": "EU",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "JP-device-foreign-data",
+      "domain": "device",
+      "market": "JP",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "CA-device-claims",
+      "domain": "device",
+      "market": "CA",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "CN-device-import",
+      "domain": "device",
+      "market": "CN",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "US-ivd-analytical-clinical",
+      "domain": "ivd",
+      "market": "US",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "EU-ivd-per",
+      "domain": "ivd",
+      "market": "EU",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "JP-ivd-local-scope",
+      "domain": "ivd",
+      "market": "JP",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "CA-ivd-risk",
+      "domain": "ivd",
+      "market": "CA",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "CN-ivd-dossier",
+      "domain": "ivd",
+      "market": "CN",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "US-biotech-batch-change",
+      "domain": "biotech",
+      "market": "US",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "EU-biotech-classification",
+      "domain": "biotech",
+      "market": "EU",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "JP-biotech-development",
+      "domain": "biotech",
+      "market": "JP",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "CA-biotech-first-human",
+      "domain": "biotech",
+      "market": "CA",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "CN-biotech-overseas",
+      "domain": "biotech",
+      "market": "CN",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "US-pharma-safety",
+      "domain": "pharma",
+      "market": "US",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "EU-pharma-ctis-records",
+      "domain": "pharma",
+      "market": "EU",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "JP-pharma-bridging",
+      "domain": "pharma",
+      "market": "JP",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "CA-pharma-guidance-status",
+      "domain": "pharma",
+      "market": "CA",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "CN-pharma-ethnic-sensitivity",
+      "domain": "pharma",
+      "market": "CN",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "US-cro-transfer",
+      "domain": "cro",
+      "market": "US",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "EU-cro-scope",
+      "domain": "cro",
+      "market": "EU",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "JP-cro-mrct",
+      "domain": "cro",
+      "market": "JP",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "CA-cro-accountability",
+      "domain": "cro",
+      "market": "CA",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "CN-cro-data-quality",
+      "domain": "cro",
+      "market": "CN",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "IA-clear-definition",
+      "domain": "control",
+      "market": "MULTI",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "IA-supplied-draft",
+      "domain": "control",
+      "market": "US",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "IA-user-correction",
+      "domain": "control",
+      "market": "MULTI",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "IA-retrieval-failure",
+      "domain": "control",
+      "market": "US",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "IA-comparison-limits",
+      "domain": "control",
+      "market": "CA",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "IA-newer-not-authority",
+      "domain": "control",
+      "market": "JP",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "IA-declined-clarification",
+      "domain": "control",
+      "market": "CN",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "IA-europe-not-eu",
+      "domain": "control",
+      "market": "MULTI",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    },
+    {
+      "caseId": "IA-ambiguous-europe",
+      "domain": "control",
+      "market": "MULTI",
+      "reviewerId": null,
+      "reviewedOn": null,
+      "dimensionScores": {
+        "material_gap_recognition": null,
+        "question_relevance_and_burden": null,
+        "context_integration": null,
+        "bounded_helpfulness": null,
+        "scientific_applicability": null,
+        "market_and_source_discipline": null,
+        "record_and_authority": null
+      },
+      "criticalFailureFindings": null,
+      "sourceApplicabilityChecked": null,
+      "rationale": null,
+      "disposition": null
+    }
+  ]
+}

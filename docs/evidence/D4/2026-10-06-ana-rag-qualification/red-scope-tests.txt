@@ -1,0 +1,134 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/eval/rag/__tests__/run-eval-attribution.test.ts
+{
+  "timestamp": "2026-10-06T16:58:06.759Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:58:06.760Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/eval/rag/__tests__/run-eval-attribution.test.ts
+{
+  "timestamp": "2026-10-06T16:58:06.760Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/eval/rag/__tests__/run-eval-attribution.test.ts
+[database] Database connection successful
+
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > reports no gaps when the generator and a different judge are both pinned 2ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses a run with no pinned generator — the answer is unattributable 1ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses a run with no pinned judge — an unpinned model graded it 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses self-grading: the same model cannot answer and judge 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > reports BOTH gaps for a bare run — the default invocation 1ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > does not treat an empty string as a pin 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > forwards --model to the retrieval/generation call 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > omits model entirely when unpinned, rather than sending undefined 0ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > forwards --judge-model to the judge call 1ms
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > omits model from the judge call when unpinned 0ms
+ × server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > refuses missing tenant before retrieval can be invoked 5ms
+   → expected [Function] to throw an error
+ × server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > refuses missing programme instead of reading another programme in the tenant 1ms
+   → expected [Function] to throw an error
+ × server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > threads both scopes into the existing vault router and program filter 1ms
+   → expected undefined to be 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' // Object.is equality
+ × server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > uses reviewed basic retrieval without auxiliary model calls 1ms
+   → expected undefined to be 'basic' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > refuses missing tenant before retrieval can be invoked
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/eval/rag/__tests__/run-eval-attribution.test.ts:98:95
+     96| describe('evaluation reads the explicitly named evaluation tenant and …
+     97|   it('refuses missing tenant before retrieval can be invoked', () => {
+     98|     expect(() => buildQueryParams('q', { model: 'model', k: 5, program…
+       |                                                                                               ^
+     99|   });
+    100|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > refuses missing programme instead of reading another programme in the tenant
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/eval/rag/__tests__/run-eval-attribution.test.ts:102:109
+    100|
+    101|   it('refuses missing programme instead of reading another programme i…
+    102|     expect(() => buildQueryParams('q', { model: 'model', k: 5, organiz…
+       |                                                                                                             ^
+    103|   });
+    104|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > threads both scopes into the existing vault router and program filter
+AssertionError: expected undefined to be 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' // Object.is equality
+
+- Expected:
+"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+
++ Received:
+undefined
+
+ ❯ server/eval/rag/__tests__/run-eval-attribution.test.ts:107:37
+    105|   it('threads both scopes into the existing vault router and program f…
+    106|     const params = buildQueryParams('q', { model: 'model', k: 5, ...sc…
+    107|     expect(params.organizationUuid).toBe(scope.organizationUuid);
+       |                                     ^
+    108|     expect(params.corpus).toBe('vault');
+    109|     expect(params.filters).toEqual({ programId: scope.programId });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/eval/rag/__tests__/run-eval-attribution.test.ts > evaluation reads the explicitly named evaluation tenant and programme > uses reviewed basic retrieval without auxiliary model calls
+AssertionError: expected undefined to be 'basic' // Object.is equality
+
+- Expected:
+"basic"
+
++ Received:
+undefined
+
+ ❯ server/eval/rag/__tests__/run-eval-attribution.test.ts:114:29
+    112|   it('uses reviewed basic retrieval without auxiliary model calls', ()…
+    113|     const params = buildQueryParams('q', { model: 'model', k: 5, ...sc…
+    114|     expect(params.strategy).toBe('basic');
+       |                             ^
+    115|     expect(params.useReranking).toBe(false);
+    116|     expect(params.useMmr).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 10 passed (14)
+   Start at  12:58:05
+   Duration  2.32s (transform 1.09s, setup 79ms, import 1.93s, tests 16ms, environment 0ms)
+

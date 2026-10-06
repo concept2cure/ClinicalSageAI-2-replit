@@ -1,0 +1,2109 @@
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {
+    "@anthropic-ai/sdk": {
+      "name": "@anthropic-ai/sdk",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        {
+          "source": 1119428,
+          "name": "@anthropic-ai/sdk",
+          "dependency": "@anthropic-ai/sdk",
+          "title": "Claude SDK for TypeScript has Insecure Default File Permissions in Local Filesystem Memory Tool",
+          "url": "https://github.com/advisories/GHSA-p7fg-763f-g4gf",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-732"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": ">=0.79.0 <0.91.1"
+        }
+      ],
+      "effects": [],
+      "range": "0.79.0 - 0.91.0",
+      "nodes": [
+        "node_modules/@anthropic-ai/sdk"
+      ],
+      "fixAvailable": {
+        "name": "@anthropic-ai/sdk",
+        "version": "0.131.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@esbuild-kit/core-utils": {
+      "name": "@esbuild-kit/core-utils",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "esbuild"
+      ],
+      "effects": [
+        "@esbuild-kit/esm-loader"
+      ],
+      "range": "*",
+      "nodes": [
+        "node_modules/@esbuild-kit/core-utils"
+      ],
+      "fixAvailable": {
+        "name": "drizzle-kit",
+        "version": "0.31.11",
+        "isSemVerMajor": true
+      }
+    },
+    "@esbuild-kit/esm-loader": {
+      "name": "@esbuild-kit/esm-loader",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@esbuild-kit/core-utils"
+      ],
+      "effects": [
+        "drizzle-kit"
+      ],
+      "range": "*",
+      "nodes": [
+        "node_modules/@esbuild-kit/esm-loader"
+      ],
+      "fixAvailable": {
+        "name": "drizzle-kit",
+        "version": "0.31.11",
+        "isSemVerMajor": true
+      }
+    },
+    "@istanbuljs/load-nyc-config": {
+      "name": "@istanbuljs/load-nyc-config",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "js-yaml"
+      ],
+      "effects": [
+        "babel-plugin-istanbul"
+      ],
+      "range": "*",
+      "nodes": [
+        "node_modules/@istanbuljs/load-nyc-config"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "@jest/console": {
+      "name": "@jest/console",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "jest-message-util"
+      ],
+      "effects": [
+        "@jest/core",
+        "@jest/reporters",
+        "@jest/test-result",
+        "jest-runner"
+      ],
+      "range": "25.4.0 - 30.2.0",
+      "nodes": [
+        "node_modules/@jest/console"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "@jest/core": {
+      "name": "@jest/core",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@jest/console",
+        "@jest/reporters",
+        "@jest/test-result",
+        "@jest/transform",
+        "jest-config",
+        "jest-haste-map",
+        "jest-message-util",
+        "jest-resolve",
+        "jest-resolve-dependencies",
+        "jest-runner",
+        "jest-runtime",
+        "jest-snapshot",
+        "jest-watcher",
+        "micromatch"
+      ],
+      "effects": [
+        "jest",
+        "jest-cli"
+      ],
+      "range": "<=30.2.0",
+      "nodes": [
+        "node_modules/@jest/core"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "@jest/environment": {
+      "name": "@jest/environment",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@jest/fake-timers"
+      ],
+      "effects": [
+        "@jest/globals",
+        "jest-circus"
+      ],
+      "range": "<=30.2.0",
+      "nodes": [
+        "node_modules/@jest/environment"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "@jest/expect": {
+      "name": "@jest/expect",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "expect",
+        "jest-snapshot"
+      ],
+      "effects": [
+        "@jest/globals",
+        "jest-circus"
+      ],
+      "range": "<=30.2.0",
+      "nodes": [
+        "node_modules/@jest/expect"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "@jest/fake-timers": {
+      "name": "@jest/fake-timers",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "jest-message-util"
+      ],
+      "effects": [
+        "@jest/environment",
+        "jest-environment-node",
+        "jest-runtime"
+      ],
+      "range": "<=30.2.0",
+      "nodes": [
+        "node_modules/@jest/fake-timers"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "@jest/globals": {
+      "name": "@jest/globals",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@jest/environment",
+        "@jest/expect"
+      ],
+      "effects": [
+        "jest-runtime"
+      ],
+      "range": "<=30.2.0",
+      "nodes": [
+        "node_modules/@jest/globals"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "@jest/reporters": {
+      "name": "@jest/reporters",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@jest/console",
+        "@jest/test-result",
+        "@jest/transform",
+        "jest-message-util"
+      ],
+      "effects": [],
+      "range": "<=30.2.0",
+      "nodes": [
+        "node_modules/@jest/reporters"
+      ],
+      "fixAvailable": true
+    },
+    "@jest/test-result": {
+      "name": "@jest/test-result",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@jest/console"
+      ],
+      "effects": [
+        "@jest/test-sequencer",
+        "jest-circus",
+        "jest-cli",
+        "jest-runtime",
+        "jest-watcher"
+      ],
+      "range": "25.4.0 - 30.2.0",
+      "nodes": [
+        "node_modules/@jest/test-result"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "@jest/test-sequencer": {
+      "name": "@jest/test-sequencer",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@jest/test-result",
+        "jest-haste-map"
+      ],
+      "effects": [
+        "jest-config"
+      ],
+      "range": "<=30.2.0",
+      "nodes": [
+        "node_modules/@jest/test-sequencer"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "@jest/transform": {
+      "name": "@jest/transform",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "babel-plugin-istanbul",
+        "jest-haste-map",
+        "micromatch"
+      ],
+      "effects": [
+        "@jest/reporters",
+        "babel-jest",
+        "jest-runner",
+        "jest-runtime",
+        "jest-snapshot"
+      ],
+      "range": "*",
+      "nodes": [
+        "node_modules/@jest/core/node_modules/@jest/transform",
+        "node_modules/@jest/reporters/node_modules/@jest/transform",
+        "node_modules/@jest/transform",
+        "node_modules/jest-config/node_modules/@jest/transform",
+        "node_modules/jest-runner/node_modules/@jest/transform",
+        "node_modules/jest-runtime/node_modules/@jest/transform",
+        "node_modules/jest-snapshot/node_modules/@jest/transform"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "@opentelemetry/core": {
+      "name": "@opentelemetry/core",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1153174,
+          "name": "@opentelemetry/core",
+          "dependency": "@opentelemetry/core",
+          "title": "OpenTelemetry Core: Unbounded memory allocation in W3C Baggage propagation",
+          "url": "https://github.com/advisories/GHSA-8988-4f7v-96qf",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-770"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": "<2.8.0"
+        }
+      ],
+      "effects": [
+        "@opentelemetry/instrumentation-amqplib",
+        "@opentelemetry/instrumentation-connect",
+        "@opentelemetry/instrumentation-express",
+        "@opentelemetry/instrumentation-fastify",
+        "@opentelemetry/instrumentation-fs",
+        "@opentelemetry/instrumentation-hapi",
+        "@opentelemetry/instrumentation-http",
+        "@opentelemetry/instrumentation-koa",
+        "@opentelemetry/instrumentation-mongoose",
+        "@opentelemetry/instrumentation-pg",
+        "@opentelemetry/instrumentation-undici",
+        "@opentelemetry/resources",
+        "@opentelemetry/sdk-trace-base",
+        "@opentelemetry/sql-common",
+        "@sentry/node"
+      ],
+      "range": "<2.8.0",
+      "nodes": [
+        "node_modules/@opentelemetry/core"
+      ],
+      "fixAvailable": {
+        "name": "@sentry/node",
+        "version": "11.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@opentelemetry/instrumentation-amqplib": {
+      "name": "@opentelemetry/instrumentation-amqplib",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core"
+      ],
+      "effects": [
+        "@sentry/node"
+      ],
+      "range": "<=0.46.1",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-amqplib"
+      ],
+      "fixAvailable": {
+        "name": "@sentry/node",
+        "version": "11.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@opentelemetry/instrumentation-connect": {
+      "name": "@opentelemetry/instrumentation-connect",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core"
+      ],
+      "effects": [],
+      "range": "<=0.43.1",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-connect"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/instrumentation-express": {
+      "name": "@opentelemetry/instrumentation-express",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core"
+      ],
+      "effects": [],
+      "range": "<=0.47.1",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-express"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/instrumentation-fastify": {
+      "name": "@opentelemetry/instrumentation-fastify",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core"
+      ],
+      "effects": [
+        "@sentry/node"
+      ],
+      "range": "<=0.44.2",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-fastify"
+      ],
+      "fixAvailable": {
+        "name": "@sentry/node",
+        "version": "11.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@opentelemetry/instrumentation-fs": {
+      "name": "@opentelemetry/instrumentation-fs",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core"
+      ],
+      "effects": [
+        "@sentry/node"
+      ],
+      "range": "<=0.19.1",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-fs"
+      ],
+      "fixAvailable": {
+        "name": "@sentry/node",
+        "version": "11.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@opentelemetry/instrumentation-hapi": {
+      "name": "@opentelemetry/instrumentation-hapi",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core"
+      ],
+      "effects": [],
+      "range": "0.24.0 - 0.45.2",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-hapi"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/instrumentation-http": {
+      "name": "@opentelemetry/instrumentation-http",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core"
+      ],
+      "effects": [],
+      "range": "<=0.16.0 || 0.19.1-alpha.7 - 0.218.0",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-http"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/instrumentation-knex": {
+      "name": "@opentelemetry/instrumentation-knex",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1241249,
+          "name": "@opentelemetry/instrumentation-knex",
+          "dependency": "@opentelemetry/instrumentation-knex",
+          "title": "Multiple @opentelemetry/instrumentation-* packages expose database username via unconditional db.user span attribute",
+          "url": "https://github.com/advisories/GHSA-qqmp-wf37-98f9",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-532"
+          ],
+          "cvss": {
+            "score": 5.8,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:L/I:N/A:N"
+          },
+          "range": "<0.65.0"
+        }
+      ],
+      "effects": [
+        "@sentry/node"
+      ],
+      "range": "<0.65.0",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-knex"
+      ],
+      "fixAvailable": {
+        "name": "@sentry/node",
+        "version": "11.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@opentelemetry/instrumentation-koa": {
+      "name": "@opentelemetry/instrumentation-koa",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core"
+      ],
+      "effects": [],
+      "range": "<=0.15.0 || 0.20.0 - 0.47.1",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-koa"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/instrumentation-mongoose": {
+      "name": "@opentelemetry/instrumentation-mongoose",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        {
+          "source": 1241251,
+          "name": "@opentelemetry/instrumentation-mongoose",
+          "dependency": "@opentelemetry/instrumentation-mongoose",
+          "title": "Multiple @opentelemetry/instrumentation-* packages expose database username via unconditional db.user span attribute",
+          "url": "https://github.com/advisories/GHSA-qqmp-wf37-98f9",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-532"
+          ],
+          "cvss": {
+            "score": 5.8,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:L/I:N/A:N"
+          },
+          "range": "<0.67.0"
+        }
+      ],
+      "effects": [
+        "@sentry/node"
+      ],
+      "range": "<=0.66.0",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-mongoose"
+      ],
+      "fixAvailable": {
+        "name": "@sentry/node",
+        "version": "11.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@opentelemetry/instrumentation-mysql": {
+      "name": "@opentelemetry/instrumentation-mysql",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1241250,
+          "name": "@opentelemetry/instrumentation-mysql",
+          "dependency": "@opentelemetry/instrumentation-mysql",
+          "title": "Multiple @opentelemetry/instrumentation-* packages expose database username via unconditional db.user span attribute",
+          "url": "https://github.com/advisories/GHSA-qqmp-wf37-98f9",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-532"
+          ],
+          "cvss": {
+            "score": 5.8,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:L/I:N/A:N"
+          },
+          "range": "<0.67.0"
+        }
+      ],
+      "effects": [],
+      "range": "<0.67.0",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-mysql"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/instrumentation-mysql2": {
+      "name": "@opentelemetry/instrumentation-mysql2",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/sql-common",
+        {
+          "source": 1241248,
+          "name": "@opentelemetry/instrumentation-mysql2",
+          "dependency": "@opentelemetry/instrumentation-mysql2",
+          "title": "Multiple @opentelemetry/instrumentation-* packages expose database username via unconditional db.user span attribute",
+          "url": "https://github.com/advisories/GHSA-qqmp-wf37-98f9",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-532"
+          ],
+          "cvss": {
+            "score": 5.8,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:L/I:N/A:N"
+          },
+          "range": "<0.67.0"
+        }
+      ],
+      "effects": [],
+      "range": "<=0.66.0",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-mysql2"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/instrumentation-pg": {
+      "name": "@opentelemetry/instrumentation-pg",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/sql-common",
+        {
+          "source": 1241247,
+          "name": "@opentelemetry/instrumentation-pg",
+          "dependency": "@opentelemetry/instrumentation-pg",
+          "title": "Multiple @opentelemetry/instrumentation-* packages expose database username via unconditional db.user span attribute",
+          "url": "https://github.com/advisories/GHSA-qqmp-wf37-98f9",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-532"
+          ],
+          "cvss": {
+            "score": 5.8,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:L/I:N/A:N"
+          },
+          "range": "<0.73.0"
+        }
+      ],
+      "effects": [],
+      "range": "<=0.72.0",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-pg"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/instrumentation-tedious": {
+      "name": "@opentelemetry/instrumentation-tedious",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1241253,
+          "name": "@opentelemetry/instrumentation-tedious",
+          "dependency": "@opentelemetry/instrumentation-tedious",
+          "title": "Multiple @opentelemetry/instrumentation-* packages expose database username via unconditional db.user span attribute",
+          "url": "https://github.com/advisories/GHSA-qqmp-wf37-98f9",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-532"
+          ],
+          "cvss": {
+            "score": 5.8,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:L/I:N/A:N"
+          },
+          "range": "<0.40.0"
+        }
+      ],
+      "effects": [],
+      "range": "<0.40.0",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-tedious"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/instrumentation-undici": {
+      "name": "@opentelemetry/instrumentation-undici",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core"
+      ],
+      "effects": [
+        "@sentry/node"
+      ],
+      "range": "<=0.10.1",
+      "nodes": [
+        "node_modules/@opentelemetry/instrumentation-undici"
+      ],
+      "fixAvailable": {
+        "name": "@sentry/node",
+        "version": "11.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@opentelemetry/resources": {
+      "name": "@opentelemetry/resources",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core"
+      ],
+      "effects": [],
+      "range": "0.8.0 - 2.7.1",
+      "nodes": [
+        "node_modules/@opentelemetry/resources"
+      ],
+      "fixAvailable": true
+    },
+    "@opentelemetry/sdk-trace-base": {
+      "name": "@opentelemetry/sdk-trace-base",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/resources"
+      ],
+      "effects": [
+        "@prisma/instrumentation"
+      ],
+      "range": "<=2.7.1",
+      "nodes": [
+        "node_modules/@opentelemetry/sdk-trace-base"
+      ],
+      "fixAvailable": {
+        "name": "@sentry/node",
+        "version": "11.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@opentelemetry/sql-common": {
+      "name": "@opentelemetry/sql-common",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/core"
+      ],
+      "effects": [
+        "@opentelemetry/instrumentation-mysql2",
+        "@opentelemetry/instrumentation-pg"
+      ],
+      "range": "<=0.40.1",
+      "nodes": [
+        "node_modules/@opentelemetry/sql-common"
+      ],
+      "fixAvailable": true
+    },
+    "@prisma/instrumentation": {
+      "name": "@prisma/instrumentation",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@opentelemetry/sdk-trace-base"
+      ],
+      "effects": [
+        "@sentry/node"
+      ],
+      "range": "4.14.0-dev.1 - 6.1.0-integration-expose-deserialize-raw-result.1",
+      "nodes": [
+        "node_modules/@prisma/instrumentation"
+      ],
+      "fixAvailable": {
+        "name": "@sentry/node",
+        "version": "11.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@sentry/node": {
+      "name": "@sentry/node",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "@opentelemetry/core",
+        "@opentelemetry/instrumentation-amqplib",
+        "@opentelemetry/instrumentation-connect",
+        "@opentelemetry/instrumentation-express",
+        "@opentelemetry/instrumentation-fastify",
+        "@opentelemetry/instrumentation-fs",
+        "@opentelemetry/instrumentation-hapi",
+        "@opentelemetry/instrumentation-http",
+        "@opentelemetry/instrumentation-knex",
+        "@opentelemetry/instrumentation-koa",
+        "@opentelemetry/instrumentation-mongoose",
+        "@opentelemetry/instrumentation-mysql",
+        "@opentelemetry/instrumentation-mysql2",
+        "@opentelemetry/instrumentation-pg",
+        "@opentelemetry/instrumentation-tedious",
+        "@opentelemetry/instrumentation-undici",
+        "@opentelemetry/resources",
+        "@opentelemetry/sdk-trace-base",
+        "@prisma/instrumentation"
+      ],
+      "effects": [],
+      "range": "8.0.0-alpha.1 - 10.53.1",
+      "nodes": [
+        "node_modules/@sentry/node"
+      ],
+      "fixAvailable": {
+        "name": "@sentry/node",
+        "version": "11.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@tailwindcss/typography": {
+      "name": "@tailwindcss/typography",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "postcss-selector-parser"
+      ],
+      "effects": [],
+      "range": "<=0.0.0-insiders.fda8ce5 || >=0.5.5",
+      "nodes": [
+        "node_modules/@tailwindcss/typography"
+      ],
+      "fixAvailable": {
+        "name": "@tailwindcss/typography",
+        "version": "0.5.4",
+        "isSemVerMajor": true
+      }
+    },
+    "@vitest/mocker": {
+      "name": "@vitest/mocker",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1193684,
+          "name": "@vitest/mocker",
+          "dependency": "@vitest/mocker",
+          "title": "Vitest: Path Traversal / Arbitrary File Read via @vitest/mocker Redirect Mock",
+          "url": "https://github.com/advisories/GHSA-82fw-gwwq-j7x9",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 5.9,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N"
+          },
+          "range": ">=2.1.0 <4.1.11"
+        }
+      ],
+      "effects": [
+        "vitest"
+      ],
+      "range": "2.1.0 - 4.1.10",
+      "nodes": [
+        "node_modules/@vitest/mocker"
+      ],
+      "fixAvailable": {
+        "name": "vitest",
+        "version": "4.1.11",
+        "isSemVerMajor": false
+      }
+    },
+    "argparse": {
+      "name": "argparse",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "sprintf-js"
+      ],
+      "effects": [
+        "js-yaml",
+        "mammoth"
+      ],
+      "range": "1.0.0 - 1.0.10",
+      "nodes": [
+        "node_modules/@istanbuljs/load-nyc-config/node_modules/argparse",
+        "node_modules/mammoth/node_modules/argparse"
+      ],
+      "fixAvailable": {
+        "name": "mammoth",
+        "version": "0.3.29",
+        "isSemVerMajor": true
+      }
+    },
+    "babel-jest": {
+      "name": "babel-jest",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        "@jest/transform",
+        "@jest/transform",
+        "babel-plugin-istanbul"
+      ],
+      "effects": [
+        "jest-config"
+      ],
+      "range": ">=24.2.0-alpha.0",
+      "nodes": [
+        "node_modules/babel-jest",
+        "node_modules/jest-config/node_modules/babel-jest"
+      ],
+      "fixAvailable": {
+        "name": "babel-jest",
+        "version": "24.1.0",
+        "isSemVerMajor": true
+      }
+    },
+    "babel-plugin-istanbul": {
+      "name": "babel-plugin-istanbul",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@istanbuljs/load-nyc-config"
+      ],
+      "effects": [
+        "@jest/transform",
+        "babel-jest"
+      ],
+      "range": ">=6.0.0-beta.0",
+      "nodes": [
+        "node_modules/@jest/core/node_modules/babel-plugin-istanbul",
+        "node_modules/@jest/reporters/node_modules/babel-plugin-istanbul",
+        "node_modules/babel-plugin-istanbul",
+        "node_modules/jest-config/node_modules/babel-plugin-istanbul",
+        "node_modules/jest-runner/node_modules/babel-plugin-istanbul",
+        "node_modules/jest-runtime/node_modules/babel-plugin-istanbul",
+        "node_modules/jest-snapshot/node_modules/babel-plugin-istanbul"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "braces": {
+      "name": "braces",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1240992,
+          "name": "braces",
+          "dependency": "braces",
+          "title": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+          "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+          "severity": "high",
+          "cwe": [
+            "CWE-674"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": "<=3.0.3"
+        }
+      ],
+      "effects": [
+        "micromatch"
+      ],
+      "range": "*",
+      "nodes": [
+        "node_modules/braces"
+      ],
+      "fixAvailable": {
+        "name": "danger",
+        "version": "7.0.19",
+        "isSemVerMajor": true
+      }
+    },
+    "bull": {
+      "name": "bull",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "uuid"
+      ],
+      "effects": [],
+      "range": ">=2.0.0",
+      "nodes": [
+        "node_modules/bull"
+      ],
+      "fixAvailable": {
+        "name": "bull",
+        "version": "1.1.3",
+        "isSemVerMajor": true
+      }
+    },
+    "compression": {
+      "name": "compression",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        {
+          "source": 1241221,
+          "name": "compression",
+          "dependency": "compression",
+          "title": "compression vulnerable to Denial of Service via memory leak on premature response close",
+          "url": "https://github.com/advisories/GHSA-vc2v-76pw-4v95",
+          "severity": "high",
+          "cwe": [
+            "CWE-401",
+            "CWE-459"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": "<1.8.2"
+        }
+      ],
+      "effects": [],
+      "range": "<1.8.2",
+      "nodes": [
+        "node_modules/compression"
+      ],
+      "fixAvailable": {
+        "name": "compression",
+        "version": "1.8.2",
+        "isSemVerMajor": false
+      }
+    },
+    "create-jest": {
+      "name": "create-jest",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "jest-config"
+      ],
+      "effects": [
+        "jest-cli"
+      ],
+      "range": "29.7.0 - 30.2.0",
+      "nodes": [
+        "node_modules/create-jest"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "csv-parse": {
+      "name": "csv-parse",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        {
+          "source": 1193670,
+          "name": "csv-parse",
+          "dependency": "csv-parse",
+          "title": "node-csv: Prototype replacement still reachable via columns path",
+          "url": "https://github.com/advisories/GHSA-8cw4-87c7-c6xx",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-1321"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": "<7.0.2"
+        }
+      ],
+      "effects": [],
+      "range": "<7.0.2",
+      "nodes": [
+        "node_modules/csv-parse"
+      ],
+      "fixAvailable": {
+        "name": "csv-parse",
+        "version": "7.0.3",
+        "isSemVerMajor": true
+      }
+    },
+    "danger": {
+      "name": "danger",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        "micromatch"
+      ],
+      "effects": [],
+      "range": ">=7.1.0",
+      "nodes": [
+        "node_modules/danger"
+      ],
+      "fixAvailable": {
+        "name": "danger",
+        "version": "7.0.19",
+        "isSemVerMajor": true
+      }
+    },
+    "dompurify": {
+      "name": "dompurify",
+      "severity": "low",
+      "isDirect": true,
+      "via": [
+        {
+          "source": 1240621,
+          "name": "dompurify",
+          "dependency": "dompurify",
+          "title": "DOMPurify: IN_PLACE: node-removing afterSanitize hook leaves detached subtree event handlers armed, causing DOM XSS",
+          "url": "https://github.com/advisories/GHSA-p98j-92pf-mc4p",
+          "severity": "low",
+          "cwe": [
+            "CWE-79"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": ">=3.4.13 <=3.4.15"
+        },
+        {
+          "source": 1241204,
+          "name": "dompurify",
+          "dependency": "dompurify",
+          "title": "DOMPurify: IN_PLACE returns a force-removed rawtext root whose text carries attacker markup \u2014 pure HTML reparse executes",
+          "url": "https://github.com/advisories/GHSA-6688-9rhm-gjv2",
+          "severity": "low",
+          "cwe": [
+            "CWE-79"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": "<=3.4.15"
+        }
+      ],
+      "effects": [],
+      "range": "<=3.4.15",
+      "nodes": [
+        "node_modules/dompurify"
+      ],
+      "fixAvailable": {
+        "name": "dompurify",
+        "version": "3.4.16",
+        "isSemVerMajor": false
+      }
+    },
+    "drizzle-kit": {
+      "name": "drizzle-kit",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "@esbuild-kit/esm-loader",
+        "esbuild"
+      ],
+      "effects": [],
+      "range": "0.9.1 - 0.9.54 || 0.12.9 - 1.0.0-beta.1-fd8bfcc",
+      "nodes": [
+        "node_modules/drizzle-kit"
+      ],
+      "fixAvailable": {
+        "name": "drizzle-kit",
+        "version": "0.31.11",
+        "isSemVerMajor": true
+      }
+    },
+    "esbuild": {
+      "name": "esbuild",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1102341,
+          "name": "esbuild",
+          "dependency": "esbuild",
+          "title": "esbuild enables any website to send any requests to the development server and read the response",
+          "url": "https://github.com/advisories/GHSA-67mh-4wv8-2f99",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-346"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:N/A:N"
+          },
+          "range": "<=0.24.2"
+        }
+      ],
+      "effects": [
+        "@esbuild-kit/core-utils",
+        "drizzle-kit"
+      ],
+      "range": "<=0.24.2",
+      "nodes": [
+        "node_modules/@esbuild-kit/core-utils/node_modules/esbuild",
+        "node_modules/drizzle-kit/node_modules/esbuild"
+      ],
+      "fixAvailable": {
+        "name": "drizzle-kit",
+        "version": "0.31.11",
+        "isSemVerMajor": true
+      }
+    },
+    "exceljs": {
+      "name": "exceljs",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "uuid"
+      ],
+      "effects": [],
+      "range": ">=3.5.0",
+      "nodes": [
+        "node_modules/exceljs"
+      ],
+      "fixAvailable": {
+        "name": "exceljs",
+        "version": "3.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "expect": {
+      "name": "expect",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "jest-message-util"
+      ],
+      "effects": [
+        "jest-snapshot"
+      ],
+      "range": "21.0.0-beta.1 - 30.2.0",
+      "nodes": [
+        "node_modules/@jest/expect/node_modules/expect",
+        "node_modules/jest-snapshot/node_modules/expect"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "fast-uri": {
+      "name": "fast-uri",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1240091,
+          "name": "fast-uri",
+          "dependency": "fast-uri",
+          "title": "fast-uri vulnerable to inconsistent host case normalization via percent-encoded octets",
+          "url": "https://github.com/advisories/GHSA-hrr3-gc8f-f4qj",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-178"
+          ],
+          "cvss": {
+            "score": 4.8,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          },
+          "range": ">=3.0.0 <3.1.8"
+        }
+      ],
+      "effects": [],
+      "range": "3.0.0 - 3.1.7",
+      "nodes": [
+        "node_modules/fast-uri"
+      ],
+      "fixAvailable": true
+    },
+    "image-size": {
+      "name": "image-size",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1239765,
+          "name": "image-size",
+          "dependency": "image-size",
+          "title": "image-size: JXL and HEIF parsers allow denial of service through infinite loops",
+          "url": "https://github.com/advisories/GHSA-5p2g-fcmc-qvqq",
+          "severity": "high",
+          "cwe": [
+            "CWE-835"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": ">=1.2.0 <=2.0.2"
+        },
+        {
+          "source": 1239766,
+          "name": "image-size",
+          "dependency": "image-size",
+          "title": "image-size: ICNS parser allows denial of service through an infinite loop",
+          "url": "https://github.com/advisories/GHSA-w3rx-r6r6-pgpr",
+          "severity": "high",
+          "cwe": [
+            "CWE-835"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": ">=0.6.3 <=2.0.2"
+        }
+      ],
+      "effects": [
+        "pptxgenjs"
+      ],
+      "range": "0.6.3 - 2.0.2",
+      "nodes": [
+        "node_modules/image-size"
+      ],
+      "fixAvailable": {
+        "name": "pptxgenjs",
+        "version": "4.0.0",
+        "isSemVerMajor": true
+      }
+    },
+    "ip-address": {
+      "name": "ip-address",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1239948,
+          "name": "ip-address",
+          "dependency": "ip-address",
+          "title": "ip-address: Address6.isLinkLocal() recognizes fe80::/64 rather than fe80::/10, allowing SSRF and trust-boundary bypass to on-link hosts",
+          "url": "https://github.com/advisories/GHSA-rpw4-54j3-4h4q",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-697",
+            "CWE-918"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": "<=10.5.0"
+        },
+        {
+          "source": 1239949,
+          "name": "ip-address",
+          "dependency": "ip-address",
+          "title": "ip-address: no classifier recognizes the NAT64 local-use range 64:ff9b:1::/48, allowing SSRF and trust-boundary bypass",
+          "url": "https://github.com/advisories/GHSA-2vr4-cq9g-pvrc",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-918"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": ">=10.2.0 <=10.5.0"
+        },
+        {
+          "source": 1240097,
+          "name": "ip-address",
+          "dependency": "ip-address",
+          "title": "ip-address: isInSubnet() and isHostInSubnet() compare addresses of different families as if they shared an address space, allowing an allowlist check to admit an address outside its range",
+          "url": "https://github.com/advisories/GHSA-j6r3-76f7-8jcv",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-697",
+            "CWE-843"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": "<=10.7.0"
+        },
+        {
+          "source": 1240098,
+          "name": "ip-address",
+          "dependency": "ip-address",
+          "title": "ip-address: Address6 builds a parse diagnostic proportional to the input with no length bound, allowing a single long string to stall or crash the process",
+          "url": "https://github.com/advisories/GHSA-h3mg-xc3c-68pw",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-400",
+            "CWE-770"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": "<=10.7.0"
+        }
+      ],
+      "effects": [],
+      "range": "<=10.7.0",
+      "nodes": [
+        "node_modules/ip-address"
+      ],
+      "fixAvailable": true
+    },
+    "jest": {
+      "name": "jest",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        "@jest/core",
+        "jest-cli"
+      ],
+      "effects": [],
+      "range": "24.2.0-alpha.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "jest-circus": {
+      "name": "jest-circus",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@jest/environment",
+        "@jest/expect",
+        "@jest/test-result",
+        "jest-message-util",
+        "jest-runtime",
+        "jest-snapshot"
+      ],
+      "effects": [
+        "jest-config"
+      ],
+      "range": "20.1.0-alpha.1 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-circus"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "jest-cli": {
+      "name": "jest-cli",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@jest/core",
+        "@jest/test-result",
+        "create-jest",
+        "jest-config"
+      ],
+      "effects": [
+        "jest"
+      ],
+      "range": "23.5.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-cli"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "jest-config": {
+      "name": "jest-config",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@jest/test-sequencer",
+        "babel-jest",
+        "jest-circus",
+        "jest-environment-node",
+        "jest-resolve",
+        "jest-runner",
+        "micromatch"
+      ],
+      "effects": [
+        "create-jest",
+        "jest-cli"
+      ],
+      "range": "18.1.0 - 19.0.4 || 23.5.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-config"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "jest-environment-node": {
+      "name": "jest-environment-node",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@jest/environment",
+        "@jest/fake-timers"
+      ],
+      "effects": [
+        "jest-runner"
+      ],
+      "range": "24.2.0-alpha.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-environment-node"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "jest-haste-map": {
+      "name": "jest-haste-map",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "micromatch"
+      ],
+      "effects": [
+        "@jest/test-sequencer",
+        "jest-resolve",
+        "jest-runner",
+        "jest-runtime"
+      ],
+      "range": "18.1.0 - 30.2.0",
+      "nodes": [
+        "node_modules/@jest/core/node_modules/jest-haste-map",
+        "node_modules/@jest/reporters/node_modules/jest-haste-map",
+        "node_modules/@jest/test-sequencer/node_modules/jest-haste-map",
+        "node_modules/jest-config/node_modules/jest-haste-map",
+        "node_modules/jest-resolve/node_modules/jest-haste-map",
+        "node_modules/jest-runner/node_modules/jest-haste-map",
+        "node_modules/jest-runtime/node_modules/jest-haste-map",
+        "node_modules/jest-snapshot/node_modules/jest-haste-map"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "jest-message-util": {
+      "name": "jest-message-util",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "micromatch"
+      ],
+      "effects": [
+        "@jest/console",
+        "@jest/fake-timers",
+        "@jest/reporters",
+        "expect",
+        "jest-circus",
+        "jest-runtime",
+        "jest-snapshot"
+      ],
+      "range": "18.5.0-alpha.7da3df39 - 30.2.0",
+      "nodes": [
+        "node_modules/@jest/console/node_modules/jest-message-util",
+        "node_modules/@jest/core/node_modules/jest-message-util",
+        "node_modules/@jest/expect/node_modules/jest-message-util",
+        "node_modules/@jest/fake-timers/node_modules/jest-message-util",
+        "node_modules/@jest/reporters/node_modules/jest-message-util",
+        "node_modules/jest-circus/node_modules/jest-message-util",
+        "node_modules/jest-runner/node_modules/jest-message-util",
+        "node_modules/jest-runtime/node_modules/jest-message-util",
+        "node_modules/jest-snapshot/node_modules/jest-message-util"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "jest-resolve": {
+      "name": "jest-resolve",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "jest-haste-map"
+      ],
+      "effects": [
+        "@jest/core",
+        "jest-config",
+        "jest-runner",
+        "jest-runtime"
+      ],
+      "range": "18.1.0 - 19.0.2 || 24.2.0-alpha.0 - 24.5.0 || 27.1.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-resolve"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "jest-resolve-dependencies": {
+      "name": "jest-resolve-dependencies",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "jest-snapshot"
+      ],
+      "effects": [],
+      "range": "27.0.0-next.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-resolve-dependencies"
+      ],
+      "fixAvailable": true
+    },
+    "jest-runner": {
+      "name": "jest-runner",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@jest/console",
+        "@jest/environment",
+        "@jest/test-result",
+        "@jest/transform",
+        "jest-environment-node",
+        "jest-haste-map",
+        "jest-message-util",
+        "jest-resolve",
+        "jest-runtime",
+        "jest-watcher"
+      ],
+      "effects": [
+        "@jest/core",
+        "jest-config"
+      ],
+      "range": "21.0.0-alpha.1 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-runner"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "jest-runtime": {
+      "name": "jest-runtime",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@jest/environment",
+        "@jest/fake-timers",
+        "@jest/globals",
+        "@jest/test-result",
+        "@jest/transform",
+        "jest-haste-map",
+        "jest-message-util",
+        "jest-resolve",
+        "jest-snapshot"
+      ],
+      "effects": [
+        "jest-circus",
+        "jest-runner"
+      ],
+      "range": "18.1.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-runtime"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "jest-snapshot": {
+      "name": "jest-snapshot",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@jest/transform",
+        "expect",
+        "jest-message-util"
+      ],
+      "effects": [
+        "@jest/expect",
+        "jest-circus",
+        "jest-resolve-dependencies",
+        "jest-runtime"
+      ],
+      "range": "23.3.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-snapshot"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "jest-watcher": {
+      "name": "jest-watcher",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@jest/test-result"
+      ],
+      "effects": [
+        "jest-runner"
+      ],
+      "range": "25.4.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-watcher"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "js-yaml": {
+      "name": "js-yaml",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        {
+          "source": 1239991,
+          "name": "js-yaml",
+          "dependency": "js-yaml",
+          "title": "js-yaml: maxTotalMergeKeys does not limit CPU use for empty merge sources",
+          "url": "https://github.com/advisories/GHSA-r3ph-w7gj-g6xm",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-400",
+            "CWE-407"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": ">=5.0.0 <=5.4.0"
+        },
+        "argparse"
+      ],
+      "effects": [
+        "@istanbuljs/load-nyc-config"
+      ],
+      "range": "3.2.7 - 3.15.2 || 5.0.0 - 5.4.0",
+      "nodes": [
+        "node_modules/@istanbuljs/load-nyc-config/node_modules/js-yaml",
+        "node_modules/js-yaml"
+      ],
+      "fixAvailable": {
+        "name": "jest",
+        "version": "30.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "mammoth": {
+      "name": "mammoth",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "argparse"
+      ],
+      "effects": [],
+      "range": ">=0.3.30",
+      "nodes": [
+        "node_modules/mammoth"
+      ],
+      "fixAvailable": {
+        "name": "mammoth",
+        "version": "0.3.29",
+        "isSemVerMajor": true
+      }
+    },
+    "micromatch": {
+      "name": "micromatch",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "braces"
+      ],
+      "effects": [
+        "@jest/core",
+        "@jest/transform",
+        "danger",
+        "jest-config",
+        "jest-haste-map",
+        "jest-message-util"
+      ],
+      "range": ">=0.2.0",
+      "nodes": [
+        "node_modules/micromatch"
+      ],
+      "fixAvailable": {
+        "name": "danger",
+        "version": "7.0.19",
+        "isSemVerMajor": true
+      }
+    },
+    "node-cron": {
+      "name": "node-cron",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "uuid"
+      ],
+      "effects": [],
+      "range": "3.0.2 - 3.0.3",
+      "nodes": [
+        "node_modules/node-cron"
+      ],
+      "fixAvailable": {
+        "name": "node-cron",
+        "version": "4.6.0",
+        "isSemVerMajor": true
+      }
+    },
+    "postcss-selector-parser": {
+      "name": "postcss-selector-parser",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1241232,
+          "name": "postcss-selector-parser",
+          "dependency": "postcss-selector-parser",
+          "title": "PostCSS: Quadratic complexity in flat selector parsing allows CPU exhaustion",
+          "url": "https://github.com/advisories/GHSA-rj75-hqrm-r3gf",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-400",
+            "CWE-407"
+          ],
+          "cvss": {
+            "score": 5.9,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": "<7.1.6"
+        }
+      ],
+      "effects": [
+        "@tailwindcss/typography"
+      ],
+      "range": "<7.1.6",
+      "nodes": [
+        "node_modules/postcss-nested/node_modules/postcss-selector-parser",
+        "node_modules/postcss-selector-parser"
+      ],
+      "fixAvailable": {
+        "name": "@tailwindcss/typography",
+        "version": "0.5.4",
+        "isSemVerMajor": true
+      }
+    },
+    "pptxgenjs": {
+      "name": "pptxgenjs",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        "image-size"
+      ],
+      "effects": [],
+      "range": ">=4.0.1-beta.0",
+      "nodes": [
+        "node_modules/pptxgenjs"
+      ],
+      "fixAvailable": {
+        "name": "pptxgenjs",
+        "version": "4.0.0",
+        "isSemVerMajor": true
+      }
+    },
+    "proxy-addr": {
+      "name": "proxy-addr",
+      "severity": "critical",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1241210,
+          "name": "proxy-addr",
+          "dependency": "proxy-addr",
+          "title": "proxy-addr vulnerable to IP spoofing via IPv4-mapped IPv6 trust subnet",
+          "url": "https://github.com/advisories/GHSA-jqcg-44mw-7w3h",
+          "severity": "critical",
+          "cwe": [
+            "CWE-290",
+            "CWE-348",
+            "CWE-697"
+          ],
+          "cvss": {
+            "score": 9.1,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+          },
+          "range": ">=1.1.0 <2.0.8"
+        }
+      ],
+      "effects": [],
+      "range": "1.1.0 - 2.0.7",
+      "nodes": [
+        "node_modules/proxy-addr"
+      ],
+      "fixAvailable": true
+    },
+    "shell-quote": {
+      "name": "shell-quote",
+      "severity": "critical",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1241332,
+          "name": "shell-quote",
+          "dependency": "shell-quote",
+          "title": "shell-quote: `quote()` command injection via a line terminator in a token after a `{ comment }` token",
+          "url": "https://github.com/advisories/GHSA-pqg4-j6r4-53mv",
+          "severity": "critical",
+          "cwe": [
+            "CWE-78"
+          ],
+          "cvss": {
+            "score": 8.1,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+          },
+          "range": ">=1.8.4 <1.11.0"
+        }
+      ],
+      "effects": [],
+      "range": "1.8.4 - 1.10.0",
+      "nodes": [
+        "node_modules/shell-quote"
+      ],
+      "fixAvailable": true
+    },
+    "source-map-js": {
+      "name": "source-map-js",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1241209,
+          "name": "source-map-js",
+          "dependency": "source-map-js",
+          "title": "source-map-js allows event-loop denial of service through indexed source-map section offsets",
+          "url": "https://github.com/advisories/GHSA-68fv-2mgg-jv7q",
+          "severity": "high",
+          "cwe": [
+            "CWE-1284"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": ">=1.0.0 <1.2.2"
+        }
+      ],
+      "effects": [],
+      "range": "1.0.0 - 1.2.1",
+      "nodes": [
+        "node_modules/source-map-js"
+      ],
+      "fixAvailable": true
+    },
+    "sprintf-js": {
+      "name": "sprintf-js",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1241202,
+          "name": "sprintf-js",
+          "dependency": "sprintf-js",
+          "title": "sprintf-js vulnerable to denial of service through unbounded precision specifiers",
+          "url": "https://github.com/advisories/GHSA-hp3w-g68c-fv3c",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-1284"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": "<=1.1.3"
+        }
+      ],
+      "effects": [
+        "argparse"
+      ],
+      "range": "*",
+      "nodes": [
+        "node_modules/sprintf-js"
+      ],
+      "fixAvailable": {
+        "name": "mammoth",
+        "version": "0.3.29",
+        "isSemVerMajor": true
+      }
+    },
+    "uuid": {
+      "name": "uuid",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1119441,
+          "name": "uuid",
+          "dependency": "uuid",
+          "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided",
+          "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-787",
+            "CWE-1285"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+          },
+          "range": "<11.1.1"
+        }
+      ],
+      "effects": [
+        "bull",
+        "exceljs",
+        "node-cron"
+      ],
+      "range": "<11.1.1",
+      "nodes": [
+        "node_modules/bull/node_modules/uuid",
+        "node_modules/exceljs/node_modules/uuid",
+        "node_modules/node-cron/node_modules/uuid"
+      ],
+      "fixAvailable": {
+        "name": "exceljs",
+        "version": "3.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "vitest": {
+      "name": "vitest",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "@vitest/mocker",
+        {
+          "source": 1193683,
+          "name": "vitest",
+          "dependency": "vitest",
+          "title": "Vitest: Path Traversal / Arbitrary File Read via @vitest/mocker Redirect Mock",
+          "url": "https://github.com/advisories/GHSA-82fw-gwwq-j7x9",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 5.9,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N"
+          },
+          "range": ">=2.1.0 <4.1.11"
+        }
+      ],
+      "effects": [],
+      "range": "2.1.0-beta.1 - 4.1.10",
+      "nodes": [
+        "node_modules/vitest"
+      ],
+      "fixAvailable": {
+        "name": "vitest",
+        "version": "4.1.11",
+        "isSemVerMajor": false
+      }
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 1,
+      "moderate": 43,
+      "high": 33,
+      "critical": 2,
+      "total": 79
+    },
+    "dependencies": {
+      "prod": 1351,
+      "dev": 1151,
+      "optional": 198,
+      "peer": 0,
+      "peerOptional": 0,
+      "total": 2575
+    }
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "commit": "775bde8adbe03a9d150f6cbb2a65a41c9912d66d",
+  "runId": 37498480047,
+  "jobId": 112389039861,
+  "jobUrl": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37498480047/job/112389039861",
+  "job": {
+    "id": 112389039861,
+    "name": "Security Scan",
+    "status": "completed",
+    "conclusion": "failure",
+    "run_id": 37498480047,
+    "logs_url": null,
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1
+      },
+      {
+        "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2
+      },
+      {
+        "name": "Setup Node.js",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3
+      },
+      {
+        "name": "Install dependencies",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4
+      },
+      {
+        "name": "Generate SBOM (CycloneDX)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5
+      },
+      {
+        "name": "Upload SBOM artifact",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6
+      },
+      {
+        "name": "Run lockfile audit and dependency-risk ledger gate",
+        "status": "completed",
+        "conclusion": "failure",
+        "number": 7
+      },
+      {
+        "name": "Prove dependency-risk gate fail-closed behavior",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 8
+      },
+      {
+        "name": "Prove PPTX image parser is unreachable",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 9
+      },
+      {
+        "name": "Upload exact npm audit evidence",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10
+      },
+      {
+        "name": "Trivy exceptions are attached, owned and dated (with selftests)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11
+      },
+      {
+        "name": "Trivy filesystem scan (deps + secrets)",
+        "status": "completed",
+        "conclusion": "failure",
+        "number": 12
+      },
+      {
+        "name": "Trivy config scan (Dockerfile/IaC)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13
+      },
+      {
+        "name": "Post Trivy config scan (Dockerfile/IaC)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 23
+      },
+      {
+        "name": "Post Trivy filesystem scan (deps + secrets)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 24
+      },
+      {
+        "name": "Post Setup Node.js",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 25
+      },
+      {
+        "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 26
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 27
+      }
+    ]
+  },
+  "artifact": {
+    "id": 11428976502,
+    "name": "npm-audit-lockfile-evidence",
+    "size_in_bytes": 6966,
+    "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/artifacts/11428976502",
+    "archive_download_url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/artifacts/11428976502/zip",
+    "expired": false,
+    "created_at": "2026-10-06T16:48:40Z",
+    "expires_at": "2027-01-04T16:47:33Z",
+    "updated_at": "2026-10-06T16:48:40Z",
+    "digest": "sha256:50e5fc3e6bb0973265b2fcb516bdfa8885c2a2ff97bd09bb87aa8860c893ffb9",
+    "workflow_run": {
+      "id": 37498480047,
+      "repository_id": 1096040843,
+      "head_repository_id": 1096040843,
+      "head_branch": "concept2cure-v2",
+      "head_sha": "775bde8adbe03a9d150f6cbb2a65a41c9912d66d"
+    }
+  },
+  "logExcerpt": [
+    "2026-10-06T16:48:39.3236705Z Dependency risk gate: unreviewed Critical/High finding(s): @jest/core, @jest/expect, @jest/globals, @jest/reporters, @jest/transform, babel-jest, compression, create-jest, jest, jest-circus, jest-cli, jest-config, jest-resolve-dependencies, jest-runner, jest-runtime, jest-snapshot, proxy-addr, shell-quote, source-map-js",
+    "2026-10-06T16:49:10.8395093Z │                           Target                           │ Type │ Vulnerabilities │ Secrets │",
+    "2026-10-06T16:49:10.8436278Z package-lock.json (npm)",
+    "2026-10-06T16:49:10.8436955Z Total: 3 (HIGH: 2, CRITICAL: 1)",
+    "2026-10-06T16:49:10.8441999Z │ compression   │ CVE-2026-87776 │ HIGH     │ fixed  │ 1.8.1             │ 1.8.2         │ compression: compression: Denial of Service via memory leak │",
+    "2026-10-06T16:49:10.8446644Z │ proxy-addr    │ CVE-2026-90711 │ CRITICAL │        │ 2.0.7             │ 2.0.8         │ proxy-addr is a Node.js module that determines a request's  │",
+    "2026-10-06T16:49:10.8450731Z │ source-map-js │ CVE-2026-93749 │ HIGH     │        │ 1.2.1             │ 1.2.2         │ source-map-js: source-map-js: Denial of Service via         │"
+  ]
+}

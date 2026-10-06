@@ -1,0 +1,14 @@
+[
+  {
+    "name": "iq-attempt",
+    "exit": 1
+  },
+  {
+    "name": "traceability-selftest",
+    "exit": 0
+  },
+  {
+    "name": "traceability-current",
+    "exit": 0
+  }
+]

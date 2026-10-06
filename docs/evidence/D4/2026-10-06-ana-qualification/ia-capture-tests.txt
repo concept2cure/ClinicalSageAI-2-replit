@@ -1,0 +1,63 @@
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/eval/pq/__tests__/ia-review.test.ts
+{
+  "timestamp": "2026-10-06T17:24:37.605Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T17:24:37.607Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stdout | server/eval/pq/__tests__/ia-review.test.ts
+[database] Database connection successful
+
+stdout | server/eval/pq/__tests__/ia-review.test.ts > existing PQ runner supplemental mode > writes a separate transcript record that cannot claim to be passed PQ evidence
+IA review: PENDING_REVIEW; 39/39 attributable turns; reviewer pending
+record: ../../../../tmp/ana-ia-review-foM79c/claude-opus-4-ia-review.json
+
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > source-grounded reviewer-draft IA bank integrity > is valid preparation with no captured candidates, approvals or full-text-corpus claims 3ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > source-grounded reviewer-draft IA bank integrity > covers all 25 domain-market combinations without counting controls toward that coverage 3ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > source-grounded reviewer-draft IA bank integrity > refuses caller-made approval, empty banks and duplicate case identities 1ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > source-grounded reviewer-draft IA bank integrity > refuses unresolved sources, invented corpus verification and candidate verdicts 1ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > source-grounded reviewer-draft IA bank integrity > keeps authority types and a source revision rather than passing harmonization off as local law 0ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > pinned IA capture is actual output and pending human review > partial or non-text IA output is incomplete and stops follow-ups: max_tokens 2ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > pinned IA capture is actual output and pending human review > partial or non-text IA output is incomplete and stops follow-ups: tool_use 1ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > pinned IA capture is actual output and pending human review > partial or non-text IA output is incomplete and stops follow-ups: unknown 1ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > pinned IA capture is actual output and pending human review > partial or non-text IA output is incomplete and stops follow-ups: aborted 1ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > pinned IA capture is actual output and pending human review > uses only the canonical IA policy and source context, keeping expected answers out of the prompt 1ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > pinned IA capture is actual output and pending human review > carries the real earlier assistant reply and user correction into a follow-up request 1ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > pinned IA capture is actual output and pending human review > copies dispatch messages so provider mutation cannot rewrite the recorded request 0ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > pinned IA capture is actual output and pending human review > withholds attribution and follow-up on wrong version 1ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > pinned IA capture is actual output and pending human review > withholds attribution and follow-up on unreported version 0ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > pinned IA capture is actual output and pending human review > withholds attribution and follow-up on wrong provider 0ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > pinned IA capture is actual output and pending human review > does not invent a response or export raw secrets when the provider refuses execution 1ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > pinned IA capture is actual output and pending human review > records a partially executed conversation as incomplete and preserves the successful turn 0ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > pinned IA capture is actual output and pending human review > does not count an empty response as an executed assessment 0ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > pinned IA capture is actual output and pending human review > refuses an invalid bank before spending tokens 1ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > existing PQ runner supplemental mode > writes a separate transcript record that cannot claim to be passed PQ evidence 70ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > existing PQ runner supplemental mode > refuses an unknown model before dispatch 0ms
+ ✓ server/eval/pq/__tests__/ia-review.test.ts > existing PQ runner supplemental mode > preflights without a provider and exposes only credential presence, never values 55ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  13:24:35
+   Duration  2.13s (transform 958ms, setup 71ms, import 1.67s, tests 147ms, environment 0ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+stderr | server/eval/pq/__tests__/ia-review.test.ts
+{
+  "timestamp": "2026-10-06T17:24:37.607Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+

@@ -1,0 +1,77 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > mean > returns 0 for an empty list 1ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > mean > averages values 1ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 1 when an expected id is within top-k 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 0 when the expected id is below the cutoff 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 0 when there are no expected ids 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > recallAtK > is the fraction of expected ids found in top-k 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > recallAtK > respects the k cutoff 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > precisionAtK > is the fraction of top-k that are relevant 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > precisionAtK > is 0 for k <= 0 1ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 1 when the first result is relevant 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 1/rank of the first relevant result 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 0 when nothing relevant is retrieved 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > answerContainsScore > scores the fraction of expected substrings present, case-insensitively 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > answerContainsScore > is 0 when no expected substrings are given 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > isGroundedRefusal > detects the pipeline refusal phrasing 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > isGroundedRefusal > is false for a substantive answer 0ms
+ × server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > rejects an out-of-range judge score in a strict qualification assessment 5ms
+   → promise resolved "1" instead of rejecting
+ × server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > does not extract a plausible score from arbitrary prose in a strict assessment 1ms
+   → promise resolved "1" instead of rejecting
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > parses a bare numeric judge response and clamps to [0,1] 0ms
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > returns 0 when the judge emits no number 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > rejects an out-of-range judge score in a strict qualification assessment
+AssertionError: promise resolved "1" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+1
+
+ ❯ server/eval/rag/__tests__/rag-metrics.test.ts:91:89
+     89|   describe('judgeFaithfulness', () => {
+     90|     it('rejects an out-of-range judge score in a strict qualification …
+     91|       await expect(judgeFaithfulness(async () => '5', 'q', 'a', ['s'],…
+       |                                                                                         ^
+     92|     });
+     93|     it('does not extract a plausible score from arbitrary prose in a s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > does not extract a plausible score from arbitrary prose in a strict assessment
+AssertionError: promise resolved "1" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+1
+
+ ❯ server/eval/rag/__tests__/rag-metrics.test.ts:94:115
+     92|     });
+     93|     it('does not extract a plausible score from arbitrary prose in a s…
+     94|       await expect(judgeFaithfulness(async () => '2026 review: confide…
+       |                                                                                                                   ^
+     95|     });
+     96|     it('parses a bare numeric judge response and clamps to [0,1]', asy…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)
+   Start at  12:59:18
+   Duration  342ms (transform 74ms, setup 76ms, import 22ms, tests 15ms, environment 0ms)
+

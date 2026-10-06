@@ -1,0 +1,31 @@
+{
+  "status": "BLOCKED",
+  "kind": "checked-in-rag-prerequisite-audit",
+  "goldVersion": "0.3.0-seed",
+  "goldSha256": "04e4a293b0a185c9b246d9f0c3c897f3472b35520501a35b79d59fd7be35b2a0",
+  "manifestVersion": "0.2.0-unverified",
+  "manifestSha256": "7074e75fa13c0353b32dd64806b25fc2e39333d6531716f10b0155a9ecb386df",
+  "goldItems": 20,
+  "positiveItems": 18,
+  "negativeControls": 2,
+  "documentedGoldTarget": {
+    "min": 30,
+    "max": 50
+  },
+  "manifestEntries": 24,
+  "verifiedManifestEntries": 0,
+  "positiveEvidenceQuotes": 0,
+  "positiveItemsWithOpenChecks": [
+    "ich-m4-ctd-modules",
+    "ema-paediatric-investigation-plan",
+    "stats-primary-endpoint-multiplicity",
+    "fda-bla-vs-nda",
+    "ich-e2a-serious-adverse-event"
+  ],
+  "goldKeysProvisional": true,
+  "liveRagExecuted": false,
+  "providerServedAttributionVerified": false,
+  "ownerApprovalRecorded": false,
+  "domainExpertAcceptanceRecorded": false,
+  "tenantCorpusVerified": false
+}

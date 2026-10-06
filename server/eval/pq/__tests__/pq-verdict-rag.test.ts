@@ -84,7 +84,9 @@ function item(id: string, over: Partial<PqRagResult> = {}): PqRagResult {
     itemId: id,
     negativeControl: false,
     servedModel: 'claude-opus-5-5',
-    servedModelVerified: true,
+    servedModelVerified: true, generatorCalled: true, servedProvider: 'anthropic',
+    judgeServedModel: 'judge-pin', judgeServedProvider: 'openai', judgeVerified: true, negativeControlPassed: null,
+    generationRequestSha256: 'a'.repeat(64), generationResponseSha256: 'b'.repeat(64), judgeRequestSha256: 'c'.repeat(64), judgeResponseSha256: 'd'.repeat(64),
     hit: 1,
     faithfulness: 1,
     ...over,
@@ -93,13 +95,17 @@ function item(id: string, over: Partial<PqRagResult> = {}): PqRagResult {
 
 /** A declared negative control: it names no expected source by design. */
 function control(id: string, over: Partial<PqRagResult> = {}): PqRagResult {
-  return item(id, { negativeControl: true, hit: null, faithfulness: null, ...over });
+  return item(id, { negativeControl: true, negativeControlPassed: true, hit: null, faithfulness: null, ...over });
 }
 
 /** A rag record whose itemsScored agrees with its items, as a runner would write it. */
 function ragRun(items: PqRagResult[]): PqRagRecord {
   const itemsScored = items.filter((i) => !i.error && (i.hit !== null || i.faithfulness !== null)).length;
-  return { ran: true, itemsScored, items };
+  return { ran: true, itemsScored, items, plannedItemIds: items.map(i => i.itemId), scopeVerified: true,
+    scope: { organizationId: 7, organizationUuid: '11111111-1111-4111-8111-111111111111', programId: '22222222-2222-4222-8222-222222222222' },
+    goldBankSha256: 'a'.repeat(64), corpusManifestSha256: 'b'.repeat(64),
+    attribution: { generator: { modelId: 'generator', pinnedVersion: 'claude-opus-5-5', provider: 'anthropic' },
+      judge: { modelId: 'judge', pinnedVersion: 'judge-pin', provider: 'openai' } } };
 }
 
 const passingRag = () => ragRun([item('q1'), item('q2'), item('q3')]);
@@ -209,7 +215,7 @@ describe('rag required AND executable — the sample floor and item identity', (
     const r = verdictOf(protocolCopy({ executable: true, floor: 3 }), rag);
     expect(r.verdict).toBe('INCOMPLETE');
     expect(why(r)).toMatch(/rag hit rate was measured on 2 item/);
-    expect(why(r)).not.toMatch(/rag faithfulness was measured/);
+    expect(why(r)).toMatch(/rag faithfulness was measured on 2 item/);
   });
 
   it('the protocol sets no rag sample floor while rag is executable → INCOMPLETE, whatever the run scored', () => {
@@ -265,14 +271,13 @@ describe('rag required AND executable — negative controls are declared, not in
     expect(why(r)).toMatch(/q3.*negativeControl/);
   });
 
-  it('a judged control counts toward faithfulness, as run-eval scores it', () => {
+  it('a control cannot alter the positive faithfulness metric', () => {
     // run-eval judges every item that retrieved something and is not a grounded
     // refusal, negatives included (server/eval/rag/run-eval.ts faithfulness loop).
     const rag = ragRun([item('q1'), item('q2'), control('neg', { faithfulness: 0 })]);
     const r = verdictOf(protocolCopy({ executable: true }), rag);
-    // (1 + 1 + 0) / 3 = 0.667, below the protocol's 0.7.
-    expect(r.verdict).toBe('FAIL');
-    expect(why(r)).toMatch(/rag faithfulness 0\.667 is below/);
+    expect(r.verdict).toBe('PASS');
+    expect(why(r)).not.toMatch(/below/);
   });
 });
 
@@ -449,7 +454,7 @@ describe('rag not (required and executable) — exactly today\'s verdict, whatev
     ['rag malformed (NaN scores, string ran)', { ran: 'yes' as unknown as boolean, itemsScored: 1, items: [item('q1', { hit: Number.NaN })] }],
   ];
 
-  const NOT_EXECUTABLE = `required component "rag" cannot be executed yet: ${REAL.components.rag.notExecutableReason}`;
+  const NOT_EXECUTABLE = `required component "rag" cannot be executed yet: ${REAL.components.rag.notExecutableReason ?? 'no reason recorded'}`;
 
   it.each(variants)('required, not executable, %s → INCOMPLETE for exactly the one reason it is today', (_name, rag) => {
     // With the floor left out too: criteria are not read while rag cannot run.
@@ -466,11 +471,11 @@ describe('rag not (required and executable) — exactly today\'s verdict, whatev
     }
   });
 
-  it('the real protocol as shipped (draft, rag not executable) is unaffected by rag results', () => {
-    const p = clone(REAL);
-    for (const [, rag] of variants) {
-      expect(verdictOf(p, rag)).toEqual({ verdict: 'INCOMPLETE', reasons: [NOT_EXECUTABLE] });
-    }
+  it('the real draft is executable, sets 30 positives per metric and cannot qualify this three-item seed', () => {
+    expect(REAL.status).toBe('draft');
+    expect(REAL.components.rag.executable).toBe(true);
+    expect(REAL.components.rag.criteria.minScoredItems).toBe(30);
+    expect(verdictOf(clone(REAL), passingRag()).verdict).toBe('INCOMPLETE');
   });
 });
 

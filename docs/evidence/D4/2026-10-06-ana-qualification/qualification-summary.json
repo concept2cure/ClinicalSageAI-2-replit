@@ -1,0 +1,73 @@
+{
+  "kind": "qualification-preparation-summary",
+  "status": "PREPARED_NOT_QUALIFIED",
+  "protocol": {
+    "id": "PQ-DRAFT-001",
+    "status": "draft",
+    "approvedBy": null,
+    "approvedOn": null,
+    "ragExecutable": true,
+    "ragDraftCriteria": {
+      "minHitRate": 0.6,
+      "minFaithfulness": 0.7,
+      "minScoredItems": 30
+    }
+  },
+  "documentGold": {
+    "generationByDocType": {
+      "510k": 10,
+      "cer": 10,
+      "ind": 10
+    },
+    "extractionByDocType": {
+      "510k": 4,
+      "cer": 4,
+      "ind": 4
+    }
+  },
+  "ragGold": {
+    "total": 20,
+    "positive": 18,
+    "negative": 2,
+    "itemEvidenceQuotes": 0,
+    "openChecks": 5,
+    "manifestEntries": 24,
+    "verifiedManifestEntries": 0,
+    "additionalReviewedPositivesRequired": 12,
+    "separateDraftExpansionItems": 12,
+    "draftExpansionAdmittedToGold": false
+  },
+  "iaDraft": {
+    "cases": 34,
+    "plannedTurns": 39,
+    "sourcePages": 20,
+    "approved": false,
+    "expertReviewComplete": false
+  },
+  "liveAttempts": {
+    "ia": "NOT_EXECUTED: 0 captured/attributable turns of 39",
+    "pq": "NOT_EXECUTED: 30 generation + 12 extraction attempts without outputs; 20/20 RAG planned IDs retained, phase refused missing verified scope/judge"
+  },
+  "deterministicChecks": {
+    "pqDocModelTests": 218,
+    "suites": 10,
+    "iaTests": 22,
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "fullLocalTypeScriptGraph": "deferred under authorized memory exception"
+  },
+  "humanDecisions": [
+    "Assign qualified domain/market/scientific reviewers and adjudicate actual transcripts",
+    "Approve canonical drafting PQ acceptance criteria including new draft 30 positive items per metric",
+    "Verify official full texts, revisions, reuse terms and source bindings/quotes; close 5 open checks",
+    "Review 18 seed positives and at least 12 new positives; keep 2 negative controls",
+    "Approve a qualified generated-negative-control refusal/unsupported-claim review contract",
+    "Select/provision existing registry candidate and distinct independent judge and authorized real evaluation organization/programme",
+    "Approve complete actual PQ/production validation/release evidence through accountable owners"
+  ],
+  "runCommands": [
+    "node --import tsx server/eval/pq/run-pq.ts --ia-preflight",
+    "node --import tsx server/eval/pq/run-pq.ts --model <registry-id> --ia-review-only --record",
+    "node --import tsx server/eval/pq/run-pq.ts --model <registry-id> --judge-model <independent-registry-id> --org-uuid <authorized-organization-uuid> --program-id <authorized-programme-uuid> --record"
+  ]
+}

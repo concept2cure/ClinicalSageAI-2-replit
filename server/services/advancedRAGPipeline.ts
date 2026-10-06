@@ -49,6 +49,7 @@ import { getOrgPlacementResolver } from './ai-gateway/providers/org-placement.js
 import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from './aiProviderRouter.js';
 import { getOpenAIClient } from './openai-client.js';
 import { getReranker, type Reranker } from './rag-reranker.js';
+import { buildRagGenerationRequest, buildRagSourceText, RAG_EMPTY_CONTEXT_REFUSAL } from './rag-generation-request.js';
 import { fuseHybrid, mergeByMaxScore } from './rag-fusion.js';
 import {
   hydeRetrieval,
@@ -1036,6 +1037,8 @@ export class AdvancedRAGPipeline {
           FROM vault.document_chunks c
           JOIN vault.documents d ON d.id = c.document_id
           WHERE c.embedding IS NOT NULL${denseFilter}
+            AND d.deleted_at IS NULL
+            AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id = d.program_id AND p.organization_id = d.organization_id AND p.deleted_at IS NULL)
             -- Explicit tenant predicate. A document with a NULL organization_id is
             -- unattributable (migrations/20260905_vault_documents_organization_id.sql)
             -- and this predicate excludes it, which is the intended refusal: an
@@ -1092,6 +1095,8 @@ export class AdvancedRAGPipeline {
           FROM vault.document_chunks c
           JOIN vault.documents d ON d.id = c.document_id
           WHERE c.embedding IS NOT NULL${lexFilter}
+            AND d.deleted_at IS NULL
+            AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id = d.program_id AND p.organization_id = d.organization_id AND p.deleted_at IS NULL)
             AND to_tsvector('english', c.chunk_text) @@ websearch_to_tsquery('english', $1)
             AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $3::uuid)
           ORDER BY ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1)) DESC
@@ -1536,12 +1541,7 @@ export class AdvancedRAGPipeline {
 
   /** Assemble the `[Source N: title]` block fed to generation and the self-checks. */
   private buildSourceText(documents: RetrievedDocument[]): string {
-    return documents
-      .map(
-        (doc, idx) =>
-          `[Source ${idx + 1}: ${doc.title}]\n${doc.compressedContent || doc.expandedContent || doc.content}`
-      )
-      .join('\n\n---\n\n');
+    return buildRagSourceText(documents);
   }
 
   async queryWithGeneration(
@@ -1559,8 +1559,7 @@ export class AdvancedRAGPipeline {
 
     if (context.documents.length === 0) {
       return {
-        answer:
-          'I could not find relevant information in the regulatory knowledge base to answer this question.',
+        answer: RAG_EMPTY_CONTEXT_REFUSAL,
         sources: [],
         context,
       };
@@ -1594,22 +1593,8 @@ export class AdvancedRAGPipeline {
     // the run can be attributed to it (a PQ requirement); unset keeps the
     // gateway's task-type selection, which is every existing caller.
     const response = await this.aiRouter.route({
-      taskType: 'regulatory_review',
+      ...buildRagGenerationRequest(query, sourceText),
       ...(options.model ? { model: options.model } : {}),
-      messages: [
-        {
-          role: 'system',
-          content: `You are a regulatory affairs expert with deep knowledge of FDA, EMA, and ICH guidelines.
-Answer questions based ONLY on the provided sources. Be precise and cite sources using [Source N] notation.
-If the sources don't contain enough information to fully answer, say so clearly.`,
-        },
-        {
-          role: 'user',
-          content: `Question: ${query}\n\nSources:\n${sourceText}`,
-        },
-      ],
-      maxTokens: 1000,
-      temperature: 0.3,
     });
 
     if (options.persistCitations && options.organizationUuid) {

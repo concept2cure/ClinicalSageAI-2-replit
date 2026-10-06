@@ -1,0 +1,10 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 ci:dependency-risk
+> node scripts/ci/check-dependency-risk.mjs
+
+Dependency risk gate: PASS; 3 Critical/High advisory occurrence(s), all reviewed.
+Scanner: npm audit 11.9.0; Node v22.16.0; lockfile e5950b44018f8093e400bd0b482c44ab2d995c850ee6a4b9e86c0fe637718d40
+  GHSA-VFJ7-8CJW-P6XM braces high: unreachable
+  GHSA-5P2G-FCMC-QVQQ image-size high: unreachable
+  GHSA-W3RX-R6R6-PGPR image-size high: unreachable

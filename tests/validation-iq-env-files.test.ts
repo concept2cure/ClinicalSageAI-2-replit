@@ -61,3 +61,27 @@ describe('the IQ runner reads env files the way the server does', () => {
     expect(source).not.toMatch(/dotenv\(['"]\.env['"]\)/);
   });
 });
+
+describe('validation execution metadata and configuration evidence', () => {
+  it('uses the execution date instead of a fixed historical evidence folder', async () => {
+    const { resolveRunDate } = await import('../scripts/validation/env-files.mjs');
+    expect(resolveRunDate(undefined, new Date('2026-10-06T16:00:00Z'))).toBe('2026-10-06');
+    expect(resolveRunDate('2026-09-27', new Date('2026-10-06T16:00:00Z'))).toBe('2026-09-27');
+  });
+  it.each(['2026-02-30', '../old-run', '2026-10-06/extra', 'not-a-date'])('rejects invalid or path-like run dates: %s', async value => {
+    const { resolveRunDate } = await import('../scripts/validation/env-files.mjs');
+    expect(() => resolveRunDate(value)).toThrow(/calendar-valid/);
+  });
+  it('records effective process configuration without retaining credential values', async () => {
+    const { configurationPresence } = await import('../scripts/validation/env-files.mjs');
+    const dir = root({ '.env': 'DATABASE_URL=file-database\n' });
+    const env = resolveEnv(dir, { DATABASE_URL: 'process-database-private', OPENAI_API_KEY: 'test-provider-private' });
+    const report = configurationPresence(['DATABASE_URL', 'SESSION_SECRET'], env);
+    expect(report).toEqual({ set: ['DATABASE_URL'], unset: ['SESSION_SECRET'], providerConfigured: true });
+    expect(JSON.stringify(report)).not.toMatch(/private|file-database/);
+  });
+  it('does not treat a placeholder provider key as configured', async () => {
+    const { configurationPresence } = await import('../scripts/validation/env-files.mjs');
+    expect(configurationPresence([], { OPENAI_API_KEY: 'sk-...' }).providerConfigured).toBe(false);
+  });
+});

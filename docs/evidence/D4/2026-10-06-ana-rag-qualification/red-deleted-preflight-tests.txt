@@ -1,0 +1,228 @@
+TAP version 13
+# Subtest: no flag → the default report (orgUuid null)
+ok 1 - no flag → the default report (orgUuid null)
+  ---
+  duration_ms: 1.673493
+  type: 'test'
+  ...
+# Subtest: --org-uuid <uuid> and --org-uuid=<uuid> are both read
+ok 2 - --org-uuid <uuid> and --org-uuid=<uuid> are both read
+  ---
+  duration_ms: 0.244428
+  type: 'test'
+  ...
+# Subtest: --org-uuid with no value, or a value that is not a uuid, is a usage error — never the default report
+ok 3 - --org-uuid with no value, or a value that is not a uuid, is a usage error — never the default report
+  ---
+  duration_ms: 0.376257
+  type: 'test'
+  ...
+# Subtest: control — embedded chunks for the organization → exit 0
+ok 4 - control — embedded chunks for the organization → exit 0
+  ---
+  duration_ms: 11.127904
+  type: 'test'
+  ...
+# Subtest: a non-empty corpus is reported as NON-EMPTY, and says plainly that completeness is NOT checked
+ok 5 - a non-empty corpus is reported as NON-EMPTY, and says plainly that completeness is NOT checked
+  ---
+  duration_ms: 0.2723
+  type: 'test'
+  ...
+# Subtest: the headline says which store a PQ rag run WILL read, not that one reads it today
+ok 6 - the headline says which store a PQ rag run WILL read, not that one reads it today
+  ---
+  duration_ms: 0.144148
+  type: 'test'
+  ...
+# Subtest: documents and chunks but nothing embedded → EMPTY, exit 1: the pipeline reads only embedded chunks
+ok 7 - documents and chunks but nothing embedded → EMPTY, exit 1: the pipeline reads only embedded chunks
+  ---
+  duration_ms: 0.174133
+  type: 'test'
+  ...
+# Subtest: a documented-but-unembedded document is named as not retrievable, without failing a non-empty corpus
+ok 8 - a documented-but-unembedded document is named as not retrievable, without failing a non-empty corpus
+  ---
+  duration_ms: 0.118859
+  type: 'test'
+  ...
+# Subtest: an organization uuid that matches no organization → exit 1, and it says so rather than "empty"
+ok 9 - an organization uuid that matches no organization → exit 1, and it says so rather than "empty"
+  ---
+  duration_ms: 0.296247
+  type: 'test'
+  ...
+# Subtest: the store is missing → exit 1, named as missing
+ok 10 - the store is missing → exit 1, named as missing
+  ---
+  duration_ms: 0.435837
+  type: 'test'
+  ...
+# Subtest: a read error → exit 1, reported as unreadable, never as an empty corpus
+ok 11 - a read error → exit 1, reported as unreadable, never as an empty corpus
+  ---
+  duration_ms: 0.198259
+  type: 'test'
+  ...
+# Subtest: CT.gov rows in csr_* beside an empty eval corpus → still exit 1, and csr_* is labelled NOT read by the RAG pipeline
+ok 12 - CT.gov rows in csr_* beside an empty eval corpus → still exit 1, and csr_* is labelled NOT read by the RAG pipeline
+  ---
+  duration_ms: 0.176886
+  type: 'test'
+  ...
+# Subtest: csr_* that could not be counted is said, not shown as zero, and does not decide the exit code
+ok 13 - csr_* that could not be counted is said, not shown as zero, and does not decide the exit code
+  ---
+  duration_ms: 0.846325
+  type: 'test'
+  ...
+# Subtest: counts only the named organization's embedded chunks — not another tenant's, not an orphan's
+ok 14 - counts only the named organization's embedded chunks — not another tenant's, not an orphan's
+  ---
+  duration_ms: 1730.46004
+  type: 'test'
+  ...
+# Subtest: an organization with no documents → counted as zero, and the verdict is EMPTY
+ok 15 - an organization with no documents → counted as zero, and the verdict is EMPTY
+  ---
+  duration_ms: 1260.614586
+  type: 'test'
+  ...
+# Subtest: soft-deleted documents cannot keep the evaluation corpus non-empty
+not ok 16 - soft-deleted documents cannot keep the evaluation corpus non-empty
+  ---
+  duration_ms: 1195.150157
+  type: 'test'
+  location: '/workspace/scratch/bd36ee581acd/concept2cure/tests/ops/verify-rag-corpus.test.mjs:225:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    2 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/ops/verify-rag-corpus.test.mjs:230:12)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: a deleted programme cannot contribute embedded evidence from its live documents
+not ok 17 - a deleted programme cannot contribute embedded evidence from its live documents
+  ---
+  duration_ms: 1239.089061
+  type: 'test'
+  location: '/workspace/scratch/bd36ee581acd/concept2cure/tests/ops/verify-rag-corpus.test.mjs:237:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    2 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/ops/verify-rag-corpus.test.mjs:242:12)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: an organization uuid nobody has → orgId null (not a zero count)
+ok 18 - an organization uuid nobody has → orgId null (not a zero count)
+  ---
+  duration_ms: 1241.720742
+  type: 'test'
+  ...
+# Subtest: the store absent → named as missing
+ok 19 - the store absent → named as missing
+  ---
+  duration_ms: 1229.791635
+  type: 'test'
+  ...
+# Subtest: a query that fails is returned as an error, not as counts
+ok 20 - a query that fails is returned as an error, not as counts
+  ---
+  duration_ms: 0.517531
+  type: 'test'
+  ...
+# Subtest: the read sets the same tenant GUC the pipeline's withTenantContext sets (no RLS claim: not tested here)
+ok 21 - the read sets the same tenant GUC the pipeline's withTenantContext sets (no RLS claim: not tested here)
+  ---
+  duration_ms: 1247.785877
+  type: 'test'
+  ...
+# Subtest: csr_reports / csr_details are counted when present, and absent tables are null
+ok 22 - csr_reports / csr_details are counted when present, and absent tables are null
+  ---
+  duration_ms: 1237.490099
+  type: 'test'
+  ...
+# Subtest: the vault arm retrieves by exactly the predicates the preflight counts by
+ok 23 - the vault arm retrieves by exactly the predicates the preflight counts by
+  ---
+  duration_ms: 1.654437
+  type: 'test'
+  ...
+# Subtest: the pin fails when the vault arm gains a restriction the preflight does not count by
+ok 24 - the pin fails when the vault arm gains a restriction the preflight does not count by
+  ---
+  duration_ms: 0.789882
+  type: 'test'
+  ...
+# Subtest: the pin fails when a predicate leaves the vault arm, even though the same text survives in the rag_chunks arms
+ok 25 - the pin fails when a predicate leaves the vault arm, even though the same text survives in the rag_chunks arms
+  ---
+  duration_ms: 0.750613
+  type: 'test'
+  ...
+# Subtest: CLI — a malformed --org-uuid exits 2 before touching a database
+ok 26 - CLI — a malformed --org-uuid exits 2 before touching a database
+  ---
+  duration_ms: 76.102513
+  type: 'test'
+  ...
+# Subtest: CLI — no flag and no database URL: the pre-existing message and exit 1, unchanged
+ok 27 - CLI — no flag and no database URL: the pre-existing message and exit 1, unchanged
+  ---
+  duration_ms: 65.553345
+  type: 'test'
+  ...
+# Subtest: CLI e2e — CT.gov rows and another tenant's chunks, but an empty evaluation org → exit 1, EMPTY, csr_* NOT read
+ok 28 - CLI e2e — CT.gov rows and another tenant's chunks, but an empty evaluation org → exit 1, EMPTY, csr_* NOT read
+  ---
+  duration_ms: 1796.680039
+  type: 'test'
+  ...
+# Subtest: CLI e2e — the evaluation org holds an embedded chunk → exit 0
+ok 29 - CLI e2e — the evaluation org holds an embedded chunk → exit 0
+  ---
+  duration_ms: 1718.446936
+  type: 'test'
+  ...
+# Subtest: CLI e2e — an organization uuid nobody has → exit 1
+ok 30 - CLI e2e — an organization uuid nobody has → exit 1
+  ---
+  duration_ms: 1787.627373
+  type: 'test'
+  ...
+# Subtest: CLI e2e — without the flag, the default report still exits 0 over the same database
+ok 31 - CLI e2e — without the flag, the default report still exits 0 over the same database
+  ---
+  duration_ms: 1699.470307
+  type: 'test'
+  ...
+1..31
+# tests 31
+# suites 0
+# pass 29
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 17675.432494

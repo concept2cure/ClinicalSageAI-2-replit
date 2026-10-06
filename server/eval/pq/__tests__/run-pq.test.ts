@@ -73,7 +73,7 @@ function stub(served: string | ((i: number) => string | undefined), content: (pr
         const n = i++;
         return {
           content: content(prompt),
-          provider: 'anthropic',
+          provider: 'anthropic', cached: false, deterministic: false, finishReason: 'stop',
           model: PINNED,
           resolvedModel: typeof served === 'function' ? served(n) : served,
         } as never;
@@ -115,6 +115,20 @@ afterEach(() => {
 });
 
 describe('run-pq live path', () => {
+  it.each(['max_tokens', 'tool_use', 'unknown', 'aborted'])('generation and extraction never score a partial provider output: %s', async finishReason => {
+    const s = stub(PINNED);
+    const gateway = { evaluateModel: async (id: string, req: { messages: Array<{ content: string }> }) => ({ ...await s.gateway.evaluateModel(id, req), finishReason }) as never };
+    const result = await runPq({ modelId: MODEL_ID, gateway });
+    expect(result.verdict).toBe('NOT_EXECUTED');
+    expect(result.generation.every(g => g.sectionCoverage === null && g.error && g.servedModel === PINNED)).toBe(true);
+    expect(result.extraction.every(e => e.f1 === null && e.error && e.servedModel === PINNED)).toBe(true);
+  });
+  it('raw provider errors are sanitized in drafting records and console findings', async () => {
+    const gateway = { evaluateModel: async () => { throw new Error('PRIVATE_API_KEY_123'); } };
+    const result = await runPq({ modelId: MODEL_ID, gateway });
+    expect(JSON.stringify(result)).not.toContain('PRIVATE_API_KEY_123');
+    expect(result.verdict).toBe('NOT_EXECUTED');
+  });
   it('sends every task to exactly the model under qualification', async () => {
     const s = stub(PINNED);
     await runPq({ modelId: MODEL_ID, gateway: s.gateway });
@@ -309,8 +323,10 @@ describe('run-pq rag component', () => {
     const out = mkdtempSync(path.join(os.tmpdir(), 'pq-record-'));
     dirs.push(out);
     const r = await runPq({ modelId: MODEL_ID, record: true, outDir: out, gateway: stub(PINNED).gateway });
-    expect(r.rag).toMatchObject({ ran: false, itemsScored: 0, items: [] });
-    expect(r.rag.notRunReason).toMatch(/no rag phase/);
+    expect(r.rag).toMatchObject({ ran: false, itemsScored: 0 });
+    expect(r.rag.items).toHaveLength(20);
+    expect(r.rag.plannedItemIds).toHaveLength(20);
+    expect(r.rag.notRunReason).toMatch(/tenant\/programme scope/);
     const rec = JSON.parse(readFileSync(r.recordPath as string, 'utf8'));
     expect(rec.rag).toEqual(r.rag);
   });
@@ -335,7 +351,7 @@ describe('run-pq rag component', () => {
     // The fail-open, as it was: rag never ran, and the verdict said PASS.
     expect(r.verdict).not.toBe('PASS');
     expect(r.verdict).toBe('INCOMPLETE');
-    expect(r.reasons.join(' ')).toMatch(/"rag".*not run.*no rag phase/);
+    expect(r.reasons.join(' ')).toMatch(/"rag".*not run.*tenant\/programme scope/);
   });
 
   it('a caller cannot hand run-pq another protocol: a protocolPath is ignored, and the record hashes the real file', async () => {

@@ -26,6 +26,10 @@
  * criteria are not approved yet" would report a known shortfall as pending.
  */
 
+import { RAG_EMPTY_CONTEXT_REFUSAL } from '../../services/rag-generation-request.js';
+
+import { verifyCanonicalPqClaim } from './verify-pq-record.js';
+
 export type PqVerdict = 'PASS' | 'FAIL' | 'INCOMPLETE' | 'NOT_EXECUTED';
 
 export interface PqComponentProtocol {
@@ -53,6 +57,10 @@ export interface PqGenerationResult {
   servedModel: string | null;
   /** True only when servedModel is present and is the pinned version. */
   servedModelVerified: boolean;
+  servedProvider?: string | null;
+  finishReason?: string | null;
+  cached?: boolean | null;
+  deterministic?: boolean | null;
   sectionCoverage: number | null;
   forbiddenHits: number | null;
   /** Set when the task could not produce a scorable output. */
@@ -65,6 +73,10 @@ export interface PqExtractionResult {
   docType: string;
   servedModel: string | null;
   servedModelVerified: boolean;
+  servedProvider?: string | null;
+  finishReason?: string | null;
+  cached?: boolean | null;
+  deterministic?: boolean | null;
   /** null when the task produced nothing scorable (no reply, or unparseable). */
   f1: number | null;
   precision: number | null;
@@ -92,6 +104,27 @@ export interface PqRagResult {
   /** What the provider reported serving for the answer's generation call. */
   servedModel: string | null;
   servedModelVerified: boolean;
+  /** Optional on historic records; missing attribution cannot qualify RAG. */
+  servedProvider?: string | null;
+  generatorCalled?: boolean;
+  judgeServedModel?: string | null;
+  judgeServedProvider?: string | null;
+  judgeVerified?: boolean;
+  negativeControlPassed?: boolean | null;
+  retrievedDocumentIds?: string[];
+  expectedSourceKeys?: string[];
+  expectedSourceIds?: string[];
+  sourceText?: string;
+  answer?: string | null;
+  generationRequest?: unknown;
+  judgeRequest?: unknown;
+  generationResponse?: unknown;
+  judgeResponse?: unknown;
+  generationRequestSha256?: string | null;
+  generationResponseSha256?: string | null;
+  judgeRequestSha256?: string | null;
+  judgeResponseSha256?: string | null;
+  review?: { status: 'pending'; reviewer: null; rationale: null };
   /**
    * 1 when an expected source document was retrieved within k, 0 when none
    * was. null only on a negative control; on a positive item it is INCOMPLETE.
@@ -127,6 +160,20 @@ export interface PqRagRecord {
    */
   itemsScored: number;
   items: PqRagResult[];
+  plannedItemIds?: string[];
+  attribution?: { generator: PqModelPin; judge: PqModelPin };
+  scope?: { organizationId: number; organizationUuid: string; programId: string };
+  scopeVerified?: boolean;
+  goldBankSha256?: string;
+  corpusManifestSha256?: string;
+}
+
+export interface PqModelPin { modelId: string; pinnedVersion: string; provider: string }
+
+/** Provider namespaces must not allow one underlying model to grade itself. */
+export function sameServingIdentity(a: string | null | undefined, b: string | null | undefined): boolean {
+  const canonical = (s: string) => s.toLowerCase().replace(/^(?:anthropic|openai|google|bedrock|vertex)[.:/]/, '').replace(/:0$/, '');
+  return Boolean(typeof a === 'string' && typeof b === 'string' && a && b && (canonical(a) === canonical(b) || servedModelMatches(canonical(a), canonical(b)) || servedModelMatches(canonical(b), canonical(a))));
 }
 
 export interface PqVerdictResult {
@@ -142,7 +189,7 @@ export interface PqVerdictResult {
  * substring, which would let `gpt-4o-mini` pass for `gpt-4o`.
  */
 export function servedModelMatches(served: string | null | undefined, pinnedVersion: string): boolean {
-  if (!served) return false;
+  if (typeof served !== 'string' || !served) return false;
   if (served === pinnedVersion) return true;
   if (!served.startsWith(`${pinnedVersion}-`)) return false;
   // Only a date-shaped suffix counts as the same model: `-2024-08-06`, `-20250514`.
@@ -441,6 +488,74 @@ function ragRecordRefusal(rag: PqRagRecord | undefined): string[] | null {
   return null;
 }
 
+function validPin(pin: PqModelPin | undefined): pin is PqModelPin {
+  return Boolean(pin && [pin.modelId, pin.pinnedVersion, pin.provider].every(s => typeof s === 'string' && s.trim()));
+}
+
+function fixedControl(i: PqRagResult): boolean {
+  return i.negativeControl && i.generatorCalled === false && i.servedModel === null && i.servedProvider === null &&
+    i.servedModelVerified === false && Array.isArray(i.retrievedDocumentIds) && i.retrievedDocumentIds.length === 0 &&
+    i.negativeControlPassed === true && i.answer === RAG_EMPTY_CONTEXT_REFUSAL && i.hit === null && i.faithfulness === null;
+}
+
+const isDigest = (value: unknown): boolean => typeof value === 'string' && /^[0-9a-f]{64}$/.test(value);
+const isScopeUuid = (value: unknown): boolean => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
+function ragProvenanceProblems(rag: PqRagRecord): string[] {
+  const out: string[] = [];
+  if (rag.scopeVerified !== true || !Number.isSafeInteger(rag.scope?.organizationId) || (rag.scope?.organizationId ?? 0) <= 0 ||
+      !isScopeUuid(rag.scope?.organizationUuid) || !isScopeUuid(rag.scope?.programId)) out.push('rag has no verified live organization/programme scope');
+  if (!isDigest(rag.goldBankSha256) || !isDigest(rag.corpusManifestSha256)) out.push('rag lacks pinned gold/corpus SHA-256 provenance');
+  return [...out, ...ragPlanProblems(rag)];
+}
+
+function ragPlanProblems(rag: PqRagRecord): string[] {
+  const out: string[] = [];
+  const planned = rag.plannedItemIds;
+  if (!Array.isArray(planned) || !planned.length || planned.some(id => typeof id !== 'string' || !id) || new Set(planned).size !== planned.length) {
+    out.push('rag has no complete distinct planned-item list');
+  } else if (planned.length !== rag.items.length || planned.some(id => !rag.items.some(i => i.itemId === id))) {
+    out.push('rag planned items do not match all recorded items; omitted or unplanned items cannot qualify');
+  }
+  return out;
+}
+
+function ragGeneratorProblems(i: PqRagResult, generator: PqModelPin): string[] {
+  const out: string[] = [];
+  if (!isDigest(i.generationRequestSha256) || !isDigest(i.generationResponseSha256)) out.push(`rag item ${i.itemId}: generator request/response digests are missing`);
+  if (i.generatorCalled !== true || i.servedProvider !== generator.provider || !servedModelMatches(i.servedModel, generator.pinnedVersion) || i.servedModelVerified !== true) {
+    out.push(`rag item ${i.itemId}: actual generator/provider is missing or not the pinned version`);
+  }
+  return out;
+}
+
+function ragJudgeProblems(i: PqRagResult, judge: PqModelPin): string[] {
+  const out: string[] = [];
+  if (!i.negativeControl) {
+    if (i.judgeServedProvider !== judge.provider || !servedModelMatches(i.judgeServedModel, judge.pinnedVersion) || i.judgeVerified !== true) {
+      out.push(`rag item ${i.itemId}: actual independent judge/provider is missing or not the pinned version`);
+    }
+    if (!isDigest(i.judgeRequestSha256) || !isDigest(i.judgeResponseSha256)) out.push(`rag item ${i.itemId}: judge request/response digests are missing`);
+  }
+  if (sameServingIdentity(i.servedModel, i.judgeServedModel)) out.push(`rag item ${i.itemId}: generator actually graded itself`);
+  if (i.negativeControl && typeof i.negativeControlPassed !== 'boolean') out.push(`rag item ${i.itemId}: negative control was not assessed`);
+  return out;
+}
+
+/** Recompute serving/plan assertions instead of trusting verified booleans. */
+function ragAttributionProblems(rag: PqRagRecord): string[] {
+  const out = ragProvenanceProblems(rag);
+  const generator = rag.attribution?.generator;
+  const judge = rag.attribution?.judge;
+  if (!validPin(generator) || !validPin(judge)) return [...out, 'rag is missing pinned generator/judge provider attribution'];
+  if (generator.modelId === judge.modelId || sameServingIdentity(generator.pinnedVersion, judge.pinnedVersion)) out.push('rag judge must be independent of the generator');
+  for (const i of rag.items) {
+    if (i.error || fixedControl(i)) continue;
+    out.push(...ragGeneratorProblems(i, generator), ...ragJudgeProblems(i, judge));
+  }
+  return out;
+}
+
 /** Items that produced nothing, positive items missing a score, and items another model answered. */
 function ragItemShortfalls(items: PqRagResult[]): string[] {
   const out: string[] = [];
@@ -454,7 +569,7 @@ function ragItemShortfalls(items: PqRagResult[]): string[] {
   }
   const unjudged = answered.filter((i) => !i.negativeControl && i.faithfulness === null);
   if (unjudged.length) out.push(`positive rag item(s) ${ids(unjudged)} were not judged for faithfulness and carry no error`);
-  const unverified = answered.filter((i) => !i.servedModelVerified);
+  const unverified = answered.filter((i) => !i.servedModelVerified && !fixedControl(i));
   if (unverified.length) {
     out.push(
       `${unverified.length} rag item(s) were answered by a model that is not the pinned version, or did not say: ` +
@@ -470,7 +585,7 @@ function ragItemShortfalls(items: PqRagResult[]): string[] {
  * rag is scored:
  *
  *   - A rag component that is required and executable but NOT RUN is
- *     INCOMPLETE. run-pq has no rag phase yet, so today that is every record;
+ *     INCOMPLETE. The controlled run-pq phase must produce a complete attributable record;
  *     without this step, flipping `components.rag.executable` to true would have
  *     let an approved protocol PASS with rag never executed.
  *   - Each criterion must itself have been measured, on at least the protocol's
@@ -492,16 +607,21 @@ function ragFindings(protocol: PqProtocol, rag: PqRagRecord | undefined): { inco
 
   const criteriaProblems = ragCriteriaProblems(c.criteria);
   const refusal = ragRecordRefusal(rag);
-  if (refusal || !rag) return { incomplete: [...(refusal ?? []), ...criteriaProblems], missed: [] };
+  if (refusal || !rag) return { incomplete: [...(refusal ?? []), ...criteriaProblems],
+    missed: Array.isArray(rag?.items) ? rag.items.filter(i => i.negativeControl === true && i.negativeControlPassed === false).map(i => `rag negative control ${i.itemId} failed grounded refusal`) : [] };
 
   const floor = isFloor(c.criteria.minScoredItems) ? c.criteria.minScoredItems : undefined;
-  const counted = rag.items.filter((i) => !hasError(i) && i.servedModelVerified);
+  const generator = rag.attribution?.generator;
+  const judge = rag.attribution?.judge;
+  const counted = rag.items.filter((i) => !hasError(i) && i.servedModelVerified === true && validPin(generator) &&
+    validPin(judge) && i.servedProvider === generator.provider && servedModelMatches(i.servedModel, generator.pinnedVersion) &&
+    (i.negativeControl || (i.judgeVerified === true && i.judgeServedProvider === judge.provider && servedModelMatches(i.judgeServedModel, judge.pinnedVersion) && !sameServingIdentity(i.servedModel, i.judgeServedModel))));
   const hit = ragCriterion('rag hit rate', c.criteria.minHitRate, floor, counted.filter((i) => !i.negativeControl), (i) => i.hit);
-  // Faithfulness counts every judged item, controls included, as run-eval scores it.
-  const faith = ragCriterion('rag faithfulness', c.criteria.minFaithfulness, floor, counted, (i) => i.faithfulness);
+  const faith = ragCriterion('rag faithfulness', c.criteria.minFaithfulness, floor, counted.filter((i) => !i.negativeControl), (i) => i.faithfulness);
+  const failedControls = rag.items.filter(i => i.negativeControl && i.negativeControlPassed === false);
   return {
-    incomplete: [...ragItemShortfalls(rag.items), ...criteriaProblems, ...hit.incomplete, ...faith.incomplete],
-    missed: [...hit.missed, ...faith.missed],
+    incomplete: [...ragAttributionProblems(rag), ...ragItemShortfalls(rag.items), ...criteriaProblems, ...hit.incomplete, ...faith.incomplete],
+    missed: [...hit.missed, ...faith.missed, ...failedControls.map(i => `rag negative control ${i.itemId} failed grounded refusal`)],
   };
 }
 
@@ -575,9 +695,8 @@ export interface PqRecord {
   /** Absent on records written before the extraction component could execute. */
   extraction?: PqExtractionResult[];
   /**
-   * Absent on records written before the verdict had a rag step. run-pq has no
-   * rag phase yet and records `{ ran: false, … }`, so an executable rag
-   * component reads as INCOMPLETE rather than dropping out of the verdict.
+   * Absent on historic records. The controlled RAG phase retains all planned
+   * items and provider/source/scope evidence; missing execution is INCOMPLETE.
    */
   rag?: PqRagRecord;
   verdict: PqVerdict;
@@ -587,6 +706,7 @@ export interface PqRecord {
 export interface RegistryPqClaim {
   id: string;
   pinnedVersion: string;
+  provider?: string;
   pq: { status: 'pending' | 'passed' | 'failed'; reference: string | null };
 }
 
@@ -600,29 +720,5 @@ export interface RegistryPqClaim {
  * until now nothing checked.
  */
 export function verifyPqClaim(entry: RegistryPqClaim, readRecord: (ref: string) => unknown): string[] {
-  const problems: string[] = [];
-  const { status, reference } = entry.pq;
-  if (status === 'pending') {
-    if (reference !== null) problems.push(`${entry.id}: pending PQ cites a record (${reference}) — record the outcome or drop the reference`);
-    return problems;
-  }
-  if (!reference) return [`${entry.id}: pq.status is "${status}" with no record to point at`];
-
-  let rec: Partial<PqRecord> | null;
-  try {
-    rec = readRecord(reference) as Partial<PqRecord> | null;
-  } catch (err) {
-    return [`${entry.id}: cannot read PQ record ${reference}: ${(err as Error).message}`];
-  }
-  if (!rec || rec.kind !== 'pq-record') return [`${entry.id}: ${reference} is not a PQ record`];
-  if (rec.modelId !== entry.id) problems.push(`${entry.id}: record is for "${rec.modelId}"`);
-  if (rec.pinnedVersion !== entry.pinnedVersion) {
-    problems.push(`${entry.id}: record qualified ${rec.pinnedVersion}; the registry now pins ${entry.pinnedVersion} — re-qualification is owed`);
-  }
-  if (status === 'passed') {
-    if (rec.verdict !== 'PASS') problems.push(`${entry.id}: claims passed; the record says ${rec.verdict}`);
-    if (rec.protocolStatus !== 'approved') problems.push(`${entry.id}: record ran against a ${rec.protocolStatus} protocol`);
-  }
-  if (status === 'failed' && rec.verdict === 'PASS') problems.push(`${entry.id}: claims failed; the record says PASS`);
-  return problems;
+  return verifyCanonicalPqClaim(entry, readRecord, { computeVerdict, servedModelMatches });
 }

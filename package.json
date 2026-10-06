@@ -536,7 +536,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
-    "compression": "1.8.1",
+    "compression": "1.8.2",
     "connect-pg-simple": "^10.0.0",
     "cookie-parser": "1.4.7",
     "cors": "^2.8.5",
@@ -714,6 +714,9 @@
     "vitest": "4.1.7"
   },
   "overrides": {
+    "proxy-addr": "2.0.8",
+    "source-map-js": "1.2.2",
+    "shell-quote": "1.11.0",
     "@napi-rs/canvas": "$@napi-rs/canvas",
     "tar": "7.5.7",
     "form-data": "4.0.6",

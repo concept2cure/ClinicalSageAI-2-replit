@@ -1,0 +1,32 @@
+# Official source register for reviewer-draft IA scenarios
+
+All entries were opened from official issuer sites on 2026-10-06. They are bounded review context. This register does not certify a full-text source corpus, legal completeness, ongoing currency, translated legal authority, or product-specific applicability. Source summaries in the bank are paraphrases; no copied full guidance text is bundled.
+
+The source URL may use a publication/posting date different from the document's actual issue date. Web-current entries are observations on the checked date, not immutable regulator revisions. Read the controlling legislation and product-specific current guidance during expert review. Official NMPA English postings still require Chinese controlling-text/revision confirmation. PMDA indexes link detailed notifications that must be read for a product-specific requirement. European CTIS material applies to EU/EEA scope and is contrasted with a separately verified UK page; it is not evidence that all Europe follows one route.
+
+| ID | Issuer / scope | Authority type | Observed revision | Official source |
+|---|---|---|---|---|
+| FDA-510K | FDA / US | guidance | final-2014-07-28 | [Open official source](https://www.fda.gov/regulatory-information/search-fda-guidance-documents/510k-program-evaluating-substantial-equivalence-premarket-notifications-510k) |
+| FDA-IVD | FDA / US | regulator-overview | web-current-2026-10-06 | [Open official source](https://www.fda.gov/medical-devices/ivd-regulatory-assistance/overview-ivd-regulation) |
+| FDA-IND | FDA / US | regulator-overview | web-current-2026-10-06 | [Open official source](https://www.fda.gov/drugs/types-applications/investigational-new-drug-application-ind) |
+| FDA-CMC | FDA / US | regulator-overview | web-current-2026-10-06 | [Open official source](https://www.fda.gov/drugs/investigational-new-drug-application-ind/ind-applications-clinical-investigations-chemistry-manufacturing-and-control-cmc-information) |
+| US-CRO | eCFR / US | regulation | current-2026-10-06 | [Open official source](https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312/subpart-D/section-312.52) |
+| EU-IVD | European Commission / EU | guidance | MDCG-2022-2 | [Open official source](https://health.ec.europa.eu/system/files/2022-01/mdcg_2022-2_en.pdf) |
+| EU-TRIAL | EMA / EU | operational-guidance | 6.4-2026-07-07 | [Open official source](https://www.ema.europa.eu/system/files/documents/other/sponsor-handbook-v-64_clean-version_20260716-en.pdf) |
+| EU-ATMP | EMA / EU | regulator-overview | web-current-2026-10-06 | [Open official source](https://www.ema.europa.eu/en/human-regulatory-overview/advanced-therapy-medicinal-products-overview) |
+| EU-DEVICE | European Commission / EU | regulator-overview | web-current-2026-10-06 | [Open official source](https://health.ec.europa.eu/medical-devices-vitro-diagnostics/overview_en) |
+| JP-FAQ | PMDA / JP | regulator-faq | web-current-2026-10-06 | [Open official source](https://www.pmda.go.jp/english/about-pmda/0004.html) |
+| JP-CONSULT | PMDA / JP | regulator-overview | web-current-2026-10-06 | [Open official source](https://www.pmda.go.jp/english/review-services/consultations/0002.html) |
+| JP-MRCT | PMDA / JP | notification-index | index-with-2023-12-25-notification | [Open official source](https://www.pmda.go.jp/english/review-services/regulatory-info/0013.html) |
+| CA-DEVICE | Health Canada / CA | guidance | web-current-2026-10-06 | [Open official source](https://www.canada.ca/en/health-canada/services/drugs-health-products/medical-devices/application-information/guidance-documents/clinical-evidence-requirements-medical-devices.html) |
+| CA-IVD | Health Canada / CA | guidance | guidance-2016-09-26 | [Open official source](https://www.canada.ca/en/health-canada/services/drugs-health-products/medical-devices/application-information/guidance-documents/guidance-document-guidance-risk-based-classification-system-vitro.html) |
+| CA-CTA | Health Canada / CA | guidance | GUI-0100-v4-2026-08-14 | [Open official source](https://www.canada.ca/en/health-canada/services/drugs-health-products/compliance-enforcement/good-clinical-practices/guidance-documents/guidance-drugs-clinical-trials-human-subjects-gui-0100/application-authorization.html) |
+| CA-GCP | Health Canada / CA | guidance | GUI-0100-v4-2026-08-14 | [Open official source](https://www.canada.ca/en/health-canada/services/drugs-health-products/compliance-enforcement/good-clinical-practices/guidance-documents/guidance-drugs-clinical-trials-human-subjects-gui-0100.html) |
+| CN-DEVICE | NMPA / CN | official-English-regulation | official-English-posting-2024-06-05 | [Open official source](https://english.nmpa.gov.cn/2024-06/05/c_993242.htm) |
+| CN-DRUG | NMPA / CN | official-English-regulation | official-English-posting-2022-06-30 | [Open official source](https://english.nmpa.gov.cn/2022-06/30/c_785628_2.htm) |
+| CN-FOREIGN | NMPA / CN | technical-guidance | technical-requirements-2020-11-18 | [Open official source](https://english.nmpa.gov.cn/2020-11/18/c_568155.htm) |
+| UK-TRIAL | MHRA / UK | guidance | guidance-from-2026-04-28 | [Open official source](https://www.gov.uk/guidance/clinical-trials-for-medicines-apply-for-approval-in-the-uk) |
+
+Useful locators for review: FDA IVD page sections “510(k) Review Process” and “Studies to Demonstrate Substantial Equivalence”; FDA IND page's three content areas and law-versus-guidance distinction; FDA CMC “Contents” and “Safety perspective”; 21 CFR 312.52(a)-(b); MDCG 2022-2 purpose and performance-evaluation pillars, including justified exceptions; CTIS handbook v6.4 introduction (document date 7 July 2026, despite URL suffix 20260716); PMDA FAQ Q2-6 plus linked device notifications; PMDA consultations and multiregional-trial notification index; Health Canada device clinical-evidence overview and IVDD classification guidance; GUI-0100 v4 overview's sponsor accountability and local-law precedence, application/authorization section; NMPA device provisions Articles 33-38 and drug provisions' overseas-data/GCP context; NMPA foreign drug-data technical requirements' PK/PD sensitivity section; MHRA current UK approval guidance's legal status and application scope.
+
+No RAG manifest entry was marked verified from these summaries. The RAG source-to-corpus process must independently obtain, pin, review and hash its exact full texts before scoring expected document retrieval.

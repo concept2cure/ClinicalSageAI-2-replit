@@ -1,0 +1,102 @@
+{
+  "headSha": "775bde8adbe03a9d150f6cbb2a65a41c9912d66d",
+  "runId": 37498480047,
+  "observedAt": "2026-10-06T17:13:05.287Z",
+  "limitation": "Earlier Anna implementation head only; this is not the candidate release or current branch's CI verdict.",
+  "jobs": [
+    {
+      "id": 112389039861,
+      "name": "Security Scan",
+      "status": "completed",
+      "conclusion": "failure",
+      "failedSteps": [
+        "Run lockfile audit and dependency-risk ledger gate",
+        "Trivy filesystem scan (deps + secrets)"
+      ]
+    },
+    {
+      "id": 112389040146,
+      "name": "Lint",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "id": 112389040240,
+      "name": "Secret scan (full history)",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "id": 112389040250,
+      "name": "Security Contract Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "id": 112389041777,
+      "name": "Nightly Governance Strict",
+      "status": "completed",
+      "conclusion": "skipped",
+      "failedSteps": []
+    },
+    {
+      "id": 112395312885,
+      "name": "Coverage (ratchet)",
+      "status": "in_progress",
+      "conclusion": null,
+      "failedSteps": []
+    },
+    {
+      "id": 112395313045,
+      "name": "Production Image Boot (built image, empty database, sign-in)",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "id": 112395313065,
+      "name": "AnA Readiness Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "id": 112395313099,
+      "name": "Production Boot Smoke (RLS on, non-superuser role)",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "id": 112395313100,
+      "name": "Integration Tests",
+      "status": "in_progress",
+      "conclusion": null,
+      "failedSteps": []
+    },
+    {
+      "id": 112395313162,
+      "name": "Blank DB Provisioning + Deploy Migration",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "id": 112395313201,
+      "name": "Test",
+      "status": "in_progress",
+      "conclusion": null,
+      "failedSteps": []
+    },
+    {
+      "id": 112395313212,
+      "name": "AIOS Audit Assets",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    }
+  ]
+}

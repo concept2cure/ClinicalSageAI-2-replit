@@ -152,8 +152,8 @@ describe('verifyPqClaim', () => {
   const entry = { id: 'claude-opus-4', pinnedVersion: 'claude-opus-5', pq: { status: 'passed' as const, reference: 'r.json' } };
   const reader = (rec: unknown) => () => rec;
 
-  it('control — a passed claim citing a PASS record for this id and version, on an approved protocol', () => {
-    expect(verifyPqClaim(entry, reader(good))).toEqual([]);
+  it('a header-only PASS does not establish execution or canonical approval', () => {
+    expect(verifyPqClaim(entry, reader(good))).not.toEqual([]);
   });
   it('control — pending with no reference', () => {
     expect(verifyPqClaim({ ...entry, pq: { status: 'pending', reference: null } }, reader(good))).toEqual([]);

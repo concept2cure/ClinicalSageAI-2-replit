@@ -1,0 +1,25 @@
+{
+  "set": [],
+  "unset": [
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "GEMINI_API_KEY",
+    "GOOGLE_API_KEY",
+    "KIMI_API_KEY",
+    "DATABASE_URL",
+    "APP_DATABASE_URL",
+    "VALIDATION_BASE_URL",
+    "STAGING_BASE_URL",
+    "VALIDATION_USER_PASSWORD",
+    "VALIDATION_USER_TOTP_SECRET",
+    "OQ_SIGNER_EMAIL",
+    "OQ_SIGNER_PASSWORD",
+    "OQ_SIGNER_TOTP_SECRET",
+    "OQ_PLATFORM_ADMIN_PASSWORD",
+    "OQ_STANDING_PASSWORD",
+    "AWS_ACCESS_KEY_ID",
+    "AWS_ROLE_ARN",
+    "SMTP_HOST"
+  ],
+  "providerConfigured": false
+}

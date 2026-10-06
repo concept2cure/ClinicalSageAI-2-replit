@@ -1,0 +1,58 @@
+{"level":40,"time":"2026-10-06T17:24:35.382Z","pid":83,"hostname":"6bafce8f9cda","context":{},"msg":"[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable"}
+
+PQ PQ-DRAFT-001 v0.1.0 (draft) — claude-opus-4 → claude-opus-5-5 [anthropic], 30 generation task(s), gold bank 0.4.0
+────────────────────────────────────────────────────────────────────────
+  510k-se-summary-generate           [510k] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  cer-clinical-eval-generate         [cer] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  ind-m2-summary-generate            [ind] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  nonclinical-tox-summary-generate   [ind] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  510k-indications-for-use-generate  [510k] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  510k-device-description-generate   [510k] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  510k-predicate-comparison-generate [510k] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  510k-biocompatibility-generate     [510k] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  510k-software-documentation-generate [510k] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  510k-sterilization-shelf-life-generate [510k] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  510k-electrical-safety-emc-generate [510k] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  510k-clinical-performance-generate [510k] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  510k-risk-analysis-generate        [510k] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  cer-scope-device-description-generate [cer] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  cer-state-of-the-art-generate      [cer] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  cer-literature-search-protocol-generate [cer] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  cer-literature-appraisal-generate  [cer] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  cer-equivalence-demonstration-generate [cer] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  cer-gspr-conformity-generate       [cer] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  cer-benefit-risk-generate          [cer] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  cer-pmcf-evaluation-generate       [cer] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  cer-pms-data-generate              [cer] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  ind-introductory-statement-generate [ind] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  ind-general-investigational-plan-generate [ind] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  ind-investigator-brochure-generate [ind] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  ind-clinical-protocol-generate     [ind] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  ind-cmc-drug-substance-generate    [ind] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  ind-cmc-drug-product-generate      [ind] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  ind-previous-human-experience-generate [ind] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  ind-pediatric-study-plan-generate  [ind] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  510k-header-extract                [510k] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  cer-device-extract                 [cer] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  510k-indications-extract           [510k] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  510k-performance-extract           [510k] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  510k-sterilization-extract         [510k] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  cer-literature-extract             [cer] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  cer-pms-extract                    [cer] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  cer-benefit-risk-extract           [cer] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  ind-cover-extract                  [ind] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  ind-tox-summary-extract            [ind] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  ind-protocol-synopsis-extract      [ind] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  ind-cmc-extract                    [ind] NOT EXECUTED — QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+────────────────────────────────────────────────────────────────────────
+Verdict: NOT_EXECUTED
+  - no generation task produced a scorable output
+  - 510k-se-summary-generate: QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  - cer-clinical-eval-generate: QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  - ind-m2-summary-generate: QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  - nonclinical-tox-summary-generate: QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+  - 510k-indications-for-use-generate: QUALIFICATION_STEP_FAILED: provider text did not complete or could not be scored
+
+record: docs/evidence/D4/2026-10-06-ana-qualification/claude-opus-4.json
+{"verdict":"NOT_EXECUTED","generationItems":30,"extractionItems":12,"ragPlanned":20,"ragRan":false}
+{"level":20,"time":"2026-10-06T17:24:35.385Z","pid":83,"hostname":"6bafce8f9cda","context":{},"msg":"[ai-gateway] [AI Gateway] Initialized — providers: , strategy: task_based, deterministic: false"}

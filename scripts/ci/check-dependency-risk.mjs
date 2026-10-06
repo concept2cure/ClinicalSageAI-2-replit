@@ -32,7 +32,21 @@ if (ledger.lockfileSha256 !== createHash('sha256').update(lockBytes).digest('hex
   fail('ledger lockfileSha256 is stale');
 }
 
-const now = new Date(process.env.DEPENDENCY_RISK_NOW || Date.now());
+function riskDate(value) {
+  // Date.parse accepts some impossible calendar dates by rolling them into
+  // the next month. Require an ISO calendar date and a timezone when a time
+  // is present, and independently verify the calendar portion.
+  if (typeof value !== 'string' ||
+      !/^\d{4}-\d{2}-\d{2}(?:T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,3})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d))?$/.test(value)) return undefined;
+  const parsed = new Date(value);
+  const calendar = new Date(value.slice(0, 10));
+  if (!Number.isFinite(parsed.getTime()) || !Number.isFinite(calendar.getTime()) ||
+      calendar.toISOString().slice(0, 10) !== value.slice(0, 10)) return undefined;
+  return parsed;
+}
+
+const now = process.env.DEPENDENCY_RISK_NOW === undefined ? new Date() : riskDate(process.env.DEPENDENCY_RISK_NOW);
+if (!now || !Number.isFinite(now.getTime())) fail('validation clock is invalid');
 for (const finding of ledger.findings) {
   if (!finding.advisory || !finding.package || !finding.severity || !finding.action || !finding.owner) {
     fail('every ledger row requires advisory, package, severity, and action');
@@ -52,16 +66,21 @@ for (const finding of ledger.findings) {
   if ((direct ? 'direct' : 'transitive') !== finding.dependencyType) {
     fail(`${finding.advisory} direct/transitive status does not match package.json`);
   }
+  const reviewedAt = riskDate(finding.reviewDate);
+  const expiresAt = riskDate(finding.expiresAt);
+  if (finding.reviewDate !== undefined && !reviewedAt) fail(`${finding.advisory} review date is invalid`);
+  if (finding.expiresAt !== undefined && !expiresAt) fail(`${finding.advisory} expiry is invalid`);
   if (!['fixed', 'exception'].includes(finding.disposition)) {
-    if (!finding.reviewDate || !finding.expiresAt) fail(`${finding.advisory} decision is not time bounded`);
-    if (new Date(finding.expiresAt) <= now) fail(`${finding.advisory} decision expired`);
+    if (!reviewedAt || !expiresAt) fail(`${finding.advisory} decision is not time bounded`);
+    if (expiresAt <= now) fail(`${finding.advisory} decision expired`);
   }
   if (finding.disposition === 'exception') {
     const approval = finding.approval;
     if (!approval?.owner || !approval?.approvedBy || !approval?.approvedAt || !finding.expiresAt) {
       fail(`${finding.advisory} is an unreviewed exception`);
     }
-    if (new Date(finding.expiresAt) <= now) fail(`${finding.advisory} exception expired`);
+    if (!riskDate(approval.approvedAt)) fail(`${finding.advisory} approval timestamp is invalid`);
+    if (expiresAt <= now) fail(`${finding.advisory} exception expired`);
   }
 }
 
@@ -98,49 +117,74 @@ if (!report?.vulnerabilities || !report?.metadata?.vulnerabilities) {
 
 const decisions = new Map(ledger.findings.map(row => [row.advisory.toUpperCase(), row]));
 const blocking = [];
-const observed = [];
-const advisoryId = url => url?.match(/GHSA-[a-z0-9-]+/i)?.[0]?.toUpperCase();
+const observed = new Map();
+const advisoryId = url => typeof url === 'string' ? url.match(/GHSA-[a-z0-9-]+/i)?.[0]?.toUpperCase() : undefined;
+const knownSeverity = severity => ['info', 'low', 'moderate', 'high', 'critical'].includes(severity);
+const validCauseList = vulnerability => vulnerability && knownSeverity(vulnerability.severity) &&
+  Array.isArray(vulnerability.via) && vulnerability.via.length > 0;
+const validAdvisory = via => via && typeof via === 'object' && knownSeverity(via.severity);
 
-function covered(packageName, path = new Set()) {
+function coverage(packageName, path = new Set()) {
   // `path` is the current DFS chain, not a global visited set: two siblings
   // reaching the same reviewed leaf (a diamond, npm audit's normal shape for a
   // shared transitive) must both be allowed to check it. Only a package that
   // appears on its own causal chain — a true cycle — fails closed here.
-  if (path.has(packageName)) return false;
+  if (path.has(packageName)) return { valid: false, hasRelevantCause: false };
   path.add(packageName);
   try {
     const vulnerability = report.vulnerabilities[packageName];
     // A via-string naming a package the report does not list is a malformed
     // or truncated scanner response; treat the unknown as unreviewed.
-    if (!vulnerability) return false;
+    if (!validCauseList(vulnerability)) {
+      return { valid: false, hasRelevantCause: false };
+    }
     let hasRelevantCause = false;
-    for (const via of vulnerability.via || []) {
+    for (const via of vulnerability.via) {
       if (typeof via === 'string') {
-        hasRelevantCause = true;
-        if (!covered(via, path)) return false;
+        const child = coverage(via, path);
+        // npm combines causes of different severity in a single wrapper.
+        // Traverse every branch (including moderate-only ones) so malformed
+        // links and hidden High/Critical causes cannot escape the gate. A
+        // valid moderate-only branch does not require a High/Critical decision.
+        if (!child.valid) return { valid: false, hasRelevantCause };
+        hasRelevantCause ||= child.hasRelevantCause;
         continue;
+      }
+      if (!validAdvisory(via)) {
+        return { valid: false, hasRelevantCause };
       }
       if (!['high', 'critical'].includes(via.severity)) continue;
       hasRelevantCause = true;
       const id = advisoryId(via.url);
       const decision = id && decisions.get(id);
-      observed.push({ id, packageName, severity: via.severity });
+      // A shared cause may be traversed through many npm wrappers. Count the
+      // actual advisory/package/severity occurrence once, not each DFS visit.
+      observed.set(`${id} ${packageName} ${via.severity}`, { id, packageName, severity: via.severity });
       // A row marked fixed must not continue to appear against the exact graph.
       // Only an evidence-backed current decision can cover an observed finding.
       if (!decision || decision.package !== packageName ||
-          !['unreachable', 'mitigated', 'exception'].includes(decision.disposition)) return false;
+          !['unreachable', 'mitigated', 'exception'].includes(decision.disposition)) {
+        return { valid: false, hasRelevantCause };
+      }
     }
-    return hasRelevantCause;
+    // A High/Critical wrapper with no corresponding cause is inconsistent
+    // scanner evidence, not a clean result.
+    return {
+      valid: !['high', 'critical'].includes(vulnerability.severity) || hasRelevantCause,
+      hasRelevantCause,
+    };
   } finally {
     path.delete(packageName);
   }
 }
 
-for (const [name, vulnerability] of Object.entries(report.vulnerabilities)) {
-  if (['high', 'critical'].includes(vulnerability.severity) && !covered(name)) blocking.push(name);
+for (const name of Object.keys(report.vulnerabilities)) {
+  // Inspect every reported cause, not just a wrapper's aggregate severity.
+  // Otherwise a mislabeled Moderate wrapper could hide a Critical advisory.
+  if (!coverage(name).valid) blocking.push(name);
 }
 if (blocking.length) fail(`unreviewed Critical/High finding(s): ${[...new Set(blocking)].join(', ')}`);
 
-console.log(`Dependency risk gate: PASS; ${observed.length} Critical/High advisory occurrence(s), all reviewed.`);
+console.log(`Dependency risk gate: PASS; ${observed.size} Critical/High advisory occurrence(s), all reviewed.`);
 console.log(`Scanner: npm audit ${scannerVersion}; Node ${process.version}; lockfile ${ledger.lockfileSha256}`);
-for (const item of observed) console.log(`  ${item.id} ${item.packageName} ${item.severity}: ${decisions.get(item.id).disposition}`);
+for (const item of observed.values()) console.log(`  ${item.id} ${item.packageName} ${item.severity}: ${decisions.get(item.id).disposition}`);

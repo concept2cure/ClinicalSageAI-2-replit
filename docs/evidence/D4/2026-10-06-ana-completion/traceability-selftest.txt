@@ -1,0 +1,3 @@
+negative case: builder exited 1 and named URS-FAKE-999 — the gate fails when it should
+positive case: builder exited 0 on the real tree (TM-001: 82 requirements — pass 0, partial 0, fail 0, open 0, uncovered 82; 0 OQ steps → ../../../../tmp/tm-selftest-PIwK1I/out-pos/TM-001-TRACEABILITY-MATRIX.md)
+build-traceability selftest: OK

@@ -1,0 +1,22 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ tests/validation-iq-env-files.test.ts > the IQ runner reads env files the way the server does > uses the same files in the same order as the server 2ms
+ ✓ tests/validation-iq-env-files.test.ts > the IQ runner reads env files the way the server does > takes .env.local over .env for a key both define 2ms
+ ✓ tests/validation-iq-env-files.test.ts > the IQ runner reads env files the way the server does > lets the process environment beat both files, as the server does 1ms
+ ✓ tests/validation-iq-env-files.test.ts > the IQ runner reads env files the way the server does > reports what the files set without the process environment 1ms
+ ✓ tests/validation-iq-env-files.test.ts > the IQ runner reads env files the way the server does > is what run-iq.mjs uses, not a .env-only read of its own 1ms
+ ✓ tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > uses the execution date instead of a fixed historical evidence folder 1ms
+ ✓ tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > rejects invalid or path-like run dates: 2026-02-30 1ms
+ ✓ tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > rejects invalid or path-like run dates: ../old-run 0ms
+ ✓ tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > rejects invalid or path-like run dates: 2026-10-06/extra 0ms
+ ✓ tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > rejects invalid or path-like run dates: not-a-date 0ms
+ ✓ tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > records effective process configuration without retaining credential values 1ms
+ ✓ tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > does not treat a placeholder provider key as configured 0ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  12:58:57
+   Duration  477ms (transform 114ms, setup 101ms, import 55ms, tests 13ms, environment 0ms)
+
