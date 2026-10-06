@@ -644,6 +644,9 @@ export function AnaRail({
   liveDrive,
   work,
   onNewThread,
+  isLoadingThread = false,
+  threadLoadError = null,
+  onRetryThread,
 }: {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -665,6 +668,9 @@ export function AnaRail({
    *  conversation-thread surface, so this is non-destructive. An absent handler
    *  disables the button rather than leaving it inert. */
   onNewThread?: () => void;
+  isLoadingThread?: boolean;
+  threadLoadError?: { threadId: string; message: string } | null;
+  onRetryThread?: () => void;
   /**
    * Mid-run control. The server has supported pause / resume / cancel /
    * interject at the agentic loop's round boundaries since run control
@@ -796,7 +802,7 @@ export function AnaRail({
     // Never send while an upload is in flight. The previous composer had no
     // concept of "in flight" at all, so this case could not arise — and that
     // was the bug.
-    if (uploadingAttachments.length > 0) return;
+    if (uploadingAttachments.length > 0 || isLoadingThread || threadLoadError) return;
 
     // Only files the server confirmed it read are referenced. A failed upload
     // must never be described as attached: the chip stays visible with its
@@ -1174,6 +1180,15 @@ export function AnaRail({
           onSteer={onSteer}
         />
         <div className="ana-composer">
+          {isLoadingThread && <p role="status">Loading conversation…</p>}
+          {threadLoadError && (
+            <div role="alert">
+              <p>{threadLoadError.message}</p>
+              {onRetryThread && (
+                <button type="button" onClick={onRetryThread}>Retry loading conversation</button>
+              )}
+            </div>
+          )}
           {attachments.length > 0 && (
             <div className="ana-files">
               {attachments.map((a) => {
@@ -1298,6 +1313,7 @@ export function AnaRail({
                 type="button"
                 className="ana-send"
                 disabled={
+                  isLoadingThread || Boolean(threadLoadError) ||
                   uploadingAttachments.length > 0 ||
                   (!draft.trim() && readyAttachments.length === 0)
                 }

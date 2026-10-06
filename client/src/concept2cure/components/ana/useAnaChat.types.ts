@@ -818,4 +818,6 @@ export interface UseAnaChatReturn {
   threadId: string | null;
   /** True while loadThread is fetching messages. */
   isLoadingThread: boolean;
+  /** A failed history load blocks sending until retry or reset. */
+  threadLoadError?: { threadId: string; message: string } | null;
 }

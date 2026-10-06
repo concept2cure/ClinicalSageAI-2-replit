@@ -998,6 +998,8 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
     return opened && !t.authoringDoc ? { ...t, authoringDoc: opened } : t;
   });
   const busy = anaChat.isStreaming;
+  const historyFailed = loadErr || !!anaChat.threadLoadError;
+  const historyUnavailable = anaChat.isLoadingThread || historyFailed;
   /* The one turn Continue may be offered on: the latest, settled, with nothing
      in flight. It sends a new turn on this conversation; the stopped run is
      over, so there is nothing to resume. */
@@ -1070,6 +1072,20 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
   const shellChatRef = useRef(shellChat);
   shellChatRef.current = shellChat;
 
+  const loadConversation = (threadId: string) => {
+    setLoadErr(false);
+    void anaChat.loadThread(threadId)
+      .then(() => {
+        const convo = window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } };
+        // Only the requested conversation may become current. Another screen
+        // may have selected a different conversation while its history loaded.
+        if (shellChat && convo.C2C_CONVO?.id === threadId) {
+          convo.C2C_CONVO = { id: 'current', seed: null };
+        }
+      })
+      .catch(() => setLoadErr(true));
+  };
+
   /* The rule every branch below keeps: arriving on this screen never wipes a
      turn that is still running in the shell's chat. `reset` and `loadThread`
      both abort the in-flight stream, and the stream may be AnA driving — the
@@ -1103,19 +1119,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
         );
         return;
       }
-      setLoadErr(false);
-      Promise.resolve(anaChat.loadThread(sel.id))
-        .then(() => {
-          // Loaded into the shell's chat, it IS the conversation in progress
-          // now. Left as its id, the next arrival here — AnA's navigation
-          // among them — re-read it, and if the shell's chat had moved on (a
-          // new thread from the rail) loaded it over whatever was running.
-          // Only if nothing has asked for another conversation meanwhile.
-          if (shellChat && convo.C2C_CONVO?.id === sel.id) {
-            convo.C2C_CONVO = { id: 'current', seed: null };
-          }
-        })
-        .catch(() => setLoadErr(true));
+      loadConversation(sel.id);
     } else if (sel.seed) {
       // Deferred by one task ON PURPOSE. Sending synchronously here opened a
       // fetch during StrictMode's first mount pass; the cleanup at the top of
@@ -1188,7 +1192,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
     const t = draft.trim();
     // Never send mid-upload: AnA would answer about a document the server has
     // not finished reading. Same rule as the shell composer.
-    if (busy || uploadingAttachments.length > 0) return;
+    if (busy || historyUnavailable || uploadingAttachments.length > 0) return;
     if (!t && readyAttachments.length === 0) return;
 
     // Only files the server CONFIRMED it read are named. A failed upload must
@@ -1206,11 +1210,9 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
      that draw the rail). Nothing is deleted: every turn of the previous
      conversation is already in the governed conversation store.
 
-     Not while a conversation is loading either. A reset does not stop a load
-     in flight: the load resolves afterwards and puts that conversation back,
-     thread id and all, and the next question went into it under a "New
-     conversation" heading. */
-  const cannotStartOver = busy || anaChat.isLoadingThread;
+     Reset cancels a pending history read too, so even a stalled load can be
+     explicitly replaced with a new conversation without restoring old turns. */
+  const cannotStartOver = busy;
   const startNewConversation = () => {
     if (cannotStartOver) return;
     anaChat.reset();
@@ -1248,9 +1250,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
             title={
               busy
                 ? 'AnA is still answering. A new conversation can start once she has finished.'
-                : anaChat.isLoadingThread
-                  ? 'A conversation is loading. A new one can start once it has loaded.'
-                  : undefined
+                : undefined
             }
           >
             {I.plus} New conversation
@@ -1281,15 +1281,23 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
               {loadingHistory && (
                 <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading conversation…</div>
               )}
-              {loadErr && turns.length === 0 && (
-                <EmptyState
-                  tone="error"
-                  icon={I.alertTriangle}
-                  title="Couldn't load this conversation"
-                  hint="This conversation didn't load. It's read from your organization's governed chat store — sign in and retry, or start a new one below."
-                />
+              {historyFailed && (
+                <div role="alert">
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="Couldn't load this conversation"
+                    hint={anaChat.threadLoadError?.message ?? 'Retry loading this conversation, or choose New conversation. Your question has not been sent.'}
+                  />
+                  {(anaChat.threadLoadError?.threadId || (!isNew && !isCurrent)) && (
+                    <button type="button" className="ct-head-open" disabled={anaChat.isLoadingThread}
+                      onClick={() => loadConversation(anaChat.threadLoadError?.threadId ?? sel.id)}>
+                      Retry loading conversation
+                    </button>
+                  )}
+                </div>
               )}
-              {turns.length === 0 && !loadingHistory && !loadErr && (
+              {turns.length === 0 && !loadingHistory && !historyFailed && (
                 <div className="ct-empty">
                   <div className="ct-empty-mk">{'✻'}</div>
                   <h2>Talk to AnA</h2>
@@ -1384,7 +1392,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                    upload blocks send — the old condition looked only at the
                    textarea, which is why attaching could never have worked
                    even if the paperclip had opened a picker. */
-                disabled={busy || uploadingAttachments.length > 0 || (!draft.trim() && readyAttachments.length === 0)}
+                disabled={busy || historyUnavailable || uploadingAttachments.length > 0 || (!draft.trim() && readyAttachments.length === 0)}
                 onClick={send}
               >
                 {I.arrowUp}

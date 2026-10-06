@@ -1056,6 +1056,7 @@ export function V2App() {
       return;
     }
     if (!prefs.anaOpen) set('anaOpen', true);
+    if (anaChat.isLoadingThread || anaChat.threadLoadError) return;
     void anaChat.send(clean, files);
   };
 
@@ -1267,6 +1268,12 @@ export function V2App() {
              transcript and starts a fresh server thread; the prior thread stays
              in history (conversation-thread surface), so this is non-destructive. */
           onNewThread={anaChat.reset}
+          isLoadingThread={anaChat.isLoadingThread}
+          threadLoadError={anaChat.threadLoadError}
+          onRetryThread={() => {
+            const failed = anaChat.threadLoadError;
+            if (failed) void anaChat.loadThread(failed.threadId).catch(() => {});
+          }}
           onNav={nav}
           // Scopes composer uploads to the active project, so extracted text
           // lands in that project's memory — the same id useAnaChat uses.

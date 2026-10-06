@@ -399,6 +399,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   messagesRef.current = messages;
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoadingThread, setIsLoadingThread] = useState(false);
+  const [threadLoadError, setThreadLoadError] = useState<UseAnaChatReturn['threadLoadError']>(null);
+  const threadLoadRef = useRef<AbortController | null>(null);
+  const threadLoadErrorRef = useRef<UseAnaChatReturn['threadLoadError']>(null);
   const threadIdRef = useRef<string | null>(options.initialThreadId || null);
   const abortRef = useRef<AbortController | null>(null);
   /* The latest options, read by `send` at call time. `send` is memoized and
@@ -636,6 +639,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   // has not moved is aborted like any other: the person left, not AnA.
   useEffect(() => {
     return () => {
+      const loading = threadLoadRef.current;
+      threadLoadRef.current = null;
+      loading?.abort();
       if (drivingRef.current) return;
       abortRef.current?.abort();
     };
@@ -644,6 +650,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const reset = useCallback(() => {
     haltTurnDrive();
     abortRef.current?.abort();
+    const loading = threadLoadRef.current;
+    threadLoadRef.current = null;
+    loading?.abort();
+    threadLoadErrorRef.current = null;
+    setThreadLoadError(null);
+    setIsLoadingThread(false);
     threadIdRef.current = null;
     messagesRef.current = [];
     setMessages([]);
@@ -657,6 +669,16 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     abortRef.current?.abort();
     isStreamingRef.current = false;
     setIsStreaming(false);
+    threadLoadRef.current?.abort();
+    const loading = new AbortController();
+    threadLoadRef.current = loading;
+    threadLoadErrorRef.current = null;
+    setThreadLoadError(null);
+    // The selected conversation has not loaded yet. Keeping the last one's
+    // transcript/id here let a failed switch silently send into that thread.
+    threadIdRef.current = null;
+    messagesRef.current = [];
+    setMessages([]);
     setIsLoadingThread(true);
     try {
       const res = await fetch(
@@ -665,8 +687,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           method: 'GET',
           headers: getAuthHeaders(),
           credentials: 'include',
+          signal: loading.signal,
         }
       );
+      if (threadLoadRef.current !== loading) return;
       if (!res.ok) {
         // Resolving here made the caller's error branch unreachable, so a 401
         // or a 500 on a real conversation rendered as the "Talk to AnA" empty
@@ -690,6 +714,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           } | null;
         }>;
       };
+      if (threadLoadRef.current !== loading) return;
       const rows = Array.isArray(body.messages) ? body.messages : [];
       const hydrated: AnaChatMessage[] = rows
         .filter(
@@ -745,10 +770,21 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       messagesRef.current = hydrated;
       setMessages(hydrated);
     } catch (err: any) {
+      // Aborting alone cannot cancel an already-resolved response/body. Only
+      // the current selection may replace history, fail, or finish loading.
+      if (threadLoadRef.current !== loading) return;
+      threadLoadErrorRef.current = {
+        threadId,
+        message: "This conversation couldn't load. Retry, or start a new conversation. Your question has not been sent.",
+      };
+      setThreadLoadError(threadLoadErrorRef.current);
       console.warn('[useAnaChat] loadThread failed:', err?.message);
       throw err;
     } finally {
-      setIsLoadingThread(false);
+      if (threadLoadRef.current === loading) {
+        threadLoadRef.current = null;
+        setIsLoadingThread(false);
+      }
     }
   }, [haltTurnDrive]);
 
@@ -761,7 +797,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       // Read at call time, never from the memoized closure (see optionsRef).
       const options = optionsRef.current;
       const text = rawText.trim();
-      if (!text || isStreamingRef.current) return;
+      if (!text || isStreamingRef.current || threadLoadRef.current || threadLoadErrorRef.current) return;
       drivingRef.current = false;
       /* The run THIS turn started, from its own `run_started`. The drive
          controls below are bound to it, never to `runIdRef.current`: the shell
@@ -1816,5 +1852,6 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     loadThread,
     threadId: threadIdRef.current,
     isLoadingThread,
+    threadLoadError,
   };
 }

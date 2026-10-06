@@ -1,0 +1,47 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — real ANA action rendering > renders the real executed actions ANA reports (not a fabricated result card) 69ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — real ANA action rendering > renders the REAL Part 11 sign-off prompt for a governed action ANA proposed 35ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — real ANA action rendering > a non-signature governed command shows the reason-for-change sign-off 16ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — real ANA action rendering > renders a navigation target AnA resolved as a button that navigates 161ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — real ANA action rendering > does not offer a navigation chip that cannot say where it goes 44ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — real ANA action rendering > leaves every non-navigation executed action inert 37ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — the "Start demonstration" chip > invokes the rail's own startDemo with the script id and title 42ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — the "Start demonstration" chip > is inert when Live Drive is locked for the workspace — same rule as the Control menu 35ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — the "Start demonstration" chip > is inert when the rail has no demo starter at all 34ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — the "Start demonstration" chip > a chip that cannot name its script is never a button 34ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — Ask / Agent is what AnA will actually do > reads Agent when AnA drives, and Ask switches her hands off 60ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — Ask / Agent is what AnA will actually do > Agent switches Live Drive on from Ask 78ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — Ask / Agent is what AnA will actually do > a locked workspace reads Ask even with the preference on, and Agent says why instead of switching 80ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — Ask / Agent is what AnA will actually do > never rewrites what the person typed 29ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > the composer actually uploads the file > POSTs the real File to /api/chat/upload, not just its name 74ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > send tells the truth about what was attached > names the uploaded file in the message once it is ready 34ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > send tells the truth about what was attached > does NOT claim an attachment when the upload failed 25ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > send tells the truth about what was attached > refuses to send at all when only a failed upload is present 20ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > send tells the truth about what was attached > does not send while an upload is still in flight 20ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > the chip states what actually happened > shows the extraction result once read 26ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > the chip states what actually happened > shows the failure reason rather than a bare filename 20ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > the chip states what actually happened > rejects an unsupported type without a network call 14ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no invented current section > Protocol development in the biopharma domain claims no section and no blocker 65ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no invented current section > Protocol development in the medtech domain claims no section and no blocker 20ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no invented current section > Protocol development in the diagnostics domain claims no section and no blocker 14ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no invented current section > Protocol development in the cro domain claims no section and no blocker 14ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no invented current section > Protocol development in the health domain claims no section and no blocker 17ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no invented current section > no authoring surface reports a section or sends a prompt that presumes one 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no invented current section > the focus on an authoring surface does not change with the domain picker 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no internal identifiers in "Working in" > Protocol development shows no ticket range and no doubled period 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no internal identifiers in "Working in" > Vault and Tasks show no route or schema names 20ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no internal identifiers in "Working in" > no registered surface puts an internal identifier in module, here or focus 30ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no internal identifiers in "Working in" > Home is named Home, not by its raw id 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > Quick access — no entry promises a feature that does not exist > there is no "Starred Items" entry (nothing in the product can be starred) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > Quick access — no entry promises a feature that does not exist > Projects, the destination that entry opened, is still on the rail 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailHistory.test.tsx > AnA rail history recovery > keeps the draft while history loads, then sends it after loading 271ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailHistory.test.tsx > AnA rail history recovery > shows a failed load with retry and preserves a draft until recovery 77ms
+
+ Test Files  4 passed (4)
+      Tests  37 passed (37)
+   Start at  21:48:45
+   Duration  5.69s (transform 729ms, setup 316ms, import 1.52s, tests 1.55s, environment 1.75s)
+

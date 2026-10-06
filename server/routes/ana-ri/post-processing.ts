@@ -418,7 +418,9 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
           await import('../../services/ana-ri/command-executor.js');
         const cmdResult = await processCommandsInResponse(contentForCommandProcessing, cmdCtx);
         executedCommands = [...executedCommands, ...cmdResult.executedCommands];
-        cleanedFullContent = cmdResult.cleanedText ? cmdResult.cleanedText : contentForCommandProcessing;
+        // Empty is valid for a command-only reply: let blocksOnlyAnswer below
+        // explain the real outcome instead of restoring the command JSON.
+        cleanedFullContent = cmdResult.cleanedText;
         if (cmdResult.executedCommands.length > 0) {
           console.info(`[AnA RI Stream] Dispatched ${cmdResult.executedCommands.length} command(s)`);
         }
