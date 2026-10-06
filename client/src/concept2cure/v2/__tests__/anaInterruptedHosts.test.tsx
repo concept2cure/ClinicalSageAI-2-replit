@@ -44,7 +44,7 @@ function Host({ kind }: { kind: HostKind }) {
 
 const requests = () => fetchMock.mock.calls.filter(([url]) => url === '/api/ana-ri/stream')
   .map(([, init]) => JSON.parse(init.body));
-const continueButton = () => screen.queryByRole('button', { name: 'Continue', exact: true });
+const continueButton = () => screen.queryByRole('button', { name: 'Continue' });
 const showsNote = (text: string) => Array.from(document.querySelectorAll('.ana-activity-stopped'))
   .some(note => note.textContent?.includes(text));
 

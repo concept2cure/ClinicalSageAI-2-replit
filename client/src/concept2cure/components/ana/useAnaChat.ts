@@ -113,6 +113,46 @@ const STREAM_IDLE_TIMEOUT_MS = 90_000;
 /** A control request must not leave Stop (and a queued replacement demo) waiting forever. */
 const CONTROL_REQUEST_TIMEOUT_MS = 5_000;
 
+/** Saved history must release the composer even when headers or the body stall. */
+const THREAD_LOAD_TIMEOUT_MS = 15_000;
+
+/** Race both fetch and JSON against one deadline; cancellation settles the wait too. */
+function historyDeadline(loading: AbortController) {
+  let timedOut = false;
+  let rejectAborted!: () => void;
+  const promise = new Promise<never>((_resolve, reject) => {
+    rejectAborted = () => {
+      const failure = new Error('History read aborted');
+      failure.name = 'AbortError';
+      reject(failure);
+    };
+    loading.signal.addEventListener('abort', rejectAborted, { once: true });
+  });
+  const timer = setTimeout(() => {
+    timedOut = true;
+    loading.abort();
+  }, THREAD_LOAD_TIMEOUT_MS);
+  return {
+    promise,
+    failureMessage: () => timedOut
+      ? 'Loading this conversation timed out. Retry, or start a new conversation. Your question has not been sent.'
+      : "This conversation couldn't load. Retry, or start a new conversation. Your question has not been sent.",
+    dispose: () => {
+      clearTimeout(timer);
+      loading.signal.removeEventListener('abort', rejectAborted);
+    },
+  };
+}
+
+function fetchHistoryHeaders(threadId: string, signal: AbortSignal) {
+  return fetch(`/api/chat/threads/${encodeURIComponent(threadId)}/messages?limit=100`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+    credentials: 'include',
+    signal,
+  });
+}
+
 /** When to ask the server, by run id, for the record of a turn that ended here first. */
 const RECORD_CONFIRM_WAITS_MS = [1_500, 4_000];
 
@@ -371,8 +411,18 @@ export function hydrateToolTrace(
  * "AnA is unreachable — the network or the AI gateway did not respond", which
  * sent people to check a connection that was fine.
  */
+function streamFailure(event: { error?: unknown; code?: unknown; status?: unknown }) {
+  const failure = new Error(typeof event.error === 'string' ? event.error : 'Stream error') as Error & { code?: string; status?: number };
+  if (typeof event.code === 'string') failure.code = event.code;
+  if (typeof event.status === 'number') failure.status = event.status;
+  return failure;
+}
+
 export function streamRefusalText(err: unknown): string {
   const failure = err as { code?: string; status?: number } | undefined;
+  if (failure?.code === 'THREAD_FORBIDDEN') {
+    return 'That conversation belongs to another user. Select your own conversation or start a new one. Your request was not sent to the AI provider.';
+  }
   if (failure?.status === 401) {
     return 'Your sign-in could not be verified. Sign in again to ask AnA. Prior turns are preserved.';
   }
@@ -686,16 +736,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     messagesRef.current = [];
     setMessages([]);
     setIsLoadingThread(true);
+    const deadline = historyDeadline(loading);
     try {
-      const res = await fetch(
-        `/api/chat/threads/${encodeURIComponent(threadId)}/messages?limit=100`,
-        {
-          method: 'GET',
-          headers: getAuthHeaders(),
-          credentials: 'include',
-          signal: loading.signal,
-        }
-      );
+      const res = await Promise.race([deadline.promise, fetchHistoryHeaders(threadId, loading.signal)]);
       if (threadLoadRef.current !== loading) return;
       if (!res.ok) {
         // Resolving here made the caller's error branch unreachable, so a 401
@@ -705,7 +748,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         console.warn('[useAnaChat] loadThread non-ok:', res.status);
         throw new Error(`loadThread ${res.status}`);
       }
-      const body = (await res.json()) as {
+      const body = (await Promise.race([deadline.promise, res.json()])) as {
         messages?: Array<{
           role?: string;
           content?: string;
@@ -781,12 +824,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       if (threadLoadRef.current !== loading) return;
       threadLoadErrorRef.current = {
         threadId,
-        message: "This conversation couldn't load. Retry, or start a new conversation. Your question has not been sent.",
+        message: deadline.failureMessage(),
       };
       setThreadLoadError(threadLoadErrorRef.current);
       console.warn('[useAnaChat] loadThread failed:', err?.message);
       throw err;
     } finally {
+      deadline.dispose();
       if (threadLoadRef.current === loading) {
         threadLoadRef.current = null;
         setIsLoadingThread(false);
@@ -1708,7 +1752,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 serverStatedRecord = true;
                 setMessages(prev => prev.map(m => (m.id === assistantId ? { ...m, turnRecord } : m)));
               }
-              throw new Error(event.error || 'Stream error');
+              throw streamFailure(event);
             }
           }
         }
