@@ -1344,7 +1344,7 @@ jobs:
           CI: true
 
       - name: MCP SDK OAuth credentials stay bound to their issuer
-        run: node --test tests/security/mcp-sdk-issuer.test.mjs
+        run: npm run test:mcp-sdk-issuer
 
   ana-readiness-tests:
     name: AnA Readiness Tests

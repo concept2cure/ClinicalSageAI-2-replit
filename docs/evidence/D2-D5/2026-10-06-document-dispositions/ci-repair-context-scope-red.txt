@@ -1,0 +1,68 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/__tests__/rag-disposition.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-06T19:22:50.261Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T19:22:50.262Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-disposition.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-06T19:22:50.262Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-disposition.pglite.integration.test.ts
+[database] Database connection successful
+
+ × server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > expands only public guidance or the supplied integer or verified UUID tenant 64ms
+   → expected [ …(3) ] to deeply equal [ Array(1) ]
+ ↓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > keeps scoped guidance and refuses foreign private rows and identities without a tenant
+ ↓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > marks retained Vault, RAG and atom text, then excludes it after the later withdrawal without deleting history
+ ↓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > withholds a generated answer when a real disposition commits during the provider await
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > expands only public guidance or the supplied integer or verified UUID tenant
+AssertionError: expected [ …(3) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
++   "c3089aa3-465d-4ec5-abcb-2c0055c5b40a",
++   "f011cdaa-ced7-49ca-a82a-e05818d93ee9",
+    "81c024da-033c-4f2c-94f7-a4ac7809aba0",
+  ]
+
+ ❯ server/services/__tests__/rag-disposition.pglite.integration.test.ts:71:41
+     69|     const p = pipeline(f);
+     70|     const noTenant = await p.expandContext(candidates, 1);
+     71|     expect(noTenant.map(doc => doc.id)).toEqual([publicChunk]);
+       |                                         ^
+     72|     expect(noTenant[0].expandedContent).toBe('Public guidance hit\n\nP…
+     73|     expect((await p.expandContext(candidates, 1, 'invalid-tenant')).ma…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  15:22:48
+   Duration  4.08s (transform 1.09s, setup 79ms, import 1.86s, tests 1.89s, environment 0ms)
+

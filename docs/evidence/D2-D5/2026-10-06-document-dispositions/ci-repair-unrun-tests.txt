@@ -1,0 +1,7 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 ci:check-unrun-tests
+> node scripts/ci/check-unrun-tests.mjs
+
+[ci:unrun-tests] 3709 test files · 13 vitest globs · 6 non-vitest runner globs · 0 unrun (0 allowlisted).
+[ci:unrun-tests] OK — every test file is reachable by a runner, or explained.

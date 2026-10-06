@@ -9,6 +9,7 @@ import {
 
 type Internal = Pick<AdvancedRAGPipeline, 'queryWithGeneration'> & {
   revalidateCandidates(documents: RetrievedDocument[], options: RetrievalOptions): Promise<RetrievedDocument[]>;
+  expandContext(documents: RetrievedDocument[], window: number, organizationUuid?: string, organizationId?: number): Promise<RetrievedDocument[]>;
 };
 let harness: DispositionHarness;
 beforeAll(async () => {
@@ -18,6 +19,8 @@ beforeAll(async () => {
     ALTER TABLE vault.documents ADD COLUMN file_name text;
     ALTER TABLE lumen_data_atoms ADD COLUMN title text;
     ALTER TABLE rag_documents ADD COLUMN title text;
+    ALTER TABLE rag_documents ALTER COLUMN organization_id DROP NOT NULL;
+    ALTER TABLE rag_chunks ADD COLUMN chunk_index integer DEFAULT 0;
   `);
 });
 afterAll(async () => { await harness.close(); });
@@ -47,6 +50,33 @@ function pipeline(f: DispositionFixture): Internal {
 }
 
 describe('RAG candidate policy checks execute against canonical disposition SQL', () => {
+  it('expands only public guidance or the supplied integer or verified UUID tenant', async () => {
+    const f = await harness.seed();
+    const own = await sources(f);
+    const foreign = await sources(await harness.seed());
+    const publicDocument = (await f.pg.query<{ id: string }>(
+      'INSERT INTO rag_documents (organization_id,title) VALUES (NULL,\'Public guidance\') RETURNING id',
+    )).rows[0].id;
+    // tenant-isolation-safe: isolated PGlite fixture; the exact parent ID was just returned by the explicitly public guidance INSERT.
+    const publicChunk = (await f.pg.query<{ id: string }>(`INSERT INTO rag_chunks (document_id,chunk_index,content)
+      VALUES ($1,0,'Public guidance hit'),($1,1,'Public guidance neighbor') RETURNING id`, [publicDocument])).rows[0].id;
+    const publicDoc: RetrievedDocument = {
+      id: publicChunk, documentId: publicDocument, chunkIndex: 0, atomType: 'rag_chunk',
+      content: 'Public guidance hit', title: 'Public guidance', initialScore: 1, finalScore: 1,
+    };
+    const candidates = [own.docs[1], foreign.docs[1]].map(doc => ({ ...doc, chunkIndex: 0 }));
+    candidates.push(publicDoc);
+    const p = pipeline(f);
+    const noTenant = await p.expandContext(candidates, 1);
+    expect(noTenant.map(doc => doc.id)).toEqual([publicChunk]);
+    expect(noTenant[0].expandedContent).toBe('Public guidance hit\n\nPublic guidance neighbor');
+    expect((await p.expandContext(candidates, 1, 'invalid-tenant')).map(doc => doc.id)).toEqual([publicChunk]);
+    const expected = [own.docs[1].id, publicChunk];
+    expect((await p.expandContext(candidates, 1, undefined, f.org)).map(doc => doc.id)).toEqual(expected);
+    expect((await p.expandContext(candidates, 1, own.options.organizationUuid)).map(doc => doc.id)).toEqual(expected);
+    expect((await p.expandContext(candidates, 1, randomUUID())).map(doc => doc.id)).toEqual([publicChunk]);
+  });
+
   it('keeps scoped guidance and refuses foreign private rows and identities without a tenant', async () => {
     const f = await harness.seed();
     const own = await sources(f);

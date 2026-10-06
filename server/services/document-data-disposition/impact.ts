@@ -61,6 +61,7 @@ async function readImpactCounts(q: DispositionQueryable, input: DispositionPrevi
   const atomSql = `SELECT * FROM lumen_data_atoms a WHERE a.organization_id = $1
     AND public.document_disposition_atom_references(a.source_type,a.source_id,to_jsonb(a.structured_data),$2::jsonb)`;
   const atoms = await observe(q,'atoms',atomSql,ids,fingerprints);
+  // tenant-isolation-safe: readLinks proves each exact-hash Vault ID through regulatory_programs.organization_id and this program before this child-only count.
   const vaultChunks = await observe(q,'vaultChunks','SELECT * FROM vault.document_chunks WHERE document_id::text = ANY($1::text[])',[linkedIds.vaultDocumentIds],fingerprints);
   const ragChunks = await observe(q,'ragChunks',`SELECT c.* FROM rag_chunks c JOIN rag_documents d ON d.id = c.document_id
     WHERE d.organization_id = $1 AND public.document_disposition_rag_references(d.document_id,$2::jsonb)`,[input.organizationId,JSON.stringify(linkedIds)],fingerprints);

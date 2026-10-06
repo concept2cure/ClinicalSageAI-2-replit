@@ -10,7 +10,8 @@ type WithExpand = {
   expandContext(
     documents: RetrievedDocument[],
     window: number,
-    organizationUuid?: string
+    organizationUuid?: string,
+    organizationId?: number
   ): Promise<RetrievedDocument[]>;
 };
 
@@ -43,9 +44,8 @@ describe('AdvancedRAGPipeline.expandContext', () => {
     const out = await p.expandContext([ragChunk('c', 5)], 1);
 
     expect(out[0].expandedContent).toBe('prev\n\nhit\n\nnext');
-    // window math: chunk_index BETWEEN idx-1 AND idx+1; $4 is the tenant org
-    // filter (null when no org id is supplied → no filter for internal callers).
-    expect(query.mock.calls[0][1]).toEqual(['doc-1', 4, 6, null]);
+    // With no integer/UUID tenant, the SQL permits only explicitly public guidance.
+    expect(query.mock.calls[0][1]).toEqual(['doc-1', 4, 6, null, null]);
     expect(out[0].content).toBe('chunk-c'); // original chunk content preserved
   });
 

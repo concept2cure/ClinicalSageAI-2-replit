@@ -956,19 +956,18 @@ export class AdvancedRAGPipeline {
               return rows.map(r => r.chunk_text || '').filter(Boolean);
             });
           } else if (doc.atomType === 'rag_chunk') {
-            // Tenant-scoped: rag_chunks is not RLS-scoped, so join rag_documents
-            // and filter by the caller's org (rag_documents.organization_id) —
-            // defense-in-depth over the document_id that upstream retrieval
-            // already org-vetted. Conditional ($4 NULL → no filter) preserves
-            // internal callers that don't pass an org id.
+            // rag_chunks has no RLS; permit explicit public guidance or the
+            // supplied integer/verified UUID tenant, even without prior retrieval.
             const { rows } = await this.pool.query<{ content: string | null }>(
               `SELECT rc.content FROM rag_chunks rc
                JOIN rag_documents rd ON rd.id = rc.document_id
                WHERE rc.document_id = $1 AND rc.chunk_index BETWEEN $2 AND $3
-                 AND ($4::int IS NULL OR rd.organization_id = $4)
+                 AND (rd.organization_id IS NULL OR rd.organization_id = $4::int
+                   OR rd.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $5::uuid))
                  AND ${ragDataEligibleSql('rd')}
                ORDER BY rc.chunk_index`,
-              [doc.documentId, lo, hi, organizationId ?? null]
+              [doc.documentId, lo, hi, organizationId ?? null,
+                isTenantUuid(organizationUuid) ? organizationUuid : null]
             );
             texts = rows.map(r => r.content || '').filter(Boolean);
           } else {

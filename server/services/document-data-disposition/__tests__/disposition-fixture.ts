@@ -99,8 +99,10 @@ export async function createDispositionHarness() {
     await pg.query(`INSERT INTO lumen_data_atoms (organization_id,source_type,source_id,structured_data,status,content)
       VALUES ($1,'chat_upload',$2,'{}','active','Study endpoint'),($1,'vault_document',$3,'{}','active','Study duration'),
         ($1,'artifact',$4,'{}','active','Study population')`, [org, `cre_source:${capture}`, vault, String(artifact)]);
+    // tenant-isolation-safe: isolated PGlite fixture; the parent Vault document was just seeded for this fixture organization/program and exact ID.
     await pg.query('INSERT INTO vault.document_chunks (document_id,chunk_text) VALUES ($1,\'Page one\')', [vault]);
     const ragDocument = (await pg.query<{ id: string }>('INSERT INTO rag_documents (organization_id,document_id) VALUES ($1,$2) RETURNING id', [org, String(artifact)])).rows[0].id;
+    // tenant-isolation-safe: isolated PGlite fixture; ragDocument is the ID returned by the immediately preceding INSERT with this fixture organization.
     await pg.query('INSERT INTO rag_chunks (document_id,content) VALUES ($1,\'Authored extract\')', [ragDocument]);
     await pg.query('INSERT INTO vault.document_catalog VALUES ($1,$2)', [vault, JSON.stringify({ population: '40', endpoint: 'change' })]);
     await pg.query('INSERT INTO authoring_citations (id,tenant_id,source,reference_id) VALUES ($1,$2,\'cre_evidence_source\',$3)', [randomUUID(), org, String(capture)]);
