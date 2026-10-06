@@ -146,7 +146,7 @@ describe('stream.ts carries the loop outcome — carriage', () => {
   });
 
   it('adds the stopped-turn note beside the trace note, from the same history', () => {
-    const at = src.indexOf('const traceNote = formatTraceForContext(collectTracesFromHistory(previousMsgs));');
+    const at = src.indexOf('const traceNote = formatTraceForContext(traces);');
     expect(at).toBeGreaterThan(-1);
     const near = src.slice(at, at + 800);
     expect(near).toMatch(/const stoppedNote = formatStoppedTurnNote\(previousMsgs\);/);

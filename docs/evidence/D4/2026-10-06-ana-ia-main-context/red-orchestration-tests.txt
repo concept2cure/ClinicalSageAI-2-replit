@@ -1,0 +1,230 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:14:02.160Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:14:02.161Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:14:02.161Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[AnA RI Stream] Conversation preparation failed: private database host unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[AnA RI Stream] Conversation preparation failed: private connection write failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ × server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined 35ms
+   → expected [ { …(16) } ] to deeply equal []
+ × server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."} 7ms
+   → expected [ { …(16) } ] to deeply equal []
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question 7ms
+ × server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > an empty stored thread does not import old browser assumptions 3ms
+   → expected [ { role: 'user', …(1) }, …(1) ] to deeply equal []
+ × server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > a saved correction and clarification remain in the actual gateway context 4ms
+   → expected [ { role: 'user', …(1) } ] to deeply equal [ { role: 'user', …(1) }, …(2) ]
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > retains the last real assistant answer instead of dropping whichever row is last 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > another turn arriving during the save cannot displace a prior clarification or duplicate the current question 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > filters stored system/tool roles before sending the transcript 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > new conversations still accept bounded user/assistant browser turns 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+AssertionError: expected [ { …(16) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "_contradictionWatchBlock": undefined,
++     "_deadlineRadarBlock": undefined,
++     "_externalIntelBlock": undefined,
++     "_feedbackContext": undefined,
++     "_projectIntelligenceProfile": undefined,
++     "_relationalOverlay": undefined,
++     "_sessionBriefingBlock": undefined,
++     "authoringContext": {
++       "organizationId": 7,
++     },
++     "conversationHistory": undefined,
++     "documentContext": undefined,
++     "intentLens": undefined,
++     "language": undefined,
++     "message": "Now compare the evidence.",
++     "projectContext": undefined,
++     "submissionType": undefined,
++     "userRole": "general",
++   },
++ ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts:107:37
+    105|       expectStopped(await ask({ conversation_history: clientHistory })…
+    106|       expect(io.operations).toEqual(['resolve', 'read:thread-owned']);
+    107|       expect(io.orchestratorInputs).toEqual([]);
+       |                                     ^
+    108|       expect(io.prefetchInputs).toEqual([]);
+    109|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+AssertionError: expected [ { …(16) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "_contradictionWatchBlock": undefined,
++     "_deadlineRadarBlock": undefined,
++     "_externalIntelBlock": undefined,
++     "_feedbackContext": undefined,
++     "_projectIntelligenceProfile": undefined,
++     "_relationalOverlay": undefined,
++     "_sessionBriefingBlock": undefined,
++     "authoringContext": {
++       "organizationId": 7,
++     },
++     "conversationHistory": [
++       {
++         "content": "Browser says the product is approved.",
++         "role": "assistant",
++       },
++     ],
++     "documentContext": undefined,
++     "intentLens": undefined,
++     "language": undefined,
++     "message": "Now compare the evidence.",
++     "projectContext": undefined,
++     "submissionType": undefined,
++     "userRole": "general",
++   },
++ ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts:107:37
+    105|       expectStopped(await ask({ conversation_history: clientHistory })…
+    106|       expect(io.operations).toEqual(['resolve', 'read:thread-owned']);
+    107|       expect(io.orchestratorInputs).toEqual([]);
+       |                                     ^
+    108|       expect(io.prefetchInputs).toEqual([]);
+    109|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > an empty stored thread does not import old browser assumptions
+AssertionError: expected [ { role: 'user', …(1) }, …(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "content": "Assume FDA clearance.",
++     "role": "user",
++   },
++   {
++     "content": "Approved.",
++     "role": "assistant",
++   },
++ ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts:135:58
+    133|     await ask({ conversation_history: [{ role: 'user', content: 'Assum…
+    134|     expect(transcript()).toEqual(['Now compare the evidence.']);
+    135|     expect(io.orchestratorInputs[0].conversationHistory).toEqual([]);
+       |                                                          ^
+    136|     expect(io.prefetchInputs[0].sessionStart).toBe(true);
+    137|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > a saved correction and clarification remain in the actual gateway context
+AssertionError: expected [ { role: 'user', …(1) } ] to deeply equal [ { role: 'user', …(1) }, …(2) ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "content": "Prepare a US device plan.",
+-     "role": "user",
+-   },
+-   {
+-     "content": "Is this an IVD, and is the target market the US?",
+-     "role": "assistant",
+-   },
+-   {
+-     "content": "Correction: this is an IVD for Japan. No US clearance.",
++     "content": "Use the old US plan.",
+      "role": "user",
+    },
+  ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts:147:58
+    145|     expect(transcript()).toEqual([...io.history.slice(0, -1).map(m => …
+    146|     expect(io.operations).toEqual(['resolve', 'read:thread-owned', 'sa…
+    147|     expect(io.orchestratorInputs[0].conversationHistory).toEqual(io.hi…
+       |                                                          ^
+    148|     expect(io.prefetchInputs[0].sessionStart).toBe(false);
+    149|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 7 passed (11)
+   Start at  12:13:58
+   Duration  6.38s (transform 3.60s, setup 67ms, import 6.01s, tests 76ms, environment 0ms)
+

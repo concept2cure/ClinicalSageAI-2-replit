@@ -388,7 +388,8 @@ describe('stream conversation memory access', () => {
   it('does not read caller thread memory after persistence fails', async () => {
     h.thread.mockRejectedValue(new Error('database unavailable'));
     await turn('Review this', 'thorough', { thread_id: 'secret' });
-    expect(h.memory).toHaveBeenCalledWith(expect.objectContaining({ threadId: '' }));
+    expect(h.memory).not.toHaveBeenCalled();
+    expect(h.state.gatewayCalls).toHaveLength(0);
     expect(JSON.stringify(h.state.gatewayCalls)).not.toContain('PRIVATE SUMMARY');
   });
   it('refuses foreign-thread access before memory or the model runs', async () => {

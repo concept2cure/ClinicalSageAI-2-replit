@@ -890,6 +890,82 @@ export function mountStreamRoute(router: Router): void {
           ? ({ ...authoring_context } as Record<string, unknown>)
           : undefined;
 
+      // Thread resolution (before private memory and server history).
+      //
+      // The id the CLIENT sent is never used as-is. getOrCreateThread resolves
+      // it in the caller's organization and to the caller's own thread, or
+      // mints a fresh one; a colleague's thread id is refused outright. If the
+      // resolution, history read, or question write fails, the turn stops
+      // before a model or tool runs. A browser transcript cannot stand in for
+      // a stored conversation the platform failed to load.
+      let threadId: string | null = null;
+      const persistenceFailed = false;
+      let previousMsgs: Awaited<ReturnType<typeof getThreadMessages>> = [];
+      let conversationFailureCode = 'THREAD_UNAVAILABLE';
+      if (orgId) {
+        try {
+          threadId = await getOrCreateThread(
+            thread_id || null,
+            typeof userId === 'number' || typeof userId === 'string' ? userId : undefined,
+            'ana-ri',
+            Number(orgId),
+            // The program the shell has open (its regulatory_programs UUID), so
+            // the thread can be listed under — and resumed from — that project.
+            programIdForThread(project_id || resolveProjectIdFromBody(req.body))
+          );
+          turnRecorder?.setThread(threadId);
+          conversationFailureCode = 'HISTORY_UNAVAILABLE';
+          // Snapshot before saving this question. Removing the last row of a
+          // later read could remove a concurrent turn, leaving this question
+          // duplicated in the model context and dropping somebody else's turn.
+          previousMsgs = [...(await getThreadMessages(threadId))];
+          conversationFailureCode = 'CONVERSATION_UNAVAILABLE';
+          const userMessageId = await saveMessage(threadId, 'user', message);
+          turnRecorder?.setMessageIds({ user: userMessageId });
+        } catch (e: any) {
+          if (e instanceof ThreadAccessError) {
+            console.warn('[AnA RI Stream] Refused caller-supplied thread id:', e.code);
+            // Refused before any model ran — still a turn someone attempted,
+            // and recorded as one.
+            turnRecorder?.warn('Refused: the conversation named in this turn belongs to another user.');
+            streamFailed = true;
+            const turnRecord = await fileTurnRecord('failed');
+            res.write(
+              `data: ${JSON.stringify({
+                type: 'error',
+                code: e.code,
+                error: 'That conversation belongs to another user.',
+                turnRecord,
+              })}\n\n`
+            );
+            res.end();
+            return;
+          }
+          console.error('[AnA RI Stream] Conversation preparation failed:', e?.message);
+          const error = conversationFailureCode === 'HISTORY_UNAVAILABLE'
+            ? 'Earlier conversation could not be loaded. Please retry.'
+            : conversationFailureCode === 'THREAD_UNAVAILABLE'
+              ? 'This conversation could not be opened. Please retry.'
+              : 'Your question could not be saved. Please retry.';
+          streamFailed = true;
+          turnRecorder?.warn(error);
+          const turnRecord = await fileTurnRecord('failed');
+          res.write(`data: ${JSON.stringify({ type: 'error', code: conversationFailureCode, error, turnRecord })}\n\n`);
+          res.end();
+          return;
+        }
+      }
+
+      // One bounded transcript drives both routing and the model. Browser
+      // turns are accepted only when starting without a named conversation.
+      const browserTurns = Array.isArray(conversation_history)
+        ? recentTurns(conversation_history.filter((msg: any) =>
+            typeof msg?.content === 'string' && msg.content.length <= 50000), 20)
+        : [];
+      const conversationTurns = (threadId && (thread_id || previousMsgs.length > 0)
+        ? recentTurns(previousMsgs, 20)
+        : browserTurns).map(msg => ({ ...msg, role: msg.role as 'user' | 'assistant' }));
+
       // Org/project intelligence is independent of route prefetch; overlap
       // their existing budgets instead of paying both waits in sequence.
       const intelligencePrefixPromise = getIntelligencePrefix(orgId ? Number(orgId) : undefined, streamProjectId).catch(err => {
@@ -904,7 +980,7 @@ export function mountStreamRoute(router: Router): void {
         userId: typeof userId === 'number' ? userId : Number(userId) || null,
         targetAgency:
           typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
-        sessionStart: !Array.isArray(conversation_history) || conversation_history.length === 0,
+        sessionStart: conversationTurns.length === 0,
       });
       const streamDecisionContext = prefetchedStreamContext.decisionContext;
       const streamFeedbackContext = prefetchedStreamContext.feedbackContext;
@@ -927,7 +1003,7 @@ export function mountStreamRoute(router: Router): void {
         projectContext: project_context,
         documentContext: document_context,
         submissionType: submission_type as SubmissionType | undefined,
-        conversationHistory: conversation_history,
+        conversationHistory: conversationTurns,
         authoringContext: streamOrchestratorAuthoringContext,
         _feedbackContext: streamFeedbackContext,
         _projectIntelligenceProfile: streamProjectProfile,
@@ -981,56 +1057,6 @@ export function mountStreamRoute(router: Router): void {
           message: 'Loading project memory…',
         })}\n\n`
       );
-
-      // Thread resolution (before private memory and server history).
-      //
-      // The id the CLIENT sent is never used as-is. getOrCreateThread resolves
-      // it in the caller's organization and to the caller's own thread, or
-      // mints a fresh one; a colleague's thread id is refused outright. If the
-      // resolution fails for any other reason, `threadId` stays null so that
-      // NO history is loaded from an id nothing has verified — the previous
-      // shape kept the caller-supplied id and read its transcript into the
-      // model context even after persistence had failed.
-      let threadId: string | null = null;
-      let persistenceFailed = false;
-      if (orgId) {
-        try {
-          threadId = await getOrCreateThread(
-            thread_id || null,
-            typeof userId === 'number' || typeof userId === 'string' ? userId : undefined,
-            'ana-ri',
-            Number(orgId),
-            // The program the shell has open (its regulatory_programs UUID), so
-            // the thread can be listed under — and resumed from — that project.
-            programIdForThread(project_id || resolveProjectIdFromBody(req.body))
-          );
-          const userMessageId = await saveMessage(threadId, 'user', message);
-          turnRecorder?.setThread(threadId);
-          turnRecorder?.setMessageIds({ user: userMessageId });
-        } catch (e: any) {
-          if (e instanceof ThreadAccessError) {
-            console.warn('[AnA RI Stream] Refused caller-supplied thread id:', e.code);
-            // Refused before any model ran — still a turn someone attempted,
-            // and recorded as one.
-            turnRecorder?.warn('Refused: the conversation named in this turn belongs to another user.');
-            streamFailed = true;
-            const turnRecord = await fileTurnRecord('failed');
-            res.write(
-              `data: ${JSON.stringify({
-                type: 'error',
-                code: e.code,
-                error: 'That conversation belongs to another user.',
-                turnRecord,
-              })}\n\n`
-            );
-            res.end();
-            return;
-          }
-          console.error('[AnA RI Stream] Thread persistence failed:', e?.message);
-          persistenceFailed = true;
-          threadId = null;
-        }
-      }
 
       // Intelligence + memory + enrichment — run in PARALLEL for speed
       const streamContextStart = Date.now();
@@ -1117,7 +1143,8 @@ export function mountStreamRoute(router: Router): void {
         turnContextSources.push({ source: 'context', content: projectDataGiven.join('\n\n') });
       }
 
-      // Build messages — prefer server thread history, fall back to client
+      // A named conversation uses its stored transcript, including an empty
+      // one. Client history is accepted only when starting without a thread.
       const messages: GatewayMessage[] = [
         { role: 'system', content: streamStablePrefix, cacheControl: true },
       ];
@@ -1125,61 +1152,21 @@ export function mountStreamRoute(router: Router): void {
         messages.push({ role: 'system', content: streamVolatileSuffix });
       }
 
-      let streamHistoryLoaded = false;
-      /* How many turns preceded this one. It decides whether this is the START
-         of a session, which is the only point the rehydration below fires. */
-      let streamPriorTurns = 0;
-      /* The tools earlier turns ran successfully, offered again so a follow-up
-         ("draft it", "and for the EU?") keeps the tool it builds on (TP-RL-3,
-         tool-selection.ts). Only the thread's own history records them. */
-      let carriedTools: string[] = [];
-      if (threadId) {
-        try {
-          const serverHistory = await getThreadMessages(threadId);
-          // Exclude the message we just saved (it's the current user message)
-          const previousMsgs = serverHistory.slice(0, -1);
-          streamPriorTurns = previousMsgs.length;
-          if (previousMsgs.length > 0) {
-            // Opens on a question: after an unanswered turn, the last twenty
-            // messages can start on an answer (services/ana/history-window.ts).
-            for (const msg of recentTurns(previousMsgs, 20)) {
-              messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
-            }
-            streamHistoryLoaded = true;
-            // Tool-trace memory: carry forward a compact summary of the tools AnA
-            // already ran in earlier turns (stored on each assistant message's
-            // metadata) so she reuses prior findings instead of re-running them.
-            carriedTools = carriedToolsFrom(collectTracesFromHistory(previousMsgs));
-            const traceNote = formatTraceForContext(collectTracesFromHistory(previousMsgs));
-            // …except the work of a turn that did not finish. The trace note
-            // says "reuse these findings"; when the last turn was cut short by
-            // the round limit or the repeat guard, this one says its findings
-            // are not complete, so she neither presents them as settled nor
-            // starts over when asked to continue. Each is sent only when it
-            // has something to say.
-            const stoppedNote = formatStoppedTurnNote(previousMsgs);
-            messages.push(
-              ...[traceNote, stoppedNote].filter(Boolean).map((content) => ({ role: 'system' as const, content })),
-            );
-          }
-        } catch {
-          /* fall through to client history */
-        }
+      const streamPriorTurns = conversationTurns.length;
+      for (const msg of conversationTurns) {
+        messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
       }
-      // Client history carries role and content, not the metadata a stop is
-      // stored in: a turn served from it gets neither the trace note nor the
-      // stopped-turn note, so a capped predecessor is not named here (a known
-      // limit, handed on with row 74 — the client does not send it).
-      if (!streamHistoryLoaded && conversation_history && Array.isArray(conversation_history)) {
-        const MAX_HISTORY_MSGS = 20;
-        const MAX_MSG_LENGTH = 50000;
-        const clientTurns = conversation_history
-          .slice(-MAX_HISTORY_MSGS)
-          .filter((msg: any) => typeof msg?.content === 'string' && msg.content.length <= MAX_MSG_LENGTH);
-        for (const msg of recentTurns(clientTurns, MAX_HISTORY_MSGS)) {
-          messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
-          streamPriorTurns += 1;
-        }
+      // Only stored metadata can attest to tools previously run or a turn
+      // stopped early. Browser turns carry no such provenance.
+      let carriedTools: string[] = [];
+      if (previousMsgs.length > 0) {
+        const traces = collectTracesFromHistory(previousMsgs);
+        carriedTools = carriedToolsFrom(traces);
+        const traceNote = formatTraceForContext(traces);
+        const stoppedNote = formatStoppedTurnNote(previousMsgs);
+        messages.push(
+          ...[traceNote, stoppedNote].filter(Boolean).map((content) => ({ role: 'system' as const, content })),
+        );
       }
 
       /* Session-start rehydration — the same block POST /api/chat/send-message

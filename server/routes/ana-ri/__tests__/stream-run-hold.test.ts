@@ -272,13 +272,14 @@ describe('the tool context names the conversation, the turn and the model (PF-10
     });
   });
 
-  it("when the thread could not be persisted, the held call names no conversation — never the client's thread id", async () => {
+  it("when the thread could not be opened, no model call or governed approval proceeds", async () => {
     h.state.statuses = ['running'];
     h.state.mintFails = true;
     h.state.script = [[{ id: 'draft_2', name: 'draft_authoring_document', input: { title: 'Clinical overview' } }], 'Done.'];
-    await turn({ thread_id: 'ana-ri_supplied_by_the_client' });
-    expect(h.state.approvals).toHaveLength(1);
-    expect(h.state.approvals[0].toolContext).toMatchObject({ threadId: null, turnId: 'run_test' });
+    const events = await turn({ thread_id: 'ana-ri_supplied_by_the_client' });
+    expect(events).toContainEqual(expect.objectContaining({ type: 'error', code: 'THREAD_UNAVAILABLE' }));
+    expect(h.state.approvals).toHaveLength(0);
+    expect(h.state.gatewayCalls).toBe(0);
   });
 });
 
