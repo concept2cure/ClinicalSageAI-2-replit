@@ -1,0 +1,35 @@
+[
+  {
+    "gate": "ci:untracked-imports",
+    "exit": 0,
+    "output": "[ci:untracked-imports] OK \u2014 every relative import in 4 file(s) resolves to a tracked file.\n"
+  },
+  {
+    "gate": "ci:pushed-lint-errors",
+    "exit": 0,
+    "output": "[ci:pushed-lint-errors] OK \u2014 no ESLint errors in 4 changed file(s) against origin/concept2cure-v2.\n"
+  },
+  {
+    "gate": "ci:pushed-lint-warnings",
+    "exit": 1,
+    "output": "[ci:eslint-warning-ratchet] --since 8a389e4e5dd5413515350233d11bb4387bfa1e3b (8a389e4e5) -- 4 lintable file(s) changed; linting both versions of each...\n\n    +1  server/services/lumen-context/intelligence-prefix.ts  (1 -> 2)\n         server/services/lumen-context/intelligence-prefix.ts:79:8  max-lines-per-function  Async function 'getIntelligencePrefix' has too many lines (122). Maximum allowed is 100.\n\n[ci:eslint-warning-ratchet] net +1 warning(s) across the files changed since 8a389e4e5dd5413515350233d11bb4387bfa1e3b.\n  Those lines are what the ratchet is refusing. Fix them -- do not regenerate\n  the baseline to make room.\n\n[ci:eslint-warning-ratchet] FAIL -- the changed files gained 1 warning(s) (listed above).\n"
+  },
+  {
+    "gate": "ci:untracked-imports",
+    "attempt": "after extracting deadline helper",
+    "exit": 0,
+    "output": "[ci:untracked-imports] OK \u2014 every relative import in 4 file(s) resolves to a tracked file.\n"
+  },
+  {
+    "gate": "ci:pushed-lint-errors",
+    "attempt": "after extracting deadline helper",
+    "exit": 0,
+    "output": "[ci:pushed-lint-errors] OK \u2014 no ESLint errors in 4 changed file(s) against origin/concept2cure-v2.\n"
+  },
+  {
+    "gate": "ci:pushed-lint-warnings",
+    "attempt": "after extracting deadline helper",
+    "exit": 0,
+    "output": "[ci:eslint-warning-ratchet] --since 8a389e4e5dd5413515350233d11bb4387bfa1e3b (8a389e4e5) -- 4 lintable file(s) changed; linting both versions of each...\n[ci:eslint-warning-ratchet] no file changed its warning count since 8a389e4e5dd5413515350233d11bb4387bfa1e3b.\n"
+  }
+]

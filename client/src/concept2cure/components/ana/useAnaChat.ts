@@ -29,6 +29,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getAuthHeaders } from '../../../utils/authToken';
+import { errorCodeOf, serverMessage } from '@/lib/queryClient';
 import {
   extractPendingSignoffs,
   pendingSignoffFromApproval,
@@ -413,8 +414,8 @@ export function hydrateToolTrace(
  * sent people to check a connection that was fine.
  */
 function streamFailure(event: { error?: unknown; code?: unknown; status?: unknown }) {
-  const failure = new Error(typeof event.error === 'string' ? event.error : 'Stream error') as Error & { code?: string; status?: number };
-  if (typeof event.code === 'string') failure.code = event.code;
+  const failure = new Error(serverMessage(event) ?? 'Stream error') as Error & { code?: string; status?: number };
+  failure.code = errorCodeOf(event);
   if (typeof event.status === 'number') failure.status = event.status;
   return failure;
 }

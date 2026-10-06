@@ -9,6 +9,8 @@ describe('structured streaming refusals', () => {
     [{ code: 'THREAD_FORBIDDEN' }, 'another user'],
     [{ code: 'GATEWAY_UNAVAILABLE' }, 'No AI provider is configured'],
     [{ code: 'WEEKLY_LIMIT_EXCEEDED' }, 'weekly limit'],
+    [{ error: { code: 'THREAD_FORBIDDEN', message: 'Refused' } }, 'another user'],
+    [{ error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'Refused' } }, 'weekly limit'],
     [{ status: 401 }, 'Sign in again'],
     [{ status: 429 }, 'Too many AnA requests'],
   ])('retains recovery details for %o', async (details, expected) => {

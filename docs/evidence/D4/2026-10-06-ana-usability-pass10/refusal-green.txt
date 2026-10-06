@@ -1,0 +1,54 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > gives a sign-in recovery for HTTP 401 without blaming the network 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > gives an access recovery for HTTP 403 without blaming the network 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > does not invent a cause for an unexplained failure 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > does not invent a cause for an unexplained failure 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > keeps the specific explanation for { status: 503, code: 'GATEWAY_UNAVAILABLE' } 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > keeps the specific explanation for { status: 429, code: 'WEEKLY_LIMIT_EXCEEDED' } 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > keeps the specific explanation for { status: 429 } 0ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'THREAD_FORBIDDEN' }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'GATEWAY_UNAVAILABLE' }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'WEEKLY_LIMIT_EXCEEDED' }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'THREAD_FORBIDDEN', message: 'Refused' } }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'Refused' } }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 401 }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 429 }
+[useAnaChat] stream failed: Refused
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'THREAD_FORBIDDEN' } 18ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'GATEWAY_UNAVAILABLE' } 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'WEEKLY_LIMIT_EXCEEDED' } 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'THREAD_FORBIDDEN', message: 'Refused' } } 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'Refused' } } 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 401 } 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 429 } 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > times out a request that never receives response headers and releases the composer 23ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > bounds a stalled server cancellation so Stop and a replacement demo can finish 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > a delayed cancellation for an ended turn never aborts a replacement demo 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores headers that arrive after a reset 19ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores remaining events in a chunk when a drive callback resets the conversation 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores queued events after a conversation reset 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores queued events after a conversation switch 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > turn identities > gives two turns in the same millisecond distinct message identities 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > turn identities > looks up the interrupted turn record using its own run, even after a new run starts 6ms
+
+ Test Files  4 passed (4)
+      Tests  23 passed (23)
+   Start at  22:57:02
+   Duration  1.12s (transform 785ms, setup 378ms, import 1.26s, tests 127ms, environment 2.04s)
