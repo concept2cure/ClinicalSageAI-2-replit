@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-06T21:33:45.563Z",
+  "generatedAt": "2026-10-06T21:43:00.080Z",
   "git": {
-    "sha": "5717e69d4d7564b589d0969ad5a14a435b7b862b",
+    "sha": "4147048613991d8aaed094baae4156936f1bcdad",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2071,7 +2071,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 272843
+        "bytes": 272997
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2273,7 +2273,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5822
+        "lines": 5827
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2645,7 +2645,7 @@
       },
       {
         "file": "server/routes/taskManagement.routes.ts",
-        "lines": 1668
+        "lines": 1672
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
