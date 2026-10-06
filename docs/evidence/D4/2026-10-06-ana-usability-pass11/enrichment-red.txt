@@ -1,0 +1,117 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when summary stalls 12ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when workflow stalls 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when query stalls 2ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > starts project, workflow and requested claims reads before the project summary resolves 2ms
+   → expected "vi.fn()" to be called with arguments: [ 42, 'IND', 7 ]
+
+Number of calls: 0
+
+ × server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > preserves slash rewriting and static claim guidance when the requested read times out 2ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > keeps an availability notice even under the optional composer budget 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > does not confuse healthy empty results with unavailable context 4ms
+   → expected undefined to deeply equal []
+ × server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > does not change the returned snapshot when a query resolves after its deadline 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > keeps projectless guidance without starting scoped reads 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when summary stalls
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when workflow stalls
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when query stalls
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts:31:21
+     29|     const { settled, pending } = observe();
+     30|     await vi.advanceTimersByTimeAsync(3000);
+     31|     expect(settled).toHaveBeenCalledTimes(1);
+       |                     ^
+     32|     await pending;
+     33|     const result = settled.mock.calls[0][0];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > starts project, workflow and requested claims reads before the project summary resolves
+AssertionError: expected "vi.fn()" to be called with arguments: [ 42, 'IND', 7 ]
+
+Number of calls: 0
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts:48:24
+     46|     await vi.advanceTimersByTimeAsync(0);
+     47|     expect(h.summary).toHaveBeenCalledWith(42, 7);
+     48|     expect(h.workflow).toHaveBeenCalledWith(42, 'IND', 7);
+       |                        ^
+     49|     expect(h.query).toHaveBeenCalled();
+     50|     expect(h.query.mock.calls[0][1]).toEqual([42, 7, 8]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > preserves slash rewriting and static claim guidance when the requested read times out
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts:61:21
+     59|     const { settled, pending } = observe({ ...INPUT, message: '/claims…
+     60|     await vi.advanceTimersByTimeAsync(3000);
+     61|     expect(settled).toHaveBeenCalledTimes(1);
+       |                     ^
+     62|     await pending;
+     63|     const result = settled.mock.calls[0][0];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > keeps an availability notice even under the optional composer budget
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts:74:21
+     72|     const pending = enrichContextForChat({ ...INPUT, composeTokenBudge…
+     73|     await vi.advanceTimersByTimeAsync(3000);
+     74|     expect(settled).toHaveBeenCalledTimes(1);
+       |                     ^
+     75|     await pending;
+     76|     expect(settled.mock.calls[0][0].block).toContain('Enrichment conte…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > does not confuse healthy empty results with unavailable context
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts:84:55
+     82|     h.summary.mockResolvedValue(null); h.workflow.mockResolvedValue(''…
+     83|     const result = await enrichContextForChat(INPUT);
+     84|     expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+       |                                                       ^
+     85|     expect(result.block).not.toContain('Enrichment context unavailable…
+     86|     expect(vi.getTimerCount()).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > does not change the returned snapshot when a query resolves after its deadline
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts:94:21
+     92|     const { settled, pending } = observe();
+     93|     await vi.advanceTimersByTimeAsync(3000);
+     94|     expect(settled).toHaveBeenCalledTimes(1);
+       |                     ^
+     95|     await pending;
+     96|     const result = settled.mock.calls[0][0];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 1 passed (9)
+   Start at  23:22:04
+   Duration  4.49s (transform 3.03s, setup 69ms, import 4.16s, tests 28ms, environment 0ms)

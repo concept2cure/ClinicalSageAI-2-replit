@@ -34,6 +34,7 @@ const h = vi.hoisted(() => {
     guardedInputs: [] as string[],
     encapsulateInput: false,
     prefetch: { unavailableSources: [] as string[], contextAvailabilityBlock: '' },
+    enrichment: { block: '', sources: [] as string[], enrichmentMeta: { unavailableSources: [] as string[] } },
   };
   const pool = {
     query: async () => ({ rows: [], rowCount: 0 }),
@@ -167,7 +168,7 @@ vi.mock('../../../services/memory-context-assembler.js', () => ({
   buildMemoryContextForChat: async () => ({ memoryBlock: '', atoms: [], diagnostics: null }),
 }));
 vi.mock('../../../services/ana-ri/context-enrichment.js', () => ({
-  enrichContextForChat: async () => ({ block: '', sources: [] }),
+  enrichContextForChat: async () => h.state.enrichment,
 }));
 vi.mock('../../../services/chat-thread-helpers.js', () => ({
   getOrCreateThread: async () => 'thread-1',
@@ -228,6 +229,7 @@ beforeEach(() => {
   h.state.guardedInputs = [];
   h.state.encapsulateInput = false;
   h.state.prefetch = { unavailableSources: [], contextAvailabilityBlock: '' };
+  h.state.enrichment = { block: '', sources: [], enrichmentMeta: { unavailableSources: [] } };
 });
 
 /** The stream's frames, parsed. */
@@ -268,6 +270,19 @@ function thread(steps: Array<{ tool: string; status: string }>, question: string
 }
 
 describe('a follow-up keeps the tools its conversation used (TP-RL-3)', () => {
+  it('warns when requested enrichment is unavailable and retains its model availability notice', async () => {
+    h.state.enrichment = {
+      block: '\nEnrichment context unavailable: claims. Do not infer that missing context or unresolved findings do not exist.',
+      sources: [],
+      enrichmentMeta: { unavailableSources: ['claims'] },
+    };
+    const frames = await turn('Review the claims');
+    expect(frames).toContainEqual({ type: 'warning', message: 'Some project context could not be loaded for this reply. Check the relevant records before relying on missing information.' });
+    expect(h.state.gatewayCalls[0].messages.some(m => m.role === 'system' && typeof m.content === 'string' && m.content.includes('Enrichment context unavailable'))).toBe(true);
+    const { body } = h.state.post.turnRecorder.seal('answered');
+    expect(body.warnings).toContain('Some project context could not be loaded for this reply. Check the relevant records before relying on missing information.');
+  });
+
   it('reports unavailable optional context to the person and includes it in the model input', async () => {
     h.state.prefetch = {
       unavailableSources: ['external intelligence'],

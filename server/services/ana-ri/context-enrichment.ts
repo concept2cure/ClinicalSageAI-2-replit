@@ -93,6 +93,8 @@ export interface EnrichmentResult {
     sourcesSucceeded: string[];
     /** Sources that failed or had no data */
     sourcesFailed: string[];
+    /** Failed or deadline-exceeded reads, distinct from healthy empty results. */
+    unavailableSources?: string[];
     /** Whether this was a slash-command-triggered, app-mention-triggered, or natural-language-triggered enrichment */
     triggerType: 'slash_command' | 'app_mention' | 'natural_language' | 'proactive' | 'none';
     /** The detected slash command, if any */
@@ -1050,11 +1052,37 @@ async function enrichWithProjectSummary(projectId: string | number, orgId?: numb
 
     return '\n\n' + parts.join('\n') + '\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.';
   } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
-    return '';
+    // The turn budget handles this failure; an empty profile is a different result.
+    throw e;
   }
 }
 
 // ─── Main enrichment function ────────────────────────────────────────────────
+
+/** Optional narrative enrichment shares one budget; execution policy is separate. */
+function createEnrichmentBudget() {
+  const deadline = Date.now() + 3000;
+  const unavailable = new Set<string>();
+  const read = async (source: string, load: () => Promise<string>): Promise<string> => {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) { unavailable.add(source); return ''; }
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        Promise.resolve().then(load),
+        new Promise<string>(resolve => {
+          timer = setTimeout(() => { unavailable.add(source); resolve(''); }, remaining);
+        }),
+      ]);
+    } catch {
+      unavailable.add(source);
+      return '';
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+  return { read, unavailable };
+}
 
 export async function enrichContextForChat(params: {
   message: string;
@@ -1224,21 +1252,15 @@ export async function enrichContextForChat(params: {
     sources.push('governed-envelope');
   }
 
-  // ── Always inject project intelligence summary when available ──
-  const projectSummary = await enrichWithProjectSummary(projectId, organizationId).catch(() => '');
-  if (projectSummary) {
-    blocks.push(projectSummary);
-    sources.push('project-profile');
-  }
-
-  // ── Always inject workflow status when submission type is known ──
-  if (submissionType) {
-    const workflowCtx = await buildWorkflowContext(projectId, submissionType, organizationId).catch(() => '');
-    if (workflowCtx) {
-      blocks.push(workflowCtx);
-      sources.push('workflow');
-    }
-  }
+  // These reads are independent of the requested enrichment. Start together
+  // and join at composition, preserving their original prompt ordering.
+  const budget = createEnrichmentBudget();
+  const commonContext = Promise.all([
+    budget.read('project-profile', () => enrichWithProjectSummary(projectId, organizationId)),
+    submissionType
+      ? budget.read('workflow', () => buildWorkflowContext(projectId, submissionType, organizationId))
+      : Promise.resolve(''),
+  ]);
 
   // ── Check for slash commands first ──
   const slash = detectSlashCommand(message);
@@ -1359,7 +1381,7 @@ export async function enrichContextForChat(params: {
     const enrichFn = enrichMap[slash.command];
     sourcesAttempted++;
     if (enrichFn) {
-      const block = await enrichFn().catch(() => '');
+      const block = await budget.read(slash.command, enrichFn);
       if (block) {
         blocks.push(block);
         sources.push(slash.command);
@@ -1523,7 +1545,7 @@ export async function enrichContextForChat(params: {
         const fn = appEnrichFnMap[sourceName];
         if (!fn) { sourcesFailed.push(`app-${sourceName}`); return; }
         try {
-          const block = await fn();
+          const block = await budget.read(`app:${appId}/${sourceName}`, fn);
           if (block) {
             blocks.push(block);
             sources.push(`app:${appId}/${sourceName}`);
@@ -1575,7 +1597,7 @@ export async function enrichContextForChat(params: {
         matchedFns.map(async t => {
           sourcesAttempted++;
           try {
-            const block = await t.fn();
+            const block = await budget.read(t.name, t.fn);
             if (block) {
               blocks.push(block);
               sources.push(t.name);
@@ -1682,8 +1704,9 @@ export async function enrichContextForChat(params: {
     }
 
     // ── Proactive enrichment for greetings/help — inject status so AnA can lead ──
+    const greetingCommonContext = await commonContext;
     const isGreeting = /^(hi|hello|hey|good\s*(morning|afternoon|evening)|what.?s up|how are you|help|what can you do)/i.test(message.trim());
-    if (isGreeting && sources.length === 0) {
+    if (isGreeting && sources.length === 0 && !greetingCommonContext.some(Boolean)) {
       triggerType = 'proactive';
       sourcesAttempted += 4;
       // Inject readiness + top recommendation + the license→submission journey +
@@ -1691,10 +1714,10 @@ export async function enrichContextForChat(params: {
       // where their program stands, the next move, and any investigation that
       // finished while they were away — not a bare hello.
       const [readinessBlock, recsBlock, journeyBlock, activityBlock] = await Promise.allSettled([
-        enrichWithReadiness(projectId, organizationId),
-        enrichWithRecommendations(projectId, organizationId),
-        enrichWithClientJourney(organizationId, submissionType),
-        enrichWithAgentActivity(organizationId),
+        budget.read('proactive-readiness', () => enrichWithReadiness(projectId, organizationId)),
+        budget.read('proactive-recommendations', () => enrichWithRecommendations(projectId, organizationId)),
+        budget.read('proactive-client-journey', () => enrichWithClientJourney(organizationId, submissionType)),
+        budget.read('proactive-agent-activity', () => enrichWithAgentActivity(organizationId)),
       ]);
       if (journeyBlock.status === 'fulfilled' && journeyBlock.value) {
         blocks.push(journeyBlock.value);
@@ -1743,6 +1766,12 @@ export async function enrichContextForChat(params: {
     }
   }
 
+  const commonBlocks = await commonContext;
+  const commonEntries = commonBlocks.map((block, i) => ({ block, source: i === 0 ? 'project-profile' : 'workflow' })).filter(entry => entry.block);
+  const commonOffset = canonicalGovernedState ? 1 : 0;
+  blocks.splice(commonOffset, 0, ...commonEntries.map(entry => entry.block));
+  sources.splice(commonOffset, 0, ...commonEntries.map(entry => entry.source));
+
   // ── Role lens — frame the pack guidance for the audience, once, at the end ──
   if (hasRoleLens(userRole) && sources.some(s => ROLE_FRAMEABLE_SOURCES.has(s))) {
     const lensBlock = buildRoleLensBlock(userRole as UserRole);
@@ -1771,6 +1800,13 @@ export async function enrichContextForChat(params: {
     composeTokensUsed = composed.tokensUsed;
   }
 
+  const unavailableSources = [...budget.unavailable].sort();
+  if (unavailableSources.length > 0) {
+    // Availability is an instruction, not evidence or an enrichment success.
+    // It must survive the optional composer trimming substantive source text.
+    composedBlock = `\n## Enrichment context availability\nEnrichment context unavailable: ${unavailableSources.join(', ')}. ` +
+      'Do not infer that missing context or unresolved findings do not exist. Check the relevant records before relying on their absence.\n' + composedBlock;
+  }
   return {
     block: composedBlock,
     sources,
@@ -1778,7 +1814,8 @@ export async function enrichContextForChat(params: {
     enrichmentMeta: {
       sourcesAttempted,
       sourcesSucceeded: [...sources],
-      sourcesFailed,
+      sourcesFailed: [...new Set([...sourcesFailed, ...unavailableSources])],
+      unavailableSources,
       triggerType,
       detectedCommand,
       detectedAppMention: detectedAppMentionId,

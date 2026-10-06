@@ -1003,6 +1003,12 @@ export function mountStreamRoute(router: Router): void {
       ]);
       streamContextMs = Date.now() - streamContextStart;
 
+      if (enrichment.enrichmentMeta?.unavailableSources?.length) {
+        const warning = 'Some project context could not be loaded for this reply. Check the relevant records before relying on missing information.';
+        turnRecorder?.warn(warning);
+        res.write(`data: ${JSON.stringify({ type: 'warning', message: warning })}\n\n`);
+      }
+
       const memoryBlock = memoryResult.memoryBlock;
 
       if (enrichment.sources.length > 0) {
