@@ -1,0 +1,167 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > gives a sign-in recovery for HTTP 401 without blaming the network 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > gives an access recovery for HTTP 403 without blaming the network 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > does not invent a cause for an unexplained failure 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > does not invent a cause for an unexplained failure 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > keeps the specific explanation for { status: 503, code: 'GATEWAY_UNAVAILABLE' } 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > keeps the specific explanation for { status: 429, code: 'WEEKLY_LIMIT_EXCEEDED' } 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > keeps the specific explanation for { status: 429 } 0ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'THREAD_FORBIDDEN' }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'GATEWAY_UNAVAILABLE' }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'WEEKLY_LIMIT_EXCEEDED' }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'THREAD_FORBIDDEN', message: 'Refused' } }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'Refused' } }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 401 }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 429 }
+[useAnaChat] stream failed: Refused
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > times out a request that never receives response headers and releases the composer 30ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > bounds a stalled server cancellation so Stop and a replacement demo can finish 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > a delayed cancellation for an ended turn never aborts a replacement demo 9ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores headers that arrive after a reset 46ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores remaining events in a chunk when a drive callback resets the conversation 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores queued events after a conversation reset 9ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores queued events after a conversation switch 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > turn identities > gives two turns in the same millisecond distinct message identities 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > turn identities > looks up the interrupted turn record using its own run, even after a new run starts 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'THREAD_FORBIDDEN' } 35ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'GATEWAY_UNAVAILABLE' } 14ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'WEEKLY_LIMIT_EXCEEDED' } 8ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'THREAD_FORBIDDEN', message: 'Refused' } } 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'Refused' } } 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 401 } 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 429 } 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > offers recovery only for an interrupted partial: timeout 311ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > does not label an unfinished tool as a network failure when the server reports an error
+[useAnaChat] stream failed: Generation failed
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request
+[useAnaChat] stream failed: Generation failed
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > offers recovery only for an interrupted partial: stop 130ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > does not label an unfinished tool as a network failure when the server reports an error 36ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > marks partial text incomplete when the stream closes without post_done
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > keeps the existing repeated-step explanation and offers no Continue
+[useAnaChat] stream failed: Finishing failed
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request 123ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > marks partial text incomplete when the stream closes without post_done 51ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request
+[useAnaChat] stream failed: Generation failed
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > keeps the existing repeated-step explanation and offers no Continue 41ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > marks partial text incomplete when the stream closes without post_done
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > keeps the existing repeated-step explanation and offers no Continue
+[useAnaChat] stream failed: Finishing failed
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request 113ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > marks partial text incomplete when the stream closes without post_done 51ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 401
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 403
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 429
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > keeps the existing repeated-step explanation and offers no Continue 56ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue 40ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue 42ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 401
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue 43ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > leaves a completed text response without an interruption note or Continue 57ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 403
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 429
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery guidance > shows safe recovery guidance after partial text for { status: 401 }
+[useAnaChat] stream failed: internal provider details
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue 40ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue 31ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue 31ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > leaves a completed text response without an interruption note or Continue 33ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery guidance > shows safe recovery guidance after partial text for { status: 403 }
+[useAnaChat] stream failed: internal provider details
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery guidance > shows safe recovery guidance after partial text for { status: 429 }
+[useAnaChat] stream failed: internal provider details
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery guidance > shows safe recovery guidance after partial text for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'internal limiter details' } }
+[useAnaChat] stream failed: internal limiter details
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery guidance > shows safe recovery guidance after partial text for { code: 'GATEWAY_UNAVAILABLE' }
+[useAnaChat] stream failed: internal provider details
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery guidance > shows safe recovery guidance after partial text for { code: 'THREAD_FORBIDDEN' }
+[useAnaChat] stream failed: internal provider details
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery guidance > shows safe recovery guidance after partial text for { status: 401 } 22ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery guidance > shows safe recovery guidance after partial text for { status: 403 } 17ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery guidance > shows safe recovery guidance after partial text for { status: 429 } 18ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery guidance > shows safe recovery guidance after partial text for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'internal limiter details' } } 20ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery guidance > shows safe recovery guidance after partial text for { code: 'GATEWAY_UNAVAILABLE' } 23ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery guidance > shows safe recovery guidance after partial text for {}
+[useAnaChat] stream failed: internal provider details
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 401 }
+[useAnaChat] stream failed: internal provider details
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 403 }
+[useAnaChat] stream failed: internal provider details
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 429 }
+[useAnaChat] stream failed: internal provider details
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'internal limiter details' } }
+[useAnaChat] stream failed: internal limiter details
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { code: 'GATEWAY_UNAVAILABLE' }
+[useAnaChat] stream failed: internal provider details
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery guidance > shows safe recovery guidance after partial text for { code: 'THREAD_FORBIDDEN' } 23ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery guidance > shows safe recovery guidance after partial text for {} 18ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 401 } 20ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 403 } 21ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 429 } 18ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'internal limiter details' } } 20ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { code: 'THREAD_FORBIDDEN' }
+[useAnaChat] stream failed: internal provider details
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for {}
+[useAnaChat] stream failed: internal provider details
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { code: 'GATEWAY_UNAVAILABLE' } 17ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { code: 'THREAD_FORBIDDEN' } 18ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for {} 25ms
+
+ Test Files  5 passed (5)
+      Tests  54 passed (54)
+   Start at  02:43:09
+   Duration  6.21s (transform 3.71s, setup 828ms, import 5.78s, tests 1.74s, environment 3.59s)
+

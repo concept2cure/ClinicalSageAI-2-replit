@@ -186,3 +186,31 @@ describe.each<HostKind>(['rail', 'conversation'])('%s responses without partial 
     expect(continueButton()).toBeNull();
   });
 });
+
+
+describe.each<HostKind>(['rail', 'conversation'])('%s partial response recovery guidance', kind => {
+  it.each([
+    [{ status: 401 }, 'Sign in again before asking AnA to continue.'],
+    [{ status: 403 }, 'Ask an administrator to review your access before asking AnA to continue.'],
+    [{ status: 429 }, 'Wait a moment before asking AnA to continue.'],
+    [{ error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'internal limiter details' } }, 'An administrator can review the weekly limit before you ask AnA to continue.'],
+    [{ code: 'GATEWAY_UNAVAILABLE' }, 'An administrator needs to configure an AI provider before AnA can continue.'],
+    [{ code: 'THREAD_FORBIDDEN' }, 'Select your own conversation or start a new one before asking again.'],
+    [{}, 'Review the partial text before asking AnA to try again.'],
+  ])('shows safe recovery guidance after partial text for %o', async (details, recovery) => {
+    responses.push(response([
+      { type: 'warning', message: 'Some project context is unavailable.' },
+      { type: 'text', content: PARTIAL },
+      { type: 'error', error: 'internal provider details', ...details, turnRecord: recorded },
+    ]));
+    render(<Host kind={kind} />);
+    await act(async () => { await chat.send('Compare the endpoints'); });
+    expect(chat.messages.at(-1)?.text).toBe(PARTIAL);
+    expect(chat.messages.at(-1)?.warnings).toContain(recovery);
+    expect(screen.getByText(recovery).closest('.ana-msg-warnings')).not.toBeNull();
+    expect(screen.getByText('Some project context is unavailable.')).not.toBeNull();
+    expect(screen.queryByText(/internal.*details/)).toBeNull();
+    expect(chat.messages.at(-1)?.turnRecord).toEqual(recorded);
+    expect(requests()).toHaveLength(1);
+  });
+});

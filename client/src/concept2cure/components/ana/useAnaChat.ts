@@ -443,6 +443,24 @@ export function streamRefusalText(err: unknown): string {
   return "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved.";
 }
 
+/** Recovery beside a partial draft must not describe an already-started reply as unsent. */
+function partialReplyRecoveryText(err: unknown): string {
+  const failure = err as { code?: string; status?: number } | undefined;
+  if (failure?.code === 'THREAD_FORBIDDEN') {
+    return 'Select your own conversation or start a new one before asking again.';
+  }
+  if (failure?.status === 401) return 'Sign in again before asking AnA to continue.';
+  if (failure?.status === 403) return 'Ask an administrator to review your access before asking AnA to continue.';
+  if (failure?.code === 'GATEWAY_UNAVAILABLE') {
+    return 'An administrator needs to configure an AI provider before AnA can continue.';
+  }
+  if (failure?.code === 'WEEKLY_LIMIT_EXCEEDED') {
+    return 'An administrator can review the weekly limit before you ask AnA to continue.';
+  }
+  if (failure?.status === 429) return 'Wait a moment before asking AnA to continue.';
+  return 'Review the partial text before asking AnA to try again.';
+}
+
 export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const [messages, setMessages] = useState<AnaChatMessage[]>([]);
   /* The transcript `send` forwards as `conversation_history`, read at call
@@ -1833,6 +1851,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 completedAt: Date.now(),
                 interrupted: true,
                 interruptedWithPartialResponse: streamedText.trim().length > 0,
+                warnings: streamedText.trim().length > 0
+                  ? [...new Set([...(m.warnings || []), partialReplyRecoveryText(err)])]
+                  : m.warnings,
                 progress: closeProgress(m.progress, 'stopped', Date.now()),
                 toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — the turn was interrupted.', Date.now()),
                 turnRecord: m.turnRecord ?? { status: 'unconfirmed' },
