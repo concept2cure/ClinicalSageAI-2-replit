@@ -450,7 +450,7 @@
     "@hocuspocus/server": "3.4.4",
     "@hookform/resolvers": "5.9.1",
     "@jridgewell/trace-mapping": "^0.3.25",
-    "@modelcontextprotocol/sdk": "1.30.0",
+    "@modelcontextprotocol/sdk": "1.32.1",
     "@napi-rs/canvas": "0.1.80",
     "@neondatabase/serverless": "^1.1.0",
     "@node-saml/node-saml": "5.1.0",
