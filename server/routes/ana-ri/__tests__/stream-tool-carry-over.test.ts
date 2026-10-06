@@ -78,7 +78,7 @@ const h = vi.hoisted(() => {
     ...Array.from({ length: 60 }, (_, i) => `filler_${i}`),
   ].map((name) => ({ name, description: name.startsWith('filler_') ? 'unrelated utility' : name, input_schema: { type: 'object', properties: {} } }));
   const prefix = vi.fn(async () => '');
-  return { state, pool, gateway, handlers, toolset, prefix };
+  return { state, pool, gateway, handlers, toolset, prefix, thread: vi.fn(), memory: vi.fn() };
 });
 
 vi.mock('../../../db.js', () => ({ getPool: () => h.pool, pool: h.pool, db: {} }));
@@ -172,13 +172,13 @@ vi.mock('../../../services/lumen-context-builder.js', () => ({
   buildSectionSpecificPrompt: () => '',
 }));
 vi.mock('../../../services/memory-context-assembler.js', () => ({
-  buildMemoryContextForChat: async () => ({ memoryBlock: '', atoms: [], diagnostics: null }),
+  buildMemoryContextForChat: h.memory,
 }));
 vi.mock('../../../services/ana-ri/context-enrichment.js', () => ({
   enrichContextForChat: async () => h.state.enrichment,
 }));
 vi.mock('../../../services/chat-thread-helpers.js', () => ({
-  getOrCreateThread: async () => 'thread-1',
+  getOrCreateThread: h.thread,
   getThreadMessages: async () => h.state.history,
   saveChatMessage: async () => {},
   programIdForThread: () => null,
@@ -240,6 +240,8 @@ beforeEach(() => {
   h.state.prefetchWait = null;
   h.state.onPrefetch = null;
   h.prefix.mockReset().mockResolvedValue('');
+  h.thread.mockReset().mockResolvedValue('thread-1');
+  h.memory.mockReset().mockImplementation(async ({ threadId }) => ({ memoryBlock: threadId === 'secret' ? 'PRIVATE SUMMARY' : '', atoms: [], diagnostics: null }));
 });
 
 /** The stream's frames, parsed. */
@@ -374,5 +376,27 @@ describe('a follow-up keeps the tools its conversation used (TP-RL-3)', () => {
     h.state.history = [{ role: 'user', content: 'and for the EU?' }];
     await turn('and for the EU?');
     expect(h.state.gatewayCalls[0].tools).toEqual(['list_platform_commands', 'execute_platform_command', 'search_literature']);
+  });
+});
+
+
+describe('stream conversation memory access', () => {
+  it('reads memory only with the resolved thread ID', async () => {
+    await turn('Review this', 'thorough', { thread_id: 'secret' });
+    expect(h.memory).toHaveBeenCalledWith(expect.objectContaining({ threadId: 'thread-1' }));
+  });
+  it('does not read caller thread memory after persistence fails', async () => {
+    h.thread.mockRejectedValue(new Error('database unavailable'));
+    await turn('Review this', 'thorough', { thread_id: 'secret' });
+    expect(h.memory).toHaveBeenCalledWith(expect.objectContaining({ threadId: '' }));
+    expect(JSON.stringify(h.state.gatewayCalls)).not.toContain('PRIVATE SUMMARY');
+  });
+  it('refuses foreign-thread access before memory or the model runs', async () => {
+    const { ThreadAccessError } = await import('../../../services/chat-thread-helpers.js');
+    h.thread.mockRejectedValue(new ThreadAccessError('THREAD_FORBIDDEN', 'secret'));
+    const frames = await turn('Review this', 'thorough', { thread_id: 'secret' });
+    expect(frames.some(frame => frame.type === 'error')).toBe(true);
+    expect(h.memory).not.toHaveBeenCalled();
+    expect(h.state.gatewayCalls).toHaveLength(0);
   });
 });

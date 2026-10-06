@@ -401,6 +401,11 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   // failure handler immediately so an early rejection is always handled.
   const intelligencePrefixPromise = getIntelligencePrefix(numericOrgId ?? undefined, projectId).catch(() => '');
 
+  // Private conversation memory and history share one caller-scoped access check.
+  const accessibleThreadPromise = thread_id
+    ? resolveAccessibleThread(thread_id, numericOrgId, userId).catch(() => null)
+    : Promise.resolve(null);
+
   const prefetchedContext = await prefetchRouteIntelligenceContext({
     projectId,
     organizationId: numericOrgId,
@@ -451,14 +456,14 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   // Intelligence prefix + memory + enrichment (parallel)
   const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
     intelligencePrefixPromise,
-    buildMemoryContextForChat({
-      threadId: thread_id || undefined,
+    accessibleThreadPromise.then(accessible => buildMemoryContextForChat({
+      threadId: accessible?.id ?? '',
       organizationId: numericOrgId ?? undefined,
       projectId: projectId != null ? Number(projectId) : undefined,
       query: message,
       limitPerLayer: 4,
       maxChars: 3500,
-    }).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null })),
+    })).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null })),
     enrichContextForChat({
       message,
       projectId,
@@ -589,7 +594,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   let historyLoaded = false;
   if (thread_id) {
     try {
-      const accessible = await resolveAccessibleThread(thread_id, numericOrgId, userId);
+      const accessible = await accessibleThreadPromise;
       const serverHistory = accessible ? await getThreadMessages(accessible.id) : [];
       if (serverHistory.length > 0) {
         for (const msg of serverHistory.slice(-20)) {

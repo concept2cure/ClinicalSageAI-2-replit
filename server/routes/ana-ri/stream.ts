@@ -979,12 +979,62 @@ export function mountStreamRoute(router: Router): void {
         })}\n\n`
       );
 
+      // Thread resolution (before private memory and server history).
+      //
+      // The id the CLIENT sent is never used as-is. getOrCreateThread resolves
+      // it in the caller's organization and to the caller's own thread, or
+      // mints a fresh one; a colleague's thread id is refused outright. If the
+      // resolution fails for any other reason, `threadId` stays null so that
+      // NO history is loaded from an id nothing has verified — the previous
+      // shape kept the caller-supplied id and read its transcript into the
+      // model context even after persistence had failed.
+      let threadId: string | null = null;
+      let persistenceFailed = false;
+      if (orgId) {
+        try {
+          threadId = await getOrCreateThread(
+            thread_id || null,
+            typeof userId === 'number' || typeof userId === 'string' ? userId : undefined,
+            'ana-ri',
+            Number(orgId),
+            // The program the shell has open (its regulatory_programs UUID), so
+            // the thread can be listed under — and resumed from — that project.
+            programIdForThread(project_id || resolveProjectIdFromBody(req.body))
+          );
+          const userMessageId = await saveMessage(threadId, 'user', message);
+          turnRecorder?.setThread(threadId);
+          turnRecorder?.setMessageIds({ user: userMessageId });
+        } catch (e: any) {
+          if (e instanceof ThreadAccessError) {
+            console.warn('[AnA RI Stream] Refused caller-supplied thread id:', e.code);
+            // Refused before any model ran — still a turn someone attempted,
+            // and recorded as one.
+            turnRecorder?.warn('Refused: the conversation named in this turn belongs to another user.');
+            streamFailed = true;
+            const turnRecord = await fileTurnRecord('failed');
+            res.write(
+              `data: ${JSON.stringify({
+                type: 'error',
+                code: e.code,
+                error: 'That conversation belongs to another user.',
+                turnRecord,
+              })}\n\n`
+            );
+            res.end();
+            return;
+          }
+          console.error('[AnA RI Stream] Thread persistence failed:', e?.message);
+          persistenceFailed = true;
+          threadId = null;
+        }
+      }
+
       // Intelligence + memory + enrichment — run in PARALLEL for speed
       const streamContextStart = Date.now();
       const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
         intelligencePrefixPromise,
         buildMemoryContextForChat({
-          threadId: thread_id || undefined,
+          threadId: threadId || '',
           organizationId: orgId ? Number(orgId) : undefined,
           projectId: streamProjectId || undefined,
           query: message,
@@ -1062,56 +1112,6 @@ export function mountStreamRoute(router: Router): void {
       ].filter((t) => typeof t === 'string' && t.trim().length > 0);
       if (projectDataGiven.length > 0) {
         turnContextSources.push({ source: 'context', content: projectDataGiven.join('\n\n') });
-      }
-
-      // Thread resolution (before message building so we can load server history).
-      //
-      // The id the CLIENT sent is never used as-is. getOrCreateThread resolves
-      // it in the caller's organization and to the caller's own thread, or
-      // mints a fresh one; a colleague's thread id is refused outright. If the
-      // resolution fails for any other reason, `threadId` stays null so that
-      // NO history is loaded from an id nothing has verified — the previous
-      // shape kept the caller-supplied id and read its transcript into the
-      // model context even after persistence had failed.
-      let threadId: string | null = null;
-      let persistenceFailed = false;
-      if (orgId) {
-        try {
-          threadId = await getOrCreateThread(
-            thread_id || null,
-            typeof userId === 'number' || typeof userId === 'string' ? userId : undefined,
-            'ana-ri',
-            Number(orgId),
-            // The program the shell has open (its regulatory_programs UUID), so
-            // the thread can be listed under — and resumed from — that project.
-            programIdForThread(project_id || resolveProjectIdFromBody(req.body))
-          );
-          const userMessageId = await saveMessage(threadId, 'user', message);
-          turnRecorder?.setThread(threadId);
-          turnRecorder?.setMessageIds({ user: userMessageId });
-        } catch (e: any) {
-          if (e instanceof ThreadAccessError) {
-            console.warn('[AnA RI Stream] Refused caller-supplied thread id:', e.code);
-            // Refused before any model ran — still a turn someone attempted,
-            // and recorded as one.
-            turnRecorder?.warn('Refused: the conversation named in this turn belongs to another user.');
-            streamFailed = true;
-            const turnRecord = await fileTurnRecord('failed');
-            res.write(
-              `data: ${JSON.stringify({
-                type: 'error',
-                code: e.code,
-                error: 'That conversation belongs to another user.',
-                turnRecord,
-              })}\n\n`
-            );
-            res.end();
-            return;
-          }
-          console.error('[AnA RI Stream] Thread persistence failed:', e?.message);
-          persistenceFailed = true;
-          threadId = null;
-        }
       }
 
       // Build messages — prefer server thread history, fall back to client
