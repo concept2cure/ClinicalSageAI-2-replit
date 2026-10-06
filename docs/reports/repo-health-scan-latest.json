@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-06T07:38:39.476Z",
+  "generatedAt": "2026-10-06T14:18:34.632Z",
   "git": {
-    "sha": "49866dec76897d860e4cf87d88902e17d2737c92",
+    "sha": "b7984438bc472348b5ed2958f8fd101c97d5a666",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2082,7 +2082,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "bytes": 184207
+        "bytes": 184649
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
@@ -2276,7 +2276,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "lines": 5518
+        "lines": 5527
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2607,16 +2607,16 @@
         "lines": 1787
       },
       {
+        "file": "server/services/ana/submission-chat-handler.ts",
+        "lines": 1780
+      },
+      {
         "file": "server/services/cmc-write-through.ts",
         "lines": 1773
       },
       {
         "file": "server/routes/submissions.ts",
         "lines": 1771
-      },
-      {
-        "file": "server/services/ana/submission-chat-handler.ts",
-        "lines": 1756
       },
       {
         "file": "tests/services/ana-biostats.test.ts",
