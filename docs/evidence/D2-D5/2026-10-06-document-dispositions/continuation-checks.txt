@@ -12,3 +12,21 @@ Production build (before neighbor-scope tightening)
 (!) Some chunks are larger than 500 kB after minification. Consider:
 ✓ built in 14.83s
 ✅ Server build complete → dist/index.js
+
+Final RAG scope/revalidation rerun (after tightening)
+ Test Files  3 passed (3)
+      Tests  21 passed (21)
+   Duration  5.94s (transform 1.12s, setup 101ms, import 3.33s, tests 2.00s, environment 0ms)
+
+Declared MCP issuer Node runner: npm run test:mcp-sdk-issuer
+ℹ tests 2
+ℹ pass 2
+ℹ fail 0
+ℹ duration_ms 181.431147
+
+Final production build (after tightening)
+(!) Some chunks are larger than 500 kB after minification. Consider:
+✓ built in 14.35s
+✅ Server build complete → dist/index.js
+
+Final Semgrep 1.177.0: p/default + p/ci, --metrics=off --error --timeout=30; 5 explicit changed production targets, 210 rules, 0 findings, 0 errors, ~100% parsed lines, exit 0. New runtime-role test independently scanned: 1 target, 210 rules, 0 findings/errors, exit 0.
