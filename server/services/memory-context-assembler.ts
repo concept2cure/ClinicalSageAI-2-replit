@@ -19,32 +19,37 @@ import type { ClientMemoryEntry, ProjectMemoryEntry } from 'shared/schema';
  * Race a promise against a timeout. If the promise doesn't resolve within `ms`
  * milliseconds the fallback value is returned instead, preventing indefinite
  * hangs when the embedding service or vector DB is slow/unreachable.
- * The `onTimeout` callback lets callers surface timeouts in diagnostics
- * instead of eating them silently.
+ * Clear settled timers so a successful read cannot later log a false timeout.
  */
-function withTimeout<T>(
+async function withTimeout<T>(
   promise: Promise<T>,
   ms: number,
   fallback: T,
-  onTimeout?: (ms: number) => void
+  label: string
 ): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>(resolve =>
-      setTimeout(() => {
-        console.warn(`[memory-context] Semantic search timed out after ${ms}ms, using fallback`);
-        onTimeout?.(ms);
-        resolve(fallback);
-      }, ms)
-    ),
-  ]);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>(resolve => {
+        timer = setTimeout(() => {
+          console.warn(`[memory-context] ${label} timed out after ${ms}ms`);
+          resolve(fallback);
+        }, ms);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
 }
 
 /**
- * Per-layer deadline for semantic memory retrieval. Originally 10s, which
+ * Per-read deadline for memory retrieval. Originally 10s for semantic reads, which
  * meant cold vector-DB requests silently ate most of the context-assembly
  * budget and returned zero atoms with no signal to the caller. 3s is still
- * generous for a healthy embedding path and fails fast when it isn't.
+ * generous for a healthy embedding path and fails fast when it isn't. The
+ * opt-in working-memory semantic path can use two deadlines: semantic first,
+ * then recency fallback. Default recency recall has just one deadline.
  */
 const MEMORY_LAYER_TIMEOUT_MS = 3000;
 
@@ -114,7 +119,7 @@ export interface MemoryAssemblyDiagnostics {
    *   - 'none'              no summary recalled at all
    */
   workingMemoryMode?: 'semantic' | 'recency_fallback' | 'recency' | 'none';
-  /** Wall-clock milliseconds spent in semantic search (parallel across layers). */
+  /** Wall-clock milliseconds spent in client/project semantic search in parallel. */
   semanticSearchMs?: number;
 }
 
@@ -216,6 +221,129 @@ function mapProjectEntryToAtom(entry: SemanticMemoryHit<ProjectMemoryEntry>): Re
   };
 }
 
+interface MemoryLayerRead {
+  atoms: RetrievedMemoryAtom[];
+  outcome: LayerOutcome;
+}
+
+interface WorkingMemoryRead extends MemoryLayerRead {
+  mode: NonNullable<MemoryAssemblyDiagnostics['workingMemoryMode']>;
+}
+
+function isUnavailable(outcome: LayerOutcome): boolean {
+  return outcome === 'timeout' || outcome === 'error';
+}
+
+async function readMemoryLayer(
+  read: Promise<RetrievedMemoryAtom[]>,
+  label: string
+): Promise<MemoryLayerRead> {
+  // A late read produces its own discarded result; it never appends to the
+  // selected atoms or mutates the diagnostics after its deadline.
+  const result = read.then<MemoryLayerRead>(atoms => ({
+    atoms,
+    outcome: atoms.length > 0 ? 'ok' : 'empty',
+  })).catch((err: any): MemoryLayerRead => {
+    if (err?.code !== '42P01') {
+      console.warn(`[MemoryContextAssembler] ${label} failed:`, err?.message);
+    }
+    return { atoms: [], outcome: 'error' };
+  });
+  return withTimeout(result, MEMORY_LAYER_TIMEOUT_MS, { atoms: [], outcome: 'timeout' }, label);
+}
+
+async function readWorkingMemory(
+  input: MemoryContextAssemblerInput,
+  minSimilarity: number
+): Promise<WorkingMemoryRead> {
+  const semanticAttempted = Boolean(
+    isSemanticWorkingMemoryEnabled() && input.organizationId && input.query?.trim()
+  );
+  let semantic: MemoryLayerRead | undefined;
+  if (semanticAttempted && input.organizationId) {
+    semantic = await readMemoryLayer(
+      searchWorkingMemorySemantic(input.threadId, input.organizationId, input.query, {
+        limit: 1,
+        minSimilarity,
+      }).then(hits => hits.map((hit): RetrievedMemoryAtom => ({
+        id: hit.id,
+        layer: 'working_memory',
+        title: 'Working memory summary',
+        content: hit.summary,
+        similarity: hit.similarity,
+        metadata: { extractedBy: 'system', createdAt: toIso(hit.generatedAt) },
+      }))),
+      'Working memory semantic retrieval'
+    );
+    if (semantic.outcome === 'ok') return { ...semantic, mode: 'semantic' };
+  }
+
+  // Preserve semantic-first selection and its recency fallback, each bounded.
+  const recency: MemoryLayerRead = input.organizationId
+    ? await readMemoryLayer(
+        getLatestWorkingMemoryByThread(input.threadId, input.organizationId).then<RetrievedMemoryAtom[]>(summary => summary ? [{
+          id: 0,
+          layer: 'working_memory',
+          title: 'Latest Working Memory Summary',
+          content: summary,
+          metadata: { extractedBy: 'system' },
+        }] : []),
+        'Working memory recency retrieval'
+      )
+    : { atoms: [], outcome: 'empty' };
+  if (recency.outcome === 'ok') {
+    return { ...recency, mode: semanticAttempted ? 'recency_fallback' : 'recency' };
+  }
+  // Empty recency cannot establish that a timed-out/failed semantic source had
+  // no relevant memory. Keep that unavailability visible to the caller/model.
+  const outcome = recency.outcome === 'empty' && semantic && isUnavailable(semantic.outcome)
+    ? semantic.outcome : recency.outcome;
+  return { ...recency, outcome, mode: 'none' };
+}
+
+async function readSemanticLayers(
+  input: MemoryContextAssemblerInput,
+  limit: number,
+  minSimilarity: number
+) {
+  const skipped: MemoryLayerRead = { atoms: [], outcome: 'skipped' };
+  if (!input.organizationId || !input.query?.trim()) {
+    return { client: skipped, project: skipped, semanticSearchMs: undefined };
+  }
+  const semanticStart = Date.now();
+  const [client, project] = await Promise.all([
+    readMemoryLayer(
+      searchMemoryEntriesSemantic(null, input.organizationId, input.query, {
+        limit,
+        minSimilarity,
+      }).then(result => result.entries.map(mapClientEntryToAtom)),
+      'Client semantic retrieval'
+    ),
+    input.projectId
+      ? readMemoryLayer(
+          searchProjectMemoryEntriesSemantic(
+            null, input.projectId, input.organizationId, input.query, { limit, minSimilarity }
+          ).then(result => result.entries.map(mapProjectEntryToAtom)),
+          'Project semantic retrieval'
+        )
+      : skipped,
+  ]);
+  return { client, project, semanticSearchMs: Date.now() - semanticStart };
+}
+
+function unavailableMemoryNotice(
+  outcomes: NonNullable<MemoryAssemblyDiagnostics['layerOutcomes']>
+): string[] {
+  const layers: Array<[string, LayerOutcome]> = [
+    ['Working Memory', outcomes.workingMemory],
+    ['Client Memory', outcomes.clientMemory],
+    ['Project Memory', outcomes.projectMemory],
+  ];
+  const unavailable = layers.filter(([, outcome]) => isUnavailable(outcome));
+  if (!unavailable.length) return [];
+  return [`## Memory retrieval incomplete\n${unavailable.map(([name, outcome]) => `${name} unavailable (${outcome})`).join('; ')}.\n` +
+    'Do not infer that missing memory or prior decisions do not exist. State the retrieval limitation when relevant; ask for or verify needed context.'];
+}
 
 export async function buildMemoryContextForChat(
   input: MemoryContextAssemblerInput
@@ -224,148 +352,22 @@ export async function buildMemoryContextForChat(
   const maxChars = clampChars(input.maxChars);
   const minSimilarity = clampSimilarity(input.minSimilarity);
   const maxAgeDays = clampMaxAgeDays(input.maxAgeDays);
-
-  const atoms: RetrievedMemoryAtom[] = [];
-  const layerOutcomes: {
-    workingMemory: LayerOutcome;
-    clientMemory: LayerOutcome;
-    projectMemory: LayerOutcome;
-  } = {
-    workingMemory: 'skipped',
-    clientMemory: 'skipped',
-    projectMemory: 'skipped',
+  const [working, { client, project, semanticSearchMs }] = await Promise.all([
+    readWorkingMemory(input, minSimilarity),
+    readSemanticLayers(input, limit, minSimilarity),
+  ]);
+  const atoms = [...working.atoms, ...client.atoms, ...project.atoms];
+  const layerOutcomes = {
+    workingMemory: working.outcome,
+    clientMemory: client.outcome,
+    projectMemory: project.outcome,
   };
-
-  // Working memory: when semantic recall is enabled and we have a query, recall
-  // the summary most relevant to it (with similarity, ranked by the semantic
-  // policy). Otherwise — and whenever semantic recall clears nothing — fall back
-  // to the recency-only latest summary under the default policy, exactly as
-  // before. The flag defaults off, so the recency path is the unchanged default.
-  let useSemanticWorkingMemory = false;
-  const semanticAttempted = Boolean(
-    isSemanticWorkingMemoryEnabled() && input.organizationId && input.query?.trim()
-  );
-  let workingMemoryMode: MemoryAssemblyDiagnostics['workingMemoryMode'] = 'none';
-
-  // (`&& input.organizationId` restores the type narrowing semanticAttempted
-  // already guarantees — it can never change which branch runs.)
-  if (semanticAttempted && input.organizationId) {
-    const hits = await withTimeout(
-      searchWorkingMemorySemantic(input.threadId, input.organizationId, input.query, {
-        limit: 1,
-        minSimilarity,
-      }).catch(() => [] as Awaited<ReturnType<typeof searchWorkingMemorySemantic>>),
-      MEMORY_LAYER_TIMEOUT_MS,
-      [] as Awaited<ReturnType<typeof searchWorkingMemorySemantic>>
-    );
-    if (hits.length > 0) {
-      for (const hit of hits) {
-        atoms.push({
-          id: hit.id,
-          layer: 'working_memory',
-          title: 'Working memory summary',
-          content: hit.summary,
-          similarity: hit.similarity,
-          metadata: {
-            extractedBy: 'system',
-            createdAt: toIso(hit.generatedAt),
-          },
-        });
-      }
-      layerOutcomes.workingMemory = 'ok';
-      useSemanticWorkingMemory = true;
-      workingMemoryMode = 'semantic';
-    }
-  }
-
-  if (!useSemanticWorkingMemory) {
-    const workingSummary = input.organizationId
-      ? await getLatestWorkingMemoryByThread(input.threadId, input.organizationId).catch(() => null)
-      : null;
-    if (workingSummary) {
-      atoms.push({
-        id: 0,
-        layer: 'working_memory',
-        title: 'Latest Working Memory Summary',
-        content: workingSummary,
-        metadata: {
-          extractedBy: 'system',
-        },
-      });
-      layerOutcomes.workingMemory = 'ok';
-      workingMemoryMode = semanticAttempted ? 'recency_fallback' : 'recency';
-    } else {
-      layerOutcomes.workingMemory = 'empty';
-      workingMemoryMode = 'none';
-    }
-  }
-
-  // Client + project semantic searches run in parallel — no reason to serialize
-  // two independent vector-DB queries. Tighter per-layer timeout so a slow
-  // embedding path fails fast instead of swallowing the whole context budget.
-  const semanticStart = Date.now();
-  let semanticSearchMs: number | undefined;
-
-  if (input.organizationId && input.query?.trim()) {
-    const clientTask: Promise<LayerOutcome> = withTimeout(
-      searchMemoryEntriesSemantic(null, input.organizationId, input.query, {
-        limit,
-        minSimilarity,
-      })
-        .then(result => {
-          atoms.push(...result.entries.map(mapClientEntryToAtom));
-          return (result.entries.length > 0 ? 'ok' : 'empty') as LayerOutcome;
-        })
-        .catch((err: any) => {
-          if (err?.code !== '42P01') {
-            console.warn(
-              '[MemoryContextAssembler] Client semantic retrieval failed:',
-              err?.message
-            );
-          }
-          return 'error' as LayerOutcome;
-        }),
-      MEMORY_LAYER_TIMEOUT_MS,
-      'timeout' as LayerOutcome
-    );
-
-    const projectTask: Promise<LayerOutcome> = input.projectId
-      ? withTimeout(
-          searchProjectMemoryEntriesSemantic(
-            null,
-            input.projectId,
-            input.organizationId,
-            input.query,
-            { limit, minSimilarity }
-          )
-            .then(result => {
-              atoms.push(...result.entries.map(mapProjectEntryToAtom));
-              return (result.entries.length > 0 ? 'ok' : 'empty') as LayerOutcome;
-            })
-            .catch((err: any) => {
-              if (err?.code !== '42P01') {
-                console.warn(
-                  '[MemoryContextAssembler] Project semantic retrieval failed:',
-                  err?.message
-                );
-              }
-              return 'error' as LayerOutcome;
-            }),
-          MEMORY_LAYER_TIMEOUT_MS,
-          'timeout' as LayerOutcome
-        )
-      : Promise.resolve('skipped' as LayerOutcome);
-
-    const [clientOutcome, projectOutcome] = await Promise.all([clientTask, projectTask]);
-    layerOutcomes.clientMemory = clientOutcome;
-    layerOutcomes.projectMemory = projectOutcome;
-    semanticSearchMs = Date.now() - semanticStart;
-  }
+  const workingMemoryMode = working.mode;
 
   // Forget stale atoms, collapse duplicates, and rank across layers under the
   // single reviewed policy (memory-orchestrator). This module only assembles
   // and formats; the coordination policy lives there.
-  const memoryPolicy = useSemanticWorkingMemory
+  const memoryPolicy = workingMemoryMode === 'semantic'
     ? SEMANTIC_WORKING_MEMORY_POLICY
     : DEFAULT_MEMORY_POLICY;
   const {
@@ -374,7 +376,9 @@ export async function buildMemoryContextForChat(
     droppedByDeduplication,
   } = orchestrateAtoms(atoms, maxAgeDays, memoryPolicy);
 
-  const sections: string[] = [];
+  // Put unavailability ahead of recalled content so the character budget
+  // cannot erase the distinction between unread and absent memory.
+  const sections: string[] = unavailableMemoryNotice(layerOutcomes);
   // Each rendered item with the line that carries it, so the ones the
   // character budget cut can be told apart from the ones the model read.
   const rendered: Array<{ entry: MemoryReadEntry; line: string }> = [];

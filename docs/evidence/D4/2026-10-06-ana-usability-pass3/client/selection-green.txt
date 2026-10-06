@@ -1,0 +1,12 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue-react-selection.test.tsx > a healthy drive batch across React selection state > selects a submission then its sequence without manual renders (delayed read: false) 306ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue-react-selection.test.tsx > a healthy drive batch across React selection state > selects a submission then its sequence without manual renders (delayed read: true) 125ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  21:33:49
+   Duration  1.91s (transform 603ms, setup 132ms, import 753ms, tests 435ms, environment 442ms)
+

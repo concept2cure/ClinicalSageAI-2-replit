@@ -33,7 +33,7 @@
  * Pure module state + small functions; renderer-free except the React hook.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   resolveSurfaceAction,
   SURFACE_ACTIONS,
@@ -107,9 +107,13 @@ export function advertisedScreenActions(
   }));
 }
 
-/** What actually happened when a directive was handed to the bus. */
+/**
+ * What happened when a directive was handed to the bus. `committed` is an
+ * optional local-only React commit-or-disposal boundary, requested by the
+ * drive queue; it is never serialized or sent to the server.
+ */
 export type SurfaceActionOutcome =
-  | { status: 'applied'; detail?: string }
+  | { status: 'applied'; detail?: string; committed?: Promise<void> }
   | { status: 'stashed' }
   | { status: 'unavailable'; reason: string }
   | { status: 'failed'; reason: string };
@@ -199,6 +203,8 @@ export function listedChoices(names: ReadonlyArray<string>, noun = 'Listed'): st
 interface Registration {
   surfaceId: string;
   handlers: Record<string, SurfaceActionHandler>;
+  /** React-owned boundary after a handler has scheduled its state updates. */
+  awaitCommit?: () => Promise<void>;
 }
 
 let registration: Registration | null = null;
@@ -208,6 +214,7 @@ interface PendingEntry {
   setAt: number;
   /** Reports the eventual outcome to whoever stashed (overlay honesty). */
   onOutcome?: (outcome: SurfaceActionOutcome) => void;
+  waitForCommit?: boolean;
 }
 
 /** One-shot pending slot for the navigate→mount gap. Short on purpose: the
@@ -291,8 +298,9 @@ export function registeredSurfaceId(): string | null {
 export function registerSurfaceActionHandlers(
   surfaceId: string,
   handlers: Record<string, SurfaceActionHandler>,
+  awaitCommit?: () => Promise<void>,
 ): () => void {
-  const mine: Registration = { surfaceId, handlers };
+  const mine: Registration = { surfaceId, handlers, awaitCommit };
   registration = mine;
   if (import.meta.env?.DEV) {
     for (const id of Object.keys(handlers)) {
@@ -325,7 +333,9 @@ export function notifySurfaceActionReady(surfaceId: string): void {
 /**
  * React hook — register this surface's action handlers for its mounted
  * lifetime. Handlers read through a ref so the registered closure always sees
- * the surface's latest state without re-registering every render.
+ * the surface's latest state without re-registering every render. A drive
+ * queue can also wait until their state update and effect-scheduled readiness
+ * updates commit before it acknowledges a move or attempts the next one.
  */
 export function useSurfaceActionHandlers(
   surfaceId: string | null,
@@ -333,6 +343,27 @@ export function useSurfaceActionHandlers(
 ): void {
   const latest = useRef(handlers);
   latest.current = handlers;
+  const nextRevision = useRef(0);
+  const commits = useRef(new Map<number, () => void>());
+  const [revision, setRevision] = useState(0);
+  const [effectsRevision, setEffectsRevision] = useState(0);
+  useEffect(() => {
+    // A selection change starts dependent reads in passive effects. Commit
+    // their loading state before releasing the next action, or it reads the
+    // previous selection's rows under the new selection's name.
+    if (effectsRevision < revision) {
+      setEffectsRevision(revision);
+      return;
+    }
+    // Only a render carrying the requested revision can acknowledge it. The
+    // mounting effect may perform a stashed action before this effect runs;
+    // that render's old revision must not release the newly created barrier.
+    for (const [requested, resolve] of commits.current) {
+      if (requested > revision) continue;
+      commits.current.delete(requested);
+      resolve();
+    }
+  }, [revision, effectsRevision]);
   useEffect(() => {
     // A null id registers NOTHING, the same escape `usePublishSurfaceContext`
     // gives a publisher. It exists because registration is a single global
@@ -341,6 +372,7 @@ export function useSurfaceActionHandlers(
     // the bus while a different screen is on, and that screen's own directives
     // would find a registration for someone else.
     if (!surfaceId) return undefined;
+    const pendingCommits = commits.current;
     // Stable proxies delegate to the latest real handler at call time.
     const proxies: Record<string, SurfaceActionHandler> = {};
     for (const id of Object.keys(latest.current)) {
@@ -349,7 +381,23 @@ export function useSurfaceActionHandlers(
         return h ? h(params, context) : { ok: false, reason: 'handler no longer present' };
       };
     }
-    return registerSurfaceActionHandlers(surfaceId, proxies);
+    let disposed = false;
+    const unregister = registerSurfaceActionHandlers(surfaceId, proxies, () => {
+      if (disposed) return Promise.resolve();
+      const requested = ++nextRevision.current;
+      const committed = new Promise<void>(resolve => { pendingCommits.set(requested, resolve); });
+      setRevision(requested);
+      return committed;
+    });
+    return () => {
+      disposed = true;
+      unregister();
+      // Some successful actions intentionally navigate away (open-program).
+      // Disposal is also a boundary: no later move can read this host's old
+      // handler state, and its already-applied action must not hang the queue.
+      for (const resolve of pendingCommits.values()) resolve();
+      pendingCommits.clear();
+    };
   }, [surfaceId]);
 }
 
@@ -371,7 +419,7 @@ function attemptPendingFor(surfaceId: string): void {
     });
     return;
   }
-  const res = performRaw(p.directive);
+  const res = performRaw(p.directive, p.waitForCommit);
   if (res.kind === 'retry') return; // still pending — the ready signal re-attempts
   unstash(p);
   p.onOutcome?.(res.outcome);
@@ -380,6 +428,7 @@ function attemptPendingFor(surfaceId: string): void {
 /** One raw attempt against the CURRENT registration. */
 function performRaw(
   directive: SurfaceActionDirective,
+  waitForCommit = false,
 ):
   | { kind: 'done'; outcome: SurfaceActionOutcome }
   | { kind: 'retry'; reason: string } {
@@ -408,7 +457,11 @@ function performRaw(
     if (res.ok) {
       return {
         kind: 'done',
-        outcome: { status: 'applied', ...(res.detail ? { detail: res.detail } : {}) },
+        outcome: {
+          status: 'applied',
+          ...(res.detail ? { detail: res.detail } : {}),
+          ...(waitForCommit && reg.awaitCommit ? { committed: reg.awaitCommit() } : {}),
+        },
       };
     }
     if (res.retry) return { kind: 'retry', reason: res.reason };
@@ -456,25 +509,30 @@ export function validateDriveAction(raw: unknown): SurfaceActionDirective | null
  * stash, the terminal outcome arrives through `onDeferredOutcome` exactly
  * once: applied, refused, or 'unavailable' when the stash expired unconsumed
  * or was replaced by a newer one.
+ *
+ * The queue requests `waitForCommit` so an applied React handler carries its
+ * commit-or-disposal promise. Direct chip callers keep the immediate outcome;
+ * non-React registrations have no extra boundary to wait for.
  */
 export function applySurfaceAction(
   directive: SurfaceActionDirective,
   navigate: (surfaceId: string) => void,
   onDeferredOutcome?: (outcome: SurfaceActionOutcome) => void,
+  options?: { waitForCommit?: boolean },
 ): SurfaceActionOutcome {
   const reg = registration;
   if (reg && reg.surfaceId === resolvedTargetSurface(directive)) {
-    const res = performRaw(directive);
+    const res = performRaw(directive, options?.waitForCommit);
     if (res.kind === 'done') return res.outcome;
     // Mounted but not ready — hold for the surface's ready signal.
-    stash({ directive, setAt: Date.now(), onOutcome: onDeferredOutcome });
+    stash({ directive, setAt: Date.now(), onOutcome: onDeferredOutcome, waitForCommit: options?.waitForCommit });
     return { status: 'stashed' };
   }
   // Not mounted (or another surface is): stash one-shot and head there. A
   // newer stash replaces an older one — the drive moved on, and so must we —
   // and the replaced one is told so rather than vanishing.
   // nav() applies the same alias resolution, so the nav-target id is correct.
-  stash({ directive, setAt: Date.now(), onOutcome: onDeferredOutcome });
+  stash({ directive, setAt: Date.now(), onOutcome: onDeferredOutcome, waitForCommit: options?.waitForCommit });
   navigate(directive.surfaceId);
   return { status: 'stashed' };
 }

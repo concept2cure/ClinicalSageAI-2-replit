@@ -1,0 +1,17 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx > React surface commit boundaries > a stashed action mounts and commits before the next action (StrictMode: false) 129ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx > React surface commit boundaries > a stashed action mounts and commits before the next action (StrictMode: true) 109ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx > React surface commit boundaries > an action that navigates away releases its barrier after unregistering its source 108ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx > React surface commit boundaries > direct chip callers retain the same immediate applied outcome 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx > React surface commit boundaries > a non-React registration needs no commit barrier even when requested 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx > React surface commit boundaries > Stop preserves an already-performed action awaiting commit (was stashed: false) 52ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx > React surface commit boundaries > Stop preserves an already-performed action awaiting commit (was stashed: true) 55ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  21:34:52
+   Duration  1.44s (transform 241ms, setup 133ms, import 244ms, tests 460ms, environment 451ms)
+

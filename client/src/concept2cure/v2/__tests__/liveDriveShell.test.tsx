@@ -337,6 +337,12 @@ describe('every move is settled back to the run that made it, exactly once', () 
     drive({ type: 'drive_action', directive: SEARCH, moveId: 'toolu_act' }, a);
     drive({ type: 'drive_navigation', directive: NAV_HERE, moveId: 'toolu_nav' }, a);
     await waitFor(() => expect(a.moveLanded.mock.calls.map(c => c[0])).toEqual(['toolu_act', 'toolu_nav']));
+    expect(applySurfaceAction).toHaveBeenCalledWith(
+      expect.objectContaining({ actionId: 'vault.search' }),
+      expect.any(Function),
+      expect.any(Function),
+      { waitForCommit: true },
+    );
     expect(a.reportScreen).not.toHaveBeenCalled();
   });
 

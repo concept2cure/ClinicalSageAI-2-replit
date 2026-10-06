@@ -113,6 +113,8 @@ export interface DriveQueue {
 /** What a move dropped by clear() is settled with when no reason is given. */
 export const CLEARED_REASON = 'It was cancelled before it could be made.';
 
+type ActionOutcome = SurfaceActionOutcome | { status: 'dropped'; reason: string };
+
 export function createDriveQueue(deps: DriveQueueDeps): DriveQueue {
   let chain: Promise<void> = Promise.resolve();
   let generation = 0;
@@ -137,7 +139,6 @@ export function createDriveQueue(deps: DriveQueueDeps): DriveQueue {
   };
 
   const runAct = async (move: Extract<DriveMove, { kind: 'act' }>) => {
-    type ActionOutcome = SurfaceActionOutcome | { status: 'dropped'; reason: string };
     const outcome = await new Promise<ActionOutcome>((resolve) => {
       let settled = false;
       const settle = (o: ActionOutcome) => {
@@ -168,6 +169,9 @@ export function createDriveQueue(deps: DriveQueueDeps): DriveQueue {
       );
     });
     if (outcome.status === 'applied') {
+      // The handler ran, so cancellation is already disarmed by settle().
+      // React must commit its new selection before the next move reads it.
+      await outcome.committed;
       deps.onApplied(move, outcome.detail);
     } else if (outcome.status === 'failed' || outcome.status === 'unavailable') {
       deps.onFailed(move, outcome.reason);

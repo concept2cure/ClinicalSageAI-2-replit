@@ -1,0 +1,14 @@
+
+/workspace/scratch/bd36ee581acd/concept2cure/client/src/concept2cure/v2/V2App.tsx
+   314:8   warning  Function 'V2App' has too many lines (649). Maximum allowed is 100                               max-lines-per-function
+   314:8   warning  Function 'V2App' has a complexity of 51. Maximum allowed is 15                                  complexity
+   526:55  warning  Arrow function has a complexity of 37. Maximum allowed is 15                                    complexity
+   679:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+   860:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+   885:1   warning  File has too many lines (807). Maximum allowed is 500                                           max-lines
+   914:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  1159:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+✖ 8 problems (0 errors, 8 warnings)
+  0 errors and 4 warnings potentially fixable with the `--fix` option.
+

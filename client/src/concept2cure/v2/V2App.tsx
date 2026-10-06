@@ -451,7 +451,8 @@ export function V2App() {
       },
       isShowing: (directive) =>
         resolveSurfaceIdForTarget(directive.targetId) === activeIdRef.current,
-      perform: (directive, onDeferred) => applySurfaceAction(directive, nav, onDeferred),
+      perform: (directive, onDeferred) =>
+        applySurfaceAction(directive, nav, onDeferred, { waitForCommit: true }),
       cancelPending: cancelPendingSurfaceAction,
       canApply: () => !driveRef.current.takenOver,
       refuse: (move) => {
