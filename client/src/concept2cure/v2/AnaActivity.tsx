@@ -95,6 +95,8 @@ export interface AnaActivityProps {
    * turn: the answer above it is what she had when she was stopped.
    */
   stoppedReason?: AnaStoppedReason;
+  /** A response interrupted after actual text arrived; failure copy alone is not partial work. */
+  interruptedWithPartialResponse?: boolean;
   rounds?: number;
   /** The run policy the turn ran under (row 74). */
   runPolicy?: AnaRunPolicy;
@@ -127,6 +129,7 @@ export function activityPropsFor(m: AnaChatMessage): AnaActivityProps {
     completedAt: m.completedAt,
     turnRecord: m.turnRecord,
     stoppedReason: m.stoppedReason,
+    interruptedWithPartialResponse: m.interruptedWithPartialResponse,
     rounds: m.rounds,
     runPolicy: m.runPolicy,
     pendingSteps: m.pendingSteps,
@@ -140,8 +143,7 @@ export { stoppedNoteText };
 
 /** True when the record has something real to show for a settled turn. */
 export function hasReportableWork(a: AnaActivityProps): boolean {
-  return Boolean(
-    (a.toolCalls && a.toolCalls.length > 0) ||
+  return Boolean(a.toolCalls?.length ||
       (a.planChanges && a.planChanges.length > 0) ||
       (a.plan && a.plan.length > 0) ||
       (a.lens && LENS_PHRASE[a.lens]) ||
@@ -150,9 +152,8 @@ export function hasReportableWork(a: AnaActivityProps): boolean {
       a.draftTitle ||
       // A turn stopped short has something to say even with nothing else:
       // no host may drop it as a plain answer.
-      stoppedNoteText(a.stoppedReason, a.rounds, a.pendingSteps) ||
-      replacedNoteText(a.replacedSteps),
-  );
+      stoppedNoteText(a.stoppedReason, a.rounds, a.pendingSteps, a.interruptedWithPartialResponse) ||
+      replacedNoteText(a.replacedSteps));
 }
 
 /**
@@ -430,6 +431,7 @@ export function AnaActivity({
   completedAt,
   turnRecord,
   stoppedReason,
+  interruptedWithPartialResponse,
   rounds,
   pendingSteps,
   replacedSteps,
@@ -488,7 +490,7 @@ export function AnaActivity({
      guard stopped her, and a reader must not have to open the record to learn
      that. Continue is offered only where the host offers it (the latest
      settled turn) and only for a stop that picking up again can help. */
-  const stoppedText = streaming ? null : stoppedNoteText(stoppedReason, rounds, pendingSteps);
+  const stoppedText = streaming ? null : stoppedNoteText(stoppedReason, rounds, pendingSteps, interruptedWithPartialResponse);
   /* Continue unmounts in the render after its own click: the host's send makes
      a new turn the latest, and this one stops being offered it. Focus on a
      removed button falls to <body>, so it moves first to the note the button
@@ -499,7 +501,7 @@ export function AnaActivity({
     <p className="ana-activity-stopped" role="note" tabIndex={-1} ref={stoppedRef}>
       <span className="ana-activity-glyph" aria-hidden="true">{I.alertTriangle}</span>
       <span id={stoppedTextId}>{stoppedText}</span>
-      {onContinue && isContinuable(stoppedReason) ? (
+      {onContinue && isContinuable(stoppedReason, interruptedWithPartialResponse) ? (
         <button
           type="button"
           className="ana-activity-continue"

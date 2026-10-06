@@ -1,0 +1,196 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > names each tool AnA actually ran, under its real label 47ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > announces status through exactly one polite region 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > keeps the live region mounted when there is nothing to say 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > speaks the outcomes, not just the phase 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > points the disclosure at the region it controls 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > separates the rounds so going back for more reads as exactly that 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > names no rounds when she declared a plan — the plan is the structure 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > says a draft once when the step that wrote it already names it 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > states how the question was read 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > reports the deliverable it produced, without needing to be expanded 84ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > names the deliverable as a step too once the record is open 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > shows the newest stretch of her reasoning while she is still thinking 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > shows her reasoning verbatim, never a summary of it 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > lets a keyboard reach the reasoning it has to scroll to read 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > does not add an empty tab stop for the live thought, which does not scroll 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > cuts a long live thought at a word boundary and marks the cut 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > is open while streaming and collapsed once the answer has landed 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > renders nothing at all for a settled turn that did no reportable work 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > renders nothing while streaming when there is no phase and nothing to report 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > shows a failed step as failed instead of dropping it 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > reports a failed step in the words the server wrote, not the raw payload 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > counts only settled steps as run, never the one still in flight 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the clock > runs a clock beside the live phase and freezes the recorded duration once settled 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the clock > claims no duration for a settled turn with no recorded end 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — each row opens in place, like the work it records > puts a step's duration and the inputs she passed behind that step's own chevron 46ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — each row opens in place, like the work it records > records her plan once as "Planned N steps", with the steps behind the chevron 22ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > does not say the plan twice: the folded line counts the work, the first row is the plan 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > says "Plan", not "Planned", for a reopened thread that kept only the final list 12ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > keeps a FAILED plan call as a failed row — a failure is never folded away 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > claims no duration for a settled step whose end was never recorded 13ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > says on the folded line when a fallback provider answered 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > is fed by one mapping from the turn, which carries the plan and the fallback 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > splits a label at the argument the server quoted, and leaves the rest whole 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > a recorded turn carries one quiet row with the start of its hash, and the whole of it behind the row 21ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > a turn that was not recorded says so under the turn, unfolded, with the reason 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > says it even for a turn with nothing else to report 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > claims nothing while the turn is in flight, or when the server said nothing 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > activityPropsFor carries the status from the turn 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a round-limit stop is a note outside the folded body, with Continue, and Continue sends once 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > says the limit without a number when the round count is unknown 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a cut-off answer says so, outside the folded body, and offers Continue 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a repeated-step stop says so, and offers no Continue — continuing would repeat it 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a stop the person made carries no note — they pressed Stop, they know 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a turn she ended herself carries no note 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > offers Continue only where the host offers it — the latest settled turn 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > says nothing about a stop while the turn is still in flight 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > says it even for a turn with nothing else to report 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > keeps the open-while-streaming, folded-after pin 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > which turn, and which stops > the hosts pick the latest settled assistant turn, and none while a turn is in flight 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > which turn, and which stops > isContinuable follows the table, and Continue sends one fixed sentence 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the rail > offers Continue on the latest settled turn only, and sends the fixed sentence 96ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the rail > offers nothing while a turn is in flight 21ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the rail > keeps keyboard focus in the transcript when the send withdraws Continue 32ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > offers Continue on the latest settled turn only, and sends it on the same conversation 46ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > offers nothing while a turn is in flight 47ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > keeps keyboard focus in the transcript when the send withdraws Continue 58ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > budget_exhausted → Stopped at the time limit · 1m 30s 27ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > approval_timeout → Stopped: an approval was not answered · 1m 30s 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > hold_expired → Stopped waiting for you · 1m 30s 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > hold_unavailable → Stopped: Manual was unavailable · 1m 30s 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > a reopened stopped turn says so without a clock 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > while Manual holds, she is waiting for the person — not paused 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > the panel reads the hold it is given 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > the time limit names both ceilings, from the shared constants 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > an unanswered approval: the change was not made 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > a Manual hold nobody answered names the step it did not run 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > Manual that could not hold says why and what to do — switch to Auto, then Continue; never "try again" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > budget_exhausted: an always-visible note, Continue on the latest turn, and never dropped 130ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > approval_timeout: an always-visible note, Continue on the latest turn, and never dropped 21ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > hold_expired: an always-visible note, Continue on the latest turn, and never dropped 15ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > hold_unavailable: an always-visible note, Continue on the latest turn, and never dropped 16ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > a turn carries its policy and the steps it did not run to its record > activityPropsFor 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > between hold_expired and done the state line says she stopped waiting, not "Still working" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > the progress chip — what shows with the panel closed — says she is waiting, or paused 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > a Stop at a hold names the step it left unrun (a reload must not read as a plain Stop) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > a step replaced by a steer is shown as not run, beside the turn 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > gives a sign-in recovery for HTTP 401 without blaming the network 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > gives an access recovery for HTTP 403 without blaming the network 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > does not invent a cause for an unexplained failure 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > does not invent a cause for an unexplained failure 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > keeps the specific explanation for { status: 503, code: 'GATEWAY_UNAVAILABLE' } 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > keeps the specific explanation for { status: 429, code: 'WEEKLY_LIMIT_EXCEEDED' } 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > keeps the specific explanation for { status: 429 } 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a recorded turn carries its id and hash from post_done 72ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a failed turn keeps the status the error event carried
+[useAnaChat] stream failed: An error occurred while generating the response
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a turn that was not recorded carries the reason 56ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a failed turn keeps the status the error event carried 64ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a server that says nothing leaves nothing on the turn 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > a turn that ended here before the server spoke for it > after Stop, asks for the record by run id and shows what the server filed 1784ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord > drops anything it cannot read, and never reads it as recorded 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord > keeps an unexplained refusal as a refusal 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > keeps a well-formed list, in order, and the status as before 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > drops the whole list when any entry cannot be read, so it reads as unknown, never as approved 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > carries the list from post_done onto the turn 54ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > offers recovery only for an interrupted partial: timeout 245ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > does not label an unfinished tool as a network failure when the server reports an error
+[useAnaChat] stream failed: Generation failed
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request
+[useAnaChat] stream failed: Generation failed
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > offers recovery only for an interrupted partial: stop 67ms
+ × client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > does not label an unfinished tool as a network failure when the server reports an error 28ms
+   → expected { name: 'search_documents', …(5) } to match object { status: 'error', …(1) }
+(5 matching properties omitted from actual)
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > marks partial text incomplete when the stream closes without post_done
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > keeps the existing repeated-step explanation and offers no Continue
+[useAnaChat] stream failed: Finishing failed
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request
+[useAnaChat] stream failed: Generation failed
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request 96ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > marks partial text incomplete when the stream closes without post_done 40ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > keeps the existing repeated-step explanation and offers no Continue 35ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > marks partial text incomplete when the stream closes without post_done
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > keeps the existing repeated-step explanation and offers no Continue
+[useAnaChat] stream failed: Finishing failed
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 401
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request 87ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > marks partial text incomplete when the stream closes without post_done 38ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > keeps the existing repeated-step explanation and offers no Continue 35ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 403
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 429
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue 36ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue 36ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue 35ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 401
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 403
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 429
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > leaves a completed text response without an interruption note or Continue 31ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue 27ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue 33ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue 35ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > leaves a completed text response without an interruption note or Continue 30ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > times out a request that never receives response headers and releases the composer 19ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > bounds a stalled server cancellation so Stop and a replacement demo can finish 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > a delayed cancellation for an ended turn never aborts a replacement demo 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > speaks the stop in the one polite region 40ms
+ ✓ client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > speaks the stop when a turn with nothing to report settles — the polite region stays mounted 14ms
+ ✓ client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > names what Continue answers: the button is described by the stop sentence 90ms
+ ✓ client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > keeps keyboard focus in place when Continue unmounts itself 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > does not label an unfinished tool as a network failure when the server reports an error
+AssertionError: expected { name: 'search_documents', …(5) } to match object { status: 'error', …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "resultSummary": "Not finished — the turn was interrupted.",
+    "status": "error",
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx:110:50
+    108|     render(<Host kind="rail" />);
+    109|     await act(async () => { await chat.send('Compare the endpoints'); …
+    110|     expect(chat.messages.at(-1)?.toolCalls?.[0]).toMatchObject({
+       |                                                  ^
+    111|       status: 'error', resultSummary: 'Not finished — the turn was int…
+    112|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 7 passed (8)
+      Tests  1 failed | 116 passed (117)
+   Start at  22:01:46
+   Duration  13.42s (transform 1.85s, setup 582ms, import 4.02s, tests 4.24s, environment 3.52s)
+

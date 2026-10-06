@@ -373,6 +373,12 @@ export function hydrateToolTrace(
  */
 export function streamRefusalText(err: unknown): string {
   const failure = err as { code?: string; status?: number } | undefined;
+  if (failure?.status === 401) {
+    return 'Your sign-in could not be verified. Sign in again to ask AnA. Prior turns are preserved.';
+  }
+  if (failure?.status === 403) {
+    return 'AnA cannot accept this request with your current access. Sign in again or ask an administrator to review your access. Prior turns are preserved.';
+  }
   if (failure?.code === 'GATEWAY_UNAVAILABLE') {
     return 'No AI provider is configured for this deployment, so AnA cannot answer. This is a server setting, not your connection. Prior turns are preserved.';
   }
@@ -382,7 +388,7 @@ export function streamRefusalText(err: unknown): string {
   if (failure?.status === 429) {
     return 'Too many AnA requests in the last minute, so this one was not taken. Wait a moment and ask again. Prior turns are preserved.';
   }
-  return 'AnA is unreachable — the network or the AI gateway did not respond. Prior turns are preserved.';
+  return "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved.";
 }
 
 export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
@@ -1731,6 +1737,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 statusPhase: undefined,
                 completedAt: Date.now(),
                 interrupted: true,
+                interruptedWithPartialResponse: streamedText.trim().length > 0,
                 progress: closeProgress(m.progress, 'stopped', Date.now()),
                 toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — AnA stopped responding.', Date.now()),
                 warnings: [...(m.warnings || []), 'Response timed out'],
@@ -1768,8 +1775,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 statusPhase: undefined,
                 completedAt: Date.now(),
                 interrupted: true,
+                interruptedWithPartialResponse: streamedText.trim().length > 0,
                 progress: closeProgress(m.progress, 'stopped', Date.now()),
-                toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — the connection was lost.', Date.now()),
+                toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — the turn was interrupted.', Date.now()),
                 turnRecord: m.turnRecord ?? { status: 'unconfirmed' },
               };
             })

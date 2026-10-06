@@ -136,6 +136,12 @@ export function replacedNoteText(replacedSteps: readonly string[] | undefined): 
   return steps ? `Not run — your steer replaced it: ${steps}.` : null;
 }
 
+function partialResponseNote(interruptedWithPartialResponse?: boolean): string | null {
+  return interruptedWithPartialResponse
+    ? "AnA's response was interrupted before this turn finished. The text shown may be incomplete."
+    : null;
+}
+
 /**
  * What the transcript says under a turn the loop or the run policy stopped
  * before she was done, or null when there is nothing to say: she finished
@@ -147,6 +153,7 @@ export function stoppedNoteText(
   reason: AnaStoppedReason | undefined,
   rounds?: number,
   pendingSteps?: readonly string[],
+  interruptedWithPartialResponse?: boolean,
 ): string | null {
   const steps = stepList(pendingSteps);
   switch (reason) {
@@ -174,7 +181,7 @@ export function stoppedNoteText(
       // did not run, so a reopened turn does not read as a plain Stop.
       return steps ? `The run was stopped while AnA waited for you before her next step, so it did not run: ${steps}.` : null;
     default:
-      return null;
+      return partialResponseNote(interruptedWithPartialResponse);
   }
 }
 
@@ -185,7 +192,7 @@ export function stoppedNoteText(
  * chosen. A repeated step would only be repeated again — the person has to say
  * what to change — and a Stop was the person's decision.
  */
-export function isContinuable(reason: AnaStoppedReason | undefined): boolean {
+export function isContinuable(reason: AnaStoppedReason | undefined, interruptedWithPartialResponse = false): boolean {
   switch (reason) {
     case 'max_rounds':
     case 'answer_cut_off':
@@ -195,7 +202,7 @@ export function isContinuable(reason: AnaStoppedReason | undefined): boolean {
     case 'hold_unavailable':
       return true;
     default:
-      return false;
+      return interruptedWithPartialResponse && (reason === undefined || reason === 'no_more_tools');
   }
 }
 

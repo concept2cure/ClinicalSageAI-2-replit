@@ -830,11 +830,11 @@ describe('a turn the stream route refuses says why', () => {
     expect(await answerTo()).toMatch(/^This organization has reached its weekly limit/);
   });
 
-  it('no provider configured still says so, and anything else is unreachable', async () => {
+  it('no provider configured says so, and an unexplained failure does not invent a cause', async () => {
     refuseWith(503, { error: { code: 'GATEWAY_UNAVAILABLE' } });
     expect(await answerTo()).toMatch(/^No AI provider is configured/);
     cleanup();
     refuseWith(502, {});
-    expect(await answerTo()).toMatch(/^AnA is unreachable/);
+    expect(await answerTo()).toMatch(/^AnA couldn't complete this request/);
   });
 });

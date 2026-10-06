@@ -352,6 +352,8 @@ export interface AnaChatMessage {
    * never got going cannot read as finished.
    */
   interrupted?: boolean;
+  /** True only when an interrupted stream delivered response text, before any failure copy. */
+  interruptedWithPartialResponse?: boolean;
   /**
    * Intent lens AnA detected for this turn (audit / risk / strategy /
    * improve / compare / auto). Rendered as a small meta chip.

@@ -1,0 +1,50 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > a rate limit reads as one, not as an unreachable network
+[useAnaChat] stream failed: Stream request failed: 429
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > the weekly usage cap reads as the organization’s limit
+[useAnaChat] stream failed: Stream request failed: 429
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > no provider configured says so, and an unexplained failure does not invent a cause
+[useAnaChat] stream failed: Stream request failed: 503
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > no provider configured says so, and an unexplained failure does not invent a cause
+[useAnaChat] stream failed: Stream request failed: 502
+
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn says it reports every move back > declared when the turn asks to drive and its events reach the shell
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn says it reports every move back > not declared by a chat whose drive events reach no one, or a turn that does not drive
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > a mode changed after mount is the mode sent (no stale closure)
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > per-call overrides win over the hook options for that turn
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > without Live Drive neither field is sent, whatever the mode
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > screens closed to this person ride every turn > sends locked_screens when the shell has published some
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > screens closed to this person ride every turn > omits the field entirely when nothing is locked
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn survives the unmount its own navigation causes > is NOT aborted when the hosting panel unmounts mid-drive
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn survives the unmount its own navigation causes > an ordinary turn IS aborted on unmount (no orphaned generation)
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn survives the unmount its own navigation causes > a turn the server declined to drive (drive_state disabled) is still aborted on unmount
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > emits drive_turn_end, with the run controls, once the driving stream ends
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > a turn that never drove never emits drive_turn_end
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > a turn the server declined to drive never emits drive_turn_end
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn that is allowed to drive but has not moved > IS aborted when the panel unmounts, and still releases the shell’s drive
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn that is allowed to drive but has not moved > an operation performed on screen exempts it, not only a navigation
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn that is allowed to drive but has not moved > the move is marked before the shell applies it — the unmount it causes finds the turn driving
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > moveLanded settles a move by its id, and a report can name the move it is about
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > reportScreen sends a screen_report to this turn’s run, and queues no steer
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a steer typed into the drive strip is the person’s, queued as pending like the composer’s
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a report about an earlier turn never reaches a newer run
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > with no run to address — before run_started, or once the turn ended — it resolves false, sending nothing
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a steer accepted as the run ends is not left pending into the next turn
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn ended from its own chat > Stop tells the shell before the cancel is answered, with this turn’s controls
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn ended from its own chat > a new conversation replacing it halts the drive too
+ ↓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn ended from its own chat > a turn the server did not let drive has no drive to halt
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > a rate limit reads as one, not as an unreachable network 21ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > the weekly usage cap reads as the organization’s limit 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > no provider configured says so, and an unexplained failure does not invent a cause 5ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed | 25 skipped (28)
+   Start at  22:00:34
+   Duration  1.11s (transform 272ms, setup 140ms, import 314ms, tests 32ms, environment 473ms)
+

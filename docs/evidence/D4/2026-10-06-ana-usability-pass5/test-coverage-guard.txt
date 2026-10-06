@@ -1,0 +1,6 @@
+Warning: modified files without companion tests (non-blocking):
+ - client/src/concept2cure/components/ana/useAnaChat.ts
+ - client/src/concept2cure/components/ana/useAnaChat.types.ts
+ - client/src/concept2cure/v2/AnaActivity.tsx
+ - client/src/concept2cure/v2/anaWorkModel.ts
+Test presence verified for added/renamed source files.
