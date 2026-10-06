@@ -397,6 +397,10 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   // Build authoring context
   const authoringContextBlock = buildAuthoringContextBlock(authoring_context);
 
+  // Org/project intelligence does not depend on route prefetch. Attach its
+  // failure handler immediately so an early rejection is always handled.
+  const intelligencePrefixPromise = getIntelligencePrefix(numericOrgId ?? undefined, projectId).catch(() => '');
+
   const prefetchedContext = await prefetchRouteIntelligenceContext({
     projectId,
     organizationId: numericOrgId,
@@ -446,7 +450,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
 
   // Intelligence prefix + memory + enrichment (parallel)
   const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
-    getIntelligencePrefix(numericOrgId ?? undefined, projectId).catch(() => ''),
+    intelligencePrefixPromise,
     buildMemoryContextForChat({
       threadId: thread_id || undefined,
       organizationId: numericOrgId ?? undefined,

@@ -890,6 +890,13 @@ export function mountStreamRoute(router: Router): void {
           ? ({ ...authoring_context } as Record<string, unknown>)
           : undefined;
 
+      // Org/project intelligence is independent of route prefetch; overlap
+      // their existing budgets instead of paying both waits in sequence.
+      const intelligencePrefixPromise = getIntelligencePrefix(orgId ? Number(orgId) : undefined, streamProjectId).catch(err => {
+        console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
+        return '';
+      });
+
       const prefetchedStreamContext = await prefetchRouteIntelligenceContext({
         projectId: streamProjectId,
         organizationId: orgId,
@@ -975,10 +982,7 @@ export function mountStreamRoute(router: Router): void {
       // Intelligence + memory + enrichment — run in PARALLEL for speed
       const streamContextStart = Date.now();
       const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
-        getIntelligencePrefix(orgId ? Number(orgId) : undefined, streamProjectId).catch(err => {
-          console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
-          return '';
-        }),
+        intelligencePrefixPromise,
         buildMemoryContextForChat({
           threadId: thread_id || undefined,
           organizationId: orgId ? Number(orgId) : undefined,

@@ -35,6 +35,8 @@ const h = vi.hoisted(() => {
     encapsulateInput: false,
     prefetch: { unavailableSources: [] as string[], contextAvailabilityBlock: '' },
     enrichment: { block: '', sources: [] as string[], enrichmentMeta: { unavailableSources: [] as string[] } },
+    prefetchWait: null as Promise<void> | null,
+    onPrefetch: null as (() => void) | null,
   };
   const pool = {
     query: async () => ({ rows: [], rowCount: 0 }),
@@ -75,7 +77,8 @@ const h = vi.hoisted(() => {
     'get_cmc_requirements',
     ...Array.from({ length: 60 }, (_, i) => `filler_${i}`),
   ].map((name) => ({ name, description: name.startsWith('filler_') ? 'unrelated utility' : name, input_schema: { type: 'object', properties: {} } }));
-  return { state, pool, gateway, handlers, toolset };
+  const prefix = vi.fn(async () => '');
+  return { state, pool, gateway, handlers, toolset, prefix };
 });
 
 vi.mock('../../../db.js', () => ({ getPool: () => h.pool, pool: h.pool, db: {} }));
@@ -158,10 +161,14 @@ vi.mock('../../../services/ana-ri/orchestrator.js', () => ({
 }));
 vi.mock('../../../services/ana-ri/chat-context-builder.js', async importOriginal => ({
   ...(await importOriginal<typeof import('../../../services/ana-ri/chat-context-builder.js')>()),
-  prefetchRouteIntelligenceContext: async () => h.state.prefetch,
+  prefetchRouteIntelligenceContext: async () => {
+    h.state.onPrefetch?.();
+    await h.state.prefetchWait;
+    return h.state.prefetch;
+  },
 }));
 vi.mock('../../../services/lumen-context-builder.js', () => ({
-  getIntelligencePrefix: async () => '',
+  getIntelligencePrefix: h.prefix,
   buildSectionSpecificPrompt: () => '',
 }));
 vi.mock('../../../services/memory-context-assembler.js', () => ({
@@ -230,6 +237,9 @@ beforeEach(() => {
   h.state.encapsulateInput = false;
   h.state.prefetch = { unavailableSources: [], contextAvailabilityBlock: '' };
   h.state.enrichment = { block: '', sources: [], enrichmentMeta: { unavailableSources: [] } };
+  h.state.prefetchWait = null;
+  h.state.onPrefetch = null;
+  h.prefix.mockReset().mockResolvedValue('');
 });
 
 /** The stream's frames, parsed. */
@@ -268,6 +278,25 @@ function thread(steps: Array<{ tool: string; status: string }>, question: string
     { role: 'user', content: question },
   ];
 }
+
+describe('stream intelligence recall overlaps optional route prefetch', () => {
+  it.each([false, true])('handles early recall with rejection=%s', async rejected => {
+    if (rejected) h.prefix.mockRejectedValue(new Error('recall unavailable'));
+    else h.prefix.mockResolvedValue('Early client intelligence');
+    let release!: () => void;
+    let started!: () => void;
+    h.state.prefetchWait = new Promise<void>(resolve => { release = resolve; });
+    const prefetchStarted = new Promise<void>(resolve => { started = resolve; });
+    h.state.onPrefetch = started;
+    const pending = turn('Review the project', 'thorough', { project_id: 42 });
+    await prefetchStarted;
+    try { expect(h.prefix).toHaveBeenCalledWith(7, 42); }
+    finally { release(); await pending; }
+    expect(h.prefix).toHaveBeenCalledTimes(1);
+    expect(h.state.gatewayCalls).toHaveLength(1);
+    if (!rejected) expect(h.state.gatewayCalls[0].messages.some(m => typeof m.content === 'string' && m.content.includes('Early client intelligence'))).toBe(true);
+  });
+});
 
 describe('a follow-up keeps the tools its conversation used (TP-RL-3)', () => {
   it('warns when requested enrichment is unavailable and retains its model availability notice', async () => {
