@@ -61,7 +61,7 @@ afterEach(() => {
 });
 
 it('recovers a recorded export through the existing history without creating another export', async () => {
-  render(<DocumentAuthoring surface={{ id: 'document-authoring', label: 'Authoring' } as any} onAsk={vi.fn()} onNav={vi.fn()} segment="biotech" />);
+  render(<DocumentAuthoring surface={{ id: 'document-authoring', label: 'Authoring' } as any} onAsk={vi.fn()} onNav={vi.fn()} />);
   await screen.findAllByText('Overview');
   fireEvent.click(screen.getByRole('button', { name: /^Word$/ }));
   const recovery = await screen.findByRole('button', { name: /Check export history/ });

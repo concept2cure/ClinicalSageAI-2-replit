@@ -63,3 +63,12 @@ Production build, changed-file warning ratchet (6 files; no warning count change
 test-import resolution and git diff --check passed. Full TypeScript on the
 published commit remains an unchanged GitHub CI gate; no local full-tsc result
 is asserted. No new dependency, schema, model, store, or capability was added.
+
+## CI fixture type correction
+
+The first published commit's zero-baseline TypeScript gate found two errors in
+new test fixtures: a partial Response with a rejecting blob method needed the
+existing explicit unknown cast, and the Workbench test supplied a segment prop
+that DocumentAuthoring does not accept. Both fixtures were corrected; application
+behavior is unchanged. The three affected client suites (39 tests) were rerun,
+and the same zero-baseline gate verifies the correction on its published commit.

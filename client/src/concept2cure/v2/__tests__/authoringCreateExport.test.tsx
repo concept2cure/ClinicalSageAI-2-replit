@@ -66,7 +66,7 @@ describe('Authoring export confirmation and recovery', () => {
   });
 
   it('a body-read failure after success refreshes the real record without claiming delivery', async () => {
-    wireExport(async () => ({ ok: true, status: 200, blob: async () => { throw new Error('stream interrupted'); } }) as Response);
+    wireExport(async () => ({ ok: true, status: 200, blob: async () => { throw new Error('stream interrupted'); } }) as unknown as Response);
     const onExported = vi.fn();
     const fireToast = vi.fn();
     render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} onExported={onExported} />);
