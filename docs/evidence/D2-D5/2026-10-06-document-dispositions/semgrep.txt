@@ -12,13 +12,14 @@
   js              153       1
   json              4       1
 
-Warning: 2 timeout error(s) in server/services/ana/AnaToolExecutor.ts when running the following rules:
-[javascript.express.security.audit.express-ssrf.express-ssrf, javascript.express.security.audit.xss.direct-response-
-write.direct-response-write]
   Current version has 18 findings.
 
 Creating git worktree from 'e78869eec43301b44f2e1af01e630f0278b3d360' to scan baseline.
   Will report findings introduced by these commits (may be incomplete for shallow checkouts):
+    * a4bbc2619 Type disposition SQL fixtures and clarify retained citations
+    * 20c2dd089 Use supported role query options in disposition UI tests
+    * cc0108dd3 Record disposition recovery checkpoint and correct Ana spelling
+    * 8af2676ac Enforce reviewed document dispositions and preserve source lineage
     *   f58540a29 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
     |\
     | * ed6b79a5b chore(repo-health): auto-refresh baseline after merge [skip ci]

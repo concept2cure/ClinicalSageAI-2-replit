@@ -1,0 +1,32 @@
+Curated completed final-touchup offline Vitest run; runtime/provider/configuration diagnostics omitted.
+49 overlapping cases across five files, already within the 1149 combined-test total.
+
+RECORDED COMMAND
+NODE_OPTIONS='--require=/tmp/c2c-offline-verification.cjs --max-old-space-size=4096' npx vitest run --config vitest.config.ts --maxWorkers=1 client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts > /tmp/c2c-disposition-final-touchups.txt 2>&1
+
+PORTABLE PRELOAD
+./docs/evidence/D2-D5/2026-10-06-document-dispositions/offline-verification.cjs
+
+SUITE PASS COUNTS
+  6 passed  client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx
+  3 passed  server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts
+  5 passed  server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts
+ 17 passed  server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts
+ 18 passed  server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts
+
+SELECTED ACTUAL PROOF CASES
+ ✓ server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts > source and catalog consumers of an actual recorded disposition > detects the original-file leak if the binary-availability predicate is removed 49ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > refuses reparenting a disposed atom, chunk, catalog row or citation into an eligible identity 62ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > replays with one trigger of each kind and blocks update, delete and truncate 49ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > enforces source identity and a monotonic disposition chain at the database door 45ms
+ ✓ server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts > legacy Ana artifact tools apply the canonical disposition gate before returning text > reads and lists stored kept text with original-unavailable markers, then excludes a later withdrawal 170ms
+ ✓ server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts > legacy Ana artifact tools apply the canonical disposition gate before returning text > excludes a superseded representation and refuses foreign artifact ids 85ms
+ ✓ server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts > legacy Ana artifact tools apply the canonical disposition gate before returning text > reports a failed policy store explicitly and never returns the previously readable artifact text 13ms
+
+VERBATIM RUNNER SUMMARY
+ Test Files  5 passed (5)
+      Tests  49 passed (49)
+   Start at  14:55:27
+   Duration  23.37s (transform 4.88s, setup 226ms, import 6.66s, tests 15.21s, environment 532ms)
+
+EXIT 0

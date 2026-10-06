@@ -1,0 +1,21 @@
+seed-never-checked {"phase":"skip-only-signature-seed","skippedCount":345,"total":397,"pendingChanges":0,"unchecked":397,"uncheckedLocal":["./client/src/a.ts","./server/z.ts"],"errors":[],"pendingEmitCount":2,"checkPending":null}
+seed-never-checked {"phase":"one-semantic-file","file":"client/src/a.ts","codes":[],"total":397,"pendingChanges":0,"unchecked":396,"uncheckedLocal":["./server/z.ts"],"errors":[],"pendingEmitCount":2,"checkPending":null}
+seed-never-checked:canonical {"status":2,"codes":[2322],"output":"server/z.ts(1,14): error TS2322: Type 'string' is not assignable to type 'number'."}
+seed-batch-progress {"phase":"skip-only-signature-seed","skippedCount":345,"total":397,"pendingChanges":0,"unchecked":397,"uncheckedLocal":["./client/src/a.ts","./server/z.ts"],"errors":[],"pendingEmitCount":2,"checkPending":null}
+seed-batch-progress {"phase":"one-semantic-file","file":"client/src/a.ts","codes":[],"total":397,"pendingChanges":0,"unchecked":396,"uncheckedLocal":["./server/z.ts"],"errors":[],"pendingEmitCount":2,"checkPending":null}
+seed-batch-progress {"phase":"one-semantic-file","file":"server/z.ts","codes":[2322],"total":397,"pendingChanges":0,"unchecked":395,"uncheckedLocal":[],"errors":[{"file":"./server/z.ts","codes":[2322]}],"pendingEmitCount":2,"checkPending":null}
+seed-batch-progress:canonical {"status":2,"codes":[2322],"output":"server/z.ts(1,14): error TS2322: Type 'string' is not assignable to type 'number'."}
+seed-batch-progress {"phase":"skip-only-signature-seed","skippedCount":1,"total":397,"pendingChanges":0,"unchecked":1,"uncheckedLocal":["./client/src/a.ts"],"errors":[{"file":"./server/z.ts","codes":[2322]}],"pendingEmitCount":2,"checkPending":null}
+seed-batch-progress {"phase":"one-semantic-file","file":"client/src/a.ts","codes":[],"total":397,"pendingChanges":0,"unchecked":0,"uncheckedLocal":[],"errors":[{"file":"./server/z.ts","codes":[2322]}],"pendingEmitCount":2,"checkPending":null}
+seed-batch-progress:canonical {"status":1,"codes":[2322],"output":"server/z.ts(1,14): error TS2322: Type 'string' is not assignable to type 'number'."}
+seed-batch-progress {"phase":"skip-only-signature-seed","skippedCount":1,"total":397,"pendingChanges":0,"unchecked":1,"uncheckedLocal":["./server/z.ts"],"errors":[],"pendingEmitCount":2,"checkPending":null}
+seed-batch-progress:canonical {"status":0,"codes":[],"output":""}
+seed-export-dependent:canonical {"status":0,"codes":[],"output":""}
+seed-export-dependent {"phase":"skip-only-signature-seed","skippedCount":2,"total":397,"pendingChanges":0,"unchecked":2,"uncheckedLocal":["./client/src/a.ts","./server/z.ts"],"errors":[],"pendingEmitCount":2,"checkPending":null}
+seed-export-dependent {"phase":"one-semantic-file","file":"client/src/a.ts","codes":[],"total":397,"pendingChanges":0,"unchecked":1,"uncheckedLocal":["./server/z.ts"],"errors":[],"pendingEmitCount":2,"checkPending":null}
+seed-export-dependent:canonical {"status":2,"codes":[2322],"output":"server/z.ts(1,53): error TS2322: Type 'number' is not assignable to type 'string'."}
+seed-global-dependent:canonical {"status":0,"codes":[],"output":""}
+seed-global-dependent {"phase":"skip-only-signature-seed","skippedCount":338,"total":398,"pendingChanges":0,"unchecked":338,"uncheckedLocal":["./client/src/a.ts","./server/z.ts","./shared/global.d.ts"],"errors":[],"pendingEmitCount":2,"checkPending":null}
+seed-global-dependent {"phase":"one-semantic-file","file":"client/src/a.ts","codes":[],"total":398,"pendingChanges":0,"unchecked":337,"uncheckedLocal":["./server/z.ts","./shared/global.d.ts"],"errors":[],"pendingEmitCount":2,"checkPending":null}
+seed-global-dependent:canonical {"status":2,"codes":[2322],"output":"server/z.ts(1,14): error TS2322: Type 'number' is not assignable to type 'string'."}
+PASS: 5.6.3 signature-only native seed and per-file diagnostic batches make honest progress; canonical compiler catches skipped/cached/export/global errors.
