@@ -54,6 +54,8 @@ beforeAll(async () => {
   await pglite.exec(migration('db/migrations/20260803_document_span_lineage.sql'));
   await pglite.exec(migration('migrations/20260907_span_lineage_accepted_machine_draft.sql'));
   await pglite.exec(migration('migrations/20260908_span_lineage_machine_draft.sql'));
+  await pglite.exec(migration('migrations/20260726_cre_source_program_scope.sql'));
+  await pglite.exec(migration('migrations/20261006_document_data_dispositions.sql'));
 }, 60_000);
 afterAll(async () => {
   await pglite?.close();

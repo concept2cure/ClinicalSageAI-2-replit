@@ -62,6 +62,8 @@ beforeAll(async () => {
       metadata jsonb
     );`);
   await pglite.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
+  await pglite.exec(migration('migrations/20260726_cre_source_program_scope.sql'));
+  await pglite.exec(migration('migrations/20261006_document_data_dispositions.sql'));
 
   await pool.query(
     `INSERT INTO lumen_data_atoms (id, source_type, source_id, metadata) VALUES

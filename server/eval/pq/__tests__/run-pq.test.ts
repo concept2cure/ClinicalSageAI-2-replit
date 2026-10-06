@@ -8,6 +8,7 @@
  */
 import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import type * as NodeFs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -15,6 +16,7 @@ import { runPq, type RunPqOptions } from '../run-pq';
 import goldBank from '../../doc-quality/gold-tasks.json';
 import protocolJson from '../pq-protocol.json';
 import { APPROVED_MODELS } from '../../../services/ai-governance/approved-models';
+import type { GatewayResponse } from '../../../services/ai-gateway/types';
 
 /**
  * The version the model under qualification is pinned to, read from the same
@@ -67,7 +69,7 @@ function stub(served: string | ((i: number) => string | undefined), content: (pr
   return {
     calls,
     gateway: {
-      evaluateModel: async (modelId: string, req: { messages: Array<{ content: string }> }) => {
+      evaluateModel: async (modelId: string, req: { messages: Array<{ content: string }> }): Promise<GatewayResponse> => {
         calls.push(modelId);
         const prompt = req.messages[0].content;
         const n = i++;
@@ -76,7 +78,9 @@ function stub(served: string | ((i: number) => string | undefined), content: (pr
           provider: 'anthropic', cached: false, deterministic: false, finishReason: 'stop',
           model: PINNED,
           resolvedModel: typeof served === 'function' ? served(n) : served,
-        } as never;
+          usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0 },
+          latencyMs: 0, requestId: `fixture-${n}`,
+        };
       },
     },
   };
@@ -94,7 +98,7 @@ function stub(served: string | ((i: number) => string | undefined), content: (pr
  */
 const fsRedirect = vi.hoisted(() => ({ protocolText: null as string | null }));
 vi.mock('node:fs', async (importOriginal) => {
-  const real = await importOriginal<typeof import('node:fs')>();
+  const real = await importOriginal<typeof NodeFs>();
   const readFileSync = ((file: unknown, ...rest: unknown[]) => {
     if (
       fsRedirect.protocolText !== null &&
@@ -117,7 +121,7 @@ afterEach(() => {
 describe('run-pq live path', () => {
   it.each(['max_tokens', 'tool_use', 'unknown', 'aborted'])('generation and extraction never score a partial provider output: %s', async finishReason => {
     const s = stub(PINNED);
-    const gateway = { evaluateModel: async (id: string, req: { messages: Array<{ content: string }> }) => ({ ...await s.gateway.evaluateModel(id, req), finishReason }) as never };
+    const gateway = { evaluateModel: async (id: string, req: { messages: Array<{ content: string }> }) => ({ ...await s.gateway.evaluateModel(id, req), finishReason }) };
     const result = await runPq({ modelId: MODEL_ID, gateway });
     expect(result.verdict).toBe('NOT_EXECUTED');
     expect(result.generation.every(g => g.sectionCoverage === null && g.error && g.servedModel === PINNED)).toBe(true);

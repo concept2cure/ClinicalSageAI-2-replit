@@ -110,6 +110,7 @@ beforeAll(async () => {
   await pglite.exec(migration('migrations/20260726_authoring_citation_source_usage.sql'));
   // The migration under test.
   await pglite.exec(migration('migrations/20260829_cre_source_versioning.sql'));
+  await pglite.exec(migration('migrations/20261006_document_data_dispositions.sql'));
 }, 120_000);
 
 afterAll(async () => { await pglite?.close(); });

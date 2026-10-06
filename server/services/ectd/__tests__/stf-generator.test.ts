@@ -211,9 +211,9 @@ describe('regional packager writes the STF under its spec name and links it to i
 
       const indexXml = await zip.file('index.xml')!.async('string');
       const idOf = (href: string): string => {
-        const m = indexXml.match(new RegExp(`<leaf [^>]*xlink:href="${href.replace(/[.]/g, '\\.')}"[^>]*ID="([^"]+)"`));
-        expect(m, `index.xml leaf for ${href}`).not.toBeNull();
-        return m![1];
+        const m = [...indexXml.matchAll(/<leaf [^>]*xlink:href="([^"]+)"[^>]*ID="([^"]+)"/g)].find(leaf => leaf[1] === href);
+        expect(m, `index.xml leaf for ${href}`).toBeDefined();
+        return m![2];
       };
       const reportId = idOf('m5/5-3-5-1/study-001/s1-report.pdf');
       const protocolId = idOf('m5/5-3-5-1/study-001/s1-protocol.pdf');

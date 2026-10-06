@@ -53,6 +53,8 @@ beforeAll(async () => {
       'utf8',
     ),
   );
+  await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../migrations/20260726_cre_source_program_scope.sql'), 'utf8'));
+  await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../migrations/20261006_document_data_dispositions.sql'), 'utf8'));
   // Minimal real protocol-objectives store — only the columns getDesignEvidence's
   // endpoint resolver reads (it resolves a protocol_documents id → primary endpoint).
   await pglite.exec(

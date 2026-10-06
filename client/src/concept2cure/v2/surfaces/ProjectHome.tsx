@@ -11,6 +11,7 @@ import { useChatUpload, readyAttachmentLabel } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
+import { DocumentDisposition } from './DocumentDisposition';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
 import '../styles/project-home-v2.css';
@@ -246,6 +247,9 @@ interface SourceRow {
   extractionMethod: string | null;
   /** False once a re-upload superseded it. Absent on a server that predates it. */
   isCurrent?: boolean;
+  dataEligible?: boolean;
+  originalFileAvailable?: boolean;
+  disposition?: import('@shared/document-data-disposition').DocumentDispositionChoice | null;
   /** Recorded citations of this source. Absent on a server that predates it. */
   usage?: { sections: number; documents: number; changedSections: number } | null;
 }
@@ -327,11 +331,26 @@ function kindLabel(mime: string | null): string {
  * failure on a regulatory surface.
  */
 function readState(s: SourceRow): { label: string; tone: 'ok' | 'warn' | 'muted' } {
+  if (s.disposition === 'remove_data') return { label: 'Data withdrawn', tone: 'warn' };
+  if (s.disposition === 'supersede') return { label: 'Replaced by newer data', tone: 'muted' };
+  if (s.disposition === 'keep_data') return { label: 'Data retained · original unavailable', tone: 'muted' };
   if (s.extractionStatus === 'extracted') {
     return { label: s.extractionMethod?.includes('ocr') ? 'Read via OCR' : 'Read', tone: 'ok' };
   }
   if (s.extractionStatus === 'failed') return { label: 'Text not readable', tone: 'warn' };
   return { label: 'Not processed yet', tone: 'muted' };
+}
+
+function sourceCanGround(s: SourceRow): boolean {
+  return s.extractionStatus === 'extracted' && s.isCurrent !== false && s.dataEligible !== false;
+}
+
+function sourcePinTitle(s: SourceRow): string {
+  if (s.dataEligible === false || s.isCurrent === false) return 'This source is excluded from active data use';
+  if (s.originalFileAvailable === false) return 'Use the retained extracted text as context for AnA; the original file is unavailable';
+  return s.extractionStatus === 'extracted'
+    ? 'Use this source as context for AnA'
+    : 'This source has no readable text, so it cannot ground a draft';
 }
 
 function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: string) => void; onAsk: (q: string) => void }) {
@@ -371,12 +390,21 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   }, [settled]);
 
   const sources = state.data?.sources ?? [];
+  // A refreshed lifecycle decision must retire local and cross-surface pins.
+  // A retained-data pin resolves the recorded extraction when its original
+  // file is unavailable; withdrawn and replaced data cannot ground a draft.
+  useEffect(() => {
+    if (state.loading || state.error || !state.data) return;
+    const eligible = new Set(state.data.sources.filter(sourceCanGround).map(s => s.id));
+    setPinned(prev => prev.every(id => eligible.has(id)) ? prev : prev.filter(id => eligible.has(id)));
+    if (window.C2C_SOURCE_PINS) window.C2C_SOURCE_PINS = window.C2C_SOURCE_PINS.filter(id => eligible.has(Number(id)));
+  }, [state.data, state.loading, state.error]);
   const rows = sources.filter(s =>
     q.trim() ? (s.title || '').toLowerCase().includes(q.trim().toLowerCase()) : true,
   );
   /* One file re-uploaded is one source: its retired revision is listed but not
      counted. A full window's count is a floor. */
-  const current = sources.filter(s => s.isCurrent !== false);
+  const current = sources.filter(s => s.isCurrent !== false && s.dataEligible !== false);
   const total = current.length;
   const readable = current.filter(s => s.extractionStatus === 'extracted').length;
   const truncated = state.data?.window?.truncated === true;
@@ -520,6 +548,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                   <div
                     key={s.id}
                     className="pj-src"
+                    style={{ flexWrap: 'wrap' }}
                   >
                     {/* Pin as context. Only a source whose text was actually
                         read can ground a draft, so an unreadable one cannot be
@@ -528,18 +557,14 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                     <input
                       type="checkbox"
                       checked={pinned.includes(s.id)}
-                      disabled={s.extractionStatus !== 'extracted'}
+                      disabled={!sourceCanGround(s)}
                       onChange={(e) =>
                         setPinned((prev) =>
                           e.target.checked ? [...prev, s.id] : prev.filter((id) => id !== s.id),
                         )
                       }
                       aria-label={`Use ${s.title || `source ${s.id}`} as context`}
-                      title={
-                        s.extractionStatus === 'extracted'
-                          ? 'Use this source as context for AnA'
-                          : 'This source has no readable text, so it cannot ground a draft'
-                      }
+                      title={sourcePinTitle(s)}
                     />
                     <span aria-hidden="true">{I.fileText}</span>
                     <span style={{ flex: 1, minWidth: 0 }}>
@@ -571,6 +596,10 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                     >
                       {rs.label}
                     </span>
+                    {pid && (!s.disposition || s.disposition === 'keep_data') && <div style={{ flexBasis: '100%' }}><DocumentDisposition
+                      key={`${s.id}-${reloadKey}`} projectId={pid} targetType="captured_source" targetId={String(s.id)}
+                      title={s.title || `Source ${s.id}`} existingChoice={s.disposition} onChanged={() => setReloadKey(k => k + 1)}
+                    /></div>}
                   </div>
                 );
               })}

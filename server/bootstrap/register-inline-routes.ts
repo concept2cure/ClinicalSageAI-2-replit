@@ -847,6 +847,8 @@ export async function registerInlineAiWorkflowRoutes({
   // C2C Projects detail (Phase 10 — /api/c2c/projects/*).
   try {
     const c2cProjectsModule = await import('../routes/c2c/projects');
+    const dispositionsModule = await import('../routes/c2c/document-data-dispositions');
+    app.use('/api/c2c/projects', authMiddleware, dispositionsModule.default());
     app.use('/api/c2c/projects', authMiddleware, c2cProjectsModule.default);
     console.info('✅ C2C Projects routes mounted (/api/c2c/projects)');
   } catch (error) {

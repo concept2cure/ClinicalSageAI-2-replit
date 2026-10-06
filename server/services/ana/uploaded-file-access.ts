@@ -26,6 +26,7 @@
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { uploadedBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
 import { createHash } from 'node:crypto';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -171,7 +172,7 @@ export async function loadUploadedFileMetadata(
     checksum_sha256: string | null;
   }>(
     `SELECT id, original_name, mime_type, storage_path, organization_id, checksum_sha256
-       FROM file_uploads WHERE id = ANY($1)`,
+       FROM file_uploads f WHERE id = ANY($1) AND ${uploadedBinaryAvailableSql('f')}`,
     [ids],
   );
 
@@ -217,7 +218,7 @@ export async function loadUploadedFile(
     checksum_sha256: string | null;
   }>(
     `SELECT id, original_name, mime_type, file_size, storage_path, organization_id, checksum_sha256
-       FROM file_uploads WHERE id = $1`,
+       FROM file_uploads f WHERE id = $1 AND ${uploadedBinaryAvailableSql('f')}`,
     [fileId],
   );
   if (rows.length === 0) {

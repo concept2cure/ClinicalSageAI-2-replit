@@ -1,0 +1,112 @@
+Curated completed offline Vitest run. Runtime/provider/configuration diagnostics omitted.
+Per-file pass counts below are derived from 1149 verbose passed-case lines across 86 files.
+The exact original command is retained; its temporary transport boundary is archived as offline-verification.cjs.
+See README.md for the portable command using the relative archived path.
+
+COMMAND NODE_OPTIONS="--require=/tmp/c2c-offline-verification.cjs --max-old-space-size=4096" npx vitest run --config vitest.config.ts --maxWorkers=1 client/src/concept2cure/v2/__tests__/documentDisposition.test.tsx client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx server/__tests__/services/contextual-ingest.test.ts server/eval/pq/__tests__/gold-bank-floor.test.ts server/eval/pq/__tests__/ia-review.test.ts server/eval/pq/__tests__/pq-rag-attribution.test.ts server/eval/pq/__tests__/pq-verdict-rag.test.ts server/eval/pq/__tests__/pq-verdict.test.ts server/eval/pq/__tests__/rag-phase.test.ts server/eval/pq/__tests__/run-pq.test.ts server/eval/pq/__tests__/verify-pq-record.test.ts server/eval/rag/__tests__/rag-metrics.test.ts server/eval/rag/__tests__/run-eval-attribution.test.ts server/routes/__tests__/vault-data-room-counts.test.ts server/routes/__tests__/vault-data-room-file.test.ts server/routes/__tests__/vault-download.test.ts server/routes/c2c/__tests__/project-vault-document-count.test.ts server/services/__tests__/rag-cache-tenant-key.test.ts server/services/__tests__/rag-context-expansion.test.ts server/services/__tests__/rag-corrective-loop.test.ts server/services/__tests__/rag-disposition-revalidation.test.ts server/services/__tests__/rag-disposition.pglite.integration.test.ts server/services/__tests__/rag-filters.test.ts server/services/__tests__/rag-fusion.test.ts server/services/__tests__/rag-generation-request.test.ts server/services/__tests__/rag-query-transforms.test.ts server/services/__tests__/rag-reranker.test.ts server/services/__tests__/rag-retrieval-strategies.test.ts server/services/__tests__/rag-runtime-metrics.test.ts server/services/__tests__/rag-vault-tenant-scope.test.ts server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts server/services/ana/__tests__/document-passage-tools.test.ts server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts server/services/ana/__tests__/enrich-chunks-evidence-source.pglite.integration.test.ts server/services/ana/__tests__/rag-provenance.test.ts server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts server/services/chat-uploads/__tests__/upload-retrieval-atom.test.ts server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/coverageService.test.ts server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/data-origins-pdf.determinism.test.ts server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/facade-convergence.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/governance.test.ts server/services/clinical-regulatory-evidence/__tests__/lineage-gate.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts server/services/clinical-regulatory-evidence/__tests__/machine-draft-lineage.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/program-scope-migration.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/retrieval-atoms.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/retrieval-atoms.projections.test.ts server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/source-and-author-lineage.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/source-attribution.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/source-attribution.test.ts server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/source-version.test.ts server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/span-lineage-backfill.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/span-retire-asserter.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/study-design-evidence.pglite.integration.test.ts server/services/document-data-disposition/__tests__/artifact-freeze.pglite.integration.test.ts server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts server/services/document-data-disposition/__tests__/eligibility.test.ts server/services/document-data-disposition/__tests__/route-auth.test.ts server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts server/services/ectd/__tests__/stf-generator.test.ts server/services/market-specs/__tests__/device-labeling-ivd.test.ts server/services/market-specs/__tests__/device-labeling.test.ts server/services/submission-gateways/__tests__/stf-packaging.test.ts server/services/vault/__tests__/document-catalog-key-data.test.ts server/services/vault/__tests__/document-catalog.service.test.ts server/services/vault/__tests__/document-chunking.tenancy.test.ts server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts server/services/vault/__tests__/vault-search.test.ts tests/lineage/founder-path-lineage.pglite.test.ts
+
+SUITE PASS COUNTS
+  17 passed  client/src/concept2cure/v2/__tests__/documentDisposition.test.tsx
+   6 passed  client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx
+  18 passed  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx
+  19 passed  client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx
+   9 passed  server/__tests__/services/contextual-ingest.test.ts
+   6 passed  server/eval/pq/__tests__/gold-bank-floor.test.ts
+  22 passed  server/eval/pq/__tests__/ia-review.test.ts
+   8 passed  server/eval/pq/__tests__/pq-rag-attribution.test.ts
+  63 passed  server/eval/pq/__tests__/pq-verdict-rag.test.ts
+  26 passed  server/eval/pq/__tests__/pq-verdict.test.ts
+  30 passed  server/eval/pq/__tests__/rag-phase.test.ts
+  23 passed  server/eval/pq/__tests__/run-pq.test.ts
+  29 passed  server/eval/pq/__tests__/verify-pq-record.test.ts
+  20 passed  server/eval/rag/__tests__/rag-metrics.test.ts
+  14 passed  server/eval/rag/__tests__/run-eval-attribution.test.ts
+   5 passed  server/routes/__tests__/vault-data-room-counts.test.ts
+   6 passed  server/routes/__tests__/vault-data-room-file.test.ts
+  22 passed  server/routes/__tests__/vault-download.test.ts
+   3 passed  server/routes/c2c/__tests__/project-vault-document-count.test.ts
+   4 passed  server/services/__tests__/rag-cache-tenant-key.test.ts
+   6 passed  server/services/__tests__/rag-context-expansion.test.ts
+   6 passed  server/services/__tests__/rag-corrective-loop.test.ts
+  11 passed  server/services/__tests__/rag-disposition-revalidation.test.ts
+   3 passed  server/services/__tests__/rag-disposition.pglite.integration.test.ts
+  11 passed  server/services/__tests__/rag-filters.test.ts
+  12 passed  server/services/__tests__/rag-fusion.test.ts
+   5 passed  server/services/__tests__/rag-generation-request.test.ts
+  13 passed  server/services/__tests__/rag-query-transforms.test.ts
+  21 passed  server/services/__tests__/rag-reranker.test.ts
+   7 passed  server/services/__tests__/rag-retrieval-strategies.test.ts
+   3 passed  server/services/__tests__/rag-runtime-metrics.test.ts
+   5 passed  server/services/__tests__/rag-vault-tenant-scope.test.ts
+   3 passed  server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts
+  14 passed  server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts
+  17 passed  server/services/ana/__tests__/document-passage-tools.test.ts
+   4 passed  server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+   4 passed  server/services/ana/__tests__/enrich-chunks-evidence-source.pglite.integration.test.ts
+   2 passed  server/services/ana/__tests__/rag-provenance.test.ts
+   9 passed  server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts
+  10 passed  server/services/chat-uploads/__tests__/upload-retrieval-atom.test.ts
+  24 passed  server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts
+   9 passed  server/services/clinical-regulatory-evidence/__tests__/coverageService.test.ts
+   3 passed  server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts
+   9 passed  server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts
+   6 passed  server/services/clinical-regulatory-evidence/__tests__/data-origins-pdf.determinism.test.ts
+  10 passed  server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts
+  10 passed  server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts
+   5 passed  server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts
+  17 passed  server/services/clinical-regulatory-evidence/__tests__/facade-convergence.pglite.integration.test.ts
+  19 passed  server/services/clinical-regulatory-evidence/__tests__/governance.test.ts
+   3 passed  server/services/clinical-regulatory-evidence/__tests__/lineage-gate.pglite.integration.test.ts
+  66 passed  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts
+  43 passed  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+   7 passed  server/services/clinical-regulatory-evidence/__tests__/machine-draft-lineage.pglite.integration.test.ts
+   6 passed  server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts
+   3 passed  server/services/clinical-regulatory-evidence/__tests__/program-scope-migration.pglite.integration.test.ts
+   5 passed  server/services/clinical-regulatory-evidence/__tests__/retrieval-atoms.pglite.integration.test.ts
+  15 passed  server/services/clinical-regulatory-evidence/__tests__/retrieval-atoms.projections.test.ts
+  10 passed  server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts
+  11 passed  server/services/clinical-regulatory-evidence/__tests__/source-and-author-lineage.pglite.integration.test.ts
+   5 passed  server/services/clinical-regulatory-evidence/__tests__/source-attribution.pglite.integration.test.ts
+  26 passed  server/services/clinical-regulatory-evidence/__tests__/source-attribution.test.ts
+  36 passed  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts
+  11 passed  server/services/clinical-regulatory-evidence/__tests__/source-version.test.ts
+  13 passed  server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts
+   8 passed  server/services/clinical-regulatory-evidence/__tests__/span-lineage-backfill.pglite.integration.test.ts
+  36 passed  server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts
+   4 passed  server/services/clinical-regulatory-evidence/__tests__/span-retire-asserter.pglite.integration.test.ts
+   6 passed  server/services/clinical-regulatory-evidence/__tests__/study-design-evidence.pglite.integration.test.ts
+   6 passed  server/services/document-data-disposition/__tests__/artifact-freeze.pglite.integration.test.ts
+   7 passed  server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts
+   5 passed  server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts
+  17 passed  server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts
+  13 passed  server/services/document-data-disposition/__tests__/eligibility.test.ts
+   4 passed  server/services/document-data-disposition/__tests__/route-auth.test.ts
+  18 passed  server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts
+  23 passed  server/services/ectd/__tests__/stf-generator.test.ts
+  24 passed  server/services/market-specs/__tests__/device-labeling-ivd.test.ts
+   8 passed  server/services/market-specs/__tests__/device-labeling.test.ts
+   4 passed  server/services/submission-gateways/__tests__/stf-packaging.test.ts
+  23 passed  server/services/vault/__tests__/document-catalog-key-data.test.ts
+  15 passed  server/services/vault/__tests__/document-catalog.service.test.ts
+   6 passed  server/services/vault/__tests__/document-chunking.tenancy.test.ts
+  15 passed  server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts
+   4 passed  server/services/vault/__tests__/vault-search.test.ts
+  15 passed  tests/lineage/founder-path-lineage.pglite.test.ts
+
+SELECTED ACTUAL PROOF CASES
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > keep_data cannot resurrect binary access through a fresh upload ID holding the same bytes 44ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > remove_data cannot resurrect binary access through a fresh upload ID holding the same bytes 49ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > refuses reparenting a disposed atom, chunk, catalog row or citation into an eligible identity 63ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > replays with one trigger of each kind and blocks update, delete and truncate 45ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > enforces source identity and a monotonic disposition chain at the database door 40ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > keep_data freezes linked OCR, atoms, chunks and catalog writes and refuses same-byte resurrection 61ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > remove_data freezes linked OCR, atoms, chunks and catalog writes and refuses same-byte resurrection 60ms
+ ✓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > withholds a generated answer when a real disposition commits during the provider await 69ms
+ ✓ server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts > source and catalog consumers of an actual recorded disposition > detects the original-file leak if the binary-availability predicate is removed 43ms
+
+VERBATIM RUNNER SUMMARY
+ Test Files  86 passed (86)
+      Tests  1149 passed (1149)
+   Start at  14:24:21
+   Duration  142.76s (transform 8.88s, setup 1.47s, import 39.66s, tests 88.18s, environment 1.55s)
+EXIT 0

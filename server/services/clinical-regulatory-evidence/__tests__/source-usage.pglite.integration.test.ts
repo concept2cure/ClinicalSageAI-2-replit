@@ -120,6 +120,7 @@ beforeAll(async () => {
   // authoring_documents.client_program_id: a document's project, which a citation is judged by (PF-11).
   await pglite.exec(migration('migrations/20260727_authoring_document_program_scope.sql'));
   await pglite.exec(migration('migrations/20260726_authoring_citation_source_usage.sql'));
+  await pglite.exec(migration('migrations/20261006_document_data_dispositions.sql'));
   // Four real migrations into a cold WASM Postgres exceeds the 10s default hook
   // timeout on a loaded runner.
 }, 90_000);

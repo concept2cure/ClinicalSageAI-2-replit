@@ -32,6 +32,8 @@ describe('controlled RAG PQ phase', () => {
     expect(result).toMatchObject({ ran: true, scopeVerified: true, itemsScored: 1, plannedItemIds: ['q1', 'n1'] });
     expect(result.items[0]).toMatchObject({ hit: 1, faithfulness: 1, servedModelVerified: true, judgeVerified: true, expectedSourceIds: ['doc1'] });
     expect(result.items[0].generationRequest).toMatchObject(buildRagGenerationRequest(positive.question, '[Source 1: Official guidance]\nReviewed official evidence.'));
+    expect(result.items[0].judgeRequest).toMatchObject({ taskType: 'general', organizationId: 7, callerModule: 'pq-rag-judge', maxTokens: 16, temperature: 0 });
+    expect(result.items[0].judgeRequest).not.toHaveProperty('model');
     expect(result.items[0].generationRequestSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(result.items[0].judgeResponseSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(result.items[0].review).toEqual({ status: 'pending', reviewer: null, rationale: null });
@@ -74,6 +76,9 @@ describe('controlled RAG PQ phase', () => {
     const result = await runRagPhase(options(), deps); expect(result.items[0]).toMatchObject({ hit: 0, faithfulness: null, generatorCalled: false });
     expect(result.items[0].error).toMatch(/EMPTY_CONTEXT/);
   });
+});
+
+describe('controlled RAG PQ attribution and control outcomes', () => {
   it.each(['wrong-version', 'wrong-provider', 'cached', 'deterministic', 'aborted', 'max_tokens', 'unknown', 'tool_calls', 'pause_turn', 'missing-finish'])('refuses unusable generator response: %s', async defect => {
     const deps = dependencies(); deps.evaluateModel = vi.fn(async () => {
       const r = reply('candidate', 'Reviewed [Source 1]');

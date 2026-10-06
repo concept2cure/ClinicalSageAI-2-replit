@@ -24,6 +24,7 @@ import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
 import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
 import { getGateway } from '../ai-gateway/gateway';
 import { getTenantScope } from '../../db/tenantStore.js';
+import { artifactDataEligibleSql, artifactOriginalFileAvailableSql } from '../document-data-disposition/eligibility.js';
 // Region + gateway taxonomy — shared with the tool schemas in
 // AnaToolDefinitions so an accepted value and an advertised one are the same
 // list. This module has no runtime deps, so importing it here does not pull in
@@ -20411,11 +20412,20 @@ function viewExcerpt(text: string, input: Record<string, unknown>): { content: s
   return { content: text.slice(0, max), totalChars: text.length, truncated: text.length > max };
 }
 
+function artifactModelAvailability(row: Record<string, unknown>) {
+  const available = row.original_file_available !== false;
+  return {
+    original_file_available: available,
+    source_availability: available ? 'Original file available.'
+      : 'Original file unavailable; extracted data retained. This stored representation is not a fresh read of the original file.',
+  };
+}
+
 registerToolHandler('list_vault_documents', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'list_vault_documents requires tenant context.' });
   try {
     const { getPool } = await import('../../db.js');
-    const filters: string[] = [`a.status != 'archived'`];
+    const filters: string[] = [`a.status != 'archived'`, artifactDataEligibleSql('a')];
     const args: unknown[] = [ctx.organizationId];
     if (typeof input.query === 'string' && input.query.trim()) {
       args.push(`%${input.query.trim().replace(/[%_]/g, (m) => `\\${m}`)}%`);
@@ -20432,7 +20442,7 @@ registerToolHandler('list_vault_documents', async (input, ctx) => {
     args.push(viewLimit(input));
     const { rows } = await getPool().query(
       `SELECT a.id, a.artifact_id, a.title, a.type, a.category, a.ctd_section, a.status,
-              a.version, a.updated_at
+              a.version, a.updated_at, ${artifactOriginalFileAvailableSql('a')} AS original_file_available
          FROM concept2cure_artifacts a
         WHERE a.organization_id = $1 AND ${filters.join(' AND ')}
         ORDER BY a.updated_at DESC
@@ -20442,7 +20452,7 @@ registerToolHandler('list_vault_documents', async (input, ctx) => {
     return JSON.stringify({
       ok: true,
       count: rows.length,
-      documents: rows,
+      documents: rows.map(row => ({ ...row, ...artifactModelAvailability(row) })),
       message: rows.length
         ? `${rows.length} Artifacts Center document(s). Use read_vault_document with an id to open one.`
         : /* An empty Artifacts Center answer said "No vault documents match", about a
@@ -20493,14 +20503,16 @@ registerToolHandler('read_vault_document', async (input, ctx) => {
   try {
     const { getPool } = await import('../../db.js');
     const { rows } = await getPool().query(
-      `SELECT id, artifact_id, title, type, category, ctd_section, status, version,
-              content, content_hash, created_at, updated_at, locked_at
-         FROM concept2cure_artifacts
-        WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2)
+      `SELECT a.id, a.artifact_id, a.title, a.type, a.category, a.ctd_section, a.status, a.version,
+              a.content, a.content_hash, a.created_at, a.updated_at, a.locked_at,
+              ${artifactOriginalFileAvailableSql('a')} AS original_file_available
+         FROM concept2cure_artifacts a
+        WHERE a.organization_id = $1 AND (a.id::text = $2 OR a.artifact_id = $2)
+          AND ${artifactDataEligibleSql('a')}
         LIMIT 1`,
       [ctx.organizationId, artifactId],
     );
-    if (!rows.length) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
+    if (!rows.length) return JSON.stringify({ error: `No currently eligible Artifacts Center document '${artifactId}' in this organization. A withdrawn or superseded representation cannot be used as new grounding. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
     const { content, ...meta } = rows[0];
     const excerpt = viewExcerpt(typeof content === 'string' ? content : JSON.stringify(content ?? ''), input);
 
@@ -20511,7 +20523,7 @@ registerToolHandler('read_vault_document', async (input, ctx) => {
 
     return JSON.stringify({
       ok: true,
-      document: meta,
+      document: { ...meta, ...artifactModelAvailability(meta) },
       content: excerpt.content,
       totalChars: excerpt.totalChars,
       truncated: excerpt.truncated,
@@ -21040,9 +21052,12 @@ registerToolHandler('search_all_documents', async (input, ctx) => {
     const limit = Number.isFinite(raw) ? Math.min(50, Math.max(1, Math.round(raw))) : 15;
     const fanout = await Promise.allSettled([
       getPool().query(
-        `SELECT id, artifact_id, title, status, ctd_section, updated_at FROM concept2cure_artifacts
-          WHERE organization_id = $1 AND status != 'archived' AND title ILIKE $2
-          ORDER BY updated_at DESC LIMIT $3`, [ctx.organizationId, ilike, limit]),
+        `SELECT a.id, a.artifact_id, a.title, a.status, a.ctd_section, a.updated_at,
+                ${artifactOriginalFileAvailableSql('a')} AS original_file_available
+           FROM concept2cure_artifacts a
+          WHERE a.organization_id = $1 AND a.status != 'archived' AND a.title ILIKE $2
+            AND ${artifactDataEligibleSql('a')}
+          ORDER BY a.updated_at DESC LIMIT $3`, [ctx.organizationId, ilike, limit]),
       getPool().query(
         `SELECT id, doc_type, agency, title, status, readiness FROM c2c_documents
           WHERE org_id = $1 AND title ILIKE $2
@@ -21054,12 +21069,17 @@ registerToolHandler('search_all_documents', async (input, ctx) => {
     ]);
     const stores = ['vault', 'governed', 'tmf'] as const;
     const hits: Array<Record<string, unknown>> = [];
+    const unavailable: string[] = [];
     fanout.forEach((r, i) => {
-      if (r.status === 'fulfilled') for (const row of r.value.rows) hits.push({ store: stores[i], ...row });
+      if (r.status === 'fulfilled') for (const row of r.value.rows) hits.push({ store: stores[i], ...row,
+        ...(i === 0 ? artifactModelAvailability(row) : {}) });
+      else unavailable.push(stores[i]);
     });
     return JSON.stringify({
-      ok: true, query: q, count: hits.length, hits,
-      message: `${hits.length} hits. Open vault hits with read_vault_document, governed hits with read_governed_document, TMF hits with get_tmf_view.`,
+      ok: unavailable.length === 0, query: q, count: hits.length, hits,
+      ...(unavailable.length ? { unavailable_stores: unavailable,
+        error: 'Some document stores could not be searched. Missing results are not evidence that no records exist.' } : {}),
+      message: `${hits.length} hits${unavailable.length ? ' from the available stores only' : ''}. Open vault hits with read_vault_document, governed hits with read_governed_document, TMF hits with get_tmf_view.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `search_all_documents failed: ${err instanceof Error ? err.message : String(err)}` });

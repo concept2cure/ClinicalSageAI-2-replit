@@ -37,6 +37,7 @@
  */
 
 import { pool } from '../../db.js';
+import { vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
 
 export class PassageSearchUnavailableError extends Error {
   constructor(reason: string) {
@@ -137,7 +138,7 @@ export async function getPassageCoverage(
        FROM vault.documents d
        JOIN regulatory_programs p ON p.id = d.program_id
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE p.organization_id = $1 AND d.deleted_at IS NULL
+      WHERE p.organization_id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
         AND ($2::uuid IS NULL OR d.program_id = $2::uuid)`,
     [organizationId, programId],
   );

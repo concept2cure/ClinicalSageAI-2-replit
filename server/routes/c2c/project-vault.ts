@@ -72,6 +72,7 @@ import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
 import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
 import { readVaultLifecycles, vaultVersionNotTransmittable } from '../../services/vault/vault-lifecycle.js';
 import { fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
+import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSql } from '../../services/document-data-disposition/eligibility.js';
 import { searchVaultDocuments } from '../../services/vault/vault-search.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { governedActorId, requireEditorAccess } from '../../middleware/orgMembership.js';
@@ -105,6 +106,8 @@ interface VaultDoc {
   src?: 'authored' | 'upload';
   /** Upload-only extras (all projected from real columns). */
   docId?: string;
+  originalFileAvailable?: boolean;
+  disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
   sizeLabel?: string;
   hash?: string;
   /** vault.documents.mime_type, verified against the magic bytes at ingest.
@@ -442,6 +445,8 @@ function prettySize(bytes: unknown): string {
 const KIND_LABEL = new Map(VAULT_DOC_KINDS.map(k => [k.value as string, k.label]));
 
 export interface UploadRow {
+  original_file_available?: boolean;
+  disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
   id: string;
   document_code: string | null;
   document_title: string | null;
@@ -508,6 +513,12 @@ function versionFacts(row: UploadRow): Pick<VaultDoc, 'versionCount' | 'document
 
 /** An uploaded vault.documents row → a VaultDoc leaf (all real columns).
  *  Exported for the tree-merge regression test. */
+function uploadPreview(row: UploadRow, title: string, size: string): string {
+  return `${row.file_name ?? title} · ${size}` +
+    (row.original_file_available === false ? ' · Original file unavailable; extracted data retained' : '') +
+    (row.content_hash ? ` · SHA-256 ${row.content_hash.slice(0, 12)}…` : '');
+}
+
 export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
   const placementStatus = row.placement_status || 'unfiled';
   const title = row.document_title || row.file_name || 'Document';
@@ -525,10 +536,11 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
     owner: row.owner_name ?? '—',
     ver: row.version ? `v${row.version}` : '—',
     updated: relativeTime(row.updated_at),
-    preview: `${row.file_name ?? title} · ${size}` +
-      (row.content_hash ? ` · SHA-256 ${row.content_hash.slice(0, 12)}…` : ''),
+    preview: uploadPreview(row, title, size),
     src: 'upload',
     docId: row.id,
+    originalFileAvailable: row.original_file_available ?? true,
+    disposition: row.disposition ?? null,
     sizeLabel: size,
     hash: row.content_hash ?? undefined,
     mimeType: row.mime_type ?? null,
@@ -1279,6 +1291,7 @@ export default function createProjectVaultRoutes(): Router {
       /** The program+tenant predicate, shared by the page and its aggregates so
        *  a count can never be taken over a different set than the rows. */
       const uploadsWhere = `d.program_id = $1 AND d.deleted_at IS NULL
+              AND ${vaultDataEligibleSql('d')}
               AND EXISTS (
                 SELECT 1 FROM regulatory_programs rp
                  WHERE rp.id = d.program_id
@@ -1302,6 +1315,8 @@ export default function createProjectVaultRoutes(): Router {
                   d.folder_id, d.evidence_kind, d.ctd_section,
                   d.placement_status, d.placement_confidence, d.placement_rationale,
                   d.updated_at,
+                  ${vaultBinaryAvailableSql('d')} AS original_file_available,
+                  ${vaultDispositionChoiceSql('d')} AS disposition,
                   COALESCE(u.name, u.email) AS owner_name,
                   vc.version_count,
                   lc.stage AS lifecycle_stage
@@ -1379,7 +1394,8 @@ export default function createProjectVaultRoutes(): Router {
             limit: DATA_ROOM_WINDOW + 1,
           });
           const truncated = read.length > DATA_ROOM_WINDOW;
-          const sources = truncated ? read.slice(0, DATA_ROOM_WINDOW) : read;
+          const sources = (truncated ? read.slice(0, DATA_ROOM_WINDOW) : read)
+            .filter(s => s.dataEligible !== false && s.originalFileAvailable !== false);
           // `filed` asks whether THIS source's bytes already exist in the
           // program's vault. Ask the database that, about exactly these
           // checksums, instead of deriving it from the page of documents
@@ -1615,6 +1631,8 @@ export default function createProjectVaultRoutes(): Router {
             placementStatus: r.placementStatus,
             version: r.version,
             current: r.current,
+            originalFileAvailable: r.originalFileAvailable,
+            disposition: r.disposition,
             snippet: r.snippet,
           })),
         },
@@ -1796,13 +1814,14 @@ export default function createProjectVaultRoutes(): Router {
       if (!(await programInOrganization(pool, id, orgId))) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
       const docRes = await pool.query(
-        `SELECT id, file_name, document_title, mime_type, file_size, s3_key,
-                storage_version_id, storage_provider, content_hash
-           FROM vault.documents
-          WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
+        `SELECT d.id, d.file_name, d.document_title, d.mime_type, d.file_size, d.s3_key,
+                d.storage_version_id, d.storage_provider, d.content_hash
+           FROM vault.documents d
+          WHERE d.id = $1 AND d.program_id = $2 AND d.deleted_at IS NULL
+            AND ${vaultBinaryAvailableSql('d')}
             AND EXISTS (
               SELECT 1 FROM regulatory_programs rp
-               WHERE rp.id = vault.documents.program_id
+               WHERE rp.id = d.program_id
                  AND rp.organization_id = $3
                  AND rp.deleted_at IS NULL
             )

@@ -209,6 +209,7 @@ const MIGRATIONS = [
   'migrations/20261001_cre_evidence_sources_capture_immutability.sql',
   'migrations/20260726_file_uploads_tenancy.sql',
   'db/migrations/20260828_file_uploads_checksum.sql',
+  'migrations/20261006_document_data_dispositions.sql',
   // Authoring: the document loop, its ledger, seal, signatures, span lineage, aliases, provenance.
   'db/migrations/20260725_authoring_document_loop_tables.sql',
   'db/migrations/20260817_doc_revisions_immutable_ledger.sql',

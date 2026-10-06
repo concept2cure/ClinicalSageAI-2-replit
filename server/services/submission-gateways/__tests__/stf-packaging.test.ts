@@ -67,8 +67,11 @@ describe('STF cross-linking in packageEctdSubmission', () => {
 
       // Each doc-content points at its leaf's ID in index.xml and holds the file-tag.
       const indexXml = await zip.file('index.xml')!.async('string');
-      const idOf = (href: string) =>
-        indexXml.match(new RegExp(`<leaf [^>]*xlink:href="${href.replace(/[.]/g, '\\.')}"[^>]*ID="([^"]+)"`))![1];
+      const idOf = (href: string) => {
+        const leaf = [...indexXml.matchAll(/<leaf [^>]*xlink:href="([^"]+)"[^>]*ID="([^"]+)"/g)].find(match => match[1] === href);
+        expect(leaf, `index.xml leaf for ${href}`).toBeDefined();
+        return leaf![2];
+      };
       const stf1 = await zip.file('m5/5-3-5-1/study-001/stf-study-001.xml')!.async('string');
       expect(stf1).toContain('<study-id>STUDY-001</study-id>');
       expect(stf1).toContain('<title>Pivotal efficacy</title>');

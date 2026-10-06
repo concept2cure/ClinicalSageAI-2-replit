@@ -124,7 +124,9 @@ async function assessItem(item: GoldItem, opts: RagPhaseOptions, deps: RagPhaseD
     if (isGroundedRefusal(generated.content)) { out.error = 'POSITIVE_REFUSAL: positive item produced no judgeable grounded answer'; return out; }
     stage = 'JUDGE';
     out.faithfulness = await judgeFaithfulness(async prompt => {
-      const judgeRequest: EvaluationRequest = { ...buildJudgeRequest(prompt, { judgeModel: null, organizationId: opts.scope.organizationId }), organizationId: opts.scope.organizationId, callerModule: 'pq-rag-judge' };
+      // The legacy router maps its 'reasoning' category to gateway 'general'.
+      // Keep that mapping when calling the pinned evaluation model directly.
+      const judgeRequest: EvaluationRequest = { ...buildJudgeRequest(prompt, { judgeModel: null, organizationId: opts.scope.organizationId }), taskType: 'general', organizationId: opts.scope.organizationId, callerModule: 'pq-rag-judge' };
       out.judgeRequest = judgeRequest; out.judgeRequestSha256 = hash(judgeRequest);
       const judged = await deps.evaluateModel(opts.judge.modelId, judgeRequest);
       out.judgeServedModel = judged.resolvedModel ?? null; out.judgeServedProvider = judged.provider;

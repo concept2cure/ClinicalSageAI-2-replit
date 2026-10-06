@@ -32,6 +32,7 @@ import { VaultLibraryResults } from './VaultLibraryResults';
 import { VaultFixityCheck } from './VaultFixityCheck';
 import { VaultRelationships } from './VaultRelationships';
 import { VaultAnnotations } from './VaultAnnotations';
+import { DocumentDisposition } from './DocumentDisposition';
 import { downloadBlob, safeFileName } from '../download';
 import {
   EDITOR_TARGET_DOC_TYPES,
@@ -652,6 +653,8 @@ function UploadsLane({
    the real count, not the page length, so the surface can say "12 of 340"
    instead of implying the page is everything. */
 interface VaultSearchHit {
+  originalFileAvailable?: boolean;
+  disposition?: VaultDoc['disposition'];
   id: string;
   title: string;
   fileName: string | null;
@@ -703,6 +706,8 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
     preview: (h.snippet || '').replace(/<\/?b>/g, ''),
     src: 'upload',
     docId: h.id,
+    originalFileAvailable: h.originalFileAvailable,
+    disposition: h.disposition,
     sizeLabel: h.size || undefined,
   };
 }
@@ -1720,6 +1725,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                 )}
 
+                {sel.src === 'upload' && sel.docId && projectId && (!sel.disposition || sel.disposition === 'keep_data') && <DocumentDisposition
+                  key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} targetType="vault_document" targetId={sel.docId}
+                  title={sel.title} existingChoice={sel.disposition} onChanged={() => setVaultEpoch(n => n + 1)}
+                />}
+                {sel.originalFileAvailable === false && <p className="sec-sub" role="status">Original file unavailable. Retained extracted data and its lineage remain accessible.</p>}
+
                 {sel.src === 'upload' && sel.filing ? (
                   <>
                     {/* ── Dossier filing — the placement lifecycle ──
@@ -2042,7 +2053,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                     <button
                       className="sp-ask"
                       onClick={() => void downloadVaultDoc(sel.docId!, sel.title)}
-                      disabled={downloading === sel.docId}
+                      disabled={downloading === sel.docId || sel.originalFileAvailable === false}
+                      title={sel.originalFileAvailable === false ? 'The original file is unavailable after the recorded retention decision' : undefined}
                     >
                       {I.download} {downloading === sel.docId ? 'Downloading…' : 'Download'}
                     </button>

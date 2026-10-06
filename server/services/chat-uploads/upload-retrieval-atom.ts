@@ -37,6 +37,7 @@
  */
 
 import { createScopedLogger } from '../../utils/logger';
+import { atomOriginalFileAvailableSql } from '../document-data-disposition/eligibility.js';
 
 const logger = createScopedLogger('upload-retrieval-atom');
 
@@ -153,7 +154,9 @@ export async function writeUploadRetrievalAtom(
          (organization_id, source_type, source_id, atom_type, title, content,
           structured_data, tags, confidence, status)
        SELECT $1, 'chat_upload', $2, 'source_document', $3, $4, $5::json, $6::text[], 0.85, 'active'
-        WHERE NOT EXISTS (
+         FROM (SELECT $1::int AS organization_id, 'chat_upload'::text AS source_type,
+           $2::text AS source_id, $5::json AS structured_data) a
+        WHERE ${atomOriginalFileAvailableSql('a')} AND NOT EXISTS (
           SELECT 1 FROM lumen_data_atoms WHERE organization_id = $1 AND source_id = $2
         )
        RETURNING id`,

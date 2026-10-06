@@ -79,6 +79,7 @@ import {
    invited the user to quote pointed at nothing. */
 import { serverError } from '../../lib/api-response.js';
 import { createSource, findSourceByChecksum } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
+import { uploadedBinaryAvailableSql } from '../../services/document-data-disposition/eligibility.js';
 
 // People are named through public.actor_name, not a join on users: since users
 // took row-level security (D3, 2026-09-28) a tenant scope reads only current
@@ -1423,7 +1424,8 @@ router.post('/:id/adopt', async (req: Request, res: Response) => {
     }
     const file = await client.query(
       `SELECT id, original_name, mime_type, file_size, storage_path, checksum_sha256
-         FROM file_uploads WHERE id = $1 AND organization_id = $2`,
+         FROM file_uploads f WHERE id = $1 AND organization_id = $2
+           AND ${uploadedBinaryAvailableSql('f')}`,
       [fileUploadId, orgId],
     );
     const f = file.rows[0] as
@@ -1494,6 +1496,7 @@ router.get('/:id/conversation-files', async (req: Request, res: Response) => {
       `SELECT f.id, f.original_name, f.mime_type, f.file_size, f.created_at
          FROM file_uploads f
         WHERE f.organization_id = $1 AND f.user_id = $2 AND f.checksum_sha256 IS NOT NULL
+          AND ${uploadedBinaryAvailableSql('f')}
           AND NOT EXISTS (
                 SELECT 1 FROM cre_evidence_sources s
                  WHERE s.organization_id = $1 AND s.checksum = f.checksum_sha256
@@ -1707,6 +1710,9 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       title: s.title,
       checksum: s.checksum,
       isCurrent: s.isCurrent !== false,
+      dataEligible: s.dataEligible !== false,
+      originalFileAvailable: s.originalFileAvailable !== false,
+      disposition: s.disposition ?? null,
       ingestionStatus: s.ingestionStatus,
       extractionStatus: s.extractionStatus,
       createdAt: s.createdAt,

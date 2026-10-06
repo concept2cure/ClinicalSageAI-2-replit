@@ -1,0 +1,26 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-06T18:07:05.273Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts > source and catalog consumers of an actual recorded disposition > starts with a readable file and an eligible, identifiable source 41ms
+ ✓ server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts > source and catalog consumers of an actual recorded disposition > retains extracted text and lineage while refusing original-file pins 79ms
+ ✓ server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts > source and catalog consumers of an actual recorded disposition > withdraws new grounding without rewriting the historical captured identity 54ms
+ ✓ server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts > source and catalog consumers of an actual recorded disposition > detects the original-file leak if the binary-availability predicate is removed 56ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  14:07:01
+   Duration  3.64s (transform 768ms, setup 69ms, import 110ms, tests 3.22s, environment 0ms)
+

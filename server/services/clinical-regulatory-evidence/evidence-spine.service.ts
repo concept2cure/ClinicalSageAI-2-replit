@@ -13,6 +13,7 @@
  */
 
 import { pool } from '../../db';
+import { capturedDataEligibleSql, capturedBinaryAvailableSql, capturedDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
 import { captureActor, recordCapture, recordSupersession } from './data-room-capture-audit';
 import {
   SOURCE_TYPES, VISIBILITY_CLASSES, OUTCOME_TYPES, RELATIONSHIP_TYPES, ENTITY_TYPES,
@@ -293,7 +294,10 @@ export async function listClientDocuments(orgId: number, opts: {
 
   args.push(Math.min(Math.max(opts.limit ?? 200, 1), 500));
   const { rows } = await pool.query(
-    `SELECT * FROM cre_evidence_sources
+    `SELECT s.*, ${capturedDataEligibleSql('s')} AS data_eligible,
+            ${capturedBinaryAvailableSql('s')} AS original_file_available,
+            ${capturedDispositionChoiceSql('s')} AS disposition
+       FROM cre_evidence_sources s
       WHERE ${where}
       ORDER BY created_at DESC
       LIMIT $${args.length}`,
@@ -367,8 +371,9 @@ export async function readSourceUploads(orgId: number, ids: number[]): Promise<S
   const { rows } = await pool.query(
     `SELECT id, organization_id, source_type, client_program_id, is_current, title, checksum,
             provenance->>'fileUploadId' AS file_upload_id
-       FROM cre_evidence_sources
-      WHERE id = ANY($1) AND ${c.sql} AND deleted_at IS NULL`,
+       FROM cre_evidence_sources s
+      WHERE id = ANY($1) AND ${c.sql} AND deleted_at IS NULL
+        AND ${capturedBinaryAvailableSql('s')}`,
     [ids, c.param],
   );
   return rows.map((r: Record<string, unknown>) => ({
@@ -489,7 +494,10 @@ export async function findSupersededCandidate(
 export async function getSource(orgId: number, id: number): Promise<EvidenceSource | null> {
   const c = visibleOrgClause(orgId, 2);
   const { rows } = await pool.query(
-    `SELECT * FROM cre_evidence_sources WHERE id = $1 AND ${c.sql} AND deleted_at IS NULL`,
+    `SELECT s.*, ${capturedDataEligibleSql('s')} AS data_eligible,
+            ${capturedBinaryAvailableSql('s')} AS original_file_available,
+            ${capturedDispositionChoiceSql('s')} AS disposition
+       FROM cre_evidence_sources s WHERE id = $1 AND ${c.sql} AND deleted_at IS NULL`,
     [id, c.param],
   );
   return rows[0] ? adaptSource(rows[0]) : null;
@@ -500,7 +508,7 @@ export async function listSources(orgId: number, opts: {
 } = {}): Promise<EvidenceSource[]> {
   const c = visibleOrgClause(orgId, 1);
   const args: unknown[] = [c.param];
-  let where = `${c.sql} AND deleted_at IS NULL`;
+  let where = `${c.sql} AND deleted_at IS NULL AND ${capturedDataEligibleSql('cre_evidence_sources')}`;
   if (opts.sourceType) { args.push(opts.sourceType); where += ` AND source_type = $${args.length}`; }
   if (opts.applicationNumber) { args.push(opts.applicationNumber); where += ` AND application_number = $${args.length}`; }
   if (opts.indication) { args.push(opts.indication); where += ` AND indication = $${args.length}`; }
@@ -800,6 +808,9 @@ function adaptSource(r: any): EvidenceSource {
     trialRegistryIdentifier: r.trial_registry_identifier, documentDate: r.document_date,
     officialUrl: r.official_url, storedArtifactRef: r.stored_artifact_ref, checksum: r.checksum,
     version: r.version, isCurrent: r.is_current !== false,
+    dataEligible: r.data_eligible ?? true,
+    originalFileAvailable: r.original_file_available ?? true,
+    disposition: r.disposition ?? null,
     provenance: j(r.provenance), ingestionStatus: r.ingestion_status,
     extractionStatus: r.extraction_status, linkedCsrReportId: r.linked_csr_report_id,
     linkedPrecedentId: r.linked_precedent_id, metadata: j(r.metadata),

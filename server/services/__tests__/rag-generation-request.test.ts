@@ -21,12 +21,20 @@ const expectedRequest = {
   maxTokens: 1000,
   temperature: 0.3,
 };
+const options = { strategy: 'basic' as const, organizationUuid: '3fa85f64-5717-4562-b3fc-2c963f66afa6' };
 
 function pipeline(documents = sources) {
   const instance = Object.create(AdvancedRAGPipeline.prototype) as AdvancedRAGPipeline;
   const route = vi.fn(async () => ({ content: 'Source-based reply.' }));
   const context = { documents, totalCandidates: documents.length, retrievalStrategy: 'basic', processingTimeMs: 0, tokensUsed: 0 };
-  Object.assign(instance, { retrieve: vi.fn(async () => context), aiRouter: { route } });
+  const query = vi.fn(async () => ({ rows: documents.map(d => ({
+    id: d.id, document_id: d.documentId, title: d.title, original_file_available: true,
+  })) }));
+  const client = { query, release: vi.fn() };
+  Object.assign(instance, {
+    retrieve: vi.fn(async () => context), aiRouter: { route },
+    pool: { query, connect: vi.fn(async () => client) },
+  });
   return { instance, route };
 }
 
@@ -40,18 +48,18 @@ describe('one canonical RAG generation request for production and controlled qua
   });
   it('the actual production generation method sends that exact canonical request', async () => {
     const p = pipeline();
-    await p.instance.queryWithGeneration('What is recorded?', { strategy: 'basic' });
+    await p.instance.queryWithGeneration('What is recorded?', options);
     expect(p.route).toHaveBeenCalledOnce();
     expect(p.route).toHaveBeenCalledWith(expectedRequest);
   });
   it('retains the explicit generator pin while reusing the canonical request', async () => {
     const p = pipeline();
-    await p.instance.queryWithGeneration('What is recorded?', { strategy: 'basic', model: 'candidate-model' });
+    await p.instance.queryWithGeneration('What is recorded?', { ...options, model: 'candidate-model' });
     expect(p.route).toHaveBeenCalledWith({ ...expectedRequest, model: 'candidate-model' });
   });
   it('retains the existing empty-source refusal without calling a model', async () => {
     const p = pipeline([]);
-    const result = await p.instance.queryWithGeneration('What is recorded?', { strategy: 'basic' });
+    const result = await p.instance.queryWithGeneration('What is recorded?', options);
     expect(result.sources).toEqual([]);
     expect(result.answer).toContain('could not find relevant information');
     expect(p.route).not.toHaveBeenCalled();

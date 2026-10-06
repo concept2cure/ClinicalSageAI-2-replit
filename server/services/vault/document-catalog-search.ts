@@ -17,6 +17,7 @@
  */
 
 import { pool } from '../../db.js';
+import { vaultDataEligibleSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
 
 export class CatalogSearchUnavailableError extends Error {
   constructor(reason: string) {
@@ -26,6 +27,7 @@ export class CatalogSearchUnavailableError extends Error {
 }
 
 export interface CatalogSearchHit {
+  originalFileAvailable: boolean;
   documentId: string;
   programId: string;
   programName: string | null;
@@ -92,7 +94,7 @@ export async function searchCatalog(
        FROM vault.documents d
        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE d.deleted_at IS NULL
+      WHERE d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
         AND ($2::uuid IS NULL OR d.program_id = $2::uuid)`,
       [organizationId, programId],
     );
@@ -100,11 +102,13 @@ export async function searchCatalog(
       `SELECT d.id, d.program_id, rp.name AS program_name, d.file_name, d.document_title,
               d.folder_id, d.ctd_section, d.placement_status,
               c.document_kind, c.purpose, c.summary, c.key_data,
+              ${vaultBinaryAvailableSql('d')} AS original_file_available,
               1 - (c.embedding <=> $2::vector) AS similarity
          FROM vault.document_catalog c
          JOIN vault.documents d ON d.id = c.document_id AND d.deleted_at IS NULL
          JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
         WHERE c.embedding IS NOT NULL AND c.catalog_status = 'cataloged'
+          AND ${vaultDataEligibleSql('d')}
           AND 1 - (c.embedding <=> $2::vector) >= $3
           AND ($5::uuid IS NULL OR d.program_id = $5::uuid)
         ORDER BY c.embedding <=> $2::vector
@@ -113,6 +117,7 @@ export async function searchCatalog(
     );
     return {
       hits: res.rows.map((r: any) => ({
+        originalFileAvailable: r.original_file_available ?? true,
         documentId: r.id,
         programId: r.program_id,
         programName: r.program_name,

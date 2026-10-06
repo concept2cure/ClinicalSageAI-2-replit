@@ -244,34 +244,11 @@ router.get('/components', async (req, res) => {
 });
 
 // Delete document
-router.delete('/file/:id', async (req, res) => {
-  try {
-    const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
-    const documentId = parseInt(req.params.id);
-    // SECURITY (21 CFR Part 11): the actor recorded against this deletion must
-    // come from the verified JWT, never from a client-supplied header.
-    const userId = String((req as any).user?.id ?? (req as any).user?.userId ?? '');
-    if (!userId) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    const result = await documentDataCenterService.deleteDocument(
-      organizationId,
-      documentId,
-      userId
-    );
-
-    // Honest not-found: deleteDocument only reports success when a row that
-    // belongs to this org actually existed and was removed.
-    if (!result.success) {
-      return res.status(404).json({ error: 'Document not found' });
-    }
-
-    res.json({ success: true, message: 'Document deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting document:', error);
-    res.status(500).json({ error: 'Failed to delete document' });
-  }
+router.delete('/file/:id', (_req, res) => {
+  return res.status(409).json({
+    error: 'DOCUMENT_DISPOSITION_REQUIRED',
+    message: 'Document removal requires a typed project source and an extracted-data disposition. Open the project Data Room to review the impact before removal.',
+  });
 });
 
 // Get single document file

@@ -55,6 +55,7 @@ import { registerDocumentPlacementHandlers } from './document-placement-tools.js
 import { registerDocumentPassageHandlers } from './document-passage-tools.js';
 import { vaultWriteRefusal } from '../vault/vault-write-authority.js';
 import { catalogScope, documentScopeRefusal } from './catalog-scope.js';
+import { sourceAvailabilityPresentation } from '../vault/document-catalog-eligibility.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handlers
@@ -344,6 +345,7 @@ async function handleReadProjectDocument(
     documentId: doc.id,
     fileName: doc.fileName,
     documentTitle: doc.documentTitle,
+    ...sourceAvailabilityPresentation(doc),
     extractionMethod: doc.catalog!.extractionMethod,
     ...(comprehension ? { comprehension } : {}),
     /* An OCR'd scan is not the same evidence as a born-digital text layer, and

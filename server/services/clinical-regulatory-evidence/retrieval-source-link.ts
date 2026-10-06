@@ -42,6 +42,7 @@
 
 import { pool } from '../../db';
 import type { Queryable } from './span-lineage.service';
+import { capturedDataEligibleSql } from '../document-data-disposition/eligibility.js';
 
 /** Default executor — the pool (its own transaction per statement). */
 const defaultExec: Queryable = pool as unknown as Queryable;
@@ -104,7 +105,8 @@ export async function resolveEvidenceSourceIdsByArtifact(
       `SELECT (metadata->>'artifactId') AS artifact_id, id
          FROM cre_evidence_sources
         WHERE organization_id = $1
-          AND metadata->>'artifactId' = ANY($2::text[])`,
+          AND metadata->>'artifactId' = ANY($2::text[])
+          AND ${capturedDataEligibleSql('cre_evidence_sources')}`,
       [orgId, byArtifactId],
     );
     for (const r of rows) {
@@ -126,7 +128,8 @@ export async function resolveEvidenceSourceIdsByArtifact(
       `SELECT id
          FROM cre_evidence_sources
         WHERE organization_id = $1
-          AND id = ANY($2::int[])`,
+          AND id = ANY($2::int[])
+          AND ${capturedDataEligibleSql('cre_evidence_sources')}`,
       [orgId, wantedIds],
     );
     for (const r of rows) {

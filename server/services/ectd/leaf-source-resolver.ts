@@ -46,6 +46,7 @@ import path from 'path';
 import { createHash } from 'crypto';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../../db';
+import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
 import { coauthorDocuments } from '../../../shared/schema';
 import { unifiedDocuments, workflowDocumentVersions } from '../../../shared/schema/unified_workflow';
 import { ctdOnboardingDocuments } from '../../../shared/schema/ctd-projects';
@@ -627,6 +628,7 @@ export async function materializeLeafSources(
            FROM vault.documents d
           WHERE d.id = $1::uuid
             AND d.deleted_at IS NULL
+            AND ${vaultBinaryAvailableSql('d')}
             AND EXISTS (
               SELECT 1 FROM regulatory_programs rp
                WHERE rp.id = d.program_id

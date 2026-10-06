@@ -96,6 +96,7 @@ beforeAll(async () => {
   // reads them through readSourceUploads, as every deployed database has them.
   const versioning = path.resolve(here, '../../../../migrations/20260829_cre_source_versioning.sql');
   await pglite.exec(fs.readFileSync(versioning, 'utf8'));
+  await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../migrations/20261006_document_data_dispositions.sql'), 'utf8'));
 }, 90_000);
 afterAll(async () => {
   await pglite.close();

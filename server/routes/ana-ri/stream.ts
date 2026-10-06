@@ -144,7 +144,7 @@ import { continuationContextMessage } from '../../../shared/ana/continuation-con
 import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
 import { buildContextUsedEvent, type ContextUpload } from '../../services/ana/turn-context-used.js';
 import { guardUserInput, PromptInjectionError } from '../../services/ana/ana-input-guard.js';
-import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
+import { isPdfIntakeEnabled } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
 import {
@@ -1254,12 +1254,32 @@ export function mountStreamRoute(router: Router): void {
             Number(orgId),
             req.body.source_ids as Array<number | string>
           );
-          if (fromSources.length < req.body.source_ids.length) {
-            unreadableSources = req.body.source_ids.length - fromSources.length;
+          const { readRetainedSourceContexts } = await import(
+            '../../services/clinical-regulatory-evidence/retained-source-context.js'
+          );
+          const retained = await readRetainedSourceContexts(
+            Number(orgId), programIdForThread(streamProjectId), req.body.source_ids,
+          );
+          for (const source of retained) {
+            const identity = `cre_source:${source.sourceId}`;
+            messages.push({ role: 'user', content:
+              `[Selected retained source ${identity}; original SHA-256 ${source.sha256}; ` +
+              `stored representation ${source.representationId}; supplied text SHA-256 ${source.textSha256}. ` +
+              'Original file unavailable; extracted data retained. ' +
+              `${source.truncated ? 'This is a bounded excerpt, not a full-document read.' : 'Stored extracted text follows.'}]\n` +
+              source.text,
+            });
+            turnContextSources.push({ source: identity, content: source.text });
+            contextUploads.push({ fileId: identity, fileName: source.title, mimeType: 'text/plain', read: 'content' });
+            contentReadIds.add(identity);
+            uploadChecksums.set(identity, source.textSha256);
+          }
+          if (fromSources.length + retained.length < req.body.source_ids.length) {
+            unreadableSources = req.body.source_ids.length - fromSources.length - retained.length;
             // A selected source with no readable upload must not pass silently —
             // the user chose it expecting it to be read.
             console.warn(
-              `[AnA RI Stream] ${req.body.source_ids.length - fromSources.length} of ${
+              `[AnA RI Stream] ${unreadableSources} of ${
                 req.body.source_ids.length
               } selected source(s) have no readable upload`
             );
@@ -1321,7 +1341,10 @@ export function mountStreamRoute(router: Router): void {
                     ? 'text/plain'
                     : null;
                 if (!docMime || !f.storagePath) continue;
-                const buf = await readLocalUploadBuffer(f.storagePath);
+                // Recheck the disposition at the byte read too: the preview may
+                // have been confirmed after the earlier metadata lookup.
+                const { loadUploadedFile } = await import('../../services/ana/uploaded-file-access.js');
+                const buf = (await loadUploadedFile(f.fileId, Number(orgId))).buffer;
                 if (!buf || buf.length === 0 || buf.length > MAX_DOC_BYTES) continue;
                 messages.push({
                   role: 'user' as const,
@@ -1377,7 +1400,7 @@ export function mountStreamRoute(router: Router): void {
       // What this turn read before answering — uploads and memory — so the
       // work panel's "Used in this session" states facts, not an attempt.
       const contextUsedEvent = buildContextUsedEvent({
-        requestedUploads: streamFileIds.length + unreadableSources,
+        requestedUploads: Math.max(streamFileIds.length, contextUploads.length) + unreadableSources,
         uploads: contextUploads.map(u =>
           contentReadIds.has(u.fileId) ? { ...u, read: 'content' as const } : u
         ),

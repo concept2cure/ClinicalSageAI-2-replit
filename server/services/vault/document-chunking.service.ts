@@ -23,6 +23,7 @@
  */
 
 import { pool } from '../../db.js';
+import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
 import { getTenantScope, runWithTenantScope, type TenantScope } from '../../db/tenantStore.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { FeatureToggleService } from '../featureToggleService.js';
@@ -120,6 +121,7 @@ async function documentIsInOrganization(
     `SELECT 1 FROM vault.documents d
        JOIN regulatory_programs p ON p.id = d.program_id
       WHERE d.id = $1 AND p.organization_id = $2
+        AND ${vaultBinaryAvailableSql('d')}
       LIMIT 1`,
     [documentId, organizationId],
   );
@@ -201,6 +203,9 @@ export async function chunkAndEmbedDocument(args: {
     vectors = await runWithTenantScope(embeddingScope(args.organizationId), async () => {
       const out: string[] = [];
       for (let i = 0; i < chunks.length; i += EMBED_BATCH) {
+        if (!(await documentIsInOrganization(pool, args.documentId, args.organizationId))) {
+          throw new Error('Document file access was withdrawn before embedding; indexing refused.');
+        }
         const batch = chunks.slice(i, i + EMBED_BATCH);
         const results = await svc.embedBatch(batch.map(c => c.text), CHUNK_EMBEDDING_MODEL);
         for (let j = 0; j < batch.length; j++) {

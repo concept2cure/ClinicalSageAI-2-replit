@@ -3043,6 +3043,11 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-pma-pack-software-doc-level-*.
   'migrations/20261005b_pma_fda_outline_v1_1_software_documentation_level.sql',
 
+  // W2/D2 + D5: append-only typed logical file/extracted-data dispositions.
+  // Source/Vault/lineage rows and physical retention remain intact. Before the
+  // final RLS sweeps because this is public + organization_id INTEGER.
+  'migrations/20261006_document_data_dispositions.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

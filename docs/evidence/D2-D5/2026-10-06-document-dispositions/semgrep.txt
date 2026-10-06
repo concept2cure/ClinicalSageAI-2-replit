@@ -1,0 +1,165 @@
+
+
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 88 files tracked by git with 1075 Code rules:
+
+  Language      Rules   Files          Origin      Rules
+ ─────────────────────────────        ───────────────────
+  <multilang>      47      88          Community    1075
+  ts              163      74
+  js              153       1
+  json              4       1
+
+Warning: 2 timeout error(s) in server/services/ana/AnaToolExecutor.ts when running the following rules:
+[javascript.express.security.audit.express-ssrf.express-ssrf, javascript.express.security.audit.xss.direct-response-
+write.direct-response-write]
+  Current version has 18 findings.
+
+Creating git worktree from 'e78869eec43301b44f2e1af01e630f0278b3d360' to scan baseline.
+  Will report findings introduced by these commits (may be incomplete for shallow checkouts):
+    *   f58540a29 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+    |\
+    | * ed6b79a5b chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * | cd1321ca2 Patch MCP SDK OAuth issuer binding and gate its regression
+    |/
+    * 0e0bb7ec4 Complete Anna IA qualification safeguards
+    * 73a151ec6 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * 775bde8ad fix(ana): distinguish unassessed evidence from clear findings
+    * 3ba0b56a2 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * 0efd2e86e fix(ana): preserve uncertainty in scientific evidence judgments
+    * 41dd55b3f chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * 8212d3c69 fix(ana): expose conversation blind spots and retain late corrections
+    * e16398bd1 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * afe63076c fix(ana): use verified conversation context before routing or answering
+    * 64012fae7 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * b7984438b fix(ana): preserve clarification context and require explicit rewrite proposals
+    * 9036acd75 fix(ana): preserve intelligent awareness in orchestration overlays
+    * 75de31925 feat(ana): ground IA questions in scientific and market judgment
+    * 148f24441 feat(ana): make intelligent awareness guide contextual answers
+    * 373257239 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * 49866dec7 fix(ana): close unconfirmed activity after final reply
+    * 989d23553 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * e5b01812d fix(ana): exclude recovery copy from model history and review scan findings
+    * d8edb1231 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * c0b3089df fix(ana): bind drive Stop to its original stream
+    * 2cdb83136 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * e2d844104 fix(ana): clear abandoned controls on conversation switch
+    * 6bef1dc5a chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * bb691af06 fix(ana): reject incomplete history and explain recovery
+    * eab6a4377 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * eb8fd2bf9 fix(ana): release composer when final reply completes
+    * 440b7f1db chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * b553c21ce fix(ana): show recovery guidance beside interrupted replies
+    * 9100bbbcc chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * 2bf299776 fix(ana): verify thread access before private memory recall
+    * 18f36fe0a chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * 0bb1cd6db perf(ana): overlap independent intelligence recall with route prefetch
+    * e197e0c23 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * b4b983266 fix(ana): bound optional enrichment while retaining healthy context and intent
+    * cdb6e3183 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * f315fdf31 fix(ana): bound intelligence recall and parse streaming refusals canonically
+    * 8a389e4e5 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * 5d7faedd8 Bound optional AnA context prefetch waits and report unavailable sources
+    * 7c83d0a20 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * c7acab341 fix(ana): preserve the visible partial draft on explicit Continue
+    * 4f9797c4b chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * 07ed92828 fix(ana): isolate aborted streams and keep turn identities unique
+    * bdba62065 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * 227dcbe94 fix(ana): bound history loading and retain specific stream recovery
+    * b58941b1d chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * 7119b71bf fix(ana): expose interrupted answers and actionable recovery
+    * e322dbeb5 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * 38c4ce101 fix(ana): preserve conversation ownership and explain action outcomes
+    * d669c6f00 fix(ana): bound memory startup and await demo screen commits
+    * d680b8166 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * 4997ed619 fix(ana): cancel deferred demo actions and own provider retries
+    * e6213ac1a chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * d5e9b20aa fix(ana): bound stalled turns and preserve replacement demos
+    * 570636907 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    *   9852637b4 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+    |\
+    | *   42a9cceab Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+    | |\
+    | * \   8a21c4f46 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+    | |\ \
+    | * | | 04aac98c0 Module 3 signed snapshots and provenance are append-only (D2, D5, D6)
+    |  / /
+    * | | b92c257d2 Any document outline can now be briefed to AnA from data, each statement labelled with its basis
+    * | | c5c9ab298 The software documentation summary no longer reports completeness against an assumed Basic level
+    * | | 708b2fa3e IVD knowledge names FDA's three PCCP components and dates the De Novo rule correctly (effective 2022-01-03)
+    * | | 25710c65f A device whose EU class is not determined no longer scores "classification determined", and AnA is told to ask for the missing facts
+    * | | c4928da8b AnA reviewing an EU risk management file gets the EU AFAP rule from its RMF tool
+    * | | 9c53002ea The PSUR retirement's tool test pins what AnA now does: refuse a PSUR, name the canonical path, still draft incident reports
+    * | |   6126c4e90 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+    |\ \ \
+    | | |/
+    | |/|
+    | * | 6585d21ff chore(repo-health): auto-refresh baseline after merge [skip ci]
+    | * | 63a3dbfcc Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+    | |\|
+    | * | b0038b034 The "Draft from sources" door files a turn record and checks the draft against what the model was shown (RT-6, reasoning round 12)
+    |  /
+    * | c0bc6c6fb IVDR classify no longer calls every blood-grouping test Class D, and no longer offers Class B an Annex XI route
+    * | 6a73c1f1c Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+    |\|
+    | * 006bc7627 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * | 92ac7e0ea CER/PER validation no longer calls a report valid when scope, appraisal, evaluator qualification, PMCF, references or an IVDR performance pillar is missing
+    * | 6becd3fda A US sequence's Study Tagging Files are named stf-<study-id>.xml, point at index.xml leaf IDs, and refuse a dataset tag FDA rejects (TRC 1735)
+    |/
+    * 28e131547 A 510(k) or De Novo whose device answers contradict its own sections is held back before FDA's technical screening sees it
+    * 553887bf5 An IVDR GSPR checklist now cites IVDR Annex I numbering (§1–8, §9–19, §20), not the MDR's
+    *   edaf24429 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+    |\
+    | * 182930ca8 chore(repo-health): auto-refresh baseline after merge [skip ci]
+    * 64818b1f2 A registry that names a CTD code wrongly now fails CI against one shared contract
+    * 2051aa2b8 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+    * 496fd7e72 AnA's combination-product cGMP plan states the QMSR-era 21 CFR 4.4(b)(1) call-outs: 21 CFR 820.10 and the ISO 13485:2016 clauses
+    * 4b793d04a A PSUR is authored one way, as the program's post-market document; the parallel builder is retired
+    * 46dd613ff New PMA projects scaffold an outline whose C.4 asks for FDA's Basic/Enhanced software documentation level
+    * f997a5e8e Device labeling now lists FDA IVD (809.10) and investigational (812.5) label elements and checks authored labeling for them
+    * 963c2167d classify_device no longer calls a pacemaker Class IIb or an IVD self-test Class B, and states no class it cannot support
+    * 3ea53fe52 EU and Japanese Module 1 come from one cited record, and an EU eCTD MAA is no longer told its table of contents is missing
+    * e65b5b284 Vault coverage stays out of every readiness path again: the database-lock chain no longer names it
+    * 62ff3edc3 Nothing is sent to PMDA over an unsourced protocol, and Japan devices no longer show as transmittable
+    * 1022b61e1 The J-NDA rule-pack replay test no longer times out under a loaded run
+    * 78e81575e AnA's Vault read for the submission plan now also returns document ids, from the one shared query
+    * da01820d8 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+    * ecabf4b15 A section rewritten from the AnA chat is written against what that section must contain
+    * 59919d386 HARMONIZE flags references that do not exist and stops warning on ones it cannot check
+    * b0d433730 eSTAR filing readiness says when the template on file is not FDA's current version
+    * a81811bf7 Design controls cite ISO 13485 §7.3 under the QMSR, and a missing independent reviewer no longer blocks a DHF
+    * e841291c1 Dataset-package readiness no longer passes a package FDA would reject for missing TS, DM, ADSL or define.xml
+    * b086d6fe1 The EU datasheet, AnA's MAA submit step and the SOP generator name the eSubmission Gateway for a centralised MAA, and the US datasheet no longer presents eCTD v4.0 as the format
+    * c479a62ef AnA's database-lock plan no longer counts a SAP as the CSR, and sees a CSR filed at 5.3.5 or in Module 5
+    * ca874aa26 AnA's CTD record now knows which Module 2-5 headings ICH M4 defines; an invented 4.3.1 is refused (D2)
+    * 5c93bf1ab Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+    * 345aac576 CSR sections are drafted against what ICH E3 says each one contains, not the model's memory of E3
+
+
+
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 6 files tracked by git with 3 Code rules:
+  Scanning 6 files with 3 ts rules.
+
+
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 213
+ • Targets scanned: 88
+ • Parsed lines: ~99.9%
+ • Scan was limited to files changed since baseline commit.
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 213 rules on 88 files: 0 findings.
+(need more rules? `semgrep login` for additional free Semgrep Registry rules)
+
+
+A new version of Semgrep is available. See https://semgrep.dev/docs/upgrading
+If Semgrep missed a finding, please send us feedback to let us know!
+See https://semgrep.dev/docs/reporting-false-negatives/

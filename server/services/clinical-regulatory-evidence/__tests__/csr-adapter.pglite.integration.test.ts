@@ -64,6 +64,8 @@ beforeAll(async () => {
   const migration = path.resolve(here, '../../../../db/migrations/20260724_clinical_regulatory_evidence_spine.sql');
   await pglite.exec(fs.readFileSync(migration, 'utf8'));
   await pglite.exec(CORPUS_DDL);
+  await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../migrations/20260726_cre_source_program_scope.sql'), 'utf8'));
+  await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../migrations/20261006_document_data_dispositions.sql'), 'utf8'));
 }, 90_000);
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => {

@@ -24,6 +24,7 @@
 import { getEmbeddingProvider } from './ai-gateway/embeddings/embedding-provider';
 import { isTerminalGatewayError } from './ai-gateway/gateway-outcome';
 import pg from 'pg';
+import { atomDataEligibleSql, atomOriginalFileAvailableSql } from './document-data-disposition/eligibility.js';
 import { assertTenantIsCurrent, isTenantUuid, TenantKeyRequiredError } from '../db/currentTenant';
 import crypto from 'crypto';
 
@@ -255,8 +256,8 @@ export class EnhancedEmbeddingService {
       SELECT
         id, content, title, atom_type,
         embedding IS NOT NULL as has_embedding
-      FROM lumen_data_atoms
-      WHERE id = $1
+      FROM lumen_data_atoms a
+      WHERE id = $1 AND ${atomOriginalFileAvailableSql('a')}
     `,
       [atomId]
     );
@@ -281,12 +282,12 @@ export class EnhancedEmbeddingService {
     // Store embedding
     await this.pool.query(
       `
-      UPDATE lumen_data_atoms
+      UPDATE lumen_data_atoms a
       SET
         embedding = $1::vector,
         embedding_model = $2,
         embedding_updated_at = NOW()
-      WHERE id = $3
+      WHERE id = $3 AND ${atomOriginalFileAvailableSql('a')}
     `,
       [`[${result.embedding.join(',')}]`, result.model, atomId]
     );
@@ -487,12 +488,14 @@ export class EnhancedEmbeddingService {
       SELECT
         a.id,
         a.content,
-        a.title,
+        CASE WHEN ${atomOriginalFileAvailableSql('a')} THEN a.title
+          ELSE COALESCE(a.title, 'Untitled source') || ' [retained data; original file unavailable]' END AS title,
         a.atom_type,
         1 - (a.embedding <=> $1::vector) as similarity
       FROM lumen_data_atoms a
       JOIN organizations o ON a.organization_id = o.id
       WHERE a.embedding IS NOT NULL
+        AND ${atomDataEligibleSql('a')}
         AND o.uuid = $4
         AND 1 - (a.embedding <=> $1::vector) > $2
         ${filterSql}
@@ -580,10 +583,14 @@ export class EnhancedEmbeddingService {
         FROM lumen_data_atoms a
         JOIN organizations o ON a.organization_id = o.id
         WHERE o.uuid = $6
+          AND ${atomDataEligibleSql('a')}
           ${projectFilterClause}
       )
-      SELECT h.*
+      SELECT h.*, CASE WHEN ${atomOriginalFileAvailableSql('a')} THEN h.title
+          ELSE COALESCE(h.title, 'Untitled source') || ' [retained data; original file unavailable]' END AS title
       FROM search_atoms_hybrid($1, $2::vector, $3, $4, $5, NULL, ARRAY(SELECT id FROM org_atoms)) h
+      JOIN lumen_data_atoms a ON a.id = h.id
+      WHERE ${atomDataEligibleSql('a')}
       ORDER BY h.combined_score DESC
       `,
       projectId

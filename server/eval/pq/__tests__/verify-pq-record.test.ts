@@ -10,10 +10,12 @@ const entry = { id: 'generator', pinnedVersion: 'generator-pin', provider: 'anth
   pq: { status: 'passed' as 'passed' | 'failed' | 'pending', reference: 'fixture.json' as string | null } };
 function fixture() {
   const protocol = JSON.parse(JSON.stringify(protocolJson));
-  Object.assign(protocol, { status: 'approved', approvedBy: 'fixture owner', approvedOn: '2026-10-06' });
+  protocol.status = 'approved';
+  protocol.approvedBy = 'fixture owner';
+  protocol.approvedOn = '2026-10-06';
   protocol.components.generation.criteria.minTasksPerDocType = 1;
-  Object.assign(protocol.components.rag, { executable: true });
-  Object.assign(protocol.components.rag.criteria, { minScoredItems: 1 });
+  protocol.components.rag.executable = true;
+  protocol.components.rag.criteria.minScoredItems = 1;
   const bank = { version: 'fixture', tasks: [{ id: 'g1', docType: 'ind', taskType: 'generation', input: 'Fixture source' },
     { id: 'e1', docType: 'ind', taskType: 'extraction', input: 'Fixture source', expectedFields: { field: 'recorded' } }] };
   const gold = { keysProvisional: false, items: [{ id: 'q1', question: 'What is recorded?', openChecks: [], expectedSourceKeys: ['SOURCE@1'],

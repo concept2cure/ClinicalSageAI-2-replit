@@ -20,6 +20,8 @@
  */
 
 import { pool } from '../../db.js';
+import { vaultDataEligibleSql, vaultDispositionChoiceSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
+import { catalogableDocument } from './document-catalog-eligibility.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { FeatureToggleService } from '../featureToggleService.js';
 import {
@@ -127,6 +129,8 @@ export async function recordExtractionOutcome(
 
 /** The org-checked document row every tool call resolves through (see module header on tenancy). */
 export interface CatalogDocumentRow {
+  disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
+  originalFileAvailable?: boolean;
   id: string;
   programId: string;
   documentCode: string;
@@ -165,13 +169,15 @@ export async function loadDocumentForOrg(
   const res = await pool.query(
     `SELECT d.id, d.program_id, d.document_code, d.document_title, d.document_type,
             d.file_name, d.mime_type, d.content_hash, ${textCol},
+            ${vaultDispositionChoiceSql('d')} AS disposition,
+            ${vaultBinaryAvailableSql('d')} AS original_file_available,
             d.folder_id, d.evidence_kind, d.ctd_section, d.placement_status,
             c.catalog_status, c.extraction_method, c.extraction_confidence,
             c.extraction_error, c.char_count, c.word_count, c.page_count,
             c.document_kind, c.purpose, c.summary, c.key_data, c.cataloged_at
        FROM vault.documents d
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE d.id = $1 AND d.deleted_at IS NULL
+      WHERE d.id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
         AND EXISTS (SELECT 1 FROM regulatory_programs rp
                      WHERE rp.id = d.program_id AND rp.organization_id = $2)
       LIMIT 1`,
@@ -188,6 +194,8 @@ export async function loadDocumentForOrg(
     fileName: r.file_name,
     mimeType: r.mime_type,
     contentHash: r.content_hash,
+    disposition: r.disposition ?? null,
+    originalFileAvailable: r.original_file_available ?? true,
     extractedText: r.extracted_text,
     folderId: r.folder_id,
     evidenceKind: r.evidence_kind,
@@ -276,27 +284,9 @@ export async function completeCatalog(args: {
   userId?: number | null;
 }): Promise<CompleteCatalogResult> {
   // The text that was served is the text key_data is verified against.
-  const doc = await loadDocumentForOrg(args.documentId, args.organizationId, { includeText: true });
-  if (!doc) {
-    return { ok: false, refusal: 'Document not found in your organization\'s programs.' };
-  }
-  if (!doc.catalog) {
-    return {
-      ok: false,
-      refusal:
-        'This document has no catalog record (it predates the catalog, or cataloging was off at ' +
-        'ingest), so there is no recorded extraction to verify a read against. Re-ingest it, or ' +
-        'read it via the vault surface first.',
-    };
-  }
-  if (doc.catalog.status === 'extraction_failed') {
-    return {
-      ok: false,
-      refusal:
-        `Extraction failed for this document (${doc.catalog.extractionError ?? 'no reason recorded'}), ` +
-        'so there is no text to have read. Fix extraction (e.g. re-ingest, or OCR the source) before cataloging.',
-    };
-  }
+  const availability = catalogableDocument(await loadDocumentForOrg(args.documentId, args.organizationId, { includeText: true }));
+  if (!availability.ok) return availability;
+  const doc = availability.document;
 
   /* Coverage proves the model was served every character; it proved nothing
      about what the model then wrote. key_data was stored as the model typed
@@ -385,6 +375,8 @@ export async function completeCatalog(args: {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ProjectDocumentListing {
+  disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
+  originalFileAvailable?: boolean;
   id: string;
   programId: string;
   programName: string | null;
@@ -466,6 +458,8 @@ export async function listProjectDocuments(
     `SELECT d.id, d.program_id, rp.name AS program_name, d.document_code, d.document_title,
             d.document_type, d.file_name, d.folder_id, d.ctd_section, d.evidence_kind,
             d.placement_status, d.created_at,
+            ${vaultDispositionChoiceSql('d')} AS disposition,
+            ${vaultBinaryAvailableSql('d')} AS original_file_available,
             c.catalog_status, c.document_kind, c.purpose, c.extraction_error, c.char_count,
             COUNT(*) OVER () AS scope_total,
             COUNT(*) FILTER (
@@ -478,7 +472,7 @@ export async function listProjectDocuments(
        FROM vault.documents d
        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE d.deleted_at IS NULL ${programFilter}
+      WHERE d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')} ${programFilter}
       ORDER BY d.created_at DESC
       LIMIT $2`,
     params,
@@ -491,6 +485,8 @@ export async function listProjectDocuments(
     documentTitle: r.document_title,
     documentType: r.document_type,
     fileName: r.file_name,
+    disposition: r.disposition ?? null,
+    originalFileAvailable: r.original_file_available ?? true,
     location: {
       folderId: r.folder_id,
       ctdSection: r.ctd_section,
@@ -580,8 +576,9 @@ export async function listChatUploads(
     currentOnly: true,
     limit: want + 1,
   });
+  const active = sources.filter(s => s.dataEligible !== false);
   const hasMore = sources.length > want;
-  const uploads = (hasMore ? sources.slice(0, want) : sources).map(s => {
+  const uploads = (hasMore ? active.slice(0, want) : active).map(s => {
     const prov = (s.provenance ?? {}) as Record<string, unknown>;
     const meta = (s.metadata ?? {}) as Record<string, unknown>;
     return {

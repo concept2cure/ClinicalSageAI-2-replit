@@ -68,6 +68,8 @@ beforeAll(async () => {
   await pglite.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
   await pglite.exec(`INSERT INTO organizations (id, name) VALUES (${ORG_A},'a'), (${ORG_B},'b');`);
   await pglite.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
+  await pglite.exec(migration('migrations/20260726_cre_source_program_scope.sql'));
+  await pglite.exec(migration('migrations/20261006_document_data_dispositions.sql'));
 
   idA1 = await makeSourceWithArtifact(ORG_A, 'art-1');
   idA2 = await makeSourceWithArtifact(ORG_A, 'art-2');

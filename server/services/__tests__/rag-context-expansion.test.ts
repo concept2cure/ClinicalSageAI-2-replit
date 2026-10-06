@@ -77,12 +77,18 @@ describe('AdvancedRAGPipeline.expandContext', () => {
     expect(out[0].expandedContent).toBeUndefined();
   });
 
-  it('degrades to the bare chunk when the neighbour query fails', async () => {
+  it('refuses the stale chunk when the neighbour query fails', async () => {
     const query = vi.fn(async () => {
       throw new Error('db down');
     });
     const out = await pipelineWith(query).expandContext([ragChunk('c', 5)], 1);
-    expect(out[0].expandedContent).toBeUndefined();
-    expect(out[0].content).toBe('chunk-c'); // result is never dropped
+    expect(out).toEqual([]);
+  });
+
+  it('drops a chunk whose policy-filtered neighbour query no longer finds it', async () => {
+    const query = vi.fn(async (_sql: string) => ({ rows: [] }));
+    const out = await pipelineWith(query).expandContext([ragChunk('withdrawn', 5)], 1);
+    expect(out).toEqual([]);
+    expect(query.mock.calls[0][0]).toContain('document_data_dispositions');
   });
 });

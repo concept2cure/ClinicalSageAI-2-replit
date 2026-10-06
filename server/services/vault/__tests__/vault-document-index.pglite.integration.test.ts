@@ -13,6 +13,9 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 let pglite: PGlite;
 const pool = {
@@ -120,6 +123,8 @@ async function seed(over: Record<string, unknown> = {}): Promise<string> {
 beforeAll(async () => {
   pglite = new PGlite();
   await pglite.exec(DDL);
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../migrations/20261006_document_data_dispositions.sql'), 'utf8'));
 });
 
 afterAll(async () => {

@@ -483,6 +483,10 @@ export type HumanReviewStatus = (typeof HUMAN_REVIEW_STATUSES)[number];
 // ─── Entity row shapes (camelCase; adapters map from snake_case) ───────────────
 
 export interface EvidenceSource {
+  /** Disposition is projected; the immutable capture is never rewritten. */
+  dataEligible?: boolean;
+  originalFileAvailable?: boolean;
+  disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
   id: number;
   organizationId: number | null;          // null = GLOBAL_PUBLIC
   visibilityClass: VisibilityClass;

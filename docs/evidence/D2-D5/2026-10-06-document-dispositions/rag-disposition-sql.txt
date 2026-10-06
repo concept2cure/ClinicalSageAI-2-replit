@@ -1,0 +1,33 @@
+Curated local Vitest output: exact case results and runner summary.
+Repetitive initialization and the intentional db-down test stack trace omitted.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > preserves source numbering, separators and compressed/expanded/raw precedence exactly 1ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > preserves the pre-extraction prompt, task, sampling and token budget exactly 1ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > the actual production generation method sends that exact canonical request 3ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > retains the explicit generator pin while reusing the canonical request 1ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > retains the existing empty-source refusal without calling a model 1ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > does not send a candidate withdrawn after initial retrieval to the reranker 3ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > rechecks after reranking before missing candidate vectors are embedded 1ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > rechecks after MMR before compression and does not return stale grounding 1ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > does not publish compressed grounding withdrawn while compression awaited 1ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > refuses generation when the returned retrieval snapshot is already withdrawn 1ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > withholds the entire generated answer when one of its sources changes during generation 1ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > keeps stored text usable and marks retained data in the generation input 1ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > refuses on a failed policy lookup before a provider sees candidate content 2ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > batched candidate checks bind their actual corpus identities > checks each corpus once, binds the atom project, and does not accept an identity mismatch 2ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > batched candidate checks bind their actual corpus identities > preserves database-verified public guidance without a tenant-wide fallback 1ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > batched candidate checks bind their actual corpus identities > refuses private sources without a valid tenant and rejects unknown corpus types 1ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > expands a rag_chunk to its ±window neighbours, joined in order 4ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > does not annotate when the window adds no neighbours (single row) 1ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > skips the query entirely when window <= 0 1ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > passes through documents without a chunk index (project atoms, memory) 1ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > refuses the stale chunk when the neighbour query fails 7ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > drops a chunk whose policy-filtered neighbour query no longer finds it 1ms
+ ✓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > keeps scoped guidance and refuses foreign private rows and identities without a tenant 57ms
+ ✓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > marks retained Vault, RAG and atom text, then excludes it after the later withdrawal without deleting history 121ms
+ ✓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > withholds a generated answer when a real disposition commits during the provider await 61ms
+ Test Files  4 passed (4)
+      Tests  25 passed (25)
+   Start at  14:17:22
+   Duration  4.58s (transform 4.56s, setup 393ms, import 8.19s, tests 2.10s, environment 0ms)

@@ -1,0 +1,118 @@
+
+COMMAND npm run --silent ci:ectd-stubs
+[ectd-validate] ✅ Loaded sub-schema: leaf_map.schema.json
+[ectd-validate] ✅ Loaded sub-schema: sequence_plan.schema.json
+[ectd-validate] ✅ Loaded sub-schema: m1_index.schema.json
+[ectd-validate] ✅ Bundle data validates against bundle schema (AJV compile + validate)
+[ectd-validate] Computed bundle hash: e4446ba912b572d27dbd382f…
+[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…
+[ectd-validate] ✅ Proof-pack layout validated
+[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1
+[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids
+
+[ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref).
+EXIT 0
+
+COMMAND npm run --silent ci:risk-codes
+OK: Generated risk code types are up to date.
+EXIT 0
+
+COMMAND npm run --silent ci:migration-set-order
+[ci:migration-set-order] OK — 362 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+EXIT 0
+
+COMMAND npm run --silent ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 362 migrations, 36 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+EXIT 0
+
+COMMAND npm run --silent ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 112 baselined file(s) on no deploy path, none new.
+EXIT 0
+
+COMMAND npm run --silent ci:column-reachability
+[ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+EXIT 0
+
+COMMAND npm run --silent ci:runtime-ddl
+[ci:runtime-ddl] 84 DDL statement(s) in 14 runtime server file(s); 14 baselined
+[ci:runtime-ddl] ✅ no new runtime DDL.
+EXIT 0
+
+COMMAND npm run --silent ci:json-operator-types
+[ci:json-operator-types] 961 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3051 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+EXIT 0
+
+COMMAND npm run --silent db:sync-manifest:check
+Manifest is in sync.
+EXIT 0
+
+COMMAND npm run --silent ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 110 site(s), all baselined; 17 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 17 fix(es).
+EXIT 0
+
+COMMAND npm run --silent ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+EXIT 0
+
+COMMAND npm run --silent ci:unauthenticated-fetch
+✅ ci:unauthenticated-fetch — 70 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+EXIT 0
+
+COMMAND npm run --silent ci:session-scoped-rls-bypass
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 34 baselined occurrence(s) remain in 7 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+EXIT 0
+
+COMMAND npm run --silent check:catalog-copy
+[ci:catalog-copy] OK — 119 catalog description(s) across 3 migration(s) read as product copy.
+EXIT 0
+
+COMMAND npm run --silent ci:fixture-fallback
+[ci:fixture-fallback] `live ?? FIXTURE` and `live?.length ? live : FIXTURE` in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+EXIT 0
+
+COMMAND npm run --silent ci:no-mock-in-prod-routes
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+EXIT 0
+
+COMMAND npm run --silent ci:fabricated-identity
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+EXIT 0
+
+COMMAND npm run --silent ci:program-ownership-single-source:selftest
+[self-test] OK — 10 copies found, 6 reads passed.
+EXIT 0
+
+COMMAND npm run --silent ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+EXIT 0
+
+COMMAND npm run --silent ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 112 baselined across 50 file(s).
+  5 baselined file(s) now below their count — run --write-baseline to shrink it.
+EXIT 0
+
+COMMAND npm run --silent ci:client-ip-single-source
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+EXIT 0
+
+COMMAND npm run --silent ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 20 baselined site(s) remain, exactly as baselined.
+EXIT 0
+
+COMMAND npm run --silent ci:upload-guards
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 19 file(s) build uploads.
+EXIT 0
+
+COMMAND npm run --silent ci:trivyignore-hygiene
+[ci:trivyignore-hygiene] OK — 3 suppression(s) in /workspace/scratch/bd36ee581acd/concept2cure/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+EXIT 0
+
+COMMAND npm run --silent ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+EXIT 0
