@@ -3665,9 +3665,13 @@ export function DocumentWorkbench({
                     requestLeave({ kind: 'section', id: s.id })
                   );
               }}
-              /* A successful export re-baselines this document, so the Exports
+              /* A confirmed export record re-baselines this document, so the Exports
                  rail's "changed since the last export" verdict is now stale. */
               onExported={() => setExportsEpoch(e => e + 1)}
+              onCheckExports={() => {
+                setExportsEpoch(e => e + 1);
+                setRail('exports');
+              }}
             />
             {/* Section / Document. An author writes a section but SHIPS a
                 document, and until now the whole document was never on screen

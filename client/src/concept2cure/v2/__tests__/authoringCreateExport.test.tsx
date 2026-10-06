@@ -9,7 +9,8 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { ApiRequestError } from '@/lib/queryClient';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -33,6 +34,125 @@ const PROJECT = '11111111-1111-4111-8111-111111111111';
 afterEach(() => {
   cleanup();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+});
+
+function wireExport(reply: () => Promise<Response>) {
+  apiRequest.mockImplementation(async (method: string) => method === 'POST' ? reply() : ok({ templates: [] }));
+}
+
+describe('Authoring export confirmation and recovery', () => {
+
+  it('a lost reply is unknown, blocks repeat export, and offers the existing history', async () => {
+    wireExport(async () => { throw new TypeError('Failed to fetch'); });
+    const fireToast = vi.fn();
+    const onCheckExports = vi.fn();
+    render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} onCheckExports={onCheckExports} />);
+    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    const issue = await screen.findByRole('alert');
+    expect(issue.textContent).toMatch(/cannot confirm.*recorded/i);
+    expect(issue.textContent).not.toMatch(/document is unchanged|no file was produced/i);
+    expect((screen.getByRole('button', { name: /Word/ }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: /Check export history/ }));
+    expect(onCheckExports).toHaveBeenCalledOnce();
+    expect(apiRequest.mock.calls.filter(c => c[0] === 'POST')).toHaveLength(1);
+    expect(fireToast).not.toHaveBeenCalledWith(expect.stringMatching(/^Exported/));
+  });
+
+  it.each([502, 500])('an untyped %s does not assert that nothing was recorded', async (status) => {
+    wireExport(async () => { throw new ApiRequestError('Service unavailable', status); });
+    render(<AuthoringCreateExport {...base} docId="D1" />);
+    fireEvent.click(screen.getByRole('button', { name: /PDF/ }));
+    expect((await screen.findByRole('alert')).textContent).toMatch(/cannot confirm.*recorded/i);
+  });
+
+  it('a body-read failure after success refreshes the real record without claiming delivery', async () => {
+    wireExport(async () => ({ ok: true, status: 200, blob: async () => { throw new Error('stream interrupted'); } }) as Response);
+    const onExported = vi.fn();
+    const fireToast = vi.fn();
+    render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} onExported={onExported} />);
+    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    expect((await screen.findByRole('alert')).textContent).toMatch(/recorded.*file.*not received/i);
+    expect(onExported).toHaveBeenCalledWith('docx');
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+    expect(fireToast).not.toHaveBeenCalledWith(expect.stringMatching(/^Exported/));
+  });
+
+  it('an empty body is not passed to the download primitive', async () => {
+    wireExport(async () => ({ ok: true, status: 200, blob: async () => new Blob([]) }) as Response);
+    render(<AuthoringCreateExport {...base} docId="D1" />);
+    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    expect((await screen.findByRole('alert')).textContent).toMatch(/recorded.*file.*not received/i);
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('a typed rendering failure is retryable without an unknown-outcome claim', async () => {
+    wireExport(async () => { throw new ApiRequestError('Rendering failed', 500, undefined, 'EXPORT_NOT_RECORDED'); });
+    const fireToast = vi.fn();
+    render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} />);
+    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    await waitFor(() => expect(fireToast).toHaveBeenCalled());
+    expect(String(fireToast.mock.calls[0][0])).toMatch(/no export was recorded/i);
+    expect((screen.getByRole('button', { name: /Word/ }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('the server’s confirmed-record delivery failure refreshes history', async () => {
+    wireExport(async () => { throw new ApiRequestError('Delivery failed', 500, undefined, 'EXPORT_DELIVERY_FAILED'); });
+    const onExported = vi.fn();
+    render(<AuthoringCreateExport {...base} docId="D1" onExported={onExported} />);
+    fireEvent.click(screen.getByRole('button', { name: /XML/ }));
+    expect((await screen.findByRole('alert')).textContent).toMatch(/recorded.*file.*not received/i);
+    expect(onExported).toHaveBeenCalledWith('xml');
+  });
+
+});
+
+describe('Authoring export context isolation', () => {
+  it('does not overlap export requests across formats', async () => {
+    let resolve!: (value: Response) => void;
+    wireExport(() => new Promise<Response>(r => { resolve = r; }));
+    render(<AuthoringCreateExport {...base} docId="D1" />);
+    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    fireEvent.click(screen.getByRole('button', { name: /PDF/ }));
+    expect(apiRequest.mock.calls.filter(c => c[0] === 'POST')).toHaveLength(1);
+    await act(async () => resolve({ ok: true, status: 200, blob: async () => new Blob(['PK']) } as Response));
+  });
+
+  it('a delayed old document export cannot download or refresh the new document', async () => {
+    let resolve!: (value: Response) => void;
+    wireExport(() => new Promise<Response>(r => { resolve = r; }));
+    const onExported = vi.fn();
+    const fireToast = vi.fn();
+    const { rerender } = render(<AuthoringCreateExport {...base} docId="D1" onExported={onExported} fireToast={fireToast} />);
+    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    rerender(<AuthoringCreateExport {...base} docId="D2" onExported={onExported} fireToast={fireToast} />);
+    await act(async () => resolve({ ok: true, status: 200, blob: async () => new Blob(['PK']) } as Response));
+    expect(onExported).not.toHaveBeenCalled();
+    expect(fireToast).not.toHaveBeenCalled();
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+    expect((screen.getByRole('button', { name: /Word/ }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it.each(['document round-trip', 'project switch', 'unmount'])('ignores a pending old body after %s', async (change) => {
+    let resolve!: (value: Blob) => void;
+    wireExport(async () => ({ ok: true, status: 200, blob: () => new Promise<Blob>(r => { resolve = r; }) }) as Response);
+    const onExported = vi.fn();
+    const fireToast = vi.fn();
+    const props = { ...base, docId: 'D1', onExported, fireToast };
+    const { rerender, unmount } = render(<AuthoringCreateExport {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    await waitFor(() => expect(resolve).toBeTypeOf('function'));
+    if (change === 'document round-trip') {
+      rerender(<AuthoringCreateExport {...props} docId="D2" />);
+      rerender(<AuthoringCreateExport {...props} />);
+    } else if (change === 'project switch') {
+      (window as unknown as { C2C_PROJECT: unknown }).C2C_PROJECT = { id: '22222222-2222-4222-8222-222222222222', title: 'Other IND' };
+      rerender(<AuthoringCreateExport {...props} />);
+    } else unmount();
+    await act(async () => resolve(new Blob(['PK'])));
+    expect(onExported).not.toHaveBeenCalled();
+    expect(fireToast).not.toHaveBeenCalled();
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
 });
 beforeEach(() => {
   // A document is created in the open project (PF-07).

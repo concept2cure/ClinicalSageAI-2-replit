@@ -5739,8 +5739,28 @@ router.delete('/docs/:docId', async (req: Request, res: Response) => {
 
 // ============= EXPORT Operations =============
 
+function exportFailureVerdict(recordConfirmed: boolean, recordAttempted: boolean) {
+  if (recordConfirmed) return {
+    code: 'EXPORT_DELIVERY_FAILED',
+    message: 'The export was recorded, but file delivery could not be completed. Check export history before retrying; retrying creates another export record.',
+  };
+  if (recordAttempted) return {
+    code: 'EXPORT_OUTCOME_UNKNOWN',
+    message: 'We cannot confirm whether the export was recorded. Check export history before retrying.',
+  };
+  return {
+    code: 'EXPORT_NOT_RECORDED',
+    message: 'The export could not be completed. No export was recorded. Retry after resolving the failure.',
+  };
+}
+
 // POST /api/authoring/docs/:docId/export - Export document in various formats
 router.post('/docs/:docId/export', async (req: Request, res: Response) => {
+  // Rendering, recording, and delivering are different outcomes. Once the
+  // INSERT is sent its reply can be lost after persistence; a delivery failure
+  // cannot undo a confirmed export or its history baseline.
+  let recordAttempted = false;
+  let recordConfirmed = false;
   try {
     const { docId } = req.params;
     const { format = 'docx', options = {} } = req.body;
@@ -5858,6 +5878,7 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
        (doc_sha256, for content_changed_since_last_export) AND of the DELIVERED
        ARTIFACT BYTES (artifactSha256), so it can attest that a re-download is
        the identical artifact. */
+    recordAttempted = true;
     await logExport(pool, {
       docId: String(docId),
       format,
@@ -5868,6 +5889,7 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
       metadata: { options, exportId, artifactSha256: rendered.artifactSha256 },
       tenantId,
     });
+    recordConfirmed = true;
 
     res.setHeader('Content-Type', rendered.contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${rendered.fileName}"`);
@@ -5877,9 +5899,14 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     // toast verbatim, and a library/DB message here was the one remaining path
     // for exception text to reach the UI (BP-W0-5).
     console.error('Export error:', error);
+    // A partial stream cannot be replaced with a JSON error body.
+    if (res.headersSent) { res.destroy(); return; }
+    res.removeHeader('Content-Disposition');
+    res.removeHeader('Content-Type');
+    res.removeHeader('Content-Length');
     res.status(500).json({
       error: 'Export failed',
-      message: 'The export could not be rendered. No file was produced; the document is unchanged.',
+      ...exportFailureVerdict(recordConfirmed, recordAttempted),
     });
   }
 });

@@ -45,9 +45,17 @@ async function bearer(): Promise<string> {
   return `Bearer ${token}`;
 }
 
-function makeApp() {
+function makeApp(failSend = false) {
   const app = express();
   app.use(express.json());
+  if (failSend) app.use((_req, res, next) => {
+    const send = res.send.bind(res);
+    res.send = (body) => {
+      if (Buffer.isBuffer(body)) throw new Error('transport failed before bytes');
+      return send(body);
+    };
+    next();
+  });
   app.use('/api/authoring', router);
   return app;
 }
@@ -55,7 +63,8 @@ function makeApp() {
 describe('authoring export — real PDF branch', () => {
   beforeEach(() => {
     mockQuery.mockReset();
-    renderHtmlToPdf.mockClear();
+    renderHtmlToPdf.mockReset();
+    renderHtmlToPdf.mockResolvedValue(Buffer.from('%PDF-1.7 rendered'));
   });
 
   it('renders application/pdf through the HTML→PDF engine (not mislabeled DOCX)', async () => {
@@ -92,5 +101,33 @@ describe('authoring export — real PDF branch', () => {
     expect(html).toContain('Tox Summary');
     expect(html).toContain('A &lt;critical&gt; finding &amp; more'); // escaped, not raw
     expect((res.body as Buffer).toString()).toContain('%PDF-1.7 rendered');
+  });
+
+  it.each(['render', 'ledger', 'delivery'] as const)('reports the %s failure at its actual stage', async (stage) => {
+    const recorded: unknown[][] = [];
+    mockQuery.mockImplementation(async (sql: unknown, args: unknown[]) => {
+      const s = String(sql);
+      if (s.includes('FROM authoring_documents')) return { rowCount: 1, rows: [{ id: 'D1', title: 'Tox', module: 'M2', status: 'approved' }] };
+      if (s.includes('FROM authoring_sections')) return { rowCount: 1, rows: [{ code: '2.6.6', content: 'Saved body' }] };
+      if (s.includes('INSERT INTO authoring_export_history')) {
+        recorded.push(args);
+        if (stage === 'ledger') throw new Error('reply lost after INSERT');
+        return { rowCount: 1, rows: [{ id: 'X1', exported_at: new Date() }] };
+      }
+      return { rowCount: 0, rows: [] };
+    });
+    if (stage === 'render') renderHtmlToPdf.mockRejectedValueOnce(new Error('private renderer detail'));
+    const res = await request(makeApp(stage === 'delivery'))
+      .post('/api/authoring/docs/D1/export')
+      .set('Authorization', await bearer())
+      .send({ format: 'pdf' });
+    expect(res.status).toBe(500);
+    expect(res.headers['content-type']).toContain('application/json');
+    expect(res.headers['content-disposition']).toBeUndefined();
+    expect(res.body.code).toBe(stage === 'render' ? 'EXPORT_NOT_RECORDED' : stage === 'ledger' ? 'EXPORT_OUTCOME_UNKNOWN' : 'EXPORT_DELIVERY_FAILED');
+    expect(recorded).toHaveLength(stage === 'render' ? 0 : 1);
+    expect(JSON.stringify(res.body)).not.toMatch(/private renderer detail|reply lost after INSERT|transport failed|document is unchanged/);
+    if (stage === 'ledger') expect(res.body.message).toMatch(/cannot confirm.*recorded/i);
+    if (stage === 'delivery') expect(res.body.message).toMatch(/recorded/i);
   });
 });
