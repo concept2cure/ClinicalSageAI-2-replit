@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-06T02:04:52.143Z",
+  "generatedAt": "2026-10-06T02:12:53.740Z",
   "git": {
-    "sha": "7119b71bf4a618d94b714c7b1640d4dcdb38c037",
+    "sha": "227dcbe947566375b11fb5577313287f7532be21",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2515,6 +2515,10 @@
         "lines": 1927
       },
       {
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "lines": 1910
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "lines": 1903
       },
@@ -2537,10 +2541,6 @@
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
         "lines": 1869
-      },
-      {
-        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 1866
       },
       {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
