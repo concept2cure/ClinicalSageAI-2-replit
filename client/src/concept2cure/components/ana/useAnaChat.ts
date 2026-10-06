@@ -1454,6 +1454,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     statusPhase: undefined,
                     completedAt: Date.now(),
                     progress: closeProgress(m.progress, 'done', Date.now()),
+                    toolCalls: settleRunningCalls(m.toolCalls, 'Completion not confirmed — no result was received for this step.', Date.now(), 'unconfirmed'),
                     executedActions: actions,
                     pendingSignoffs: pendingSignoffs.length > 0 ? pendingSignoffs : undefined,
                     groundingSources:

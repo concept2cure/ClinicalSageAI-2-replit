@@ -36,7 +36,7 @@ import { clip, formatClock, SENDING_PLACEHOLDER, type UsedRow } from './anaWorkM
 /** The one status glyph: check / warning triangle / dot. Shared with AnaActivity. */
 export function statusGlyph(status: AnaToolCall['status']): React.ReactElement {
   if (status === 'success') return I.check;
-  if (status === 'error') return I.alertTriangle;
+  if (status === 'error' || status === 'unconfirmed') return I.alertTriangle;
   return I.dot;
 }
 

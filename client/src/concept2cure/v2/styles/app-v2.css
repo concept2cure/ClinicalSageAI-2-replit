@@ -1962,7 +1962,7 @@
 .c2c-v2 .ana-activity-glyph{display:inline-flex;align-self:center;color:var(--text-400);}
 .c2c-v2 .ana-activity-glyph svg{font-size:12px;}
 .c2c-v2 .ana-activity-step.is-success .ana-activity-glyph{color:var(--text-400);}
-.c2c-v2 .ana-activity-step.is-error .ana-activity-glyph{color:var(--warning);}
+.c2c-v2 .ana-activity-step.is-error .ana-activity-glyph,.c2c-v2 .ana-activity-step.is-unconfirmed .ana-activity-glyph{color:var(--warning);}
 .c2c-v2 .ana-activity-step.is-running .ana-activity-glyph{color:var(--accent-200);}
 /* The row's own 3px padding and the step's 5px keep each row the height it was
    while the row itself (the chevron's target) reaches 24px (SC 2.5.8). */

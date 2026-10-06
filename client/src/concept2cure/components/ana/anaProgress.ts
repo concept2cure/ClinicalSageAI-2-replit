@@ -186,8 +186,8 @@ export function byRound(calls: AnaToolCall[]): Array<{ round: number; calls: Ana
 
 /**
  * Close every step still "running" when the turn ends before they report —
- * a stop, a timeout, a lost connection. A step the turn never heard back
- * from did not complete, and a row that keeps saying "running" beside
+ * a stop, a timeout, a lost connection, or final completion without a result.
+ * A step without a result has no confirmed completion; keeping "running" beside
  * "Stopped after 12s" is a contradiction on screen. `note` is the sentence
  * the row shows for why. Pure; returns the same array when nothing is open.
  */
@@ -195,9 +195,10 @@ export function settleRunningCalls(
   calls: AnaToolCall[] | undefined,
   note: string,
   now: number,
+  status: 'error' | 'unconfirmed' = 'error',
 ): AnaToolCall[] | undefined {
   if (!calls || !calls.some(c => c.status === 'running')) return calls;
-  return calls.map(c => (c.status === 'running' ? { ...c, status: 'error', endedAt: now, message: note } : c));
+  return calls.map(c => (c.status === 'running' ? { ...c, status, endedAt: now, message: note } : c));
 }
 
 /** The step currently in flight, if any — the row the panel highlights. */

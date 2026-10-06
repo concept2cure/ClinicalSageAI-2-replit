@@ -73,7 +73,8 @@ export interface AnaChatAction {
 export interface AnaToolCall {
   name: string;
   label: string;
-  status: 'running' | 'success' | 'error';
+  /** Unconfirmed means the turn closed without a result for this call, not a failure verdict. */
+  status: 'running' | 'success' | 'error' | 'unconfirmed';
   /**
    * The server's id for this call (the model's tool_use id). A step runs its
    * calls concurrently, and several can be the SAME tool, so the name alone

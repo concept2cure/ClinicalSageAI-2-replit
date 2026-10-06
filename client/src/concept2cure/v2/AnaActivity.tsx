@@ -203,7 +203,7 @@ function Row({
   detail,
   mono,
 }: {
-  status: 'running' | 'success' | 'error';
+  status: AnaToolCall['status'];
   glyph?: React.ReactElement;
   verb: string;
   object?: string;
@@ -259,10 +259,12 @@ function Row({
   );
 }
 
+const hasStepResult = (status: AnaToolCall['status']) => status === 'success' || status === 'error';
+
 function ToolRow({ c, now }: { c: AnaToolCall; now: number }) {
   const { verb, object, rest } = splitLabel(c.label || c.name);
   const hasInput = c.input !== undefined && c.input !== null;
-  const took = c.status === 'running' ? '' : stepDuration(c, now);
+  const took = hasStepResult(c.status) ? stepDuration(c, now) : '';
   const detail =
     hasInput || took ? (
       <>
@@ -283,8 +285,8 @@ function ToolRow({ c, now }: { c: AnaToolCall; now: number }) {
       verb={verb}
       object={object}
       rest={rest}
-      trailing={c.status === 'running' ? 'running' : took || undefined}
-      note={c.status === 'error' ? c.message || 'did not complete' : undefined}
+      trailing={hasStepResult(c.status) ? took || undefined : c.status}
+      note={c.status === 'unconfirmed' ? c.message || 'Completion not confirmed.' : c.status === 'error' ? c.message || 'did not complete' : undefined}
       detail={detail}
     />
   );
@@ -294,6 +296,8 @@ function ToolRow({ c, now }: { c: AnaToolCall; now: number }) {
 function namedBySuccessfulStep(calls: AnaToolCall[], title: string): boolean {
   return calls.some((c) => c.status === 'success' && (c.label ?? '').includes(title));
 }
+
+const unconfirmedSummary = (count: number) => count > 0 ? `${count} unconfirmed` : '';
 
 /**
  * The folded line. Failures and deliverables are OUTCOMES and appear here
@@ -305,6 +309,7 @@ function foldedLine(o: {
   finalPlan: AnaPlanStep[];
   ran: number;
   failed: number;
+  unconfirmed: number;
   draftTitle?: string;
   thinking?: string;
   fallback?: boolean;
@@ -322,6 +327,7 @@ function foldedLine(o: {
     // as a contradiction.
     o.ran > 0 ? (planned > 0 ? `${o.ran} ${o.ran === 1 ? 'tool' : 'tools'} run` : `${steps(o.ran)} completed`) : '',
     o.failed > 0 ? `${o.failed} failed` : '',
+    unconfirmedSummary(o.unconfirmed),
     o.draftTitle ? `Drafted ${o.draftTitle}` : '',
     o.thinking ? 'reasoning' : '',
     o.fallback ? 'answered by a fallback provider' : '',
@@ -352,7 +358,7 @@ function orderedItems(calls: AnaToolCall[], changes: AnaPlanChange[], plan: AnaP
   let seq = 0;
   let lastT = Number.NEGATIVE_INFINITY;
   for (const c of calls) {
-    if (c.name === PLAN_TOOL && c.status !== 'error') continue;
+    if (c.name === PLAN_TOOL && c.status !== 'error' && c.status !== 'unconfirmed') continue;
     lastT = typeof c.startedAt === 'number' ? c.startedAt : lastT;
     items.push({ kind: 'tool', t: lastT, seq: seq++, call: c });
   }
@@ -444,9 +450,10 @@ export function AnaActivity({
   // reads its recorded end, and a turn with no start claims no duration.
   const now = useNow(Boolean(streaming) && typeof startedAt === 'number');
   const elapsed = typeof startedAt === 'number' ? formatElapsed((completedAt ?? now) - startedAt) : '';
-  const work = calls.filter((c) => c.name !== PLAN_TOOL || c.status === 'error');
-  const ran = work.filter((c) => c.status !== 'running').length;
+  const work = calls.filter((c) => c.name !== PLAN_TOOL || c.status === 'error' || c.status === 'unconfirmed');
+  const ran = work.filter((c) => c.status === 'success' || c.status === 'error').length;
   const failed = work.filter((c) => c.status === 'error').length;
+  const unconfirmed = work.filter((c) => c.status === 'unconfirmed').length;
   // Round headers say "she went back for more". With a declared plan the plan
   // is the structure, and every plan update takes a round of its own, so the
   // first step after "Planned 3 steps" would read "Went back · round 2" when
@@ -539,13 +546,8 @@ export function AnaActivity({
 
   const expanded = Boolean(streaming) || open;
   const summary = foldedLine({
-    changes,
-    finalPlan,
-    ran,
-    failed,
-    draftTitle,
-    thinking,
-    fallback,
+    changes, finalPlan, ran, failed, unconfirmed,
+    draftTitle, thinking, fallback,
     duration: elapsed && typeof completedAt === 'number' ? elapsed : '',
   });
 

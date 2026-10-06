@@ -214,3 +214,33 @@ describe.each<HostKind>(['rail', 'conversation'])('%s partial response recovery 
     expect(requests()).toHaveLength(1);
   });
 });
+
+
+describe.each<HostKind>(['rail', 'conversation'])('%s final activity reconciliation', kind => {
+  it.each(['search_documents', 'update_plan'])('closes an unconfirmed %s without changing received results or the finished answer', async unconfirmedTool => {
+    responses.push(response([
+      { type: 'tool_use', name: unconfirmedTool, label: 'Checking protocol', toolUseId: 'missing' },
+      { type: 'tool_use', name: 'search_documents', label: 'Checking evidence', toolUseId: 'received' },
+      { type: 'tool_result', name: 'search_documents', toolUseId: 'received', status: 'success', result: 'Evidence found' },
+      { type: 'text', content: 'The review is ready.' },
+      { type: 'done', stoppedReason: 'no_more_tools' },
+      { type: 'post_done', cleanedResponse: 'The final review.', turnRecord: recorded },
+    ]));
+    render(<Host kind={kind} />);
+    await act(async () => { await chat.send('Review the protocol'); });
+    const turn = chat.messages.at(-1)!;
+    expect(turn.toolCalls?.[0]).toMatchObject({ status: 'unconfirmed', message: 'Completion not confirmed — no result was received for this step.' });
+    expect(typeof turn.toolCalls?.[0].endedAt).toBe('number');
+    expect(turn.toolCalls?.[0].result).toBeUndefined();
+    expect(turn.toolCalls?.[1]).toMatchObject({ status: 'success', result: 'Evidence found' });
+    expect(turn).toMatchObject({ text: 'The final review.', streaming: false, turnRecord: recorded });
+    expect(turn.interrupted).not.toBe(true);
+    expect(chat.isStreaming).toBe(false);
+    const toggle = document.querySelector('.ana-activity-toggle')!;
+    expect(toggle.textContent).toContain('1 unconfirmed');
+    expect(toggle.textContent).not.toContain('failed');
+    fireEvent.click(toggle);
+    expect(screen.getByText('Completion not confirmed — no result was received for this step.').closest('[hidden]')).toBeNull();
+    expect(requests()).toHaveLength(1);
+  });
+});
