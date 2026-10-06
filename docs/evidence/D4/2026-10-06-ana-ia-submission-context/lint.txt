@@ -1,0 +1,39 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/routes/ana-features.ts
+   192:39  warning  Async arrow function has too many lines (140). Maximum allowed is 100  max-lines-per-function
+   192:39  warning  Async arrow function has a complexity of 29. Maximum allowed is 15     complexity
+   196:13  warning  'userId' is assigned a value but never used                            @typescript-eslint/no-unused-vars
+   565:1   warning  File has too many lines (5136). Maximum allowed is 500                 max-lines
+  1397:39  warning  Async arrow function has too many lines (131). Maximum allowed is 100  max-lines-per-function
+  1397:39  warning  Async arrow function has a complexity of 23. Maximum allowed is 15     complexity
+  1964:33  warning  Arrow function has a complexity of 20. Maximum allowed is 15           complexity
+  2218:39  warning  Async arrow function has a complexity of 43. Maximum allowed is 15     complexity
+  2352:39  warning  Async arrow function has a complexity of 16. Maximum allowed is 15     complexity
+  2586:39  warning  Async arrow function has a complexity of 16. Maximum allowed is 15     complexity
+  3765:39  warning  Async arrow function has a complexity of 21. Maximum allowed is 15     complexity
+  3911:39  warning  Async arrow function has a complexity of 16. Maximum allowed is 15     complexity
+  4918:39  warning  Async arrow function has a complexity of 16. Maximum allowed is 15     complexity
+  4994:39  warning  Async arrow function has a complexity of 22. Maximum allowed is 15     complexity
+  5094:39  warning  Async arrow function has a complexity of 19. Maximum allowed is 15     complexity
+  5361:39  warning  Async arrow function has a complexity of 16. Maximum allowed is 15     complexity
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/ana/submission-chat-handler.ts
+   437:23  warning  Arrow function has a complexity of 16. Maximum allowed is 15                              complexity
+   749:1   warning  File has too many lines (1370). Maximum allowed is 500                                    max-lines
+   787:8   warning  Function 'buildSystemPrompt' has too many lines (129). Maximum allowed is 100             max-lines-per-function
+   939:8   warning  Function 'buildStreamingSystemPrompt' has too many lines (116). Maximum allowed is 100    max-lines-per-function
+  1066:8   warning  Function 'parseStreamingStructure' has a complexity of 20. Maximum allowed is 15          complexity
+  1068:3   warning  'fallbackAnswer' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
+  1069:3   warning  'fallbackRewriteContent' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  1215:8   warning  Async function 'handleSubmissionChat' has too many lines (438). Maximum allowed is 100    max-lines-per-function
+  1215:8   warning  Async function 'handleSubmissionChat' has a complexity of 77. Maximum allowed is 15       complexity
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/ana/submission-chat-stream-handler.ts
+   48:8  warning  'StreamDelta' is defined but never used                                                       @typescript-eslint/no-unused-vars
+  145:8  warning  Async function 'handleSubmissionChatStream' has too many lines (489). Maximum allowed is 100  max-lines-per-function
+  145:8  warning  Async function 'handleSubmissionChatStream' has a complexity of 87. Maximum allowed is 15     complexity
+  570:1  warning  File has too many lines (610). Maximum allowed is 500                                         max-lines
+
+✖ 29 problems (0 errors, 29 warnings)
+

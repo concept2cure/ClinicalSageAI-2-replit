@@ -1,0 +1,555 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered distinguishes a failed search from a verified dossier gap
+[AnA submission-chat] advanced RAG retrieval failed, returning empty: fixture retrieval unavailable
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming distinguishes a failed search from a verified dossier gap
+[AnA submission-chat-stream] advanced retrieval failed: fixture retrieval unavailable
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > buffered does not answer from a silently missing conversation after history failure
+[AnA submission-chat] Conversation history unavailable: fixture history storage unavailable
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > streaming does not answer from a silently missing conversation after history failure
+[AnA submission-chat] Conversation history unavailable: fixture history storage unavailable
+
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: Which intended use should this cover? 10ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: I cannot verify efficacy without the study results. 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > preserves an explicit proposal and its scope 3ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps streamed questions in the answer channel without a proposal 4ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered permits clarification without inventing a rewrite or gap source 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming permits clarification without inventing a rewrite or gap source 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered retains the ending of a long clarification answer and declares the omitted middle 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming retains the ending of a long clarification answer and declares the omitted middle 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > keeps the same correction in the gateway conversation turns 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > preserves an explicitly emitted rewrite and persists its body in history 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > retains a long user correction in streaming model input 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > a bare text fallback is an answer, never an inferred proposal 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered distinguishes a failed search from a verified dossier gap 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming distinguishes a failed search from a verified dossier gap 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered declares actually shortened evidence passages 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming declares actually shortened evidence passages 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > buffered retains the question and supplied answer before creating an explicit proposal 2ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > streaming retains the question and supplied answer before creating an explicit proposal 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > buffered keeps contradictory retrieved sources distinct from a missing passage 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > streaming keeps contradictory retrieved sources distinct from a missing passage 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered refuses a colleague thread before history, memory, or a model call 2ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming refuses a colleague thread before history, memory, or a model call 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered uses only the caller-resolved ID for context and writes 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming uses only the caller-resolved ID for context and writes 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered fails closed when the caller identity is missing 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming fails closed when the caller identity is missing 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > buffered does not answer from a silently missing conversation after history failure 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streaming does not answer from a silently missing conversation after history failure 1ms
+ ✓ tests/services/proposal-check.test.ts > the prose a proposal would store > reads every free-text field, at any depth, and no other field 7ms
+ ✓ tests/services/proposal-check.test.ts > the prose a proposal would store > reads a list of paragraphs under a prose field 1ms
+ ✓ tests/services/proposal-check.test.ts > the prose a proposal would store > stops at a fixed depth, so no proposal shape can overflow the stack 2ms
+ ✓ tests/services/proposal-check.test.ts > a proposal checked against this turn's sources > finds what the sources hold, and names what they do not 15ms
+ ✓ tests/services/proposal-check.test.ts > a proposal checked against this turn's sources > names a verdict the draft states 7ms
+ ✓ tests/services/proposal-check.test.ts > a proposal checked against this turn's sources > with nothing consulted, the draft's claims are not checked — never found 1ms
+ ✓ tests/services/proposal-check.test.ts > a proposal checked against this turn's sources > a proposal that stores no prose has nothing to check 0ms
+stdout | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-10-06T14:13:28.772Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T14:13:28.774Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-10-06T14:13:28.774Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied
+{
+  "timestamp": "2026-10-06T14:13:28.795Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T14:13:28.801Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied
+{
+  "timestamp": "2026-10-06T14:13:28.801Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied
+[database] Database connection successful
+
+stdout | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+[database] Database connection successful
+
+stderr | tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied
+{
+  "timestamp": "2026-10-06T14:13:29.109Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-10-06T14:13:29.113Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-personality-core.test.ts
+{
+  "timestamp": "2026-10-06T14:13:29.373Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T14:13:29.374Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/ana-personality-core.test.ts
+{
+  "timestamp": "2026-10-06T14:13:29.375Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-personality-core.test.ts
+[database] Database connection successful
+
+stderr | tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a colleague's thread id is refused, not forked and not read
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a colleague's thread id is refused, not forked and not read
+{
+  "timestamp": "2026-10-06T14:13:29.529Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a colleague's thread id is refused, not forked and not read
+[chat-thread-helpers] Table ensure warning: cannot insert multiple commands into a prepared statement
+
+stdout | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+{
+  "timestamp": "2026-10-06T14:13:29.550Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T14:13:29.551Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+{
+  "timestamp": "2026-10-06T14:13:29.551Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+[database] Database connection successful
+
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a colleague's thread id is refused, not forked and not read 999ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > another tenant's thread id is never resolved — the caller gets a fresh thread 6ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > the caller's own thread id resolves to itself 1ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a thread with no recorded owner is scoped by organization alone 2ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > an unknown id mints a fresh thread, as it always did 1ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > with no organization to scope by, a supplied id is never honoured 1ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > an unidentified caller does not get an owned thread 1ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > resolveAccessibleThread — the history gate the context builder uses > returns null for a foreign tenant and throws for a colleague 2ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > ensureThread cannot adopt someone else’s stable id > refuses a colleague's id and a foreign tenant's id, creates its own 14ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > the organization's own program is bound, lower-cased 5ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > another organization's program is never bound: the thread is minted unbound 3ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > a deleted program of the organization is not bound either 3ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > the program list shows the thread under its own program, never under another organization's 44ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied 3671ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a second factor the caller asserts is not a second factor 6ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a wrong password is refused and counted against the account 6ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > an account taken out of use cannot sign it (F-28) 4ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a verified signer: the service is handed what the ceremony verified, never the credentials 10ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a rewrite applied without a signature asks for no credential 6ms
+stderr | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+{
+  "timestamp": "2026-10-06T14:13:30.330Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/__tests__/ana-personality-core.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-personality-core.test.ts
+{
+  "timestamp": "2026-10-06T14:13:30.342Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-10-06T14:13:30.565Z",
+  "level": "error",
+  "message": "[ana-features] [AnA authoring-plan generate] store not provisioned",
+  "context": {
+    "err": "authoring_plans table not migrated yet"
+  }
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "therapeutic_area column not migrated yet"
+{
+  "timestamp": "2026-10-06T14:13:30.580Z",
+  "level": "error",
+  "message": "[ana-features] [AnA authoring-plan generate] store not provisioned",
+  "context": {
+    "err": "therapeutic_area column not migrated yet"
+  }
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE > 503 keeps the code and does not echo the thrown text
+{
+  "timestamp": "2026-10-06T14:13:30.592Z",
+  "level": "error",
+  "message": "[ana-features] [AnA submission-chat] AI provider unavailable",
+  "context": {
+    "err": "AI provider unavailable: upstream gateway 10.0.4.xxx:8443 refused"
+  }
+}
+
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet" 4034ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "therapeutic_area column not migrated yet" 9ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > the 400 for INVALID_REQUEST from the generator still carries the domain message (4xx is out of scope) 5ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE > 503 keeps the code and does not echo the thrown text 5ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE > the 404 for ARTIFACT_NOT_FOUND still carries the domain message (4xx is out of scope) 6ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > submission-chat private context errors > maps THREAD_FORBIDDEN without exposing internal context 4ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > submission-chat private context errors > maps AUTH_REQUIRED without exposing internal context 10ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > submission-chat private context errors > maps HISTORY_UNAVAILABLE without exposing internal context 4ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "evidence labels" doctrine 1ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "no fabrication" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "constructive dissent" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "context clarity (no hallucinated context)" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "document consequence" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "proactive foresight" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "know your limits / hand off" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "response grounding mode" doctrine 8ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > keeps the serious-room floor (no exclamation marks, no emoji where it counts) 1ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > every core doctrine survives into the assembled system prompt 0ms
+stdout | server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+{
+  "timestamp": "2026-10-06T14:13:30.949Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T14:13:30.951Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+{
+  "timestamp": "2026-10-06T14:13:30.951Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-06T14:13:31.035Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T14:13:31.036Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-06T14:13:31.036Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/response-register.test.ts
+{
+  "timestamp": "2026-10-06T14:13:31.143Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T14:13:31.145Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/response-register.test.ts
+{
+  "timestamp": "2026-10-06T14:13:31.145Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/response-register.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana-ri/__tests__/response-register.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/response-register.test.ts
+{
+  "timestamp": "2026-10-06T14:13:31.307Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/personality-coverage.test.ts
+{
+  "timestamp": "2026-10-06T14:13:31.568Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T14:13:31.570Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/personality-coverage.test.ts
+{
+  "timestamp": "2026-10-06T14:13:31.570Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/personality-coverage.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana-ri/__tests__/personality-coverage.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/personality-coverage.test.ts
+{
+  "timestamp": "2026-10-06T14:13:32.282Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'caring'" trait 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'kind'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'warm / empathetic'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'intellectual'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'warm, and shows it'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'playful'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'serious where it counts'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'self-reflective'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > holds the guardrails that keep warmth from becoming performance 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > keeps play out of every room where it would cost the person 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > makes "cute" charm, never smallness, and never a scripted line 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > reads the humor dial, and no dial loosens a serious room 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_BRIEF > is a compression of the core, carrying the same named traits 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_BRIEF > stays short enough for a prompt already carrying a strict schema 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_BRIEF > subordinates itself to the output contract 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the RI system prompt embeds the full core block 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the RI system prompt keeps her personality under every role overlay 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the submission-chat prompt carries the brief 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the streaming submission-chat prompt carries the brief 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the submission-chat prompts still state their output contract 0ms
+stdout | server/services/__tests__/ana-personality-core.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Loaded 0 academic documents
+
+stdout | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+Loaded 0 academic documents
+
+stdout | server/services/ana-ri/__tests__/response-register.test.ts
+Loaded 0 academic documents
+
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > defines the requested traits 2ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > is composed into the AnA RI system prompt 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > is composed into the cortex prompts (single source of truth) 0ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > injects relational context when provided 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > renders nothing when no relational notes exist yet 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Orchestrator — relational + external intelligence injection > injects the pre-fetched relational overlay and external intel block 12ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Orchestrator — relational + external intelligence injection > omits both blocks when not provided 12ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Relational reflection signal detection > fires on emotional and corrective signals 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Relational reflection signal detection > stays quiet on neutral turns 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > parses RSS 2.0 items 3ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > parses Atom entries 2ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > registry covers regulatory agencies and knowledge centers (incl. SCDM) 3ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > RI receives the shared awareness policy exactly once 2ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > stream orchestration receives the shared awareness policy exactly once 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > cortex receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > compact cortex receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > unified cortex receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > submission buffered receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > submission streaming receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > full preserves the practical boundaries 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > brief preserves the practical boundaries 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > does not let the chat register force a verdict before a blocking question 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > does not let strategy or drafting shortcuts override IA 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > RI carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > stream orchestration carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > cortex carries scientific and market-specific critical thinking 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > compact cortex carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > unified cortex carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > submission buffered carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > submission streaming carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "What does CTD stand for?" 6ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "Draft the supplied clinical overview using these confirmed results." 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "Which market should we target? I have not chosen an intended use yet." 2ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > allows explicit reconsideration without silently rewriting recorded decisions 4ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > composes chat, artifact and switch blocks, each headed once 2ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > states every chat-register rule the founder asked for 1ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > keeps the artifact register and the chat-voice-interjection rule 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > renders a tool result as a sentence plus the figures, never a section 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > holds the voice floor itself (no exclamation, no emoji) 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > carries the register exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > carries the register under every role and lens overlay 11ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Structure responses with headers, bullets, and bold key terms" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Clear headers and section structure" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Always greet users by name" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "offer 2-3 specific things you can help with" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "After every substantive response" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "suggest the logical next step" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Use bullet points heavily" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Structured responses with clear headings" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Greet them as \"" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Don't just say hello back" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "give them a status check and a recommended next action" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## How to Communicate" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Conversation Style" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Momentum" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Formatting" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Your Voice" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Communication Principles" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Personality & Tone" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "I don't see a specific document status" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "Prefix proactive insights with a subtle marker" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "This recommendation has moderate confidence" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "Only surface if confidence > 70%" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "lead with what's missing before addressing the user's question" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "Would you like me to run an FDA War Game simulation" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "mention you can \"walk through a guided questionnaire\"" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "**Action:** [what was done]" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > says how to talk while working through several steps 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > has one formatting section: no second one survives in the core 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > has one tone section (ANA_PERSONALITY_CORE), not a duplicate in the core 1ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > keeps the substance the founder wants: warmth, project awareness, one-line risk flags, evidence 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > keeps every governance anchor the register refers to 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > document-state behaviour still reaches the prompt — from the orchestrator, only when a status exists 2ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > the other AnA prompt stacks compose the same register, once > cortex-unified: BASE_SYSTEM_PROMPT 1ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > the other AnA prompt stacks compose the same register, once > ana-cortex: ANA_SYSTEM_PROMPT and ANA_COMPACT_PROMPT 1ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > the other AnA prompt stacks compose the same register, once > lumen-context-builder user-identity overlay no longer forces bullets, headings or a greeting 4ms
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true
+[AnA RI] Intelligence prefix failed: recall unavailable
+
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > every call of a reasoning turn carries the turn's thinking config, and every round's reasoning is shown and kept 38ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a demonstration keeps its follow-up rounds as narration: no reasoning display there 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a Fast turn reasons on no call 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > runs at high API effort on the first call and every follow-up, whatever effort was chosen 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > a turn that is not high-stakes keeps the effort chosen 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=false 31ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > warns when requested enrichment is unavailable and retains its model availability notice 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > reports unavailable optional context to the person and includes it in the model input 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > Continue receives the visible partial draft even when stored history lacks it 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > encapsulates the handoff with the request and never sends an unguarded duplicate 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > does not attach a continuation draft to an unrelated request 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 17ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 17ms
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+[AnA RI Stream] Thread persistence failed: database unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[AnA RI Stream] Refused caller-supplied thread id: undefined
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > reads memory only with the resolved thread ID 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs 3ms
+
+ Test Files  12 passed (12)
+      Tests  185 passed (185)
+   Start at  10:13:25
+   Duration  9.20s (transform 22.98s, setup 707ms, import 41.58s, tests 11.34s, environment 1ms)
+

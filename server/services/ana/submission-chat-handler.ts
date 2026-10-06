@@ -24,6 +24,7 @@ import { buildMemoryContextForChat } from '../memory-context-assembler.js';
 import { getProjectInstructionsBlock } from '../projects/project-instructions.js';
 import {
   getThreadMessages,
+  getOrCreateThread,
   saveChatMessage,
 } from '../chat-thread-helpers.js';
 import { verifyClaim, type VerifierFlag } from '../../routes/chat/verifier.js';
@@ -604,8 +605,11 @@ export async function loadConversationHistory(
         content: r.content,
       }));
     return filtered.slice(-limit);
-  } catch {
-    return [];
+  } catch (error: unknown) {
+    console.warn('[AnA submission-chat] Conversation history unavailable:', error instanceof Error ? error.message : 'Unknown storage failure');
+    const unavailable = new Error('Earlier conversation could not be loaded. Please retry.');
+    Object.assign(unavailable, { code: 'HISTORY_UNAVAILABLE' });
+    throw unavailable;
   }
 }
 
@@ -736,21 +740,40 @@ function renderPriorCitationsBlock(priorCitations: PriorCitation[]): string {
 
 /**
  * Render the conversation history as a compact transcript for the system
- * prompt. Long assistant turns (the original section draft) get truncated so
- * the prompt budget isn't blown — the model has the active artifact title
- * and the retrieved evidence for grounding regardless.
+ * prompt. Long turns keep their beginning and ending, including a late
+ * correction or question. Omitted middle text is explicitly marked; an
+ * excerpt must not be mistaken for the complete conversation or evidence.
  */
+export function excerptSubmissionTurn(content: string, limit: number): string {
+  if (content.length <= limit) return content;
+  const head = Math.ceil(limit / 2);
+  const tail = Math.floor(limit / 2);
+  return `${content.slice(0, head)}\n[Middle of this turn omitted: ${content.length - limit} characters]\n${content.slice(-tail)}`;
+}
+
+export function submissionConversationTurns(history: ConversationTurn[]): ConversationTurn[] {
+  return history.map(turn => ({ role: turn.role, content: excerptSubmissionTurn(turn.content, 1500) }));
+}
+
+/** Retrieval coverage is a limitation, never evidence that a dossier is complete. */
+function submissionEvidenceLimitations(unavailable: boolean | undefined, chunks: RetrievedChunk[]): string {
+  return [
+    unavailable ? 'Some retrieval was unavailable or not run; retrieved passages may be incomplete.' : 'Retrieved passages are a limited selection, not a complete dossier review.',
+    chunks.some(chunk => chunk.content.length > 600) ? 'Some retrieved passages were shortened for this prompt; omitted text may contain relevant facts or contradictions.' : '',
+    'No retrieved passages is not proof that the dossier is silent or that evidence does not exist.',
+    'Do not invent a gap citation. Use relationship="gap" only with a real retrieved passage that supports the specific gap; otherwise explain the retrieval limitation without a citation.',
+    'When essential facts or unresolved source conflicts block a defensible rewrite, ask the decisive question in the answer and return no proposal. A user clarification is context, not independently verified dossier evidence.',
+  ].filter(Boolean).join('\n');
+}
+
 function renderHistoryBlock(history: ConversationTurn[]): string {
   if (history.length === 0) return '';
   const lines = history.map(turn => {
     const label = turn.role === 'user' ? 'User' : 'AnA';
-    const body =
-      turn.content.length > 800
-        ? `${turn.content.slice(0, 800)}…`
-        : turn.content;
+    const body = excerptSubmissionTurn(turn.content, 800);
     return `${label}: ${body}`;
   });
-  return ['', '--- CONVERSATION SO FAR ---', ...lines, '--- END CONVERSATION ---'].join(
+  return ['', '--- CONVERSATION SO FAR ---', 'Recent turns may be excerpted. An omission marker means missing context; do not treat the excerpt as the full answer or independently verified evidence.', ...lines, '--- END CONVERSATION ---'].join(
     '\n'
   );
 }
@@ -771,6 +794,7 @@ export function buildSystemPrompt(
     sectionReference?: string | null;
     history?: ConversationTurn[];
     priorCitations?: PriorCitation[];
+    retrievalUnavailable?: boolean;
   } = {}
 ): string {
   const intent = options.intent ?? 'general';
@@ -829,7 +853,7 @@ export function buildSystemPrompt(
           '    conflicting fact.',
           '  - Identify any [SRC-n] that exposes a gap (silence where a record',
           '    is expected). Cite with relationship="gap".',
-          'THEN propose a "rewrite" object on the JSON envelope. The rewrite',
+          'When essential facts are known, propose a "rewrite" object on the JSON envelope. For a clarification-only reply set rewrite to null. Any proposed rewrite',
           'MUST acknowledge every contradiction surfaced above — either by',
           'adopting the dossier-grounded value, or by explicitly stating the',
           'discrepancy. Every claim in the rewrite must be defensible against',
@@ -856,6 +880,7 @@ export function buildSystemPrompt(
     renderHistoryBlock(history),
     intentBlock,
     '',
+    submissionEvidenceLimitations(options.retrievalUnavailable, chunks),
     '--- CROSS-DOSSIER EVIDENCE ---',
     evidenceLines.join('\n\n') || '(no retrieved evidence — answer "I cannot verify that from the dossier")',
     '--- END EVIDENCE ---',
@@ -873,7 +898,7 @@ export function buildSystemPrompt(
     '              // gap = source is silent where a record is expected',
     '    }',
     '  ],',
-    '  "rewrite": {                // REQUIRED when intent="rewrite", else null',
+    '  "rewrite": {                // only when explicit proposed content is ready; otherwise null',
     '    "sectionCode": string | null,',
     '    "targetAgency": string | null,',
     '    "proposedContent": string, // the new section text',
@@ -884,7 +909,7 @@ export function buildSystemPrompt(
     'Rules:',
     '1. Every factual claim in the prose must be cited inline as [SRC-n].',
     '2. If two sources disagree, cite both and label one supports / one contradicts.',
-    '3. If the dossier is silent, say so explicitly and emit a citation with relationship="gap".',
+    '3. Describe gaps only to the extent the retrieved evidence supports them; never fabricate a source for unavailable evidence.',
     '4. Never infer from training data — if it isn\'t in the evidence, say so.',
     '5. Resolve coreferences ("that source", "the EU cohort") against the conversation history.',
     '6. Sentence case. No exclamations. Numbers over adjectives. Second person, direct.',
@@ -921,6 +946,7 @@ export function buildStreamingSystemPrompt(
     sectionReference?: string | null;
     history?: ConversationTurn[];
     priorCitations?: PriorCitation[];
+    retrievalUnavailable?: boolean;
   } = {}
 ): string {
   const intent = options.intent ?? 'general';
@@ -971,7 +997,7 @@ export function buildStreamingSystemPrompt(
             : 'Target: the active artifact (no explicit section reference).',
           'Flag any [SRC-n] that contradicts the active section in %%ANSWER%%',
           '(use relationship="contradicts" in the structure block), then emit',
-          'the proposed new content in %%REWRITE%%.',
+          'the proposed new content in %%REWRITE%% only when essential facts are known. For a clarification-only reply omit %%REWRITE%% and set rewriteMetadata to null.',
         ].join('\n');
       default:
         return '';
@@ -994,17 +1020,18 @@ export function buildStreamingSystemPrompt(
     renderHistoryBlock(history),
     intentBlock,
     '',
+    submissionEvidenceLimitations(options.retrievalUnavailable, chunks),
     '--- CROSS-DOSSIER EVIDENCE ---',
     evidenceLines.join('\n\n') || '(no retrieved evidence — answer "I cannot verify that from the dossier")',
     '--- END EVIDENCE ---',
     '',
     'Output contract — emit the following sections in order, EXACTLY one of',
-    'each, with no other text outside the markers:',
+    'each applicable section, with no other text outside the markers. For a clarification-only reply omit %%REWRITE%% and set rewriteMetadata to null:',
     '',
     '%%ANSWER%%',
     '<prose answer with [SRC-n] inline citations>',
     intent === 'rewrite' ? '%%REWRITE%%' : '',
-    intent === 'rewrite' ? '<the proposed new section content with [SRC-n] citations>' : '',
+    intent === 'rewrite' ? '<explicit proposed content with [SRC-n] citations; omit for clarification-only replies>' : '',
     '%%STRUCTURE%%',
     '{',
     '  "intent": "provenance" | "cross_evidence" | "rewrite" | "general",',
@@ -1020,7 +1047,7 @@ export function buildStreamingSystemPrompt(
     'Rules:',
     '1. Every factual claim must be cited inline with [SRC-n].',
     '2. If two sources disagree, cite both with supports / contradicts labels.',
-    '3. If the dossier is silent, say so and use relationship="gap".',
+    '3. Describe gaps only to the extent the retrieved evidence supports them; never fabricate a source for unavailable evidence.',
     '4. Never infer from training data — if it isn\'t in the evidence, say so.',
     '5. Resolve coreferences ("that source", "the EU cohort") against the conversation history.',
     '6. Sentence case. No exclamations. Numbers over adjectives. Second person, direct.',
@@ -1175,6 +1202,16 @@ function normalizeRewrite(value: unknown): SubmissionChatRewrite | null {
   };
 }
 
+/** Resolve private context with the same owner/organization check as main AnA chat. */
+export async function resolveSubmissionChatThread(input: SubmissionChatRequest): Promise<string> {
+  if ([input.organizationId, input.userId].some(id => !Number.isInteger(id) || Number(id) <= 0)) {
+    const error = new Error('Authenticated caller required');
+    Object.assign(error, { code: 'AUTH_REQUIRED' });
+    throw error;
+  }
+  return getOrCreateThread(input.threadId, input.userId, 'ana-submission', input.organizationId);
+}
+
 export async function handleSubmissionChat(
   input: SubmissionChatRequest
 ): Promise<SubmissionChatResponse> {
@@ -1191,6 +1228,8 @@ export async function handleSubmissionChat(
     throw err;
   }
 
+  const threadId = await resolveSubmissionChatThread(input);
+
   // Step 1 — resolve artifact + project scope.
   const artifact = await loadArtifact(input.artifactId, input.organizationId);
   const projectArtifacts = await loadProjectArtifacts(
@@ -1202,8 +1241,8 @@ export async function handleSubmissionChat(
   // resolve and "why did you cite this source?" can refer back to the
   // [SRC-n] from the prior generation by exact rank.
   const [history, priorCitations] = await Promise.all([
-    loadConversationHistory(input.threadId, HISTORY_TURN_LIMIT),
-    loadPriorCitations(input.threadId, projectArtifacts),
+    loadConversationHistory(threadId, HISTORY_TURN_LIMIT),
+    loadPriorCitations(threadId, projectArtifacts),
   ]);
 
   // Step 3 — classify intent + extract structured hints. Cheap, deterministic.
@@ -1228,7 +1267,7 @@ export async function handleSubmissionChat(
     // one exists, the client should apply by proposalId — that's what binds
     // the apply call to the exact content the user saw, server-side.
     const activeProposal = await getActiveProposalForThreadArtifact(
-      input.threadId,
+      threadId,
       artifact.artifact_id,
       artifact.organization_id
     );
@@ -1243,13 +1282,13 @@ export async function handleSubmissionChat(
     // Persist the turn so the thread stays continuous.
     try {
       await saveChatMessage(
-        input.threadId,
+        threadId,
         'user',
         input.question,
         'submission-chat:confirm'
       );
       await saveChatMessage(
-        input.threadId,
+        threadId,
         'assistant',
         directiveAnswer,
         'submission-chat:confirm'
@@ -1272,7 +1311,7 @@ export async function handleSubmissionChat(
         : ['proposedContent', 'reasonForChange'];
 
     return {
-      threadId: input.threadId,
+      threadId: threadId,
       artifactId: artifact.artifact_id,
       projectId: artifact.project_id,
       intent: 'confirm_apply',
@@ -1310,7 +1349,7 @@ export async function handleSubmissionChat(
 
   // Step 4 — project-tier memory (rules, decisions, prior answers).
   const memoryResult = await buildMemoryContextForChat({
-    threadId: input.threadId,
+    threadId: threadId,
     organizationId: artifact.organization_id,
     projectId: artifact.project_id,
     query: input.question,
@@ -1330,6 +1369,7 @@ export async function handleSubmissionChat(
   const validOrgUuid =
     orgUuid && /^[0-9a-f-]{36}$/i.test(orgUuid) ? orgUuid : undefined;
 
+  let retrievalUnavailable = !validOrgUuid;
   let rawHits: Array<{ id: string; title: string; content: string; score: number }> = [];
   if (validOrgUuid) {
     const artifactScope = {
@@ -1352,6 +1392,7 @@ export async function handleSubmissionChat(
         artifactScope,
       })
       .catch(err => {
+        retrievalUnavailable = true;
         console.warn(
           '[AnA submission-chat] advanced RAG retrieval failed, returning empty:',
           err?.message
@@ -1393,6 +1434,7 @@ export async function handleSubmissionChat(
             artifactScope,
           })
           .catch(err => {
+            retrievalUnavailable = true;
             console.warn(
               '[AnA submission-chat] artifact-scan retrieval failed:',
               err?.message
@@ -1459,20 +1501,15 @@ export async function handleSubmissionChat(
       sectionReference,
       history,
       priorCitations,
+      retrievalUnavailable,
     }) +
     projectInstructionsBlock +
     (memoryResult.memoryBlock ? `\n${memoryResult.memoryBlock}` : '');
 
   // Pass the conversation as message turns too (in addition to the transcript
   // baked into the system prompt) so the model sees the actual structure of
-  // the dialogue. Trim long assistant turns the same way the prompt does.
-  const conversationTurns = history.map(turn => ({
-    role: turn.role,
-    content:
-      turn.content.length > 1500
-        ? `${turn.content.slice(0, 1500)}…`
-        : turn.content,
-  }));
+  // the dialogue. The shared excerpt rule retains both ends of long turns.
+  const conversationTurns = submissionConversationTurns(history);
 
   const gwResponse = await gw.route({
     taskType: 'regulatory_review',
@@ -1532,24 +1569,11 @@ export async function handleSubmissionChat(
       };
     });
 
-  // Step 7 — finalize the rewrite payload. If the model declared rewrite
-  // intent but didn't include a "rewrite" object, treat the answer as the
-  // proposed content so callers always get something to render. Conversely,
-  // if the user clearly asked to rewrite but the model returned only an
-  // answer, mark it as a rewrite anyway (best-effort).
-  const resolvedIntent: SubmissionChatIntent =
-    parsed.intent ?? intent;
+  // A rewrite intent may end in a clarification. Only explicit proposed
+  // content becomes a proposal; answer prose is never promoted into one.
+  const resolvedIntent: SubmissionChatIntent = parsed.intent ?? intent;
   const modelName = `${gwResponse.provider}/${gwResponse.model}`;
-
-  let rewrite: SubmissionChatRewrite | null = parsed.rewrite;
-  if (resolvedIntent === 'rewrite' && !rewrite && answer) {
-    rewrite = {
-      sectionCode: sectionReference,
-      targetAgency,
-      proposedContent: answer,
-      rationale: '',
-    };
-  }
+  const rewrite: SubmissionChatRewrite | null = parsed.rewrite;
   if (rewrite && !rewrite.sectionCode && sectionReference) {
     rewrite.sectionCode = sectionReference;
   }
@@ -1577,7 +1601,7 @@ export async function handleSubmissionChat(
   if (rewrite && rewrite.proposedContent) {
     try {
       const handle = await persistRewriteProposal({
-        threadId: input.threadId,
+        threadId: threadId,
         artifactId: artifact.artifact_id,
         artifactPk: artifact.id,
         organizationId: artifact.organization_id,
@@ -1613,11 +1637,11 @@ export async function handleSubmissionChat(
   //   - ai_messages: the audit-grade provenance chain.
   // Both may be missing in dev/test envs (42P01 is tolerated).
   try {
-    await saveChatMessage(input.threadId, 'user', input.question, modelName);
+    await saveChatMessage(threadId, 'user', input.question, modelName);
     await saveChatMessage(
-      input.threadId,
+      threadId,
       'assistant',
-      answer,
+      rewrite ? `${answer}\n\n${rewrite.proposedContent}` : answer,
       modelName,
       gwResponse.usage.totalTokens
     );
@@ -1635,7 +1659,7 @@ export async function handleSubmissionChat(
       `INSERT INTO ai_threads (id, organization_id, project_id, created_by)
        VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
       [
-        input.threadId,
+        threadId,
         artifact.organization_id,
         artifact.project_id,
         input.userId ?? null,
@@ -1643,11 +1667,11 @@ export async function handleSubmissionChat(
     );
     await getPool().query(
       `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'user', $2)`,
-      [input.threadId, input.question]
+      [threadId, input.question]
     );
     await getPool().query(
       `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'assistant', $2)`,
-      [input.threadId, answer]
+      [threadId, rewrite ? `${answer}\n\n${rewrite.proposedContent}` : answer]
     );
   } catch (e: any) {
     if (e?.code !== '42P01') {
@@ -1660,7 +1684,7 @@ export async function handleSubmissionChat(
 
   emitMetric({
     name: 'submission_chat.turn',
-    threadId: input.threadId,
+    threadId: threadId,
     artifactId: artifact.artifact_id,
     projectId: artifact.project_id,
     organizationId: artifact.organization_id,
@@ -1684,7 +1708,7 @@ export async function handleSubmissionChat(
   });
 
   return {
-    threadId: input.threadId,
+    threadId: threadId,
     artifactId: artifact.artifact_id,
     projectId: artifact.project_id,
     intent: resolvedIntent,

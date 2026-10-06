@@ -1,0 +1,260 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered distinguishes a failed search from a verified dossier gap
+[AnA submission-chat] advanced RAG retrieval failed, returning empty: fixture retrieval unavailable
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming distinguishes a failed search from a verified dossier gap
+[AnA submission-chat-stream] advanced retrieval failed: fixture retrieval unavailable
+
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: Which intended use should this cover? 6ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: I cannot verify efficacy without the study results. 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > preserves an explicit proposal and its scope 2ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps streamed questions in the answer channel without a proposal 2ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered permits clarification without inventing a rewrite or gap source 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming permits clarification without inventing a rewrite or gap source 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered retains the ending of a long clarification answer and declares the omitted middle 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming retains the ending of a long clarification answer and declares the omitted middle 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > keeps the same correction in the gateway conversation turns 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > preserves an explicitly emitted rewrite and persists its body in history 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > retains a long user correction in streaming model input 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > a bare text fallback is an answer, never an inferred proposal 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered distinguishes a failed search from a verified dossier gap 2ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming distinguishes a failed search from a verified dossier gap 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered declares actually shortened evidence passages 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming declares actually shortened evidence passages 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > buffered retains the question and supplied answer before creating an explicit proposal 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > streaming retains the question and supplied answer before creating an explicit proposal 2ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > buffered keeps contradictory retrieved sources distinct from a missing passage 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > streaming keeps contradictory retrieved sources distinct from a missing passage 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered refuses a colleague thread before history, memory, or a model call 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming refuses a colleague thread before history, memory, or a model call 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered uses only the caller-resolved ID for context and writes 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming uses only the caller-resolved ID for context and writes 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered fails closed when the caller identity is missing 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming fails closed when the caller identity is missing 0ms
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > buffered does not answer from a silently missing conversation after history failure 11ms
+   → promise resolved "{ threadId: 'thread-1', …(13) }" instead of rejecting
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > streaming does not answer from a silently missing conversation after history failure 2ms
+   → expected [ { type: 'metadata', …(6) }, …(4) ] to deep equally contain ObjectContaining{…}
+stdout | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-10-06T14:13:11.244Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T14:13:11.245Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-10-06T14:13:11.245Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+[database] Database connection successful
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-10-06T14:13:11.426Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-10-06T14:13:12.020Z",
+  "level": "error",
+  "message": "[ana-features] [AnA authoring-plan generate] store not provisioned",
+  "context": {
+    "err": "authoring_plans table not migrated yet"
+  }
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "therapeutic_area column not migrated yet"
+{
+  "timestamp": "2026-10-06T14:13:12.031Z",
+  "level": "error",
+  "message": "[ana-features] [AnA authoring-plan generate] store not provisioned",
+  "context": {
+    "err": "therapeutic_area column not migrated yet"
+  }
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE > 503 keeps the code and does not echo the thrown text
+{
+  "timestamp": "2026-10-06T14:13:12.039Z",
+  "level": "error",
+  "message": "[ana-features] [AnA submission-chat] AI provider unavailable",
+  "context": {
+    "err": "AI provider unavailable: upstream gateway 10.0.4.xxx:8443 refused"
+  }
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > submission-chat private context errors > maps HISTORY_UNAVAILABLE without exposing internal context
+{
+  "timestamp": "2026-10-06T14:13:12.049Z",
+  "level": "error",
+  "message": "[ana-features] [AnA submission-chat] failed:",
+  "context": {
+    "error": "private thread-id fixture database detail"
+  }
+}
+
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet" 1993ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "therapeutic_area column not migrated yet" 5ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > the 400 for INVALID_REQUEST from the generator still carries the domain message (4xx is out of scope) 4ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE > 503 keeps the code and does not echo the thrown text 3ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE > the 404 for ARTIFACT_NOT_FOUND still carries the domain message (4xx is out of scope) 3ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > submission-chat private context errors > maps THREAD_FORBIDDEN without exposing internal context 2ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > submission-chat private context errors > maps AUTH_REQUIRED without exposing internal context 2ms
+ × tests/routes/ana-features-coded-503-containment.test.ts > submission-chat private context errors > maps HISTORY_UNAVAILABLE without exposing internal context 7ms
+   → expected 500 to be 503 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/ana-features-coded-503-containment.test.ts > submission-chat private context errors > maps HISTORY_UNAVAILABLE without exposing internal context
+AssertionError: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ tests/routes/ana-features-coded-503-containment.test.ts:167:24
+    165|     h.handleSubmissionChat.mockRejectedValue(coded('private thread-id …
+    166|     const res = await request(await app()).post('/api/ana/submission-c…
+    167|     expect(res.status).toBe(status); expect(res.body).toEqual({ error:…
+       |                        ^
+    168|   });
+    169| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > buffered does not answer from a silently missing conversation after history failure
+AssertionError: promise resolved "{ threadId: 'thread-1', …(13) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "answer": "Not reached",
++   "artifactId": "ART-1",
++   "citations": [],
++   "confirmApply": null,
++   "conversation": {
++     "historyMessages": 0,
++     "priorCitations": 0,
++   },
++   "intent": "rewrite",
++   "latencyMs": 0,
++   "model": "fixture/fixture",
++   "projectId": 2,
++   "provider": "fixture",
++   "retrieval": {
++     "artifactsInScope": 1,
++     "chunksConsidered": 0,
++     "chunksRetrieved": 0,
++     "retrievalQuery": "Rewrite this section for Japan.",
++   },
++   "rewrite": null,
++   "threadId": "thread-1",
++   "usage": {
++     "completionTokens": 20,
++     "promptTokens": 30,
++     "totalTokens": 50,
++   },
+  }
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:202:94
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > streaming does not answer from a silently missing conversation after history failure
+AssertionError: expected [ { type: 'metadata', …(6) }, …(4) ] to deep equally contain ObjectContaining{…}
+
+- Expected:
+ObjectContaining {
+  "code": "HISTORY_UNAVAILABLE",
+  "type": "error",
+}
+
++ Received:
+[
+  {
+    "artifactId": "ART-1",
+    "conversation": {
+      "historyMessages": 0,
+      "priorCitations": 0,
+    },
+    "intent": "rewrite",
+    "projectId": 2,
+    "retrieval": {
+      "artifactsInScope": 1,
+      "chunksRetrieved": 0,
+      "retrievalQuery": "Rewrite this section for Japan.",
+    },
+    "threadId": "thread-1",
+    "type": "metadata",
+  },
+  {
+    "channel": "answer",
+    "content": "Not re",
+    "type": "delta",
+  },
+  {
+    "channel": "answer",
+    "content": "ached",
+    "type": "delta",
+  },
+  {
+    "citations": [],
+    "type": "citations",
+  },
+  {
+    "artifactId": "ART-1",
+    "latencyMs": 0,
+    "model": "fixture/fixture",
+    "projectId": 2,
+    "provider": "fixture",
+    "threadId": "thread-1",
+    "type": "done",
+    "usage": {
+      "completionTokens": 20,
+      "promptTokens": 30,
+      "totalTokens": 50,
+    },
+  },
+]
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:203:156
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 33 passed (36)
+   Start at  10:13:09
+   Duration  2.46s (transform 1.39s, setup 140ms, import 282ms, tests 2.06s, environment 0ms)
+

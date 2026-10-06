@@ -1,0 +1,118 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered distinguishes a failed search from a verified dossier gap
+[AnA submission-chat] advanced RAG retrieval failed, returning empty: fixture retrieval unavailable
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming distinguishes a failed search from a verified dossier gap
+[AnA submission-chat-stream] advanced retrieval failed: fixture retrieval unavailable
+
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: Which intended use should this cover? 5ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: I cannot verify efficacy without the study results. 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > preserves an explicit proposal and its scope 2ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps streamed questions in the answer channel without a proposal 2ms
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered permits clarification without inventing a rewrite or gap source 5ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming permits clarification without inventing a rewrite or gap source 1ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered retains the ending of a long clarification answer and declares the omitted middle 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming retains the ending of a long clarification answer and declares the omitted middle 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > keeps the same correction in the gateway conversation turns 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > preserves an explicitly emitted rewrite and persists its body in history 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > retains a long user correction in streaming model input 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > a bare text fallback is an answer, never an inferred proposal 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered distinguishes a failed search from a verified dossier gap 1ms
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming distinguishes a failed search from a verified dossier gap 1ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered declares actually shortened evidence passages 1ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming declares actually shortened evidence passages 1ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered permits clarification without inventing a rewrite or gap source
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:75:64
+     73|     expect(prompt.includes('ask the decisive question in the answer'))…
+     74|     expect(prompt.includes('REQUIRED when intent="rewrite"')).toBe(fal…
+     75|     expect(prompt.includes('THEN propose a "rewrite" object')).toBe(fa…
+       |                                                                ^
+     76|     expect(prompt.includes('clarification-only')).toBe(true);
+     77|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming permits clarification without inventing a rewrite or gap source
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:76:51
+     74|     expect(prompt.includes('REQUIRED when intent="rewrite"')).toBe(fal…
+     75|     expect(prompt.includes('THEN propose a "rewrite" object')).toBe(fa…
+     76|     expect(prompt.includes('clarification-only')).toBe(true);
+       |                                                   ^
+     77|   });
+     78|   it.each(builders)('%s retains the ending of a long clarification ans…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming distinguishes a failed search from a verified dossier gap
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:123:74
+    121|     else { streamed('Please supply the study report.'); await handleSu…
+    122|     const prompt = h.route.mock.calls[0][0].messages[0].content;
+    123|     expect(prompt.includes('Some retrieval was unavailable or not run'…
+       |                                                                          ^
+    124|     expect(prompt.includes('No retrieved passages is not proof')).toBe…
+    125|     expect(h.persist).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered declares actually shortened evidence passages
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming declares actually shortened evidence passages
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:129:71
+    127|   it.each(builders)('%s declares actually shortened evidence passages'…
+    128|     const prompt = build(artifact, [artifact], [{ id: 'c1', title: 'Re…
+    129|     expect(prompt.includes('Some retrieved passages were shortened')).…
+       |                                                                       ^
+    130|   });
+    131| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 11 passed (16)
+   Start at  10:07:09
+   Duration  446ms (transform 155ms, setup 162ms, import 116ms, tests 25ms, environment 0ms)
+

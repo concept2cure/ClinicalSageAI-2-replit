@@ -5032,6 +5032,15 @@ router.post(
       if (code === 'ARTIFACT_NOT_FOUND') {
         return res.status(404).json({ error: error.message, code });
       }
+      if (code === 'HISTORY_UNAVAILABLE') {
+        return res.status(503).json({ error: 'Earlier conversation could not be loaded. Please retry.', code });
+      }
+      if (code === 'THREAD_FORBIDDEN') {
+        return res.status(403).json({ error: 'That conversation is not accessible.', code });
+      }
+      if (code === 'AUTH_REQUIRED') {
+        return res.status(401).json({ error: 'Authenticated caller required.', code });
+      }
       if (code === 'ARTIFACT_ORG_MISMATCH') {
         return res.status(403).json({ error: error.message, code });
       }
