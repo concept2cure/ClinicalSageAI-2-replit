@@ -29,9 +29,10 @@
  */
 import { pool } from '../../db';
 import { getSectionByCode, type SectionStatus } from '../../../services/regulatory/ind-ectd-sections.js';
-import { evaluateIndReadiness } from './ind-readiness-service';
+import { evaluateIndReadiness, type IndReadinessReport } from './ind-readiness-service';
 import { compareSectionCode, normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { IND_FORM_REQUIREMENTS, indFormForDocumentType } from '../ectd/section-to-ctd';
+import { leafSourceKey } from '../ectd/leaf-source-resolver';
 
 const MAX_DOCS = 10;
 
@@ -95,12 +96,8 @@ const STATUS_MAP: Record<string, string> = {
 /** A document exists, so the floor is "drafting" — never not_started (that means no doc). */
 const mapStatus = (raw: unknown): string => STATUS_MAP[str(raw).toLowerCase()] ?? 'drafting';
 
-/** Ordering used to keep the most-advanced status when two docs land on one section.
- *  2026-09-23 (W5/D7, co-author final pass): among the complete states, a bare
- *  lock ranks BELOW the ones that record a sign-off — every 'locked' here comes
- *  from coauthor_documents, where it (and 'finalized', now mapped to it)
- *  records no signature — so a section holding an approved or signed copy and
- *  a frozen one shows the approval, never less than the truth. */
+/** A section with several current documents is only as complete as its least
+ * advanced document. One approval must not conceal another document's draft. */
 const RANK: Record<string, number> = {
   not_started: 0, data_gathering: 1, drafting: 2, revision: 3, internal_review: 3,
   qa_review: 4, frozen: 5, locked: 5, approved: 6, signed: 7,
@@ -277,11 +274,76 @@ function resolveTargetReceiptDate(
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
-/** Merge a (code → {status,name}) entry, keeping the more-advanced status. */
+/** Merge CURRENT documents, keeping the least-advanced status. */
 function put(map: Map<string, { status: string; name: string }>, code: string, status: string, name: string): void {
   if (!code) return;
   const prev = map.get(code);
-  if (!prev || (RANK[status] ?? 0) > (RANK[prev.status] ?? 0)) map.set(code, { status, name });
+  if (!prev || (RANK[status] ?? 0) < (RANK[prev.status] ?? 0)) map.set(code, { status, name });
+}
+
+interface ChecklistLeaf {
+  id: number;
+  sequence_id: number;
+  section_code: string;
+  lifecycle_op: string;
+  document_table: string | null;
+  document_id: number | null;
+  document_uuid: string | null;
+  document_type: string | null;
+}
+
+/** Fold working placements in sequence order, using the publisher's source
+ * identity. This is current authoring inventory, not a claim of agency receipt.
+ * An untouched document carries forward. A named delete acts only on that
+ * document; an unnamed delete binds only to a unique current leaf in its
+ * section, matching package-from-core's refusal to guess. No history is written.
+ */
+function currentLeaves(
+  leaves: ChecklistLeaf[], seqToSub: Map<number, number>,
+): { leaves: ChecklistLeaf[]; issues: Map<number, string[]> } {
+  const bySub = new Map<number, Map<string, ChecklistLeaf>>();
+  const issues = new Map<number, string[]>();
+  for (const leaf of leaves) {
+    const sub = seqToSub.get(Number(leaf.sequence_id));
+    if (sub == null) continue;
+    const current = bySub.get(sub) ?? new Map<string, ChecklistLeaf>();
+    bySub.set(sub, current);
+    const code = sectionKey(str(leaf.section_code));
+    const named = !!leaf.document_table && (leaf.document_id != null || leaf.document_uuid != null);
+    const key = `${code}/${named ? leafSourceKey(leaf.document_table, leaf.document_id, leaf.document_uuid) : `unresolved:${leaf.id}`}`;
+    const op = norm(leaf.lifecycle_op);
+    const issue = (message: string) => {
+      const list = issues.get(sub) ?? [];
+      list.push(`${code}: ${message}`);
+      issues.set(sub, list);
+    };
+    if (op === 'delete') {
+      if (named) {
+        if (!current.delete(key)) issue('withdrawal names no current document');
+      } else {
+        const matches = [...current].filter(([, l]) => sectionKey(str(l.section_code)) === code);
+        if (matches.length === 1) current.delete(matches[0][0]);
+        else issue('withdrawal needs one unambiguous current document');
+      }
+      continue;
+    }
+    if (!['new', 'replace', 'append'].includes(op)) {
+      issue('unrecognised lifecycle operation');
+      continue;
+    }
+    if ((op === 'replace' || op === 'append') && !current.has(key)) {
+      issue(`${op} names no current document`);
+    }
+    current.set(key, leaf);
+  }
+  return { leaves: [...bySub.values()].flatMap((m) => [...m.values()]), issues };
+}
+
+function applyLifecycleIssues(readiness: IndReadinessReport, messages: string[]): void {
+  for (const message of messages) {
+    readiness.blockers.push({ kind: 'lifecycle', code: 'unresolved_lifecycle', message });
+  }
+  if (messages.length > 0) readiness.ready = false;
 }
 
 /**
@@ -309,7 +371,7 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
   // closed to [] when unprovisioned.
   const [seqRes, coauthorRes, programTargets] = await Promise.all([
     pool.query(
-      `SELECT id, submission_id FROM ectd_sequences
+      `SELECT id, submission_id, sequence_number FROM ectd_sequences
         WHERE submission_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL`,
       [subIds, orgId],
     ),
@@ -323,20 +385,19 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
   const seqIds = seqRows.map((r) => Number(r.id));
   const leavesRes = seqIds.length
     ? await pool.query(
-        `SELECT sequence_id, section_code, document_table, document_id, document_type FROM submission_leaves
-          WHERE sequence_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL`,
+        `SELECT l.id, l.sequence_id, l.section_code, l.lifecycle_op,
+                l.document_table, l.document_id, l.document_uuid, l.document_type
+           FROM submission_leaves l
+           JOIN ectd_sequences s ON s.id = l.sequence_id AND s.organization_id = l.organization_id
+          WHERE l.sequence_id = ANY($1) AND l.organization_id = $2 AND l.deleted_at IS NULL
+          ORDER BY s.sequence_number ASC, s.id ASC, l.id ASC`,
         [seqIds, orgId],
       )
     : { rows: [] as Array<Record<string, unknown>> };
-  const leaves = leavesRes.rows as Array<{
-    sequence_id: number;
-    section_code: string;
-    document_table: string | null;
-    document_id: number | null;
-    document_type: string | null;
-  }>;
+  const allLeaves = leavesRes.rows as ChecklistLeaf[];
 
   const seqToSub = new Map<number, number>(seqRows.map((r) => [Number(r.id), Number(r.submission_id)]));
+  const { leaves, issues } = currentLeaves(allLeaves, seqToSub);
 
   /* Forms completed by the SPONSOR rather than by authoring.
      1571/1572/3674 are signed FDA forms: a sponsor completes and signs the
@@ -391,6 +452,7 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
       filingType: 'initial', sectionStatus,
       completedForms: forms.filter((f) => f.done).map((f) => f.id),
     });
+    applyLifecycleIssues(readiness, issues.get(subId) ?? []);
 
     const productName = s.product_name != null && str(s.product_name).trim() !== '' ? str(s.product_name) : null;
     const title = str(s.title).trim() !== '' ? str(s.title) : null;

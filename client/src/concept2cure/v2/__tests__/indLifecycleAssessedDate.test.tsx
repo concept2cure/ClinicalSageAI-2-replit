@@ -113,6 +113,24 @@ describe('IND readiness comes from the server, including Ana context', () => {
     expect(context.facts.readinessPercent).toBe(report.overallPercentage);
     expect(context.facts.requiredSections.total).toBe(report.requiredSections.total);
     expect(context.facts.requiredSections.incomplete).toEqual(report.requiredSections.incomplete);
+    expect(context.facts.readinessBlockers).toEqual(report.blockers);
+  });
+
+  it('exposes a lifecycle blocker to Ana even when all section and form completion percentages are 100', async () => {
+    const report = evaluateIndReadiness({
+      filingType: 'initial', completedForms: forms.map((f) => f.id),
+      sectionStatus: Object.fromEntries(getAllINDSections().filter((s) => s.required).map((s) => [s.code, 'approved'])),
+    });
+    report.blockers.push({ kind: 'lifecycle', code: 'unresolved_lifecycle', message: 'm2.3: withdrawal needs one unambiguous current document' });
+    report.ready = false;
+    mockChecklist(forms, [section], report);
+    render(<IndLifecycle {...props()} />);
+    await screen.findByText('NOT YET FILEABLE');
+    expect(screen.queryByText('READY TO FILE')).toBeNull();
+    const context = publish.mock.calls.at(-1)?.[1];
+    expect(context.facts.readinessPercent).toBe(100);
+    expect(context.facts.readyToFile).toBe(false);
+    expect(context.facts.readinessBlockers).toEqual(report.blockers);
   });
 
   it('retains READY TO FILE when the server has evaluated the complete required set', async () => {

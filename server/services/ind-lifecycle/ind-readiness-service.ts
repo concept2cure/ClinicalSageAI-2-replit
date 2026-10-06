@@ -67,7 +67,7 @@ export interface ReadinessGap {
 }
 
 export interface ReadinessBlocker {
-  kind: 'required_section' | 'required_form' | 'overdue_safety_report' | 'nothing_assessed';
+  kind: 'required_section' | 'required_form' | 'overdue_safety_report' | 'nothing_assessed' | 'lifecycle';
   code: string;
   message: string;
 }

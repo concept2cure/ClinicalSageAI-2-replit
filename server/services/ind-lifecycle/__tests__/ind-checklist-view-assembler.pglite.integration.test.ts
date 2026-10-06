@@ -28,8 +28,8 @@ const OTHER = 9;
 const DDL = `
 CREATE TABLE organizations (id serial PRIMARY KEY, name text);
 CREATE TABLE submissions (id serial PRIMARY KEY, organization_id int, program_id uuid, title text, product_name text, application_type text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
-CREATE TABLE ectd_sequences (id serial PRIMARY KEY, organization_id int, submission_id int, deleted_at timestamptz);
-CREATE TABLE submission_leaves (id serial PRIMARY KEY, organization_id int, sequence_id int, section_code text, document_table text, document_id int, document_type text, deleted_at timestamptz);
+CREATE TABLE ectd_sequences (id serial PRIMARY KEY, organization_id int, submission_id int, sequence_number text NOT NULL DEFAULT '0000', deleted_at timestamptz);
+CREATE TABLE submission_leaves (id serial PRIMARY KEY, organization_id int, sequence_id int, section_code text, lifecycle_op text NOT NULL DEFAULT 'new', document_table text, document_id int, document_uuid uuid, document_type text, deleted_at timestamptz);
 CREATE TABLE rendered_leaf_files (id serial PRIMARY KEY, organization_id int, rendered_from text, file_name text, sha256 text, section_code text);
 CREATE TABLE coauthor_documents (id serial PRIMARY KEY, organization_id int, module_number text, status text, module_name text);
 CREATE TABLE regulatory_programs (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int, name text, code text, program_type text, product_name text, target_submission_date timestamptz, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
@@ -360,9 +360,9 @@ describe('assembleOrgIndChecklists — a section is the same section however it 
      whether an unsigned freeze counts as done to the founder. Decided
      2026-10-01 (DP-35): it does not. It is now 'frozen', which claims no
      signature and no completion. 'signed' stays for a status that records one;
-     and a signature or approval on the same section outranks a bare freeze,
-     so the section never shows less than the truth. */
-  it("maps finalized to 'frozen', never 'signed', and never complete; a signed or approved copy of the same section outranks it", async () => {
+     and each current document must be complete: another approval cannot
+     hide a current unsigned freeze. */
+  it("maps finalized to frozen, never signed or complete; another approval cannot hide current unsigned content", async () => {
     await seedSpelled(ORG, [
       ['1.1.1', 'finalized'],
       ['m1.2', 'finalized'], ['1.2', 'approved'],
@@ -371,17 +371,17 @@ describe('assembleOrgIndChecklists — a section is the same section however it 
     ]);
     const ind = (await assembleOrgIndChecklists(ORG))[0] as any;
     const sec = Object.fromEntries(ind.sections.map((x: any) => [x.code, x.status]));
-    expect(sec).toEqual({ 'm1.2': 'approved', 'm2.3': 'signed', 'm2.4': 'frozen' });
+    expect(sec).toEqual({ 'm1.2': 'frozen', 'm2.3': 'frozen', 'm2.4': 'frozen' });
     // DP-35: a frozen, unsigned Form 1571 is not done.
     const done = Object.fromEntries(ind.forms.map((f: any) => [f.id, f.done]));
     expect(done.FDA_1571).toBe(false);
   });
 
-  it('two spellings of one section are one section, at the more advanced status', async () => {
+  it('two spellings of one section are one section, with the least complete current document', async () => {
     await seedSpelled(ORG, [['m1.2', 'draft'], ['1.2', 'approved']]);
     const ind = (await assembleOrgIndChecklists(ORG))[0] as any;
     expect(ind.sections).toHaveLength(1);
-    expect(ind.sections[0]).toMatchObject({ code: 'm1.2', status: 'approved' });
+    expect(ind.sections[0]).toMatchObject({ code: 'm1.2', status: 'drafting' });
   });
 
   it('a section the blueprint does not model keeps the document’s own name, never an invented title', async () => {
@@ -430,5 +430,152 @@ describe('IND checklist authoritative readiness and program identity', () => {
     await pglite.query(`UPDATE submissions SET program_id = '10000000-0000-4000-8000-000000000099' WHERE id = $1`, [subId]);
     const [ind] = await assembleOrgIndChecklists(ORG) as any[];
     expect(ind.targetReceiptDate).toBeNull();
+  });
+});
+
+// Current placement inventory, not agency acceptance: retain untouched leaves,
+// fold repeated document identities in sequence order, and apply withdrawals.
+async function sequence(subId: number, number: string): Promise<number> {
+  const r = await pglite.query<{ id: number }>(
+    `INSERT INTO ectd_sequences (organization_id, submission_id, sequence_number) VALUES ($1,$2,$3) RETURNING id`,
+    [ORG, subId, number],
+  );
+  return r.rows[0].id;
+}
+async function place(seq: number, code: string, status: string): Promise<number> {
+  const r = await pglite.query<{ id: number }>(
+    `INSERT INTO coauthor_documents (organization_id,module_number,status,module_name) VALUES ($1,$2,$3,$2) RETURNING id`,
+    [ORG, code, status],
+  );
+  const id = r.rows[0].id;
+  await pglite.query(
+    `INSERT INTO submission_leaves (organization_id,sequence_id,section_code,document_table,document_id) VALUES ($1,$2,$3,'coauthor_documents',$4)`,
+    [ORG, seq, code, id],
+  );
+  return id;
+}
+async function withdraw(seq: number, code: string, id: number | null): Promise<void> {
+  await pglite.query(
+    `INSERT INTO submission_leaves (organization_id,sequence_id,section_code,lifecycle_op,document_table,document_id) VALUES ($1,$2,$3,'delete',$4,$5)`,
+    [ORG, seq, code, id == null ? null : 'coauthor_documents', id],
+  );
+}
+
+
+describe('IND checklist current lifecycle inventory', () => {
+  it('does not hide a later draft behind an earlier approval in the same section', async () => {
+    const sub = await seedIND(ORG, { withLeaves: false });
+    await place(await sequence(sub, '0000'), 'm3.2.S.1', 'approved');
+    await place(await sequence(sub, '0001'), '3.2.s.1', 'draft');
+    const [ind] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(ind.sections.find((s: any) => s.code === 'm3.2.S.1').status).toBe('drafting');
+    expect(ind.readiness.blockers.some((b: any) => b.code === 'm3.2.S.1')).toBe(true);
+  });
+
+  it('removes a named withdrawn leaf without removing another document in that section', async () => {
+    const sub = await seedIND(ORG, { withLeaves: false });
+    const original = await sequence(sub, '0000');
+    const old = await place(original, 'm3.2.S.1', 'approved');
+    await place(original, 'm3.2.S.1', 'draft');
+    await place(original, 'm2.3', 'approved');
+    await withdraw(await sequence(sub, '0001'), '3.2.s.1', old);
+    const [ind] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(ind.sections.find((s: any) => s.code === 'm3.2.S.1').status).toBe('drafting');
+    expect(ind.sections.find((s: any) => s.code === 'm2.3').status).toBe('approved');
+  });
+
+  it('a withdrawn authored FDA form is no longer complete, including when sequence IDs are out of order', async () => {
+    const sub = await seedIND(ORG, { withLeaves: false });
+    const later = await sequence(sub, '0001');
+    const doc = await place(await sequence(sub, '0000'), '1.1.1', 'approved');
+    await withdraw(later, 'm1.1.1', doc);
+    const [ind] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(ind.forms.find((f: any) => f.id === 'FDA_1571').done).toBe(false);
+    expect(ind.readiness.forms.completed).not.toContain('FDA_1571');
+  });
+
+  it('a unique section-only withdrawal removes the old content; a later new placement remains current', async () => {
+    const sub = await seedIND(ORG, { withLeaves: false });
+    await place(await sequence(sub, '0000'), 'm2.3', 'approved');
+    await withdraw(await sequence(sub, '0001'), '2.3', null);
+    const [withdrawn] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(withdrawn.sections).toEqual([]);
+    await place(await sequence(sub, '0002'), 'm2.3', 'draft');
+    const [restored] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(restored.sections).toEqual([expect.objectContaining({ code: 'm2.3', status: 'drafting' })]);
+  });
+
+  it('does not mistake a named withdrawal of an unknown document for a section withdrawal', async () => {
+    const sub = await seedIND(ORG, { withLeaves: false });
+    await place(await sequence(sub, '0000'), 'm2.3', 'approved');
+    await withdraw(await sequence(sub, '0001'), 'm2.3', 99999);
+    const [ind] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(ind.sections).toEqual([expect.objectContaining({ code: 'm2.3', status: 'approved' })]);
+    expect(ind.readiness.blockers).toContainEqual(expect.objectContaining({ kind: 'lifecycle' }));
+    expect(ind.readiness.ready).toBe(false);
+  });
+
+});
+
+describe('IND checklist lifecycle refusals and retained form history', () => {
+  it('a withdrawn sponsor-completed form does not remain complete merely because its retained file still exists', async () => {
+    const sub = await seedIND(ORG, { withLeaves: false });
+    const original = await sequence(sub, '0000');
+    const file = await pglite.query<{ id: number }>(
+      `INSERT INTO rendered_leaf_files (organization_id,file_name) VALUES ($1,'signed-1571.pdf') RETURNING id`, [ORG],
+    );
+    await pglite.query(
+      `INSERT INTO submission_leaves (organization_id,sequence_id,section_code,document_table,document_id,document_type) VALUES ($1,$2,'m1.1','rendered_leaf_files',$3,'form_1571')`,
+      [ORG, original, file.rows[0].id],
+    );
+    const [before] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(before.forms.find((f: any) => f.id === 'FDA_1571').done).toBe(true);
+    await pglite.query(
+      `INSERT INTO submission_leaves (organization_id,sequence_id,section_code,lifecycle_op,document_table,document_id) VALUES ($1,$2,'1.1','delete','rendered_leaf_files',$3)`,
+      [ORG, await sequence(sub, '0001'), file.rows[0].id],
+    );
+    const [after] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(after.forms.find((f: any) => f.id === 'FDA_1571').done).toBe(false);
+    expect((await pglite.query(`SELECT id FROM rendered_leaf_files`)).rows).toHaveLength(1);
+    expect((await pglite.query(`SELECT id FROM submission_leaves`)).rows).toHaveLength(2);
+  });
+
+  it('an ambiguous section withdrawal blocks readiness and preserves the documents instead of guessing', async () => {
+    const sub = await seedIND(ORG, { withLeaves: false });
+    const original = await sequence(sub, '0000');
+    await place(original, 'm2.3', 'approved');
+    await place(original, 'm2.3', 'draft');
+    await withdraw(await sequence(sub, '0001'), 'm2.3', null);
+    const [ind] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(ind.sections[0].status).toBe('drafting');
+    expect(ind.readiness.blockers).toContainEqual(expect.objectContaining({ kind: 'lifecycle', message: expect.stringContaining('unambiguous') }));
+  });
+
+  it('a replacement without a matching document identity blocks readiness', async () => {
+    const sub = await seedIND(ORG, { withLeaves: false });
+    const original = await sequence(sub, '0000');
+    await place(original, 'm2.3', 'approved');
+    const latest = await sequence(sub, '0001');
+    const doc = await place(latest, 'm2.3', 'approved');
+    await pglite.query(`UPDATE submission_leaves SET lifecycle_op='replace' WHERE sequence_id=$1 AND document_id=$2`, [latest, doc]);
+    const [ind] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(ind.readiness.blockers).toContainEqual(expect.objectContaining({ kind: 'lifecycle', message: expect.stringContaining('replace names no current document') }));
+  });
+
+  it('an append to the same document identity remains current once, while deleted sequences do not withdraw it', async () => {
+    const sub = await seedIND(ORG, { withLeaves: false });
+    const original = await sequence(sub, '0000');
+    const doc = await place(original, 'm2.3', 'approved');
+    const latest = await sequence(sub, '0001');
+    await pglite.query(
+      `INSERT INTO submission_leaves (organization_id,sequence_id,section_code,lifecycle_op,document_table,document_id) VALUES ($1,$2,'2.3','append','coauthor_documents',$3)`,
+      [ORG, latest, doc],
+    );
+    const deleted = await sequence(sub, '0002');
+    await withdraw(deleted, 'm2.3', doc);
+    await pglite.query(`UPDATE ectd_sequences SET deleted_at=now() WHERE id=$1`, [deleted]);
+    const [ind] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(ind.sections).toEqual([expect.objectContaining({ code: 'm2.3', status: 'approved' })]);
+    expect(ind.readiness.blockers.some((b: any) => b.kind === 'lifecycle')).toBe(false);
   });
 });

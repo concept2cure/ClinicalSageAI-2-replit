@@ -375,6 +375,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         readinessAssessed: R.assessed,
         readyToFile: R.ready,
         readinessPercent: R.assessed ? R.overallPercentage : null,
+        readinessBlockers: R.blockers,
         requiredSections: R.assessed
           ? {
               total: R.requiredSections.total,
