@@ -913,7 +913,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       // Handed to the shell with every drive event (see DriveTurnControls).
       const driveControls: DriveTurnControls = {
         stop: () => {
-          void stopRef.current?.();
+          // The shell can retain these controls after this turn ended. Only
+          // its own stream may be stopped, including before run_started.
+          if (abortRef.current === abortCtl) void stopRef.current?.();
         },
         interject: (message: string) => steerRun(ownRun(), message),
         /* The app's report, on its own channel. It used to ride `interject`,
