@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-06T20:22:05.463Z",
+  "generatedAt": "2026-10-06T20:34:52.480Z",
   "git": {
-    "sha": "a5703dc64a71ef1668f230bbb5588c66aa4c9ea7",
+    "sha": "5ca549468d273a4137bd87f1b20df866b89b5a43",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2689,7 +2689,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
-        "lines": 1569
+        "lines": 1570
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
