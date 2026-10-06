@@ -51,3 +51,19 @@ describe('IA across AnA prompt paths', () => {
     expect(ANA_BEHAVIOR).toContain('missing facts');
   });
 });
+
+
+describe('IA is subject matter judgment', () => {
+  it.each(surfaces)('%s carries scientific and market-specific critical thinking', (_name, prompt) => {
+    for (const term of ['medical device', 'diagnostic/IVD', 'biotech', 'pharmaceutical', 'contract research organization', 'Europe', 'United States', 'Japan', 'Canada', 'China']) expect(prompt).toContain(term);
+    expect(prompt).toContain('clinical validity');
+    expect(prompt).toContain('intended use');
+    expect(prompt).toContain('sponsor responsibilities');
+    expect(prompt).toContain('bias, controls');
+    expect(prompt).toContain('binding law');
+    expect(prompt).toContain('effective date');
+    expect(prompt).toContain('disconfirming evidence');
+    expect(prompt).toContain('Do not transfer a rule between markets');
+    expect(prompt).toContain('only the domain facts that could change this answer');
+  });
+});
