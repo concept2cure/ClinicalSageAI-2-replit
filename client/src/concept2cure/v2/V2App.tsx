@@ -39,6 +39,7 @@ import {
 import {
   advertisedScreenActions,
   applySurfaceAction,
+  cancelPendingSurfaceAction,
   readDirectiveProgram,
   validateDriveAction,
 } from './surfaceActions';
@@ -451,6 +452,7 @@ export function V2App() {
       isShowing: (directive) =>
         resolveSurfaceIdForTarget(directive.targetId) === activeIdRef.current,
       perform: (directive, onDeferred) => applySurfaceAction(directive, nav, onDeferred),
+      cancelPending: cancelPendingSurfaceAction,
       canApply: () => !driveRef.current.takenOver,
       refuse: (move) => {
         const target = move.kind === 'navigate' ? move.directive.targetId : move.directive.surfaceId;
@@ -569,9 +571,9 @@ export function V2App() {
           /* A new turn begins driving. Moves still queued from an earlier turn
              belong to a turn that is over — played now, they would land under
              this turn's budget and narration, on a screen this turn never
-             chose. A move already in flight finishes, reports to its own turn
-             (settleMove), and is not recorded as this turn's (onApplied). The
-             cleared ones are settled as not made (onDropped). */
+             chose. A navigation already in flight finishes and reports to
+             its own turn; an action still waiting for its screen/data is
+             cancelled. Cleared moves are settled as not made (onDropped). */
           driveQueueRef.current?.clear();
           /* Consent is the switch, per turn. A turn sent while it was on can
              begin driving after the person switched it off; engaging then

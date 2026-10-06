@@ -1,0 +1,1012 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts
+{
+  "timestamp": "2026-10-06T01:18:32.580Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:18:32.581Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts
+{
+  "timestamp": "2026-10-06T01:18:32.582Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+{
+  "timestamp": "2026-10-06T01:18:32.581Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:18:32.582Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+{
+  "timestamp": "2026-10-06T01:18:32.582Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts
+{
+  "timestamp": "2026-10-06T01:18:32.581Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:18:32.583Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway.test.ts
+{
+  "timestamp": "2026-10-06T01:18:32.583Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+{
+  "timestamp": "2026-10-06T01:18:32.582Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:18:32.583Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+{
+  "timestamp": "2026-10-06T01:18:32.583Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts
+{
+  "timestamp": "2026-10-06T01:18:32.587Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:18:32.588Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts
+{
+  "timestamp": "2026-10-06T01:18:32.588Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-openai-stream.test.ts
+{
+  "timestamp": "2026-10-06T01:18:32.593Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:18:32.595Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-openai-stream.test.ts
+{
+  "timestamp": "2026-10-06T01:18:32.595Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/gateway-openai-stream.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/local-provider-tools.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-openai-stream.test.ts > executeOpenAICompatibleStream — reasoning + streaming parity > returns partial content if the stream errors mid-flight (resilience)
+{
+  "timestamp": "2026-10-06T01:18:32.705Z",
+  "level": "error",
+  "message": "[ai-gateway] [AI Gateway] openai stream interrupted:",
+  "context": "connection reset"
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error
+{
+  "timestamp": "2026-10-06T01:18:32.700Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error
+{
+  "timestamp": "2026-10-06T01:18:32.700Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: upstream 500",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-openai-stream.test.ts > executeOpenAICompatibleStream — reasoning + streaming parity > re-throws when the stream fails before any content (nothing to salvage)
+{
+  "timestamp": "2026-10-06T01:18:32.707Z",
+  "level": "error",
+  "message": "[ai-gateway] [AI Gateway] openai stream interrupted:",
+  "context": "immediate failure"
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the Anthropic stream — silence is a stall only while text is streaming > text that stops mid-block is still a stall after the text limit, returned as partial
+{
+  "timestamp": "2026-10-06T01:19:07.708Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Stream stalled — no chunk for 35s while text was streaming. Accumulated 13 chars so far. Aborting stream.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the Anthropic stream — silence is a stall only while text is streaming > text that stops mid-block is still a stall after the text limit, returned as partial
+{
+  "timestamp": "2026-10-06T01:19:07.708Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Returning partial response (13 chars) after stream stall",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream
+{
+  "timestamp": "2026-10-06T01:18:32.709Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream
+{
+  "timestamp": "2026-10-06T01:18:32.709Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: anthropic/claude-sonnet-5 went silent for 300s before it produced any text or tool call, so the stream was stopped.",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-openai-stream.test.ts > executeOpenAICompatibleStream — reasoning + streaming parity > streams reasoning then text and aggregates the response + usage 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-openai-stream.test.ts > executeOpenAICompatibleStream — reasoning + streaming parity > returns partial content if the stream errors mid-flight (resilience) 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-openai-stream.test.ts > executeOpenAICompatibleStream — reasoning + streaming parity > re-throws when the stream fails before any content (nothing to salvage) 2ms
+stderr | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the Anthropic stream — silence is a stall only while text is streaming > a stream silent past the working limit with nothing produced is an error, not an empty answer
+{
+  "timestamp": "2026-10-06T01:23:37.709Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Stream stalled — no chunk for 305s while the model was working. Accumulated 0 chars so far. Aborting stream.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > still retries a transient non-streaming fallback once and returns its recovery
+{
+  "timestamp": "2026-10-06T01:18:32.711Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the OpenAI-compatible stream — the same rule > once it is writing, the text limit applies, and nothing produced is an error
+{
+  "timestamp": "2026-10-06T01:19:07.713Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot stream stalled — no chunk for 35s while it was writing. Accumulated 7 chars. Aborting stream.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the OpenAI-compatible stream — the same rule > once it is writing, the text limit applies, and nothing produced is an error
+{
+  "timestamp": "2026-10-06T01:19:07.713Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Returning partial moonshot response (7 chars) after stall",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the OpenAI-compatible stream — the same rule > once it is writing, the text limit applies, and nothing produced is an error
+{
+  "timestamp": "2026-10-06T01:23:37.713Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot stream stalled — no chunk for 305s before it wrote anything. Accumulated 0 chars. Aborting stream.",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error 10ms
+ ✓ server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > still retries a transient non-streaming fallback once and returns its recovery 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the Anthropic stream — silence is a stall only while text is streaming > a model thinking silently for longer than the text limit is not cut off 6ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the Anthropic stream — silence is a stall only while text is streaming > a tool's arguments buffered for longer than the text limit are not cut off 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the Anthropic stream — silence is a stall only while text is streaming > text that stops mid-block is still a stall after the text limit, returned as partial 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the Anthropic stream — silence is a stall only while text is streaming > a stream silent past the working limit with nothing produced is an error, not an empty answer 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the OpenAI-compatible stream — the same rule > a server that reads the prompt or reasons for longer than the text limit is not cut off 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > the OpenAI-compatible stream — the same rule > once it is writing, the text limit applies, and nothing produced is an error 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > watchStreamForStall > fires on silence past the limit for the phase, once, and a chunk resets the clock 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts > watchStreamForStall > returns to the working limit when text stops 1ms
+stderr | server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > still returns a response when the caller's stream sink throws
+{
+  "timestamp": "2026-10-06T01:18:32.718Z",
+  "level": "warn",
+  "message": "[ai-gateway] [ai-gateway] deterministic onStream sink threw",
+  "context": {
+    "error": "sink closed"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T01:18:32.720Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T01:18:32.721Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T01:18:32.721Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 3 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:18:32.721Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-4-8 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T01:18:32.722Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 4 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:18:32.722Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T01:18:32.722Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 5 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:18:32.722Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-4-6 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T01:18:32.723Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 6 failures — recovery in 120s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:18:32.723Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-haiku-4-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T01:18:32.723Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-06T01:18:32.723Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o-mini failed: upstream 503",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > passes the abort signal through to the provider call 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > keeps the text already streamed when the user stops mid-answer 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > never opens a provider call for a run that is already cancelled 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > never falls back to another model 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > never counts against the provider circuit breaker 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > is not retried by the backoff loop 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > an abort that lands mid-call (the SDK error) never counts against the circuit breaker 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > an abort that lands mid-call is not re-run on the next model 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > one Stop leaves Anthropic healthy for everyone — it used to count once per fallback rung 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors 5ms
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should log entries to buffer
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=300 cost=$0.00200 500ms org=org-1 user=user-1 caller=- req=test-req-1
+
+stderr | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should log entries to buffer
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=300 cost=$0.00100 300ms org=- user=- caller=- req=test-req-0
+
+stderr | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=300 cost=$0.00100 400ms org=- user=- caller=- req=test-req-1
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=300 cost=$0.00100 500ms org=- user=- caller=- req=test-req-2
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats
+[AI Gateway Audit] ✓ anthropic/claude-3-5-sonnet task=chat tokens=300 cost=$0.00100 600ms org=- user=- caller=- req=test-req-3
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats
+[AI Gateway Audit] ✗ anthropic/claude-3-5-sonnet task=chat tokens=300 cost=$0.00100 700ms org=- user=- caller=- req=test-req-4
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-0
+
+stderr | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-1
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-2
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-3
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-4
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-5
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-6
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-7
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-8
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 500
+{
+  "timestamp": "2026-10-06T01:18:32.701Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: 500 Simulated upstream 500",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-9
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-10
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-11
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-12
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-13
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-14
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-15
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-16
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-17
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-18
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-19
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-20
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-21
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-22
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-23
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-24
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-25
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-26
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-27
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-28
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-29
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-30
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-31
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-32
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-33
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-34
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-35
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-36
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-37
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-38
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-39
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-40
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-41
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-42
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-43
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-44
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-45
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-46
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-47
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-48
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-49
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-50
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-51
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-52
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-53
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-54
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-55
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-56
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-57
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-58
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-59
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-60
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-61
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-62
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-63
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-64
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-65
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-66
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-67
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-68
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-69
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-70
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-71
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-72
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-73
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-74
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-75
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-76
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-77
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-78
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-79
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-80
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-81
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-82
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-83
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-84
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-85
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-86
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-87
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-88
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-89
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-90
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-91
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-92
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-93
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-94
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-95
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-96
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-97
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-98
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-99
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-100
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-101
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-102
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-103
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-104
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-105
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-106
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-107
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-108
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-109
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 500
+{
+  "timestamp": "2026-10-06T01:18:32.701Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: 500 {\"error\":{\"type\":\"api_error\",\"message\":\"Simulated upstream 500\"}}",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-110
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-111
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-112
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-113
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-114
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-115
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-116
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-117
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-118
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-119
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-120
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-121
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-122
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-123
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-124
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-125
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-126
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-127
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-128
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-129
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-130
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-131
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-132
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-133
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-134
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-135
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-136
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-137
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-138
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-139
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-140
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-141
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-142
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-143
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-144
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-145
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-146
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-147
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-148
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-149
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 429
+{
+  "timestamp": "2026-10-06T01:18:32.740Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: 429 Simulated upstream 429",
+  "context": {}
+}
+
+(node:39) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:39) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 429
+{
+  "timestamp": "2026-10-06T01:18:32.740Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: 429 {\"error\":{\"type\":\"api_error\",\"message\":\"Simulated upstream 429\"}}",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > initialization > should create a gateway instance 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > initialization > should default to deterministic mode in test config 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > initialization > should list enabled providers 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > singleton > getGateway returns same instance 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > singleton > resetGateway clears singleton 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > should return deterministic response for chat 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > delivers the content through onStream when the caller is streaming 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > does not invoke onStream for a non-streaming caller 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > still returns a response when the caller's stream sink throws 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > should return different responses for different task types 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > should toggle deterministic mode at runtime 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > structured output in deterministic mode returns JSON 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > helper methods > complete() wraps a single prompt 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > helper methods > chat() wraps system + user messages 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > helper methods > structuredOutput() returns parsed JSON 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > every registry entry declares the wire surface it accepts 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > no adaptive-thinking model also claims to accept sampling params 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > omits temperature for a model that rejects sampling (would 400) 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > records NO temperature for a reasoning-only model — it was never sent 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > records the real temperature for a model that does accept sampling 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > records NO temperature for a model the registry does not know 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > uses adaptive thinking (no budget_tokens) on an adaptive model 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > keeps the legacy temperature + budget_tokens surface on a budget model 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > clamps the legacy budget_tokens below max_tokens (would 400 otherwise) 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > provider health > should return health status for enabled providers 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > request context > should accept organization and user context 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > token budget > should allow requests within token budget 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > token budget > should block requests exceeding token budget 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > blocked patterns > should block content matching blocked patterns 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > blocked patterns > should allow clean content 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > rate limiting > should allow requests within rate limit 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > rate limiting > should block requests exceeding rate limit 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > configuration > should return current config 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > configuration > should update config dynamically 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should log entries to buffer 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size 9ms
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > retains the four-attempt non-streaming overload budget without multiplying it in the SDK
+{
+  "timestamp": "2026-10-06T01:18:49.062Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-sonnet-5 failed: 429 {\"error\":{\"type\":\"api_error\",\"message\":\"Simulated upstream 429\"}}",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 500 39ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 429 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > retains one gateway-owned retry for non-streaming transient failures 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > retains the four-attempt non-streaming overload budget without multiplying it in the SDK 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > OpenAI-compatible gateway client factories > local leaves streaming retries to the gateway 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > OpenAI-compatible gateway client factories > azure leaves streaming retries to the gateway 61ms
+stdout | server/services/ai-gateway/__tests__/local-provider-tools.test.ts > the withholding is reported once per process > warns on the first withheld round, names the switch, and is silent after
+[database] Database connection successful
+
+ ✓ server/services/ai-gateway/__tests__/local-provider-tools.test.ts > the local provider without LOCAL_AI_SUPPORTS_TOOLS > sends no tools and no tool_choice, and the turn comes back as text 4ms
+ ✓ server/services/ai-gateway/__tests__/local-provider-tools.test.ts > the local provider without LOCAL_AI_SUPPORTS_TOOLS > sends no tools on the streaming path either, and streams the text through 1ms
+ ✓ server/services/ai-gateway/__tests__/local-provider-tools.test.ts > the local provider without LOCAL_AI_SUPPORTS_TOOLS > tells her at the end of the leading system prompt, never in a system message after the conversation 1ms
+ ✓ server/services/ai-gateway/__tests__/local-provider-tools.test.ts > the local provider without LOCAL_AI_SUPPORTS_TOOLS > refuses a turn that was required to call a tool, as a 400, without sending it 1ms
+ ✓ server/services/ai-gateway/__tests__/local-provider-tools.test.ts > the local provider with LOCAL_AI_SUPPORTS_TOOLS=1 > is offered tools exactly as openai is 1ms
+ ✓ server/services/ai-gateway/__tests__/local-provider-tools.test.ts > the local provider with LOCAL_AI_SUPPORTS_TOOLS=1 > is offered tools on the streaming path too 0ms
+ ✓ server/services/ai-gateway/__tests__/local-provider-tools.test.ts > openai — the withholding is per provider > is offered tools with LOCAL_AI_SUPPORTS_TOOLS unset 1ms
+ ✓ server/services/ai-gateway/__tests__/local-provider-tools.test.ts > the withholding is reported once per process > warns on the first withheld round, names the switch, and is silent after 134ms
+ ✓ server/services/ai-gateway/__tests__/local-provider-tools.test.ts > route() — a deployment whose only provider is a local server > answers a tool-bearing turn as text instead of failing it 4ms
+stdout | server/services/ai-gateway/__tests__/retry-policy-529.test.ts
+{
+  "timestamp": "2026-10-06T01:18:33.609Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:18:33.610Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/retry-policy-529.test.ts
+{
+  "timestamp": "2026-10-06T01:18:33.610Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/retry-policy-529.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > treats 529 (Anthropic Overloaded) and other transients as retryable 2ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > treats hard client errors as non-retryable 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > treats a missing status (network error) as retryable but not a hard client error 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > classifies overload statuses (429/503/529) 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > gives overload more non-streaming retries than a generic transient, and none while streaming 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > gateway-error-map — 529 / overloaded classification > maps a 529 provider failure to OVERLOADED (not a generic fault) 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > gateway-error-map — 529 / overloaded classification > maps an "overloaded" message to OVERLOADED 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > gateway-error-map — 529 / overloaded classification > still maps 429 to RATE_LIMITED and generic failure to PROVIDER_UNAVAILABLE 0ms
+
+ Test Files  8 passed (8)
+      Tests  84 passed (84)
+   Start at  21:18:30
+   Duration  3.31s (transform 6.04s, setup 552ms, import 14.62s, tests 393ms, environment 1ms)
+

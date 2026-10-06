@@ -1,0 +1,23 @@
+Source: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37398107179/job/112058801698
+Commit: d5e9b20aa053e364a4b44351d8180feeb04d7dd2
+
+2026-10-06T01:14:54.8511407Z ##[group]Run npm run ci:typecheck:no-regression
+2026-10-06T01:14:54.8511850Z [36;1mnpm run ci:typecheck:no-regression[0m
+2026-10-06T01:14:54.8602777Z shell: /usr/bin/bash -e {0}
+2026-10-06T01:14:54.8603067Z env:
+2026-10-06T01:14:54.8603295Z   NODE_VERSION: 22
+2026-10-06T01:14:54.8603726Z ##[endgroup]
+2026-10-06T01:14:54.9656783Z 
+2026-10-06T01:14:54.9657424Z > concept2cure-riai@1.0.0 ci:typecheck:no-regression
+2026-10-06T01:14:54.9657957Z > node scripts/ci/typecheck-no-regression.mjs
+2026-10-06T01:14:54.9658196Z 
+2026-10-06T01:14:55.0006019Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-06T01:17:55.3176954Z [ci:typecheck-no-regression] errors found: 2 (tsc exit 2)
+2026-10-06T01:17:55.3179734Z [ci:typecheck-no-regression] FAIL — error count 2 exceeds baseline 0 (+2).
+2026-10-06T01:17:55.3180779Z   Either fix the new errors, or — if intentional — update the baseline:
+2026-10-06T01:17:55.3181257Z     npm run ci:typecheck:write-baseline
+2026-10-06T01:17:55.3183439Z 
+2026-10-06T01:17:55.3184292Z   Tail of tsc output (most recent first):
+2026-10-06T01:17:55.3185394Z     client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts(88,29): error TS2322: Type 'void' is not assignable to type 'Promise<void>'.
+2026-10-06T01:17:55.3187029Z     client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts(118,29): error TS2322: Type 'void' is not assignable to type 'Promise<void>'.
+2026-10-06T01:17:55.3296023Z ##[error]Process completed with exit code 1.

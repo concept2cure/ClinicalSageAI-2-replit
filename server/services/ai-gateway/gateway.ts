@@ -4331,7 +4331,9 @@ export class AIGateway {
     const openaiConfig = this.config.providers.find(p => p.name === 'openai');
     if (openaiConfig?.enabled && openaiConfig.apiKey) {
       try {
-        this.openaiClient = new OpenAI({ apiKey: openaiConfig.apiKey });
+        // The gateway owns retries. SDK defaults would silently multiply each
+        // attempt (including streaming calls that must not be replayed).
+        this.openaiClient = new OpenAI({ apiKey: openaiConfig.apiKey, maxRetries: 0 });
         log.debug('  ✅ OpenAI provider ready');
       } catch (e: any) {
         log.warn(`  ⚠️ OpenAI provider init failed: ${e.message}`);
@@ -4342,7 +4344,7 @@ export class AIGateway {
     const anthropicConfig = this.config.providers.find(p => p.name === 'anthropic');
     if (anthropicConfig?.enabled && anthropicConfig.apiKey) {
       try {
-        this.anthropicClient = new Anthropic({ apiKey: anthropicConfig.apiKey });
+        this.anthropicClient = new Anthropic({ apiKey: anthropicConfig.apiKey, maxRetries: 0 });
         log.debug('  ✅ Anthropic provider ready');
       } catch (e: any) {
         log.warn(`  ⚠️ Anthropic provider init failed: ${e.message}`);
@@ -4356,6 +4358,7 @@ export class AIGateway {
         this.moonshotClient = new OpenAI({
           apiKey: moonshotConfig.apiKey,
           baseURL: moonshotConfig.baseUrl || 'https://api.moonshot.ai/v1',
+          maxRetries: 0,
         });
         log.debug('  ✅ Moonshot/Kimi provider ready');
       } catch (e: any) {

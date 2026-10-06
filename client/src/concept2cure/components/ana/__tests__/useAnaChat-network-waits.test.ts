@@ -84,7 +84,7 @@ describe('AnA network wait limits', () => {
     const { result } = renderHook(() => useAnaChat({ liveDrive: true, onDriveEvent }));
     let sent!: Promise<void>;
     await act(async () => { sent = result.current.send('Show me around'); });
-    let stopped!: Promise<void>;
+    let stopped!: ReturnType<typeof result.current.stop>;
     await act(async () => { stopped = result.current.stop(); });
     expect(onDriveEvent.mock.calls.map(([event]) => event.type)).toContain('drive_stopped');
     // Give the server a chance to record the person's cancel before disconnecting.
@@ -114,7 +114,7 @@ describe('AnA network wait limits', () => {
     const { result } = renderHook(() => useAnaChat({ liveDrive: true, onDriveEvent: vi.fn() }));
     let firstSent!: Promise<void>;
     await act(async () => { firstSent = result.current.send('Show me around'); });
-    let stopped!: Promise<void>;
+    let stopped!: ReturnType<typeof result.current.stop>;
     await act(async () => { stopped = result.current.stop(); });
     // The run completes while its control response is still crossing the network.
     await act(async () => { first.finish(); await firstSent; });

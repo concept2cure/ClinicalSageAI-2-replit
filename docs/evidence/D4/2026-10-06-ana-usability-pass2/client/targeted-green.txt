@@ -1,0 +1,65 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > switches a live drive to a demonstration, keeping the turn and its queued moves 1266ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > does not re-arm a drive the person took over 136ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > does not re-arm a drive the person switched off 118ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > a turn that begins driving after the switch went off does not engage 107ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > C / D — a move that did not land is reported to the run that made it, as an observation > reports through reportScreen, never as a human steer 74ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > C / D — a move that did not land is reported to the run that made it, as an observation > a pending move cancelled by a newer turn is reported to ITS turn, not the newer one 129ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move that lands is settled as landed, by its id — navigation or operation 368ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move the screen refuses is settled as not made, with the screen’s reason and its id 57ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move refused on arrival is still settled, with why — never silently dropped 57ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a pending action and the move behind it are both settled as not made when cleared 128ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move is settled once, even when reporting its landing fails 102ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > a new turn that begins driving drops the moves still queued from the last one 137ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > starting a tour over a running answer drops that answer’s queued moves 293ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > starting a tour over a running answer also refuses the moves still on their way from it 260ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > the strip’s Stop refuses the moves still on their way from the run it stopped 134ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > the driving chat’s own Stop halts the drive, queued moves and ones still arriving 140ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > stopping an older turn’s chat does not end the drive a newer turn began 71ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a navigation queued behind another move is not shown as made until it lands 387ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a move from the previous turn that lands after a new turn began is not claimed for it 902ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a navigation that cannot be made is worded as a screen that did not open 64ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — order > a navigation holds the next move until its screen is showing and settled 7ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — order > runs a batch of navigations strictly in the order AnA made them 2ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — a navigation that never lands > reports failure after NAV_SHOW_TIMEOUT_MS, never success, and moves on 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — an action the screen performs later > waits for the deferred outcome, then reports it as applied with the screen detail 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — an action the screen performs later > reports a deferred refusal as a failure with the screen reason, never as applied 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — an action the screen performs later > a screen that never answers is reported unavailable after the belt timeout 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > refuse() short-circuits: the move is reported failed and the screen never moves 2ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > clear() drops every move not yet started; the one in flight finishes 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > a clear with a reason settles each dropped move with that reason 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > once the person has taken over (canApply=false) no move is made at all 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > a move the queue itself fails on is settled as dropped, and the next still runs 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — whenIdle > resolves only after the last queued move has landed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > names what is listed, deduplicated and trimmed, for a refusal AnA can retry from 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > says nothing when nothing is listed — an empty list is never presented as choices 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > lists a long name by its opening words, the ellipsis outside the quotes so the quoted part still matches 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > summarises beyond the cap instead of silently dropping names 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > validateDriveAction > resolves through the registry — the canonical copy, not the payload 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > validateDriveAction > drops unknown actions, malformed payloads, and enum violations 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > performs through the registered handler and reports the handler outcome 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > reports an honest refusal from the handler, never a fabricated success 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a throwing handler is a failure, not a crash 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a mounted surface WITHOUT the handler is unavailable — never performed "at" it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > stashes across the navigate→mount gap and performs on registration (one shot) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > an expired stash never performs, and says so once — never silence 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a stash replaced by a newer one is told it will not run 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a stash for another surface is not consumed by an unrelated registration 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a mounted-but-not-ready surface (retry refusal) holds the directive for the ready signal 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a retry-held directive still dies at the TTL — held is not forever 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > resolves DEEP_LINK_ALIASES: a nav-target directive lands on the v2 surface registration 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > alias stash: an act for an unmounted aliased surface navigates by nav-target id and performs on the v2 registration 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > unregistration clears ownership so a stale unmount cannot swallow actions 0ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts > stopping a demo during a deferred screen action > cancels the mount-gap action so arriving on its screen after Stop cannot execute it 6ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts > stopping a demo during a deferred screen action > cancels a loading-screen retry and starts the replacement demo without the 20-second TTL 2ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts > stopping a demo during a deferred screen action > keeps the success of an action already applied before Stop 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts > stopping a demo during a deferred screen action > a stale cancellation cannot erase a different pending action the person selected 1ms
+
+ Test Files  4 passed (4)
+      Tests  55 passed (55)
+   Start at  21:14:38
+   Duration  7.97s (transform 1.76s, setup 167ms, import 1.89s, tests 4.99s, environment 426ms)
+

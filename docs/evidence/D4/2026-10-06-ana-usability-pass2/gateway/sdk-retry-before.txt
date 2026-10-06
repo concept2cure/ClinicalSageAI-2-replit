@@ -1,0 +1,142 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts
+{
+  "timestamp": "2026-10-06T01:15:20.388Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:15:20.389Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts
+{
+  "timestamp": "2026-10-06T01:15:20.389Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 500
+{
+  "timestamp": "2026-10-06T01:15:20.508Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: 500 Simulated upstream 500",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 500
+{
+  "timestamp": "2026-10-06T01:15:20.510Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: 500 {\"error\":{\"type\":\"api_error\",\"message\":\"Simulated upstream 500\"}}",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 429
+{
+  "timestamp": "2026-10-06T01:15:20.548Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: 429 Simulated upstream 429",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 429
+{
+  "timestamp": "2026-10-06T01:15:20.550Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: 429 {\"error\":{\"type\":\"api_error\",\"message\":\"Simulated upstream 429\"}}",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > retains the four-attempt non-streaming overload budget without multiplying it in the SDK
+{
+  "timestamp": "2026-10-06T01:15:37.688Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-sonnet-5 failed: 429 {\"error\":{\"type\":\"api_error\",\"message\":\"Simulated upstream 429\"}}",
+  "context": {}
+}
+
+ × server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 500 40ms
+   → the primary SDK retried outside the gateway policy: expected "vi.fn()" to be called 1 times, but got 3 times
+ × server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 429 5ms
+   → the primary SDK retried outside the gateway policy: expected "vi.fn()" to be called 1 times, but got 3 times
+ × server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > retains one gateway-owned retry for non-streaming transient failures 3ms
+   → the retry was hidden inside the SDK rather than owned by the gateway: expected "dispatchProvider" to be called 2 times, but got 1 times
+ × server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > retains the four-attempt non-streaming overload budget without multiplying it in the SDK 9ms
+   → four gateway attempts were multiplied by SDK retries: expected "vi.fn()" to be called 4 times, but got 12 times
+ × server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > OpenAI-compatible gateway client factories > local leaves streaming retries to the gateway 2ms
+   → the factory enabled hidden SDK retries: expected "vi.fn()" to be called 1 times, but got 3 times
+ × server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > OpenAI-compatible gateway client factories > azure leaves streaming retries to the gateway 88ms
+   → the factory enabled hidden SDK retries: expected "vi.fn()" to be called 1 times, but got 3 times
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 500
+ FAIL  server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 429
+AssertionError: the primary SDK retried outside the gateway policy: expected "vi.fn()" to be called 1 times, but got 3 times
+ ❯ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts:59:79
+     57|
+     58|     expect(await outcome).toBeInstanceOf(GatewayAllProvidersFailedErro…
+     59|     expect(openaiFetch, 'the primary SDK retried outside the gateway p…
+       |                                                                               ^
+     60|     expect(anthropicFetch, 'the fallback SDK retried outside the gatew…
+     61|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > retains one gateway-owned retry for non-streaming transient failures
+AssertionError: the retry was hidden inside the SDK rather than owned by the gateway: expected "dispatchProvider" to be called 2 times, but got 1 times
+ ❯ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts:90:94
+     88|     expect((await outcome).content).toBe('Recovered.');
+     89|     expect(providerFetch).toHaveBeenCalledTimes(2);
+     90|     expect(dispatch, 'the retry was hidden inside the SDK rather than …
+       |                                                                                              ^
+     91|   });
+     92|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > retains the four-attempt non-streaming overload budget without multiplying it in the SDK
+AssertionError: four gateway attempts were multiplied by SDK retries: expected "vi.fn()" to be called 4 times, but got 12 times
+ ❯ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts:110:83
+    108|     expect(await outcome).toBeInstanceOf(GatewayAllProvidersFailedErro…
+    109|     expect(dispatch).toHaveBeenCalledTimes(4);
+    110|     expect(providerFetch, 'four gateway attempts were multiplied by SD…
+       |                                                                                   ^
+    111|   });
+    112| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > OpenAI-compatible gateway client factories > local leaves streaming retries to the gateway
+ FAIL  server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > OpenAI-compatible gateway client factories > azure leaves streaming retries to the gateway
+AssertionError: the factory enabled hidden SDK retries: expected "vi.fn()" to be called 1 times, but got 3 times
+ ❯ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts:132:69
+    130|
+    131|     expect(await outcome).toBeInstanceOf(Error);
+    132|     expect(providerFetch, 'the factory enabled hidden SDK retries').to…
+       |                                                                     ^
+    133|   });
+    134| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  21:15:18
+   Duration  1.85s (transform 820ms, setup 66ms, import 1.42s, tests 149ms, environment 0ms)
+

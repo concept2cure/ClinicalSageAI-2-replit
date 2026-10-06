@@ -75,6 +75,7 @@ function harness(opts: {
           return { status: 'applied' } as SurfaceActionOutcome;
         }),
     ),
+    cancelPending: vi.fn(),
     canApply: opts.canApply ?? (() => true),
     refuse: opts.refuse,
     onApplied: vi.fn((m: DriveMove, detail?: string) => {

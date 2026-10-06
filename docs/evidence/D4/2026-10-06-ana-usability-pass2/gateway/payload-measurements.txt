@@ -1,0 +1,8 @@
+{"level":40,"time":"2026-10-06T01:17:16.881Z","pid":5,"hostname":"6bafce8f9cda","context":{},"msg":"[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable"}
+{"basePersonaChars":53601,"estimatedPersonaTokens":13401,"registeredTools":791,"toolSelectionDisabled":false}
+{"message":"hi","taskType":"regulatory_review","riskTier":"medium","modelTier":"standard","selectedTools":21,"serializedToolChars":21267,"estimatedToolTokens":5317,"estimatedPersonaAndToolTokens":18718}
+{"message":"hello","taskType":"regulatory_review","riskTier":"medium","modelTier":"standard","selectedTools":21,"serializedToolChars":21267,"estimatedToolTokens":5317,"estimatedPersonaAndToolTokens":18718}
+{"message":"open settings","taskType":"regulatory_review","riskTier":"medium","modelTier":"standard","selectedTools":50,"serializedToolChars":50253,"estimatedToolTokens":12564,"estimatedPersonaAndToolTokens":25965}
+{"message":"go to biostatistics","taskType":"regulatory_review","riskTier":"medium","modelTier":"standard","selectedTools":24,"serializedToolChars":38759,"estimatedToolTokens":9690,"estimatedPersonaAndToolTokens":23091}
+{"message":"run the sales demo","taskType":"regulatory_review","riskTier":"medium","modelTier":"standard","selectedTools":50,"serializedToolChars":59405,"estimatedToolTokens":14852,"estimatedPersonaAndToolTokens":28253}
+{"message":"What is the page limit for a 510(k) summary?","taskType":"regulatory_review","riskTier":"medium","modelTier":"standard","selectedTools":50,"serializedToolChars":59419,"estimatedToolTokens":14855,"estimatedPersonaAndToolTokens":28256}

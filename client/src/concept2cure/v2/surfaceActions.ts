@@ -254,6 +254,21 @@ function unstash(entry: PendingEntry): void {
   }
 }
 
+/**
+ * Cancel only this caller's still-pending directive. A drive stopped while a
+ * screen loads must not operate it later, and must not erase a newer action
+ * the person clicked. Applied actions have already left the slot.
+ */
+export function cancelPendingSurfaceAction(
+  directive: SurfaceActionDirective,
+  reason: string,
+): void {
+  const entry = pending;
+  if (!entry || entry.directive !== directive) return;
+  unstash(entry);
+  entry.onOutcome?.({ status: 'unavailable', reason });
+}
+
 /** Test hook: wipe all module state. */
 export function __resetSurfaceActionBus(): void {
   registration = null;
