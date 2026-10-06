@@ -27,12 +27,12 @@ const OTHER = 9;
 
 const DDL = `
 CREATE TABLE organizations (id serial PRIMARY KEY, name text);
-CREATE TABLE submissions (id serial PRIMARY KEY, organization_id int, title text, product_name text, application_type text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
+CREATE TABLE submissions (id serial PRIMARY KEY, organization_id int, program_id uuid, title text, product_name text, application_type text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
 CREATE TABLE ectd_sequences (id serial PRIMARY KEY, organization_id int, submission_id int, deleted_at timestamptz);
 CREATE TABLE submission_leaves (id serial PRIMARY KEY, organization_id int, sequence_id int, section_code text, document_table text, document_id int, document_type text, deleted_at timestamptz);
 CREATE TABLE rendered_leaf_files (id serial PRIMARY KEY, organization_id int, rendered_from text, file_name text, sha256 text, section_code text);
 CREATE TABLE coauthor_documents (id serial PRIMARY KEY, organization_id int, module_number text, status text, module_name text);
-CREATE TABLE regulatory_programs (id serial PRIMARY KEY, organization_id int, name text, code text, program_type text, product_name text, target_submission_date timestamptz, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
+CREATE TABLE regulatory_programs (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int, name text, code text, program_type text, product_name text, target_submission_date timestamptz, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
 `;
 
 // [section code, coauthor status]. Forms are m1.1.1/.2/.3.
@@ -388,5 +388,47 @@ describe('assembleOrgIndChecklists — a section is the same section however it 
     await seedSpelled(ORG, [['3.2.S.4.2', 'draft', 'Analytical Procedures']]);
     const ind = (await assembleOrgIndChecklists(ORG))[0] as any;
     expect(ind.sections).toEqual([expect.objectContaining({ code: 'm3.2.S.4.2', title: 'Analytical Procedures', module: 'M3' })]);
+  });
+});
+
+// The loaded filing is not the complete requirement set; missing leaves must
+// remain blockers. The server verdict is what both the screen and Ana consume.
+describe('IND checklist authoritative readiness and program identity', () => {
+  it('does not call three forms and a single approved section a complete IND', async () => {
+    const subId = await seedIND(ORG);
+    await pglite.query(`UPDATE coauthor_documents SET status = 'approved' WHERE organization_id = $1`, [ORG]);
+    const [ind] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(ind.submissionId).toBe(subId);
+    expect(ind.readiness.ready).toBe(false);
+    expect(ind.readiness.requiredSections.total).toBeGreaterThan(ind.sections.length);
+    expect(ind.readiness.blockers.some((b: any) => b.kind === 'required_section' && b.code === 'm4.2.3')).toBe(true);
+  });
+
+  it('uses the recorded program ID and its date despite duplicate names and a rename', async () => {
+    const actual = '10000000-0000-4000-8000-000000000001';
+    const other = '10000000-0000-4000-8000-000000000002';
+    await pglite.query(`INSERT INTO regulatory_programs (id, organization_id, name, product_name, program_type, target_submission_date) VALUES ($1,$2,'Renamed program','Different product','IND','2026-11-03T00:00:00Z'),($3,$2,'BX-301','BX-301','IND','2026-12-04T00:00:00Z')`, [actual, ORG, other]);
+    const subId = await seedIND(ORG);
+    await pglite.query(`UPDATE submissions SET program_id = $1 WHERE id = $2`, [actual, subId]);
+    const [ind] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(ind.programId).toBe(actual);
+    expect(ind.targetReceiptDate).toBe('2026-11-03T00:00:00.000Z');
+  });
+
+  it('does not guess a date between two same-named unlinked programs', async () => {
+    await seedIND(ORG);
+    await seedProgram(ORG);
+    await seedProgram(ORG, { target: '2026-12-01T00:00:00Z' });
+    const [ind] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(ind.programId).toBeNull();
+    expect(ind.targetReceiptDate).toBeNull();
+  });
+
+  it('does not borrow a name-matched date when a recorded link cannot be resolved', async () => {
+    const subId = await seedIND(ORG);
+    await seedProgram(ORG);
+    await pglite.query(`UPDATE submissions SET program_id = '10000000-0000-4000-8000-000000000099' WHERE id = $1`, [subId]);
+    const [ind] = await assembleOrgIndChecklists(ORG) as any[];
+    expect(ind.targetReceiptDate).toBeNull();
   });
 });

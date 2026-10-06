@@ -12,8 +12,8 @@
  *
  * The surface renders one IND (rows[0]) with its Module-1 forms (1571 / 1572 / 3674)
  * and the eCTD sections the team is actually authoring, each with its real status; it
- * recomputes filing readiness itself (indlReadiness) from what we return. So this
- * assembler maps identity + forms + sections only — no blob, no fabricated field. An
+ * renders the existing server evaluator's full-required-set readiness report.
+ * Placed sections remain an inventory, not the denominator for completeness. An
  * org with no IND submission returns [] and the surface shows its honest empty state.
  *
  * Section status is sourced from coauthor_documents.status, whose 5-value authoring
@@ -28,7 +28,8 @@
  * filing, not the full 108-section blueprint and not an org-wide document dump.
  */
 import { pool } from '../../db';
-import { getSectionByCode } from '../../../services/regulatory/ind-ectd-sections.js';
+import { getSectionByCode, type SectionStatus } from '../../../services/regulatory/ind-ectd-sections.js';
+import { evaluateIndReadiness } from './ind-readiness-service';
 import { compareSectionCode, normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { IND_FORM_REQUIREMENTS, indFormForDocumentType } from '../ectd/section-to-ctd';
 
@@ -126,6 +127,7 @@ function enrichSection(code: string, status: string, name: string) {
 interface CoauthorDoc { id: number; module_number: string | null; status: string; module_name: string | null }
 
 interface ProgramTargetRow {
+  id: string;
   name: string | null;
   code: string | null;
   product_name: string | null;
@@ -142,7 +144,7 @@ interface ProgramTargetRow {
 async function readIndProgramTargets(orgId: number): Promise<ProgramTargetRow[]> {
   try {
     const res = await pool.query(
-      `SELECT name, code, product_name, target_submission_date
+      `SELECT id, name, code, product_name, target_submission_date
          FROM regulatory_programs
         WHERE organization_id = $1 AND upper(program_type) = 'IND' AND deleted_at IS NULL
         ORDER BY updated_at DESC NULLS LAST`,
@@ -245,7 +247,8 @@ async function resolveSponsorCompletedForms(
 }
 
 /**
- * Resolve the submission's regulatory program by identity match (program
+ * Resolve an anchored submission by program ID. Only unlinked legacy rows use
+ * identity match (program
  * product_name / name / code vs the submission's product_name / title,
  * case-insensitive) and return its recorded target_submission_date as an ISO
  * string. Null when no program matches or no matching program records a date —
@@ -256,13 +259,19 @@ function resolveTargetReceiptDate(
   programs: ProgramTargetRow[],
   sub: Record<string, unknown>,
 ): string | null {
+  if (sub.program_id != null) {
+    const linked = programs.find((p) => String(p.id) === String(sub.program_id));
+    if (linked?.target_submission_date == null) return null;
+    const date = new Date(linked.target_submission_date);
+    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  }
   const keys = new Set([norm(sub.product_name), norm(sub.title)].filter((k) => k !== ''));
   if (keys.size === 0) return null;
-  const match = programs.find(
+  const matches = programs.filter(
     (p) =>
-      p.target_submission_date != null &&
       (keys.has(norm(p.product_name)) || keys.has(norm(p.name)) || keys.has(norm(p.code))),
   );
+  const match = matches.length === 1 ? matches[0] : null;
   if (!match || match.target_submission_date == null) return null;
   const d = new Date(match.target_submission_date as string | Date);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
@@ -281,7 +290,7 @@ function put(map: Map<string, { status: string; name: string }>, code: string, s
  */
 export async function assembleOrgIndChecklists(orgId: number): Promise<Record<string, unknown>[]> {
   const subsRes = await pool.query(
-    `SELECT s.id, s.title, s.product_name, s.application_type, s.updated_at, o.name AS org_name
+    `SELECT s.id, s.program_id, s.title, s.product_name, s.application_type, s.updated_at, o.name AS org_name
        FROM submissions s
        JOIN organizations o ON o.id = s.organization_id
       WHERE s.organization_id = $1 AND lower(s.application_type) = 'ind' AND s.deleted_at IS NULL
@@ -370,6 +379,19 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
       done: COMPLETE.has(statusByCode.get(f.code)?.status ?? '') || sponsorCompleted.has(f.id),
     }));
 
+    // Evaluate the full existing required set, not only placed sections. The
+    // displayed section list remains an inventory; its length is not readiness.
+    const sectionStatus = Object.fromEntries(
+      [...statusByCode].map(([code, value]) => [code, value.status]),
+    ) as Record<string, SectionStatus>;
+    for (const form of FORM_SECTIONS) {
+      if (forms.some((f) => f.id === form.id && f.done)) sectionStatus[form.code] = 'approved';
+    }
+    const readiness = evaluateIndReadiness({
+      filingType: 'initial', sectionStatus,
+      completedForms: forms.filter((f) => f.done).map((f) => f.id),
+    });
+
     const productName = s.product_name != null && str(s.product_name).trim() !== '' ? str(s.product_name) : null;
     const title = str(s.title).trim() !== '' ? str(s.title) : null;
     return {
@@ -378,6 +400,7 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
       // /amendment/file) need to create an ectd_sequences row. Real data, not an
       // invented handle: every checklist row IS a submissions row.
       submissionId: subId,
+      programId: s.program_id == null ? null : String(s.program_id),
       // `code` is the surface's stable key and the drugName fallback; prefer the real
       // product/title, else a stable per-submission code.
       code: productName ?? title ?? `IND-${subId}`,
@@ -391,6 +414,7 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
       targetReceiptDate: resolveTargetReceiptDate(programTargets, s),
       forms,
       sections,
+      readiness,
     };
   });
 }

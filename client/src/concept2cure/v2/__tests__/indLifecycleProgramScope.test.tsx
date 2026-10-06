@@ -91,7 +91,7 @@ describe('IndLifecycle — program scoping', () => {
     expect(note.textContent).toMatch(/1 other IND/);
   });
 
-  it('falls back to the first IND and SAYS the open program has none', async () => {
+  it('does not expose another IND for drafting or filing when the open program has none', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = {
       id: 'prog-uuid',
       title: 'CX-900 IND',
@@ -100,10 +100,9 @@ describe('IndLifecycle — program scoping', () => {
     wire(TWO_ROWS);
     render(<IndLifecycle {...surfaceProps()} />);
 
-    expect(await screen.findByRole('heading', { name: /AAA-100 — Initial IND/ })).toBeTruthy();
-    expect(screen.getByTestId('indl-scope-note').textContent).toMatch(
-      /open program \(CX-900 IND\) has no IND checklist yet/,
-    );
+    expect(await screen.findByText('No IND checklist yet')).toBeTruthy();
+    expect(screen.getByText(/No IND checklist is linked to the open program/)).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: /AAA-100 — Initial IND/ })).toBeNull();
   });
 
   it('with no program open and several INDs, says which one is shown and how to scope', async () => {
@@ -137,8 +136,15 @@ describe('IndLifecycle — program scoping', () => {
     wire([row({ submissionId: 1, code: 'BX-701', drugName: 'BX-701', productName: 'BX-701 IND', programId: 'other-uuid' })]);
     render(<IndLifecycle {...surfaceProps()} />);
 
-    expect(await screen.findByRole('heading', { name: /BX-701 — Initial IND/ })).toBeTruthy();
-    expect(screen.getByTestId('indl-scope-note').textContent).toMatch(/open program \(BX-701 IND\) has no IND checklist yet/);
+    expect(await screen.findByText('No IND checklist yet')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: /BX-701 — Initial IND/ })).toBeNull();
+  });
+
+  it('does not guess between two unlinked, identically named INDs', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: 'prog-uuid', product: 'BX-701' };
+    wire([row({ code: 'BX-701' }), row({ code: 'BX-701', submissionId: 2 })]);
+    render(<IndLifecycle {...surfaceProps()} />);
+    expect(await screen.findByText('No IND checklist yet')).toBeTruthy();
   });
 
   it('an IND with no recorded project is matched by name only, and the note says so', async () => {

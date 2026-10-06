@@ -5142,8 +5142,11 @@ router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response)
       return res.status(404).json({ success: false, error: 'Document not found' });
     }
     const lastExportResult = await pool.query(
+      // Export history stores wall-clock TIMESTAMP; citations use TIMESTAMPTZ.
+      // Resolve the export in the database's timezone before the driver turns
+      // it into a JS Date. Otherwise host/DB timezone differences invent drift.
       `
-      SELECT COALESCE(exported_at, created_at) AS exported_at
+      SELECT COALESCE(exported_at, created_at)::timestamptz AS exported_at
       FROM authoring_export_history
       WHERE document_id = $1 AND tenant_id = $2
       ORDER BY COALESCE(exported_at, created_at) DESC LIMIT 1

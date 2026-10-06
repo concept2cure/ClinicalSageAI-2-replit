@@ -19,6 +19,7 @@ import type {
   IndlForm,
   IndlSection,
 } from '../fixtures/ind-lifecycle-data';
+import type { IndReadinessReport } from '../../../../../server/services/ind-lifecycle/ind-readiness-service';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
@@ -36,6 +37,8 @@ import { readShellProject } from '../shellProject';
    projecting from an invented offset. forms/sections are always arrays (the
    assembler returns [] when nothing is authored yet). */
 interface IndlChecklist {
+  /** Evaluated by the existing server against the complete required set. */
+  readiness?: IndReadinessReport;
   /** The REAL submissions.id the checklist was assembled from — the anchor the
       lifecycle /file routes need to create an ectd_sequences row. Optional so an
       older server shape degrades to "cannot file" honestly, never to a guess. */
@@ -178,8 +181,8 @@ const EMPTY_SECTIONS: IndlSection[] = [];
    whose submission is anchored to the open program (`programId`, LX-22) is its
    IND; one anchored to ANOTHER program never is, whatever its name. Only a row
    with no recorded project is matched by name (product/title), and the note
-   says so. rows[0] remains the fallback when no program is open or no row
-   matches — WITH the mismatch said out loud, never silently. */
+   says so. rows[0] is used only when no program is open. An unmatched or
+   ambiguously named IND is never substituted for the open program. */
 interface ShellProjectRead {
   id?: unknown;
   title?: string;
@@ -204,8 +207,8 @@ function programRow(rows: IndlChecklist[], p: ShellProjectRead | null): { row: I
   if (!p) return null;
   const anchored = rows.find((r) => rowMatchesProgram(r, p) === 'program');
   if (anchored) return { row: anchored, byName: false };
-  const named = rows.find((r) => rowMatchesProgram(r, p) === 'legacy-name');
-  return named ? { row: named, byName: true } : null;
+  const named = rows.filter((r) => rowMatchesProgram(r, p) === 'legacy-name');
+  return named.length === 1 ? { row: named[0], byName: true } : null;
 }
 
 /* ════ IND Lifecycle -- the deliverable-first IND workspace (21 CFR 312) ════ */
@@ -216,15 +219,15 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   /* The org's IND checklist — GET /api/ind-checklist (assembled from the real eCTD
      submission core, org scoped). useLiveRows unwraps the { data } envelope; the
      surface renders one IND, so it reads the first row. Real data, an honest empty
-     state, or an honest failed-load state — never a fixture. Readiness and the
-     30-day clock are computed deterministically from the loaded forms/sections. */
+     state, or an honest failed-load state — never a fixture. The
+     readiness verdict comes from the server; the target-date clock is a projection. */
   const { rows, loading, error } = useLiveRows<IndlChecklist>('/api/ind-checklist');
-  /* Prefer the row that IS the open program's IND; fall back to the first row
-     with the mismatch stated (scopeNote), never silently. */
+  /* Prefer the recorded program link; legacy name matching remains explicit.
+     Never substitute another program's IND when the open program has no match. */
   const shellProject = readShellProject();
   const found = programRow(rows, shellProject);
   const matched = found?.row ?? null;
-  const checklist = matched ?? rows[0] ?? null;
+  const checklist = matched ?? (shellProject ? null : rows[0] ?? null);
   const byNameNote = found?.byName ? ' Matched by name: this IND has no project recorded.' : '';
   const scopeNote =
     checklist == null
@@ -266,7 +269,17 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   const sections = checklist?.sections ?? EMPTY_SECTIONS;
   const targetReceiptDate = checklist?.targetReceiptDate ?? null;
 
-  const R = useMemo(() => indlReadiness(sections, forms), [sections, forms]);
+  const R = useMemo(() => {
+    const report = checklist?.readiness;
+    // An older server may return only an inventory. Never turn that inventory
+    // into a filing verdict: missing requirements would disappear from it.
+    if (!report) return indlReadiness([], []);
+    return {
+      ...report,
+      assessed: report.overallPercentage !== null,
+      overallPercentage: report.overallPercentage ?? 0,
+    };
+  }, [checklist?.readiness]);
 
   /* 30-day regulatory clock -- a PROJECTION from the org's RECORDED target
      submission date (regulatory_programs.target_submission_date). When no
@@ -327,7 +340,9 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     }
     if (!checklist) {
       return {
-        summary: 'IND lifecycle: this organisation has no IND checklist assembled yet, so there is no filing to work.',
+        summary: shellProject
+          ? 'IND lifecycle: the open program has no matching IND checklist. Do not use another program\'s submission for drafting or filing.'
+          : 'IND lifecycle: this organisation has no IND checklist assembled yet, so there is no filing to work.',
       };
     }
     return {
@@ -339,7 +354,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           ? `Readiness ${R.overallPercentage}% — ${R.requiredSections.completed} of ${R.requiredSections.total} ` +
             `required section(s) complete, ${formList.filter((f) => f.done).length} of ${formList.length} Module 1 ` +
             `form(s) done. ${R.ready ? 'Assessed READY to file.' : 'NOT yet ready to file.'}`
-          : 'The checklist held nothing to evaluate, so filing readiness has NOT been assessed — this is not a zero-percent verdict.') +
+          : 'No server readiness assessment was returned, so filing readiness has NOT been assessed — placed documents alone are not a completeness verdict.') +
         (clock
           ? clockFromReceipt
             ? ` The 30-day clock: ${clock.status}, ${clock.daysUntilThirtyDay} day(s) to the 30-day date, ` +
@@ -350,6 +365,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
       facts: {
         openTab: tab,
         submissionId: checklist.submissionId ?? null,
+        programId: checklist.programId ?? null,
         code: checklist.code,
         drugName: checklist.drugName,
         productName: checklist.productName,
@@ -396,7 +412,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         'Switch between the file-the-IND and lifecycle tabs',
       ],
     };
-  }, [loading, error, checklist, tab, R, forms, sections, clock, clockFromReceipt, targetReceiptDate]);
+  }, [loading, error, checklist, shellProject, tab, R, forms, sections, clock, clockFromReceipt, targetReceiptDate]);
   usePublishSurfaceContext('ind-checklist', anaContext);
 
   /* Cover-letter exemplar — the first deliverable wired end-to-end (POST
@@ -489,7 +505,9 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         <EmptyState
           icon={I.fileText}
           title="No IND checklist yet"
-          hint="No Investigational New Drug application is provisioned for this organization yet. Once an IND is set up, its Module 1 forms (1571 / 1572 / 3674), eCTD section state, and 30-day safe-to-proceed clock appear here."
+          hint={shellProject
+            ? 'No IND checklist is linked to the open program. Set up or link its IND submission; another program\'s filing is not used here.'
+            : 'No Investigational New Drug application is provisioned for this organization yet. Once an IND is set up, its Module 1 forms (1571 / 1572 / 3674), eCTD section state, and 30-day safe-to-proceed clock appear here.'}
         />
       </div>
     );
@@ -1021,7 +1039,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             }
           },
         }}
-        secondary="Live from this org's IND checklist — its forms and section state; readiness is computed from it."
+        secondary="Live from this program's IND checklist — readiness checks the full required set, including missing sections."
       />
 
       <div className="indl-grid">
