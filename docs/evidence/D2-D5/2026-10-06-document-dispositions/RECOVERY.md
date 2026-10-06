@@ -40,3 +40,5 @@ Final verification is complete. Connected GitHub publication reconstructs each s
 ## Offboarding conflict continuation
 
 Source `c92730dd1` adds safe 409 conflict handling for exact document-disposition deletion refusals after rollback. Four unique focused files / 52 tests, production build and Semgrep passed; the route test has one existing partial-parser warning, recorded in `offboarding-conflict/README.md`. The Repo Health bot checkpoint `518995c5146c6df201e8dd256769a6649132a3d2` is preserved. Full pre-push and verified-tree publication are pending at this checkpoint; resume from actual Git HEAD/status.
+
+The offboarding-conflict continuation passed the full unchanged pre-push hook at source `7852569cb`: TypeScript zero errors, tracked imports, no ESLint error/warning growth. Exact transcript: `offboarding-conflict/prepush.txt`. Preserve the recorded partial Semgrep test-parser warning. Confirm actual canonical GitHub HEAD and CI before repeating work; feature activation and live qualification remain blocked.
