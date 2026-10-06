@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-06T02:59:34.529Z",
+  "generatedAt": "2026-10-06T03:27:35.631Z",
   "git": {
-    "sha": "f315fdf31af1dd3b1097e695a059f745465f964a",
+    "sha": "b4b98326680fb200e6d75c4b5f9e253c6c089e07",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2086,7 +2086,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 169675
+        "bytes": 170027
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2229,12 +2229,12 @@
         "bytes": 108007
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 107584
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "bytes": 107885
       },
       {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "bytes": 105559
+        "file": "server/routes/c2c/project-vault.ts",
+        "bytes": 107584
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
@@ -2308,7 +2308,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3353
+        "lines": 3359
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2575,6 +2575,10 @@
         "lines": 1836
       },
       {
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 1828
+      },
+      {
         "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
         "lines": 1828
       },
@@ -2597,10 +2601,6 @@
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "lines": 1794
-      },
-      {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1791
       },
       {
         "file": "server/routes/ana-cortex-ft.ts",
