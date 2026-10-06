@@ -48,6 +48,15 @@ describe('submissionContextBlockFor', () => {
     expect(block).not.toContain('plan_submission_from_database_lock');
   });
 
+  it.each(['IND', 'NDA', 'BLA'])('the %s drafting guidance distinguishes generation, saving, and approval', (type) => {
+    const block = blockFor(type);
+    expect(block).toContain('generated but NOT saved');
+    expect(block).toContain('authoringDocId');
+    expect(block).toContain('retry only failed sections');
+    expect(block).toContain('never recreate a document already saved');
+    expect(block).toContain('A saved draft is not approved or filed');
+  });
+
   it('an IND block carries the canonical initial-IND brief, not a second hand list', () => {
     const block = blockFor('IND');
     expect(block).toContain('Initial IND Application');

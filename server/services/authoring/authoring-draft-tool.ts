@@ -49,6 +49,8 @@ export interface DraftToolContext {
 
 export interface DraftToolResult {
   status: 'generated';
+  saved: true;
+  documentStatus: 'draft';
   authoringDocId: string;
   programId: string;
   title: string;
@@ -137,6 +139,8 @@ export async function draftAuthoringDocumentTool(
     if (outcome.kind === 'refused') return JSON.stringify({ error: outcome.error });
     const result: DraftToolResult = {
       status: 'generated',
+      saved: true,
+      documentStatus: 'draft',
       authoringDocId: String(outcome.document.id),
       programId,
       title: parsed.value.title,
@@ -144,7 +148,7 @@ export async function draftAuthoringDocumentTool(
       ...(parsed.value.documentType ? { documentType: parsed.value.documentType } : {}),
       content: summaryContent(parsed.value),
       message:
-        `Drafted '${parsed.value.title}' as an authoring document (${outcome.sections.length} section(s)) in the open project. ` +
+        `Saved '${parsed.value.title}' as an authoring draft (${outcome.sections.length} section(s)) in the open project. ` +
         'It is a draft in the editor; nothing is filed in the vault until someone files it.',
     };
     return JSON.stringify(result);

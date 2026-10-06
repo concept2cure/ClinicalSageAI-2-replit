@@ -96,7 +96,11 @@ function draftingRoute(app: UsApplication): string {
       LIFECYCLE_ID[app] +
       '" for the whole application) — state its requirements rather than recalling them.',
     '2. `draft_authoring_document` to put the draft into the project as an authoring document the person opens ' +
-      'in the editor and files to the Vault. Use `batch_draft_sections` when several sections are asked for at once.',
+      'in the editor and files to the Vault. Use `batch_draft_sections` when several sections are asked for at once. ' +
+      'Batch output is generated but NOT saved. For a deliverable, promote successful content through ' +
+      '`draft_authoring_document` and its existing gates. Report saved only when it returns an authoringDocId. ' +
+      'Retain saved IDs and successful drafts; retry only failed sections, never recreate a document already saved. ' +
+      'A saved draft is not approved or filed.',
   ];
   if (app === 'IND') {
     lines.push(

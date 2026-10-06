@@ -15578,13 +15578,15 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
     | { deviceName?: string; deviceType?: string; indication?: string; predicateDevice?: string; classification?: string }
     | undefined;
 
+  const { batchDraftReceipt, batchSectionRecord } = await import('./batch-draft-result.js');
   const requests = rawSections
-    .map((s) => {
-      const sec = s as Record<string, unknown>;
-      const sectionType = typeof sec.section_type === 'string' ? sec.section_type : '';
-      const instructions = typeof sec.instructions === 'string' ? sec.instructions : '';
+    .map((s, requestIndex) => {
+      const sec = batchSectionRecord(s);
+      const sectionType = typeof sec.section_type === 'string' ? sec.section_type.trim() : '';
+      const instructions = typeof sec.instructions === 'string' ? sec.instructions.trim() : '';
       if (!sectionType || !instructions) return null;
       return {
+        requestIndex,
         framework: framework as any,
         submissionType,
         sectionType,
@@ -15593,42 +15595,34 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
         projectContext,
         organizationId: ctx?.organizationId ?? undefined,
         userId: ctx?.userId ?? undefined,
-        projectId: ctx?.projectId ?? undefined,
+        projectId: ctx?.projectRef ?? ctx?.projectId ?? undefined,
       };
     })
     .filter((r): r is NonNullable<typeof r> => r !== null);
 
   if (requests.length === 0) {
-    return JSON.stringify({ error: 'each section requires section_type and instructions' });
+    return JSON.stringify({ ...batchDraftReceipt(rawSections, requests, []), error: 'each section requires section_type and instructions' });
   }
 
   try {
     const { getAnaDraftingService } = await import('./AnaDocumentDraftingService.js');
-    const { isBatchDraftFailure } = await import('./batch-draft-result.js');
     const service = getAnaDraftingService();
     const results = await service.batchDraft({ requests, concurrency: 5 });
     // A section that could not be drafted arrives as a failure result in its
     // own slot (batch-draft-result.ts); the other sections' drafts are kept
     // and reported. `count` is the number actually drafted.
-    const failed = results.filter((r) => isBatchDraftFailure(r)).length;
+    const receipt = batchDraftReceipt(rawSections, requests, results);
     return JSON.stringify({
-      status: failed === 0 ? 'drafted' : failed === results.length ? 'failed' : 'partial',
+      ...receipt,
       engine: 'framework-grade',
-      count: results.length - failed,
-      failed,
-      sections: results.map((r, i) =>
-        isBatchDraftFailure(r)
-          ? { sectionType: requests[i].sectionType, error: r.error, message: r.message }
-          : { sectionType: requests[i].sectionType, content: r.content, model: r.model, latencyMs: r.latencyMs },
-      ),
       instruction:
-        'These are parallel first drafts. The author promotes each through the governed authoring flow (accept into the section, which runs the Part-11 version trigger). State any completeness gaps honestly; do not present unknown values as established.' +
-        (failed > 0
-          ? ` ${failed} section(s) were not drafted; each carries its reason. A section refused for size needs its existing content shortened or split before it is retried.`
+        'These are generated first drafts, NOT saved documents. For a requested deliverable, use draft_authoring_document with the successful section content through its existing confirmation and qualification gates. Report saved only after it returns an authoringDocId. Preserve each saved ID; never rerun creation for a section already saved. Saving a draft is not approval or filing. State completeness gaps honestly; do not present unknown values as established.' +
+        (receipt.failed > 0
+          ? ` ${receipt.failed} section(s) were not drafted; each carries its original requestIndex and reason. Repair and retry only retryIndices, preserving successful drafts. A section refused for size needs its existing content shortened or split before retrying.`
           : ''),
     });
-  } catch (err: any) {
-    return JSON.stringify({ error: `batch draft failed: ${err?.message || 'unknown error'}` });
+  } catch {
+    return JSON.stringify({ ...batchDraftReceipt(rawSections, requests, []), error: 'Batch drafting failed. No documents were saved; the failed sections can be retried.' });
   }
 });
 

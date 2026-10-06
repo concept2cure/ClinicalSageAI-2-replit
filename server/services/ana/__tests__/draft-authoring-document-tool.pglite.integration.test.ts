@@ -97,7 +97,7 @@ describe('draft_authoring_document', () => {
       await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectRef: PROGRAM, projectId: null, threadId: 'thread_42' }),
     );
     expect(out.error, JSON.stringify(out)).toBeUndefined();
-    expect(out).toMatchObject({ status: 'generated', programId: PROGRAM, title: input.title, sectionCount: 3, documentType: 'clinical_overview' });
+    expect(out).toMatchObject({ status: 'generated', saved: true, documentStatus: 'draft', programId: PROGRAM, title: input.title, sectionCount: 3, documentType: 'clinical_overview' });
     expect(out.authoringDocId).toMatch(/^[0-9a-f-]{36}$/);
     // A text summary for the artifact_draft rail — the stream needs content to render.
     expect(out.content).toContain('# Module 2.5 Clinical Overview — AnA draft');
