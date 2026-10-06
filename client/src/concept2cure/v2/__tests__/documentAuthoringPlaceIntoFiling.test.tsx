@@ -29,7 +29,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -114,7 +114,7 @@ async function openAndTarget() {
 
 const REASON = 'Clinical summary approved for sequence 0000';
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT; });
 beforeEach(() => apiRequest.mockReset());
 
 describe('the dialog states the identity fact and picks real targets', () => {
@@ -178,11 +178,11 @@ describe('the placement chain — snapshot then leaf, verdict verbatim', () => {
     mockApi((method, url, body) => {
       if (method === 'POST' && String(url).split('?')[0] === '/api/coauthor/documents') {
         calls.push({ method, url, body });
-        return { ok: true, status: 201, json: async () => ({ success: true, document: { id: 502 } }) };
+        return { ok: true, status: 201, json: async () => ({ success: true, document: { id: 502, metadata: { source: 'authoring-document', docId: 'D1' } } }) };
       }
       if (method === 'PUT' && url === '/api/submissions/sequences/31/leaves') {
         calls.push({ method, url, body });
-        return { ok: true, status: 200, json: async () => ({ id: 78, sectionCode: '3.2.S.4.2', title: 'M2.7 Clinical Summary', lifecycleOp: 'new' }) };
+        return { ok: true, status: 200, json: async () => ({ id: 78, sequenceId: 31, documentTable: 'coauthor_documents', documentId: 502, auditTrail: { persisted: true, chained: true }, sectionCode: '3.2.S.4.2', title: 'M2.7 Clinical Summary', lifecycleOp: 'new' }) };
       }
       return undefined;
     });
@@ -201,14 +201,14 @@ describe('the placement chain — snapshot then leaf, verdict verbatim', () => {
     mockApi((method, url, body) => {
       if (method === 'POST' && String(url).split('?')[0] === '/api/coauthor/documents') {
         calls.push({ method, url, body });
-        return { ok: true, status: 201, json: async () => ({ success: true, document: { id: 501 } }) };
+        return { ok: true, status: 201, json: async () => ({ success: true, document: { id: 501, metadata: { source: 'authoring-document', docId: 'D1' } } }) };
       }
       if (method === 'PUT' && url === '/api/submissions/sequences/31/leaves') {
         calls.push({ method, url, body });
         return {
           ok: true,
           status: 200,
-          json: async () => ({ id: 77, sectionCode: '2.7.3', title: 'M2.7 Clinical Summary', lifecycleOp: 'new' }),
+          json: async () => ({ id: 77, sequenceId: 31, documentTable: 'coauthor_documents', documentId: 501, auditTrail: { persisted: true, chained: true }, sectionCode: '2.7.3', title: 'M2.7 Clinical Summary', lifecycleOp: 'new' }),
         };
       }
       return undefined;
@@ -255,7 +255,7 @@ describe('the placement chain — snapshot then leaf, verdict verbatim', () => {
     let putCalls = 0;
     mockApi((method, url) => {
       if (method === 'POST' && String(url).split('?')[0] === '/api/coauthor/documents') {
-        return { ok: true, status: 201, json: async () => ({ success: true, document: { id: 502 } }) };
+        return { ok: true, status: 201, json: async () => ({ success: true, document: { id: 502, metadata: { source: 'authoring-document', docId: 'D1' } } }) };
       }
       if (method === 'PUT' && url === '/api/submissions/sequences/31/leaves') {
         putCalls += 1;
@@ -301,9 +301,9 @@ describe('the placement chain — snapshot then leaf, verdict verbatim', () => {
     await openAndTarget();
     fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
     await waitFor(() =>
-      expect(document.body.textContent).toContain('The filing snapshot could not be created'),
+      expect(document.body.textContent).toContain('The filing snapshot could not be confirmed'),
     );
-    expect(document.body.textContent).toContain('Nothing was placed');
+    expect(document.body.textContent).toContain('No leaf placement was requested');
     expect(putCalls).toBe(0);
   });
 
@@ -425,5 +425,141 @@ describe('the section code says where the document will be filed, before it is',
     await waitFor(() => expect(document.body.textContent).toMatch(/is not a CTD section code/));
     expect(apiRequest.mock.calls.some((c) => c[0] === 'POST' && String(c[1]).includes('/api/coauthor/documents'))).toBe(false);
     expect(apiRequest.mock.calls.some((c) => c[0] === 'PUT')).toBe(false);
+  });
+});
+
+const PLACED = { id: 91, sequenceId: 31, sectionCode: '2.7.3', title: 'M2.7 Clinical Summary', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 501, auditTrail: { persisted: true, chained: true } };
+
+describe('filing placement confirmation', () => {
+  it('a lost leaf reply is unknown, never nothing placed, and offers reconciliation', async () => {
+    mockApi((method) => {
+      if (method === 'POST') return { ok: true, status: 201, json: async () => ({ success: true, document: { id: 501, metadata: { source: 'authoring-document', docId: 'D1' } } }) };
+      if (method === 'PUT') throw new TypeError('Failed to fetch');
+      return undefined;
+    });
+    const { onNav, fireToast } = renderSeam();
+    await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await screen.findByText(/cannot confirm whether the leaf was placed/i);
+    expect(document.body.textContent).not.toContain('nothing was placed in the sequence');
+    expect((screen.getByRole('button', { name: /Place leaf/ }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: /Check filing status/ }));
+    expect(onNav).toHaveBeenCalledWith('submission-center');
+    expect(fireToast).not.toHaveBeenCalled();
+    expect(apiRequest.mock.calls.filter(c => c[0] === 'PUT')).toHaveLength(1);
+  });
+
+  it.each([null, false, {}, { id: 0 }])('does not report a malformed successful leaf reply %j as a refusal', async (receipt) => {
+    mockApi((method) => {
+      if (method === 'POST') return { ok: true, status: 201, json: async () => ({ success: true, document: { id: 501, metadata: { source: 'authoring-document', docId: 'D1' } } }) };
+      if (method === 'PUT') return { ok: true, status: 200, json: async () => receipt };
+      return undefined;
+    });
+    renderSeam();
+    await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await screen.findByText(/cannot confirm whether the leaf was placed/i);
+    expect(document.body.textContent).not.toContain('nothing was placed in the sequence');
+  });
+
+  it.each([{ sequenceId: 32 }, { sectionCode: '3.2.P.8' }, { documentId: 999 }, { lifecycleOp: 'replace' }])('refuses a mismatched leaf receipt %j', async (override) => {
+    mockApi((method) => {
+      if (method === 'POST') return { ok: true, status: 201, json: async () => ({ success: true, document: { id: 501, metadata: { source: 'authoring-document', docId: 'D1' } } }) };
+      if (method === 'PUT') return { ok: true, status: 200, json: async () => ({ ...PLACED, ...override }) };
+      return undefined;
+    });
+    const { fireToast } = renderSeam();
+    await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await screen.findByText(/cannot confirm whether the leaf was placed/i);
+    expect(fireToast).not.toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain('server-confirmed (leaf');
+  });
+
+  it.each([null, { persisted: false }, { persisted: true, chained: false }])('states audit confirmation %j without rolling back a real placement', async (auditTrail) => {
+    mockApi((method) => {
+      if (method === 'POST') return { ok: true, status: 201, json: async () => ({ success: true, document: { id: 501, metadata: { source: 'authoring-document', docId: 'D1' } } }) };
+      if (method === 'PUT') return { ok: true, status: 200, json: async () => ({ ...PLACED, auditTrail }) };
+      return undefined;
+    });
+    const { fireToast } = renderSeam();
+    await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await screen.findByText(/server-confirmed.*audit/i);
+    expect(document.body.textContent).not.toContain('nothing was placed');
+    expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/audit/i), 'error');
+    expect((screen.getByRole('button', { name: /Place leaf/ }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe('filing placement context', () => {
+  it('a document switch resets the dialog and stops the old chain after its pending read', async () => {
+    let resolve!: (value: typeof SECTIONS) => void;
+    mockApi((method, url) => method === 'GET' && url.endsWith('/D1/sections')
+      ? { ok: true, status: 200, json: () => new Promise<typeof SECTIONS>(r => { resolve = r; }) }
+      : undefined);
+    const props = { docTitle: 'Summary', activeSectionCode: '2.7.3', dirty: false, onNav: vi.fn(), fireToast: vi.fn() };
+    const { rerender } = render(<AuthoringPlaceIntoFiling {...props} docId="D1" />);
+    await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await waitFor(() => expect(resolve).toBeTypeOf('function'));
+    rerender(<AuthoringPlaceIntoFiling {...props} docId="D2" />);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await act(async () => resolve(SECTIONS));
+    expect(apiRequest.mock.calls.filter(c => c[0] === 'POST' || c[0] === 'PUT')).toHaveLength(0);
+    expect(props.fireToast).not.toHaveBeenCalled();
+  });
+});
+
+describe('pending filing receipts', () => {
+  it.each(['snapshot', 'leaf'])('ignores an old %s receipt after a project switch', async stage => {
+    let resolve!: (value: unknown) => void;
+    mockApi(method => {
+      if (method === 'POST') return { ok: true, status: 201, json: () => stage === 'snapshot' ? new Promise(r => { resolve = r; }) : Promise.resolve({ success: true, document: { id: 501, metadata: { source: 'authoring-document', docId: 'D1' } } }) };
+      if (method === 'PUT') return { ok: true, status: 200, json: () => new Promise(r => { resolve = r; }) };
+      return undefined;
+    });
+    const props = { docId: 'D1', docTitle: 'Summary', activeSectionCode: '2.7.3', dirty: false, onNav: vi.fn(), fireToast: vi.fn() };
+    const { rerender } = render(<AuthoringPlaceIntoFiling {...props} />);
+    await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await waitFor(() => expect(resolve).toBeTypeOf('function'));
+    (window as unknown as { C2C_PROJECT: unknown }).C2C_PROJECT = { id: '11111111-1111-4111-8111-111111111111', title: 'Other IND' };
+    rerender(<AuthoringPlaceIntoFiling {...props} />);
+    await act(async () => resolve(stage === 'snapshot' ? { success: true, document: { id: 501, metadata: { source: 'authoring-document', docId: 'D1' } } } : PLACED));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(props.fireToast).not.toHaveBeenCalled();
+    expect(apiRequest.mock.calls.filter(c => c[0] === 'PUT')).toHaveLength(stage === 'snapshot' ? 0 : 1);
+  });
+});
+
+describe('filing snapshot receipts', () => {
+  it.each([0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1])('never places from an invalid snapshot id %s', async id => {
+    mockApi(method => method === 'POST' ? { ok: true, status: 201, json: async () => ({ success: true, document: { id } }) } : undefined);
+    renderSeam();
+    await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await screen.findByText(/filing snapshot could not be confirmed/i);
+    expect(apiRequest.mock.calls.filter(c => c[0] === 'PUT')).toHaveLength(0);
+  });
+
+  it('does not turn malformed saved-section data into an empty document', async () => {
+    mockApi((method, url) => method === 'GET' && url.endsWith('/sections') ? { ok: true, status: 200, json: async () => ({ success: true }) } : undefined);
+    renderSeam();
+    await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await screen.findByText(/failed read, not an empty document/i);
+    expect(apiRequest.mock.calls.filter(c => c[0] !== 'GET')).toHaveLength(0);
+  });
+});
+
+describe('filing snapshot source lineage', () => {
+  it.each([undefined, { source: 'authoring-document', docId: 'D2' }, { source: 'upload', docId: 'D1' }])('does not file a copy with unconfirmed source lineage %j', async metadata => {
+    mockApi(method => method === 'POST' ? { ok: true, status: 201, json: async () => ({ success: true, document: { id: 501, metadata } }) } : undefined);
+    renderSeam();
+    await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await screen.findByText(/filing snapshot could not be confirmed/i);
+    expect(apiRequest.mock.calls.filter(c => c[0] === 'PUT')).toHaveLength(0);
   });
 });

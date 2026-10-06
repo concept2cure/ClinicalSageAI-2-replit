@@ -107,6 +107,10 @@ const lensL = (v: string) => SC_LENSES.find((l) => l.v === v)?.l ?? v;
 export interface MutateResult<T> {
   data: T | null;
   error?: string;
+  /** No reliable refusal/success receipt: the mutation may have committed. */
+  unconfirmed?: boolean;
+  status?: number;
+  code?: string;
 }
 
 /**
@@ -133,9 +137,11 @@ export async function mutateVerbatim<T>(
     const res = await apiRequest(method, path, body);
     if (!res.ok) {
       const p = (await res.json().catch(() => null)) as unknown;
-      return { data: null, error: messageFromBody(p, res.status) };
+      const code = mutationCode(p);
+      return { data: null, error: messageFromBody(p, res.status), status: res.status, code, unconfirmed: mutationUnconfirmed(res.status, code) };
     }
-    return { data: (await res.json().catch(() => null)) as T };
+    const data = (await res.json().catch(() => null)) as T | null;
+    return { data, status: res.status, unconfirmed: data == null };
   } catch (e) {
     const payload = (e as { payload?: unknown } | null)?.payload;
     const detail = (payload as { detail?: unknown } | null)?.detail;
@@ -146,14 +152,30 @@ export async function mutateVerbatim<T>(
       (e as { name?: unknown } | null)?.name === 'ApiRequestError' &&
       typeof (e as { message?: unknown }).message === 'string' &&
       (e as { message: string }).message.trim();
+    const failure = e as { status?: number; code?: string } | null;
+    const code = failure?.code ?? mutationCode(payload);
+    const status = failure?.status;
+    const unconfirmed = mutationUnconfirmed(status, code);
     const base = known
-      ? (e as { message: string }).message
-      : 'The change was not saved. Check your connection and try again.';
+      ? redactInternals((e as { message: string }).message, 'The result could not be confirmed. Check the current record before retrying.')
+      : 'We cannot confirm whether the change was recorded. Check the current record before retrying.';
     return {
       data: null,
-      error: typeof detail === 'string' && detail && !base.includes(detail) ? `${base} — ${detail}` : base,
+      error: typeof detail === 'string' && detail && !base.includes(detail) ? `${base} — ${redactInternals(detail, 'Check the current record before retrying.')}` : base,
+      unconfirmed, status, code,
     };
   }
+}
+
+/** Only a definite refusal can justify saying that a write did not occur. */
+function mutationUnconfirmed(status?: number, code?: string): boolean {
+  if (code === 'OUTCOME_UNKNOWN') return true;
+  return typeof status !== 'number' || ![400, 401, 403, 404, 409, 422, 429].includes(status);
+}
+function mutationCode(body: unknown): string | undefined {
+  const value = body as { code?: unknown; error?: { code?: unknown } } | null;
+  const code = value?.code ?? value?.error?.code;
+  return typeof code === 'string' ? code : undefined;
 }
 
 /* ── Sequence picker — the selector the per-sequence workspaces feed from ──── */

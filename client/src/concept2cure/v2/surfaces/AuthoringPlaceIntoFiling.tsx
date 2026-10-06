@@ -63,9 +63,10 @@ import {
   judgeSectionCode,
   isLocked,
 } from './filingTarget';
-import { mutateVerbatim } from './SubmissionSeqWorkspaces';
+import { mutateVerbatim, type MutateResult } from './SubmissionSeqWorkspaces';
 import { SC_LIFECYCLE_OPS } from '../fixtures/submission';
 import type { FireToast } from '../toast';
+import { shellProgramId, useShellProject } from '../shellProject';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 
 /* ── Server row shapes (only the columns this dialog reads) ── */
@@ -87,6 +88,10 @@ interface PlacedLeaf {
   sectionCode: string;
   title: string;
   lifecycleOp: string;
+  sequenceId: number;
+  documentTable: string;
+  documentId: number;
+  auditTrail?: { persisted?: boolean; chained?: boolean } | null;
 }
 
 /**
@@ -147,7 +152,7 @@ interface Placement {
   snapshotId: number;
 }
 
-export function AuthoringPlaceIntoFiling({
+function AuthoringPlaceIntoFilingForDocument({
   docId,
   docTitle,
   activeSectionCode,
@@ -175,11 +180,16 @@ export function AuthoringPlaceIntoFiling({
   const [placing, setPlacing] = React.useState(false);
   const [verdict, setVerdict] = React.useState<Verdict>(null);
   const [placement, setPlacement] = React.useState<Placement | null>(null);
+  const [needsReconciliation, setNeedsReconciliation] = React.useState(false);
+  const generation = React.useRef(0);
+  const pending = React.useRef(false);
+  React.useEffect(() => () => { generation.current += 1; }, []);
 
   const openDialog = () => {
     setOpen(true);
     setVerdict(null);
     setPlacement(null);
+    setNeedsReconciliation(false);
     setSection(activeSectionCode ?? '');
     setOp('new');
     target.load();
@@ -199,6 +209,8 @@ export function AuthoringPlaceIntoFiling({
   const reasonOk = placementReasonOk(reason);
   const canPlace =
     !placing &&
+    !needsReconciliation &&
+    !placement &&
     !dirty &&
     seq != null &&
     !isLocked(seq.status) &&
@@ -212,61 +224,23 @@ export function AuthoringPlaceIntoFiling({
   const filing = canPlace && seq && sectionJudged.canonical ? { seq, sectionCode: sectionJudged.canonical } : null;
 
   const place = async () => {
-    if (!filing) return;
+    if (!filing || pending.current) return;
+    const started = generation.current;
+    const current = () => started === generation.current;
+    pending.current = true;
     const { sectionCode } = filing;
     setPlacing(true);
     setVerdict(null);
     setPlacement(null);
     try {
-      // 1. The SAVED sections, fresh from the server — never the local buffer.
-      const read = await liveGetOrNull<{ sections?: SavedSection[] }>(
-        `/api/authoring/docs/${encodeURIComponent(docId)}/sections`,
-      );
-      if (read.error || !read.data) {
-        setVerdict({
-          tone: 'err',
-          text: `Couldn’t read the document’s saved sections — ${read.error ?? 'no response'}. Nothing was filed.`,
-        });
+      const copy = await takeFilingCopy(docId, docTitle, sectionCode, current);
+      if (!copy || !current()) return;
+      if (!copy.ok) {
+        setNeedsReconciliation(copy.unconfirmed);
+        setVerdict(copy.verdict);
         return;
       }
-      const saved = Array.isArray(read.data.sections) ? read.data.sections : [];
-      // The honest refusal: a document whose sections hold no SAVED text would
-      // snapshot to bare headings — that must not become a leaf. Checked on the
-      // sections' content, not the assembled string, so headings alone never
-      // pass as substance.
-      if (!saved.some((s) => (s.content ?? '').trim() !== '')) {
-        setVerdict({
-          tone: 'err',
-          text: 'This document has no saved section content yet — there is nothing to file. Nothing was created.',
-        });
-        return;
-      }
-      const body = assembleSnapshot(saved);
-
-      // 2. File the snapshot into the renderable store the leaves can reference.
-      const snap = await mutateVerbatim<{ document?: { id?: number } }>('POST', '/api/coauthor/documents', {
-        title: docTitle,
-        moduleNumber: sectionCode,
-        content: body,
-        /* Names the source so the server can read ITS governed state. The
-           snapshot's status is derived there, never sent from here: a
-           client-supplied status would let any caller mark a draft approved
-           and make an incomplete package report itself complete.
-           Without this the snapshot was always 'draft', and the eCTD
-           completeness check — which correctly refuses to count a draft —
-           made this path structurally incapable of producing a filable
-           package, however thoroughly the document had been frozen and
-           signed. */
-        sourceAuthoringDocId: docId,
-      });
-      const snapshotId = snap.data?.document?.id;
-      if (typeof snapshotId !== 'number') {
-        setVerdict({
-          tone: 'err',
-          text: `The filing snapshot could not be created — ${snap.error ?? 'the server returned no document id'}. Nothing was placed.`,
-        });
-        return;
-      }
+      const { snapshotId } = copy;
 
       // 3. The canonical write: the leaf, pointing at the snapshot. Verdict verbatim.
       const put = await mutateVerbatim<PlacedLeaf>('PUT', `/api/submissions/sequences/${filing.seq.id}/leaves`, {
@@ -277,27 +251,26 @@ export function AuthoringPlaceIntoFiling({
         documentId: snapshotId,
         reason: reason.trim(),
       });
-      if (!put.data || typeof put.data.id !== 'number') {
-        setVerdict({
-          tone: 'err',
-          text:
-            `The leaf was refused — ${put.error ?? 'the request failed'}. ` +
-            `The filing copy was created (${documentSourceLabel('coauthor_documents', snapshotId)}), ` +
-            `but nothing was placed in the sequence.`,
-        });
+      if (!current()) return;
+      if (!matchingLeafReceipt(put.data, filing.seq.id, sectionCode, snapshotId, op)) {
+        const failure = leafFailure(put, snapshotId, filing.seq.sequenceNumber, sectionCode);
+        setNeedsReconciliation(failure.unconfirmed);
+        setVerdict(failure.verdict);
         return;
       }
       const sequenceLabel = `${filing.seq.sequenceNumber} · ${filing.seq.type}`;
       setPlacement({ leafId: put.data.id, sectionCode: put.data.sectionCode, sequenceLabel, snapshotId });
+      const auditWarning = placementAuditWarning(put.data);
       setVerdict({
-        tone: 'ok',
+        tone: auditWarning ? 'err' : 'ok',
         text:
           `Placed as leaf ${put.data.sectionCode} in sequence ${sequenceLabel} — ` +
-          `server-confirmed (leaf #${put.data.id}, from ${documentSourceLabel('coauthor_documents', snapshotId)}).`,
+          `server-confirmed (leaf #${put.data.id}, from ${documentSourceLabel('coauthor_documents', snapshotId)}).` + auditWarning,
       });
-      fireToast(`Placed into filing — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber}.`);
+      if (auditWarning) fireToast(`Placement confirmed.${auditWarning}`, 'error');
+      else fireToast(`Placed into filing — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber}.`);
     } finally {
-      setPlacing(false);
+      if (current()) { pending.current = false; setPlacing(false); }
     }
   };
 
@@ -342,12 +315,13 @@ export function AuthoringPlaceIntoFiling({
                 <div className="de-h-t" id="apf-title">Place into filing</div>
                 <div className="de-h-s">{IDENTITY_STATEMENT}</div>
               </div>
-              <button className="de-x" onClick={() => setOpen(false)} aria-label="Close">
+              <button className="de-x" onClick={() => setOpen(false)} disabled={placing} aria-label="Close">
                 {I.close}
               </button>
             </div>
 
             <div className="de-body">
+              <fieldset disabled={placing || needsReconciliation || !!placement} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
               <FilingTargetFields target={target} idPrefix="apf" />
 
               {/* ── Section code + lifecycle operation ── */}
@@ -387,6 +361,7 @@ export function AuthoringPlaceIntoFiling({
               </div>
 
               <PlacementReasonField value={reason} onChange={setReason} idPrefix="apf" disabled={placing} />
+              </fieldset>
 
               {dirty && (
                 <div className="de-err" role="status">
@@ -398,8 +373,8 @@ export function AuthoringPlaceIntoFiling({
               <div className="de-gov">
                 <span className="ico">{I.lock}</span>
                 <span className="de-gov-t">
-                  Placement is recorded in the submission of record — audited and
-                  org-scoped. The server refuses a frozen or dispatched sequence.
+                  The server reports placement and audit outcomes for your organization.
+                  A frozen or dispatched sequence cannot be changed.
                 </span>
               </div>
 
@@ -410,7 +385,7 @@ export function AuthoringPlaceIntoFiling({
                 </div>
               )}
 
-              {placement && (
+              {(placement || needsReconciliation) && (
                 <div className="de-field">
                   <button
                     className="btn ghost"
@@ -420,7 +395,7 @@ export function AuthoringPlaceIntoFiling({
                       onNav('submission-center');
                     }}
                   >
-                    {I.layers} Open in Submission Center
+                    {I.layers} {placement ? 'Open in Submission Center' : 'Check filing status'}
                   </button>
                 </div>
               )}
@@ -456,4 +431,82 @@ export function AuthoringPlaceIntoFiling({
       )}
     </>
   );
+}
+
+/** Changing document/project resets the dialog and invalidates its old chain. */
+export function AuthoringPlaceIntoFiling(props: AuthoringPlaceIntoFilingProps) {
+  const project = shellProgramId(useShellProject());
+  return <AuthoringPlaceIntoFilingForDocument key={JSON.stringify([props.docId, project])} {...props} />;
+}
+
+function validReceiptId(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+}
+function matchingLeafReceipt(row: PlacedLeaf | null, sequenceId: number, sectionCode: string, snapshotId: number, op: string): row is PlacedLeaf {
+  if (!row || !validReceiptId(row.id)) return false;
+  return row.sequenceId === sequenceId && row.sectionCode === sectionCode &&
+    row.documentTable === 'coauthor_documents' && row.documentId === snapshotId && row.lifecycleOp === op;
+}
+function placementAuditWarning(row: PlacedLeaf): string {
+  if (row.auditTrail?.persisted !== true) return ' The placement audit entry was not confirmed. Check the audit history and follow up before treating this as a complete governed filing.';
+  if (row.auditTrail.chained !== true) return ' The placement audit entry is not confirmed in retrievable history. Follow up before treating this as a complete governed filing.';
+  return '';
+}
+
+interface SnapshotRow { id?: number; metadata?: { source?: string; docId?: string } | null }
+
+type CopyResult =
+  | { ok: true; snapshotId: number }
+  | { ok: false; unconfirmed: boolean; verdict: NonNullable<Verdict> };
+
+/** Read saved content and request the existing governed snapshot. A context
+ * switch after the read stops the next write; an already-sent write may commit. */
+async function takeFilingCopy(docId: string, docTitle: string, sectionCode: string, current: () => boolean): Promise<CopyResult | null> {
+  const read = await liveGetOrNull<{ sections?: SavedSection[] }>(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
+  if (!current()) return null;
+  if (read.error || !read.data) return {
+    ok: false, unconfirmed: false,
+    verdict: { tone: 'err', text: `Couldn’t read the document’s saved sections — ${read.error ?? 'no response'}. Nothing was filed.` },
+  };
+  if (!Array.isArray(read.data.sections)) return {
+    ok: false, unconfirmed: false,
+    verdict: { tone: 'err', text: 'The saved sections could not be read. This is a failed read, not an empty document. Nothing was filed.' },
+  };
+  const saved = read.data.sections;
+  if (!saved.some(s => (s.content ?? '').trim() !== '')) return {
+    ok: false, unconfirmed: false,
+    verdict: { tone: 'err', text: 'This document has no saved section content yet — there is nothing to file. Nothing was created.' },
+  };
+  const snap = await mutateVerbatim<{ success?: boolean; document?: SnapshotRow }>('POST', '/api/coauthor/documents', {
+    title: docTitle, moduleNumber: sectionCode, content: assembleSnapshot(saved), sourceAuthoringDocId: docId,
+  });
+  if (!current()) return null;
+  const snapshotId = snap.data?.document?.id;
+  if (validReceiptId(snapshotId) && matchingSnapshotSource(snap.data?.document, docId) && snap.data?.success !== false) return { ok: true, snapshotId };
+  return snapshotFailure(snap);
+}
+
+function snapshotFailure(snap: MutateResult<unknown>): CopyResult {
+  const unconfirmed = !!snap.unconfirmed || snap.data != null;
+  return {
+    ok: false, unconfirmed,
+    verdict: { tone: 'err', text: unconfirmed
+      ? 'The filing snapshot could not be confirmed. A copy may have been created; check filing status before retrying. No leaf placement was requested.'
+      : `The filing snapshot could not be created — ${snap.error ?? 'the server refused it'}. Nothing was placed.` },
+  };
+}
+function leafFailure(put: MutateResult<unknown>, snapshotId: number, sequence: string, sectionCode: string) {
+  const unconfirmed = !!put.unconfirmed || put.data != null;
+  return {
+    unconfirmed,
+    verdict: { tone: 'err' as const, text: unconfirmed
+      ? `We cannot confirm whether the leaf was placed in sequence ${sequence} at ${sectionCode}. ` +
+        `The filing copy was created (${documentSourceLabel('coauthor_documents', snapshotId)}). Check filing status before retrying.`
+      : `The leaf was refused — ${put.error ?? 'the server refused it'}. ` +
+        `The filing copy was created (${documentSourceLabel('coauthor_documents', snapshotId)}), but nothing was placed in the sequence.` },
+  };
+}
+
+function matchingSnapshotSource(row: SnapshotRow | undefined, docId: string): boolean {
+  return row?.metadata?.source === 'authoring-document' && row.metadata.docId === docId;
 }
