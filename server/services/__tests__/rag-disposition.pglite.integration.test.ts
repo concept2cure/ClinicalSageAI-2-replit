@@ -64,7 +64,7 @@ describe('RAG candidate policy checks execute against canonical disposition SQL'
       id: publicChunk, documentId: publicDocument, chunkIndex: 0, atomType: 'rag_chunk',
       content: 'Public guidance hit', title: 'Public guidance', initialScore: 1, finalScore: 1,
     };
-    const candidates = [own.docs[1], foreign.docs[1]].map(doc => ({ ...doc, chunkIndex: 0 }));
+    const candidates: RetrievedDocument[] = [own.docs[1], foreign.docs[1]].map(doc => ({ ...doc, chunkIndex: 0 }));
     candidates.push(publicDoc);
     const p = pipeline(f);
     const noTenant = await p.expandContext(candidates, 1);
