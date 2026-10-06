@@ -1,0 +1,109 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts > AnA final completion releases the composer > finishes without waiting for EOF and accepts the next question
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts > AnA final completion releases the composer > ignores late frames after completion in the same network chunk
+[useAnaChat] stream failed: late transport failure
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts > AnA final completion releases the composer > does not let a stalled transport cancellation hold the completed turn open
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts > AnA final completion releases the composer > finishes without waiting for EOF and accepts the next question 175ms
+   → expected true to be false // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts > AnA final completion releases the composer > ignores late frames after completion in the same network chunk 8ms
+   → expected { id: 'a-1791269157205-1', …(18) } to match object { text: 'Final answer', …(1) }
+(18 matching properties omitted from actual)
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts > AnA final completion releases the composer > does not let a stalled transport cancellation hold the completed turn open 155ms
+   → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts > AnA final completion releases the composer > finishes without waiting for EOF and accepts the next question
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ vi.waitFor.timeout client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts:33:65
+     31|     first.push({ type: 'post_done', cleanedResponse: 'Final answer', t…
+     32|     try {
+     33|       await vi.waitFor(() => expect(result.current.isStreaming).toBe(f…
+       |                                                                 ^
+     34|       await sent;
+     35|       expect(first.cancel).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts > AnA final completion releases the composer > ignores late frames after completion in the same network chunk
+AssertionError: expected { id: 'a-1791269157205-1', …(18) } to match object { text: 'Final answer', …(1) }
+(18 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "streaming": false,
+-   "text": "Final answer",
++   "text": "Answerlate text",
+  }
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts:57:44
+     55|     stream.close();
+     56|     await act(async () => { await sent; });
+     57|     expect(result.current.messages.at(-1)).toMatchObject({ text: 'Fina…
+       |                                            ^
+     58|     expect(result.current.messages.at(-1)?.interrupted).not.toBe(true);
+     59|     expect(onDriveEvent).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts > AnA final completion releases the composer > does not let a stalled transport cancellation hold the completed turn open
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ vi.waitFor.timeout client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts:70:65
+     68|     stream.push({ type: 'post_done', cleanedResponse: 'Final answer' }…
+     69|     try {
+     70|       await vi.waitFor(() => expect(result.current.isStreaming).toBe(f…
+       |                                                                 ^
+     71|       await sent;
+     72|       expect(stream.cancel).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  02:45:56
+   Duration  1.28s (transform 234ms, setup 114ms, import 278ms, tests 341ms, environment 431ms)
+

@@ -1174,7 +1174,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         // Every server path closes a turn with post_done or error. A stream
         // that ends without either did not finish, whatever it rendered.
         let turnClosed = false;
-        while (true) {
+        while (!turnClosed) {
           const { done, value } = await reader.read();
           // A queued read may settle after reset, switch, or Stop. It must not
           // restore the old thread/run or forward moves into the next turn.
@@ -1441,6 +1441,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   };
                 })
               );
+              // post_done seals the turn; trailing frames cannot reopen it.
+              break;
             } else if (event.type === 'grounding_strip') {
               // What was checked about the answer: the engine's check and
               // AnA's labels, read by the one reader the reload uses too.
@@ -1788,6 +1790,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           }
         }
         if (!turnClosed) throw new Error('The stream ended before the turn finished');
+        // Completion is authoritative even if the transport lingers. Cleanup
+        // must not hold the composer open or turn a finished reply into an error.
+        void reader.cancel().catch(() => undefined);
+        reader.releaseLock();
       } catch (err: any) {
         // The run this turn was served under, while it is still known: the
         // record of an interrupted turn is looked up by it.
