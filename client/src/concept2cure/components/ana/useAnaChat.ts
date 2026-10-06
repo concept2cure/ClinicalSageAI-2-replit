@@ -1115,10 +1115,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           module: ac?.moduleCode,
           artifactStatus: ac?.artifactStatus,
         },
-        conversation_history: messagesRef.current.slice(-10).map(m => ({
-          role: m.role,
-          content: m.text,
-        })),
+        // Recovery notices are UI copy, not answers the model produced.
+        // Keep genuine partial drafts and user questions in fallback history.
+        conversation_history: messagesRef.current
+          .filter(m => m.text.trim().length > 0 &&
+            (m.role === 'user' || !m.interrupted || m.interruptedWithPartialResponse === true))
+          .slice(-10)
+          .map(m => ({ role: m.role, content: m.text })),
         // Pinned tools (additive focus). Omitted when empty so the server
         // stays in auto/intent-based selection. A per-call override wins so
         // "pin these tools and send now" applies to this very turn.

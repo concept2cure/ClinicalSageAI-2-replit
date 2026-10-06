@@ -245,7 +245,7 @@ async function readMemoryLayer(
     outcome: atoms.length > 0 ? 'ok' : 'empty',
   })).catch((err: any): MemoryLayerRead => {
     if (err?.code !== '42P01') {
-      console.warn(`[MemoryContextAssembler] ${label} failed:`, err?.message);
+      console.warn('[MemoryContextAssembler] Memory layer failed:', label, err?.message);
     }
     return { atoms: [], outcome: 'error' };
   });

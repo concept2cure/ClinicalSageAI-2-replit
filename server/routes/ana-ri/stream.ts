@@ -941,6 +941,9 @@ export function mountStreamRoute(router: Router): void {
       if (prefetchedStreamContext.unavailableSources?.length) {
         const warning = `Optional context unavailable: ${prefetchedStreamContext.unavailableSources.join(', ')}.`;
         turnRecorder?.warn(warning);
+        // Reviewed false positive: this route sets text/event-stream, JSON encodes
+        // the warning, and the client renders it as text; this cannot execute HTML.
+        // nosemgrep: javascript.express.security.audit.xss.direct-response-write.direct-response-write
         res.write(`data: ${JSON.stringify({ type: 'warning', message: warning })}\n\n`);
       }
       streamOrchestrationMs = Date.now() - streamPhaseStart;
