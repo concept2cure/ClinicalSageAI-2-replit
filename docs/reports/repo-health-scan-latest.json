@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-06T07:01:01.552Z",
+  "generatedAt": "2026-10-06T07:09:44.232Z",
   "git": {
-    "sha": "e2d844104bb12d954dd03edaebb46d624e05f4dd",
+    "sha": "c0b3089df548f9bff3cd91cfc2e05e1ad04d65ab",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2496,7 +2496,7 @@
       },
       {
         "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 1974
+        "lines": 1976
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
