@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-06T17:47:35.379Z",
+  "generatedAt": "2026-10-06T19:08:40.167Z",
   "git": {
-    "sha": "0e0bb7ec416731db7caaaa139e5a4616404321bd",
+    "sha": "616d96b507c8b45a6b74c1c58983aea45bf8c06b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 216,
+    "duplicateBasenames": 217,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 51,
@@ -125,7 +125,7 @@
       },
       {
         "basename": "types",
-        "count": 50,
+        "count": 51,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/mdx/types.ts",
@@ -147,6 +147,7 @@
           "server/services/cognitive-ecosystem/types.ts",
           "server/services/compute/types.ts",
           "server/services/conversation-os/types.ts",
+          "server/services/document-data-disposition/types.ts",
           "server/services/ectd/ectd4/types.ts",
           "server/services/ectd/external-validator/types.ts",
           "server/services/entitlements/types.ts",
@@ -1854,6 +1855,14 @@
         ]
       },
       {
+        "basename": "service",
+        "count": 2,
+        "paths": [
+          "server/services/document-data-disposition/service.ts",
+          "server/services/projects/schedule-of-events/service.ts"
+        ]
+      },
+      {
         "basename": "spl-fhir",
         "count": 2,
         "paths": [
@@ -2042,7 +2051,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1126612
+        "bytes": 1128150
       },
       {
         "file": "shared/schema.ts",
@@ -2086,7 +2095,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 169901
+        "bytes": 171437
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2221,6 +2230,10 @@
         "bytes": 108892
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "bytes": 108716
+      },
+      {
         "file": "server/routes/auth.ts",
         "bytes": 108059
       },
@@ -2231,10 +2244,6 @@
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 107885
-      },
-      {
-        "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 107584
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
@@ -2248,7 +2257,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21743
+        "lines": 21763
       },
       {
         "file": "shared/schema.ts",
@@ -2308,7 +2317,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3356
+        "lines": 3379
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2412,7 +2421,7 @@
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "lines": 2295
+        "lines": 2314
       },
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
@@ -2447,6 +2456,10 @@
         "lines": 2093
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 2081
+      },
+      {
         "file": "client/src/concept2cure/v2/editor/suggestions.ts",
         "lines": 2077
       },
@@ -2457,10 +2470,6 @@
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
         "lines": 2076
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2069
       },
       {
         "file": "server/services/pharmacovigilance/pharmacovigilance-knowledge.ts",
@@ -2504,7 +2513,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 1956
+        "lines": 1962
       },
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
@@ -2607,6 +2616,10 @@
         "lines": 1787
       },
       {
+        "file": "server/services/advancedRAGPipeline.ts",
+        "lines": 1787
+      },
+      {
         "file": "server/services/ana/submission-chat-handler.ts",
         "lines": 1775
       },
@@ -2639,10 +2652,6 @@
         "lines": 1650
       },
       {
-        "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 1649
-      },
-      {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
       },
@@ -2659,6 +2668,10 @@
         "lines": 1612
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1606
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
         "lines": 1606
       },
@@ -2673,10 +2686,6 @@
       {
         "file": "server/routes/mdx-qms.ts",
         "lines": 1589
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1577
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
@@ -2696,7 +2705,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 413,
+      "duplicateGroups": 416,
       "largeByBytes": 40,
       "largeByLines": 86
     },
