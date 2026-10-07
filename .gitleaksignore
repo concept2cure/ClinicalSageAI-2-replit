@@ -138,3 +138,14 @@ bea4192be4854027f7e23e82b5b8a062cd6e9dcf:docs/evidence/D3/2026-10-04-pre-auth-na
 5e9d39be4d8679e0bb74637efc9f5d00610888b4:docs/evidence/D6/2026-10-01-gate-selftests/workflow-results.json:c2c-connection-uri-password:119
 5e9d39be4d8679e0bb74637efc9f5d00610888b4:docs/evidence/D6/2026-10-01-gate-selftests/workflow-results.json:private-key:781
 750c16334dfc9c513dc27ca34092004fb2ce6b94:docs/evidence/D6/2026-10-01-gate-selftests/workflow-results.json:private-key:781
+
+# status: not a secret
+# reason: QOS-LINEAGE-AUDIT-MANIFEST.json:15 records the SHA-256 checksum of
+#   server/services/ana/uploaded-file-access.ts. Verified against the exact
+#   source bytes at fdd507a91; the digest is not credential material. The word
+#   access in the manifest property lets generic-api-key read the digest as a
+#   key. Only this original commit/path/rule/line is dispositioned; no scanner
+#   rule or live-history entry changes. Remote full-history verification and
+#   the source-checksum comparison are recorded under D4's
+#   2026-10-07-biotech-qualification-followthrough/QOS-SECRET-FINDING-PLAN.md.
+fdd507a91c6b7c7976c78eae4fa9755f87326782:docs/evidence/D4/2026-10-07-biotech-qualification-followthrough/QOS-LINEAGE-AUDIT-MANIFEST.json:generic-api-key:15

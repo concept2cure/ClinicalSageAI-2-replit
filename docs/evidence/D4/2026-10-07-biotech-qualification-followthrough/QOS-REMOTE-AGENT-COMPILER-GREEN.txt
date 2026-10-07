@@ -1,0 +1,11 @@
+Source commit: fdd507a91c6b7c7976c78eae4fa9755f87326782
+Source tree: 09bdd1233c21b130b533c24c705d00a3855400c8
+Workflow run: 37676477193 (C2C Agent — Validate & Audit)
+Job: 112981176880 (typecheck)
+Job conclusion: success
+The full compiler ran remotely with the existing 24-GiB configuration.
+Local builds/erasure were not used as semantic TypeScript proof.
+
+2026-10-07T19:43:02.4950810Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-07T19:45:49.1060364Z [ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+2026-10-07T19:45:49.1061510Z [ci:typecheck-no-regression] OK — error count 0 matches baseline.
