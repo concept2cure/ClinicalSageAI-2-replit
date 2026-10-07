@@ -83,7 +83,29 @@ ESLint with zero warnings. Existing large-file warnings are not suppressed or
 given a larger baseline. The actual pre-push prefix through warning ratcheting
 must pass on the committed publication range. Full TypeScript and repository
 ESLint execute on GitHub for the exact source commit, as requested; a prior
-commit's green run is not evidence for these changes.
+commit's green run is not evidence for these changes. The first five
+improvements' exact-source TypeScript/ESLint, browser journey and CodeQL
+results are recorded in [GITHUB-VALIDATION.md](GITHUB-VALIDATION.md).
+
+## Continuation: conversation files into the Data Room
+
+The existing adoption path now verifies actual bytes before capture or
+duplicate success, then binds the current upload identity/availability under
+the same transaction as capture and audits. The shared metadata/byte readers
+also reject raw tenant-prefix paths that resolve into another namespace.
+
+Contracts and scoped evidence:
+
+- [Bounded adoption contract](ADOPTION-PLAN.md)
+- [Canonical resolved-path containment](RESOLVED-PATH-CONTAINMENT.md)
+- [Verified adoption and rollback behavior](ADOPTION-VERIFICATION.md)
+- [Control-tower continuation: 974 shared tests and boundaries](CONTINUATION.md)
+
+Capture retains the original and explicitly leaves extraction pending. These
+checks are not scientific qualification, an automatic filing action, symlink
+or immutable-storage guarantees, or live independent-connection concurrency
+qualification. The control-tower continuation receipt records shared checks
+separately from worker counts.
 
 ## Goal remains open — ordered next work
 

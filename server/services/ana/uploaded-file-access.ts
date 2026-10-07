@@ -108,7 +108,22 @@ export interface UploadedFileMetadata {
  * (`uploads/file_*`).
  */
 function isUnscopedPath(storagePath: string): boolean {
-  return storagePath.startsWith('uploads/unscoped/') || /^uploads\/file_[^/]+$/.test(storagePath);
+  if (storagePath.startsWith('uploads/unscoped/')) {
+    return resolvesWithinUploadNamespace(storagePath, 'unscoped');
+  }
+  return /^uploads\/file_[^/]+$/.test(storagePath) && resolvesWithinUploadNamespace(storagePath, '');
+}
+
+/**
+ * Lexical containment after resolving dot segments, shared by metadata and
+ * byte readers. A raw org prefix alone accepts org-7/../org-9; the resolved
+ * path must be a CHILD of its permitted namespace, not the directory itself.
+ * This does not resolve symlinks or guarantee filesystem immutability.
+ */
+function resolvesWithinUploadNamespace(storagePath: string, namespace: string): boolean {
+  const directory = path.resolve(uploadsRoot(), namespace);
+  const resolved = path.resolve(process.cwd(), storagePath);
+  return resolved.startsWith(directory + path.sep);
 }
 
 /**
@@ -140,6 +155,7 @@ function rowBelongsToOrg(
   }
 
   if (!storagePath.startsWith(`uploads/org-${Number(organizationId)}/`)) return false;
+  if (!resolvesWithinUploadNamespace(storagePath, `org-${Number(organizationId)}`)) return false;
   if (row.organization_id === undefined) return true; // pre-migration database
   if (row.organization_id === null) return false;
   return Number(row.organization_id) === Number(organizationId);

@@ -80,6 +80,8 @@ import {
 import { serverError } from '../../lib/api-response.js';
 import { createSource, findSourceByChecksum } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { uploadedBinaryAvailableSql } from '../../services/document-data-disposition/eligibility.js';
+import { lockDocumentDispositionProgram } from '../../services/document-data-disposition/program-lock.js';
+import { loadUploadedFile, sha256Hex, UploadedFileError, type UploadedFile } from '../../services/ana/uploaded-file-access.js';
 
 // People are named through public.actor_name, not a join on users: since users
 // took row-level security (D3, 2026-09-28) a tenant scope reads only current
@@ -1399,6 +1401,61 @@ router.get('/:id/records', async (req: Request, res: Response) => {
 // organization's; the same bytes already in this project are that source, not
 // a second one, and adopting again writes nothing.
 
+class AdoptionRefusal extends Error {
+  constructor(readonly status: 404 | 409, readonly code: string, message: string) { super(message); }
+}
+type AdoptionFileRow = {
+  id: string; original_name: string | null; mime_type: string | null;
+  storage_path: string | null; checksum_sha256: string | null;
+};
+
+/** The pre-read takes no row lock. Recheck under FOR UPDATE only after the
+ * shared disposition advisory lock, so save/withdrawal cannot invert locks. */
+async function authorizeAdoptionProgram(client: PoolClient, req: Request, res: Response, scope: { orgId: number; programId: string }, lock: boolean): Promise<boolean> {
+  const { orgId, programId } = scope;
+  const program = await client.query(
+    `SELECT lead_user_id FROM regulatory_programs
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL${lock ? ' FOR UPDATE' : ''}`,
+    [programId, orgId],
+  );
+  if (program.rows.length === 0) { send404(res); return false; }
+  const lead = (program.rows[0] as { lead_user_id: number | null }).lead_user_id;
+  return allowProgramMutation(req, res, { leadUserId: lead == null ? null : Number(lead) }, 'POST /:id/adopt');
+}
+
+/** Caller already holds the program advisory and impact-table reservations.
+ * The loader is the sole byte/tenant integrity engine; the final row lock binds
+ * its verified bytes to the current eligible database identity until commit. */
+async function verifiedAdoptionUpload(client: PoolClient, fileUploadId: string, orgId: number): Promise<{ file: AdoptionFileRow; upload: UploadedFile; sha256: string }> {
+  const sql = `SELECT f.id, f.original_name, f.mime_type, f.storage_path, f.checksum_sha256
+    FROM file_uploads f WHERE f.id = $1 AND f.organization_id = $2
+      AND ${uploadedBinaryAvailableSql('f')}`;
+  const initial = await client.query<AdoptionFileRow>(sql, [fileUploadId, orgId]);
+  if (!initial.rows[0]) throw new AdoptionRefusal(404, 'FILE_NOT_FOUND', 'File not found');
+  if (!initial.rows[0].checksum_sha256) throw new AdoptionRefusal(409, 'FILE_IDENTITY_UNKNOWN', 'This file has no recorded checksum, so its identity cannot be established. Upload it again with the project open.');
+  const upload = await loadUploadedFile(fileUploadId, orgId);
+  if (upload.integrity !== 'verified') throw new AdoptionRefusal(409, 'FILE_IDENTITY_UNKNOWN', 'This file has no recorded checksum, so its identity cannot be established. Upload it again with the project open.');
+  const sha256 = sha256Hex(upload.buffer);
+  const final = await client.query<AdoptionFileRow>(`${sql} FOR SHARE OF f`, [fileUploadId, orgId]);
+  const file = final.rows[0];
+  if (!file || file.id !== upload.fileId || file.storage_path !== upload.storagePath || file.checksum_sha256 !== sha256) {
+    throw new AdoptionRefusal(409, 'FILE_CHANGED', 'The file identity or availability changed during adoption. Nothing was captured. Read or upload the file again.');
+  }
+  return { file, upload, sha256 };
+}
+
+function adoptionRefusalResponse(res: Response, err: unknown): Response | null {
+  if (err instanceof AdoptionRefusal) return res.status(err.status).json({ error: err.message, code: err.code });
+  if (!(err instanceof UploadedFileError)) return null;
+  const failures = {
+    UPLOAD_NOT_FOUND: { status: 404, error: 'File not found' },
+    UPLOAD_BYTES_MISSING: { status: 410, error: 'The file bytes are no longer available. Upload it again with the project open.' },
+    UPLOAD_INTEGRITY_FAILED: { status: 409, error: 'The file failed its integrity check. Nothing was captured. Upload it again with the project open.' },
+  };
+  const failure = failures[err.code];
+  return res.status(failure.status).json({ error: failure.error, code: err.code });
+}
+
 router.post('/:id/adopt', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   const userId = resolveUserId(req);
@@ -1407,41 +1464,29 @@ router.post('/:id/adopt', async (req: Request, res: Response) => {
   if (!UUID_RE.test(programId)) return send404(res);
   const fileUploadId = typeof req.body?.fileUploadId === 'string' ? req.body.fileUploadId.trim() : '';
   if (!fileUploadId) return send400(res, 'fileUploadId is required.');
+  const scope = { orgId, programId };
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const program = await client.query(
-      `SELECT lead_user_id FROM regulatory_programs
-        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
-      [programId, orgId],
-    );
-    if (program.rows.length === 0) { await client.query('ROLLBACK'); return send404(res); }
-    const lead = (program.rows[0] as { lead_user_id: number | null }).lead_user_id;
-    if (!allowProgramMutation(req, res, { leadUserId: lead == null ? null : Number(lead) }, 'POST /:id/adopt')) {
+    if (!await authorizeAdoptionProgram(client, req, res, scope, false)) {
       await client.query('ROLLBACK');
       return;
     }
-    const file = await client.query(
-      `SELECT id, original_name, mime_type, file_size, storage_path, checksum_sha256
-         FROM file_uploads f WHERE id = $1 AND organization_id = $2
-           AND ${uploadedBinaryAvailableSql('f')}`,
-      [fileUploadId, orgId],
-    );
-    const f = file.rows[0] as
-      | { id: string; original_name: string | null; mime_type: string | null; file_size: number | null; storage_path: string | null; checksum_sha256: string | null }
-      | undefined;
-    if (!f) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'File not found', code: 'FILE_NOT_FOUND' }); }
-    if (!f.checksum_sha256) {
+    await lockDocumentDispositionProgram(client, orgId, programId);
+    if (!await authorizeAdoptionProgram(client, req, res, scope, true)) {
       await client.query('ROLLBACK');
-      return res.status(409).json({
-        error: 'This file has no recorded checksum, so its identity cannot be established. Upload it again with the project open.',
-        code: 'FILE_IDENTITY_UNKNOWN',
-      });
+      return;
     }
-    const existing = await findSourceByChecksum(orgId, f.checksum_sha256, {
+    // Availability is organization-wide: reserve disposition impact tables in
+    // their established order before any eligible identity read, including a
+    // withdrawal associated with a different program. No dispositions-table
+    // lock is acquired here, which would invert withdrawal's impact lock order.
+    await client.query('LOCK TABLE public.cre_evidence_sources, public.file_uploads IN ROW EXCLUSIVE MODE');
+    const { file: f, upload, sha256 } = await verifiedAdoptionUpload(client, fileUploadId, orgId);
+    const existing = await findSourceByChecksum(orgId, sha256, {
       sourceType: 'client_document', clientProgramId: programId, clientWorkspaceId: null,
-    });
+    }, client);
     if (existing) {
       await client.query('ROLLBACK');
       return res.json({ adopted: false, sourceId: existing.id, message: 'This file is already in the project’s Data Room.' });
@@ -1452,21 +1497,25 @@ router.post('/:id/adopt', async (req: Request, res: Response) => {
       clientProgramId: programId,
       clientWorkspaceId: null,
       title: f.original_name,
-      storedArtifactRef: f.storage_path,
-      checksum: f.checksum_sha256,
+      storedArtifactRef: upload.storagePath,
+      checksum: sha256,
       ingestionStatus: 'ingested',
-      provenance: { origin: 'adopt', fileUploadId: f.id, storagePath: f.storage_path, adoptedByUserId: userId, adoptedFrom: 'conversation' },
-      metadata: { originalName: f.original_name, mimeType: f.mime_type, fileSize: f.file_size },
+      extractionStatus: 'pending',
+      createdBy: userId,
+      provenance: { origin: 'adopt', fileUploadId: upload.fileId, storagePath: upload.storagePath, adoptedByUserId: userId, adoptedFrom: 'conversation' },
+      metadata: { originalName: f.original_name, mimeType: f.mime_type, fileSize: upload.buffer.length },
     }, client);
     await writeProgramAudit(client, {
       orgId, userId, programId,
       action: 'c2c.project.adopt',
-      details: { file_upload_id: f.id, source_id: source.id, checksum: f.checksum_sha256, from: 'conversation' },
+      details: { file_upload_id: upload.fileId, source_id: source.id, checksum: sha256, from: 'conversation' },
     });
     await client.query('COMMIT');
     return res.status(201).json({ adopted: true, sourceId: source.id });
   } catch (err: unknown) {
     await client.query('ROLLBACK').catch(() => {});
+    const refusal = adoptionRefusalResponse(res, err);
+    if (refusal) return refusal;
     return serverError(res, logger, 'adopting the file into the project', err, { programId });
   } finally {
     client.release();

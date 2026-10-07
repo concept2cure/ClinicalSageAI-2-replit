@@ -410,6 +410,7 @@ export async function findSourceByChecksum(
     clientProgramId?: string | null;
     clientWorkspaceId?: number | null;
   } = {},
+  exec?: SourceExecutor,
 ): Promise<EvidenceSource | null> {
   if (!checksum) return null;
   const c = visibleOrgClause(orgId, 2);
@@ -427,7 +428,7 @@ export async function findSourceByChecksum(
     args.push(opts.clientWorkspaceId);
     where += ` AND client_workspace_id IS NOT DISTINCT FROM $${args.length}::integer`;
   }
-  const { rows } = await pool.query(
+  const { rows } = await (exec ?? pool).query(
     `SELECT * FROM cre_evidence_sources WHERE ${where} ORDER BY created_at ASC LIMIT 1`,
     args,
   );

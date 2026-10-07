@@ -369,6 +369,16 @@ export async function hopAdopt(w: World): Promise<void> {
     cwd.mockRestore();
   }
   const fileId = String(upload.body?.fileId);
+  // Adoption now proves actual upload bytes. Resolve its relative storage
+  // path against the same isolated root used by this fixture's upload.
+  async function adoptConversationFile() {
+    const adoptCwd = vi.spyOn(process, 'cwd').mockReturnValue(tmp);
+    try {
+      return await asPrincipal(ORG_A, 3)(request(w.app).post(`/api/c2c/projects/${k.programId}/adopt`)).send({ fileUploadId: fileId });
+    } finally {
+      adoptCwd.mockRestore();
+    }
+  }
 
   await hop.check('unscoped-upload-is-a-conversation-file', 'an upload with no project open records no Data Room source', async (observe) => {
     const sources = await q(`SELECT id FROM cre_evidence_sources WHERE provenance->>'fileUploadId' = $1`, [fileId]);
@@ -392,7 +402,7 @@ export async function hopAdopt(w: World): Promise<void> {
     expect(ids).not.toContain('colleague-file');
   });
   await hop.check('adopt-makes-it-the-projects-source', 'one audited adopt makes the file a source of the project, keyed to it', async (observe) => {
-    const res = await asPrincipal(ORG_A, 3)(request(w.app).post(`/api/c2c/projects/${k.programId}/adopt`)).send({ fileUploadId: fileId });
+    const res = await adoptConversationFile();
     const [src] = await q<{ client_program_id: string; organization_id: number; checksum: string }>(
       'SELECT client_program_id, organization_id, checksum FROM cre_evidence_sources WHERE id = $1', [res.body?.sourceId]);
     const audit = await q(`SELECT 1 FROM audit_logs WHERE action = 'c2c.project.adopt' AND record_id = $1`, [k.programId]);
@@ -402,7 +412,7 @@ export async function hopAdopt(w: World): Promise<void> {
     expect(audit).toHaveLength(1);
   });
   await hop.check('adopt-is-once', 'adopting the same file again is not a second source and writes no second audit row', async (observe) => {
-    const again = await asPrincipal(ORG_A, 3)(request(w.app).post(`/api/c2c/projects/${k.programId}/adopt`)).send({ fileUploadId: fileId });
+    const again = await adoptConversationFile();
     const sources = await q(`SELECT id FROM cre_evidence_sources WHERE client_program_id = $1 AND checksum = $2`, [k.programId, sha256(bytes)]);
     const audit = await q(`SELECT 1 FROM audit_logs WHERE action = 'c2c.project.adopt' AND record_id = $1`, [k.programId]);
     observe({ status: again.status, sources: sources.length, audited: audit.length });
