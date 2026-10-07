@@ -1,0 +1,164 @@
+✔ a reference to an uncreated table after a string holding /* is reported (122.808679ms)
+✔ runtime DDL after a string holding /* backs its table (0.158987ms)
+✔ runtime DDL after an https:// string on the same line backs its table (0.115196ms)
+✔ DDL only inside real comments backs nothing (0.114449ms)
+✔ DDL inside an SQL comment within an embedded string backs nothing (0.209374ms)
+✔ a leading recursive CTE with declared and quoted columns is query-local storage (0.185952ms)
+✖ a leading column-list CTE still reports the missing storage it reads (0.92343ms)
+✖ a later recursive CTE with declared columns is query-local storage (0.188656ms)
+✖ a later column-list CTE still reports the missing storage it reads (0.214613ms)
+✔ a CTE declaration does not qualify the same table name in another statement (0.292791ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 7
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 242.526667
+
+✖ failing tests:
+
+test at scripts/ci/__tests__/unbacked-tables-strings.test.mjs:185:1
+✖ a leading column-list CTE still reports the missing storage it reads (0.92343ms)
+  AssertionError [ERR_ASSERTION]: [ci:unbacked-tables] 2 tables/views created across migrations, drizzle and runtime DDL; 10 referenced in server SQL; 8 unbacked (strict mode)
+
+  🚫 Server SQL references tables that NOTHING in this repo creates:
+
+    advisory_missing
+        server/services/advisory-reader.ts
+    ghost_blocks
+        server/services/ghost-notes.ts
+    ghost_notes
+        server/services/ghost-notes.ts
+    later_cte_missing_store
+        server/services/later-column-missing-store.ts
+    later_missing_cte
+        server/services/later-column-missing-store.ts
+    later_walk
+        server/services/later-column-cte.ts
+    sql_commented_notes
+        server/services/sql-commented.ts
+    statement_local_name
+        server/services/statement-local-cte.ts
+
+    An unguarded query against a missing table throws "relation does not exist",
+    which route handlers turn into a 500 — the endpoint never works. A guarded
+    one degrades to a silent no-op, which is worse: it looks durable and is not.
+
+    Fix: add a code-derived migration for the table (see ledger C-11/C-14), or
+    point the query at the table that actually holds the data.
+    If this is pre-existing debt being tracked:
+      npm run ci:unbacked-tables:write-baseline
+
+
+      at TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/unbacked-tables-strings.test.mjs:187:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/ci/__tests__/unbacked-tables-strings.test.mjs:191:1
+✖ a later recursive CTE with declared columns is query-local storage (0.188656ms)
+  AssertionError [ERR_ASSERTION]: [ci:unbacked-tables] 2 tables/views created across migrations, drizzle and runtime DDL; 10 referenced in server SQL; 8 unbacked (strict mode)
+
+  🚫 Server SQL references tables that NOTHING in this repo creates:
+
+    advisory_missing
+        server/services/advisory-reader.ts
+    ghost_blocks
+        server/services/ghost-notes.ts
+    ghost_notes
+        server/services/ghost-notes.ts
+    later_cte_missing_store
+        server/services/later-column-missing-store.ts
+    later_missing_cte
+        server/services/later-column-missing-store.ts
+    later_walk
+        server/services/later-column-cte.ts
+    sql_commented_notes
+        server/services/sql-commented.ts
+    statement_local_name
+        server/services/statement-local-cte.ts
+
+    An unguarded query against a missing table throws "relation does not exist",
+    which route handlers turn into a 500 — the endpoint never works. A guarded
+    one degrades to a silent no-op, which is worse: it looks durable and is not.
+
+    Fix: add a code-derived migration for the table (see ledger C-11/C-14), or
+    point the query at the table that actually holds the data.
+    If this is pre-existing debt being tracked:
+      npm run ci:unbacked-tables:write-baseline
+
+
+      at TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/unbacked-tables-strings.test.mjs:193:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/ci/__tests__/unbacked-tables-strings.test.mjs:197:1
+✖ a later column-list CTE still reports the missing storage it reads (0.214613ms)
+  AssertionError [ERR_ASSERTION]: [ci:unbacked-tables] 2 tables/views created across migrations, drizzle and runtime DDL; 10 referenced in server SQL; 8 unbacked (strict mode)
+
+  🚫 Server SQL references tables that NOTHING in this repo creates:
+
+    advisory_missing
+        server/services/advisory-reader.ts
+    ghost_blocks
+        server/services/ghost-notes.ts
+    ghost_notes
+        server/services/ghost-notes.ts
+    later_cte_missing_store
+        server/services/later-column-missing-store.ts
+    later_missing_cte
+        server/services/later-column-missing-store.ts
+    later_walk
+        server/services/later-column-cte.ts
+    sql_commented_notes
+        server/services/sql-commented.ts
+    statement_local_name
+        server/services/statement-local-cte.ts
+
+    An unguarded query against a missing table throws "relation does not exist",
+    which route handlers turn into a 500 — the endpoint never works. A guarded
+    one degrades to a silent no-op, which is worse: it looks durable and is not.
+
+    Fix: add a code-derived migration for the table (see ledger C-11/C-14), or
+    point the query at the table that actually holds the data.
+    If this is pre-existing debt being tracked:
+      npm run ci:unbacked-tables:write-baseline
+
+
+      at TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/unbacked-tables-strings.test.mjs:200:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

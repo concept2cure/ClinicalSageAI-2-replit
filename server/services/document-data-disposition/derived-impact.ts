@@ -1,6 +1,6 @@
 import type { DocumentDispositionLinkedIds } from '../../../shared/document-data-disposition';
 import { capturedOwnDataEligibleSql } from './eligibility';
-import { recordedLineageCtes, recordedLineageInvalidSql } from './recorded-lineage';
+import { recordedLineageRowsSql, recordedLineageInvalidSql } from './recorded-lineage';
 import { hashSnapshot } from './tokens';
 import { DispositionError, type DispositionQueryable } from './types';
 
@@ -50,11 +50,12 @@ export async function readDerivedCaptureImpact(
   linkedIds: DocumentDispositionLinkedIds,
   sourceSha256: string,
 ): Promise<DerivedCaptureImpact> {
-  const result = await q.query(`${recordedLineageCtes(`SELECT 'captured'::text AS kind,
+  const walkRowsSql = recordedLineageRowsSql(`SELECT 'captured'::text AS kind,
       s.id::text AS id,s.organization_id,s.checksum,s.client_program_id AS program_id,to_jsonb(s.provenance) AS provenance
       FROM public.cre_evidence_sources s WHERE s.organization_id = $1 AND s.source_type = 'client_document'
         AND s.deleted_at IS NULL AND ${capturedOwnDataEligibleSql('s')}
-        AND NOT (s.id::text = ANY($2::text[]))`)}
+        AND NOT (s.id::text = ANY($2::text[]))`);
+  const result = await q.query(`WITH rl_walk AS (${walkRowsSql})
     SELECT s.*, (NOT EXISTS (SELECT 1 FROM rl_walk invalid_path
       WHERE invalid_path.root_id = s.id::text AND (${recordedLineageInvalidSql('invalid_path')}
         OR (invalid_path.depth > 0 AND ((invalid_path.kind = 'captured' AND invalid_path.id = ANY($2::text[]))

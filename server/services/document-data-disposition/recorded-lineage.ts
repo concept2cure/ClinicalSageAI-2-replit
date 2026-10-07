@@ -100,7 +100,7 @@ function recordedEdgesSql(): string {
  * ancestor. A cycle or depth limit is an unverified refusal, never truncation
  * represented as a complete lineage. Own-upload bridges consume no ancestry
  * depth; the visited identity path still detects their cycles. */
-export function recordedLineageCtes(seedSql: string): string {
+export function recordedLineageRowsSql(seedSql: string): string {
   return `WITH RECURSIVE rl_seed AS (${seedSql}),
     rl_walk(root_kind,root_id,organization_id,kind,id,checksum,program_id,provenance,depth,visited,invalid,is_cycle,expand) AS (
       SELECT kind,id,organization_id,kind,id,checksum,program_id,provenance,0,
@@ -122,7 +122,7 @@ export function recordedLineageCtes(seedSql: string): string {
         AND p.id = ${integerIdentity('e.id')} AND p.organization_id = w.organization_id AND p.source_type = 'client_document'
       LEFT JOIN public.file_uploads f ON e.kind = 'upload' AND f.id = e.id AND f.organization_id = w.organization_id
       WHERE w.expand AND NOT w.invalid AND NOT w.is_cycle AND w.depth < ${MAX_RECORDED_DEPTH}
-    )`;
+    ) SELECT * FROM rl_walk`;
 }
 
 export const recordedLineageInvalidSql = (a: string): string => {
@@ -152,7 +152,7 @@ export function recordedLineageSeedSql(kind: 'captured' | 'upload', a: string): 
 }
 
 export function recordedLineageEligibleSql(kind: 'captured' | 'upload', a: string): string {
-  return `NOT EXISTS (${recordedLineageCtes(recordedLineageSeedSql(kind, a))}
+  return `NOT EXISTS (WITH rl_walk AS (${recordedLineageRowsSql(recordedLineageSeedSql(kind, a))})
     SELECT 1 FROM rl_walk rw WHERE ${recordedLineageInvalidSql('rw')} OR ${recordedAncestorWithdrawnSql('rw')})`;
 }
 
@@ -180,8 +180,9 @@ function assertAdmissionRow(row: LineageAdmissionRow | undefined): asserts row i
 export async function readRecordedUploadLineage(
   q: DispositionQueryable, organizationId: number, fileId: string, checksum: string,
 ): Promise<RecordedUploadLineage | null> {
-  const result = await q.query(`${recordedLineageCtes(`SELECT 'upload'::text AS kind,
-      $2::text AS id,$1::integer AS organization_id,$3::text AS checksum,NULL::uuid AS program_id,NULL::jsonb AS provenance`)}
+  const walkRowsSql = recordedLineageRowsSql(`SELECT 'upload'::text AS kind,
+      $2::text AS id,$1::integer AS organization_id,$3::text AS checksum,NULL::uuid AS program_id,NULL::jsonb AS provenance`);
+  const result = await q.query(`WITH rl_walk AS (${walkRowsSql})
     SELECT COALESCE(bool_or(${recordedLineageInvalidSql('rw')}),FALSE) AS invalid,
       COALESCE(bool_or(${recordedAncestorWithdrawnSql('rw')}),FALSE) AS withdrawn,
       COALESCE(jsonb_agg(DISTINCT jsonb_build_object('id',rw.id,'checksum',rw.checksum))

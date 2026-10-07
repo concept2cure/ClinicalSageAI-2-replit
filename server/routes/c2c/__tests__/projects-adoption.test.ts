@@ -110,7 +110,7 @@ async function transactionQuery(sql: string, params: unknown[] = []) {
   if (sql === 'ROLLBACK') { staged = []; return { rows: [] }; }
   // This unit fixture represents an ordinary upload with no recorded parent.
   // Actual audit/capture ancestry is exercised by the PGlite route suite.
-  if (sql.startsWith('WITH RECURSIVE rl_seed') && sql.includes('AS parent_files')) {
+  if (sql.startsWith('WITH rl_walk AS (WITH RECURSIVE rl_seed') && sql.includes('AS parent_files')) {
     return { rows: [{ invalid: false, withdrawn: false, parent_files: [], parent_sources: [] }], rowCount: 1 };
   }
   if (sql.includes('FROM regulatory_programs')) return programRows(sql);
@@ -219,6 +219,7 @@ describe('adoption protects the database handoff', () => {
     failWrite = failure;
     const res = await adopt();
     expect(res.status).toBe(500);
+    expect(mocks.createSource).toHaveBeenCalledOnce();
     expect(committed).toEqual([]);
     expect(staged).toEqual([]);
     expect(sqlCalls()).toContain('ROLLBACK');

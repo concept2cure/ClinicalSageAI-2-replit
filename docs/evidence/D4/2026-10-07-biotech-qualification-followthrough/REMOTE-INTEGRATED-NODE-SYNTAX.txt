@@ -1,0 +1,9 @@
+$ node --check scripts/ci/check-unbacked-tables.mjs
+
+exit_code=0
+$ node --check scripts/ci/__tests__/unbacked-tables-strings.test.mjs
+
+exit_code=0
+$ node --check scripts/ci/__tests__/recorded-lineage-query-bindings.test.mjs
+
+exit_code=0

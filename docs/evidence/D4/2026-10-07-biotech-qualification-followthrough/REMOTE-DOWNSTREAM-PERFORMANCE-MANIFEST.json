@@ -1,0 +1,96 @@
+{
+  "source": {
+    "scripts/ci/check-unbacked-tables.mjs": "2c54a799c63e054cc7f061477d8197ae4158a8ee",
+    "scripts/ci/__tests__/unbacked-tables-strings.test.mjs": "04924c7102e4d7391e0f5a0090d166e9220eb943",
+    "scripts/ci/__tests__/recorded-lineage-query-bindings.test.mjs": "a1c570fa26239b039fd42dddcb71aa7cf266554f",
+    "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts": "859143c949be71107c9ee341f593928c31f5cc69",
+    "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts": "509e40619ffd2d981d3d7711fd9c6ac862ac6bbb",
+    "server/services/document-data-disposition/recorded-lineage.ts": "a7427073a59cf765f5b24dbed9b1932ab52c520b",
+    "server/services/document-data-disposition/derived-impact.ts": "d435e98135a57e3771e52fd3e9ce47df6286ec85",
+    "server/routes/c2c/__tests__/projects-adoption.test.ts": "400362485b026a053bc9818290ad1a5e1f8a5275"
+  },
+  "command": [
+    "node",
+    "--import",
+    "./node_modules/tsx/dist/loader.mjs",
+    "/workspace/scratch/c2099bdce0e4/remote-downstream-performance.mts"
+  ],
+  "helper_sha256": "f693d7df19d41bb0b7be802f89aa3f7e74012bfc15e29c40b70171aff2cc1454",
+  "original_predicate_git_blob": "86dfb77f92be2055589d320030b6dadd1fb4ca8d",
+  "exit_code": 0,
+  "data": {
+    "kind": "local PGlite descriptive timing only",
+    "same_tenant_audit_rows": 800,
+    "foreign_audit_rows": 800,
+    "index": "audit_logs(table_name,record_id), matching existing deployed identity index; no new production index",
+    "observations": [
+      {
+        "label": "atom",
+        "table": "lumen_data_atoms",
+        "original40697292": {
+          "rows": 203,
+          "milliseconds": [
+            5.84,
+            4.01,
+            5.89
+          ],
+          "median_ms": 5.84
+        },
+        "remote_gate_assembly": {
+          "rows": 203,
+          "milliseconds": [
+            754.13,
+            524.03,
+            509.63
+          ],
+          "median_ms": 524.03
+        }
+      },
+      {
+        "label": "rag",
+        "table": "rag_documents",
+        "original40697292": {
+          "rows": 201,
+          "milliseconds": [
+            2.03,
+            3.71,
+            2.97
+          ],
+          "median_ms": 2.97
+        },
+        "remote_gate_assembly": {
+          "rows": 201,
+          "milliseconds": [
+            159.71,
+            149.64,
+            188.57
+          ],
+          "median_ms": 159.71
+        }
+      },
+      {
+        "label": "artifact",
+        "table": "concept2cure_artifacts",
+        "original40697292": {
+          "rows": 201,
+          "milliseconds": [
+            5.18,
+            3.48,
+            4.58
+          ],
+          "median_ms": 4.58
+        },
+        "remote_gate_assembly": {
+          "rows": 201,
+          "milliseconds": [
+            119.51,
+            172.02,
+            137.96
+          ],
+          "median_ms": 137.96
+        }
+      }
+    ],
+    "limits": "No latency threshold, planner equivalence, production load, RLS, or independent connection qualification is claimed."
+  }
+}

@@ -32,7 +32,7 @@ vi.mock('../../auditService', () => ({
   },
 }));
 
-import { saveDerivedUpload, sha256Hex } from '../uploaded-file-access';
+import { saveDerivedUpload, sha256Hex, type DerivedUploadParams } from '../uploaded-file-access';
 
 let harness: DispositionHarness;
 let f: DispositionFixture;
@@ -53,7 +53,7 @@ beforeEach(async () => {
   [sha256Hex(h.original), h.original.length, f.upload]);
   await f.pg.query('UPDATE cre_evidence_sources SET checksum=$1 WHERE id=$2', [sha256Hex(h.original), f.capture]);
 });
-function params() {
+function params(): DerivedUploadParams & { derivation: NonNullable<DerivedUploadParams['derivation']> } {
   return { buffer: Buffer.from('edited workbook'), fileName: 'edited.xlsx',
     mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', organizationId: f.org, userId: 42,
     derivation: { sourceFileId: f.upload, sourceSha256: sha256Hex(h.original), projectRef: f.program,

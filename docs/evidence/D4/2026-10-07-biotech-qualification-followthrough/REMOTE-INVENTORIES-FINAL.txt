@@ -1,0 +1,19 @@
+$ npm run ci:unbacked-tables
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 ci:unbacked-tables
+> node scripts/ci/check-unbacked-tables.mjs
+
+[ci:unbacked-tables] 1488 tables/views created across migrations, drizzle and runtime DDL; 734 referenced in server SQL; 22 unbacked; 22 baselined
+[ci:unbacked-tables] ✅ no new references to tables nothing creates.
+exit_code=0
+
+$ npm run ci:migration-reachability
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 ci:migration-reachability
+> node scripts/ci/check-migration-reachability.mjs
+
+[ci:migration-reachability] 1357 durably-created tables; 0 server-referenced table(s) created only by a deploy-dead migration; 0 baselined
+[ci:migration-reachability] ✅ no new unreachable table references.
+exit_code=0

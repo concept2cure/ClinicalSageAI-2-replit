@@ -232,13 +232,26 @@ const NOT_A_TABLE = new Set([
  * nobody can ever resolve, and it fails future files for discussing it (the
  * lesson from the duplicate-table guard's `if` entry, ledger C-12).
  */
+// An explicit CTE output-column list defines query-local columns, not storage.
+// Use the same declaration suffix for statement admission and CTE names:
+// otherwise a leading list hides its real storage reads, while a later list
+// makes a recursive CTE appear to be an uncreated persisted table. Match only
+// identifier lists; expressions and column types are not CTE output names.
+const CTE_COLUMN = '(?:[a-zA-Z_][\\w]*|"(?:[^"]|"")+")';
+const CTE_COLUMN_LIST = '\\s*\\(\\s*' + CTE_COLUMN + '(?:\\s*,\\s*' + CTE_COLUMN + ')*\\s*\\)';
+const CTE_DECLARATION_SUFFIX = '(?:' + CTE_COLUMN_LIST + '\\s*|\\s+)AS\\s*\\(';
+const CTE_RE = new RegExp(
+  '(?:WITH|,)\\s+(?:RECURSIVE\\s+)?([a-zA-Z_][\\w]*)' + CTE_DECLARATION_SUFFIX,
+  'gi',
+);
+
 const SQL_SMELL = new RegExp(
   '^\\s*(?:' +
     'SELECT\\b' +
     '|INSERT\\s+INTO\\s+[\\w.]+\\s*[({]' +
     '|UPDATE\\s+[\\w.]+\\s+SET\\b' +
     '|DELETE\\s+FROM\\s+[\\w.]+\\s*(?:$|WHERE\\b|USING\\b|RETURNING\\b|;)' +
-    '|WITH\\s+(?:RECURSIVE\\s+)?[\\w]+\\s+AS\\s*\\(' +
+    '|WITH\\s+(?:RECURSIVE\\s+)?[a-zA-Z_][\\w]*' + CTE_DECLARATION_SUFFIX +
     ')',
   'i',
 );
@@ -259,7 +272,7 @@ for (const f of SCANNED.flatMap((d) => collect(path.join(repoRoot, d), ['.ts']))
     if (!SQL_SMELL.test(body)) continue;
     // CTE names are defined by the query itself.
     const ctes = new Set(
-      [...body.matchAll(/(?:WITH|,)\s+(?:RECURSIVE\s+)?([a-zA-Z_][\w]*)\s+AS\s*\(/gi)].map((m) =>
+      [...body.matchAll(CTE_RE)].map((m) =>
         m[1].toLowerCase(),
       ),
     );

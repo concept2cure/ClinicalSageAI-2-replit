@@ -157,7 +157,7 @@ describe('known legacy workbook ancestry eligibility', () => {
 
   it('refuses depth exhaustion instead of calling the bounded walk complete', async () => {
     const f = await harness.seed();
-    let parent = { fileId: f.upload, hash: 'a'.repeat(64) };
+    let parent: { fileId: string; hash: string } = { fileId: f.upload, hash: 'a'.repeat(64) };
     for (let i = 0; i < 65; i++) parent = await auditedUpload(f, parent);
     expect(await binary(f, parent.fileId)).toBe(false);
   }, 60_000);

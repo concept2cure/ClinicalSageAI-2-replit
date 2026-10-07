@@ -84,6 +84,41 @@ semantic TypeScript, scanner and broad CI verdicts remain pending at filing;
 queued jobs are not passes. Full release/intended-use qualification remains
 open.
 
+## Exact-source remote gate follow-through
+
+The first expanded publication's actual GitHub compiler measured three
+fixture `TS2322` errors; its main lint also found a SQL-inventory parser
+mismatch for a recursive CTE with declared columns. Its blank-database
+live-schema gate separately exposed statements assembled across SQL literals.
+All executed REDs are preserved. [REMOTE-GATES-RESULTS.md](REMOTE-GATES-RESULTS.md)
+records the narrow repair: two fixture annotations preserve byte-identical
+emitted JavaScript and all original inputs/assertions; the CI parser recognizes
+column-list CTEs while continuing to reject real missing storage; two existing
+production files bind their complete recursive query in each statement. All
+ancestry, tenant, identity, withdrawal, depth and transaction policies remain.
+The adoption mock fixture follows that query shape and its injected rollback
+cases additionally prove they reach the capture seam. No baseline grows.
+
+The final fresh regression passes **80 physical files / 1470 cases**, zero
+failed/pending/skipped/todo, exit 0, **299.97 seconds**. Its
+[execution manifest](REMOTE-INTEGRATED-GREEN-MANIFEST.json) pins all eight
+changed code blobs and confirms they remained unchanged during the run.
+All **13 Node parser/binding controls** pass, both repository inventories pass,
+all five changed TypeScript files have zero lint errors/warnings, and the
+production server builds. The first 1466-pass/four-failure integration is
+preserved as RED; it does not qualify the corrected adoption fixture.
+
+The same descriptive timing dataset now measures medians of 524.03 ms for
+203 atoms, 159.71 ms for 201 RAG rows and 137.96 ms for 201 artifacts, with
+all ordinary positive rows eligible. These separate runs do not isolate the
+assembly wrapper's cost. Relative overhead remains material, and production
+performance remains unqualified.
+
+The preceding publication's Semgrep, full-history secret scan, security
+contracts/scan, CodeQL and authenticated browser smoke passed. Final-source
+GitHub compiler and broad release CI remain independent publication gates,
+pending when these receipts are filed. D4 and D1–D10 remain open.
+
 ## Evidence scanner correction
 
 The prior Semgrep blocking differential scan found three synthetic opaque

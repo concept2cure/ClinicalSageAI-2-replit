@@ -1,0 +1,13 @@
+Exact-source remote TypeScript RED excerpt (not the entire job log).
+Publication: d46df5e1c406b0e8347385bcc0963dc02fd3e513
+Run: 37658757090; job: 112920552724
+Full job: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37658757090/job/112920552724
+Compiler measured 3 errors, tsc exit 2, baseline 0; job failed.
+
+2026-10-07T17:24:44.3399799Z > node scripts/ci/typecheck-no-regression.mjs
+2026-10-07T17:24:44.3603521Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-07T17:26:34.6617262Z [ci:typecheck-no-regression] errors found: 3 (tsc exit 2)
+2026-10-07T17:26:34.6619229Z [ci:typecheck-no-regression] FAIL — error count 3 exceeds baseline 0 (+3).
+2026-10-07T17:26:34.6622962Z     server/services/ana/__tests__/derived-spreadsheet-sql.test.ts(106,25): error TS2322: Type '""' is not assignable to type '`${string}-${string}-${string}-${string}-${string}`'.
+2026-10-07T17:26:34.6623580Z     server/services/ana/__tests__/derived-spreadsheet-sql.test.ts(121,25): error TS2322: Type '""' is not assignable to type '`${string}-${string}-${string}-${string}-${string}`'.
+2026-10-07T17:26:34.6624626Z     server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts(161,34): error TS2322: Type '{ fileId: string; hash: string; }' is not assignable to type '{ fileId: `${string}-${string}-${string}-${string}-${string}`; hash: string; }'.
