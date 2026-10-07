@@ -21,7 +21,7 @@ function inventoryReaderType(): string {
 /** Compile only the real table, Drizzle definitions and exported store aliases.
  * Importing the runtime facade here would pull the entire application graph.
  */
-function contractDiagnostics(handleType: string): ts.Diagnostic[] {
+function contractDiagnostics(handleType: string): readonly ts.Diagnostic[] {
   const source = sourceFile(storePath);
   const aliases = source.statements.filter(statement => ts.isTypeAliasDeclaration(statement)
     && ['CanonicalStoreDb', 'CanonicalStoreHandle', 'CanonicalStoreReader'].includes(statement.name.text));

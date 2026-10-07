@@ -1,0 +1,59 @@
+W2 Authoring / D4 — source verification snapshot
+Source commit: 40953b58717622ad95aa3a1559bb9e8bde46cac6
+Verified tree: e74e89b09e6a3824a9d34bf45d134f032056c962
+Observed: 2026-10-07T03:17:50.598Z
+
+Canonical full-project TypeScript + ESLint:
+https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37565406425
+setup | job 112611847386 | completed | success
+
+typecheck | job 112611847581 | completed | success
+
+regulatory_validation | job 112611848319 | completed | skipped
+
+security_audit | job 112611848342 | completed | skipped
+
+ai_prompt_eval | job 112611848384 | completed | skipped
+
+compliance_check | job 112611848449 | completed | skipped
+
+typecheck-green.txt records errors found: 0 (tsc exit 0), unchanged baseline 0.
+The same job ran ESLint with 0 errors and 6258 existing warnings.
+Pushed-file preflight found no warning growth in any of the five changed files.
+The first source typecheck error is preserved in typecheck-red.txt; no baseline changed.
+
+Broader CI:
+https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37565406630
+Security Scan | job 112611848015 | completed | success
+
+Lint | job 112611848130 | in_progress | pending
+  Proof tier — schema contracts + golden journeys + export contracts: in_progress, pending
+Security Contract Tests | job 112611848322 | completed | success
+
+Secret scan (full history) | job 112611848328 | completed | success
+
+Nightly Governance Strict | job 112611849591 | completed | skipped
+
+An in-progress job and unstarted downstream jobs are not passed release evidence.
+The live-provisioned schema ratchet/complete Blank DB job still requires a finished fresh-source result.
+The existing parser's full-server reference scan has no affected relation after the guidance correction; its reproduced failure and targeted green are preserved.
+
+Authenticated browser + real DB smoke:
+https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37565406468
+Authenticated app smoke (real browser + DB) | job 112611847541 | completed | success
+
+
+All workflows associated with this exact source commit:
+CI | 37565406630 | in_progress | pending | https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37565406630
+Semgrep | 37565406400 | in_progress | pending | https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37565406400
+CodeQL | 37565406424 | in_progress | pending | https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37565406424
+Repo Health Baseline Refresh | 37565406399 | completed | success | https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37565406399
+Tier 5 Browser Smoke | 37565406468 | completed | success | https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37565406468
+C2C Agent — Validate & Audit | 37565406425 | completed | success | https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37565406425
+
+Local follow-up integration: 594 passed tests in 26 files, followup-integrated.txt.
+Latest server build passed. Both production fixes passed red-before-green regressions.
+Independent read-only review preserved transaction/forUpdate behavior, writer contracts and org/project scope.
+The final test-only readonly Diagnostic annotation correction passes isolated strict compilation; this file is outside the repository application tsconfig, and no full local typecheck ran.
+
+Qualification remains open: client-source builds, scientific/regulatory SME review, approved high-risk model PQ, regional dataset/safety-message/technical package and transmission qualification are not proved by these results. Scheduled/manual high-risk audit jobs skipped on a push are not a qualification pass.

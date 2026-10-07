@@ -1,0 +1,5 @@
+Isolated strict TypeScript check of the actual test file.
+Command: node node_modules/typescript/bin/tsc --noEmit --strict --skipLibCheck --esModuleInterop --module esnext --moduleResolution bundler --target es2020 --types node tests/regulatory/submission-inventory-reader-contract.test.ts
+Observed exit code: 0
+Diagnostics: none
+No application graph or repository tsconfig was checked.
