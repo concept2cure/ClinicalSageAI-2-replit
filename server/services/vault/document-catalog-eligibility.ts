@@ -2,6 +2,13 @@ import type { CatalogDocumentRow } from './document-catalog.service.js';
 
 type CatalogableDocument = CatalogDocumentRow & { catalog: NonNullable<CatalogDocumentRow['catalog']> };
 
+/** Preserve absence versus a recorded extraction/comprehension from other bytes.
+ * Missing hash on legacy in-memory shapes is not promoted to verified evidence. */
+export function catalogVersionRefusal(doc: CatalogDocumentRow): string | null {
+  if (!doc.catalog || doc.catalog.contentHash === undefined || doc.catalog.contentHash === doc.contentHash) return null;
+  return 'The recorded extraction and catalog belong to another source version. Reprocess the current file before reading or cataloging it; old summaries and figures are not current evidence.';
+}
+
 /** Catalog writes require the original file and a successful recorded extraction. */
 export function catalogableDocument(doc: CatalogDocumentRow | null):
   { ok: true; document: CatalogableDocument } | { ok: false; refusal: string } {
@@ -16,6 +23,8 @@ export function catalogableDocument(doc: CatalogDocumentRow | null):
       'ingest), so there is no recorded extraction to verify a read against. Re-ingest it, or ' +
       'read it via the vault surface first.',
   };
+  const versionRefusal = catalogVersionRefusal(doc);
+  if (versionRefusal) return { ok: false, refusal: versionRefusal };
   if (doc.catalog.status === 'extraction_failed') return {
     ok: false,
     refusal: `Extraction failed for this document (${doc.catalog.extractionError ?? 'no reason recorded'}), ` +

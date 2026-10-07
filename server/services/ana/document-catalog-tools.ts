@@ -55,7 +55,7 @@ import { registerDocumentPlacementHandlers } from './document-placement-tools.js
 import { registerDocumentPassageHandlers } from './document-passage-tools.js';
 import { vaultWriteRefusal } from '../vault/vault-write-authority.js';
 import { catalogScope, documentScopeRefusal } from './catalog-scope.js';
-import { sourceAvailabilityPresentation } from '../vault/document-catalog-eligibility.js';
+import { sourceAvailabilityPresentation, catalogVersionRefusal } from '../vault/document-catalog-eligibility.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handlers
@@ -192,6 +192,7 @@ async function backfillExtractionTier(
   });
   return {
     status: outcome.status,
+    contentHash: doc.contentHash,
     extractionMethod: outcome.method,
     extractionConfidence: outcome.confidence,
     extractionError: outcome.error,
@@ -239,6 +240,8 @@ async function ensureReadable(
   doc: NonNullable<Awaited<ReturnType<CatalogService['loadDocumentForOrg']>>>,
   text: string,
 ): Promise<string | null> {
+  const versionRefusal = catalogVersionRefusal(doc);
+  if (versionRefusal) return JSON.stringify({ ok: false, code: 'SOURCE_VERSION_CHANGED', documentId: doc.id, error: versionRefusal });
   if (!doc.catalog) {
     doc.catalog = await backfillExtractionTier(svc, doc, text);
   }

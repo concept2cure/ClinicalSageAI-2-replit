@@ -14,7 +14,11 @@ import { PREREQ, VAULT_DDL, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG, AUTHOR, M25_
 import { DRAFT_AUTHORING_DOCUMENT_NO_PROJECT } from '../../authoring/authoring-draft-tool';
 import { approvedToolHandler } from './support/approved-tool-handler';
 
-const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
+const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown, beforeEmbedding: null as (() => Promise<void>) | null }));
+vi.mock('../../enhancedEmbeddingService.js', () => ({ getEmbeddingService: () => ({ embed: async () => {
+  await h.beforeEmbedding?.();
+  throw new Error('Test embedding unavailable');
+} }) }));
 vi.mock('../../../db.js', () => ({
   get db() { return h.db; },
   get pool() { return h.pool; },
@@ -128,6 +132,47 @@ describe('draft_authoring_document — durable project source references', () =>
     }
   });
 
+});
+
+describe('project catalog — source-version truth', () => {
+  it('refuses stale comprehension without read receipts or backfill, and lists the file as unstudied', async () => {
+    const { loadDocumentForOrg, listProjectDocuments, completeCatalog } = await import('../../vault/document-catalog.service');
+    await jdb.pool.query("UPDATE vault.document_catalog SET content_hash=$1,catalog_status='cataloged',char_count=4,summary='stale endpoint 9 of 10',key_data='{\"n\":999}' WHERE document_id=$2", ['d'.repeat(64), SOURCE_ID]);
+    try {
+      const loaded = await loadDocumentForOrg(SOURCE_ID, ORG);
+      expect(loaded?.catalog?.contentHash).toBe('d'.repeat(64)); // Mismatch is NOT disguised as no catalog.
+      const { getToolHandler } = await import('../AnaToolExecutor');
+      const read = JSON.parse(await getToolHandler('read_project_document')!({ document_id: SOURCE_ID }, { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM }));
+      expect(read).toMatchObject({ ok: false, code: 'SOURCE_VERSION_CHANGED' });
+      expect(JSON.stringify(read)).not.toContain('9 of 10');
+      const receipts = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.document_read_receipts WHERE document_id=$1', [SOURCE_ID]);
+      expect((receipts.rows[0] as { n: number }).n).toBe(0);
+      const listing = await listProjectDocuments(ORG, { programId: PROGRAM });
+      expect(listing).toMatchObject({ total: 1, notYetStudied: 1 });
+      expect(listing.documents[0].catalogStatus).toBe('uncataloged');
+      const completed = await completeCatalog({ documentId: SOURCE_ID, organizationId: ORG, documentKind: 'CSR', purpose: 'Review', summary: 'New summary' });
+      expect(completed).toMatchObject({ ok: false, refusal: expect.stringContaining('another source version') });
+      const unchanged = await loadDocumentForOrg(SOURCE_ID, ORG);
+      expect(unchanged?.catalog?.contentHash).toBe('d'.repeat(64));
+      expect(unchanged?.catalog?.summary).toBe('stale endpoint 9 of 10');
+    } finally {
+      await jdb.pool.query("UPDATE vault.document_catalog SET content_hash=$1,catalog_status='extracted',char_count=$2,summary=NULL,key_data=NULL WHERE document_id=$3", ['a'.repeat(64), SOURCE_TEXT.length, SOURCE_ID]);
+    }
+  });
+
+  it('does not report success when the non-vector catalog compare-and-set updates zero rows', async () => {
+    const { recordReadReceipt, completeCatalog, loadDocumentForOrg } = await import('../../vault/document-catalog.service');
+    await recordReadReceipt({ documentId: SOURCE_ID, contentHash: 'a'.repeat(64), span: { start: 0, end: SOURCE_TEXT.length }, readBy: Number(AUTHOR.id) });
+    h.beforeEmbedding = async () => { await jdb.pool.query('UPDATE vault.document_catalog SET content_hash=$1 WHERE document_id=$2', ['d'.repeat(64), SOURCE_ID]); };
+    try {
+      const outcome = await completeCatalog({ documentId: SOURCE_ID, organizationId: ORG, documentKind: 'CSR', purpose: 'Review', summary: 'Must not report saved' });
+      expect(outcome).toMatchObject({ ok: false, refusal: expect.stringContaining('changed before the write') });
+      expect((await loadDocumentForOrg(SOURCE_ID, ORG))?.catalog?.summary).toBeNull();
+    } finally {
+      h.beforeEmbedding = null;
+      await jdb.pool.query('UPDATE vault.document_catalog SET content_hash=$1 WHERE document_id=$2', ['a'.repeat(64), SOURCE_ID]);
+    }
+  });
 });
 
 describe('draft_authoring_document', () => {

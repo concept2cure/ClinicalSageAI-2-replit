@@ -54,3 +54,33 @@ TypeScript errors: six test row accesses whose database result type is unknown,
 and the new HTTP 409 source/version-conflict refusal missing from the shared
 authoring response union. The follow-up explicitly types those test rows and
 includes conflict in the canonical refusal type; no baseline or gate is changed.
+
+The correction commit `c81d27101246580aa6576f1efc2b50721427b272` passed
+full GitHub TypeScript and ESLint in Validate & Audit run 37572686176.
+
+## Current-version catalog truth
+
+Ultra review reproduced stale-version catalog reads and false successful writes
+against the actual services on an in-memory database. The existing catalog
+reader deliberately retains the raw join so stale extraction is distinguishable
+from absent extraction: a mismatch refuses before legacy backfill or read
+receipts. Listing and semantic-search joins require matching hashes; stale
+catalogs remain visible as documents needing study, not current summaries.
+Both vector and non-vector completion paths require exactly one updated row
+before returning success. Existing genuinely uncataloged legacy backfill remains.
+
+Regression evidence includes actual SQL/registered-tool stale-version refusal,
+no stale read receipt, project listing counts, unchanged stale summary, and a
+source-change race producing zero updated rows. Unit tests cover both write
+paths and hash/tenant/project predicates in semantic search. Search predicates
+are a query-contract test, not an actual pgvector execution test. Legacy test
+fixtures without a hash remain compatible but are not qualified as verified
+source evidence; draft/save source reference validation remains strict.
+
+These are W2/D4 source-integrity corrections, not scientific qualification or
+a claim that every regulatory filing type is ready for submission.
+
+Final focused regression: 159 passing tests in 12 files. Server build,
+canvas-path reachability and whitespace checks passed. Existing contract,
+migration, tenant, audit, signature and warning-ratchet preflight gates passed;
+full application TypeScript is delegated to GitHub on the published source.

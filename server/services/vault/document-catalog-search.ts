@@ -93,7 +93,7 @@ export async function searchCatalog(
          COUNT(*) FILTER (WHERE c.embedding IS NULL OR c.catalog_status IS DISTINCT FROM 'cataloged') AS unsearchable
        FROM vault.documents d
        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
-       LEFT JOIN vault.document_catalog c ON c.document_id = d.id
+       LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
       WHERE d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
         AND ($2::uuid IS NULL OR d.program_id = $2::uuid)`,
       [organizationId, programId],
@@ -105,7 +105,7 @@ export async function searchCatalog(
               ${vaultBinaryAvailableSql('d')} AS original_file_available,
               1 - (c.embedding <=> $2::vector) AS similarity
          FROM vault.document_catalog c
-         JOIN vault.documents d ON d.id = c.document_id AND d.deleted_at IS NULL
+         JOIN vault.documents d ON d.id = c.document_id AND d.deleted_at IS NULL AND c.content_hash = d.content_hash
          JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
         WHERE c.embedding IS NOT NULL AND c.catalog_status = 'cataloged'
           AND ${vaultDataEligibleSql('d')}

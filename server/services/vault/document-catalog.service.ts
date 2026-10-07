@@ -325,7 +325,7 @@ export async function completeCatalog(args: {
     embeddingStatus = 'embedded';
   } catch (err) {
     embeddingStatus = 'failed';
-    logger.warn('Catalog embedding failed — recorded as failed, catalog still written', {
+    logger.warn('Catalog embedding failed — attempting non-vector catalog write', {
       documentId: doc.id,
       err: err instanceof Error ? err.message : String(err),
     });
@@ -343,7 +343,7 @@ export async function completeCatalog(args: {
   ];
   if (embeddingLiteral) {
     try {
-      await pool.query(
+      const written = await pool.query(
         `UPDATE vault.document_catalog SET
            catalog_status = 'cataloged', document_kind = $1, purpose = $2, summary = $3,
            key_data = $4::jsonb, embedding_status = $5, cataloged_by = $6,
@@ -351,6 +351,7 @@ export async function completeCatalog(args: {
          WHERE document_id = $7 AND content_hash = $8`,
         [...baseParams, embeddingLiteral],
       );
+      if (written.rowCount !== 1) return { ok: false, refusal: 'The catalog source version changed before the write completed. Refresh and read the current source before retrying.', coverage };
       return { ok: true, coverage, embeddingStatus };
     } catch (err) {
       // The embedding column may not exist on this database (no pgvector).
@@ -362,7 +363,7 @@ export async function completeCatalog(args: {
       baseParams[4] = embeddingStatus;
     }
   }
-  await pool.query(
+  const written = await pool.query(
     `UPDATE vault.document_catalog SET
        catalog_status = 'cataloged', document_kind = $1, purpose = $2, summary = $3,
        key_data = $4::jsonb, embedding_status = $5, cataloged_by = $6,
@@ -370,6 +371,7 @@ export async function completeCatalog(args: {
      WHERE document_id = $7 AND content_hash = $8`,
     baseParams,
   );
+  if (written.rowCount !== 1) return { ok: false, refusal: 'The catalog source version changed before the write completed. Refresh and read the current source before retrying.', coverage };
   return { ok: true, coverage, embeddingStatus };
 }
 
@@ -474,7 +476,7 @@ export async function listProjectDocuments(
               OVER () AS scope_unfiled
        FROM vault.documents d
        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
-       LEFT JOIN vault.document_catalog c ON c.document_id = d.id
+       LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
       WHERE d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')} ${programFilter}
       ORDER BY d.created_at DESC
       LIMIT $2`,
