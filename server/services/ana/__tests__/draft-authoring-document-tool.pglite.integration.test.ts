@@ -95,11 +95,13 @@ describe('draft_authoring_document — durable project source references', () =>
     const out = JSON.parse(await handler(sourcedInput(), { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true }));
     expect(out.saved).toBe(true);
     const saved = await jdb.pool.query('SELECT provenance FROM authoring_documents WHERE id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
-    expect(saved.rows[0].provenance.projectSourceReferences).toEqual(out.projectSourceReferences);
+    const savedRow = saved.rows[0] as { provenance: { projectSourceReferences: unknown } };
+    expect(savedRow.provenance.projectSourceReferences).toEqual(out.projectSourceReferences);
     expect(out.projectSourceReferences[0]).toMatchObject({ sectionCode: M25_SECTIONS[0].code, verification: 'current_at_save', qualification: 'unassessed',
       sources: [{ documentId: SOURCE_ID, contentHash: 'a'.repeat(64), completeText: true }] });
     const audit = await jdb.pool.query('SELECT metadata FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
-    expect(audit.rows[0].metadata.provenance.projectSourceReferences).toEqual(out.projectSourceReferences);
+    const auditRow = audit.rows[0] as { metadata: { provenance: { projectSourceReferences: unknown } } };
+    expect(auditRow.metadata.provenance.projectSourceReferences).toEqual(out.projectSourceReferences);
     expect(JSON.stringify(out.projectSourceReferences)).not.toContain(SOURCE_TEXT);
   });
 
@@ -109,7 +111,7 @@ describe('draft_authoring_document — durable project source references', () =>
     expect(out.error).toMatch(/source references.*could not be verified/i);
     expect(out.saved).toBeUndefined();
     const after = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM authoring_documents');
-    expect(after.rows[0].n).toBe(before.rows[0].n);
+    expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n);
   });
 
   it.each(['failed-extraction', 'stale-extraction'])('refuses a %s catalog record without creating a document', async kind => {
@@ -120,7 +122,7 @@ describe('draft_authoring_document — durable project source references', () =>
       const out = JSON.parse(await handler(sourcedInput(), { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true }));
       expect(out.error).toMatch(/source references.*could not be verified/i);
       const after = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM authoring_documents');
-      expect(after.rows[0].n).toBe(before.rows[0].n);
+      expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n);
     } finally {
       await jdb.pool.query("UPDATE vault.document_catalog SET catalog_status='extracted',content_hash=$1 WHERE document_id=$2", ['a'.repeat(64), SOURCE_ID]);
     }

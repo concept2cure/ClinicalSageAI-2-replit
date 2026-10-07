@@ -63,7 +63,7 @@ export interface CreateContext {
   audit: AuthoringAuditContext;
 }
 
-export type Refusal = { kind: 'refused'; status: 400 | 403 | 404 | 503; error: string; code?: string };
+export type Refusal = { kind: 'refused'; status: 400 | 403 | 404 | 409 | 503; error: string; code?: string };
 
 export interface Binding {
   documentId: string | null;

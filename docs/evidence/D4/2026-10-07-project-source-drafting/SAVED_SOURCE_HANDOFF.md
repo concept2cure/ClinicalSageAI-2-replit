@@ -48,3 +48,9 @@ blueprint drafting, source lineage, batch receipt recovery, and source parsers.
 Server build and whitespace checks passed. Pre-commit security scan: zero
 violations across 3,073 files. Full TypeScript for this follow-up is run on
 GitHub after publication, not substituted with the preceding commit's result.
+
+Post-push validation of `05b5bd06d66df5406460a97e4dff357835b430b1` found seven
+TypeScript errors: six test row accesses whose database result type is unknown,
+and the new HTTP 409 source/version-conflict refusal missing from the shared
+authoring response union. The follow-up explicitly types those test rows and
+includes conflict in the canonical refusal type; no baseline or gate is changed.
