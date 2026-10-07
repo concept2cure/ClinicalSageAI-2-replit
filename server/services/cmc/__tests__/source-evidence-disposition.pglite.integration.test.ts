@@ -129,7 +129,7 @@ const actor = (f: DispositionFixture, documentId = f.vault) => ({
   sourceKey: SOURCE_KEY, documentId, reason: REASON,
 });
 async function liveLinks(f: DispositionFixture) {
-  return (await harness.pg.query('SELECT * FROM cmc_source_evidence WHERE organization_id=$1 ORDER BY id', [f.org])).rows;
+  return (await harness.pg.query<Record<string, unknown>>('SELECT * FROM cmc_source_evidence WHERE organization_id=$1 ORDER BY id', [f.org])).rows;
 }
 async function audits(f: DispositionFixture) {
   return (await harness.pg.query('SELECT * FROM test_cmc_evidence_audit WHERE organization_id=$1 ORDER BY id', [f.org])).rows;

@@ -46,6 +46,12 @@ in C2C run `37604598878`, job `112736901380`. That verification is scoped to
 that source; the subsequent CMC disposition increment requires its own final
 publication checks.
 
+[Exact-source publication and GitHub receipts](GITHUB-VALIDATION.md) preserve
+both test-fixture TypeScript failures and their scoped corrections. The
+row-type correction emits identical runtime JavaScript; its 14 actual-SQL
+cases and lint pass. Full semantic TypeScript is checked on the correction's
+own published source through GitHub Actions.
+
 ## Remaining qualification work
 
 | Existing gap | Required next boundary |
