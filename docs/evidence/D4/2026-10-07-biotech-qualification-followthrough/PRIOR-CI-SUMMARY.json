@@ -1,0 +1,143 @@
+{
+  "source": "40697292af6b813dcfcaba8881e12c250dab69ef",
+  "ciRun": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37642070713",
+  "jobs": [
+    {
+      "id": 112863373591,
+      "name": "Lint",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "id": 112863374048,
+      "name": "Security Contract Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "id": 112863374109,
+      "name": "Secret scan (full history)",
+      "status": "completed",
+      "conclusion": "failure",
+      "failedSteps": [
+        "Install gitleaks (pinned module version, checksum-verified)"
+      ]
+    },
+    {
+      "id": 112863374136,
+      "name": "Security Scan",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "id": 112863375656,
+      "name": "Nightly Governance Strict",
+      "status": "completed",
+      "conclusion": "skipped",
+      "failedSteps": []
+    },
+    {
+      "id": 112869332603,
+      "name": "Test",
+      "status": "in_progress",
+      "conclusion": null,
+      "failedSteps": []
+    },
+    {
+      "id": 112869332647,
+      "name": "Blank DB Provisioning + Deploy Migration",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "id": 112869332669,
+      "name": "AnA Readiness Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "id": 112869332685,
+      "name": "Coverage (ratchet)",
+      "status": "in_progress",
+      "conclusion": null,
+      "failedSteps": []
+    },
+    {
+      "id": 112869332686,
+      "name": "Integration Tests",
+      "status": "in_progress",
+      "conclusion": null,
+      "failedSteps": []
+    },
+    {
+      "id": 112869332901,
+      "name": "Production Image Boot (built image, empty database, sign-in)",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "id": 112869332948,
+      "name": "Production Boot Smoke (RLS on, non-superuser role)",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    },
+    {
+      "id": 112869333006,
+      "name": "AIOS Audit Assets",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": []
+    }
+  ],
+  "additionalChecks": [
+    {
+      "id": 37642069666,
+      "name": "CodeQL",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 37642069770,
+      "name": "Semgrep",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 37642069708,
+      "name": "Tier 5 Browser Smoke",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37642070289,
+      "name": "C2C Agent — Validate & Audit",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37642069693,
+      "name": "Repo Health Baseline Refresh",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37642070713,
+      "name": "CI",
+      "status": "in_progress",
+      "conclusion": null
+    }
+  ],
+  "notes": [
+    "Snapshot observed before this follow-through publication; in-progress jobs are not passes.",
+    "Semgrep completed its blocking differential scan and found three synthetic preview strings in two evidence files; sanitation is recorded separately.",
+    "The full-history secret scanner failed installing its pinned dependency following a sum.golang.org stream error; scanner execution was not qualified.",
+    "JavaScript CodeQL was reported failed; logs show analysis results followed by SARIF upload and failed-run cleanup. No unsupported inference about its precise cause is made."
+  ]
+}

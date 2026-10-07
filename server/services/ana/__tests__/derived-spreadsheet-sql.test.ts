@@ -5,11 +5,11 @@ import { randomUUID } from 'node:crypto';
 import { createDispositionHarness, type DispositionHarness, type DispositionFixture } from '../../document-data-disposition/__tests__/disposition-fixture';
 
 const h = vi.hoisted(() => ({ db: null as any, original: Buffer.from('study workbook source'),
-  writeFile: vi.fn(), unlink: vi.fn(), captureFails: false, auditFails: false }));
+  readBytes: Buffer.from('study workbook source'), writeFile: vi.fn(), unlink: vi.fn(), captureFails: false, auditFails: false }));
 vi.mock('node:fs', async importOriginal => {
   const original = await importOriginal<typeof import('node:fs')>();
   return { ...original, promises: { ...original.promises, mkdir: vi.fn(async () => undefined),
-    writeFile: h.writeFile, unlink: h.unlink, readFile: vi.fn(async () => h.original) } };
+    writeFile: h.writeFile, unlink: h.unlink, readFile: vi.fn(async () => h.readBytes) } };
 });
 vi.mock('../../../db.js', () => ({ getPool: () => h.db }));
 vi.mock('../../clinical-regulatory-evidence/evidence-spine.service.js', () => ({
@@ -25,6 +25,9 @@ vi.mock('../../clinical-regulatory-evidence/evidence-spine.service.js', () => ({
 vi.mock('../../auditService', () => ({
   writeChainedAuditRow: async (q: any, entry: any) => {
     await q.query('INSERT INTO test_disposition_audit VALUES ($1,$2,$3)', [randomUUID(), entry.tenantId, JSON.stringify(entry)]);
+    await q.query(`INSERT INTO audit_logs (id,tenant_id,action,table_name,record_id,target,new_values)
+      VALUES ($1,$2,$3,$4,$5,$6,$7::json)`, [randomUUID(), entry.tenantId, entry.action,
+      entry.resourceType, entry.resourceId, `${entry.resourceType}:${entry.resourceId}`, JSON.stringify(entry.details)]);
     if (h.auditFails) throw new Error('audit seam failed');
   },
 }));
@@ -42,6 +45,7 @@ beforeAll(async () => {
 afterAll(async () => { await harness.close(); });
 beforeEach(async () => {
   vi.clearAllMocks(); h.captureFails = false; h.auditFails = false;
+  h.readBytes = h.original;
   h.writeFile.mockResolvedValue(undefined); h.unlink.mockResolvedValue(undefined);
   f = await harness.seed();
   await f.pg.query(`UPDATE file_uploads SET checksum_sha256=$1, original_name='source.xlsx',
@@ -96,5 +100,33 @@ describe('spreadsheet derivation SQL and atomicity', () => {
     const p = params(); p.derivation.projectRef = other.program;
     await expect(saveDerivedUpload(p)).rejects.toThrow(/project/);
     expect(h.writeFile).not.toHaveBeenCalled();
+  });
+
+  it('keeps a no-project edit conversation-only but refuses another edit after its recorded ancestor was removed', async () => {
+    const p = params(); p.derivation.projectRef = '';
+    const conversation = await saveDerivedUpload(p);
+    expect(conversation.captureStatus).toBe('conversation_only');
+    expect(conversation.sourceId).toBeNull();
+    expect((await f.pg.query('SELECT id FROM cre_evidence_sources WHERE organization_id=$1', [f.org])).rows).toHaveLength(1);
+    await f.apply('remove_data');
+    h.writeFile.mockClear(); h.readBytes = p.buffer;
+    const next = { ...params(), derivation: { ...params().derivation,
+      sourceFileId: conversation.fileId, sourceSha256: sha256Hex(p.buffer) } };
+    await expect(saveDerivedUpload(next)).rejects.toThrow(/not found|available/);
+    expect(h.writeFile).not.toHaveBeenCalled();
+    expect((await f.pg.query('SELECT id FROM file_uploads WHERE organization_id=$1', [f.org])).rows).toHaveLength(2);
+  });
+
+  it('permits a further edited copy when a recorded ancestor retained extracted data', async () => {
+    const p = params(); p.derivation.projectRef = '';
+    const conversation = await saveDerivedUpload(p);
+    await f.apply('keep_data'); h.readBytes = p.buffer;
+    const next = { ...params(), derivation: { ...params().derivation,
+      sourceFileId: conversation.fileId, sourceSha256: sha256Hex(p.buffer) } };
+    const out = await saveDerivedUpload(next);
+    expect(out.captureStatus).toBe('captured');
+    const record = (await f.pg.query<{ provenance: Record<string, unknown> }>('SELECT provenance FROM cre_evidence_sources WHERE id=$1', [out.sourceId])).rows[0];
+    expect(record.provenance).toMatchObject({ derivedFromFileId: conversation.fileId,
+      derivedFromSha256: sha256Hex(p.buffer) });
   });
 });

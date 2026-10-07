@@ -1,0 +1,28 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > recorded descendant cached-read eligibility > establishes that the canonical captured descendant is already refused 13ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > recorded descendant cached-read eligibility > refuses the same descendant through the atom reader predicate 24ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > recorded descendant cached-read eligibility > refuses the same descendant through the RAG reader predicate 25ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > recorded descendant cached-read eligibility > refuses the descendant upload through the artifact reader predicate 7ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > refuses the exact descendant atom association: captured 33ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > refuses the exact descendant atom association: supporting 43ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > refuses the exact descendant atom association: contradicting 33ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > refuses the exact descendant atom association: upload_prefix 32ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > refuses the exact descendant atom association: upload_id 31ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > refuses the exact descendant atom association: artifact_id 35ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > refuses the exact descendant atom association: artifact_native 47ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > refuses the exact descendant RAG association: upload 33ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > refuses the exact descendant RAG association: artifact_id 41ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > refuses the exact descendant RAG association: artifact_native 27ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > retains descendants of keep_data without marking their distinct original file unavailable 169ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > keeps the retained source data distinct from that exact source original-file availability 164ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > does not invent derivation from the same child digest in an independent upload 155ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > does not import a different tenant recorded associations 103ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > cached reader recorded-identity controls > refuses a cached reference whose named parent digest is contradictory 178ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  12:45:09
+   Duration  5.49s (transform 396ms, setup 193ms, import 319ms, tests 4.36s, environment 0ms)

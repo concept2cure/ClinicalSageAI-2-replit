@@ -281,7 +281,7 @@ describe('the recorded engine is SHARED with the stability surface, not a second
     if (!outcome.ok) expect(outcome.error).toMatch(/no recorded pull-point results/);
   });
 
-  it('fits the limiting attribute from recorded results, and says why an attribute is not estimable', async () => {
+  it('retains a valid attribute estimate and withholds an incomplete programme claim', async () => {
     const { estimateRecordedShelfLife } = await import('../../cmc/recorded-stability.js');
     const outcome = await estimateRecordedShelfLife({
       id: 3, studyTitle: 'BX-701 long term', productName: 'BX-701', batchNumber: 'B-001',
@@ -299,8 +299,13 @@ describe('the recorded engine is SHARED with the stability surface, not a second
     });
     expect(outcome.ok).toBe(true);
     if (!outcome.ok) return;
-    expect(outcome.data.limitingParameter).toBe('Assay');
-    expect(typeof outcome.data.supportedShelfLife).toBe('number');
+    expect(outcome.data.limitingParameter).toBeNull();
+    expect(outcome.data.supportedShelfLife).toBeNull();
+    const assay = outcome.data.estimates.find((e) => e.parameter === 'Assay')!;
+    expect(assay).toMatchObject({ estimable: true, shelfLife: 18.63 });
+    expect(outcome.data.claimWithheldReasons).toEqual([
+      'Study 3, Aggregates (25C/60RH): ICH Q1E regression needs at least 3 numeric timepoints; 1 of 1 recorded result is numeric.',
+    ]);
     const agg = outcome.data.estimates.find((e) => e.parameter === 'Aggregates')!;
     expect(agg.estimable).toBe(false);
     expect(String(agg.reason)).toMatch(/at least 3 numeric timepoints/);

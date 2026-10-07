@@ -1,0 +1,13 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > recorded descendant cached-read eligibility > establishes that the canonical captured descendant is already refused 14ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > recorded descendant cached-read eligibility > refuses the same descendant through the atom reader predicate 31ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > recorded descendant cached-read eligibility > refuses the same descendant through the RAG reader predicate 25ms
+ ✓ server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts > recorded descendant cached-read eligibility > refuses the descendant upload through the artifact reader predicate 12ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  12:39:51
+   Duration  4.46s (transform 371ms, setup 139ms, import 442ms, tests 3.27s, environment 0ms)

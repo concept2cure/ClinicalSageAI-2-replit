@@ -11,6 +11,7 @@
  * this proves it is wired correctly at the boundary that feeds source-attribution.
  */
 
+import { RECORDED_LINEAGE_STORES_DDL } from '../../document-data-disposition/__tests__/lineage-stores-fixture';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
@@ -51,6 +52,7 @@ let evidenceSourceId: number;
 
 beforeAll(async () => {
   pglite = new PGlite();
+  await pglite.exec(RECORDED_LINEAGE_STORES_DDL);
   await pglite.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
   await pglite.exec(`INSERT INTO organizations (id, name) VALUES (${ORG}, 'org');`);
   // Minimal lumen_data_atoms — enrich only reads id/source_type/source_id/metadata.

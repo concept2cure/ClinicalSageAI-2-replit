@@ -1,3 +1,5 @@
+Evidence redaction: synthetic disposition-preview tokens are omitted. Assertion values, failures, test counts and verdicts are retained.
+
 npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
 
  RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
@@ -1850,7 +1852,7 @@ AssertionError: promise resolved "{ disposition: { …(8) }, …(1) }" instead o
 +         "69da91a5-2fa5-4392-8026-e56dabadaaa1",
 +       ],
 +     },
-+     "previewToken": "eyJ2ZXJzaW9uIjoxLCJvcmdhbml6YXRpb25JZCI6MTAwOCwicHJvZ3JhbUlkIjoiZTQzY2RhNmMtZmU2ZS00MTU0LWIxYzItY2I2MTZkMDczOGQyIiwiYWN0b3JJZCI6NDIsInRhcmdldFR5cGUiOiJjYXB0dXJlZF9zb3VyY2UiLCJ0YXJnZXRJZCI6IjgiLCJyZXBsYWNlbWVudElkIjpudWxsLCJoYXNoIjoiNzUzYWE2MDllM2IyYzMyZmJjNTIxOTllMWNlNmNlMDM5NTRiYWY1MWQ0YjJiNGEzMTI1YjM4Mzg1YzUzOWExZSIsImV4cGlyZXNBdCI6IjIwMjYtMTAtMDZUMTc6MTA6MDAuMDAwWiJ9.nbto93tHxNvZcGhw0aBNZPEAKCUIgYLaF8xLpVHczQE",
++     "previewToken": "[REDACTED_SYNTHETIC_PREVIEW_TOKEN]",
 +     "replacement": null,
 +     "retention": {
 +       "legalHolds": 0,

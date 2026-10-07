@@ -17,7 +17,6 @@ import { citeSource, listSectionSources, refreshSourceCitation } from '../../cli
 beforeAll(async () => {
   harness = await createDispositionHarness();
   await harness.pg.exec(`
-    ALTER TABLE authoring_documents ADD COLUMN client_program_id uuid;
     ALTER TABLE authoring_citations ADD COLUMN anchor jsonb;
     ALTER TABLE authoring_citations ADD COLUMN citation_text text;
     ALTER TABLE authoring_citations ADD COLUMN payload_sha256 text;

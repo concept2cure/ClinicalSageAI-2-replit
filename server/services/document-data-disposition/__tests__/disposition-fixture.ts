@@ -60,6 +60,12 @@ const DDL = `
   CREATE TABLE vault.legal_holds (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id integer, program_id uuid, document_id uuid, lifted_at timestamptz);
   CREATE TABLE canonical_documents (canonical_id text PRIMARY KEY, organization_id integer, source_refs jsonb, stage text);
   CREATE TABLE test_disposition_audit (id uuid PRIMARY KEY, organization_id integer NOT NULL, entry jsonb NOT NULL);
+  CREATE TABLE audit_logs (id uuid PRIMARY KEY, tenant_id integer, user_id integer,
+    action text, table_name text, record_id text, actor_id integer, target text,
+    target_type text, target_id text, payload_hash text, sha256_chain text,
+    occurred_at timestamptz, hmac_seal text, new_values json, old_values json,
+    ip_address text, user_agent text, reason text);
+  CREATE INDEX test_audit_record_identity ON audit_logs(table_name,record_id);
 `;
 
 function poolFor(pg: PGlite) {

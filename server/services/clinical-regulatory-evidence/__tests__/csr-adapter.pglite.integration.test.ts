@@ -8,6 +8,7 @@
  * extracted deterministically WITH provenance (never guessed).
  */
 
+import { RECORDED_LINEAGE_STORES_DDL } from '../../document-data-disposition/__tests__/lineage-stores-fixture';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
@@ -60,6 +61,7 @@ CREATE TABLE lumen_data_atoms (
 // these hooks went red purely because another pglite suite joined the directory.
 beforeAll(async () => {
   pglite = new PGlite();
+  await pglite.exec(RECORDED_LINEAGE_STORES_DDL);
   const here = path.dirname(fileURLToPath(import.meta.url));
   const migration = path.resolve(here, '../../../../db/migrations/20260724_clinical_regulatory_evidence_spine.sql');
   await pglite.exec(fs.readFileSync(migration, 'utf8'));

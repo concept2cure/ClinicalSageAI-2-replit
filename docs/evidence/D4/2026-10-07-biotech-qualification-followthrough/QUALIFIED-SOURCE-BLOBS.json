@@ -1,0 +1,113 @@
+{
+  "starting_source": "40697292af6b813dcfcaba8881e12c250dab69ef",
+  "files": [
+    {
+      "path": "server/routes/c2c/__tests__/projects-adoption-sql.test.ts",
+      "git_blob": "4b5e9cb7c011f30efd1efdb592b78b7a37bb674a"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/projects-adoption.test.ts",
+      "git_blob": "e8c967cb743e1f4bcfd926245520d480e2887f98"
+    },
+    {
+      "path": "server/routes/c2c/projects.ts",
+      "git_blob": "90671685d73ed534b115e88f8a4749e1b9abed43"
+    },
+    {
+      "path": "server/services/ana/__tests__/deepening-tools.test.ts",
+      "git_blob": "2caf9b0068731e2846b4122195c917646a183c60"
+    },
+    {
+      "path": "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts",
+      "git_blob": "c4b91c0b16b8f4f8bb9a982673c22877bc6daa80"
+    },
+    {
+      "path": "server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts",
+      "git_blob": "997821a234efe64aa046eb7716c2a1a841618c89"
+    },
+    {
+      "path": "server/services/ana/__tests__/enrich-chunks-evidence-source.pglite.integration.test.ts",
+      "git_blob": "61bc51d0e9175e0afc0d30a5dd4e751c58defb70"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts",
+      "git_blob": "4b5423912f710b4f77a35b096cc0b6c434c72420"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts",
+      "git_blob": "a44407219fcfa2c83d247e5a08c84596a3f73a27"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts",
+      "git_blob": "ec8760331b9305c96c9584f7e788c0df40e245c6"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts",
+      "git_blob": "f305415dbd688e454818f8defc651c7d351bad57"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/facade-convergence.pglite.integration.test.ts",
+      "git_blob": "c486f6769b26dfe8c66a7027521f0e73812888a6"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts",
+      "git_blob": "59061451d36138a5924e06efe8223af2f509923e"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts",
+      "git_blob": "231a0ec593d640c943bcca8559e44d45952ccf3f"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts",
+      "git_blob": "9d8af79d297487a9294f8e5eb3bd2d3ac6def925"
+    },
+    {
+      "path": "server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts",
+      "git_blob": "cc7c5f64c18a1bff24bcb2e5907187f6d10e6d67"
+    },
+    {
+      "path": "server/services/cmc/recorded-stability.ts",
+      "git_blob": "1e5f2ac619fe31830318d6c010e9860c86b0d23e"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts",
+      "git_blob": "88023d32d69c9273230856baf8ea57128b72107a"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts",
+      "git_blob": "344f836c353c3e1f82564c6c231e1dc92b8bcc3f"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/disposition-fixture.ts",
+      "git_blob": "4fc5a69a56f03262185de91c4e58dee463224f0d"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts",
+      "git_blob": "240fe9edf7304ee6223f1dcfabd2e701f27c4b7e"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/lineage-stores-fixture.ts",
+      "git_blob": "2cbd90c5badba54de501565bb0777ba837d5c35b"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts",
+      "git_blob": "5b7c7e9f2378b096114f2974d8121bf83cae71de"
+    },
+    {
+      "path": "server/services/document-data-disposition/derived-impact.ts",
+      "git_blob": "e73ca30e33dcd040727ee5f14d3721955ec4510d"
+    },
+    {
+      "path": "server/services/document-data-disposition/eligibility.ts",
+      "git_blob": "4107151d39c29fd1f0f566676a3400db9e98de4e"
+    },
+    {
+      "path": "server/services/document-data-disposition/recorded-lineage.ts",
+      "git_blob": "a31fb8c25b7e09606e4138523060ae47c9f07eec"
+    },
+    {
+      "path": "server/services/module3Composer.ts",
+      "git_blob": "4886edc9e562ea6d6883f71382bb2898b512410e"
+    }
+  ]
+}

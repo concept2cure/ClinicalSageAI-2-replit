@@ -1,0 +1,19 @@
+Final 21 lineage-owned TypeScript files after admission guard extraction. Root-owned eligibility.ts excluded.
+["npx", "eslint", "server/routes/c2c/projects.ts", "server/routes/c2c/__tests__/projects-adoption.test.ts", "server/routes/c2c/__tests__/projects-adoption-sql.test.ts", "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts", "server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts", "server/services/ana/__tests__/enrich-chunks-evidence-source.pglite.integration.test.ts", "server/services/document-data-disposition/recorded-lineage.ts", "server/services/document-data-disposition/derived-impact.ts", "server/services/document-data-disposition/__tests__/lineage-stores-fixture.ts", "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts", "server/services/document-data-disposition/__tests__/disposition-fixture.ts", "server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts", "server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts", "server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts", "server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts", "server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts", "server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts", "server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts", "server/services/clinical-regulatory-evidence/__tests__/facade-convergence.pglite.integration.test.ts", "server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts", "server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts"]
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/routes/c2c/projects.ts
+  629:54  warning  Async arrow function has too many lines (237). Maximum allowed is 100       max-lines-per-function
+  629:54  warning  Async arrow function has a complexity of 54. Maximum allowed is 15          complexity
+  814:7   warning  The value assigned to 'scaffold' is not used in subsequent statements       no-useless-assignment
+  819:7   warning  The value assigned to 'projectAnchor' is not used in subsequent statements  no-useless-assignment
+  911:1   warning  File has too many lines (1285). Maximum allowed is 500                      max-lines
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts
+  79:24  warning  'over' is assigned a value but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 6 problems (0 errors, 6 warnings)
+
+
+PROCESS_EXIT_CODE=0

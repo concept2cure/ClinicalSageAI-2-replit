@@ -1,0 +1,143 @@
+{
+  "exit_code": 0,
+  "files": 27,
+  "errors": 0,
+  "warnings": 30,
+  "per_file": [
+    {
+      "path": "server/routes/c2c/__tests__/projects-adoption-sql.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/routes/c2c/__tests__/projects-adoption.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/routes/c2c/projects.ts",
+      "errors": 0,
+      "warnings": 5
+    },
+    {
+      "path": "server/services/ana/__tests__/deepening-tools.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/enrich-chunks-evidence-source.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 1
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/facade-convergence.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/cmc/recorded-stability.ts",
+      "errors": 0,
+      "warnings": 5
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/disposition-fixture.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/lineage-stores-fixture.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/derived-impact.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/eligibility.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/recorded-lineage.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/module3Composer.ts",
+      "errors": 0,
+      "warnings": 19
+    }
+  ]
+}

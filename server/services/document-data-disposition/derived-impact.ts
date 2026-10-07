@@ -1,5 +1,6 @@
 import type { DocumentDispositionLinkedIds } from '../../../shared/document-data-disposition';
-import { capturedDataEligibleSql } from './eligibility';
+import { capturedOwnDataEligibleSql } from './eligibility';
+import { recordedLineageCtes, recordedLineageInvalidSql } from './recorded-lineage';
 import { hashSnapshot } from './tokens';
 import { DispositionError, type DispositionQueryable } from './types';
 
@@ -33,48 +34,37 @@ function validProjectionRow(value: unknown, organizationId: number): value is De
     && Boolean(row.provenance) && typeof row.provenance === 'object' && !Array.isArray(row.provenance);
 }
 
-/** Direct captured descendants only. The target's identity/upload links have
+/** Recorded captured descendants only. The target's identity/upload links have
  * already been proved by readLinks. A child in another program is a dependency
  * when it names that identity, never merely because it has matching bytes.
  *
  * No descendant is withdrawn or rewritten here. The disposition service uses
  * the result to require review before remove_data/supersede and to detect a
  * child created or changed since preview. keep_data keeps extracted data usable.
- * Conversation-only derivation is audit-only and is outside this projection. */
+ * Canonical upload audit edges can preserve conversation-only derivation when
+ * the upload is adopted. Uncaptured conversation files are not claimed as
+ * qualified captured data by this projection. */
 export async function readDerivedCaptureImpact(
   q: DispositionQueryable,
   organizationId: number,
   linkedIds: DocumentDispositionLinkedIds,
   sourceSha256: string,
 ): Promise<DerivedCaptureImpact> {
-  const namedParents = `EXISTS (
-    SELECT 1 FROM jsonb_array_elements(
-      CASE WHEN jsonb_typeof(s.provenance->'parentSourceIds') = 'array'
-        THEN s.provenance->'parentSourceIds' ELSE '[]'::jsonb END
-    ) p(value)
-    WHERE jsonb_typeof(p.value) IN ('number','string')
-      AND p.value #>> '{}' = ANY($2::text[])
-  )`;
-  const namedFile = `(s.provenance->>'derivedFromFileId' = ANY($3::text[]))`;
-  const canonicalParentArray = `(jsonb_typeof(s.provenance->'parentSourceIds') = 'array'
-    AND NOT EXISTS (
-      SELECT 1 FROM jsonb_array_elements(
-        CASE WHEN jsonb_typeof(s.provenance->'parentSourceIds') = 'array'
-          THEN s.provenance->'parentSourceIds' ELSE '[]'::jsonb END
-      ) p(value)
-      WHERE jsonb_typeof(p.value) <> 'number' OR (p.value #>> '{}') !~ '^[1-9][0-9]*$'
-    ))`;
-  const result = await q.query(`SELECT s.*,
-      (${canonicalParentArray}
-        AND s.provenance->>'derivedFromSha256' = $4
-        AND (${namedParents} OR ${namedFile})) IS TRUE AS parent_edge_verified
+  const result = await q.query(`${recordedLineageCtes(`SELECT 'captured'::text AS kind,
+      s.id::text AS id,s.organization_id,s.checksum,s.client_program_id AS program_id,to_jsonb(s.provenance) AS provenance
+      FROM public.cre_evidence_sources s WHERE s.organization_id = $1 AND s.source_type = 'client_document'
+        AND s.deleted_at IS NULL AND ${capturedOwnDataEligibleSql('s')}
+        AND NOT (s.id::text = ANY($2::text[]))`)}
+    SELECT s.*, (NOT EXISTS (SELECT 1 FROM rl_walk invalid_path
+      WHERE invalid_path.root_id = s.id::text AND (${recordedLineageInvalidSql('invalid_path')}
+        OR (invalid_path.depth > 0 AND ((invalid_path.kind = 'captured' AND invalid_path.id = ANY($2::text[]))
+          OR (invalid_path.kind = 'upload' AND invalid_path.id = ANY($3::text[])))
+          AND invalid_path.checksum IS DISTINCT FROM $4)))) AS parent_edge_verified
     FROM public.cre_evidence_sources s
-    WHERE s.organization_id = $1 AND s.source_type = 'client_document'
-      AND s.deleted_at IS NULL AND ${capturedDataEligibleSql('s')}
-      AND NOT (s.id::text = ANY($2::text[]))
-      AND (${namedParents} OR ${namedFile}
-        OR (jsonb_typeof(s.provenance->'parentSourceIds') IN ('number','string')
-          AND s.provenance->>'parentSourceIds' = ANY($2::text[])))
+    WHERE s.organization_id = $1 AND EXISTS (SELECT 1 FROM rl_walk ancestry
+      WHERE ancestry.root_id = s.id::text AND ancestry.depth > 0
+        AND ((ancestry.kind = 'captured' AND ancestry.id = ANY($2::text[]))
+          OR (ancestry.kind = 'upload' AND ancestry.id = ANY($3::text[]))))
     ORDER BY s.id`, [organizationId, linkedIds.capturedSourceIds.map(String), linkedIds.uploadIds, sourceSha256]);
   if (!Array.isArray(result.rows) || !result.rows.every(row => validProjectionRow(row, organizationId))
       || new Set(result.rows.map(row => row.id)).size !== result.rows.length) {

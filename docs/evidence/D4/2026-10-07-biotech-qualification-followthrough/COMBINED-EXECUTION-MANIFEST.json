@@ -1,0 +1,499 @@
+{
+  "source": "40697292af6b813dcfcaba8881e12c250dab69ef plus frozen pending follow-through diff",
+  "exit_code": 0,
+  "success": true,
+  "requested_files": 69,
+  "actual_files": 69,
+  "missing_files": [],
+  "unexpected_files": [],
+  "total_tests": 1341,
+  "passed_tests": 1341,
+  "failed_tests": 0,
+  "pending_tests": 0,
+  "todo_tests": 0,
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentDisposition.test.tsx",
+      "status": "passed",
+      "tests": 23,
+      "passed": 23,
+      "failed": 0
+    },
+    {
+      "path": "server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts",
+      "status": "passed",
+      "tests": 17,
+      "passed": 17,
+      "failed": 0
+    },
+    {
+      "path": "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts",
+      "status": "passed",
+      "tests": 11,
+      "passed": 11,
+      "failed": 0
+    },
+    {
+      "path": "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts",
+      "status": "passed",
+      "tests": 7,
+      "passed": 7,
+      "failed": 0
+    },
+    {
+      "path": "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 9,
+      "passed": 9,
+      "failed": 0
+    },
+    {
+      "path": "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 10,
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "path": "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 12,
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "path": "server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 6,
+      "passed": 6,
+      "failed": 0
+    },
+    {
+      "path": "server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts",
+      "status": "passed",
+      "tests": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "path": "server/routes/c2c/__tests__/projects-adoption-sql.test.ts",
+      "status": "passed",
+      "tests": 19,
+      "passed": 19,
+      "failed": 0
+    },
+    {
+      "path": "server/routes/c2c/__tests__/projects-adoption.test.ts",
+      "status": "passed",
+      "tests": 21,
+      "passed": 21,
+      "failed": 0
+    },
+    {
+      "path": "server/services/__tests__/cmc-module3-compiler.test.ts",
+      "status": "passed",
+      "tests": 8,
+      "passed": 8,
+      "failed": 0
+    },
+    {
+      "path": "server/services/__tests__/cmc-qc-batch-analyses.test.ts",
+      "status": "passed",
+      "tests": 12,
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "path": "server/services/__tests__/module3Composer.stability-filed.test.ts",
+      "status": "passed",
+      "tests": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "path": "server/services/__tests__/module3Composer.stability-honesty.test.ts",
+      "status": "passed",
+      "tests": 4,
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "path": "server/services/__tests__/module3Composer.stability-trending.test.ts",
+      "status": "passed",
+      "tests": 7,
+      "passed": 7,
+      "failed": 0
+    },
+    {
+      "path": "server/services/__tests__/module3Composer.test.ts",
+      "status": "passed",
+      "tests": 10,
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/cmc-knowledge-tools.test.ts",
+      "status": "passed",
+      "tests": 8,
+      "passed": 8,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/cmc-quality-summary-tool.test.ts",
+      "status": "passed",
+      "tests": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/deepening-tools.test.ts",
+      "status": "passed",
+      "tests": 43,
+      "passed": 43,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/derived-spreadsheet-capture.test.ts",
+      "status": "passed",
+      "tests": 14,
+      "passed": 14,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts",
+      "status": "passed",
+      "tests": 7,
+      "passed": 7,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/document-spine.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 4,
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/document-spine.test.ts",
+      "status": "passed",
+      "tests": 14,
+      "passed": 14,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-project-sources.test.ts",
+      "status": "passed",
+      "tests": 19,
+      "passed": 19,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 4,
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts",
+      "status": "passed",
+      "tests": 9,
+      "passed": 9,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/enrich-chunks-evidence-source.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 4,
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/shelf-life-tool.test.ts",
+      "status": "passed",
+      "tests": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts",
+      "status": "passed",
+      "tests": 9,
+      "passed": 9,
+      "failed": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/uploaded-file-path-containment.test.ts",
+      "status": "passed",
+      "tests": 33,
+      "passed": 33,
+      "failed": 0
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "path": "server/services/authoring/__tests__/draft-source-references.test.ts",
+      "status": "passed",
+      "tests": 15,
+      "passed": 15,
+      "failed": 0
+    },
+    {
+      "path": "server/services/authoring/__tests__/saved-draft-source-export.test.ts",
+      "status": "passed",
+      "tests": 11,
+      "passed": 11,
+      "failed": 0
+    },
+    {
+      "path": "server/services/authoring/__tests__/saved-draft-source-reservation.test.ts",
+      "status": "passed",
+      "tests": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 24,
+      "passed": 24,
+      "failed": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 9,
+      "passed": 9,
+      "failed": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/facade-convergence.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 17,
+      "passed": 17,
+      "failed": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 10,
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 36,
+      "passed": 36,
+      "failed": 0
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 13,
+      "passed": 13,
+      "failed": 0
+    },
+    {
+      "path": "server/services/cmc/__tests__/acceptance-criterion.test.ts",
+      "status": "passed",
+      "tests": 6,
+      "passed": 6,
+      "failed": 0
+    },
+    {
+      "path": "server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts",
+      "status": "passed",
+      "tests": 17,
+      "passed": 17,
+      "failed": 0
+    },
+    {
+      "path": "server/services/cmc/__tests__/recorded-numeric-qualification.test.ts",
+      "status": "passed",
+      "tests": 556,
+      "passed": 556,
+      "failed": 0
+    },
+    {
+      "path": "server/services/cmc/__tests__/recorded-poolability-two-sided.test.ts",
+      "status": "passed",
+      "tests": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    {
+      "path": "server/services/cmc/__tests__/recorded-series-qualification.test.ts",
+      "status": "passed",
+      "tests": 32,
+      "passed": 32,
+      "failed": 0
+    },
+    {
+      "path": "server/services/cmc/__tests__/recorded-stability-trending.test.ts",
+      "status": "passed",
+      "tests": 7,
+      "passed": 7,
+      "failed": 0
+    },
+    {
+      "path": "server/services/cmc/__tests__/shelf-life-poolability.test.ts",
+      "status": "passed",
+      "tests": 4,
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "path": "server/services/cmc/__tests__/shelf-life-two-sided.test.ts",
+      "status": "passed",
+      "tests": 6,
+      "passed": 6,
+      "failed": 0
+    },
+    {
+      "path": "server/services/cmc/__tests__/shelf-life.test.ts",
+      "status": "passed",
+      "tests": 14,
+      "passed": 14,
+      "failed": 0
+    },
+    {
+      "path": "server/services/cmc/__tests__/stability-trending.test.ts",
+      "status": "passed",
+      "tests": 12,
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/artifact-freeze.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 6,
+      "passed": 6,
+      "failed": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 7,
+      "passed": 7,
+      "failed": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 21,
+      "passed": 21,
+      "failed": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 17,
+      "passed": 17,
+      "failed": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/eligibility.test.ts",
+      "status": "passed",
+      "tests": 13,
+      "passed": 13,
+      "failed": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 19,
+      "passed": 19,
+      "failed": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/program-lock.test.ts",
+      "status": "passed",
+      "tests": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 28,
+      "passed": 28,
+      "failed": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/route-auth.test.ts",
+      "status": "passed",
+      "tests": 4,
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 4,
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/saved-draft-impact.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 10,
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 18,
+      "passed": 18,
+      "failed": 0
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 12,
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "path": "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts",
+      "status": "passed",
+      "tests": 3,
+      "passed": 3,
+      "failed": 0
+    }
+  ]
+}

@@ -108,6 +108,11 @@ async function transactionQuery(sql: string, params: unknown[] = []) {
   if (sql === 'BEGIN') { staged = []; return { rows: [] }; }
   if (sql === 'COMMIT') { committed.push(...staged); staged = []; return { rows: [] }; }
   if (sql === 'ROLLBACK') { staged = []; return { rows: [] }; }
+  // This unit fixture represents an ordinary upload with no recorded parent.
+  // Actual audit/capture ancestry is exercised by the PGlite route suite.
+  if (sql.startsWith('WITH RECURSIVE rl_seed') && sql.includes('AS parent_files')) {
+    return { rows: [{ invalid: false, withdrawn: false, parent_files: [], parent_sources: [] }], rowCount: 1 };
+  }
   if (sql.includes('FROM regulatory_programs')) return programRows(sql);
   if (sql.includes('FROM file_uploads f')) return uploadRows(sql, params);
   if (sql.includes('FROM cre_evidence_sources')) return { rows: duplicate ? [duplicate] : [] };

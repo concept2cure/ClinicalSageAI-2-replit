@@ -17,9 +17,11 @@ import {
   parseAcceptanceCriterion,
   parseNumeric,
   readRecordedStabilityResults,
+  unassignedObservations,
   type RecordedStabilityRead,
   type RecordedTrendSeries,
   type StabilityPointRecord,
+  type UnassignedObservation,
 } from './cmc/recorded-stability';
 import { assessRecordedCapability, capabilitySentence, isBatchAnalysisFor } from './cmc/recorded-capability';
 /* The dissolution purposes live in shared/, not in the write-through module:
@@ -303,6 +305,10 @@ function recordedStabilityConditions(payload: Record<string, unknown>): unknown 
     : String(payload.storageCondition ?? '').split(/\s*,\s*/).filter(Boolean);
 }
 
+function unassignedStabilityReason(sourceId: string, issue: UnassignedObservation): string {
+  return `Stability source ${sourceId}, row ${issue.row}: ${issue.reason}`;
+}
+
 function assessRecordedStability(stabilitySources: CanonicalSource[]): {
   compared: number;
   outOfSpec: Array<{ parameter: string; timePoint: string; result: number; criterion: string }>;
@@ -321,6 +327,8 @@ function assessRecordedStability(stabilitySources: CanonicalSource[]): {
     const payload = (s.sourcePayload || {}) as Record<string, unknown>;
     const reads = recordedStabilityReads(payload);
     unreadable += reads.filter((r) => r.unreadable).length;
+    const points = reads.flatMap(read => read.points);
+    unresolvedObservations.push(...unassignedObservations(points).map(issue => unassignedStabilityReason(s.id, issue)));
     for (const read of reads) {
       const inspected = numericSeries(read.points);
       if (!inspected.ok) unresolvedObservations.push(inspected.reason);
@@ -545,6 +553,9 @@ function stabilityTrending(sources: CanonicalSource[]): string {
     if (!assessed.ok) {
       statements.push(`Trend not assessed: ${assessed.error}`);
       continue;
+    }
+    for (const issue of assessed.data.unassignedObservations) {
+      statements.push(`Trend not assessed: ${unassignedStabilityReason(s.id, issue)}`);
     }
     for (const series of assessed.data.series) statements.push(describeTrendSeries(series, assessed.data.alpha));
   }

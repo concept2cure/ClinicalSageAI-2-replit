@@ -183,6 +183,23 @@ describe('disposition direct-child containment', () => {
     expect(await f.records()).toEqual([]);
   });
 
+  it('includes a recorded grandchild and requires fresh review when that grandchild changes', async () => {
+    const f = await harness.seed();
+    const first = await child(f);
+    const second = await child(f, { provenance: { origin: 'spreadsheet_edit',
+      derivedFromFileId: first.fileId, derivedFromSha256: DERIVED_HASH, parentSourceIds: [first.id] } });
+    await f.pg.query(`UPDATE cre_evidence_sources SET provenance=provenance || $2::jsonb WHERE id=$1`,
+      [second.id, JSON.stringify({ fileUploadId: second.fileId })]);
+    expect(await impact(f)).toMatchObject({ count: 2, unverifiedCount: 0 });
+    const preview = await f.service.preview(f.scope);
+    await f.pg.query('UPDATE cre_evidence_sources SET metadata=$2 WHERE id=$1',
+      [second.id, JSON.stringify({ scientificQualification: 'requires_review' })]);
+    await expect(f.service.apply({ ...f.scope, choice: 'keep_data',
+      reason: 'Retain the recorded workbook data after dependency review', previewToken: preview.previewToken }))
+      .rejects.toMatchObject({ code: 'STALE_PREVIEW' });
+    expect(await f.records()).toEqual([]);
+  });
+
   it('permits terminal withdrawal when matching digests or named parents belong to unrelated evidence', async () => {
     const f = await harness.seed();
     await child(f, { provenance: { derivedFromFileId: 'file_unrelated', derivedFromSha256: ORIGINAL_HASH, parentSourceIds: [] } });

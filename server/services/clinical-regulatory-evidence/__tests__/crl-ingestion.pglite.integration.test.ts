@@ -9,6 +9,7 @@
  * by any tenant.
  */
 
+import { RECORDED_LINEAGE_STORES_DDL } from '../../document-data-disposition/__tests__/lineage-stores-fixture';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
@@ -36,6 +37,7 @@ const OTHER_ORG = 88;
 // these hooks went red purely because another pglite suite joined the directory.
 beforeAll(async () => {
   pglite = new PGlite();
+  await pglite.exec(RECORDED_LINEAGE_STORES_DDL);
   const here = path.dirname(fileURLToPath(import.meta.url));
   await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../db/migrations/20260724_clinical_regulatory_evidence_spine.sql'), 'utf8'));
   await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../migrations/20260726_cre_source_program_scope.sql'), 'utf8'));

@@ -262,13 +262,13 @@ export function groupByParameter(
   return byParameter;
 }
 
-interface UnassignedObservation {
+export interface UnassignedObservation {
   row: number;
   reason: string;
 }
 
 /** A present result cannot silently disappear because its attribute is unnamed. */
-function unassignedObservations(points: StabilityPointRecord[]): UnassignedObservation[] {
+export function unassignedObservations(points: StabilityPointRecord[]): UnassignedObservation[] {
   return points.flatMap((point, index) => {
     const present = point.result != null && !(typeof point.result === 'string' && !point.result.trim());
     return present && !String(point.parameter ?? '').trim()
@@ -737,6 +737,7 @@ export type RecordedShelfLifeOutcome =
         maxTimeEvaluated: number;
         limitingParameter: string | null;
         supportedShelfLife: number | null;
+        claimWithheldReasons: string[];
         unassignedObservations: UnassignedObservation[];
         estimates: Array<Record<string, unknown>>;
       };
@@ -812,12 +813,10 @@ export async function estimateRecordedShelfLife(
   const maxTime = Number.isFinite(duration) && duration > 0 ? Math.max(120, duration * 2) : 120;
 
   const estimates: Array<Record<string, unknown>> = [];
-  let unresolvedRecordedEvidence = unassigned.length > 0;
   for (const [parameter, condition, points] of byParameter) {
     const inspected = numericSeries(points);
     const criterionInspection = inspectRecordedSeriesCriterion(points);
     if (!inspected.ok || criterionInspection.reason) {
-      unresolvedRecordedEvidence = true;
       estimates.push({
         parameter,
         condition: condition || null,
@@ -932,7 +931,15 @@ export async function estimateRecordedShelfLife(
     shelfLife: number;
     statisticalCrossing?: number;
   }>;
-  const limiting = !unresolvedRecordedEvidence && estimable.length ? estimable.reduce(moreConstraining) : null;
+  // A valid attribute retains its estimate, but cannot establish a programme
+  // claim in place of another recorded attribute the engine could not assess.
+  const claimWithheldReasons = [
+    ...unassigned.map(issue => `Study ${study.id}, row ${issue.row}: ${issue.reason}`),
+    ...estimates.filter(estimate => !estimate.estimable).map(estimate =>
+      `Study ${study.id}, ${estimate.parameter}${estimate.condition ? ` (${estimate.condition})` : ''}: ${estimate.reason}`,
+    ),
+  ];
+  const limiting = claimWithheldReasons.length === 0 && estimable.length ? estimable.reduce(moreConstraining) : null;
 
   return {
     ok: true,
@@ -948,6 +955,7 @@ export async function estimateRecordedShelfLife(
       maxTimeEvaluated: maxTime,
       limitingParameter: limiting ? limiting.parameter : null,
       supportedShelfLife: limiting ? limiting.shelfLife : null,
+      claimWithheldReasons,
       unassignedObservations: unassigned,
       estimates,
     },

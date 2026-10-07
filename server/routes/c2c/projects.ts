@@ -81,6 +81,7 @@ import { serverError } from '../../lib/api-response.js';
 import { createSource, findSourceByChecksum } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { uploadedBinaryAvailableSql } from '../../services/document-data-disposition/eligibility.js';
 import { lockDocumentDispositionProgram } from '../../services/document-data-disposition/program-lock.js';
+import { readRecordedUploadLineage } from '../../services/document-data-disposition/recorded-lineage.js';
 import { loadUploadedFile, sha256Hex, UploadedFileError, type UploadedFile } from '../../services/ana/uploaded-file-access.js';
 
 // People are named through public.actor_name, not a join on users: since users
@@ -1484,6 +1485,7 @@ router.post('/:id/adopt', async (req: Request, res: Response) => {
     // lock is acquired here, which would invert withdrawal's impact lock order.
     await client.query('LOCK TABLE public.cre_evidence_sources, public.file_uploads IN ROW EXCLUSIVE MODE');
     const { file: f, upload, sha256 } = await verifiedAdoptionUpload(client, fileUploadId, orgId);
+    const lineage = await readRecordedUploadLineage(client, orgId, upload.fileId, sha256);
     const existing = await findSourceByChecksum(orgId, sha256, {
       sourceType: 'client_document', clientProgramId: programId, clientWorkspaceId: null,
     }, client);
@@ -1502,8 +1504,9 @@ router.post('/:id/adopt', async (req: Request, res: Response) => {
       ingestionStatus: 'ingested',
       extractionStatus: 'pending',
       createdBy: userId,
-      provenance: { origin: 'adopt', fileUploadId: upload.fileId, storagePath: upload.storagePath, adoptedByUserId: userId, adoptedFrom: 'conversation' },
-      metadata: { originalName: f.original_name, mimeType: f.mime_type, fileSize: upload.buffer.length },
+      provenance: { origin: 'adopt', fileUploadId: upload.fileId, storagePath: upload.storagePath, adoptedByUserId: userId, adoptedFrom: 'conversation', ...(lineage ?? {}) },
+      metadata: { originalName: f.original_name, mimeType: f.mime_type, fileSize: upload.buffer.length,
+        ...(lineage ? { scientificQualification: 'unassessed', formulaResults: 'not_recalculated' } : {}) },
     }, client);
     await writeProgramAudit(client, {
       orgId, userId, programId,

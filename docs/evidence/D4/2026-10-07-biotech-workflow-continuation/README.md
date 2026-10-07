@@ -71,7 +71,11 @@ Four test fixtures now declare their real SQL result shapes and supply the
 catalog query contract's required `rowCount`. Queries, runtime assertions,
 production code, compiler settings and the zero-error baseline are unchanged.
 The affected 19-case rerun is [TYPED-FIXTURE-REGRESSION.txt](TYPED-FIXTURE-REGRESSION.txt).
-Final semantic qualification depends on the corrected exact-source GitHub gate.
+The corrected exact source `40697292af6b813dcfcaba8881e12c250dab69ef` passed
+the whole-tree GitHub gate with **0 errors / tsc exit 0**, against the unchanged
+zero-error baseline. The [executed receipt](../2026-10-07-biotech-qualification-followthrough/PRIOR-TYPECHECK-GREEN.txt)
+records its run/job identity. This qualifies that source's compiler result;
+broader release and scientific qualification remain separately open.
 
 This does **not close D4 or D1–D10**. Production image/staging execution,
 independent-session locking/RLS/runtime-privilege and contention tests,

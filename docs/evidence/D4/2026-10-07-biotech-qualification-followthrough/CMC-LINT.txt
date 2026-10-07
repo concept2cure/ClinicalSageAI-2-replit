@@ -1,0 +1,31 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/cmc/recorded-stability.ts
+  440:8  warning  Async function 'assessRecordedPoolability' has too many lines (224). Maximum allowed is 100  max-lines-per-function
+  440:8  warning  Async function 'assessRecordedPoolability' has a complexity of 44. Maximum allowed is 15     complexity
+  725:1  warning  File has too many lines (763). Maximum allowed is 500                                        max-lines
+  771:8  warning  Async function 'estimateRecordedShelfLife' has too many lines (148). Maximum allowed is 100  max-lines-per-function
+  771:8  warning  Async function 'estimateRecordedShelfLife' has a complexity of 30. Maximum allowed is 15     complexity
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/module3Composer.ts
+   602:10  warning  'readStabilitySignal' is defined but never used                                      @typescript-eslint/no-unused-vars
+   695:10  warning  'stabilityScopeUnrecorded' is defined but never used                                 @typescript-eslint/no-unused-vars
+   800:1   warning  File has too many lines (2331). Maximum allowed is 500                               max-lines
+   849:1   warning  Function 'qcResultVerdict' has a complexity of 20. Maximum allowed is 15             complexity
+  1057:1   warning  Function 'referenceStandardSection' has a complexity of 20. Maximum allowed is 15    complexity
+  1165:1   warning  Function 'containerClosureSection' has too many lines (167). Maximum allowed is 100  max-lines-per-function
+  1165:1   warning  Function 'containerClosureSection' has a complexity of 61. Maximum allowed is 15     complexity
+  1408:1   warning  Function 'impurityRendering' has too many lines (164). Maximum allowed is 100        max-lines-per-function
+  1408:1   warning  Function 'impurityRendering' has a complexity of 22. Maximum allowed is 15           complexity
+  1449:35  warning  Arrow function has a complexity of 24. Maximum allowed is 15                         complexity
+  1648:1   warning  Function 'dissolutionRendering' has a complexity of 51. Maximum allowed is 15        complexity
+  1987:1   warning  Function 'processRendering' has too many lines (139). Maximum allowed is 100         max-lines-per-function
+  1987:1   warning  Function 'processRendering' has a complexity of 86. Maximum allowed is 15            complexity
+  2163:1   warning  Function 'characterizationRendering' has a complexity of 16. Maximum allowed is 15   complexity
+  2269:3   warning  Method '3.2.S.1' has a complexity of 20. Maximum allowed is 15                       complexity
+  2412:3   warning  Method '3.2.S.4' has a complexity of 17. Maximum allowed is 15                       complexity
+  2634:3   warning  Method '3.2.P.3' has too many lines (105). Maximum allowed is 100                    max-lines-per-function
+  2634:3   warning  Method '3.2.P.3' has a complexity of 40. Maximum allowed is 15                       complexity
+  2771:3   warning  Method '3.2.P.5' has a complexity of 24. Maximum allowed is 15                       complexity
+
+✖ 24 problems (0 errors, 24 warnings)

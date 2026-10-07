@@ -1,0 +1,23 @@
+Expected and executed CMC regression files match: 21/21
+
+server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts
+server/services/__tests__/cmc-module3-compiler.test.ts
+server/services/__tests__/cmc-qc-batch-analyses.test.ts
+server/services/__tests__/module3Composer.stability-filed.test.ts
+server/services/__tests__/module3Composer.stability-honesty.test.ts
+server/services/__tests__/module3Composer.stability-trending.test.ts
+server/services/__tests__/module3Composer.test.ts
+server/services/ana/__tests__/cmc-knowledge-tools.test.ts
+server/services/ana/__tests__/cmc-quality-summary-tool.test.ts
+server/services/ana/__tests__/deepening-tools.test.ts
+server/services/ana/__tests__/shelf-life-tool.test.ts
+server/services/cmc/__tests__/acceptance-criterion.test.ts
+server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts
+server/services/cmc/__tests__/recorded-numeric-qualification.test.ts
+server/services/cmc/__tests__/recorded-poolability-two-sided.test.ts
+server/services/cmc/__tests__/recorded-series-qualification.test.ts
+server/services/cmc/__tests__/recorded-stability-trending.test.ts
+server/services/cmc/__tests__/shelf-life-poolability.test.ts
+server/services/cmc/__tests__/shelf-life-two-sided.test.ts
+server/services/cmc/__tests__/shelf-life.test.ts
+server/services/cmc/__tests__/stability-trending.test.ts
