@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-07T14:49:35.447Z",
+  "generatedAt": "2026-10-07T17:24:24.354Z",
   "git": {
-    "sha": "326af268b8028802508e42f7c356e5eb612f3b65",
+    "sha": "d46df5e1c406b0e8347385bcc0963dc02fd3e513",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2107,7 +2107,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "bytes": 162077
+        "bytes": 162639
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2337,7 +2337,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "lines": 3237
+        "lines": 3248
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2497,7 +2497,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 2011
+        "lines": 2014
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
