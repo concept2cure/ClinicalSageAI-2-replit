@@ -1,0 +1,899 @@
+{
+  "workstream": "W3",
+  "row": "D4",
+  "qualifiedSource": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+  "publicationBase": "f5a24e79bd263ac35bc6a4f5028593a8b2ef1929",
+  "qualifiedRun": 37697288645,
+  "scope": "evidence only; no product or test edits",
+  "excludedIdentityPaths": [
+    "docs",
+    ".gitleaksignore"
+  ],
+  "qualifiedSourceToPublicationBaseChangedPaths": [
+    ".gitleaksignore",
+    "docs/evidence/D4/2026-10-07-history-scan-dispositions/CHECKSUM-PROOF.json",
+    "docs/evidence/D4/2026-10-07-history-scan-dispositions/CONTRACT-GREEN.txt",
+    "docs/evidence/D4/2026-10-07-history-scan-dispositions/PLAN.md",
+    "docs/evidence/D4/2026-10-07-history-scan-dispositions/REMOTE-RED.txt",
+    "docs/evidence/D4/2026-10-07-history-scan-dispositions/RESULTS.md",
+    "docs/evidence/D4/2026-10-07-history-scan-dispositions/RULE-DIAGNOSTIC.json",
+    "docs/evidence/D4/2026-10-07-history-scan-dispositions/SCANNER-SELFTESTS.txt",
+    "docs/evidence/D4/2026-10-07-history-scan-dispositions/SCOPE.json",
+    "docs/evidence/D4/2026-10-07-history-scan-dispositions/WORKING-TREE-GREEN.txt"
+  ],
+  "unchangedSourceAndGuardObjects": [
+    {
+      "path": ".ai-instructions.md",
+      "kind": "blob",
+      "gitObject": "c4dcdcf094c7617a9ebd9cac2f6c4c8490f8cc55"
+    },
+    {
+      "path": ".claude",
+      "kind": "tree",
+      "gitObject": "09faa6e1a79ee9332e7a90a5975502ea62cba4ef"
+    },
+    {
+      "path": ".design",
+      "kind": "tree",
+      "gitObject": "68fd8662d718424c76e91959aa209a075b381208"
+    },
+    {
+      "path": ".devcontainer",
+      "kind": "tree",
+      "gitObject": "026356327d28d0131c76c1faacc7f92e03de2a19"
+    },
+    {
+      "path": ".dockerignore",
+      "kind": "blob",
+      "gitObject": "714d878ee1ef80f731af5c35b6864dfa05bcaeea"
+    },
+    {
+      "path": ".env.beta.example",
+      "kind": "blob",
+      "gitObject": "5297ccc75c0fe4052f1e5a2bdfded96bc2f666de"
+    },
+    {
+      "path": ".env.example",
+      "kind": "blob",
+      "gitObject": "327b9b05f4439b7e157a6d35d445aaa7200d4faf"
+    },
+    {
+      "path": ".gitattributes",
+      "kind": "blob",
+      "gitObject": "76df1eb113631dd702463cab6cbf3afc3790147d"
+    },
+    {
+      "path": ".gitguardian.yaml",
+      "kind": "blob",
+      "gitObject": "3f547e262ef94a28a6abf9aa26cf8aa5228168f9"
+    },
+    {
+      "path": ".github",
+      "kind": "tree",
+      "gitObject": "a633740a3d709c907eaa0d40c9c099e9bc3f35b2"
+    },
+    {
+      "path": ".gitignore",
+      "kind": "blob",
+      "gitObject": "927bc26826710a8176c5f98f5c140d846c1951f0"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "kind": "blob",
+      "gitObject": "73a7b0b59b71051eb914815a0c6533f810aa78cd"
+    },
+    {
+      "path": ".husky",
+      "kind": "tree",
+      "gitObject": "b814c803a69df415692225799cd53fa14b59d05c"
+    },
+    {
+      "path": ".node-version",
+      "kind": "blob",
+      "gitObject": "2bd5a0a98a36cc08ada88b804d3be047e6aa5b8a"
+    },
+    {
+      "path": ".npmrc",
+      "kind": "blob",
+      "gitObject": "f9bd6bb2aa9ee639f9faeed85ed2dadc889e29fb"
+    },
+    {
+      "path": ".nvmrc",
+      "kind": "blob",
+      "gitObject": "2bd5a0a98a36cc08ada88b804d3be047e6aa5b8a"
+    },
+    {
+      "path": ".prettierignore",
+      "kind": "blob",
+      "gitObject": "b9f77e767c1b16ec67a0c10216289d424cb21c50"
+    },
+    {
+      "path": ".prettierrc",
+      "kind": "blob",
+      "gitObject": "49fb29b5838a88dd6d1f70ebcab12cf1a765a2d5"
+    },
+    {
+      "path": ".replit",
+      "kind": "blob",
+      "gitObject": "955eaaab917ac607e2c554e0eca1ec00cb5c6fff"
+    },
+    {
+      "path": ".storybook",
+      "kind": "tree",
+      "gitObject": "4956e56afc6e58dcef2d1268def4c76f09a311c3"
+    },
+    {
+      "path": ".trivyignore",
+      "kind": "blob",
+      "gitObject": "a9bdde3d8398414b784ab94d471dbcfbceba5ab5"
+    },
+    {
+      "path": ".typecheck-baseline.json",
+      "kind": "blob",
+      "gitObject": "2a3cec07f7828f6765bd25c28f5a90acec581657"
+    },
+    {
+      "path": ".vercelignore",
+      "kind": "blob",
+      "gitObject": "13711326d1adcfa336963a5718a3efb56d73e0cc"
+    },
+    {
+      "path": ".vscode",
+      "kind": "tree",
+      "gitObject": "849f7f4b79166f5955a6bf6a5d7abc5182443575"
+    },
+    {
+      "path": "AGENTS.md",
+      "kind": "blob",
+      "gitObject": "66c2c57d7b496a3e0234e5fc6a7dd394fc3b557e"
+    },
+    {
+      "path": "ANA_DOCUMENT_STUDIO_SPEC_2026-06-20.md",
+      "kind": "blob",
+      "gitObject": "8ac554c7ecc163fe66bd8e3ac2311c79d44c5770"
+    },
+    {
+      "path": "ANA_DOCUMENT_STUDIO_UI_SPEC_2026-06-22.md",
+      "kind": "blob",
+      "gitObject": "984673a7bed689735f2c4b38fd1095ac571a754b"
+    },
+    {
+      "path": "ANA_INTELLIGENCE_EXPANSION_MASTER_PLAN_2026-06-29.md",
+      "kind": "blob",
+      "gitObject": "ee1008c2b3d34b60534a9701d2935ade38a9ea83"
+    },
+    {
+      "path": "ARCHITECTURE-AI-ACTIONS.md",
+      "kind": "blob",
+      "gitObject": "defb3073ea5fe6a17271c51223b2cdcdb534e30d"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "kind": "blob",
+      "gitObject": "26f2999c584a0ff3ef5fe1c392743777f3805c93"
+    },
+    {
+      "path": "CLAUDE.md",
+      "kind": "blob",
+      "gitObject": "1d012461501c1bb07f9d48878f39402f06070209"
+    },
+    {
+      "path": "CLAUDE_CODE_SETUP.md",
+      "kind": "blob",
+      "gitObject": "7eaf0c499451305c8bc0ef1c2027871556d9e650"
+    },
+    {
+      "path": "CODE_OF_CONDUCT.md",
+      "kind": "blob",
+      "gitObject": "666250ac998c206f762c9681913c073e065de87f"
+    },
+    {
+      "path": "COLLABORATION_TASKING_UX_ASSESSMENT_2026-08-07.md",
+      "kind": "blob",
+      "gitObject": "96916daf0cef5285b61da0aa8731be342227a1b9"
+    },
+    {
+      "path": "DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md",
+      "kind": "blob",
+      "gitObject": "fd19ad6c544e0b3d0bd67da30bd374236bf5ba72"
+    },
+    {
+      "path": "DEVICE_IVD_SUBMISSION_ASSEMBLY_SPEC_2026-06-15.md",
+      "kind": "blob",
+      "gitObject": "1253837801b21335276f73a5e4bed4171e76574a"
+    },
+    {
+      "path": "Dockerfile.optimized",
+      "kind": "blob",
+      "gitObject": "165e2e56bce7ac9d1fd3413f243b57eee56e436c"
+    },
+    {
+      "path": "EVALIDATOR_INTEGRATION_SPEC.md",
+      "kind": "blob",
+      "gitObject": "8a849aad06f74c66364349e907cae2c96a5eecf1"
+    },
+    {
+      "path": "FEATURE_INVENTORY.md",
+      "kind": "blob",
+      "gitObject": "a0aff1afb9aa5f34f80d92f87384ba759b4b366e"
+    },
+    {
+      "path": "FORENSIC_CODE_AUDIT_2026-05-29.md",
+      "kind": "blob",
+      "gitObject": "8ed37e8e70dcf34439d0798cf9621e623532430f"
+    },
+    {
+      "path": "GA_GAP_AUDIT_2026-06-10.md",
+      "kind": "blob",
+      "gitObject": "86b123a7c496ea61ce40033d9787c3c0ebdd2c43"
+    },
+    {
+      "path": "GLOBAL_LANGUAGE_STRATEGY_2026-06-29.md",
+      "kind": "blob",
+      "gitObject": "b373e5daad1a6b0e3fd616b75d591984154691e4"
+    },
+    {
+      "path": "GLOBAL_SUBMISSION_READINESS_ASSESSMENT_2026-07-30.md",
+      "kind": "blob",
+      "gitObject": "35e90a423b2b0c4d6635531a79524da01595b61d"
+    },
+    {
+      "path": "GOVERNANCE_BINDING_CONTRACT.md",
+      "kind": "blob",
+      "gitObject": "edb6882016034b8ca4ce528d234f1e92005f9b5f"
+    },
+    {
+      "path": "HANDOFF.md",
+      "kind": "blob",
+      "gitObject": "d4cb42481352ece4d4a5ae1132b2c1dcea5f561d"
+    },
+    {
+      "path": "HANDOFF_TO_DESIGN_document_authoring.md",
+      "kind": "blob",
+      "gitObject": "0c7752ad6ecbc45db32e0060ad0292f6b44536a4"
+    },
+    {
+      "path": "HANDOFF_TO_DESIGN_global_ri.md",
+      "kind": "blob",
+      "gitObject": "1c270e5268a5de3d8824ff3f06b43e09c10365a6"
+    },
+    {
+      "path": "HANDOFF_TO_DESIGN_master_admin_business_center.md",
+      "kind": "blob",
+      "gitObject": "faace0f7ecd1cb6898551c8dad87473ac1d1cf45"
+    },
+    {
+      "path": "HI_8_ECTD_SCOPING_BRIEF.md",
+      "kind": "blob",
+      "gitObject": "7d23a511b90582e6950fd4766a97b7e7fbd0400a"
+    },
+    {
+      "path": "HUMAN_FACTORS_AND_USABILITY_SPEC_2026-06-15.md",
+      "kind": "blob",
+      "gitObject": "703af99d51f4ee26597f190ec841c95c87a43412"
+    },
+    {
+      "path": "IMPLEMENTATION_TASK_CHECKLISTS_2026-06-15.md",
+      "kind": "blob",
+      "gitObject": "dd6386b67c29f938d5eaf5f80c28131e55178ec6"
+    },
+    {
+      "path": "INSIGHTS_REPORTING_IMPLEMENTATION_SPEC.md",
+      "kind": "blob",
+      "gitObject": "92f91d592060c4631e6522f8df1fc0458647cbd1"
+    },
+    {
+      "path": "LICENSE",
+      "kind": "blob",
+      "gitObject": "3b5a52a493b2c186554db8185a0f29c983eb6bad"
+    },
+    {
+      "path": "LOCALAI_ONPREM_INFERENCE_PILOT_PLAN_2026-07-30.md",
+      "kind": "blob",
+      "gitObject": "e97c8e29b160f1faf78b6289158fec11ed3765d1"
+    },
+    {
+      "path": "MDX_PAYING_CUSTOMER_VALUE_AND_ENTITLEMENTS_2026-06-15.md",
+      "kind": "blob",
+      "gitObject": "d67577384851ce1a44833c4350a224347e2d2a5e"
+    },
+    {
+      "path": "Makefile",
+      "kind": "blob",
+      "gitObject": "f086fe3d0bbadaaa730bfe112c75c183692bf75c"
+    },
+    {
+      "path": "OSS_AI_TOOLING_FIT_ASSESSMENT_2026-07-30.md",
+      "kind": "blob",
+      "gitObject": "a735f68985dc77bfc5d8e8d1dd5c568fed611fd6"
+    },
+    {
+      "path": "PDEV_IND_DESIGN_BRIEF.md",
+      "kind": "blob",
+      "gitObject": "d2ec4b7b65d20c2c3cdc56f536a3c70bd9220326"
+    },
+    {
+      "path": "PDEV_IND_WORKFLOW_AUDIT.md",
+      "kind": "blob",
+      "gitObject": "0bebd206d7118269ed04a9fcf2aa5a906863df8f"
+    },
+    {
+      "path": "PHASE_10_2_INSTALL.md",
+      "kind": "blob",
+      "gitObject": "5df0859ae92fa4a78cbfc68004887616962d9adc"
+    },
+    {
+      "path": "PHASE_11_INSTALL.md",
+      "kind": "blob",
+      "gitObject": "86669f9c1a6e3385c9eb00ab756641a76facc07a"
+    },
+    {
+      "path": "PRODUCT_READINESS_ASSESSMENT.md",
+      "kind": "blob",
+      "gitObject": "b354506cdb55467534d35536a8efbbcae43020ba"
+    },
+    {
+      "path": "QUALITY_ASSURANCE_MODULE_GA.md",
+      "kind": "blob",
+      "gitObject": "c52559bce5bc64617d46654994fb49476cc0503e"
+    },
+    {
+      "path": "QUICKSTART.md",
+      "kind": "blob",
+      "gitObject": "0abaa4093eb182da8c732e94fa82c6835e67855f"
+    },
+    {
+      "path": "README.md",
+      "kind": "blob",
+      "gitObject": "a889ae0fdd140ae48dfaab46915c31af72f399e6"
+    },
+    {
+      "path": "RECONCILE.md",
+      "kind": "blob",
+      "gitObject": "e256dc3cde4a6364bc0a4ab99d3c120e7ac55d60"
+    },
+    {
+      "path": "REPORTING_INTELLIGENCE_AUDIT_AND_SPEC_2026-06-15.md",
+      "kind": "blob",
+      "gitObject": "fb924a9283c6ccd67305aff9f3fcec230c461dab"
+    },
+    {
+      "path": "SECURITY.md",
+      "kind": "blob",
+      "gitObject": "3b67911a7bb1d70d1f7ef54b66e0f42e81b22e19"
+    },
+    {
+      "path": "SKILL.md",
+      "kind": "blob",
+      "gitObject": "fe8aeb1d798c66e3a7f8ceabc6c8e388b5738102"
+    },
+    {
+      "path": "SUBMISSION_CENTER.http",
+      "kind": "blob",
+      "gitObject": "dd06d760a710d99e04bc676959c2f3dcbbc58e80"
+    },
+    {
+      "path": "SUBMISSION_CENTER.md",
+      "kind": "blob",
+      "gitObject": "7cf6e8d4c21cbddc1c8ba00542945b29e14d41c4"
+    },
+    {
+      "path": "SUBMISSION_CENTER_API.md",
+      "kind": "blob",
+      "gitObject": "7f12c53cbe2df8fbb0d125f376d1def6e134c25f"
+    },
+    {
+      "path": "VAULT_DATA_ROOM_ASSESSMENT_2026-09-05.md",
+      "kind": "blob",
+      "gitObject": "10fca86332b1622af44b91c6b03d99510678e69a"
+    },
+    {
+      "path": "VAULT_DOCUMENT_ARCHITECTURE_SPEC_2026-09-05.md",
+      "kind": "blob",
+      "gitObject": "6ec49267c4afd796207c53b3b00d23c9b529315e"
+    },
+    {
+      "path": "_sync",
+      "kind": "tree",
+      "gitObject": "f0a1e1946dbfb00f0df2263894b0731425d7a89c"
+    },
+    {
+      "path": "app.yaml",
+      "kind": "blob",
+      "gitObject": "75e0ca82391f0378f46c4798fe2f6a36497ad29e"
+    },
+    {
+      "path": "assets",
+      "kind": "tree",
+      "gitObject": "1ec751d6d86d0100ba0ef090dc777be78cd58f85"
+    },
+    {
+      "path": "charts",
+      "kind": "tree",
+      "gitObject": "3fa2a50008cb8ba6fde6cf16eead5a2f8f692975"
+    },
+    {
+      "path": "client",
+      "kind": "tree",
+      "gitObject": "5d9443b9f4c68f1a13ad5f5a098b46883d0f9755"
+    },
+    {
+      "path": "config",
+      "kind": "tree",
+      "gitObject": "44d0945969da510a6dc1c4156d405642a09e1fc1"
+    },
+    {
+      "path": "csrs",
+      "kind": "tree",
+      "gitObject": "15d69cb3c8d4a35ce7834407ee08bcd2e13b209f"
+    },
+    {
+      "path": "dangerfile.js",
+      "kind": "blob",
+      "gitObject": "eebe41ddb8ada6abd5f63e24842e9a67651e0cc2"
+    },
+    {
+      "path": "data",
+      "kind": "tree",
+      "gitObject": "956b3ea9799e5734a2d18e827c4a7135eaf5de4c"
+    },
+    {
+      "path": "database",
+      "kind": "tree",
+      "gitObject": "7c93170ca81198d6d7ad9534d9752f28f28539cb"
+    },
+    {
+      "path": "db",
+      "kind": "tree",
+      "gitObject": "3cf0b2c4aff29ac4fc74977200ceef404890a6b0"
+    },
+    {
+      "path": "deploy",
+      "kind": "tree",
+      "gitObject": "6629a239adde9ff0cadc55083126f7e0c229f142"
+    },
+    {
+      "path": "design-system-bundle.tgz.bin",
+      "kind": "blob",
+      "gitObject": "f4de3b228ab800fbfc0c1d7fd674eb0fe2e37134"
+    },
+    {
+      "path": "design-system",
+      "kind": "tree",
+      "gitObject": "a091679ec8c5b53e5d17c9680d924729af3eb9de"
+    },
+    {
+      "path": "dev_ops",
+      "kind": "tree",
+      "gitObject": "e80dcb8f43b7a491cf674a309e1f7e6556450ef6"
+    },
+    {
+      "path": "docker-compose.beta.yml",
+      "kind": "blob",
+      "gitObject": "3d623d52dc950dee020306ad74de7a211d9ae5fc"
+    },
+    {
+      "path": "docker-compose.staging.yml",
+      "kind": "blob",
+      "gitObject": "8019b8539936ad5ee4d6a7292f5e2e7d0ac6e516"
+    },
+    {
+      "path": "docker-compose.yml",
+      "kind": "blob",
+      "gitObject": "be93e14c134ed625c967dbaecc355e2969c71ec0"
+    },
+    {
+      "path": "drizzle.config.ts",
+      "kind": "blob",
+      "gitObject": "8a295b1608fc130a45022ee456e12956611a7a67"
+    },
+    {
+      "path": "ectd-stubs",
+      "kind": "tree",
+      "gitObject": "9429e5ce897383d4535700351f8ec9d8b5158d0c"
+    },
+    {
+      "path": "eslint.config.js",
+      "kind": "blob",
+      "gitObject": "628363801e916254c6fa7acc4ca5f94da28af82b"
+    },
+    {
+      "path": "global-ri.openapi.json",
+      "kind": "blob",
+      "gitObject": "79c3395d38a98d2aaf981ec4104a6f3de929d58d"
+    },
+    {
+      "path": "helm",
+      "kind": "tree",
+      "gitObject": "6b65172c5fb6c71baf85fcf4d9ec609ce5295d4f"
+    },
+    {
+      "path": "infra",
+      "kind": "tree",
+      "gitObject": "be965e31441383e72a482d4450583999f6d29db9"
+    },
+    {
+      "path": "ingestion",
+      "kind": "tree",
+      "gitObject": "003c362220c9a8cc2f444640e7e68f74c356e614"
+    },
+    {
+      "path": "init-scripts",
+      "kind": "tree",
+      "gitObject": "c727f2840d71b1e2068d1756f512294155b34fd6"
+    },
+    {
+      "path": "init-sql",
+      "kind": "tree",
+      "gitObject": "b83c97227af7a2dddc29d13cfc855d07b57319f9"
+    },
+    {
+      "path": "ivd-platform.openapi.json",
+      "kind": "blob",
+      "gitObject": "c548990a7db106277a5d7e9156c56f176e248ff7"
+    },
+    {
+      "path": "knip.json",
+      "kind": "blob",
+      "gitObject": "d7c9d5d91060451c3900d2e2fdd49d4c9d1c9b99"
+    },
+    {
+      "path": "lighthouse-ci.json",
+      "kind": "blob",
+      "gitObject": "845e38373f471db0d917de7d33cb0e4f7a1b625d"
+    },
+    {
+      "path": "logs",
+      "kind": "tree",
+      "gitObject": "d4cf5953b6cac89704d02625643132a3c838efa8"
+    },
+    {
+      "path": "migrations",
+      "kind": "tree",
+      "gitObject": "d15e1cc5b06696662c975ea4bba9bd1b0ba1ef94"
+    },
+    {
+      "path": "package-lock.json",
+      "kind": "blob",
+      "gitObject": "a4e96f97a62b2a6304968ef85a073a3e448b2cbd"
+    },
+    {
+      "path": "package.json",
+      "kind": "blob",
+      "gitObject": "e4eedaafcb063557958f769ff7f697106d252fd0"
+    },
+    {
+      "path": "playwright.config.ts",
+      "kind": "blob",
+      "gitObject": "6e87a0d7ee96490c2bb07e230412ada96766b310"
+    },
+    {
+      "path": "policy",
+      "kind": "tree",
+      "gitObject": "61dd64ae19b1ae36a84f09a0a51a61783e8a0040"
+    },
+    {
+      "path": "postcss.config.js",
+      "kind": "blob",
+      "gitObject": "51a6e4e62be6d68903fc0f44a0bd8b4ea4eae7e5"
+    },
+    {
+      "path": "regulatory_data",
+      "kind": "tree",
+      "gitObject": "3fa327aedad0b2315e969b677f59d2691e101e2f"
+    },
+    {
+      "path": "replit.nix",
+      "kind": "blob",
+      "gitObject": "2f3e2f57616f1abf97afd03dad595150631ca297"
+    },
+    {
+      "path": "reports",
+      "kind": "tree",
+      "gitObject": "5eb2f770a7ff7cd7a3dc4105dd5d32b7fdcbeb8b"
+    },
+    {
+      "path": "requirements.txt",
+      "kind": "blob",
+      "gitObject": "429af997a0b0ef25aa52611d78eedc5d3365c398"
+    },
+    {
+      "path": "schemas",
+      "kind": "tree",
+      "gitObject": "fcef54d947045f9f4c0b201a425ddb1c3ef6c82e"
+    },
+    {
+      "path": "scripts",
+      "kind": "tree",
+      "gitObject": "5e061a402ff75100a6f75b1d41170989f7e872ae"
+    },
+    {
+      "path": "server",
+      "kind": "tree",
+      "gitObject": "dc86f572138d9cd555860cdf5ba636887c5bae70"
+    },
+    {
+      "path": "services",
+      "kind": "tree",
+      "gitObject": "c8a9c83bfa1ebb22aa1014f5c11f3c1d65a19538"
+    },
+    {
+      "path": "shadow_service",
+      "kind": "tree",
+      "gitObject": "6a935437e3cb19824c3ad4d518d9679932965ceb"
+    },
+    {
+      "path": "shared",
+      "kind": "tree",
+      "gitObject": "f91972b8ace2a0f8d067936a0ab15f871e916427"
+    },
+    {
+      "path": "skills",
+      "kind": "tree",
+      "gitObject": "df73bdf50cd1c5b611d9ffac8cfc112aeed0b6b6"
+    },
+    {
+      "path": "sql",
+      "kind": "tree",
+      "gitObject": "90594bdc31bee6e38f62d0faf9f41082ad6b4c9d"
+    },
+    {
+      "path": "start-platform.sh",
+      "kind": "blob",
+      "gitObject": "c9bd1100c8d0d682762a747165e1431bb6c6f2f3"
+    },
+    {
+      "path": "start.sh",
+      "kind": "blob",
+      "gitObject": "bb819e69d1fb27367009de6ae262abe67c6e075b"
+    },
+    {
+      "path": "storage",
+      "kind": "tree",
+      "gitObject": "deebb31112da6d96173a3c914352436463bea5e2"
+    },
+    {
+      "path": "submission-center.openapi.json",
+      "kind": "blob",
+      "gitObject": "1ecb803984ede19757b844c40636fe40536a470a"
+    },
+    {
+      "path": "tailwind.config.ts",
+      "kind": "blob",
+      "gitObject": "11bcbd11df046b19443c2a8617401013ffff449d"
+    },
+    {
+      "path": "templates",
+      "kind": "tree",
+      "gitObject": "a188500da324f2b14a620e52d9a12af590a95e18"
+    },
+    {
+      "path": "terraform",
+      "kind": "tree",
+      "gitObject": "5ce09347f114f67c00567e56346ef7708c0c7351"
+    },
+    {
+      "path": "tests",
+      "kind": "tree",
+      "gitObject": "670f1b6d5b210496b2a3ca1acc257f462c165041"
+    },
+    {
+      "path": "theme.json",
+      "kind": "blob",
+      "gitObject": "5f7511763485a82061e4dd3e08c3ef59c0e7c6d6"
+    },
+    {
+      "path": "tsconfig.beta-slice.json",
+      "kind": "blob",
+      "gitObject": "728f871de4a88760ed62f5c5c0c675d6cce3194f"
+    },
+    {
+      "path": "tsconfig.check.json",
+      "kind": "blob",
+      "gitObject": "60c8dffb276d406903fa57bdba2531645092cd76"
+    },
+    {
+      "path": "tsconfig.json",
+      "kind": "blob",
+      "gitObject": "ff4a2be628310712404ecdddfe74b3bca8f89aff"
+    },
+    {
+      "path": "ui_kits",
+      "kind": "tree",
+      "gitObject": "262f6226f777723af5b7e5cc14c0084687918a78"
+    },
+    {
+      "path": "vite.config.ts",
+      "kind": "blob",
+      "gitObject": "82232630fd0745f49aab2f440f7db2e9152e6c43"
+    },
+    {
+      "path": "vitest.clock-shift.config.ts",
+      "kind": "blob",
+      "gitObject": "412b9358b0284df9568e8fbf48f1e66a51a294b6"
+    },
+    {
+      "path": "vitest.config.ts",
+      "kind": "blob",
+      "gitObject": "8935bc6c016ffc6bbfbb41cb54e2f5220f7f2215"
+    },
+    {
+      "path": "vitest.db.config.ts",
+      "kind": "blob",
+      "gitObject": "e1be1748b9ce90e92c32d864a457dc42b029b73b"
+    },
+    {
+      "path": "vitest.visual-qa.config.ts",
+      "kind": "blob",
+      "gitObject": "b27e6d14ee3b4ef3bd1dfac2b0167d068d7da276"
+    },
+    {
+      "path": "vitest.workspace.ts",
+      "kind": "blob",
+      "gitObject": "98c7614e3062b3e52280c572b1e7892fbc5dafe6"
+    },
+    {
+      "path": "workers",
+      "kind": "tree",
+      "gitObject": "23cb144fb803b42f530088a6225a85d7d7fe67c1"
+    }
+  ],
+  "nativePhysicalFilePopulation": [
+    "server/mcp/__tests__/mcp-account-standing.dbtest.ts",
+    "server/mcp/__tests__/mcp-connector-enablement.dbtest.ts",
+    "server/mcp/__tests__/mcp-connector.dbtest.ts",
+    "server/mcp/__tests__/mcp-consent-delegated.dbtest.ts",
+    "server/middleware/__tests__/delegated-credential-scope.dbtest.ts",
+    "server/services/__tests__/embedding-corpus-policy.dbtest.ts",
+    "server/services/ana/__tests__/run-control-cross-instance.dbtest.ts",
+    "server/services/audit/__tests__/chain-anchor.dbtest.ts",
+    "server/services/audit/__tests__/chain-concurrency.dbtest.ts",
+    "server/services/c2c/__tests__/project-retention-locks.dbtest.ts",
+    "tests/db/account-standing-time-zone.dbtest.ts",
+    "tests/db/account-standing.dbtest.ts",
+    "tests/db/actor-displays.dbtest.ts",
+    "tests/db/actor-names.dbtest.ts",
+    "tests/db/actor-vanishing.dbtest.ts",
+    "tests/db/admin-change-audit.dbtest.ts",
+    "tests/db/ai-action-leases-across-tasks.dbtest.ts",
+    "tests/db/ai-gateway-audit-log.dbtest.ts",
+    "tests/db/ana-vault-search-no-key.dbtest.ts",
+    "tests/db/app-role-provisioning-rds-shape.dbtest.ts",
+    "tests/db/append-only-store-grants.dbtest.ts",
+    "tests/db/atom-search-tenant-key.dbtest.ts",
+    "tests/db/atom-search.dbtest.ts",
+    "tests/db/authoring-governed-delete-signed-freeze.dbtest.ts",
+    "tests/db/authoring-section-concurrency.dbtest.ts",
+    "tests/db/authoring-stability-table.dbtest.ts",
+    "tests/db/c2c-project-persistence.dbtest.ts",
+    "tests/db/canonical-documents-append-only.dbtest.ts",
+    "tests/db/capa-code-uniqueness.dbtest.ts",
+    "tests/db/chat-upload.dbtest.ts",
+    "tests/db/child-table-parent-scoped-rls.dbtest.ts",
+    "tests/db/cmc-module3-history-append-only.dbtest.ts",
+    "tests/db/cmc-source-evidence.dbtest.ts",
+    "tests/db/collab-presence.dbtest.ts",
+    "tests/db/compliance-reports.dbtest.ts",
+    "tests/db/compliance-review-fix-round.dbtest.ts",
+    "tests/db/compliance-review-records.dbtest.ts",
+    "tests/db/compliance-review-reports.dbtest.ts",
+    "tests/db/continuity-baseline.dbtest.ts",
+    "tests/db/control-plane-access.dbtest.ts",
+    "tests/db/correspondence-work-items.dbtest.ts",
+    "tests/db/cortex-query-tenant-header.dbtest.ts",
+    "tests/db/cre-capture-immutability.dbtest.ts",
+    "tests/db/cross-object-resolver.dbtest.ts",
+    "tests/db/data-room-capture-provenance.dbtest.ts",
+    "tests/db/document-catalog-recall.dbtest.ts",
+    "tests/db/document-catalog-role.dbtest.ts",
+    "tests/db/document-catalog-toggles.dbtest.ts",
+    "tests/db/document-catalog.dbtest.ts",
+    "tests/db/domain-history-append-only.dbtest.ts",
+    "tests/db/domain-sign-ceremony.dbtest.ts",
+    "tests/db/drafting-tasks-tenant-scope.dbtest.ts",
+    "tests/db/enterprise-onboarding-intake.dbtest.ts",
+    "tests/db/entitlement-grants-resolution.dbtest.ts",
+    "tests/db/entitlement-schema-posture.dbtest.ts",
+    "tests/db/feature-toggle-workspace-header.dbtest.ts",
+    "tests/db/gateway-accounts.dbtest.ts",
+    "tests/db/gdpr-service-runtime-role.dbtest.ts",
+    "tests/db/governed-edit-boundary.dbtest.ts",
+    "tests/db/invitation-acceptance.dbtest.ts",
+    "tests/db/knowledge-graph-tenant-isolation.dbtest.ts",
+    "tests/db/licensing-history.dbtest.ts",
+    "tests/db/licensing-trials.dbtest.ts",
+    "tests/db/lifecycle-signature-binding.dbtest.ts",
+    "tests/db/master-enterprise-requests.dbtest.ts",
+    "tests/db/master-licensing-console.dbtest.ts",
+    "tests/db/memberships.dbtest.ts",
+    "tests/db/migration-lock-timeout.dbtest.ts",
+    "tests/db/module-access-requests.dbtest.ts",
+    "tests/db/nonpublic-uuid-tenant-isolation.dbtest.ts",
+    "tests/db/one-time-credentials.dbtest.ts",
+    "tests/db/org-retention-period.dbtest.ts",
+    "tests/db/organizations-writes.dbtest.ts",
+    "tests/db/part11-audit-store.dbtest.ts",
+    "tests/db/pdfa-requirement.dbtest.ts",
+    "tests/db/pg-mock-scoping.dbtest.ts",
+    "tests/db/phase5-intelligent-docs.dbtest.ts",
+    "tests/db/platform-role-grant-record.dbtest.ts",
+    "tests/db/platform-role-grants.dbtest.ts",
+    "tests/db/pre-auth-narrowing.dbtest.ts",
+    "tests/db/pre-auth-user-lookup.dbtest.ts",
+    "tests/db/program-ownership.dbtest.ts",
+    "tests/db/project-delete-held-by-store.dbtest.ts",
+    "tests/db/project-scope-boundary.dbtest.ts",
+    "tests/db/provisioned-tenant-tables-rls.dbtest.ts",
+    "tests/db/qms-document-signature-required.dbtest.ts",
+    "tests/db/rag-pipeline-tenant-scope.dbtest.ts",
+    "tests/db/report-os-delivery-recording.dbtest.ts",
+    "tests/db/report-os-registry-seed.dbtest.ts",
+    "tests/db/report-os-tenant-from-session.dbtest.ts",
+    "tests/db/request-parent-boundary.dbtest.ts",
+    "tests/db/research-admin-sign-ceremony.dbtest.ts",
+    "tests/db/retrieval-floor.dbtest.ts",
+    "tests/db/review-comments-record.dbtest.ts",
+    "tests/db/review-record-export.dbtest.ts",
+    "tests/db/rls-bypass-does-not-outlive-release.dbtest.ts",
+    "tests/db/rls-policy-inputs.dbtest.ts",
+    "tests/db/rls-tenant-isolation.dbtest.ts",
+    "tests/db/role-config-change-audit.dbtest.ts",
+    "tests/db/scheduled-once-lease.dbtest.ts",
+    "tests/db/scheduled-once-window.dbtest.ts",
+    "tests/db/scheduler-jobs-under-rls.dbtest.ts",
+    "tests/db/second-factor-binding.dbtest.ts",
+    "tests/db/security-definer-functions.dbtest.ts",
+    "tests/db/session-activity-across-tasks.dbtest.ts",
+    "tests/db/session-termination.dbtest.ts",
+    "tests/db/sign-in-audit-trail.dbtest.ts",
+    "tests/db/sign-in-posture.dbtest.ts",
+    "tests/db/signed-act-meaning-and-lock.dbtest.ts",
+    "tests/db/signing-lockout.dbtest.ts",
+    "tests/db/signup-launch-catalog.dbtest.ts",
+    "tests/db/tamper-proof-log-tenant-column.dbtest.ts",
+    "tests/db/task-board-every-store.dbtest.ts",
+    "tests/db/task-link-completion-lock-order.dbtest.ts",
+    "tests/db/tenant-export-withheld-columns.dbtest.ts",
+    "tests/db/tenant-purge-artifact-records.dbtest.ts",
+    "tests/db/tenant-purge-audit.dbtest.ts",
+    "tests/db/tenant-purge.dbtest.ts",
+    "tests/db/traceability-update-boundary.dbtest.ts",
+    "tests/db/turn-record-purge-door.dbtest.ts",
+    "tests/db/two-tenant-application-rls.dbtest.ts",
+    "tests/db/upload-integrity-check.dbtest.ts",
+    "tests/db/user-presence-rls.dbtest.ts",
+    "tests/db/users-rls.dbtest.ts",
+    "tests/db/vault-catalog-tenant-isolation.dbtest.ts",
+    "tests/db/vault-chunk-backfill.dbtest.ts",
+    "tests/db/vault-chunking-off.dbtest.ts",
+    "tests/db/vault-coverage.dbtest.ts",
+    "tests/db/vault-data-room-file.dbtest.ts",
+    "tests/db/vault-document-archives.dbtest.ts",
+    "tests/db/vault-document-relationships.dbtest.ts",
+    "tests/db/vault-filing-vocabulary.dbtest.ts",
+    "tests/db/vault-fixity.dbtest.ts",
+    "tests/db/vault-ingest.dbtest.ts",
+    "tests/db/vault-library-search.dbtest.ts",
+    "tests/db/vault-lifecycle.dbtest.ts",
+    "tests/db/vault-metadata-edit.dbtest.ts",
+    "tests/db/vault-passage-search.dbtest.ts",
+    "tests/db/vault-placement-batch.dbtest.ts",
+    "tests/db/vault-placement.dbtest.ts",
+    "tests/db/vault-program-ownership.dbtest.ts",
+    "tests/db/vault-record-immutability.dbtest.ts",
+    "tests/db/vault-reupload.dbtest.ts",
+    "tests/db/vault-version-annotations-record.dbtest.ts",
+    "tests/db/vault-version-annotations.dbtest.ts",
+    "tests/db/vault-version-checkin.dbtest.ts",
+    "tests/db/vault-version-compare.dbtest.ts",
+    "tests/db/vault-versions.dbtest.ts",
+    "tests/db/vault-where-used.dbtest.ts",
+    "tests/db/workflow-approval-tables.dbtest.ts"
+  ],
+  "nativePhysicalFiles": 150,
+  "nativeCases": 1582,
+  "previouslyFailingCasesNowPassed": 38,
+  "rawReportSha256": "27c66560db20e0c136223b91d691c010b53d7eb10eed48e5f40ac41346187abe",
+  "archiveSha256": "2e3c6c7b67f70a7459eeba8d2c343f84d27207fc06c8100f45afdc88ca8adfec",
+  "wholeWorkflowReady": false
+}
