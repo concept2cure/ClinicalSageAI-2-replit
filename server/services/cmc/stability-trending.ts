@@ -50,6 +50,8 @@ export type TrendRefusalReason =
   | 'CRITERION_NOT_RECORDED'
   /** A criterion was recorded but `parseAcceptanceCriterion` could not read it (raised by the recorded-data caller, which holds the text). */
   | 'CRITERION_UNPARSEABLE'
+  /** A present recorded observation is not an exact numeric result at a usable month time. */
+  | 'INVALID_RECORDED_OBSERVATION'
   /** All usable points share one time; no line can be fitted. */
   | 'TIME_POINTS_DO_NOT_VARY'
   /** The study spans storage conditions and its results carry none (raised by the recorded-data caller). */

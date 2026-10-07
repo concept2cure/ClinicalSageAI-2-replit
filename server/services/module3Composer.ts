@@ -11,6 +11,7 @@ import { assessRecordedImpurity, isMutagenicAssessment, isThresholdAssessment, p
    already — one copy, used by the shelf-life engine and by this section. */
 import {
   assessRecordedTrending,
+  numericSeries,
   parseAcceptanceCriterion,
   parseNumeric,
   readRecordedStabilityResults,
@@ -299,20 +300,25 @@ function assessRecordedStability(stabilitySources: CanonicalSource[]): {
   uncomparable: number;
   /** Recorded stability payloads that could not be parsed — data, not absence. */
   unreadable: number;
+  unresolvedObservations: string[];
 } {
   const outOfSpec: Array<{ parameter: string; timePoint: string; result: number; criterion: string }> = [];
   let compared = 0;
   let uncomparable = 0;
   let unreadable = 0;
+  const unresolvedObservations: string[] = [];
 
   for (const s of stabilitySources) {
     const payload = (s.sourcePayload || {}) as Record<string, unknown>;
     const reads = recordedStabilityReads(payload);
     unreadable += reads.filter((r) => r.unreadable).length;
+    for (const read of reads) {
+      const inspected = numericSeries(read.points);
+      if (!inspected.ok) unresolvedObservations.push(inspected.reason);
+    }
     for (const point of reads.flatMap((r) => r.points)) {
       const verdict = pointVerdict(point, payload);
-      if (verdict.kind === 'not numeric') continue;
-      if (verdict.kind === 'no criterion') { uncomparable += 1; continue; }
+      if (verdict.kind === 'not numeric' || verdict.kind === 'no criterion') { uncomparable += 1; continue; }
       compared += 1;
       if (verdict.kind === 'outside') {
         outOfSpec.push({
@@ -324,7 +330,7 @@ function assessRecordedStability(stabilitySources: CanonicalSource[]): {
       }
     }
   }
-  return { compared, outOfSpec, uncomparable, unreadable };
+  return { compared, outOfSpec, uncomparable, unreadable, unresolvedObservations };
 }
 
 /** The acceptance criterion a recorded stability point is read against, as written. */
@@ -374,7 +380,7 @@ function pointVerdict(
 const STABILITY_VERDICT_TEXT: Record<string, string> = {
   within: 'within',
   outside: 'OUTSIDE',
-  'no criterion': 'no criterion recorded',
+  'no criterion': 'not compared — no usable criterion',
   'not numeric': 'not compared',
 };
 
@@ -451,11 +457,17 @@ function stabilityConformance(
   sources: CanonicalSource[],
   material: 'drug substance' | 'drug product',
 ): string {
-  const { compared, outOfSpec, uncomparable, unreadable } = assessRecordedStability(sources);
+  const { compared, outOfSpec, uncomparable, unreadable, unresolvedObservations } = assessRecordedStability(sources);
   // Said in every branch: a payload that could not be read is a gap in the
   // evidence this section rests on, whatever the readable points show.
   const unread = unreadable > 0
     ? ` ${unreadable} recorded stability payload(s) could not be read, so any results they hold were not assessed here.`
+    : '';
+  const unassessed = uncomparable > 0
+    ? ` ${uncomparable} recorded result(s) lack a usable numeric result or acceptance criterion and were not compared; whether they conform is NOT verified by this section.`
+    : '';
+  const unresolved = unresolvedObservations.length > 0
+    ? ` ${unresolvedObservations.join(' ')}`
     : '';
 
   if (outOfSpec.length > 0) {
@@ -466,25 +478,24 @@ function stabilityConformance(
     return (
       `${outOfSpec.length} of the ${compared} recorded result(s) compared here fall outside its recorded acceptance criterion ` +
       `(${named}${outOfSpec.length > 4 ? `; and ${outOfSpec.length - 4} more` : ''}). ` +
-      `The stability conclusion and the proposed storage period are NOT established by this section.` + unread
+      `The stability conclusion and the proposed storage period are NOT established by this section.` + unassessed + unread + unresolved
     );
   }
   if (compared > 0) {
     return (
-      `All ${compared} recorded result(s) carrying an acceptance criterion are within their recorded acceptance criteria at the reported time points, ` +
-      `supporting stability of the ${material} under the proposed storage conditions` +
-      (uncomparable > 0
-        ? `. A further ${uncomparable} recorded result(s) carry no acceptance criterion and were not compared.`
-        : '.') + unread
+      `All ${compared} recorded result(s) compared here are within their recorded acceptance criteria at the reported time points` +
+      (uncomparable > 0 || unreadable > 0 || unresolvedObservations.length > 0
+        ? `. The stability conclusion and proposed storage period are NOT established by this section.` + unassessed
+        : `, supporting stability of the ${material} under the proposed storage conditions.`) + unread + unresolved
     );
   }
   if (uncomparable > 0) {
     return (
-      `${uncomparable} recorded result(s) carry no recorded acceptance criterion, so whether they conform is NOT verified by this section. ` +
-      `Any conclusion stated on the study is the applicant's and was not checked against the data here.` + unread
+      unassessed.trimStart() + ' ' +
+      `Any conclusion stated on the study is the applicant's and was not checked against the data here.` + unread + unresolved
     );
   }
-  return `The stability conclusion and proposed storage period are subject to review of the stability results summarized above and are not asserted in this section.` + unread;
+  return `The stability conclusion and proposed storage period are subject to review of the stability results summarized above and are not asserted in this section.` + unread + unresolved;
 }
 
 /**
@@ -867,7 +878,7 @@ function batchAnalysesSentence(
         `${comparable.length - outside.length} within criterion, ${outside.length} out of specification. `
       : '') +
     (uncomparable.length > 0
-      ? `${uncomparable.length} record no numeric result or no acceptance criterion and were NOT compared; ` +
+      ? `${uncomparable.length} lack a usable numeric result or acceptance criterion and were NOT compared; ` +
         `their recorded disposition (${declaredPass} pass, ${declaredFail} fail, ${uncomparable.length - declaredPass - declaredFail} pending) is the applicant's and is not verified by this section. `
       : '') +
     (contradicted.length > 0

@@ -30,7 +30,7 @@
  * work immediately; the design calculators require a signed-in org and surface a
  * 401 honestly rather than showing an empty result.
  */
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
@@ -217,7 +217,10 @@ function Field({ field, value, error, onChange }: {
 
 function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: FireToast }) {
   const [values, setValues] = useState<Record<string, string>>(() => initialValues(calc));
-  const [result, setResult] = useState<any>(null);
+  const [acceptedResult, setAcceptedResult] = useState<{ generation: number; data: any } | null>(null);
+  const calculationGeneration = useRef(0);
+  const result = acceptedResult?.data ?? null;
+  const [resultNotice, setResultNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
   const [inserting, setInserting] = useState(false);
@@ -228,10 +231,28 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
   const tables = useMemo(() => objectTables(result), [result]);
   const provenance = result?.provenance ?? null;
 
+  // An edit-back is still a new input revision. Invalidate synchronously so
+  // even a response or filing callback queued before the next render is stale.
+  const discardResult = useCallback(() => {
+    const generation = ++calculationGeneration.current;
+    setAcceptedResult(null);
+    setShowRaw(false);
+    setBusy(false);
+    return generation;
+  }, []);
+
+  useEffect(() => () => { calculationGeneration.current += 1; }, []);
+
   /* BP-W2-4: file the tabulated result + full-hash provenance stamp as a
      governed authoring section. Never throws; the outcome is toasted either
      way, and on failure nothing navigates and the result stays on screen. */
   const insertIntoDocument = useCallback(async () => {
+    if (!acceptedResult || acceptedResult.generation !== calculationGeneration.current) {
+      fireToast('Compute again before inserting a result into a document.', 'error');
+      return;
+    }
+    // This explicit click authorizes this accepted snapshot. Later input edits
+    // do not cancel an Authoring write that has already started.
     setInserting(true);
     try {
       const html = engineResultToHtml({
@@ -251,12 +272,15 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
     } finally {
       setInserting(false);
     }
-  }, [calc, rows, tables, provenance, fireToast]);
+  }, [acceptedResult, calc, rows, tables, provenance, fireToast]);
 
   const run = useCallback(async () => {
+    const generation = discardResult();
+    setResultNotice(null);
     const { body, errors, fieldErrors: errs } = buildRequestBody(calc, values);
     setFieldErrors(errs);
     if (errors.length > 0) {
+      setResultNotice('Calculation not run. Correct the marked inputs and compute again.');
       // The toast announces (via its live region) that submission was refused
       // and names the first problem; the per-field messages say which controls.
       fireToast(errors.length === 1 ? errors[0] : `${errors[0]} (${errors.length} fields need attention.)`, 'error');
@@ -265,7 +289,9 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
     setBusy(true);
     try {
       const res = await readData(`/api/biostat${calc.path}`, body);
+      if (generation !== calculationGeneration.current) return;
       if (!res.ok || res.data === null) {
+        setResultNotice('Calculation failed. Compute again before inserting a result into a document.');
         fireToast(
           res.status === 401
             ? 'Sign in to your tenant to run the design calculators.'
@@ -274,11 +300,18 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
         );
         return;
       }
-      setResult(res.data);
-    } finally { setBusy(false); }
-  }, [calc, values, fireToast]);
+      setAcceptedResult({ generation, data: res.data });
+    } finally {
+      if (generation === calculationGeneration.current) setBusy(false);
+    }
+  }, [calc, values, fireToast, discardResult]);
 
-  const reset = useCallback(() => { setValues(initialValues(calc)); setResult(null); setFieldErrors({}); }, [calc]);
+  const reset = useCallback(() => {
+    discardResult();
+    setValues(initialValues(calc));
+    setFieldErrors({});
+    setResultNotice(null);
+  }, [calc, discardResult]);
 
   return (
     <div className="pj-card">
@@ -297,6 +330,10 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
               value={values[f.key] ?? ''}
               error={fieldErrors[f.key]}
               onChange={v => {
+                if (result !== null || busy) {
+                  setResultNotice('Inputs changed. Compute again before inserting a result into a document.');
+                }
+                discardResult();
                 setValues(s => ({ ...s, [f.key]: v }));
                 // Clear this field's error as soon as the user acts on it —
                 // leaving it up while they type says the new value is wrong too.
@@ -310,7 +347,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
           <button className="btn primary" style={{ height: 32 }} onClick={run} disabled={busy}>
             {I.zap} {busy ? 'Computing…' : 'Compute'}
           </button>
-          <button className="btn" style={{ height: 32 }} onClick={reset} disabled={busy}>Reset</button>
+          <button className="btn" style={{ height: 32 }} onClick={reset}>Reset</button>
           {result && <button className="btn" style={{ height: 32 }} aria-expanded={showRaw} aria-controls={`raw-${calc.id}`} onClick={() => setShowRaw(r => !r)}>{showRaw ? 'Hide' : 'Show'} raw response</button>}
           {result !== null && (rows.length > 0 || tables.length > 0) && (
             /* BP-W2-4: these numbers are SAP content, and until this button the
@@ -327,6 +364,10 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
             </button>
           )}
         </div>
+
+        {resultNotice && (
+          <div role="status" style={{ marginTop: 12, fontSize: 12, color: 'var(--text-300,#6b6963)' }}>{resultNotice}</div>
+        )}
 
         {result !== null && (
           <div style={{ marginTop: 12 }}>

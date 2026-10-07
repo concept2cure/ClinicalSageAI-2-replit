@@ -60,7 +60,8 @@ beforeAll(async () => {
     CREATE TABLE audit_logs (id uuid PRIMARY KEY, tenant_id integer, user_id integer,
       action text, table_name text, record_id text, actor_id integer, target text,
       target_type text, target_id text, payload_hash text, sha256_chain text,
-      occurred_at timestamptz, hmac_seal text, new_values json);`);
+      occurred_at timestamptz, hmac_seal text, new_values json, old_values json,
+      ip_address text, user_agent text, reason text);`);
 });
 afterAll(async () => { await harness.close(); });
 beforeEach(async () => {

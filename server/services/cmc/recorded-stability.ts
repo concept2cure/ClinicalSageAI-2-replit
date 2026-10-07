@@ -74,20 +74,69 @@ export function readRecordedStabilityResults(value: unknown): RecordedStabilityR
   };
 }
 
-/** The first finite number in a recorded value ("98.4%" → 98.4), else null. */
-export function parseNumeric(value: unknown): number | null {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
-  const m = String(value ?? '').match(/-?\d+(?:\.\d+)?/);
-  if (!m) return null;
-  const n = Number(m[0]);
-  return Number.isFinite(n) ? n : null;
+const NUMERIC_LEXEME = '[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?';
+const MEASURED_VALUE_RE = new RegExp(`^(${NUMERIC_LEXEME})\\s*%?$`);
+const MONTH_TIME_RE = new RegExp(`^(?:(${NUMERIC_LEXEME})\\s*(?:m|mos?|months?)?|months?\\s*(${NUMERIC_LEXEME}))$`, 'i');
+
+/** No substring extraction, nonfinite result, or nonzero value lost to underflow. */
+function finiteLexeme(text: string): number | null {
+  const number = Number(text);
+  if (!Number.isFinite(number)) return null;
+  if (number === 0 && /[1-9]/.test(text.split(/[eE]/)[0])) return null;
+  return number;
 }
 
-/** The (time, value) pairs of a recorded series that read as numbers — the rest are dropped, never zeroed. */
-export function numericSeries(points: StabilityPointRecord[]): TrendPoint[] {
-  return points
-    .map(p => ({ time: parseNumeric(p.timePoint), value: parseNumeric(p.result) }))
-    .filter((p): p is TrendPoint => p.time !== null && p.value !== null);
+/** A complete finite measured value ("98.4%" → 98.4), without unit conversion. */
+export function parseNumeric(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value !== 'string') return null;
+  const match = value.trim().match(MEASURED_VALUE_RE);
+  return match ? finiteLexeme(match[1]) : null;
+}
+
+/** The register records months. Recognize its labels, never convert other units. */
+function parseMonthTime(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) && value >= 0 ? value : null;
+  if (typeof value !== 'string') return null;
+  const match = value.trim().match(MONTH_TIME_RE);
+  const number = match ? finiteLexeme(match[1] ?? match[2]) : null;
+  return number !== null && number >= 0 ? number : null;
+}
+
+export type RecordedNumericSeries =
+  | { ok: true; points: TrendPoint[]; pointsUsable: number }
+  | {
+      ok: false;
+      pointsUsable: number;
+      issues: Array<{ row: number; field: 'timePoint' | 'result' }>;
+      reason: string;
+    };
+
+/**
+ * Missing results can be counted as missing. A present measured observation
+ * that cannot be interpreted must refuse the whole fit, not disappear from it.
+ * Failed inspections deliberately expose no partial points array to fit.
+ */
+export function numericSeries(points: StabilityPointRecord[]): RecordedNumericSeries {
+  const usable: TrendPoint[] = [];
+  const issues: Array<{ row: number; field: 'timePoint' | 'result' }> = [];
+  points.forEach((point, index) => {
+    if (point.result == null || (typeof point.result === 'string' && !point.result.trim())) return;
+    const value = parseNumeric(point.result);
+    const time = parseMonthTime(point.timePoint);
+    if (value === null) issues.push({ row: index + 1, field: 'result' });
+    if (time === null) issues.push({ row: index + 1, field: 'timePoint' });
+    if (time !== null && value !== null) usable.push({ time, value });
+  });
+  if (issues.length) {
+    return {
+      ok: false,
+      pointsUsable: usable.length,
+      issues,
+      reason: `Recorded observation(s) at ${issues.map(issue => `row ${issue.row} (${issue.field})`).join(', ')} cannot be read as exact finite results at nonnegative month times. Clarify the recorded values, units, and intended handling before fitting; no affected series was fitted.`,
+    };
+  }
+  return { ok: true, points: usable, pointsUsable: usable.length };
 }
 
 /**
@@ -121,9 +170,34 @@ export interface ParsedAcceptanceCriterion {
 const RANGE_RE =
   /(-?\d+(?:\.\d+)?)\s*(?:[–—]|-|\bto\b)\s*(-?\d+(?:\.\d+)?)/i;
 
+/**
+ * The criterion grammar below is intentionally still decimal-only. These
+ * unsupported numeric spellings used to yield a different limit by substring
+ * extraction. Inspect ALL candidates so a supported one cannot hide another
+ * recorded, uninterpretable limit. Unit/text grammar is not broadened here.
+ */
+function unsupportedCriterionReason(candidates: unknown[]): string | null {
+  const unsupported = candidates.some(candidate => {
+    // Existing textual comparators may touch their number (NMT1e-4). Give the
+    // preflight that same boundary without changing the criterion itself.
+    const text = String(candidate ?? '').replace(
+      /\b(?:not more than|not less than|maximum|minimum|nmt|nlt|max|min)(?=[+-]?(?:\d|\.\d))/gi,
+      '$& ',
+    );
+    // A numeric start can follow a comparator, space, or range separator, but
+    // not an identifier letter or dot. Inspect malformed numeric prefixes even
+    // before unit suffixes. Q1E and 3.2.S.4 remain ordinary textual references.
+    return /(?:^|[^\w.])(?:\d+(?:\.\d*)?[eE](?![A-Za-z])|\d+(?:[,_]\s*\d+|\s+\d+)|\d+\.\d*\.(?:[\d.]|(?=\s|%|$))|\.\d)/.test(text);
+  });
+  return unsupported
+    ? 'A recorded acceptance criterion contains unsupported numeric notation. Clarify the criterion in its supported decimal form before comparison or fitting; no limit was inferred.'
+    : null;
+}
+
 export function parseAcceptanceCriterion(
   candidates: unknown[]
 ): ParsedAcceptanceCriterion | null {
+  if (unsupportedCriterionReason(candidates)) return null;
   for (const candidate of candidates) {
     const text = String(candidate ?? '').trim();
     if (!text) continue;
@@ -365,6 +439,7 @@ export async function assessRecordedPoolability(
   const maxTime = durations.length ? Math.max(120, Math.max(...durations) * 2) : 120;
 
   const assessments: Array<Record<string, unknown>> = [];
+  let unresolvedNumericEvidence = false;
   for (const parameter of parameters) {
     /* A batch contributes only if it can be fitted. Q1E needs ≥3 numeric points
        over ≥2 distinct times per batch — the engine enforces this too, but
@@ -373,15 +448,27 @@ export async function assessRecordedPoolability(
     const contributing: Array<{ batchId: string; data: Array<{ time: number; value: number }> }> = [];
     const excluded: Array<{ batchId: string; reason: string }> = [];
     const criteria: Array<{ batchId: string } & ParsedAcceptanceCriterion> = [];
+    const batchPointCounts: Array<{ batchId: string; pointsRecorded: number; pointsUsable: number }> = [];
+    let invalidRecordedEvidence = false;
 
     for (const { study, byParameter } of perStudy) {
       const batchId = String(study.batchNumber);
       const points = byParameter.get(parameter);
       if (!points || points.length === 0) {
+        batchPointCounts.push({ batchId, pointsRecorded: 0, pointsUsable: 0 });
         excluded.push({ batchId, reason: `Did not record ${parameter}.` });
         continue;
       }
-      const usable = numericSeries(points);
+      const inspected = numericSeries(points);
+      batchPointCounts.push({ batchId, pointsRecorded: points.length, pointsUsable: inspected.pointsUsable });
+      const unsupportedCriterion = unsupportedCriterionReason(points.map(p => p.specification));
+      if (!inspected.ok || unsupportedCriterion) {
+        excluded.push({ batchId, reason: !inspected.ok ? inspected.reason : unsupportedCriterion! });
+        invalidRecordedEvidence = true;
+        unresolvedNumericEvidence = true;
+        continue;
+      }
+      const usable = inspected.points;
       if (usable.length < 3 || new Set(usable.map(p => p.time)).size < 2) {
         excluded.push({
           batchId,
@@ -398,9 +485,22 @@ export async function assessRecordedPoolability(
       criteria.push({ batchId, ...criterion });
     }
 
+    if (invalidRecordedEvidence) {
+      assessments.push({
+        parameter,
+        batchPointCounts,
+        assessable: false,
+        reason: 'A selected batch has uninterpretable recorded numeric evidence for this attribute. Clarify the excluded batch/row reasons before poolability is assessed; the other selected batches were not fitted in its place.',
+        contributingBatches: contributing.map(c => c.batchId),
+        excludedBatches: excluded,
+      });
+      continue;
+    }
+
     if (contributing.length < 2) {
       assessments.push({
         parameter,
+        batchPointCounts,
         assessable: false,
         reason: `Poolability needs at least 2 fittable batches; ${contributing.length} of ${studies.length} ${contributing.length === 1 ? 'qualifies' : 'qualify'}.`,
         contributingBatches: contributing.map(c => c.batchId),
@@ -419,6 +519,7 @@ export async function assessRecordedPoolability(
     if (distinctCriteria.length > 1) {
       assessments.push({
         parameter,
+        batchPointCounts,
         assessable: false,
         reason:
           'The selected batches recorded different acceptance criteria for this attribute, so there is no single limit to pool against. Reconcile the specification on the pull-point results first.',
@@ -441,6 +542,7 @@ export async function assessRecordedPoolability(
       const limiting = runs.reduce((a, b) => (b.result.shelfLife < a.result.shelfLife ? b : a));
       assessments.push({
         parameter,
+        batchPointCounts,
         assessable: true,
         specLimit: limiting.specLimit,
         direction: limiting.direction,
@@ -462,6 +564,7 @@ export async function assessRecordedPoolability(
     } catch (e) {
       assessments.push({
         parameter,
+        batchPointCounts,
         assessable: false,
         reason: e instanceof Error ? e.message : String(e),
         contributingBatches: contributing.map(c => c.batchId),
@@ -478,7 +581,7 @@ export async function assessRecordedPoolability(
     statisticalCrossing?: number;
     decision: string;
   }>;
-  const limiting = assessed.length ? assessed.reduce(moreConstraining) : null;
+  const limiting = !unresolvedNumericEvidence && assessed.length ? assessed.reduce(moreConstraining) : null;
 
   return {
     ok: true,
@@ -617,8 +720,23 @@ export async function estimateRecordedShelfLife(
   const maxTime = Number.isFinite(duration) && duration > 0 ? Math.max(120, duration * 2) : 120;
 
   const estimates: Array<Record<string, unknown>> = [];
+  let unresolvedNumericEvidence = false;
   for (const [parameter, condition, points] of byParameter) {
-    const usable = numericSeries(points);
+    const inspected = numericSeries(points);
+    const unsupportedCriterion = unsupportedCriterionReason(points.map(p => p.specification));
+    if (!inspected.ok || unsupportedCriterion) {
+      unresolvedNumericEvidence = true;
+      estimates.push({
+        parameter,
+        condition: condition || null,
+        estimable: false,
+        reason: !inspected.ok ? inspected.reason : unsupportedCriterion,
+        pointsRecorded: points.length,
+        pointsUsable: inspected.pointsUsable,
+      });
+      continue;
+    }
+    const usable = inspected.points;
     const criterion = parseAcceptanceCriterion(points.map((p) => p.specification));
 
     if (usable.length < 3) {
@@ -683,6 +801,8 @@ export async function estimateRecordedShelfLife(
         estimable: true,
         specLimit: limitingRun.specLimit,
         direction: limitingRun.direction,
+        pointsRecorded: points.length,
+        pointsUsable: usable.length,
         pointsUsed: usable.length,
         ...(criterion.twoSided && criterion.upperLimit !== null
           ? {
@@ -720,7 +840,7 @@ export async function estimateRecordedShelfLife(
     shelfLife: number;
     statisticalCrossing?: number;
   }>;
-  const limiting = estimable.length ? estimable.reduce(moreConstraining) : null;
+  const limiting = !unresolvedNumericEvidence && estimable.length ? estimable.reduce(moreConstraining) : null;
 
   return {
     ok: true,
@@ -800,12 +920,13 @@ export function assessRecordedTrending(study: RecordedTrendingStudy): RecordedTr
   const series: RecordedTrendSeries[] = [];
 
   for (const group of groupByParameterAndCondition(read.points, study.storageConditions)) {
-    const usable = numericSeries(group.points);
+    const inspected = numericSeries(group.points);
     const recordedCriteria = group.points
       .map(p => String(p.specification ?? '').trim())
       .filter(Boolean);
     const criterionRecordedAs = recordedCriteria[0] ?? null;
     const criterion = parseAcceptanceCriterion(group.points.map(p => p.specification));
+    const unsupportedCriterion = unsupportedCriterionReason(group.points.map(p => p.specification));
 
     let outcome: TrendOutcome;
     if (spansConditions && group.conditionInheritedFromStudy) {
@@ -813,24 +934,31 @@ export function assessRecordedTrending(study: RecordedTrendingStudy): RecordedTr
         ok: false,
         reason: 'CONDITION_NOT_SEPARABLE',
         detail: `the study is placed at more than one storage condition (${group.condition}) and these results record none, so the points of one condition cannot be separated from the others`,
-        pointsUsable: usable.length,
+        pointsUsable: inspected.pointsUsable,
+      };
+    } else if (!inspected.ok) {
+      outcome = {
+        ok: false,
+        reason: 'INVALID_RECORDED_OBSERVATION',
+        detail: inspected.reason,
+        pointsUsable: inspected.pointsUsable,
       };
     } else if (criterionRecordedAs !== null && !criterion) {
       outcome = {
         ok: false,
         reason: 'CRITERION_UNPARSEABLE',
-        detail: `the acceptance criterion is recorded as "${criterionRecordedAs}", which states no comparator or range a limit can be read from`,
-        pointsUsable: usable.length,
+        detail: unsupportedCriterion ?? `the acceptance criterion is recorded as "${criterionRecordedAs}", which states no comparator or range a limit can be read from`,
+        pointsUsable: inspected.pointsUsable,
       };
     } else {
-      outcome = assessTrend(usable, criterion, { alpha: TRENDING_ALPHA });
+      outcome = assessTrend(inspected.points, criterion, { alpha: TRENDING_ALPHA });
     }
 
     series.push({
       parameter: group.parameter,
       condition: group.condition,
       pointsRecorded: group.points.length,
-      pointsUsable: usable.length,
+      pointsUsable: inspected.pointsUsable,
       criterionRecordedAs,
       outcome,
     });
