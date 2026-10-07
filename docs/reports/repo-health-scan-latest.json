@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-07T04:35:45.634Z",
+  "generatedAt": "2026-10-07T05:54:17.306Z",
   "git": {
-    "sha": "05b5bd06d66df5406460a97e4dff357835b430b1",
+    "sha": "10222a0246bc9f6d6fca624b384ff0d273a8c8b0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2051,7 +2051,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1127666
+        "bytes": 1128614
       },
       {
         "file": "shared/schema.ts",
@@ -2257,7 +2257,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21732
+        "lines": 21746
       },
       {
         "file": "shared/schema.ts",
@@ -2517,7 +2517,7 @@
       },
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
-        "lines": 1929
+        "lines": 1931
       },
       {
         "file": "server/routes/ectd-compile.ts",
@@ -2669,7 +2669,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1606
+        "lines": 1607
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
