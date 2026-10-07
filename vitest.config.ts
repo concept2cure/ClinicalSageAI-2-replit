@@ -91,11 +91,10 @@ export default defineConfig({
     // CI job timeout, which is the right layer for "this never finishes".
     hookTimeout: 60000,
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
+    // Vitest 4 removed poolOptions.forks.singleFork. Keep the existing memory
+    // budget real: one fork and no parallel files, using supported controls.
+    maxWorkers: 1,
+    fileParallelism: false,
     reporters: ['verbose'],
     watch: false,
   },

@@ -1215,6 +1215,14 @@ jobs:
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
+      - name: Upload core test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: test-results
+          path: test-results/
+          if-no-files-found: warn
+
   coverage:
     name: Coverage (ratchet)
     runs-on: ubuntu-latest
@@ -1289,7 +1297,7 @@ jobs:
         # the enforcement lives in the ratchet step below, which is the thing
         # this job is allowed to fail on. json-summary is what the ratchet reads.
         continue-on-error: true
-        run: NODE_OPTIONS="--max-old-space-size=4096" npx vitest run --config vitest.config.ts --coverage --coverage.reporter=json-summary --coverage.reporter=text-summary --coverage.thresholds.lines=0 --coverage.thresholds.functions=0 --coverage.thresholds.branches=0 --coverage.thresholds.statements=0
+        run: NODE_OPTIONS="--max-old-space-size=4096" npx vitest run --config vitest.config.ts --reporter=verbose --reporter=json --outputFile=test-results/vitest-coverage.json --coverage --coverage.reporter=json-summary --coverage.reporter=text-summary --coverage.thresholds.lines=0 --coverage.thresholds.functions=0 --coverage.thresholds.branches=0 --coverage.thresholds.statements=0
         env:
           CI: true
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
@@ -1307,7 +1315,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: coverage-report
-          path: coverage/
+          path: |
+            coverage/
+            test-results/
           if-no-files-found: ignore
 
   security-tests:
@@ -1467,6 +1477,14 @@ jobs:
           RUN_INTEGRATION_TESTS: 'true'
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: integration-tests-results
+          path: test-results/
+          if-no-files-found: warn
 
       # ── The step that actually uses the database this job provisions ────────
       #

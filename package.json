@@ -74,7 +74,7 @@
     "validation:traceability:selftest": "node scripts/validation/build-traceability.selftest.mjs",
     "validation:lint": "eslint --no-ignore tests/validation/lib tests/validation/oq tests/validation/run-all.mjs scripts/validation",
     "lint:fix": "eslint . --fix",
-    "test": "jest --config scripts/jest.config.js && NODE_OPTIONS=\"--max-old-space-size=4096\" vitest run --config vitest.config.ts",
+    "test": "mkdir -p test-results && jest --config scripts/jest.config.js --json --outputFile=test-results/jest.json && NODE_OPTIONS=\"--max-old-space-size=4096\" vitest run --config vitest.config.ts --reporter=verbose --reporter=json --outputFile=test-results/vitest.json",
     "test:db": "vitest run --config vitest.db.config.ts",
     "ci:db-test-isolation": "node scripts/ci/check-db-test-isolation.mjs",
     "test:submission": "vitest run --config vitest.config.ts server/services/ectd server/services/submission-service server/services/region-profiles server/services/ana/__tests__/submission-center-tools.test.ts",
