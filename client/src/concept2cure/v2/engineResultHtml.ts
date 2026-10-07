@@ -28,6 +28,35 @@ export interface EngineProvenance {
   generatedAt?: string;
 }
 
+export interface EngineResultTable {
+  label: string;
+  /** Optional display labels; unlisted keys are still carried, never dropped. */
+  columns?: ReadonlyArray<{ key: string; label: string }>;
+  rows: ReadonlyArray<Record<string, unknown> | null>;
+}
+
+/** Stable union across ALL rows, not just the first row's schema. */
+export function engineResultTableColumns(table: EngineResultTable): Array<{ key: string; label: string }> {
+  const columns: Array<{ key: string; label: string }> = [];
+  const seen = new Set<string>();
+  const add = (key: string, label: string) => {
+    if (!seen.has(key)) { seen.add(key); columns.push({ key, label }); }
+  };
+  for (const column of table.columns ?? []) add(column.key, column.label);
+  for (const row of table.rows) {
+    if (row !== null) for (const key of Object.keys(row)) add(key, key);
+  }
+  return columns;
+}
+
+/** Shared screen/file table text. No rounding of the engine's numeric values. */
+export function engineResultCellText(value: unknown): string {
+  if (value === null || value === undefined) return '—';
+  if (typeof value === 'boolean') return value ? 'yes' : 'no';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
 function esc(v: unknown): string {
   return String(v)
     .replace(/&/g, '&amp;')
@@ -48,13 +77,14 @@ export function provenanceStampHtml(p: EngineProvenance): string {
 }
 
 /**
- * Render a computed result as a titled key/value table plus the stamp.
+ * Render a computed result as titled scalar/structured tables plus the stamp.
  * `rows` is the same [label, value] list the calculator surface tabulates —
  * what the user saw is what is filed.
  */
 export function engineResultToHtml(args: {
   title: string;
   rows: Array<[string, unknown]>;
+  tables?: ReadonlyArray<EngineResultTable>;
   provenance: EngineProvenance | null | undefined;
 }): string {
   const body = args.rows
@@ -63,6 +93,21 @@ export function engineResultToHtml(args: {
   const table =
     `<table><thead><tr><th>Quantity</th><th>Value</th></tr></thead>` +
     `<tbody>${body}</tbody></table>`;
+  const structuredTables = (args.tables ?? []).map((result) => {
+    const columns = engineResultTableColumns(result);
+    const head = columns.length > 0
+      ? columns.map((column) => `<th>${esc(column.label)}</th>`).join('')
+      : '<th>Record</th>';
+    const records = result.rows.map((row) => {
+      const cells = columns.length > 0
+        ? columns.map(({ key }) => `<td>${esc(engineResultCellText(
+          row !== null && Object.prototype.hasOwnProperty.call(row, key) ? row[key] : null,
+        ))}</td>`).join('')
+        : `<td>${esc(engineResultCellText(row))}</td>`;
+      return `<tr>${cells}</tr>`;
+    }).join('');
+    return `<p><b>${esc(result.label)}</b></p><table><thead><tr>${head}</tr></thead><tbody>${records}</tbody></table>`;
+  }).join('');
   const stamp = args.provenance ? provenanceStampHtml(args.provenance) : '';
-  return `<p><b>${esc(args.title)}</b></p>${table}${stamp}`;
+  return `<p><b>${esc(args.title)}</b></p>${table}${structuredTables}${stamp}`;
 }

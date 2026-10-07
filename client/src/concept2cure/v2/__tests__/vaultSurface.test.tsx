@@ -22,6 +22,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Vault } from '../surfaces/Vault';
+import { VAULT_UPLOAD_ACCEPT } from '../useVaultUpload';
 import {
   PID,
   DOC_ID,
@@ -46,6 +47,15 @@ beforeEach(() => {
 });
 
 describe('Vault — uploads are visible in the tree they were uploaded into', () => {
+  it('offers the exact receiver candidate formats, including raw structured text and signature-supported images', async () => {
+    mockApi(() => ok(vaultPayload()));
+    render(<Vault {...props()} />);
+    await screen.findAllByText('Source files · filing cabinet');
+    const picker = document.querySelector<HTMLInputElement>('input[type="file"][accept]');
+    expect(picker?.accept).toBe(VAULT_UPLOAD_ACCEPT);
+    expect(picker?.accept.split(',')).toEqual(expect.arrayContaining(['.csv', '.xlsx', '.json', '.xml', '.png', '.jpg', '.gif', '.doc', '.xls', '.rtf']));
+  });
+
   it('renders the filing cabinet with the upload inside its suggested folder', async () => {
     mockApi(() => ok(vaultPayload()));
     render(<Vault {...props()} />);

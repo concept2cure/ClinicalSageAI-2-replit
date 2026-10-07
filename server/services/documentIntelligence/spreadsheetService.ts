@@ -9,6 +9,10 @@
  *   • applyWorkbookEdits → cell value/formula edits, written to a NEW buffer
  *     (callers persist it as a new upload — originals are never mutated)
  *
+ * CSV fields stay raw strings: identifiers, dates, numbers, missingness and
+ * units require deliberate scientific mapping. XLSX keeps its stored cell types;
+ * explicit edits may introduce numbers/formulas, but this service never calculates them.
+ *
  * exceljs is loaded lazily so servers that never touch a spreadsheet don't pay
  * for it at boot.
  */
@@ -110,7 +114,10 @@ export async function loadWorkbook(
   const ExcelJS = await getExcelJS();
   const workbook = new ExcelJS.Workbook();
   if (isCsv(filename, mime)) {
-    await workbook.csv.read(Readable.from(buffer));
+    // ExcelJS's default map guesses numbers/dates/booleans/errors, losing
+    // leading-zero IDs, large integer precision and source date labels before
+    // anyone edits a cell. CSV carries field text, not an approved data schema.
+    await workbook.csv.read(Readable.from(buffer), { map: (value: string) => value });
     return { workbook, format: 'csv' };
   }
   await workbook.xlsx.load(buffer as unknown as ExcelJSNS.Buffer);

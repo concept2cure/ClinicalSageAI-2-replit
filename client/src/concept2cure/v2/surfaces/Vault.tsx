@@ -9,7 +9,7 @@ import { VaultVersions } from './VaultVersions';
 import { APPROVED_STAGES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
 import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
-import { useVaultUpload } from '../useVaultUpload';
+import { useVaultUpload, VAULT_UPLOAD_ACCEPT } from '../useVaultUpload';
 import {
   VAULT_INGEST_DOCUMENT_TYPES,
   vaultDocKindLabel,
@@ -1331,7 +1331,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           ref={fileInputRef}
           type="file"
           multiple
-          accept=".pdf,.docx,.doc,.txt,.rtf,.xlsx,.xls,.csv,.md"
+          accept={VAULT_UPLOAD_ACCEPT}
           style={{ display: 'none' }}
           onChange={(e) => void uploadFiles(e.target.files)}
           /* Labelled even though it is visually hidden and driven by the button

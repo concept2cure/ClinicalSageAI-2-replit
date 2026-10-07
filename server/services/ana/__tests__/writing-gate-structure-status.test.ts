@@ -19,7 +19,7 @@ import { describe, it, expect } from 'vitest';
 import { critiqueDraft, critiqueDocument, verifyRevision, buildRevisionBrief } from '../writing-precision-gate';
 import { CRITIQUE_DRAFT, VERIFY_REVISION, CRITIQUE_DOCUMENT } from '../writingQualityTools';
 import { getToolHandler } from '../AnaToolExecutor';
-import { listMedicalWritingCatalog } from '../medical-writing';
+import { getDocumentTypeStandard, listMedicalWritingCatalog } from '../medical-writing';
 
 /** Passes every other dimension (see writing-precision-gate.test.ts "passes a coherent two-section document"). */
 const CLEAN = 'All 186 subjects were analyzed for efficacy, per the SAP and the protocol.';
@@ -97,6 +97,22 @@ describe('verifyRevision and critiqueDocument carry the structure status', () =>
     const doc = critiqueDocument([{ title: 'Results', text: CLEAN }]);
     expect(doc.structure.status).toBe('not-applicable');
     expect(doc.verdict).toBe('pass');
+  });
+
+  it('uses existing separately held section titles as whole-document heading evidence', () => {
+    const headings = getDocumentTypeStandard('manuscript')!.structure;
+    const doc = critiqueDocument(headings.map(title => ({ title, text: CLEAN })), { documentType: 'manuscript' });
+    expect(doc.structure.status).toBe('checked');
+    expect(doc.crossSectionFindings.filter(f => f.category === 'structure')).toEqual([]);
+    const draft = critiqueDraft({ text: CLEAN, documentType: 'manuscript', knownHeadings: headings });
+    expect(draft.metrics.missingSections).toBe(0);
+  });
+
+  it('does not accept prose heading keywords or partial authoring titles as structure', () => {
+    const r = critiqueDraft({ text: 'The abstract introduction discusses methods, results, discussion, limitations, conclusions, declarations and references.', documentType: 'manuscript' });
+    expect(r.metrics.missingSections).toBe(getDocumentTypeStandard('manuscript')!.structure.length);
+    const doc = critiqueDocument([{ title: 'Methods planned', text: CLEAN }], { documentType: 'manuscript' });
+    expect(doc.crossSectionFindings.some(f => f.category === 'structure' && /Methods/.test(f.message))).toBe(true);
   });
 });
 

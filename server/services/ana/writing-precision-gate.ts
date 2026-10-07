@@ -378,6 +378,7 @@ function structureDimension(
   text: string,
   documentType: string | undefined,
   findings: PrecisionFinding[],
+  knownHeadings?: string[],
 ): { check: StructureCheck; missing: number | null } {
   if (documentType === undefined || !documentType.trim()) {
     return {
@@ -395,7 +396,7 @@ function structureDimension(
     });
     return { check: { status: 'not-checked' as const, reason }, missing: null };
   };
-  const review = reviewMedicalWriting(documentType, text);
+  const review = reviewMedicalWriting(documentType, text, knownHeadings);
   if (!review.documentType) {
     return notChecked(
       `Structure not checked: '${documentType}' is not an indexed document type.`,
@@ -413,12 +414,12 @@ function structureDimension(
     findings.push({
       category: 'structure',
       severity: 'high',
-      message: `Add the missing required section(s) for a ${review.label ?? documentType}: ${missing.join(', ')}.`,
+      message: `Expected heading(s) not detected for a ${review.label ?? documentType}: ${missing.join(', ')}. Confirm applicability and the current template; undetected headings do not prove absent content.`,
       evidence: missing,
     });
   }
   return {
-    check: { status: 'checked', reason: `Section coverage checked against ${review.label ?? documentType}.` },
+    check: { status: 'checked', reason: `Expected heading coverage checked against ${review.label ?? documentType}; substantive completeness, evidence review and approval are not assessed by this structure check.` },
     missing: missing.length,
   };
 }
@@ -447,7 +448,7 @@ export function critiqueDraft(input: CritiqueInput): PrecisionReport {
   const readability = readabilityDimension(text, audience, findings);
   const abbr = abbreviationDimension(text, findings);
   const claims = claimsDimension(text, register, findings);
-  const structure = structureDimension(text, input.documentType, findings);
+  const structure = structureDimension(text, input.documentType, findings, input.knownHeadings);
 
   findings.sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity));
   const penalty = findings.reduce((sum, f) => sum + SEVERITY_WEIGHT[f.severity], 0);

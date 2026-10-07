@@ -23,6 +23,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { ProjectHome } from '../surfaces/ProjectHome';
+import { CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 
 const PID = '11111111-1111-4111-8111-111111111111';
 
@@ -73,6 +74,15 @@ beforeEach(() => {
 });
 
 describe('ProjectHome — data room', () => {
+  it('offers only the shared chat candidates from its project-source picker', async () => {
+    mockApi(() => ok({ projectId: PID, sources: [], unscoped: [] }));
+    render(<ProjectHome {...props()} />);
+    await screen.findByText(/No sources in this project yet/);
+    const picker = screen.getByLabelText('Attach files to this project') as HTMLInputElement;
+    expect(picker.accept).toBe(CHAT_UPLOAD_ACCEPT);
+    expect(picker.accept.split(',')).toEqual(expect.arrayContaining(['.csv', '.xlsx', '.json', '.xml']));
+  });
+
   it('lists the project\'s real sources', async () => {
     mockApi(() => ok({ projectId: PID, sources: [source()], unscoped: [] }));
     render(<ProjectHome {...props()} />);

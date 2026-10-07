@@ -103,6 +103,28 @@ beforeEach(() => {
 });
 
 describe('chat evidence upload runs assertUploadSafe before anything is stored', () => {
+  it.each([
+    ['enrollment.csv', 'text/csv', 'subject,value\n001,0'],
+    ['enrollment.tsv', 'text/tab-separated-values', 'subject\tvalue\n001\t0'],
+    ['resource.json', 'application/json', '{"subject":"001","value":0}'],
+    ['define.xml', 'application/xml', '<Study id="S1"><Subject id="001" /></Study>'],
+  ])('stores and raw-text reads %s through the real multipart route after clean scanning', async (name, mime, source) => {
+    const res = await upload(name, mime, source);
+    expect(res.status).toBe(200);
+    expect(res.body.extractionMethod).toBe('utf8');
+    expect(res.body.extractionWords).toBeGreaterThan(0);
+    expect(m.scanBuffer).toHaveBeenCalledWith(Buffer.from(source));
+    expect(wroteAnything()).toBe(true);
+  });
+
+  it.each(['json', 'xml', 'tsv'])('refuses a PDF declared under a .%s name before scan/storage', async (extension) => {
+    const res = await upload(`data.${extension}`, 'application/pdf', '%PDF-1.4\n');
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('FILE_TYPE_MISMATCH');
+    expect(m.scanBuffer).not.toHaveBeenCalled();
+    expect(wroteAnything()).toBe(false);
+  });
+
   it('a text file named and declared as text is stored (control)', async () => {
     const res = await upload('protocol.txt', 'text/plain', 'enrollment data');
     expect(res.status).toBe(200);

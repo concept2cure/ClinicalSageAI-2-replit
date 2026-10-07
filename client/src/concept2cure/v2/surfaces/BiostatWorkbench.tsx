@@ -49,7 +49,7 @@ import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import type { FireToast } from '../toast';
 import { saveToAuthoring } from '../authoringHandoff';
-import { engineResultToHtml } from '../engineResultHtml';
+import { engineResultToHtml, engineResultTableColumns, engineResultCellText, type EngineResultTable } from '../engineResultHtml';
 
 interface Defensibility {
   overallScore?: number | null;
@@ -158,24 +158,18 @@ function scalarRows(value: unknown, prefix = '', depth = 0): Row[] {
 }
 
 /** Tabular sub-results (OC grids, decision tables, tipping grids) worth showing as tables. */
-function objectTables(value: unknown): Array<{ label: string; rows: Record<string, unknown>[] }> {
+function objectTables(value: unknown): EngineResultTable[] {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
-  const out: Array<{ label: string; rows: Record<string, unknown>[] }> = [];
+  const out: EngineResultTable[] = [];
   for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
     if (k === 'provenance') continue;
-    if (Array.isArray(v) && v.length > 0 && v.every(r => r && typeof r === 'object' && !Array.isArray(r))) {
-      out.push({ label: humanize(k), rows: v as Record<string, unknown>[] });
+    if (Array.isArray(v) && v.length > 0 && v.every(r => r === null || (typeof r === 'object' && !Array.isArray(r)))) {
+      const table: EngineResultTable = { label: humanize(k), rows: v as Array<Record<string, unknown> | null> };
+      table.columns = engineResultTableColumns(table).map(({ key }) => ({ key, label: humanize(key) }));
+      out.push(table);
     }
   }
   return out;
-}
-
-function cell(v: unknown): string {
-  if (typeof v === 'number') return Number.isFinite(v) ? fmt(v) : String(v);
-  if (typeof v === 'boolean') return v ? 'yes' : 'no';
-  if (v === null || v === undefined) return '—';
-  if (typeof v === 'object') return JSON.stringify(v);
-  return String(v);
 }
 
 function Field({ field, value, error, onChange }: {
@@ -243,6 +237,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
       const html = engineResultToHtml({
         title: `${calc.title} — engine result`,
         rows: rows.map(([k, v]) => [k, v] as [string, unknown]),
+        tables,
         provenance,
       });
       const outcome = await saveToAuthoring({
@@ -256,7 +251,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
     } finally {
       setInserting(false);
     }
-  }, [calc, rows, provenance, fireToast]);
+  }, [calc, rows, tables, provenance, fireToast]);
 
   const run = useCallback(async () => {
     const { body, errors, fieldErrors: errs } = buildRequestBody(calc, values);
@@ -317,7 +312,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
           </button>
           <button className="btn" style={{ height: 32 }} onClick={reset} disabled={busy}>Reset</button>
           {result && <button className="btn" style={{ height: 32 }} aria-expanded={showRaw} aria-controls={`raw-${calc.id}`} onClick={() => setShowRaw(r => !r)}>{showRaw ? 'Hide' : 'Show'} raw response</button>}
-          {result !== null && rows.length > 0 && (
+          {result !== null && (rows.length > 0 || tables.length > 0) && (
             /* BP-W2-4: these numbers are SAP content, and until this button the
                only way off this screen was retyping them — which severs the
                provenance stamp from the result. The section is filed as the
@@ -351,10 +346,16 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
                     <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>{t.label}</div>
                     <div style={{ overflowX: 'auto' }}>
                       <table className="reg-tbl">
-                        <thead><tr>{Object.keys(t.rows[0]).map(h => <th key={h}>{humanize(h)}</th>)}</tr></thead>
+                        <thead><tr>{t.columns?.length
+                          ? t.columns.map(({ key, label }) => <th key={key}>{label}</th>)
+                          : <th>Record</th>}</tr></thead>
                         <tbody>
                           {t.rows.slice(0, 60).map((r, i) => (
-                            <tr key={i}>{Object.keys(t.rows[0]).map(h => <td key={h} className="mono">{cell(r[h])}</td>)}</tr>
+                            <tr key={i}>{t.columns?.length
+                              ? t.columns.map(({ key }) => <td key={key} className="mono">{engineResultCellText(
+                                r !== null && Object.prototype.hasOwnProperty.call(r, key) ? r[key] : null,
+                              )}</td>)
+                              : <td className="mono">{engineResultCellText(r)}</td>}</tr>
                           ))}
                         </tbody>
                       </table>

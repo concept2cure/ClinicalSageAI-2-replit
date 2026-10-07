@@ -1135,10 +1135,12 @@ export const BUILD_ABBREVIATION_LIST: AnaTool = {
 export const MEDICAL_WRITING_REVIEW: AnaTool = {
   name: 'medical_writing_review',
   description:
-    "Self-review a draft (or pre-draft) against a document type's governing standard — checks section " +
-    'coverage vs the required structure (ICH E3/M4E, EU MDR/IVDR, ICMJE, …) and returns a conformance ' +
-    'checklist (structure, key requirements, pitfalls) plus a readiness verdict. Use before handing ' +
-    'off or finalizing any regulatory/scientific document to QC it like an expert medical writer.',
+    "Review a draft (or pre-draft) against an indexed document type's heading outline " +
+    '(ICH E3/M4E, EU MDR/IVDR, ICMJE, …). Returns detected-heading evidence, a human/evidence ' +
+    'review checklist and up to three focused client clarification prompts. Read project sources ' +
+    'and prior answers first; ask only unresolved material questions outside the formal document. ' +
+    'Heading coverage never establishes scientific completeness, compliance, approval or filing readiness; ' +
+    'this deterministic tool does not read or verify source evidence.',
   input_schema: {
     type: 'object',
     properties: {
@@ -1148,7 +1150,7 @@ export const MEDICAL_WRITING_REVIEW: AnaTool = {
       },
       draft_text: {
         type: 'string',
-        description: 'Optional draft text — when provided, section coverage is assessed against it.',
+        description: 'Optional draft text — checks actual headings against the indexed outline, not narrative keyword mentions or substantive evidence completeness.',
       },
     },
     required: ['document_type'],

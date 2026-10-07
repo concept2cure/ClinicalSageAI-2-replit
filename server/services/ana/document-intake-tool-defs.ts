@@ -43,7 +43,7 @@ export const READ_UPLOADED_DOCUMENT: AnaTool = {
   description:
     'Read and extract the content of an uploaded file by file_id — AnA\'s front door to learn from and study any client ' +
     'document. Handles PDF (born-digital text with automatic OCR fallback for scanned pages), DOCX, Markdown, plain ' +
-    'text/CSV/JSON, Excel (.xlsx, all sheets rendered as text), and images (OCR). Returns the extracted text (paged via ' +
+    'text/CSV/TSV/JSON/XML (raw UTF-8 text, not dataset/schema validation), Excel (.xlsx, all sheets rendered as text), and images (OCR). Returns the extracted text (paged via ' +
     'max_chars/offset), the extraction method and OCR confidence, plus a structural outline (sections, tables, figures). ' +
     'For PDFs you can scope to a page range (page_start/page_end) — preferred for large documents; run ' +
     'inspect_uploaded_document first to plan. For cell-level Excel access (values, formulas, specific sheets) use ' +
@@ -119,6 +119,8 @@ export const READ_SPREADSHEET: AnaTool = {
   description:
     'Structured, cell-level read of an uploaded Excel (.xlsx) or CSV file: returns the sheet inventory plus the requested ' +
     'sheet\'s rows as a table — display values with row numbers, and formulas preserved alongside their cached results. ' +
+    'CSV fields remain literal strings so subject/lot identifiers, leading zeros, long IDs and date-like labels are not ' +
+    'silently converted; scientific type, unit and date mapping must be deliberate. XLSX retains its stored cell types. ' +
     'Page through big sheets with start_row/max_rows, and keep paging while `truncated` is true: `lastRow` is where the ' +
     'sheet ends, while `totalRows` only counts rows that hold values, so a sheet with blank rows ends after totalRows. ' +
     'Use this (not read_uploaded_document) whenever you need to study ' +
@@ -144,7 +146,11 @@ export const EDIT_SPREADSHEET: AnaTool = {
   name: 'edit_spreadsheet',
   description:
     'Edit an uploaded Excel workbook (or CSV, promoted to .xlsx on save) and persist the result as a NEW uploaded file — ' +
-    'the original is never mutated, so provenance is preserved. Supply cell edits as A1 addresses with either a literal ' +
+    'the original is never mutated. A durable audit records the parent file/hash and edits. With a valid project open, ' +
+    'the new file is captured in that project’s Data Room; otherwise it remains a conversation upload. Extraction, ' +
+    'Vault filing and scientific qualification are still required; Excel formula results are NOT recalculated. ' +
+    'Untouched CSV fields retain their literal strings in the edited XLSX; only explicit typed edits change their types. ' +
+    'Supply cell edits as A1 addresses with either a literal ' +
     '`value` (string/number/boolean; null clears the cell) or an Excel `formula` (without the leading "="). Optionally ' +
     'create missing sheets. Returns the new file_id of the edited copy plus a summary of every applied edit — report that ' +
     'new file_id to the user. ALWAYS read_spreadsheet first to confirm the target cells before editing.',

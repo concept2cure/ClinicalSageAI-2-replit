@@ -4,7 +4,7 @@
  *
  * Picks the right method per file, with OCR as the recovery path so scanned/image
  * documents are no longer opaque:
- *   • text/* (.txt/.md/.csv/.json/.log) → utf8
+ *   • text/*, JSON/XML (.txt/.md/.csv/.tsv/.json/.xml/.log) → raw utf8
  *   • images           → WASM Tesseract OCR
  *   • PDFs             → born-digital text (pdf-parse), OCR fallback when scanned
  *   • .docx            → mammoth raw text
@@ -16,6 +16,7 @@
 import { ocrService } from './ocrService';
 import { alignPageSpans, type PageSpan } from './page-offsets';
 import { createScopedLogger } from '../../utils/logger';
+import { RAW_TEXT_SOURCE_EXTENSIONS } from '../../../shared/constants/document-intake-formats';
 
 const logger = createScopedLogger('document-text');
 
@@ -45,6 +46,7 @@ export interface ExtractedDocumentText {
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const RAW_TEXT_MIMES = new Set(['application/json', 'application/xml']);
 /** Below this many characters a PDF text layer is treated as missing → OCR. */
 const PDF_TEXT_MIN = 200;
 
@@ -107,6 +109,13 @@ async function extractPdfText(buffer: Buffer): Promise<ExtractedDocumentText> {
 /** Which extractor a file needs, from its media type and, failing that, its name. */
 type DocumentFormat = 'xlsx' | 'text' | 'image' | 'pdf' | 'docx' | 'unknown';
 
+/** Raw source representation only: this does not validate JSON/XML or map a dataset. */
+function isRawTextFormat(mime: string, filename: string): boolean {
+  const extension = /\.[^.]+$/.exec(filename)?.[0].toLowerCase();
+  return mime.startsWith('text/') || RAW_TEXT_MIMES.has(mime) ||
+    RAW_TEXT_SOURCE_EXTENSIONS.includes(extension ?? '') || extension === '.log';
+}
+
 /**
  * Classify the upload. Separated from the dispatch below so the five patterns
  * are read as one list rather than as five conditions interleaved with the
@@ -118,9 +127,9 @@ type DocumentFormat = 'xlsx' | 'text' | 'image' | 'pdf' | 'docx' | 'unknown';
  * because browsers routinely send application/octet-stream.
  */
 export function classifyDocumentFormat(mime: string | undefined, filename = ''): DocumentFormat {
-  const m = (mime || '').toLowerCase();
+  const m = (mime || '').split(';')[0].trim().toLowerCase();
   if (m === XLSX_MIME || /\.xlsx$/i.test(filename)) return 'xlsx';
-  if (m.startsWith('text/') || /\.(txt|md|csv|json|log)$/i.test(filename)) return 'text';
+  if (isRawTextFormat(m, filename)) return 'text';
   if (m.startsWith('image/') || /\.(png|jpe?g|gif|webp|tiff?|bmp)$/i.test(filename)) return 'image';
   if (m === 'application/pdf' || /\.pdf$/i.test(filename)) return 'pdf';
   if (m === DOCX_MIME || /\.docx$/i.test(filename)) return 'docx';

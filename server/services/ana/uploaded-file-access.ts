@@ -26,7 +26,8 @@
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { uploadedBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
+import { capturedDataEligibleSql, uploadedBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
+import type { SpreadsheetEdit } from '../documentIntelligence/spreadsheetService.js';
 import { createHash } from 'node:crypto';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -295,13 +296,33 @@ export async function loadUploadedFile(
  * Persist derived bytes (e.g. an edited workbook) as a NEW upload row in the
  * caller's tenant namespace. Returns the new file_id.
  */
-export async function saveDerivedUpload(params: {
+export interface DerivedUploadParams {
   buffer: Buffer;
   fileName: string;
   mimeType: string;
   organizationId?: number | null;
   userId?: number | null;
-}): Promise<{ fileId: string; storagePath: string }> {
+  /** Only the confirmed spreadsheet-edit handler supplies this, from the
+   * verified source bytes and the active session context, never a chosen org. */
+  derivation?: {
+    sourceFileId: string;
+    sourceSha256: string;
+    edits: SpreadsheetEdit[];
+    createdSheets: string[];
+    projectRef?: string | null;
+    projectId?: number | null;
+  };
+}
+
+export interface DerivedUploadResult {
+  fileId: string;
+  storagePath: string;
+  sourceId?: number | null;
+  captureStatus?: 'captured' | 'conversation_only';
+  derivationAudit?: { resourceType: 'file_upload'; resourceId: string };
+}
+
+export async function saveDerivedUpload(params: DerivedUploadParams): Promise<DerivedUploadResult> {
   const fileId = `file_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const orgSegment =
     params.organizationId != null ? `org-${Number(params.organizationId)}` : 'unscoped';
@@ -309,6 +330,7 @@ export async function saveDerivedUpload(params: {
 
   const resolved = path.resolve(process.cwd(), storagePath);
   assertWithinUploads(resolved);
+  if (params.derivation) return saveSpreadsheetDerivation(params, fileId, storagePath, resolved);
   await fs.mkdir(path.dirname(resolved), { recursive: true });
   await fs.writeFile(resolved, params.buffer);
 
@@ -333,4 +355,129 @@ export async function saveDerivedUpload(params: {
 
   logger.info('derived upload saved', { fileId, bytes: params.buffer.length });
   return { fileId, storagePath };
+}
+
+function verifiedDerivation(params: DerivedUploadParams) {
+  const derivation = params.derivation!;
+  const orgId = params.organizationId;
+  const userId = params.userId;
+  if (orgId == null || !Number.isSafeInteger(orgId) || orgId <= 0 ||
+      userId == null || !Number.isSafeInteger(userId) || userId <= 0) {
+    throw new Error('A spreadsheet derivation needs an identified tenant and user actor.');
+  }
+  if (!derivation.sourceFileId || !/^[a-f0-9]{64}$/.test(derivation.sourceSha256) || !derivation.edits.length) {
+    throw new Error('A spreadsheet derivation requires its source file, SHA-256 and applied edits.');
+  }
+  if (!/\.xlsx$/i.test(params.fileName) || params.mimeType !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+    throw new Error('An edited workbook is saved as .xlsx, including when the source was CSV.');
+  }
+  return { derivation, orgId, userId };
+}
+
+function assertDerivedSourceCurrent(
+  current: { storage_path: string; checksum_sha256: string | null } | undefined,
+  source: UploadedFile, sourceSha256: string,
+) {
+  if (!current || current.storage_path !== source.storagePath ||
+      (source.integrity === 'verified' && current.checksum_sha256 !== sourceSha256) ||
+      (current.checksum_sha256 != null && current.checksum_sha256 !== sourceSha256)) {
+    throw new Error('The source is no longer available or its identity changed. Nothing was saved.');
+  }
+}
+
+/** Preserve the edited copy's lineage in the existing audit/capture stores.
+ * This is capture, not extraction, recalculation, qualification or filing.
+ * Original uploads and sources are never mutated or automatically superseded. */
+async function saveSpreadsheetDerivation(
+  params: DerivedUploadParams, fileId: string, storagePath: string, resolved: string,
+): Promise<DerivedUploadResult> {
+  const { derivation, orgId, userId } = verifiedDerivation(params);
+  // Re-read through the one scoped, integrity-checked loader rather than trust
+  // a caller-supplied filename, path, hash, or tenant association.
+  const source = await loadUploadedFile(derivation.sourceFileId, orgId);
+  if (sha256Hex(source.buffer) !== derivation.sourceSha256) {
+    throw new Error('The source digest changed since this workbook was edited. Read it again before editing.');
+  }
+
+  const [{ getPool }, { resolveOpenProgram }, { lockDocumentDispositionProgram }, { createSource }, { writeChainedAuditRow }] = await Promise.all([
+    import('../../db.js'), import('../c2c/program-access.js'),
+    import('../document-data-disposition/program-lock.js'),
+    import('../clinical-regulatory-evidence/evidence-spine.service.js'), import('../auditService'),
+  ]);
+  const client = await getPool().connect();
+  let bytesWritten = false;
+  let commitAttempted = false;
+  try {
+    await client.query('BEGIN');
+    const programId = await resolveOpenProgram(client, { organizationId: orgId, projectRef: derivation.projectRef, projectId: derivation.projectId });
+    const requestedProject = Boolean(derivation.projectRef?.trim()) || derivation.projectId != null;
+    if (requestedProject && !programId) throw new Error('The requested project could not be resolved in this organization. Nothing was saved.');
+    if (programId) await lockDocumentDispositionProgram(client, orgId, programId);
+    await client.query("SET LOCAL lock_timeout = '5s'");
+    // Upload eligibility is organisation-wide, not only the destination
+    // project. Reserve the tables this transaction will mutate BEFORE its
+    // eligibility read, in disposition.apply's impact-lock order. Its SHARE
+    // locks then serialize withdrawals even across projects/no-project edits.
+    // A dispositions-table lock first would invert that order and deadlock.
+    await client.query('LOCK TABLE public.cre_evidence_sources, public.file_uploads IN ROW EXCLUSIVE MODE');
+    const eligible = await client.query(
+      `SELECT f.id, f.checksum_sha256, f.storage_path FROM file_uploads f
+        WHERE f.id = $1 AND f.organization_id = $2 AND ${uploadedBinaryAvailableSql('f')} FOR SHARE OF f`,
+      [source.fileId, orgId],
+    );
+    assertDerivedSourceCurrent(eligible.rows[0], source, derivation.sourceSha256);
+    const parents = programId ? await client.query(
+      `SELECT s.id FROM cre_evidence_sources s WHERE s.organization_id = $1 AND s.client_program_id = $2
+        AND s.source_type = 'client_document' AND s.is_current = TRUE AND s.deleted_at IS NULL
+        AND s.provenance->>'fileUploadId' = $3 AND s.checksum = $4 AND ${capturedDataEligibleSql('s')} ORDER BY s.id`,
+      [orgId, programId, source.fileId, derivation.sourceSha256],
+    ) : { rows: [] };
+    const parentSourceIds = parents.rows.map(r => Number(r.id));
+    const checksum = sha256Hex(params.buffer);
+    await fs.mkdir(path.dirname(resolved), { recursive: true });
+    await fs.writeFile(resolved, params.buffer);
+    bytesWritten = true;
+    await client.query(
+      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', NOW())`,
+      [fileId, userId, orgId, params.fileName, params.mimeType, params.buffer.length, storagePath, checksum],
+    );
+    const captured = programId ? await createSource(orgId, {
+      sourceType: 'client_document', visibilityClass: 'project_private', clientProgramId: programId,
+      title: params.fileName, storedArtifactRef: storagePath, checksum, createdBy: userId,
+      ingestionStatus: 'ingested', extractionStatus: 'pending',
+      provenance: {
+        origin: 'spreadsheet_edit', fileUploadId: fileId, storagePath, uploadedByUserId: userId,
+        derivedFromFileId: source.fileId, derivedFromSha256: derivation.sourceSha256,
+        sourceIntegrity: source.integrity, parentSourceIds,
+      },
+      metadata: { originalName: params.fileName, mimeType: params.mimeType, fileSize: params.buffer.length,
+        scientificQualification: 'unassessed', formulaResults: 'not_recalculated' },
+    }, client) : null;
+    const sourceId = captured ? captured.id : null;
+    await writeChainedAuditRow(client, {
+      tenantId: orgId, userId, action: 'file_upload.derived', resourceType: 'file_upload', resourceId: fileId,
+      details: {
+        operation: 'spreadsheet_edit', sourceFileId: source.fileId, sourceSha256: derivation.sourceSha256,
+        sourceIntegrity: source.integrity, fileId, checksumSha256: checksum, programId,
+        sourceId, parentSourceIds, edits: derivation.edits, createdSheets: derivation.createdSheets,
+        scientificQualification: 'unassessed', formulaResults: 'not_recalculated',
+      },
+    });
+    commitAttempted = true;
+    await client.query('COMMIT');
+    return { fileId, storagePath, sourceId,
+      captureStatus: captured ? 'captured' : 'conversation_only',
+      derivationAudit: { resourceType: 'file_upload', resourceId: fileId } };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    // Only this invocation's new file is eligible for cleanup. An ambiguous
+    // COMMIT must retain bytes, since a committed capture may already name them.
+    if (bytesWritten && !commitAttempted) {
+      await fs.unlink(resolved).catch(cleanupErr => logger.warn('derived upload cleanup failed', { fileId, error: String(cleanupErr) }));
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
 }

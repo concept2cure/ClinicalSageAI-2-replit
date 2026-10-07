@@ -504,6 +504,73 @@ describe('BP-W2-4 — a computed result files into a governed section, stamp int
     expect(doc, 'no document create was attempted').toBeTruthy();
     expect(doc![2]).toMatchObject({ client_program_id: PROGRAM });
   });
+
+});
+
+describe('D4 — structured scientific result fidelity in Authoring', () => {
+  const FULL_HASH = 'a'.repeat(64);
+
+  it('files every displayed result table, later-row columns and all rows with the full stamp', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/biostat/assurance') {
+        return ok({
+          assurance: 0.72,
+          ocTable: Array.from({ length: 65 }, (_, i) => ({
+            drift: i,
+            power: i === 0 ? 0.0250000000000123 : i / 100,
+            ...(i === 1 ? { stoppedEarly: false, note: '<script>not markup</script>', interval: { lower: null, upper: 3.14 } } : {}),
+          })),
+          provenance: { engine: 'c2c-stats', engineVersion: '1.0.0', method: 'assurance', inputsSha256: FULL_HASH, reproducible: true },
+        });
+      }
+      if (url === '/api/authoring/docs') return { ok: true, status: 200, json: async () => ({ document: { id: 'doc-grid' } }) } as Response;
+      if (url === '/api/authoring/sections') return { ok: true, status: 200, json: async () => ({ section: { id: 'sec-grid' } }) } as Response;
+      return ok({});
+    });
+
+    render(<BiostatWorkbench {...props()} />);
+    fill(/Prior mean effect/, '0.4');
+    fill(/^Prior SD/, '0.15');
+    fill(/^n per arm/, '120');
+    fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
+    expect(await screen.findByText('Oc Table')).toBeTruthy();
+    expect(screen.getByText(/Showing 60 of 65 rows/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Insert into document/ }));
+
+    await waitFor(() => {
+      const section = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections');
+      expect(section).toBeTruthy();
+      const content: string = section![2].content;
+      for (const expected of ['Oc Table', 'Drift', 'Power', 'Stopped Early', '0.0250000000000123', '<td>64</td><td>0.64</td>', '&lt;script&gt;not markup&lt;/script&gt;', '{"lower":null,"upper":3.14}', `inputs ${FULL_HASH}`]) {
+        expect(content).toContain(expected);
+      }
+      expect(content).not.toContain('<script>');
+      expect(apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/docs')![2]).toMatchObject({ client_program_id: PROGRAM, module: 'M5' });
+    });
+    expect(screen.getByRole('columnheader', { name: 'Stopped Early' })).toBeTruthy();
+    expect(screen.getByText('0.0250000000000123')).toBeTruthy();
+  });
+
+  it('can file a table-only result with heterogeneous and null rows', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/biostat/assurance') return ok({ grid: [{ drift: 0 }, null, { power: 0.987654321012345 }], provenance: { inputsSha256: FULL_HASH } });
+      if (url === '/api/authoring/docs') return { ok: true, status: 200, json: async () => ({ document: { id: 'doc-table' } }) } as Response;
+      if (url === '/api/authoring/sections') return { ok: true, status: 200, json: async () => ({ section: { id: 'sec-table' } }) } as Response;
+      return ok({});
+    });
+    render(<BiostatWorkbench {...props()} />);
+    fill(/Prior mean effect/, '0.4'); fill(/^Prior SD/, '0.15'); fill(/^n per arm/, '120');
+    fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Insert into document/ }));
+    await waitFor(() => {
+      const section = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections');
+      expect(section).toBeTruthy();
+      expect(section![2].content).toContain('<th>Drift</th><th>Power</th>');
+      expect(section![2].content).toContain('0.987654321012345');
+      expect(section![2].content).toContain('<tr><td>—</td><td>—</td></tr>');
+      expect(section![2].content).toContain(FULL_HASH);
+    });
+  });
 });
 
 describe('BP-W2-4 — with no project open, Insert into document files nothing (PF-07)', () => {

@@ -11,6 +11,7 @@ import {
   workbookToText,
   applyWorkbookEdits,
   cellValueToDisplay,
+  loadWorkbook,
 } from '../spreadsheetService';
 
 async function buildFixtureXlsx(): Promise<Buffer> {
@@ -164,14 +165,14 @@ describe('spreadsheetService', () => {
     ).rejects.toThrow(/invalid cell address/);
   });
 
-  it('reads CSV input through the same surface', async () => {
+  it('reads CSV input through the same surface without guessing numeric field types', async () => {
     const csv = Buffer.from('drug,dose_mg\nsemaglutide,2.4\ntirzepatide,15\n', 'utf8');
     const inv = await inspectWorkbook(csv, 'doses.csv', 'text/csv');
     expect(inv.format).toBe('csv');
     expect(inv.sheetCount).toBe(1);
     const r = await readWorksheet(csv, 'doses.csv');
     expect(r.rows[0].values).toEqual(['drug', 'dose_mg']);
-    expect(r.rows[1].values).toEqual(['semaglutide', 2.4]);
+    expect(r.rows[1].values).toEqual(['semaglutide', '2.4']);
   });
 
   it('cellValueToDisplay handles rich text, formulas, hyperlinks and errors', () => {
@@ -247,3 +248,47 @@ describe('a spreadsheet is read to its last value', () => {
   });
 });
 
+/** CSV supplies field text, not a client-approved type or scientific schema. */
+describe('CSV source values survive read/edit/save without inferred types', () => {
+  const csv = Buffer.from([
+    'subject_id,lot_id,long_id,label,zero,comment,scientific,flag,error,literal_formula,empty',
+    '00123,000045,123456789012345678901234,2026-01-02,0,"Lot, ""A""",1e-05,true,#N/A,"=SUM(1,2)",',
+    '',
+  ].join('\n'));
+  const sourceValues = [
+    '00123', '000045', '123456789012345678901234', '2026-01-02', '0',
+    'Lot, "A"', '1e-05', 'true', '#N/A', '=SUM(1,2)', '',
+  ];
+
+  it('reads identifiers, zero, date-looking labels, quoted commas, and exponent notation as source strings', async () => {
+    const result = await readWorksheet(csv, 'subjects.csv');
+    expect(result.rows[1].values).toEqual(sourceValues);
+    expect(result.formulas).toEqual([]);
+    const { workbook } = await loadWorkbook(csv, 'subjects.csv');
+    sourceValues.forEach((value, index) => {
+      expect(workbook.worksheets[0].getRow(2).getCell(index + 1).value).toBe(value);
+    });
+  });
+
+  it('keeps source field representations in the workbook text view', async () => {
+    const text = await workbookToText(csv, 'subjects.csv');
+    expect(text).toContain(sourceValues.slice(0, -1).join('\t'));
+  });
+
+  it('preserves untouched CSV values in the saved XLSX while only explicit edits introduce numbers/formulas', async () => {
+    const original = Buffer.from(csv);
+    const result = await applyWorkbookEdits(csv, 'subjects.csv', [
+      { cell: 'L1', value: 'review_note' },
+      { cell: 'L2', value: 'reviewed' },
+      { cell: 'M1', value: 'explicit_number' },
+      { cell: 'M2', value: 0 },
+      { cell: 'N1', value: 'explicit_formula' },
+      { cell: 'N2', formula: 'VALUE(E2)' },
+    ]);
+    expect(csv.equals(original)).toBe(true);
+    const reread = await readWorksheet(result.buffer, 'reviewed.xlsx');
+    expect(reread.rows[1].values.slice(0, sourceValues.length)).toEqual(sourceValues);
+    expect(reread.rows[1].values[12]).toBe(0);
+    expect(reread.formulas).toEqual([{ address: 'N2', formula: 'VALUE(E2)', result: null }]);
+  });
+});

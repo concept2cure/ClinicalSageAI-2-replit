@@ -25,7 +25,7 @@ import {
   getSegmentContext,
 } from '../registryModel';
 import '../styles/surfaces-v2.css';
-import { useChatUpload, composeTurn } from '../../hooks/useChatUpload';
+import { useChatUpload, composeTurn, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import { CapabilityBrowser } from './CapabilityBrowser';
 
@@ -287,7 +287,7 @@ export function Home({
             ref={fileRef}
             type="file"
             multiple
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.xml"
+          accept={CHAT_UPLOAD_ACCEPT}
             className="ana-hidden-input"
             aria-label="Attach files for AnA to read"
             onChange={(e) => {

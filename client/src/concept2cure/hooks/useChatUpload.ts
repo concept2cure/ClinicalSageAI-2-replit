@@ -11,6 +11,7 @@ import type { CSSProperties } from 'react';
 import { useCallback, useState } from 'react';
 import { ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../utils/authToken';
+import { CHAT_UPLOAD_ACCEPT, CHAT_UPLOAD_MAX_BYTES } from '@shared/constants/document-intake-formats';
 
 export interface ChatAttachment {
   id: string;
@@ -18,7 +19,7 @@ export interface ChatAttachment {
   status: 'uploading' | 'ready' | 'error';
   fileId?: string;
   error?: string;
-  /** How the server read the file (utf8 / pdf-text / pdf-ocr / image-ocr / docx). */
+  /** How the server read the file (utf8 / pdf-text / pdf-ocr / image-ocr / docx / xlsx). */
   extractionMethod?: string | null;
   /** Word count extracted into project memory. */
   extractionWords?: number;
@@ -93,11 +94,8 @@ export function composeTurn(text: string, attachments: ChatAttachment[]): { body
   };
 }
 
-/** File types the chat upload accepts (matches server-side extraction support). */
-export const CHAT_UPLOAD_ACCEPT = '.pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.docx,.doc';
-
-/** Max upload size (bytes). Comfortable for documents and multi-page scans. */
-export const CHAT_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
+/** Candidate formats and size only; server byte/scanner checks remain authoritative. */
+export { CHAT_UPLOAD_ACCEPT, CHAT_UPLOAD_MAX_BYTES } from '@shared/constants/document-intake-formats';
 
 /** Accepted extensions, derived from CHAT_UPLOAD_ACCEPT (the single source). */
 const ACCEPTED_EXTENSIONS = CHAT_UPLOAD_ACCEPT.split(',').map((e) => e.trim().toLowerCase());

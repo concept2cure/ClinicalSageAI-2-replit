@@ -92,6 +92,24 @@ const uploadOk = (over: Record<string, unknown> = {}) => ({
 });
 
 describe('the composer actually uploads the file', () => {
+  it.each([
+    ['enrollment.csv', 'text/csv', 'utf8'],
+    ['enrollment.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx'],
+    ['resource.json', 'application/json', 'utf8'],
+    ['define.xml', 'application/xml', 'utf8'],
+  ])('sends actual %s bytes and project scope without claiming scientific validation', async (name, type, method) => {
+    fetchMock.mockResolvedValue(uploadOk({ extractionMethod: method, extractionWords: 5 }));
+    renderRail();
+    expect(fileInput().accept.split(',')).toContain(name.slice(name.lastIndexOf('.')));
+    pick(new File(['source bytes'], name, { type }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const body = fetchMock.mock.calls[0][1].body as FormData;
+    expect((body.get('file') as File).name).toBe(name);
+    expect((body.get('file') as File).size).toBeGreaterThan(0);
+    expect(body.get('projectId')).toBe('42');
+    await waitFor(() => expect(screen.getByTitle(/5 words/)).toBeTruthy());
+  });
+
   it('POSTs the real File to /api/chat/upload, not just its name', async () => {
     fetchMock.mockResolvedValue(uploadOk());
     renderRail();
@@ -208,7 +226,7 @@ describe('the chip states what actually happened', () => {
 
   it('rejects an unsupported type without a network call', async () => {
     renderRail();
-    pick(new File(['x'], 'model.xlsx', { type: 'application/vnd.ms-excel' }));
+    pick(new File(['x'], 'subjects.xpt', { type: 'application/octet-stream' }));
     await waitFor(() => expect(screen.getByTitle(/Unsupported file type/)).toBeTruthy());
     expect(fetchMock).not.toHaveBeenCalled();
   });

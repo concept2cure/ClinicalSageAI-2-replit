@@ -7,7 +7,7 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
-import { useChatUpload, readyAttachmentLabel } from '../../hooks/useChatUpload';
+import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
@@ -450,6 +450,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           ref={fileRef}
           type="file"
           aria-label="Attach files to this project"
+          accept={CHAT_UPLOAD_ACCEPT}
           multiple
           hidden
           onChange={(e) => { if (e.target.files?.length) addFiles(e.target.files); e.target.value = ''; }}

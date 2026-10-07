@@ -5086,8 +5086,9 @@ registerToolHandler('read_spreadsheet', async (input, ctx) => {
 // Edit Spreadsheet — apply cell edits, save as a NEW upload (original untouched).
 registerToolHandler('edit_spreadsheet', async (input, ctx) => {
   try {
-    const { loadUploadedFile, saveDerivedUpload } = await import('./uploaded-file-access.js');
-    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId);
+    const { organizationId, userId, projectRef, projectId } = ctx ?? {};
+    const { loadUploadedFile, saveDerivedUpload, sha256Hex } = await import('./uploaded-file-access.js');
+    const file = await loadUploadedFile(String(input.file_id ?? ''), organizationId);
     if (!isWorkbookFile(file.mimeType, file.fileName)) {
       return JSON.stringify({
         error: `edit_spreadsheet supports .xlsx and .csv; "${file.fileName}" (${file.mimeType}) is neither.`,
@@ -5121,16 +5122,21 @@ registerToolHandler('edit_spreadsheet', async (input, ctx) => {
     );
 
     const defaultName = `${file.fileName.replace(/\.(xlsx|csv)$/i, '')} (edited).xlsx`;
-    const newFileName =
+    const requestedName =
       typeof input.new_file_name === 'string' && input.new_file_name.trim()
         ? input.new_file_name.trim()
         : defaultName;
+    const newFileName = /\.xlsx$/i.test(requestedName) ? requestedName : `${requestedName}.xlsx`;
     const saved = await saveDerivedUpload({
       buffer: result.buffer,
       fileName: newFileName,
       mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      organizationId: ctx?.organizationId,
-      userId: ctx?.userId,
+      organizationId,
+      userId,
+      derivation: {
+        sourceFileId: file.fileId, sourceSha256: sha256Hex(file.buffer), edits,
+        createdSheets: result.createdSheets, projectRef, projectId,
+      },
     });
 
     return JSON.stringify({
@@ -5140,7 +5146,15 @@ registerToolHandler('edit_spreadsheet', async (input, ctx) => {
       newFileName,
       appliedEdits: result.applied,
       createdSheets: result.createdSheets,
-      message: `Applied ${result.applied.length} edit(s) and saved the result as a new file (${saved.fileId}). The original upload is unchanged.`,
+      sourceSha256: sha256Hex(file.buffer),
+      sourceId: saved.sourceId ?? null,
+      captureStatus: saved.captureStatus,
+      derivationAudit: saved.derivationAudit,
+      scientificQualification: 'unassessed',
+      formulaResults: 'not_recalculated',
+      message: `Applied ${result.applied.length} edit(s) and saved the result as a new file (${saved.fileId}). The original upload is unchanged. ` +
+        (saved.captureStatus === 'captured' ? 'The edited copy is captured in the open project’s Data Room; extraction and Vault filing are still required. ' : 'The edited copy remains a conversation upload; adopt it into a project before Vault filing. ') +
+        'Formula results have not been recalculated, and scientific suitability has not been assessed.',
     });
   } catch (e) {
     return JSON.stringify({ error: `edit_spreadsheet failed: ${e instanceof Error ? e.message : String(e)}` });

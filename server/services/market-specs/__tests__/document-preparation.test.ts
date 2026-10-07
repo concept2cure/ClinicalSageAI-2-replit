@@ -1,9 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { buildDocumentPreparation, PREPARATION_TOPICS } from '../document-preparation';
+import { buildDocumentPreparation, getDocumentPreparationQuestion, PREPARATION_TOPICS } from '../document-preparation';
 import { documentTemplateTool } from '../../ana/document-template-tool';
 import { basisProblems } from '../../../../shared/regulatory/regulatory-basis';
 
 describe('biotech document preparation — region and evidence before drafting', () => {
+  it('shares inquiry prompts without exposing mutable preparation defaults or changing priorities', () => {
+    const sources = getDocumentPreparationQuestion('source_versions');
+    expect(sources.requestedEvidence).toMatch(/Study identifiers.*SAP approval/i);
+    sources.requestedEvidence = 'Caller-specific evidence';
+    const plan = buildDocumentPreparation({ templateId: 'clinical_study_report' });
+    expect(plan.questions.map(q => q.topic)).toEqual(['scope', 'source_versions', 'data_cutoff']);
+    expect(plan.questions[1].requestedEvidence).not.toBe('Caller-specific evidence');
+    expect(getDocumentPreparationQuestion('statistical_results').requestedEvidence).toMatch(/denominators.*units/i);
+    expect(getDocumentPreparationQuestion('quality').requestedEvidence).toMatch(/conditions\/timepoints/i);
+  });
   it('asks three decisive questions and never certifies readiness', () => {
     const p = buildDocumentPreparation({ templateId: 'clinical_study_report' });
     expect(p.questions.map(q => q.topic)).toEqual(['scope', 'source_versions', 'data_cutoff']);

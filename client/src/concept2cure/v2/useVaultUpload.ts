@@ -33,6 +33,7 @@ import * as React from 'react';
 import { redactInternals } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import type { VaultIngestDocumentType } from '@shared/constants/domain/vault-taxonomy';
+export { VAULT_UPLOAD_ACCEPT } from '@shared/constants/document-intake-formats';
 
 export interface VaultUploadOutcome {
   /** Files the server accepted and recorded. */

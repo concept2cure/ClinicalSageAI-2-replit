@@ -28,7 +28,7 @@ import {
   type VaultVersion,
 } from '../data/vault';
 import { useVault, useVaultAuditTrail, useVaultVersions } from '../hooks/useVault';
-import { useVaultUpload } from '../../v2/useVaultUpload';
+import { useVaultUpload, VAULT_UPLOAD_ACCEPT } from '../../v2/useVaultUpload';
 import { ErrorState } from '../../v2/dataConnect';
 import type { Program } from '../data/programs';
 
@@ -203,7 +203,7 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
             ref={fileRef}
             type="file"
             multiple
-            accept=".pdf,.docx,.doc,.txt,.rtf,.xlsx,.xls,.csv,.md"
+          accept={VAULT_UPLOAD_ACCEPT}
             style={{ display: 'none' }}
             onChange={async (e) => {
               const picked = e.target.files;
