@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-07T05:54:17.306Z",
+  "generatedAt": "2026-10-07T06:13:01.488Z",
   "git": {
-    "sha": "10222a0246bc9f6d6fca624b384ff0d273a8c8b0",
+    "sha": "0d15907bbeb072f58f2aa03b14532826d8ac5420",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2496,6 +2496,10 @@
         "lines": 2015
       },
       {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 2011
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "lines": 2003
       },
@@ -2510,10 +2514,6 @@
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1973
-      },
-      {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 1962
       },
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
