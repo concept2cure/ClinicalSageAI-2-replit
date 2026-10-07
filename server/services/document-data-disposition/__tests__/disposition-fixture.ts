@@ -46,7 +46,7 @@ const DDL = `
   CREATE TABLE vault.document_chunks (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), document_id uuid, chunk_text text);
   CREATE TABLE rag_documents (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id integer NOT NULL, document_id text);
   CREATE TABLE rag_chunks (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), document_id uuid, content text);
-  CREATE TABLE vault.document_catalog (document_id uuid PRIMARY KEY, key_data jsonb);
+  CREATE TABLE vault.document_catalog (document_id uuid PRIMARY KEY, key_data jsonb, content_hash CHAR(64) NOT NULL);
   CREATE TABLE authoring_documents (id uuid PRIMARY KEY, tenant_id integer, status text, approved_at timestamptz, frozen_at timestamptz, locked_at timestamptz);
   CREATE TABLE authoring_sections (id uuid PRIMARY KEY, doc_id uuid, tenant_id integer);
   CREATE TABLE authoring_citations (id uuid PRIMARY KEY, section_id uuid, tenant_id integer, source text, reference_id text);
@@ -104,7 +104,7 @@ export async function createDispositionHarness() {
     const ragDocument = (await pg.query<{ id: string }>('INSERT INTO rag_documents (organization_id,document_id) VALUES ($1,$2) RETURNING id', [org, String(artifact)])).rows[0].id;
     // tenant-isolation-safe: isolated PGlite fixture; ragDocument is the ID returned by the immediately preceding INSERT with this fixture organization.
     await pg.query('INSERT INTO rag_chunks (document_id,content) VALUES ($1,\'Authored extract\')', [ragDocument]);
-    await pg.query('INSERT INTO vault.document_catalog VALUES ($1,$2)', [vault, JSON.stringify({ population: '40', endpoint: 'change' })]);
+    await pg.query('INSERT INTO vault.document_catalog (document_id,key_data,content_hash) VALUES ($1,$2,$3)', [vault, JSON.stringify({ population: '40', endpoint: 'change' }), HASH]);
     await pg.query('INSERT INTO authoring_citations (id,tenant_id,source,reference_id) VALUES ($1,$2,\'cre_evidence_source\',$3)', [randomUUID(), org, String(capture)]);
     await pg.query('INSERT INTO vault.evidence_citations (source_document_id,evidence_document_id) VALUES ($1,$1)', [vault]);
     await pg.query('INSERT INTO document_span_lineage (organization_id,source,reference_id) VALUES ($1,\'cre_evidence_source\',$2)', [org, String(capture)]);

@@ -13,6 +13,8 @@ It does not declare D4, commercial deployment or regional filings qualified.
 | Recorded evidence into Module 3 narrative | Valid comparisons remain visible, with unassessed values, unresolved times and unreadable payloads named. A passing subset cannot assert overall stability support while those gaps remain. Unsupported criteria are described as unusable, rather than absent. | Same CMC contract and proof above |
 | Biostat inputs and responses into Authoring | Edits, resets and reruns invalidate old results; obsolete responses cannot restore them or disturb the current attempt. Insert requires the current accepted result. Full tables/hash and an already authorized save snapshot remain intact. | [Contract](BIOSTAT-FRESHNESS-CONTRACT.md), [results](BIOSTAT-FRESHNESS-RESULTS.md) |
 | Adoption SQL test fixture into audit-contract validation | Four missing nullable audit columns restored; the unchanged guard and actual SQL adoption regression pass. No audit gate or sealing seam changed. | [Plan](AUDIT-FIXTURE-PLAN.md), [results](AUDIT-FIXTURE.md) |
+| Vault originals and retained data into CMC evidence | Every disposition excludes the original from new document-evidence admission. Canonical locks precede reads/writes; refusal preserves earlier links. Terminal data withdrawal holds affected sections, while `keep_data` preserves retained-data grounding and exposes original-file availability separately. | [Contract](CMC-DISPOSITION-PLAN.md), [actual SQL results and limits](CMC-DISPOSITION-RESULTS.md) |
+| Catalog disposition test fixture into actual consumer queries | The fixture carries the canonical recorded content hash, allowing existing readable-source, retained-text and withdrawn-grounding checks to execute. Production readers and predicates are unchanged. | [Fixture RED/GREEN](CATALOG-FIXTURE-PARITY.md) |
 
 The two scientific fixes received independent read-only review. Models do not
 provide calculated numbers or infer handling for unsupported observations.
@@ -35,15 +37,24 @@ TypeScript runs on GitHub because the local whole-tree compiler has a known
 memory limit. Raw Vitest log start clocks are runtime-local EDT; explicitly
 labelled UTC times are converted accordingly.
 
+The new qualification test's heterogeneous table initially caused ten GitHub
+TypeScript errors. [The fixture correction](CMC-NUMERIC-TYPECHECK-CORRECTION.md)
+preserves every runtime case without casts or baseline changes. Corrected source
+`9dd81408d4775b8361a96bcf5e6002955db3722e` subsequently passed actual whole-tree
+TypeScript (zero errors, baseline zero) and ESLint (zero errors, 6,258 warnings)
+in C2C run `37604598878`, job `112736901380`. That verification is scoped to
+that source; the subsequent CMC disposition increment requires its own final
+publication checks.
+
 ## Remaining qualification work
 
 | Existing gap | Required next boundary |
 | --- | --- |
 | Permissive legacy criterion text and incomplete dimensional semantics | Explicit criterion/unit grammar and client-approved censoring/missing-data handling. This correction does not comprehensively qualify the criterion parser; `<=12abc` remains a documented example of permissive legacy behavior. |
-| Withdrawn data newly linked into CMC evidence | Canonical disposition eligibility and ordered-lock, actual-SQL late-link/read/drift controls; preserve retained extracted-data use under `keep_data`. |
+| CMC withdrawal enforcement in deployment | Independent-connection lock scheduling, runtime-role RLS and staging qualification; the actual-SQL admission/read/drift regression above does not replace those checks. |
 | Uploaded files into analysis-ready datasets | A unified, versioned qualification step for columns, units, populations, methods and intended analysis, before deterministic computation. |
 | Connector retrieval into governed intake | Authorized byte admission through scanner, hash verification, canonical capture and audit; retrieval alone is not this bridge. Watched folders/SFTP and specialized scientific formats remain unqualified pathways. |
-| Broader CI and release evidence | Resolve the named inherited failures, inspect final-source TypeScript/CI, and complete staging/intended-use/human-reviewed release qualification. No agency acceptance is claimed. |
+| Broader CI and release evidence | Resolve the remaining named inherited failures, inspect final-source TypeScript/CI, and complete staging/intended-use/human-reviewed release qualification. The three catalog-fixture errors are corrected locally here; no agency acceptance is claimed. |
 
 Earlier intake/catalog/derivation work and its remaining handoffs are described
 in [the preceding evidence](../2026-10-07-evidence-orchestration/README.md).

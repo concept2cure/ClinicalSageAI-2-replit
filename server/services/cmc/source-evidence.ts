@@ -11,7 +11,8 @@
  * through one family rule. This is the join:
  *
  *   - A person links a CMC record (its cmc_source_objects key under the
- *     program) to a CURRENT Vault version of the same program, with a reason.
+ *     program) to a CURRENT, available original Vault version of the same
+ *     program, with a reason. Any disposition refuses a new original link.
  *     The link keeps the version's content hash, version label and title as
  *     they were, so what the record was checked against is fixed.
  *   - Linking a later version of a document the record already cites moves the
@@ -23,18 +24,23 @@
  *     (migrations/20261005b_cmc_source_evidence.sql).
  *   - Every link and unlink writes a chained audit row on the Vault document's
  *     own history, in the same transaction.
- *   - A linked version that has since been superseded or withdrawn holds every
- *     compiled section that read the record (findEvidenceDrift): the approve
- *     route and the final export gate refuse until a person re-verifies the
- *     record against the current version and moves the link, or removes it.
+ *   - A linked version that has since been superseded, deleted or had its data
+ *     withdrawn (remove_data/supersede) holds every compiled section that read
+ *     the record (findEvidenceDrift): approve and final export refuse until a
+ *     person re-verifies and moves or removes the link. keep_data preserves
+ *     retained extracted-data grounding; its unavailable original is reported
+ *     separately and does not by itself create a data-drift hold.
  *
  * Failures are returned, not thrown; only an unexpected error escapes.
  *
  * @module server/services/cmc/source-evidence
  */
 import type { PoolClient } from 'pg';
+import type { DocumentDispositionChoice } from '../../../shared/document-data-disposition';
 import { writeChainedAuditRow } from '../auditService.js';
 import { programInOrganization } from '../c2c/program-access';
+import { vaultBinaryAvailableSql, vaultDataEligibleSql, vaultDispositionChoiceSql } from '../document-data-disposition/eligibility';
+import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
 import { requireGovernedReason } from '../../routes/governed-reason';
 import { currentVersionLateral, readVersionFamily, supersededSql } from '../vault/vault-version-family.js';
 import { type Refusal, refuse, inRefusableTransaction } from '../vault/vault-refusal.js';
@@ -49,7 +55,7 @@ interface Queryable {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SOURCE_KEY_MAX = 200;
 
-/** What became of the linked version since a person linked it. */
+/** Data/version state of a historical link, separate from original availability. */
 export type EvidenceState = 'current' | 'superseded' | 'withdrawn';
 
 export interface EvidenceLink {
@@ -61,6 +67,9 @@ export interface EvidenceLink {
   version: string | null;
   contentHash: string;
   state: EvidenceState;
+  /** Original access is separate from eligibility of retained extracted data. */
+  originalFileAvailable: boolean;
+  disposition: DocumentDispositionChoice | null;
   /** The family's current version label, when a later version replaced this one. */
   currentVersion: string | null;
   reason: string;
@@ -124,6 +133,7 @@ interface DocumentRow {
   title: string | null;
   superseded: boolean;
   current_version: string | null;
+  original_file_available: boolean;
 }
 
 /** A live version of this program, locked for the transaction; null when there is none. */
@@ -136,7 +146,8 @@ async function lockDocument(
   const { rows } = await client.query(
     `SELECT d.id::text AS id, btrim(d.content_hash) AS content_hash, d.version,
             COALESCE(d.document_title, d.title, d.file_name, d.filename) AS title,
-            ${supersededSql('d')} AS superseded, cv.current_version
+            ${supersededSql('d')} AS superseded, cv.current_version,
+            ${vaultBinaryAvailableSql('d')} AS original_file_available
        FROM vault.documents d
        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $3
        ${currentVersionLateral('d')}
@@ -202,7 +213,7 @@ async function moveEarlierLinks(client: PoolClient, a: Actor, sourceKey: string,
   return rows.map((r) => String(r.id));
 }
 
-/** Link a CMC record of this program to a current Vault version of the same program. */
+/** Link a CMC record to an available current original of the same program. */
 export async function linkSourceEvidence(
   pool: Queryable,
   a: Actor & { sourceKey: unknown; documentId: unknown; reason: unknown },
@@ -216,6 +227,10 @@ export async function linkSourceEvidence(
   const documentId = a.documentId as string;
 
   return inRefusableTransaction(async (client) => {
+    // Serialize with canonical withdrawal before taking impact-table/row locks.
+    // Reserve both write tables before reading eligibility or moving a link.
+    await lockDocumentDispositionProgram(client, a.organizationId, a.programId);
+    await client.query('LOCK TABLE public.cmc_source_evidence, vault.documents IN ROW EXCLUSIVE MODE');
     const src = await client.query(
       `SELECT source_type FROM cmc_source_objects
         WHERE organization_id = $1 AND project_id = $2 AND source_key = $3
@@ -226,6 +241,9 @@ export async function linkSourceEvidence(
     const sourceType = String(src.rows[0].source_type);
     const doc = await lockDocument(client, a.organizationId, a.programId, documentId);
     if (!doc) return refuse(404, 'DOCUMENT_NOT_FOUND', 'That document is not in this program’s Vault.');
+    if (!doc.original_file_available) {
+      return refuse(409, 'DOCUMENT_WITHDRAWN', 'The original document has been withdrawn and cannot be linked as new CMC evidence. Nothing was saved.');
+    }
     if (doc.superseded) {
       return refuse(
         409,
@@ -301,7 +319,10 @@ async function readLinks(q: Queryable, organizationId: number, programId: string
   const { rows } = await q.query(
     `SELECT e.id::text AS id, e.source_key, e.vault_document_id::text AS document_id,
             e.title_at_link, e.version_at_link, e.content_hash_at_link, e.reason, e.linked_at,
-            d.deleted_at IS NOT NULL AS withdrawn, ${supersededSql('d')} AS superseded, cv.current_version,
+            (d.deleted_at IS NOT NULL OR NOT ${vaultDataEligibleSql('d')}) AS withdrawn,
+            ${supersededSql('d')} AS superseded, cv.current_version,
+            (d.deleted_at IS NULL AND ${vaultBinaryAvailableSql('d')}) AS original_file_available,
+            ${vaultDispositionChoiceSql('d')} AS disposition,
             COALESCE(u.name, u.email) AS linked_by
        FROM public.cmc_source_evidence e
        JOIN vault.documents d ON d.id = e.vault_document_id
@@ -319,6 +340,8 @@ async function readLinks(q: Queryable, organizationId: number, programId: string
     version: r.version_at_link ?? null,
     contentHash: r.content_hash_at_link,
     state: r.withdrawn ? 'withdrawn' : r.superseded ? 'superseded' : 'current',
+    originalFileAvailable: r.original_file_available,
+    disposition: r.disposition ?? null,
     currentVersion: r.superseded ? (r.current_version ?? null) : null,
     reason: r.reason,
     linkedAt: new Date(r.linked_at).toISOString(),
@@ -372,7 +395,7 @@ export async function listSourceEvidence(
   return { ok: true, sources };
 }
 
-/** The program's current Vault versions a record could cite, Module 3 placements first. */
+/** Available current originals a record could newly cite, Module 3 placements first. */
 export async function listLinkableDocuments(
   q: Queryable,
   p: { organizationId: number; programId: string },
@@ -386,6 +409,7 @@ export async function listLinkableDocuments(
        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $2
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
       WHERE d.program_id = $1 AND d.deleted_at IS NULL AND NOT ${supersededSql('d')}
+        AND ${vaultBinaryAvailableSql('d')}
       ORDER BY (d.ctd_section LIKE '3.%' OR d.ctd_section LIKE 'm3%') DESC NULLS LAST, d.ctd_section NULLS LAST,
                d.created_at DESC
       LIMIT 500`,
@@ -411,10 +435,11 @@ const NAMED_REASONS = 5;
 
 /**
  * Compiled sections that read a record whose linked Vault version has since
- * been superseded or withdrawn. The record may no longer say what the current
- * document says, and only a person can tell: they re-verify it and move the
- * link to the current version (or correct the record, which then drifts and is
- * recompiled), or remove the link with a reason.
+ * been superseded, deleted or had its data withdrawn (remove_data/supersede).
+ * keep_data withdraws only original access and preserves retained-data
+ * grounding, so it does not alone hold a section. For actual data/version
+ * drift a person re-verifies and moves the link, corrects/recompiles the record,
+ * or removes the link with a reason.
  */
 export async function findEvidenceDrift(
   q: Queryable,
@@ -427,7 +452,7 @@ export async function findEvidenceDrift(
   const params: unknown[] = opts.sectionKey ? [orgId, projectId, opts.sectionKey] : [orgId, projectId];
   const { rows } = await q.query(
     `SELECT DISTINCT s.section_key, e.source_key, e.title_at_link, e.version_at_link,
-            d.deleted_at IS NOT NULL AS withdrawn, cv.current_version
+            (d.deleted_at IS NOT NULL OR NOT ${vaultDataEligibleSql('d')}) AS withdrawn, cv.current_version
        FROM cmc_module3_sections s
        JOIN cmc_section_lineage l ON l.section_id = s.id AND l.organization_id = s.organization_id
        JOIN cmc_source_objects o ON o.id = l.source_object_id AND o.organization_id = s.organization_id
@@ -437,7 +462,7 @@ export async function findEvidenceDrift(
        JOIN vault.documents d ON d.id = e.vault_document_id
        ${currentVersionLateral('d')}
       WHERE s.organization_id = $1 AND s.project_id = $2 ${sectionFilter}
-        AND (d.deleted_at IS NOT NULL OR ${supersededSql('d')})
+        AND (d.deleted_at IS NOT NULL OR NOT ${vaultDataEligibleSql('d')} OR ${supersededSql('d')})
       ORDER BY s.section_key, e.source_key`,
     params,
   );
