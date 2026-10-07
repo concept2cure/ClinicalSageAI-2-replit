@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-07T02:25:57.585Z",
+  "generatedAt": "2026-10-07T03:01:12.908Z",
   "git": {
-    "sha": "4be7a67a18ca4a328149099de8e6f523df6f426d",
+    "sha": "d4ab79436bfaaeb8b83d6a12a96ddd6be1d71dd8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2051,7 +2051,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1127299
+        "bytes": 1126453
       },
       {
         "file": "shared/schema.ts",
@@ -2063,7 +2063,7 @@
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "bytes": 361976
+        "bytes": 361712
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2146,12 +2146,12 @@
         "bytes": 134822
       },
       {
-        "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "bytes": 133645
+        "file": "shared/regulatory/global-document-registry.ts",
+        "bytes": 134188
       },
       {
-        "file": "shared/regulatory/global-document-registry.ts",
-        "bytes": 132951
+        "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
+        "bytes": 133645
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2223,7 +2223,7 @@
       },
       {
         "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 109047
+        "bytes": 109170
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
@@ -2257,7 +2257,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21741
+        "lines": 21718
       },
       {
         "file": "shared/schema.ts",
@@ -2321,7 +2321,7 @@
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "lines": 3352
+        "lines": 3361
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
