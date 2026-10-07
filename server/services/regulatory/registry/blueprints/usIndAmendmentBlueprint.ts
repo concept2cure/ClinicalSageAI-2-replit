@@ -47,7 +47,7 @@ export const US_IND_AMENDMENT_SECTION_BLUEPRINT: SectionBlueprint = {
     lifecycleSection('amendment.cmc_summary', 'ind_cmc_amendment', 'CMC-CHANGE-SUMMARY', false,
       'For a CMC information amendment, describe the affected manufacturing or control change and its quality/safety significance using source-linked evidence. This is the existing lifecycle CMC authoring component, not an additional universal amendment requirement.'),
     lifecycleSection('amendment.cmc_update', 'ind_cmc_amendment', 'MODULE3-UPDATE', false,
-      'For a CMC amendment only, update affected quality sections and supporting records in their proper current CTD locations. Select drug-substance, drug-product and comparability/stability information according to the actual change; preserve unchanged records by reference.'),
+      'For a CMC amendment only, revise affected quality sections and supporting records in their proper current CTD locations. Select drug-substance, drug-product and comparability/stability information according to the actual change; preserve unchanged records by reference.'),
     { code: 'amendment.fda_questions', title: 'Requested FDA Comments and Specific Questions', module: 1, required: false, contentType: 'list', guidance: 'If FDA comment is desired, include the request and, for protocol amendments, specific questions to be addressed. 21 CFR 312.30(d)(3) and 312.31(b)(3). A request does not imply FDA approval or a response commitment.' },
   ],
 };

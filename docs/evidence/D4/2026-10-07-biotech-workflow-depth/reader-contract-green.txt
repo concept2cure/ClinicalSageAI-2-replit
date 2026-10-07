@@ -1,0 +1,28 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ tests/regulatory/submission-inventory-reader-contract.test.ts > saved submission inventory has a schema-compatible read capability > accepts the schema-bearing runtime database without a cast 1538ms
+ ✓ tests/regulatory/submission-inventory-reader-contract.test.ts > saved submission inventory has a schema-compatible read capability > preserves the full store transaction contract rather than erasing its schema incompatibility 1409ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > reads only this project and tenant, using exact saved document types and placements 22ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > empty content and incomplete approval projections cannot vouch for completed evidence 11ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > wrong-meaning, malformed or stale-bound signatures cannot count as approved progress 18ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > retired empty projections retain their retired status and cannot defeat current evidence 16ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > a foreign or deleted active project cannot be assessed 3ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > a failed content query throws instead of returning a successful empty inventory 5ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > requires an active project by default even if the model supplies a project id and approvals 29ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > ignores model approval and project claims when a project is open 4ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > explicit hypothetical scenarios cannot certify a completed client package 2ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > invalid hypothetical rows produce an actionable refusal 1ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > invalid hypothetical rows produce an actionable refusal 0ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > invalid hypothetical rows produce an actionable refusal 0ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > does not turn a failed saved-record read into an empty successful assessment 1ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > reports the assessment limit without suggesting an endlessly failing retry 0ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > refuses a project that cannot be resolved in this tenant 0ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > asks for a recognized filing scope before any project read 1ms
+
+ Test Files  3 passed (3)
+      Tests  18 passed (18)
+   Start at  23:07:19
+   Duration  16.19s (transform 5.29s, setup 130ms, import 9.00s, tests 6.38s, environment 0ms)
+

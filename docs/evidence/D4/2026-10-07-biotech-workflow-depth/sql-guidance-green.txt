@@ -1,0 +1,30 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: table identity is schema-aware > normalizes public and unqualified names to the same identity 2ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: table identity is schema-aware > keeps a non-public schema, so same-named tables never collide 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: CREATE parsing captures the table, not the schema > reads schema-qualified CREATE TABLE correctly 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: CREATE parsing captures the table, not the schema > handles unqualified, public-qualified, quoted and IF NOT EXISTS forms 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: CREATE parsing captures the table, not the schema > does NOT treat DDL inside comments as a creator 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-39: the reference scan reads SQL, not English > ignores prose that merely contains the word FROM 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-39: the reference scan reads SQL, not English > still captures genuine queries in every quoting style 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a qualified name whose object half is composed at runtime > is skipped, not reported as a table named after its schema 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a qualified name whose object half is composed at runtime > does not settle for a shorter name to satisfy the rejection 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a qualified name whose object half is composed at runtime > still reads the same schema when the object half is written out 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: the reference scan ignores non-relations > excludes SQL keywords and prose words that follow FROM/UPDATE 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds MATERIALIZED and NOT MATERIALIZED CTEs 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > does not bind a table merely named after a CTE keyword 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds a CTE that names its columns 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds RECURSIVE and later column-list CTEs, however they are spaced 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > still reports the storage a column-list CTE reads 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > does not bind a function call or a column alias 0ms
+ ✓ tests/regulatory/ind-amendment-sql-guidance.test.ts > IND amendment guidance cannot introduce phantom SQL relations > reproduces the prior prose false positive through the existing live-schema parser 5ms
+ ✓ tests/regulatory/ind-amendment-sql-guidance.test.ts > IND amendment guidance cannot introduce phantom SQL relations > keeps the actual authoring scaffold free of SQL relation references 2ms
+ ✓ tests/regulatory/ind-amendment-sql-guidance.test.ts > IND amendment guidance cannot introduce phantom SQL relations > does not leave an affected-table reference anywhere in the server scan 556ms
+
+ Test Files  2 passed (2)
+      Tests  20 passed (20)
+   Start at  23:02:44
+   Duration  1.37s (transform 175ms, setup 106ms, import 184ms, tests 584ms, environment 0ms)
+

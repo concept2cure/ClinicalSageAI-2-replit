@@ -53,6 +53,9 @@ export type CanonicalStoreDb = NodePgDatabase<Record<string, never>>;
  * (a savepoint) rather than opening a second connection.
  */
 export type CanonicalStoreHandle = Pick<CanonicalStoreDb, 'select' | 'update' | 'insert' | 'transaction'>;
+/** Read capability shared by schema-bearing databases and transaction handles.
+ * Readers never require the empty-schema transaction callback of the writer. */
+export type CanonicalStoreReader = Pick<CanonicalStoreHandle, 'select'>;
 
 /** sha256 over canonicalAuditPayload — the one hasher that seals the trail and verifies it. */
 export function hashLifecyclePayload(payload: string): string {
@@ -184,7 +187,7 @@ export async function readOutline(
  * ends.
  */
 export async function loadProjectionInput(
-  db: CanonicalStoreHandle,
+  db: CanonicalStoreReader,
   canonicalId: string,
   organizationId: number,
   opts: { forUpdate?: boolean } = {},

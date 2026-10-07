@@ -4,7 +4,7 @@
  * inventory or a technical package validation.
  */
 import { resolveOpenProgram, type OpenProjectContext } from '../c2c/program-access.js';
-import { loadProjectionInput, type CanonicalStoreHandle } from './canonicalDocumentStore.js';
+import { loadProjectionInput, type CanonicalStoreReader } from './canonicalDocumentStore.js';
 import { projectCanonicalDocument, type ProjectionInput } from './documentLifecycleOrchestrator.js';
 import { componentTemplateIdForRegistry } from '../market-specs/document-template-library.js';
 import type { ProjectArtifactData, ProjectSectionData } from './submissionPackageBuilder.js';
@@ -39,7 +39,7 @@ function progressStatus(input: ProjectionInput): string {
 
 export async function loadSavedSubmissionInventory(input: {
   pool: Queryable;
-  db: CanonicalStoreHandle;
+  db: CanonicalStoreReader;
   context: OpenProjectContext;
   registryId: string;
 }): Promise<{ programId: string; sections: ProjectSectionData[]; artifacts: ProjectArtifactData[]; notices: string[] } | null> {

@@ -1,0 +1,13 @@
+Source: d4ab79436bfaaeb8b83d6a12a96ddd6be1d71dd8
+GitHub C2C Validate & Audit run: 37564734875
+Job: 112609745977
+
+2026-10-07T03:01:53.0358434Z ##[group]Run npm run ci:typecheck:no-regression
+2026-10-07T03:01:53.0358889Z [36;1mnpm run ci:typecheck:no-regression[0m
+2026-10-07T03:01:53.1645681Z > concept2cure-riai@1.0.0 ci:typecheck:no-regression
+2026-10-07T03:01:53.2008765Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-07T03:05:17.0059101Z [ci:typecheck-no-regression] errors found: 1 (tsc exit 2)
+2026-10-07T03:05:17.0060651Z [ci:typecheck-no-regression] FAIL — error count 1 exceeds baseline 0 (+1).
+2026-10-07T03:05:17.0065608Z     npm run ci:typecheck:write-baseline
+2026-10-07T03:05:17.0070096Z     server/services/ana/submission-package-tool.ts(44,77): error TS2322: Type 'NodePgDatabase<typeof import("/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/shared/schema")> & { $client: Pool; }' is not assignable to type 'CanonicalStoreHandle'.
+2026-10-07T03:05:17.0188690Z ##[error]Process completed with exit code 1.
