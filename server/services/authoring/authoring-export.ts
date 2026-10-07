@@ -16,6 +16,7 @@
 import crypto from 'crypto';
 import type { Queryable } from './authoring-evidence';
 import { describeSignatureMethod } from '../../../shared/part11/signature-method';
+import { verifySavedDraftSourceReferences } from './draft-source-references';
 
 export type ExportFormat = 'docx' | 'pdf' | 'xml';
 export const EXPORT_FORMATS: readonly ExportFormat[] = ['docx', 'pdf', 'xml'];
@@ -26,6 +27,8 @@ export interface ExportDocRow {
   module?: string | null;
   status?: string | null;
   created_at?: unknown;
+  provenance?: unknown;
+  client_program_id?: string | null;
 }
 
 export interface ExportSectionRow {
@@ -511,6 +514,7 @@ async function renderPdf(args: RenderExportArgs, shared: SharedRender): Promise<
 
 /** Render one authoring document in one format. Throws on a renderer failure. */
 export async function renderAuthoringExport(args: RenderExportArgs): Promise<RenderedExport> {
+  await verifySavedDraftSourceReferences(args.doc, args.executor, args.tenantId);
   const shared = await prepareShared(args);
   const out =
     args.format === 'xml'

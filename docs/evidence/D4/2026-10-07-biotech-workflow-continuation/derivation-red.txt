@@ -1,0 +1,270 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+·········xxxxx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts > disposition direct-child containment > offers keep_data and holds terminal parent withdrawal with cross-project=false
+ FAIL  server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts > disposition direct-child containment > offers keep_data and holds terminal parent withdrawal with cross-project=true
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts:119:49
+    117|     await child(f, { crossProject });
+    118|     const preview = await f.service.preview(f.scope);
+    119|     expect(preview.counts.downstreamReferences).toBe(2);
+       |                                                 ^
+    120|     expect(preview.allowedChoices).toEqual(['keep_data']);
+    121|     await expect(f.apply('remove_data')).rejects.toMatchObject({ code:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts > disposition direct-child containment > holds parent supersession rather than guessing a replacement for an edited dataset
+AssertionError: promise resolved "{ disposition: { …(8) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "disposition": {
++     "auditReceipt": {
++       "id": "b039460b-1d67-498d-b254-748bea883406",
++       "sha256Chain": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
++     },
++     "choice": "supersede",
++     "createdAt": "2026-10-06T17:00:00.000Z",
++     "id": "53179a70-d865-4949-af36-2d922b9ba7b8",
++     "linkedIds": {
++       "artifactIds": [
++         "12",
++         "a2c98754-d4b2-4c2a-88f1-ef79f2c26162",
++       ],
++       "capturedSourceIds": [
++         25,
++       ],
++       "uploadIds": [
++         "bd24ada7-5a48-415b-af1d-1f540f3d0f42",
++       ],
++       "vaultDocumentIds": [
++         "106bf530-ae36-48f1-b561-7e81ef6f5eb3",
++       ],
++     },
++     "previousDispositionId": null,
++     "replacementId": "27",
++     "target": {
++       "id": "25",
++       "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++       "title": "Captured study.pdf",
++       "type": "captured_source",
++     },
++   },
++   "preview": {
++     "allowedChoices": [],
++     "approvals": {
++       "active": 0,
++     },
++     "blockers": [
++       "This source data already has a terminal withdrawal or supersession disposition.",
++     ],
++     "counts": {
++       "atoms": 3,
++       "catalogValues": 2,
++       "chunks": 2,
++       "citations": 2,
++       "downstreamReferences": 1,
++       "extractedTexts": 3,
++     },
++     "currentDisposition": {
++       "choice": "supersede",
++       "createdAt": "2026-10-06T17:00:00.000Z",
++       "id": "53179a70-d865-4949-af36-2d922b9ba7b8",
++       "replacementId": "27",
++     },
++     "expiresAt": "2026-10-06T17:10:00.000Z",
++     "linkedIds": {
++       "artifactIds": [
++         "12",
++         "a2c98754-d4b2-4c2a-88f1-ef79f2c26162",
++       ],
++       "capturedSourceIds": [
++         25,
++       ],
++       "uploadIds": [
++         "bd24ada7-5a48-415b-af1d-1f540f3d0f42",
++       ],
++       "vaultDocumentIds": [
++         "106bf530-ae36-48f1-b561-7e81ef6f5eb3",
++       ],
++     },
++     "previewToken": "eyJ2ZXJzaW9uIjoxLCJvcmdhbml6YXRpb25JZCI6MTAxMiwicHJvZ3JhbUlkIjoiODA3NTY3MTMtYWJkZi00NTAzLTk1ZTItZWEwOWE4MmVjMzYwIiwiYWN0b3JJZCI6NDIsInRhcmdldFR5cGUiOiJjYXB0dXJlZF9zb3VyY2UiLCJ0YXJnZXRJZCI6IjI1IiwicmVwbGFjZW1lbnRJZCI6IjI3IiwiaGFzaCI6IjlmYWQ4ZjMzODA1M2M2MTZmNGE4YjVkZjVhYTEzNDAyYWEwOTFkYTQ4ZjhlZmI3NWUwMmUwNjVhOTE4NzEwYzMiLCJleHBpcmVzQXQiOiIyMDI2LTEwLTA2VDE3OjEwOjAwLjAwMFoifQ.cqQJiRk7LXhdSDYE92mTFyoC8BcKgDqQqzND5s4q4do",
++     "replacement": {
++       "id": "27",
++       "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
++       "title": "Replacement study.pdf",
++       "type": "captured_source",
++     },
++     "retention": {
++       "legalHolds": 0,
++       "physicalErasure": false,
++       "retentionUntil": "2030-12-31",
++     },
++     "target": {
++       "id": "25",
++       "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++       "title": "Captured study.pdf",
++       "type": "captured_source",
++     },
++   },
+  }
+
+ ❯ server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts:130:57
+    128|     await child(f);
+    129|     const replacementId = await insertCapturedSuccessor(f);
+    130|     await expect(f.apply('supersede', { replacementId })).rejects.toMa…
+       |                                                         ^
+    131|     expect(await f.records()).toEqual([]);
+    132|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts > disposition direct-child containment > permits original-file withdrawal while retaining both parent extraction and edited data
+AssertionError: expected [ 'remove_data', 'supersede' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "remove_data",
++   "supersede",
++ ]
+
+ ❯ server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts:142:63
+    140|       FROM cre_evidence_sources s WHERE id=ANY($1::integer[]) ORDER BY…
+    141|     expect(rows).toEqual([{ id: f.capture, data: true }, { id: derived…
+    142|     expect((await f.service.preview(f.scope)).allowedChoices).toEqual(…
+       |                                                               ^
+    143|     await expect(f.apply('remove_data')).rejects.toMatchObject({ code:…
+    144|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts > disposition direct-child containment > refuses an old withdrawal preview after a direct derived capture is created
+AssertionError: promise resolved "{ disposition: { …(8) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "disposition": {
++     "auditReceipt": {
++       "id": "e3175ec9-9d26-4c0b-8f84-bf0ee0c40a1c",
++       "sha256Chain": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
++     },
++     "choice": "remove_data",
++     "createdAt": "2026-10-06T17:00:00.000Z",
++     "id": "bc778ca5-b06f-4c89-b136-098aef0bc734",
++     "linkedIds": {
++       "artifactIds": [
++         "14",
++         "54aacda3-9589-429d-8d44-1f393c7b178a",
++       ],
++       "capturedSourceIds": [
++         30,
++       ],
++       "uploadIds": [
++         "87efee74-66f9-44b0-ab3a-3d59885115c6",
++       ],
++       "vaultDocumentIds": [
++         "963f8160-0c48-4135-8a0e-228b579e488d",
++       ],
++     },
++     "previousDispositionId": null,
++     "replacementId": null,
++     "target": {
++       "id": "30",
++       "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++       "title": "Captured study.pdf",
++       "type": "captured_source",
++     },
++   },
++   "preview": {
++     "allowedChoices": [],
++     "approvals": {
++       "active": 0,
++     },
++     "blockers": [
++       "This source data already has a terminal withdrawal or supersession disposition.",
++     ],
++     "counts": {
++       "atoms": 3,
++       "catalogValues": 2,
++       "chunks": 2,
++       "citations": 2,
++       "downstreamReferences": 1,
++       "extractedTexts": 3,
++     },
++     "currentDisposition": {
++       "choice": "remove_data",
++       "createdAt": "2026-10-06T17:00:00.000Z",
++       "id": "bc778ca5-b06f-4c89-b136-098aef0bc734",
++       "replacementId": null,
++     },
++     "expiresAt": "2026-10-06T17:10:00.000Z",
++     "linkedIds": {
++       "artifactIds": [
++         "14",
++         "54aacda3-9589-429d-8d44-1f393c7b178a",
++       ],
++       "capturedSourceIds": [
++         30,
++       ],
++       "uploadIds": [
++         "87efee74-66f9-44b0-ab3a-3d59885115c6",
++       ],
++       "vaultDocumentIds": [
++         "963f8160-0c48-4135-8a0e-228b579e488d",
++       ],
++     },
++     "previewToken": "eyJ2ZXJzaW9uIjoxLCJvcmdhbml6YXRpb25JZCI6MTAxNCwicHJvZ3JhbUlkIjoiOWVhYWQ3OGYtMjA0NC00MDY1LWEzZTEtNjk0NTc4MzlhZGJkIiwiYWN0b3JJZCI6NDIsInRhcmdldFR5cGUiOiJjYXB0dXJlZF9zb3VyY2UiLCJ0YXJnZXRJZCI6IjMwIiwicmVwbGFjZW1lbnRJZCI6bnVsbCwiaGFzaCI6IjRhNTBkYTVjODg5ODU4ODNkMjRhYjAyY2MxNzIwOTQ1MTY5NThmYzIwNDYxN2YxNTRiYjI0MzlhMWMxNmZhNjEiLCJleHBpcmVzQXQiOiIyMDI2LTEwLTA2VDE3OjEwOjAwLjAwMFoifQ.LEMHFHAbJ20rGUJAXeEEOFRL-yZmw06od_KbwSlk7vs",
++     "replacement": null,
++     "retention": {
++       "legalHolds": 0,
++       "physicalErasure": false,
++       "retentionUntil": "2030-12-31",
++     },
++     "target": {
++       "id": "30",
++       "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++       "title": "Captured study.pdf",
++       "type": "captured_source",
++     },
++   },
+  }
+
+ ❯ server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts:151:96
+    149|     await child(f, { crossProject: true });
+    150|     await expect(f.service.apply({ ...f.scope, choice: 'remove_data',
+    151|       reason: 'Withdraw invalid assay data after review', previewToken…
+       |                                                                                                ^
+    152|       .rejects.toMatchObject({ code: 'STALE_PREVIEW' });
+    153|     expect(await f.records()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 10 passed (15)
+   Start at  10:19:56
+   Duration  3.98s (transform 191ms, setup 104ms, import 170ms, tests 3.37s, environment 0ms)

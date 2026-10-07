@@ -1,10 +1,16 @@
 import type { DocumentDispositionLinkedIds, DocumentDispositionTarget } from '../../../shared/document-data-disposition';
 import { DispositionError, DISPOSITION_HASH as HASH, type DispositionPreviewInput, type DispositionQueryable, type Snapshot } from './types';
 import { hashSnapshot } from './tokens';
+import { readDerivedCaptureImpact } from './derived-impact';
 const SUCCESSFUL_EXTRACTIONS = ['extracted', 'reconciled', 'verified'];
 const ACTIVE_STAGES = ['in_review', 'reviewed', 'approved', 'placed', 'packaged', 'submitted'];
 const iso = (v: unknown): string => v instanceof Date ? v.toISOString() : String(v);
 const unique = (values: string[]): string[] => [...new Set(values)].sort();
+// Server-verified references saved by Authoring are dependencies even when no
+// claim-level citation was created. Exact original identity/hash, within tenant.
+const SAVED_SOURCE_REFERENCE = `EXISTS (SELECT 1 FROM jsonb_path_query(
+    COALESCE(to_jsonb(d)->'provenance','{}'::jsonb), '$.projectSourceReferences[*].sources[*]') saved(ref)
+  WHERE saved.ref->>'documentId' = ANY($2::text[]) AND lower(saved.ref->>'contentHash') = $3)`;
 async function source(q: DispositionQueryable, input: DispositionPreviewInput, id: string): Promise<any> {
   const rows = input.targetType === 'captured_source'
     ? (await q.query(`SELECT id, title, checksum AS hash, extraction_status, ingestion_status, previous_version_id,
@@ -56,7 +62,8 @@ async function readLinks(q: DispositionQueryable, input: DispositionPreviewInput
   const fingerprints: Record<string,string> = { captures: hashSnapshot(captures), vaults: hashSnapshot(vaults), uploads: hashSnapshot(uploads), artifacts: hashSnapshot(artifacts) };
   return {captures,vaults,artifacts,linkedIds,fingerprints};
 }
-async function readImpactCounts(q: DispositionQueryable, input: DispositionPreviewInput, linkedIds: DocumentDispositionLinkedIds, artifacts: any[], fingerprints: Record<string,string>) {
+async function readImpactCounts(q: DispositionQueryable, input: DispositionPreviewInput, linkedIds: DocumentDispositionLinkedIds, context: { artifacts: any[]; fingerprints: Record<string,string>; sourceSha256: string }) {
+  const {artifacts,fingerprints,sourceSha256} = context;
   const ids = [input.organizationId,JSON.stringify(linkedIds)];
   const atomSql = `SELECT * FROM lumen_data_atoms a WHERE a.organization_id = $1
     AND public.document_disposition_atom_references(a.source_type,a.source_id,to_jsonb(a.structured_data),$2::jsonb)`;
@@ -76,12 +83,16 @@ async function readImpactCounts(q: DispositionQueryable, input: DispositionPrevi
   const cmcReferences = await observe(q,'cmcReferences',`SELECT * FROM cmc_source_evidence WHERE organization_id=$1 AND program_id=$2 AND vault_document_id::text=ANY($3::text[]) AND unlinked_at IS NULL`,[input.organizationId,input.programId,linkedIds.vaultDocumentIds],fingerprints);
   const governedReferences = await observe(q,'governedReferences',`SELECT g.* FROM governed_dependencies g JOIN projects p ON p.id=g.project_id AND p.organization_id=g.organization_id
     WHERE g.organization_id=$1 AND p.regulatory_program_id=$2 AND g.source_type='artifact' AND g.source_id=ANY($3::text[])`,[input.organizationId,input.programId,linkedIds.artifactIds],fingerprints);
-  const downstreamReferences = lineage+cmcReferences+governedReferences;
+  const savedDraftReferences = await observe(q,'savedDraftReferences',`SELECT d.* FROM authoring_documents d
+    WHERE d.tenant_id=$1 AND ${SAVED_SOURCE_REFERENCE}`,[input.organizationId,linkedIds.vaultDocumentIds,sourceSha256],fingerprints);
+  const downstreamReferences = lineage+cmcReferences+governedReferences+savedDraftReferences;
   const legalHolds = await observe(q,'holds',`SELECT * FROM vault.legal_holds WHERE organization_id = $1 AND lifted_at IS NULL AND (program_id = $2 OR document_id::text = ANY($3::text[]))`,[input.organizationId,input.programId,linkedIds.vaultDocumentIds],fingerprints);
   const vaultApprovals = await observe(q,'approvals',`SELECT * FROM canonical_documents WHERE organization_id = $1 AND source_refs->'vault_documents'->>'nativeId' = ANY($2::text[]) AND stage = ANY($3::text[])`,[input.organizationId,linkedIds.vaultDocumentIds,ACTIVE_STAGES],fingerprints);
-  const authorApprovals = await observe(q,'authorApprovals',`SELECT DISTINCT d.* FROM authoring_documents d JOIN authoring_sections s ON s.doc_id=d.id AND s.tenant_id=d.tenant_id
-    JOIN authoring_citations c ON c.section_id=s.id AND c.tenant_id=d.tenant_id WHERE d.tenant_id=$1 AND c.source='cre_evidence_source' AND c.reference_id=ANY($2::text[])
-    AND (d.status IN ('review','in_review','approved','locked','submitted','frozen') OR d.approved_at IS NOT NULL OR d.frozen_at IS NOT NULL OR d.locked_at IS NOT NULL)`,[input.organizationId,linkedIds.capturedSourceIds.map(String)],fingerprints);
+  const authorApprovals = await observe(q,'authorApprovals',`SELECT d.* FROM authoring_documents d WHERE d.tenant_id=$1
+    AND (${SAVED_SOURCE_REFERENCE} OR EXISTS (SELECT 1 FROM authoring_sections s
+      JOIN authoring_citations c ON c.section_id=s.id AND c.tenant_id=s.tenant_id
+      WHERE s.doc_id=d.id AND s.tenant_id=d.tenant_id AND c.source='cre_evidence_source' AND c.reference_id=ANY($4::text[])))
+    AND (lower(d.status) IN ('review','in_review','approved','locked','submitted','frozen','effective') OR d.approved_at IS NOT NULL OR d.frozen_at IS NOT NULL OR d.locked_at IS NOT NULL)`,[input.organizationId,linkedIds.vaultDocumentIds,sourceSha256,linkedIds.capturedSourceIds.map(String)],fingerprints);
   const c2cApprovals = await observe(q,'c2cApprovals',`SELECT DISTINCT d.* FROM c2c_documents d LEFT JOIN c2c_document_sections s ON s.document_id=d.id
     JOIN document_span_lineage l ON l.organization_id=d.org_id AND ((l.document_table='c2c_documents' AND l.document_id=d.id) OR (l.document_table='c2c_document_sections' AND l.document_id=s.id::text))
     WHERE d.org_id=$1 AND d.project_id=$2 AND l.source='cre_evidence_source' AND l.reference_id=ANY($3::text[])
@@ -140,15 +151,20 @@ function retentionUntil(vaults: any[]): string|null {
 export async function readDispositionSnapshot(q: DispositionQueryable, input: DispositionPreviewInput, enabled: boolean): Promise<Snapshot> {
   const src = await source(q,input,String(input.targetId));
   const {captures,vaults,artifacts,linkedIds,fingerprints}=await readLinks(q,input,src);
-  const {atoms,vaultChunks,ragChunks,catalogValues,authorCitations,vaultCitations,downstreamReferences,legalHolds,active,cmcReferences,governedReferences}=await readImpactCounts(q,input,linkedIds,artifacts,fingerprints);
+  const {atoms,vaultChunks,ragChunks,catalogValues,authorCitations,vaultCitations,downstreamReferences,legalHolds,active,cmcReferences,governedReferences}=await readImpactCounts(q,input,linkedIds,{artifacts,fingerprints,sourceSha256:src.hash});
+  const derived = await readDerivedCaptureImpact(q,input.organizationId,linkedIds,src.hash);
+  fingerprints.derivedCaptures = derived.fingerprint;
+  const dataWithdrawalBlockers = derived.count > 0
+    ? [`${derived.count} derived workbook source${derived.count === 1 ? '' : 's'} depend on this data. Review their lineage before withdrawing or replacing it; retaining extracted data remains possible.${derived.unverifiedCount ? ' Some recorded parent links also require verification.' : ''}`]
+    : [];
   const {current,currentDisposition}=await readCurrent(q,input,src.hash);
   const replacement=await readReplacement(q,input,src,fingerprints);
   const blockers=dispositionBlockers(input,src,{current,currentDisposition},enabled,{legalHolds,active,cmcReferences,governedReferences});
   return {
     target: { type:input.targetType,id:String(src.id),title:String(src.title ?? ''),sha256:src.hash }, linkedIds,
     counts: { extractedTexts: extractedTexts(captures,vaults,artifacts),
-      chunks:vaultChunks+ragChunks,atoms,catalogValues,citations:authorCitations+vaultCitations,downstreamReferences },
+      chunks:vaultChunks+ragChunks,atoms,catalogValues,citations:authorCitations+vaultCitations,downstreamReferences:downstreamReferences+derived.count },
     retention: { legalHolds, retentionUntil: retentionUntil(vaults), physicalErasure:false },
-    approvals:{active}, blockers,replacement,currentDisposition,fingerprints,sequence:current?Number(current.disposition_sequence)+1:1,
+    approvals:{active}, blockers,dataWithdrawalBlockers,replacement,currentDisposition,fingerprints,sequence:current?Number(current.disposition_sequence)+1:1,
   };
 }

@@ -1,0 +1,197 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > refuses a legacy 'foreign' recorded tenant despite a matching program and valid catalog 34ms
+   → expected { …(16) } to be null
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ × server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > refuses a legacy 'unassigned' recorded tenant despite a matching program and valid catalog 13ms
+   → expected { …(16) } to be null
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ ✓ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > retains exact source verification when the document and program agree on the tenant 30ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > refuses a legacy 'foreign' recorded tenant despite a matching program and valid catalog
+AssertionError: expected { …(16) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "catalog": {
+    "catalogedAt": null,
+    "charCount": 8,
+    "contentHash": "b8e8deb15dc7a2b5da10444b29fe85feea19661517d48c8e8a0486379945b3a3",
+    "documentKind": null,
+    "extractionConfidence": null,
+    "extractionError": null,
+    "extractionMethod": null,
+    "keyData": null,
+    "pageCount": null,
+    "purpose": null,
+    "status": "extracted",
+    "summary": null,
+    "wordCount": null,
+  },
+  "contentHash": "b8e8deb15dc7a2b5da10444b29fe85feea19661517d48c8e8a0486379945b3a3",
+  "ctdSection": null,
+  "disposition": null,
+  "documentCode": "TLF-7ab20189-51a5-4e43-9bb5-1440f35410ce",
+  "documentTitle": "Recorded study evidence",
+  "documentType": "csr",
+  "evidenceKind": null,
+  "extractedText": "Evidence",
+  "fileName": "study.pdf",
+  "folderId": null,
+  "id": "7ab20189-51a5-4e43-9bb5-1440f35410ce",
+  "mimeType": null,
+  "originalFileAvailable": true,
+  "placementStatus": "unfiled",
+  "programId": "11111111-1111-4111-8111-111111111111",
+}
+
+ ❯ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts:42:23
+     40|     const { id, hash } = await source(organizationId);
+     41|     const read = await loadDocumentForOrg(id, ORG, { executor: db.pool…
+     42|     expect.soft(read).toBeNull();
+       |                       ^
+     43|     await expect.soft(verifyDraftSourceReferences(references(id, hash)…
+     44|     expect((await db.pool.query('SELECT organization_id,program_id,con…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > refuses a legacy 'foreign' recorded tenant despite a matching program and valid catalog
+AssertionError: promise resolved "[ { …(11) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "completeText": true,
+    "contentHash": "b8e8deb15dc7a2b5da10444b29fe85feea19661517d48c8e8a0486379945b3a3",
+    "disposition": null,
+    "documentId": "7ab20189-51a5-4e43-9bb5-1440f35410ce",
+    "extractionConfidence": null,
+    "extractionMethod": null,
+    "originalFileAvailable": true,
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "sourceAvailability": "Original file available.",
+    "span": {
+      "end": 8,
+      "start": 0,
+      "totalChars": 8,
+    },
+    "title": "Recorded study evidence",
+  },
+]
+
+ ❯ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts:43:95
+     41|     const read = await loadDocumentForOrg(id, ORG, { executor: db.pool…
+     42|     expect.soft(read).toBeNull();
+     43|     await expect.soft(verifyDraftSourceReferences(references(id, hash)…
+       |                                                                                               ^
+     44|     expect((await db.pool.query('SELECT organization_id,program_id,con…
+     45|       .toEqual([{ organization_id: organizationId, program_id: PROGRAM…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > refuses a legacy 'unassigned' recorded tenant despite a matching program and valid catalog
+AssertionError: expected { …(16) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "catalog": {
+    "catalogedAt": null,
+    "charCount": 8,
+    "contentHash": "a08e1490611276f9b3e20f8e01ea1d98f1d19f54efe79fb023c3700ca0ce04e8",
+    "documentKind": null,
+    "extractionConfidence": null,
+    "extractionError": null,
+    "extractionMethod": null,
+    "keyData": null,
+    "pageCount": null,
+    "purpose": null,
+    "status": "extracted",
+    "summary": null,
+    "wordCount": null,
+  },
+  "contentHash": "a08e1490611276f9b3e20f8e01ea1d98f1d19f54efe79fb023c3700ca0ce04e8",
+  "ctdSection": null,
+  "disposition": null,
+  "documentCode": "TLF-b31a8c01-6c3c-4629-ba89-12f015e91c02",
+  "documentTitle": "Recorded study evidence",
+  "documentType": "csr",
+  "evidenceKind": null,
+  "extractedText": "Evidence",
+  "fileName": "study.pdf",
+  "folderId": null,
+  "id": "b31a8c01-6c3c-4629-ba89-12f015e91c02",
+  "mimeType": null,
+  "originalFileAvailable": true,
+  "placementStatus": "unfiled",
+  "programId": "11111111-1111-4111-8111-111111111111",
+}
+
+ ❯ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts:42:23
+     40|     const { id, hash } = await source(organizationId);
+     41|     const read = await loadDocumentForOrg(id, ORG, { executor: db.pool…
+     42|     expect.soft(read).toBeNull();
+       |                       ^
+     43|     await expect.soft(verifyDraftSourceReferences(references(id, hash)…
+     44|     expect((await db.pool.query('SELECT organization_id,program_id,con…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > refuses a legacy 'unassigned' recorded tenant despite a matching program and valid catalog
+AssertionError: promise resolved "[ { …(11) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "completeText": true,
+    "contentHash": "a08e1490611276f9b3e20f8e01ea1d98f1d19f54efe79fb023c3700ca0ce04e8",
+    "disposition": null,
+    "documentId": "b31a8c01-6c3c-4629-ba89-12f015e91c02",
+    "extractionConfidence": null,
+    "extractionMethod": null,
+    "originalFileAvailable": true,
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "sourceAvailability": "Original file available.",
+    "span": {
+      "end": 8,
+      "start": 0,
+      "totalChars": 8,
+    },
+    "title": "Recorded study evidence",
+  },
+]
+
+ ❯ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts:43:95
+     41|     const read = await loadDocumentForOrg(id, ORG, { executor: db.pool…
+     42|     expect.soft(read).toBeNull();
+     43|     await expect.soft(verifyDraftSourceReferences(references(id, hash)…
+       |                                                                                               ^
+     44|     expect((await db.pool.query('SELECT organization_id,program_id,con…
+     45|       .toEqual([{ organization_id: organizationId, program_id: PROGRAM…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  10:43:06
+   Duration  9.35s (transform 1.27s, setup 207ms, import 3.71s, tests 4.16s, environment 0ms)

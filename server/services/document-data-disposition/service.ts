@@ -72,8 +72,9 @@ export function createDocumentDispositionService(deps: DispositionServiceDepende
     }
   }
   function render(input: DispositionPreviewInput, state: Snapshot, expiresAt = new Date(now().getTime()+10*60_000).toISOString()): DocumentDispositionPreview {
-    const visible = {target:state.target,linkedIds:state.linkedIds,counts:state.counts,retention:state.retention,approvals:state.approvals,blockers:state.blockers,replacement:state.replacement,currentDisposition:state.currentDisposition};
-    return { ...visible, allowedChoices:state.blockers.length ? [] : state.currentDisposition?.choice==='keep_data'?['remove_data','supersede']:['keep_data','remove_data','supersede'], previewToken:token(input,state,expiresAt),expiresAt };
+    const visible = {target:state.target,linkedIds:state.linkedIds,counts:state.counts,retention:state.retention,approvals:state.approvals,blockers:state.blockers,dataWithdrawalBlockers:state.dataWithdrawalBlockers??[],replacement:state.replacement,currentDisposition:state.currentDisposition};
+    const choices: DocumentDispositionPreview['allowedChoices'] = state.blockers.length ? [] : state.currentDisposition?.choice==='keep_data'?['remove_data','supersede']:['keep_data','remove_data','supersede'];
+    return { ...visible, allowedChoices:state.dataWithdrawalBlockers?.length ? choices.filter(c=>c==='keep_data') : choices, previewToken:token(input,state,expiresAt),expiresAt };
   }
   return {
     async preview(input: DispositionPreviewInput): Promise<DocumentDispositionPreview> {
@@ -96,6 +97,7 @@ export function createDocumentDispositionService(deps: DispositionServiceDepende
         const state = await readDispositionSnapshot(q,input,deps.enabled());
         if (decoded.hash !== hashSnapshot(state)) throw new DispositionError(409,'STALE_PREVIEW','Source data, references, holds or approvals changed after the preview. Review a fresh preview.');
         if (state.blockers.length) throw new DispositionError(409,'DISPOSITION_BLOCKED',state.blockers.join(' '));
+        if (input.choice!=='keep_data' && state.dataWithdrawalBlockers?.length) throw new DispositionError(409,'DISPOSITION_BLOCKED',state.dataWithdrawalBlockers.join(' '));
         if (state.currentDisposition && input.choice==='keep_data') throw new DispositionError(409,'INVALID_TRANSITION','Retained data can only be withdrawn or superseded. The original file remains unavailable.');
         const {disposition,updated}=await persistDisposition(q,input,state,{previewHash:decoded.hash,createdAt:now().toISOString(),deps});
         return { disposition,preview:render(input,updated) };

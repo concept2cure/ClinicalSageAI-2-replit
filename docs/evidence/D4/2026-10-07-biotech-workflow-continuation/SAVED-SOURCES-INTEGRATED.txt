@@ -1,0 +1,10 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+··································································································
+
+ Test Files  8 passed (8)
+      Tests  98 passed (98)
+   Start at  10:28:49
+   Duration  21.00s (transform 3.47s, setup 352ms, import 8.45s, tests 9.63s, environment 568ms)

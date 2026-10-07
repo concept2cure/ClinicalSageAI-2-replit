@@ -14,8 +14,8 @@ describe('processed project sources for regulatory drafting', () => {
   it('loads saved text, binds source identity/version/span, and deduplicates IDs', async () => {
     const result = await loadDraftProjectSources([id, id], ctx);
     expect(mocks.load).toHaveBeenCalledTimes(2);
-    expect(mocks.load).toHaveBeenNthCalledWith(1, id, 7);
-    expect(mocks.load).toHaveBeenNthCalledWith(2, id, 7, { includeText: true });
+    expect(mocks.load).toHaveBeenNthCalledWith(1, id, 7, { currentOnly: true });
+    expect(mocks.load).toHaveBeenNthCalledWith(2, id, 7, { includeText: true, currentOnly: true });
     expect(result).toMatchObject({ status: 'loaded', sources: [{ documentId: id, contentHash: 'a'.repeat(64), completeText: true }] });
     expect(result.sources[0].text).toContain('12 of 30');
   });

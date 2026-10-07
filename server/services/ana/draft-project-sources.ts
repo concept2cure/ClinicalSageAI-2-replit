@@ -49,10 +49,10 @@ export async function loadDraftProjectSources(raw: unknown, ctx?: ToolContext): 
   let remaining = 48000;
   for (const documentId of ids) {
     // Check project ownership before fetching extracted text, not after serving it.
-    const meta = await loadDocumentForOrg(documentId, ctx.organizationId);
+    const meta = await loadDocumentForOrg(documentId, ctx.organizationId, { currentOnly: true });
     if (!meta || meta.programId.toLowerCase() !== scope.programId.toLowerCase()) throw new Error('SOURCE_UNAVAILABLE');
     if (remaining === 0) throw new Error('SOURCE_UNAVAILABLE');
-    const doc = readableVersion(await loadDocumentForOrg(documentId, ctx.organizationId, { includeText: true }), meta, scope.programId);
+    const doc = readableVersion(await loadDocumentForOrg(documentId, ctx.organizationId, { includeText: true, currentOnly: true }), meta, scope.programId);
     const text = doc.extractedText.slice(0, Math.min(12000, remaining));
     remaining -= text.length;
     sources.push({

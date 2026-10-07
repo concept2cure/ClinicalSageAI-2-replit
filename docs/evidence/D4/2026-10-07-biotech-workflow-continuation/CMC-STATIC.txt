@@ -1,0 +1,5 @@
+{"kind":"published-source-eslint-before-increment","source":"3400f1f32f7bed7bfa041e390b67407420a30d2d","file":"server/services/cmc/recorded-stability.ts","errorCount":0,"warningCount":5}
+{"kind":"published-source-eslint-before-increment","source":"3400f1f32f7bed7bfa041e390b67407420a30d2d","file":"server/services/module3Composer.ts","errorCount":0,"warningCount":19}
+{"kind":"isolated-syntax-and-transform-only-not-semantic-typecheck","file":"server/services/cmc/recorded-stability.ts","errorCount":0,"errors":[]}
+{"kind":"isolated-syntax-and-transform-only-not-semantic-typecheck","file":"server/services/module3Composer.ts","errorCount":0,"errors":[]}
+{"kind":"isolated-syntax-and-transform-only-not-semantic-typecheck","file":"server/services/cmc/__tests__/recorded-series-qualification.test.ts","errorCount":0,"errors":[]}

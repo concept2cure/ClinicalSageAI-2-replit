@@ -22,6 +22,7 @@
 import { pool } from '../../db.js';
 import { vaultDataEligibleSql, vaultDispositionChoiceSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
 import { catalogableDocument } from './document-catalog-eligibility.js';
+import { supersededSql } from './vault-version-family.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { FeatureToggleService } from '../featureToggleService.js';
 import {
@@ -164,10 +165,13 @@ export interface CatalogDocumentRow {
 export async function loadDocumentForOrg(
   documentId: string,
   organizationId: number,
-  opts: { includeText?: boolean; executor?: Queryable; programId?: string } = {},
+  opts: { includeText?: boolean; executor?: Queryable; programId?: string; currentOnly?: boolean } = {},
 ): Promise<CatalogDocumentRow | null> {
   const textCol = opts.includeText ? 'd.extracted_text' : 'NULL::text AS extracted_text';
   const programClause = opts.programId ? ' AND d.program_id = $3::uuid' : '';
+  // Newly admitted sources require both recorded tenant consistency and a
+  // current version. Programme ownership alone cannot repair legacy conflicts.
+  const currentClause = opts.currentOnly ? ` AND d.organization_id = $2 AND NOT ${supersededSql('d')}` : '';
   const res = await (opts.executor ?? pool).query(
     `SELECT d.id, d.program_id, d.document_code, d.document_title, d.document_type,
             d.file_name, d.mime_type, d.content_hash, ${textCol},
@@ -179,7 +183,7 @@ export async function loadDocumentForOrg(
             c.document_kind, c.purpose, c.summary, c.key_data, c.cataloged_at
        FROM vault.documents d
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE d.id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}
+      WHERE d.id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}${currentClause}
         AND EXISTS (SELECT 1 FROM regulatory_programs rp
                      WHERE rp.id = d.program_id AND rp.organization_id = $2)
       LIMIT 1`,

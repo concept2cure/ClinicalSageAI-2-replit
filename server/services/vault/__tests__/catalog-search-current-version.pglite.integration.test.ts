@@ -90,6 +90,8 @@ describe('semantic catalog — current version, not a better indexed predecessor
     expect(await loadDocumentForOrg(old, ORG)).toMatchObject({
       id: old, catalog: { summary: `Summary of ${old}` },
     }); // Explicit historical reads remain available, not default search evidence.
+    expect(await loadDocumentForOrg(old, ORG, { currentOnly: true })).toBeNull();
+    expect(await loadDocumentForOrg(current, ORG, { currentOnly: true })).toMatchObject({ id: current });
     expect(await loadDocumentForOrg(old, 2)).toBeNull();
   });
 

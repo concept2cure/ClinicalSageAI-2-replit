@@ -29,6 +29,8 @@ export interface DocumentDispositionPreview {
   retention: { legalHolds: number; retentionUntil: string | null; physicalErasure: false };
   approvals: { active: number };
   blockers: string[];
+  /** Review required for withdrawal/replacement; retaining data may remain allowed. */
+  dataWithdrawalBlockers?: string[];
   replacement: DocumentDispositionTarget | null;
   allowedChoices: DocumentDispositionChoice[];
   previewToken: string;

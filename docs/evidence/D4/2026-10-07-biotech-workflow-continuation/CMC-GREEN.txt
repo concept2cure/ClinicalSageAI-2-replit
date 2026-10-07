@@ -1,0 +1,852 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts
+{
+  "timestamp": "2026-10-07T14:25:42.504Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts
+{
+  "timestamp": "2026-10-07T14:25:42.662Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T14:25:42.663Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts
+{
+  "timestamp": "2026-10-07T14:25:42.663Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — what it refuses > needs two studies, and two DIFFERENT ones 43ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — what it refuses > names the studies it could not find rather than silently pooling the rest 4ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — what it refuses > will not pool across storage conditions 4ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — what it refuses > treats a condition SET as the unit, so order is not a difference 3ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — what it refuses > will not fit a study that spans conditions, because its points cannot be told apart 5ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — what it refuses > will not pool batches of different products 3ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — what it refuses > will not count one batch twice 3ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — what it refuses > will not treat an unlabelled batch as a batch 4ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — what it refuses > says there is nothing to fit rather than returning an empty verdict 4ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — what it refuses > requires organization context 5ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — per-attribute honesty > reports an attribute as unassessable when the batches disagree on the limit 34ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — per-attribute honesty > excludes an unfittable batch by name, and says why 21ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — per-attribute honesty > will not assess an attribute only one batch recorded 4ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — the verdict > pools batches that behave alike and reports the ANCOVA tests verbatim 11ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — the verdict > falls back to the shortest batch when the slopes diverge 5ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — the verdict > states its own scope, and writes nothing 4ms
+ ✓ server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts > POST /stability-studies/poolability — the verdict > takes the most constraining attribute as the programme answer 5ms
+ ✓ server/services/ana/__tests__/cmc-quality-summary-tool.test.ts > draft_quality_overall_summary_m2_3 > refuses CMC data supplied in the call, before reading anything 3ms
+stdout | server/services/ana/__tests__/cmc-quality-summary-tool.test.ts > draft_quality_overall_summary_m2_3 > composes the open program’s QOS from that program’s recorded sources, names included
+{
+  "timestamp": "2026-10-07T14:25:44.816Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T14:25:44.817Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/cmc-quality-summary-tool.test.ts > draft_quality_overall_summary_m2_3 > composes the open program’s QOS from that program’s recorded sources, names included
+{
+  "timestamp": "2026-10-07T14:25:44.817Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/cmc-quality-summary-tool.test.ts > draft_quality_overall_summary_m2_3 > composes the open program’s QOS from that program’s recorded sources, names included
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/cmc-quality-summary-tool.test.ts > draft_quality_overall_summary_m2_3 > reports a failed read as a failure, never as a summary
+{
+  "timestamp": "2026-10-07T14:25:44.912Z",
+  "level": "error",
+  "message": "[cmc-quality-summary-tool] draft_quality_overall_summary_m2_3 failed",
+  "context": {
+    "err": "program ownership check could not be run: relation \"cmc_source_objects\" does not exist"
+  }
+}
+
+ ✓ server/services/ana/__tests__/cmc-quality-summary-tool.test.ts > draft_quality_overall_summary_m2_3 > composes the open program’s QOS from that program’s recorded sources, names included 1154ms
+ ✓ server/services/ana/__tests__/cmc-quality-summary-tool.test.ts > draft_quality_overall_summary_m2_3 > says no program is open rather than composing one from nothing 0ms
+ ✓ server/services/ana/__tests__/cmc-quality-summary-tool.test.ts > draft_quality_overall_summary_m2_3 > says the program has no recorded CMC data, and composes nothing 0ms
+ ✓ server/services/ana/__tests__/cmc-quality-summary-tool.test.ts > draft_quality_overall_summary_m2_3 > reports a failed read as a failure, never as a summary 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads the complete finite value 0 2ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads the complete finite value -0.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads the complete finite value " +98.4 % " 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads the complete finite value "-.5" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads the complete finite value ".5" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads the complete finite value "12." 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads the complete finite value "1e-05" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads the complete finite value "-1.25E+2" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads the complete finite value "1e-05 %" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads the complete finite value "0e-999" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads the complete finite value "5e-324" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '<0.1%' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '≤0.1%' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '>95' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value 'NMT 0.1%' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value 'BLQ' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value 'ND' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '1,000' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '1 000' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '1_000' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '12abc' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '1.2.3' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '12 mg' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '1e' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '1e+' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '1e309' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '1e-999' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value 'NaN' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value 'Infinity' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value ' ' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value null 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value undefined 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value true 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value false 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value [ 12 ] 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value { value: 12 } 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value { toString: [Function toString] } 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value NaN 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value Infinity 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '0x10' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '12%%' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses an inexact or unsupported value '12 months' 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads a complete month time 6 2ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads a complete month time "6" 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads a complete month time "+6.0" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads a complete month time "6e0" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads a complete month time "6M" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads a complete month time "6 mo" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads a complete month time "6 mos" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads a complete month time "6 month" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads a complete month time "6 months" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads a complete month time "Month 6" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads a complete month time "Month6" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > reads a complete month time "MONTHS 6" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses a present result whose time is -1 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses a present result whose time is "-1 months" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses a present result whose time is "6 days" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses a present result whose time is "Week 6" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses a present result whose time is "1 year" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses a present result whose time is "6%" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses a present result whose time is "6 months 2 days" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses a present result whose time is "6abc" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses a present result whose time is "<6" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses a present result whose time is null 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses a present result whose time is undefined 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > refuses a present result whose time is "" 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > recorded numeric lexemes > keeps genuine missing results separate and leaves every raw record unchanged 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1e-4 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1e-4% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1e-4mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1e-4EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1e-4% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1e-4mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1e-4EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1e-4% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1e-4mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1e-4EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1e-4% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1e-4mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1e-4EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1e-4% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1e-4mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1e-4EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1e-4% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1e-4mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1e-4EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1e-4% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1e-4mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1e-4EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1e-4% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1e-4mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1e-4EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1e-4% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1e-4mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1e-4EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1e-4% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1e-4mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1e-4EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1e-4% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1e-4mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1e-4EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1e-4% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1e-4mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1e-4EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1,000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1,000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1,000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1,000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1,000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1,000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1,000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1,000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1,000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1,000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1,000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1,000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1,000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1,000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1,000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1,000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1,000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1,000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1,000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1,000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1,000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1,000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1,000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1,000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1,000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1,000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1,000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1,000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1,000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1,000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1,000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1,000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1,000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1,000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1,000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1,000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1,000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1,000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1,000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1,000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1,000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1,000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1,000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1,000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1,000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1,000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1,000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1,000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1_000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1_000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1_000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1_000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1_000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1_000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1_000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1_000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1_000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1_000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1_000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1_000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1_000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1_000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1_000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1_000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1_000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1_000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1_000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1_000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1_000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1_000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1_000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1_000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1_000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1_000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1_000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1_000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1_000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1_000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1_000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1_000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1_000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1_000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1_000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1_000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1_000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1_000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1_000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1_000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1_000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1_000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1_000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1_000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1_000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1_000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1_000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1_000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1 000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1 000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1 000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1 000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1 000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1 000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1 000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1 000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1 000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1 000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1 000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1 000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1 000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1 000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1 000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1 000EU/mL 3ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1 000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1 000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1 000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1 000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1 000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1 000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1 000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1 000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1 000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1 000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1 000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1 000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1 000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1 000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1 000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1 000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1 000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1 000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1 000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1 000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1 000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1 000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1 000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1 000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1 000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1 000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1 000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1 000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1 000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1 000% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1 000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1 000EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1.2.3 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1.2.3% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1.2.3mg 8ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1.2.3EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1.2.3 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1.2.3% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1.2.3mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1.2.3EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1.2.3 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1.2.3% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1.2.3mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1.2.3EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1.2.3 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1.2.3% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1.2.3mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1.2.3EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1.2.3 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1.2.3% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1.2.3mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1.2.3EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1.2.3 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1.2.3% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1.2.3mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1.2.3EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1.2.3 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1.2.3% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1.2.3mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1.2.3EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1.2.3 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1.2.3% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1.2.3mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1.2.3EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1.2.3 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1.2.3% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1.2.3mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1.2.3EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1.2.3 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1.2.3% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1.2.3mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1.2.3EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1.2.3 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1.2.3% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1.2.3mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1.2.3EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1.2.3 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1.2.3% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1.2.3mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1.2.3EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1..2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1..2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1..2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1..2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1..2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1..2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1..2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1..2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1..2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1..2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1..2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1..2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1..2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1..2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1..2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1..2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1..2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1..2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1..2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1..2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1..2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1..2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1..2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1..2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1..2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1..2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1..2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1..2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1..2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1..2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1..2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1..2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1..2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1..2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1..2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1..2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1..2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1..2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1..2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1..2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1..2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1..2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1..2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1..2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1..2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1..2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1..2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1..2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1...2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1...2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1...2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT1...2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1...2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1...2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1...2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT 1...2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1...2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1...2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1...2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT1...2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1...2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1...2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1...2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT 1...2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1...2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1...2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1...2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max1...2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1...2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1...2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1...2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max 1...2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1...2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1...2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1...2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min1...2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1...2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1...2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1...2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min 1...2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1...2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1...2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1...2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=1...2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1...2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1...2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1...2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= 1...2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1...2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1...2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1...2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=1...2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1...2 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1...2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1...2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= 1...2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT .5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT .5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT .5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT .5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT .5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT .5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT .5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT .5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max .5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max .5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max .5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max .5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min .5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min .5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min .5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min .5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= .5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= .5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= .5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= .5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= .5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= .5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= .5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= .5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT-.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT-.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT-.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT-.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT -.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT -.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT -.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NMT -.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT-.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT-.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT-.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT-.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT -.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT -.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT -.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: NLT -.5EU/mL 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max-.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max-.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max-.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max-.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max -.5 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max -.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max -.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: max -.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min-.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min-.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min-.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min-.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min -.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min -.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min -.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: min -.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=-.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=-.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=-.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >=-.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= -.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= -.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= -.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: >= -.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=-.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=-.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=-.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <=-.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= -.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= -.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= -.5mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > refuses unsupported numeric prefixes through operator and unit boundaries: <= -.5EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from <= 1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from <= 1E+4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from <= 1e 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from <= 1e+ 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from <= 1,000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from <= 1_000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from <= 1 000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from <= 1.2.3 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from <= .5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from NMT1e-4% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from NLT1e+4% 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from max1e+ 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from maximum1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from minimum1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from not more than1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from not less than1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from NMT-1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from NMT1,000 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from NMT.5% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from 95.0-1e2% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from 0-1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from 0--1e-4 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from 95.0-1.2.3 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from 0-.5 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > never extracts another limit from NMT1...2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion NLT -5.0 °C 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion <= 2mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion NMT 2.0% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion 95.0-105.0% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion 95.0 to 105.0% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion maximum 2.0 EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion NMT 2.0% (per ICH Q1E) 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion NMT 2.0% (see 3.2.S.4) 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion NMT2.0% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion maximum2.0 EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion not more than2.0% 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion -5.0--1.0 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion NMT1000mg 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion NMT2.0mg (see 3.2.S.4) 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > unsupported criterion numeric notation is refused before choosing a candidate > retains established ordinary criterion NMT2EU/mL 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > an invalid measured observation cannot be omitted before fitting > refuses all recorded fitting paths for <0.1% despite sufficient other points 7ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > an invalid measured observation cannot be omitted before fitting > refuses all recorded fitting paths for 1,000 despite sufficient other points 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > an invalid measured observation cannot be omitted before fitting > refuses all recorded fitting paths for 12abc despite sufficient other points 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > an invalid measured observation cannot be omitted before fitting > refuses all recorded fitting paths for BLQ despite sufficient other points 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > an invalid measured observation cannot be omitted before fitting > retains an independent valid series but withholds an incomplete programme shelf life 9ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > an invalid measured observation cannot be omitted before fitting > uses exponent results and month labels identically to the equivalent numeric observations 5ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > an invalid measured observation cannot be omitted before fitting > does not discard a present result with an absent time while fitting the other six 0ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > an invalid measured observation cannot be omitted before fitting > refuses unsupported criterion notation even after valid criteria in every fitted path 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > an invalid measured observation cannot be omitted before fitting > retains genuine missing results in recorded counts while allowing the complete observations to fit 6ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > Module 3 stability and QC use the same complete numeric evidence > retains <0.1% raw, without presenting an exact conformance or trend 14ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > Module 3 stability and QC use the same complete numeric evidence > retains 1,000 raw, without presenting an exact conformance or trend 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > Module 3 stability and QC use the same complete numeric evidence > retains 12abc raw, without presenting an exact conformance or trend 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > Module 3 stability and QC use the same complete numeric evidence > compares an exact exponent result at its real magnitude 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > Module 3 stability and QC use the same complete numeric evidence > does not compare a supported result against an unsupported exponent criterion 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > Module 3 stability and QC use the same complete numeric evidence > reports readable comparisons but withholds stability support when another recorded payload is unreadable 1ms
+ ✓ server/services/cmc/__tests__/recorded-numeric-qualification.test.ts > Module 3 stability and QC use the same complete numeric evidence > preserves value comparisons but withholds stability support for an unresolved measured observation time 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > names unreadable selected evidence even when no labelled series can be fitted 6ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > names an unreadable selected payload while retaining the valid contributor assessment 10ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'no results' 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'two numeric results' 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'no usable criterion' 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the programme claim if one independent attribute lacks full selected-batch coverage 3ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > retains a fully covered valid attribute if another recorded attribute cannot be assessed 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > preserves a complete valid three-batch claim and its actual contributor IDs 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'mixed conditions' instead of pooling it 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'a different explicit condition' instead of pooling it 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'conflicting condition aliases' instead of pooling it 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > retains the valid independent parameter when another has mixed conditions 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > allows matching explicit and inherited conditions in the same selected batch 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > keeps LT plus a physical label conservatively unassessed without inventing equivalence 0ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different ordinary lower bound' in shelf life, trending and pooling 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different criterion direction' in shelf life, trending and pooling 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'an uninterpretable later criterion' in shelf life, trending and pooling 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > checks the upper bound of every two-sided criterion within a recorded series 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > preserves equivalent supported criterion spellings and blanks that inherit the series criterion 5ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > keeps valid independent attribute estimates while withholding the incomplete programme claim 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > withholds the aggregate for cross-batch criterion conflict while retaining another assessed parameter 3ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > Module 3 propagates recorded-series criterion refusals > preserves the existing raw table and names the series refusal 16ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > Module 3 propagates recorded-series criterion refusals > withholds Module 3 stability support for conflicting criteria in one results field while retaining passing point comparisons 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > Module 3 propagates recorded-series criterion refusals > withholds Module 3 stability support for conflicting criteria in split existing results fields while retaining passing point comparisons 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > Module 3 propagates recorded-series criterion refusals > keeps different valid criteria at separate conditions assessable in Module 3 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point "" 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point "   " 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point undefined 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > does not create an unassigned measured-point hold for missing result null 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > does not create an unassigned measured-point hold for missing result undefined 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > does not create an unassigned measured-point hold for missing result "" 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > does not create an unassigned measured-point hold for missing result " " 1ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > find_cmc_guidance > answers a code with the document, its status, date and URL 14ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > find_cmc_guidance > marks a draft as a draft in the citation 2ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > find_cmc_guidance > refuses an authority the record does not know, and names the ones it does 0ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > find_cmc_guidance > says "not indexed", and not to answer from memory, when nothing matches 2ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > get_cmc_requirements > returns an authority’s pathway with its requirements, each cited 3ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > get_cmc_requirements > filters by CTD section 4ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > explain_cmc_topic > answers a note’s own topic with its citations, or says the record has no notes yet 7ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > every answer fits what the model is given to read > stays inside the budget for the broadest questions 14ms
+ ✓ server/services/__tests__/module3Composer.stability-trending.test.ts > the stability narrative states the trend assessment > reports no out-of-trend points and the projected crossing on a clean, trending series 20ms
+ ✓ server/services/__tests__/module3Composer.stability-trending.test.ts > the stability narrative states the trend assessment > names the out-of-trend time point 3ms
+ ✓ server/services/__tests__/module3Composer.stability-trending.test.ts > the stability narrative states the trend assessment > says the trend was not assessed, and why, on too short a series 1ms
+ ✓ server/services/__tests__/module3Composer.stability-trending.test.ts > the stability narrative states the trend assessment > says the trend was not assessed when no criterion is recorded 1ms
+ ✓ server/services/__tests__/module3Composer.stability-trending.test.ts > the stability narrative states the trend assessment > is never silent — a study with no recorded results says trend was not assessed 0ms
+ ✓ server/services/__tests__/module3Composer.stability-trending.test.ts > the stability narrative states the trend assessment > §3.2.P.8 carries the same assessment for the drug product 1ms
+ ✓ server/services/__tests__/module3Composer.stability-trending.test.ts > review: a study placed at two conditions is refused, not fitted as one line > refuses through the composer when the mapper carried the condition array, and when only the legacy joined string is stored 3ms
+ ✓ server/services/__tests__/cmc-module3-compiler.test.ts > CMC Module 3 compiler > compiles deterministic sections from canonical source objects 3ms
+ ✓ server/services/__tests__/cmc-module3-compiler.test.ts > CMC Module 3 compiler > marks dependent sections stale on source changes 1ms
+ ✓ server/services/__tests__/cmc-module3-compiler.test.ts > CMC Module 3 compiler > blocks final export for unresolved critical contradictions 0ms
+ ✓ server/services/__tests__/cmc-module3-compiler.test.ts > CMC Module 3 compiler > produces deterministic hashes for unchanged canonical input 1ms
+ ✓ server/services/__tests__/cmc-module3-compiler.test.ts > CMC contradiction engine > detects critical contradictions and derives impact tasks 1ms
+ ✓ server/services/__tests__/cmc-module3-compiler.test.ts > CMC contradiction engine > builds provenance-friendly diff summaries 1ms
+ ✓ server/services/__tests__/cmc-module3-compiler.test.ts > CMC contradiction engine > creates stable source hashes for equivalent payloads 0ms
+ ✓ server/services/__tests__/cmc-module3-compiler.test.ts > CMC contradiction engine > creates stable hashes across different key ordering 0ms
+ ✓ server/services/cmc/__tests__/recorded-stability-trending.test.ts > assessRecordedTrending > assesses each recorded attribute at its condition and finds the clean series clean 6ms
+ ✓ server/services/cmc/__tests__/recorded-stability-trending.test.ts > assessRecordedTrending > names an out-of-trend pull point 1ms
+ ✓ server/services/cmc/__tests__/recorded-stability-trending.test.ts > assessRecordedTrending > separates attributes recorded against different conditions into their own series 2ms
+ ✓ server/services/cmc/__tests__/recorded-stability-trending.test.ts > assessRecordedTrending > refuses a study spanning conditions whose results carry none 0ms
+ ✓ server/services/cmc/__tests__/recorded-stability-trending.test.ts > assessRecordedTrending > refuses a series with no recorded criterion, and one whose criterion cannot be read, with different reasons 1ms
+ ✓ server/services/cmc/__tests__/recorded-stability-trending.test.ts > assessRecordedTrending > refuses a short series with the point count it has 0ms
+ ✓ server/services/cmc/__tests__/recorded-stability-trending.test.ts > assessRecordedTrending > refuses at the study level when nothing is recorded, and when the record is unreadable 1ms
+ ✓ server/services/cmc/__tests__/shelf-life-two-sided.test.ts > parseAcceptanceCriterion carries both bounds of a range > resolves "4.5 - 6.5" to lower=4.5, upper=6.5, twoSided 2ms
+ ✓ server/services/cmc/__tests__/shelf-life-two-sided.test.ts > estimateRecordedShelfLife — two-sided criteria > does NOT report the full search horizon for an attribute rising toward the UPPER bound 5ms
+ ✓ server/services/cmc/__tests__/shelf-life-two-sided.test.ts > estimateRecordedShelfLife — two-sided criteria > reports the UPPER bound as the limiting one, and shows both were evaluated 2ms
+ ✓ server/services/cmc/__tests__/shelf-life-two-sided.test.ts > estimateRecordedShelfLife — two-sided criteria > the programme answer follows the limiting bound 1ms
+ ✓ server/services/cmc/__tests__/shelf-life-two-sided.test.ts > estimateRecordedShelfLife — two-sided criteria > a falling attribute is still limited by the LOWER bound (unchanged path) 1ms
+ ✓ server/services/cmc/__tests__/shelf-life-two-sided.test.ts > estimateRecordedShelfLife — two-sided criteria > a ONE-SIDED criterion is unaffected and carries no two-sided block 1ms
+stdout | server/services/__tests__/cmc-qc-batch-analyses.test.ts
+{
+  "timestamp": "2026-10-07T14:25:49.195Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T14:25:49.197Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/cmc-qc-batch-analyses.test.ts
+{
+  "timestamp": "2026-10-07T14:25:49.197Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/cmc-qc-batch-analyses.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/cmc-qc-batch-analyses.test.ts > mapQcTestingPayload > carries the quantitative results as batchAnalyses 3ms
+ ✓ server/services/__tests__/cmc-qc-batch-analyses.test.ts > mapQcTestingPayload > emits NO batchAnalyses for a pending test 1ms
+ ✓ server/services/__tests__/cmc-qc-batch-analyses.test.ts > mapQcTestingPayload > reports whether the result has been reviewed 0ms
+ ✓ server/services/__tests__/cmc-qc-batch-analyses.test.ts > mapQcTestingPayload > reads snake_case rows too, since the write-through is fed raw DB rows 1ms
+ ✓ server/services/__tests__/cmc-qc-batch-analyses.test.ts > qc_result reaches the batch-analyses sections > is a required source for §3.2.S.4 and §3.2.P.5 1ms
+ ✓ server/services/__tests__/cmc-qc-batch-analyses.test.ts > qc_result reaches the batch-analyses sections > marks exactly those sections stale when a QC result changes 0ms
+ ✓ server/services/__tests__/cmc-qc-batch-analyses.test.ts > qc_result reaches the batch-analyses sections > does not leak into sections that are not about batch analyses 0ms
+ ✓ server/services/__tests__/cmc-qc-batch-analyses.test.ts > qc_result reaches the batch-analyses sections > composes the results into the section and counts them as an input 4ms
+ ✓ server/services/__tests__/cmc-qc-batch-analyses.test.ts > qc_result reaches the batch-analyses sections > reports batchAnalyses as MISSING when only pending QC exists 1ms
+ ✓ server/services/__tests__/cmc-qc-batch-analyses.test.ts > review closure: batch attribution and process capability over recorded QC results > the mapper carries the batch the sample represents, and null when none is recorded 0ms
+ ✓ server/services/__tests__/cmc-qc-batch-analyses.test.ts > review closure: batch attribution and process capability over recorded QC results > §3.2.S.4 states Ppk/Cpk per test across six or more batches, and says why it did not below that 3ms
+ ✓ server/services/__tests__/cmc-qc-batch-analyses.test.ts > review closure: batch attribution and process capability over recorded QC results > refuses to compute capability across batches recorded against different criteria 1ms
+ ✓ server/services/cmc/__tests__/shelf-life.test.ts > estimateShelfLife (ICH Q1E) > estimates a shelf life within the data range for a declining attribute 3ms
+ ✓ server/services/cmc/__tests__/shelf-life.test.ts > estimateShelfLife (ICH Q1E) > uses the upper confidence limit for an increasing impurity 2ms
+ ✓ server/services/cmc/__tests__/shelf-life.test.ts > estimateShelfLife (ICH Q1E) > reports exceedsEvaluatedRange when the CL never crosses spec in range 2ms
+ ✓ server/services/cmc/__tests__/shelf-life.test.ts > estimateShelfLife (ICH Q1E) > returns 0 shelf life when already failing at t=0 1ms
+ ✓ server/services/cmc/__tests__/shelf-life.test.ts > estimateShelfLife (ICH Q1E) > validates inputs 1ms
+ ✓ server/services/cmc/__tests__/shelf-life.test.ts > estimateShelfLife (ICH Q1E) > is deterministic 1ms
+ ✓ server/services/cmc/__tests__/shelf-life.test.ts > estimateShelfLife — the Q1E extrapolation limit > never proposes a shelf life beyond what Q1E allows from the observed period 1ms
+ ✓ server/services/cmc/__tests__/shelf-life.test.ts > estimateShelfLife — the Q1E extrapolation limit > applies the 12-month ceiling once the study is longer than twelve months 0ms
+ ✓ server/services/cmc/__tests__/shelf-life.test.ts > estimateShelfLife — the Q1E extrapolation limit > reports the crossing itself when it falls inside the allowance 1ms
+ ✓ server/services/cmc/__tests__/shelf-life.test.ts > estimateShelfLife — the Q1E extrapolation limit > caps the exceeds-range case too, rather than reporting the search horizon 1ms
+ ✓ server/services/cmc/__tests__/shelf-life.test.ts > estimateShelfLife — the Q1E extrapolation limit > a shelf life of zero is not raised by the allowance 1ms
+ ✓ server/services/cmc/__tests__/shelf-life.test.ts > estimateShelfLife — the nominal (mean-line) crossing > reports where the fitted line itself meets the limit, from the unrounded fit 0ms
+ ✓ server/services/cmc/__tests__/shelf-life.test.ts > estimateShelfLife — the nominal (mean-line) crossing > is null when the line heads away from the limit — no crossing exists to report 1ms
+ ✓ server/services/cmc/__tests__/shelf-life.test.ts > estimateShelfLife — the nominal (mean-line) crossing > is zero, never negative, when the line is already past the limit at t = 0 0ms
+ ✓ server/services/__tests__/module3Composer.stability-honesty.test.ts > module3Composer — stability conclusions are not fabricated > 3.2.S.7 does NOT assert "is stable" when the data shows OOS/degradation 5ms
+ ✓ server/services/__tests__/module3Composer.stability-honesty.test.ts > module3Composer — stability conclusions are not fabricated > 3.2.S.7 defers (does not assert stability) when no results are present 1ms
+ ✓ server/services/__tests__/module3Composer.stability-honesty.test.ts > module3Composer — stability conclusions are not fabricated > 3.2.P.8 does NOT claim stability studies/shelf-life when only comparability is present 1ms
+ ✓ server/services/__tests__/module3Composer.stability-honesty.test.ts > module3Composer — stability conclusions are not fabricated > spec tables do not fabricate a "Per monograph" compendial basis when no method is recorded 1ms
+ ✓ server/services/cmc/__tests__/stability-trending.test.ts > assessTrend — PhRMA regression control chart > raises no out-of-trend point on a clean linear series, and establishes the slope 6ms
+ ✓ server/services/cmc/__tests__/stability-trending.test.ts > assessTrend — PhRMA regression control chart > projects the time the fitted trend meets the limit it is heading toward 1ms
+ ✓ server/services/cmc/__tests__/stability-trending.test.ts > assessTrend — PhRMA regression control chart > names the injected excursion, and only it 1ms
+ ✓ server/services/cmc/__tests__/stability-trending.test.ts > assessTrend — PhRMA regression control chart > computes the prediction interval as the textbook formula does 2ms
+ ✓ server/services/cmc/__tests__/stability-trending.test.ts > assessTrend — PhRMA regression control chart > does not flag a point that sits exactly on a perfectly linear prior (floating point is not an excursion) 0ms
+ ✓ server/services/cmc/__tests__/stability-trending.test.ts > assessTrend — PhRMA regression control chart > refuses a series with fewer than 4 prior points to fit, with the reason 0ms
+ ✓ server/services/cmc/__tests__/stability-trending.test.ts > assessTrend — PhRMA regression control chart > refuses without an acceptance criterion rather than assessing against nothing 0ms
+ ✓ server/services/cmc/__tests__/stability-trending.test.ts > assessTrend — PhRMA regression control chart > refuses when the time points do not vary 0ms
+ ✓ server/services/cmc/__tests__/stability-trending.test.ts > assessTrend — PhRMA regression control chart > projects nothing when the slope has the safe sign for the recorded limit 1ms
+ ✓ server/services/cmc/__tests__/stability-trending.test.ts > assessTrend — PhRMA regression control chart > on a two-sided range, projects toward whichever bound the trend is heading for 0ms
+ ✓ server/services/cmc/__tests__/stability-trending.test.ts > assessTrend — PhRMA regression control chart > reports a non-significant slope as such rather than projecting from it 0ms
+ ✓ server/services/cmc/__tests__/stability-trending.test.ts > assessTrend — PhRMA regression control chart > ignores non-finite values and refuses an alpha outside (0, 0.5) 1ms
+ ✓ server/services/__tests__/module3Composer.test.ts > module3Composer > computes completeness and missing inputs deterministically 9ms
+ ✓ server/services/__tests__/module3Composer.test.ts > module3Composer > maps impacted sections for changed source type 1ms
+ ✓ server/services/__tests__/module3Composer.test.ts > module3Composer > marks the appendices (3.2.A.*) that require a changed source type impacted too 1ms
+ ✓ server/services/__tests__/module3Composer.test.ts > 3.2.P.2 dissolution tables — the Batch column is a batch number or nothing > never prints the product name under "Batch" when no batch number was recorded 1ms
+ ✓ server/services/__tests__/module3Composer.test.ts > renderComposedSectionMarkdown > is the label + narrative + rendered tables the bridge used to concatenate inline 1ms
+ ✓ server/services/__tests__/module3Composer.test.ts > renderComposedSectionMarkdown > emits no table block and no trailing blank tail when the section composes no tables 0ms
+ ✓ server/services/__tests__/module3Composer.test.ts > §3.2.P.8 — a first IND can file its stability section > does not require a comparability status no first-in-human programme can have 2ms
+ ✓ server/services/__tests__/module3Composer.test.ts > §3.2.P.8 — a first IND can file its stability section > DOES require it once a comparability assessment is on file 1ms
+ ✓ server/services/__tests__/module3Composer.test.ts > §3.2.P.8 — a first IND can file its stability section > is complete when the assessment on file states its status 1ms
+ ✓ server/services/__tests__/module3Composer.test.ts > §3.2.P.8 — a first IND can file its stability section > still refuses when the shelf-life claim itself is missing 0ms
+ ✓ server/services/cmc/__tests__/shelf-life-poolability.test.ts > assessBatchPoolability (ICH Q1E) > pools combinable batches and estimates from the pooled regression 12ms
+ ✓ server/services/cmc/__tests__/shelf-life-poolability.test.ts > assessBatchPoolability (ICH Q1E) > refuses to pool batches with clearly different slopes and uses the minimum 2ms
+ ✓ server/services/cmc/__tests__/shelf-life-poolability.test.ts > assessBatchPoolability (ICH Q1E) > validates inputs 1ms
+ ✓ server/services/cmc/__tests__/shelf-life-poolability.test.ts > assessBatchPoolability (ICH Q1E) > is deterministic 5ms
+ ✓ server/services/cmc/__tests__/acceptance-criterion.test.ts > parseAcceptanceCriterion — two-sided ranges > reads an unspaced hyphenated range as a range, not as a negative number 9ms
+ ✓ server/services/cmc/__tests__/acceptance-criterion.test.ts > parseAcceptanceCriterion — two-sided ranges > reads every dash the pharmacopoeias and keyboards actually produce 4ms
+ ✓ server/services/cmc/__tests__/acceptance-criterion.test.ts > parseAcceptanceCriterion — two-sided ranges > keeps a genuinely negative one-sided limit 0ms
+ ✓ server/services/cmc/__tests__/acceptance-criterion.test.ts > parseAcceptanceCriterion — two-sided ranges > still reads the one-sided forms 0ms
+ ✓ server/services/cmc/__tests__/acceptance-criterion.test.ts > parseAcceptanceCriterion — two-sided ranges > refuses a range whose bounds cannot be ordered 0ms
+ ✓ server/services/cmc/__tests__/acceptance-criterion.test.ts > parseAcceptanceCriterion — two-sided ranges > refuses text with nothing numeric in it 0ms
+ ✓ server/services/cmc/__tests__/recorded-poolability-two-sided.test.ts > assessRecordedPoolability — both bounds of a two-sided criterion > reports the UPPER bound as limiting for an attribute drifting upward 13ms
+ ✓ server/services/cmc/__tests__/recorded-poolability-two-sided.test.ts > assessRecordedPoolability — both bounds of a two-sided criterion > two batches that share a lower bound but not an upper one do NOT pool as if they agreed 2ms
+stdout | server/services/ana/__tests__/shelf-life-tool.test.ts
+{
+  "timestamp": "2026-10-07T14:25:54.468Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T14:25:54.471Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/shelf-life-tool.test.ts
+{
+  "timestamp": "2026-10-07T14:25:54.472Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/shelf-life-tool.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/shelf-life-tool.test.ts > estimate_shelf_life tool > is defined and registered 3ms
+ ✓ server/services/ana/__tests__/shelf-life-tool.test.ts > estimate_shelf_life tool > computes a shelf life for declining potency 7ms
+ ✓ server/services/ana/__tests__/shelf-life-tool.test.ts > estimate_shelf_life tool > returns needs_parameters on bad input 1ms
+ ✓ server/services/__tests__/module3Composer.stability-filed.test.ts > §3.2.P.8 states the drug product study, not the drug substance one > files the product study’s condition, time points and shelf life 63ms
+ ✓ server/services/__tests__/module3Composer.stability-filed.test.ts > the recorded stability results are filed with the section that cites them > §3.2.P.8 tabulates every product pull point, and none of the substance’s 21ms
+ ✓ server/services/__tests__/module3Composer.stability-filed.test.ts > the recorded stability results are filed with the section that cites them > §3.2.S.7 tabulates the substance’s pull points 9ms
+ ✓ server/services/__tests__/module3Composer.stability-filed.test.ts > the recorded stability results are filed with the section that cites them > does not render a list of test names as a data matrix of one-cell rows 6ms
+ ✓ server/services/__tests__/module3Composer.stability-filed.test.ts > the recorded stability results are filed with the section that cites them > never cites data "summarized above" that the section does not carry 5ms
+
+ Test Files  19 passed (19)
+      Tests  718 passed (718)
+   Start at  10:25:39
+   Duration  27.38s (transform 12.28s, setup 497ms, import 20.03s, tests 1.97s, environment 5ms)

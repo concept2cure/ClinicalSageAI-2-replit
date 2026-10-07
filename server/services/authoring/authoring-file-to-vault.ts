@@ -39,7 +39,8 @@ import { writeChainedAuditRow } from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 import { LOCKED_DOCUMENT_STATUSES } from './document-lock';
 import { columnState, writeAuthoringAuditTrail, type AuthoringAuditContext } from './authoring-evidence';
-import { renderAuthoringExport, logExport, computeDocHash, sectionsDigest, type RenderedExport } from './authoring-export';
+import { renderAuthoringExport, logExport, sectionsDigest, type RenderedExport, type ExportSectionRow } from './authoring-export';
+import { SavedDraftSourceError, reserveSavedDraftSourceReferences } from './draft-source-references';
 import type { AuthoringPool, AuthoringActor } from './authoring-documents';
 import { ingestVaultDocument } from '../vault/vault-ingest.service';
 import { placeVaultDocument, type VaultFilingRecord } from '../vault/vault-placement.service';
@@ -99,12 +100,20 @@ interface DocRow {
   version: string | null;
   created_by: string | null;
   created_at: unknown;
+  provenance?: unknown;
 }
 
 const refuse = (status: number, code: string, error: string): FileToVaultOutcome => ({ kind: 'refused', status, code, error });
 
 /** Postgres: lock_not_available — another transaction holds the row FOR UPDATE. */
 const LOCK_NOT_AVAILABLE = '55P03';
+const DOCUMENT_CHANGED_DURING_FILING = 'DOCUMENT_CHANGED_DURING_FILING';
+
+/** Compare every rendered field and its order; the canonical section digest
+ * deliberately omits titles, which can also change the delivered file. */
+function sectionRenderState(sections: ReadonlyArray<ExportSectionRow>): string {
+  return JSON.stringify(sections.map(({ id, code, title, content }) => [id, code, title, content]));
+}
 
 /**
  * The document row, taken FOR UPDATE NOWAIT in its own short transaction: a
@@ -219,19 +228,34 @@ async function revertIngest(args: RevertIngestArgs): Promise<void> {
 async function recordFiling(
   args: FileToVaultArgs,
   doc: DocRow,
-  rendered: RenderedExport,
+  snapshot: { rendered: RenderedExport; sections: ExportSectionRow[] },
   vault: { id: string; folder: VaultFilingRecord; exportId: string },
 ): Promise<void> {
   const { pool, tenantId, actor, docId } = args;
+  const { rendered, sections } = snapshot;
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // Same order as withdrawal and source-linked save: program before row locks.
+    await reserveSavedDraftSourceReferences(doc, client, tenantId);
     const again = await client.query(
       `SELECT status FROM authoring_documents WHERE id = $1 AND tenant_id = $2 FOR UPDATE NOWAIT`,
       [docId, tenantId],
     );
     if (String(again.rows[0]?.status ?? '') !== String(doc.status ?? '')) {
       throw Object.assign(new Error('document changed state during filing'), { code: LOCK_NOT_AVAILABLE });
+    }
+    // Admission can take time, and working drafts remain editable. Reserve
+    // inserts as well as updates before comparing the exact rendered snapshot.
+    await client.query("SET LOCAL lock_timeout = '5s'");
+    await client.query('LOCK TABLE authoring_sections IN SHARE MODE');
+    const currentSections = await client.query(
+      `SELECT id, code, title, content FROM authoring_sections
+        WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index`,
+      [docId, tenantId],
+    );
+    if (sectionRenderState(currentSections.rows) !== sectionRenderState(sections)) {
+      throw Object.assign(new Error('document sections changed during filing'), { code: DOCUMENT_CHANGED_DURING_FILING });
     }
     const details = {
       format: args.format,
@@ -247,7 +271,7 @@ async function recordFiling(
     await logExport(client, {
       docId,
       format: args.format,
-      docSha256: await computeDocHash(client, docId, tenantId),
+      docSha256: sectionsDigest(sections),
       exportedBy: actor.email ?? actor.id,
       fileName: rendered.fileName,
       fileSize: rendered.fileContent.length,
@@ -383,6 +407,32 @@ async function ingestAndFile(
   return { id: ingested.document.id, folder: placed.filing };
 }
 
+async function renderForVaultFiling(args: FileToVaultArgs, doc: DocRow, sections: ExportSectionRow[]): Promise<RenderedExport | FileToVaultOutcome> {
+  const sealed = LOCKED_DOCUMENT_STATUSES.has(String(doc.status ?? '').toUpperCase());
+  try {
+    return await renderAuthoringExport({
+      executor: args.pool, tenantId: args.tenantId, doc, sections, format: args.format,
+      notice: sealed ? null
+        : `WORKING DRAFT — not a sealed 21 CFR Part 11 record (status: ${doc.status ?? 'unknown'}). ` +
+          'No frozen snapshot or signature manifest certifies this content.',
+    });
+  } catch (err) {
+    if (err instanceof SavedDraftSourceError) return refuse(409, err.code, err.message);
+    throw err;
+  }
+}
+
+function recordingFailure(err: unknown): FileToVaultOutcome {
+  if (err instanceof SavedDraftSourceError) return refuse(409, err.code, err.message);
+  if ((err as { code?: string })?.code === DOCUMENT_CHANGED_DURING_FILING) {
+    return refuse(409, DOCUMENT_CHANGED_DURING_FILING,
+      'The document content changed while it was being filed. Nothing was filed — review the current draft and try again.');
+  }
+  return (err as { code?: string })?.code === LOCK_NOT_AVAILABLE
+    ? refuse(409, 'DOCUMENT_MID_FREEZE', 'The document changed state while it was being filed. Nothing was filed — try again.')
+    : refuse(500, 'FILE_TO_VAULT_FAILED', 'The filing could not be recorded, so the document was not filed. Nothing was kept in the vault.');
+}
+
 /** File one authoring document into its project's vault. */
 export async function fileAuthoringDocumentToVault(args: FileToVaultArgs): Promise<FileToVaultOutcome> {
   const { pool, tenantId, docId } = args;
@@ -410,31 +460,20 @@ export async function fileAuthoringDocumentToVault(args: FileToVaultArgs): Promi
       WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index`,
     [docId, tenantId],
   );
-  const rendered = await renderAuthoringExport({
-    executor: pool,
-    tenantId,
-    doc,
-    sections: sectionsRes.rows,
-    format: args.format,
-    notice: sealed
-      ? null
-      : `WORKING DRAFT — not a sealed 21 CFR Part 11 record (status: ${doc.status ?? 'unknown'}). ` +
-        'No frozen snapshot or signature manifest certifies this content.',
-  });
+  const rendered = await renderForVaultFiling(args, doc, sectionsRes.rows);
+  if ('kind' in rendered) return rendered;
 
   const admitted = await ingestAndFile(args, doc, rendered, programId);
   if ('kind' in admitted) return admitted;
 
   const exportId = crypto.randomUUID();
   try {
-    await recordFiling(args, doc, rendered, { id: admitted.id, folder: admitted.folder, exportId });
+    await recordFiling(args, doc, { rendered, sections: sectionsRes.rows }, { id: admitted.id, folder: admitted.folder, exportId });
   } catch (err) {
     const why = err instanceof Error ? err.message : String(err);
     logger.error('file-to-vault record transaction failed; reverting the ingested vault row', { docId, why });
     await revertIngest({ pool, tenantId, actorId: args.actor.id, vaultDocumentId: admitted.id, programId, why: `record failed: ${why}` });
-    return (err as { code?: string })?.code === LOCK_NOT_AVAILABLE
-      ? refuse(409, 'DOCUMENT_MID_FREEZE', 'The document changed state while it was being filed. Nothing was filed — try again.')
-      : refuse(500, 'FILE_TO_VAULT_FAILED', 'The filing could not be recorded, so the document was not filed. Nothing was kept in the vault.');
+    return recordingFailure(err);
   }
 
   const approval = await carryApprovalToVault(args, doc, sectionsRes.rows, admitted.id, rendered.artifactSha256);

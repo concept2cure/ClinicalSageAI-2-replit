@@ -11,6 +11,8 @@ import { assessRecordedImpurity, isMutagenicAssessment, isThresholdAssessment, p
    already — one copy, used by the shelf-life engine and by this section. */
 import {
   assessRecordedTrending,
+  groupByParameterAndCondition,
+  inspectRecordedSeriesCriterion,
   numericSeries,
   parseAcceptanceCriterion,
   parseNumeric,
@@ -294,6 +296,13 @@ function recordedStabilityReads(payload: Record<string, unknown>): RecordedStabi
   ];
 }
 
+/** Preserve the recorded-trending consumer's existing condition interpretation. */
+function recordedStabilityConditions(payload: Record<string, unknown>): unknown {
+  return Array.isArray(payload.storageConditions) && payload.storageConditions.length > 0
+    ? payload.storageConditions
+    : String(payload.storageCondition ?? '').split(/\s*,\s*/).filter(Boolean);
+}
+
 function assessRecordedStability(stabilitySources: CanonicalSource[]): {
   compared: number;
   outOfSpec: Array<{ parameter: string; timePoint: string; result: number; criterion: string }>;
@@ -315,6 +324,13 @@ function assessRecordedStability(stabilitySources: CanonicalSource[]): {
     for (const read of reads) {
       const inspected = numericSeries(read.points);
       if (!inspected.ok) unresolvedObservations.push(inspected.reason);
+    }
+    // A point may meet its own criterion while the criteria across the fitted
+    // series conflict. Keep those comparisons, but withhold overall support
+    // using the same series inspection that refuses the recorded trend/fit.
+    for (const series of groupByParameterAndCondition(reads.flatMap(read => read.points), recordedStabilityConditions(payload))) {
+      const inspected = inspectRecordedSeriesCriterion(series.points);
+      if (inspected.reason) unresolvedObservations.push(`${series.parameter}${series.condition ? ` (${series.condition})` : ''}: ${inspected.reason}`);
     }
     for (const point of reads.flatMap((r) => r.points)) {
       const verdict = pointVerdict(point, payload);
@@ -521,13 +537,9 @@ function stabilityTrending(sources: CanonicalSource[]): string {
     /* The mapper writes the condition array; a payload written before it did
        carries only the joined string, which is split back on its separator
        so a two-condition study is still refused rather than fitted as one. */
-    const conditionSource =
-      Array.isArray(payload.storageConditions) && payload.storageConditions.length > 0
-        ? payload.storageConditions
-        : String(payload.storageCondition ?? '').split(/\s*,\s*/).filter(Boolean);
     const assessed = assessRecordedTrending({
       id: s.id,
-      storageConditions: conditionSource,
+      storageConditions: recordedStabilityConditions(payload),
       stabilityData: points,
     });
     if (!assessed.ok) {

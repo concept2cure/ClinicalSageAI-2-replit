@@ -1,0 +1,951 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > names an unreadable selected payload while retaining the valid contributor assessment 39ms
+   → expected { parameter: 'Assay', …(17) } to match object { assessable: true, …(2) }
+(25 matching properties omitted from actual)
+   → expected 36 to be null
+   → expected 'Assay' to be null
+   → expected undefined to deeply equal ArrayContaining{…}
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'no results' 3ms
+   → expected 36 to be null
+   → expected undefined to deeply equal ArrayContaining{…}
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'two numeric results' 7ms
+   → expected 36 to be null
+   → expected undefined to deeply equal ArrayContaining{…}
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'no usable criterion' 2ms
+   → expected 36 to be null
+   → expected undefined to deeply equal ArrayContaining{…}
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the programme claim if one independent attribute lacks full selected-batch coverage 3ms
+   → expected 36 to be null
+   → expected undefined to deeply equal ArrayContaining{…}
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > retains a fully covered valid attribute if another recorded attribute cannot be assessed 3ms
+   → expected 36 to be null
+   → expected undefined to deeply equal { Object ($$typeof, sample, ...) }
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > preserves a complete valid three-batch claim and its actual contributor IDs 2ms
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'mixed conditions' instead of pooling it 4ms
+   → expected { parameter: 'Assay', …(17) } to match object { assessable: false, …(1) }
+(26 matching properties omitted from actual)
+   → expected 36 to be null
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'a different explicit condition' instead of pooling it 4ms
+   → expected { parameter: 'Assay', …(17) } to match object { assessable: false, …(1) }
+(26 matching properties omitted from actual)
+   → expected 36 to be null
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'conflicting condition aliases' instead of pooling it 4ms
+   → expected { parameter: 'Assay', …(17) } to match object { assessable: false, …(1) }
+(26 matching properties omitted from actual)
+   → expected 36 to be null
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > retains the valid independent parameter when another has mixed conditions 8ms
+   → expected [ { parameter: 'Assay', …(17) }, …(1) ] to deeply equal [ ObjectContaining{…}, …(1) ]
+   → expected 36 to be null
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > allows matching explicit and inherited conditions in the same selected batch 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > keeps LT plus a physical label conservatively unassessed without inventing equivalence 0ms
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different ordinary lower bound' in shelf life, trending and pooling 15ms
+   → expected { parameter: 'Assay', …(17) } to match object { estimable: false, …(1) }
+(26 matching properties omitted from actual)
+   → expected 36 to be null
+   → expected { ok: true, …(12) } to match object { Object (ok, detail) }
+(25 matching properties omitted from actual)
+   → expected { parameter: 'Assay', …(17) } to match object { assessable: false, …(1) }
+(26 matching properties omitted from actual)
+   → expected 36 to be null
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different criterion direction' in shelf life, trending and pooling 7ms
+   → expected { parameter: 'Assay', …(17) } to match object { estimable: false, …(1) }
+(26 matching properties omitted from actual)
+   → expected 36 to be null
+   → expected { ok: true, …(12) } to match object { Object (ok, detail) }
+(25 matching properties omitted from actual)
+   → expected { parameter: 'Assay', …(17) } to match object { assessable: false, …(1) }
+(26 matching properties omitted from actual)
+   → expected 36 to be null
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'an uninterpretable later criterion' in shelf life, trending and pooling 6ms
+   → expected { parameter: 'Assay', …(17) } to match object { estimable: false, …(1) }
+(26 matching properties omitted from actual)
+   → expected 36 to be null
+   → expected { ok: true, …(12) } to match object { Object (ok, detail) }
+(25 matching properties omitted from actual)
+   → expected { parameter: 'Assay', …(17) } to match object { assessable: false, …(1) }
+(26 matching properties omitted from actual)
+   → expected 36 to be null
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > checks the upper bound of every two-sided criterion within a recorded series 6ms
+   → expected { parameter: 'Assay', …(18) } to match object { estimable: false, …(1) }
+(32 matching properties omitted from actual)
+   → expected true to be false // Object.is equality
+   → expected 36 to be null
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > preserves equivalent supported criterion spellings and blanks that inherit the series criterion 3ms
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > keeps valid independent attribute estimates while withholding the incomplete programme claim 5ms
+   → expected [ { parameter: 'Assay', …(17) }, …(1) ] to deeply equal [ ObjectContaining{…}, …(1) ]
+   → expected 36 to be null
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > preserves the existing Module 3 raw table and names the series refusal 21ms
+   → expected 'Stability studies for the drug substa…' to match /trend not assessed:.*(?:different|co…/i
+   → expected 'Stability studies for the drug substa…' not to match /trend toward the limit projected/
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > withholds the aggregate for cross-batch criterion conflict while retaining another assessed parameter 2ms
+   → expected 36 to be null
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point "" 5ms
+   → expected 36 to be null
+   → expected { studyId: 1, …(10) } to match object { Object (unassignedObservations) }
+(11 matching properties omitted from actual)
+   → expected 36 to be null
+   → expected undefined to deeply equal ArrayContaining{…}
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point "   " 4ms
+   → expected 36 to be null
+   → expected { studyId: 1, …(10) } to match object { Object (unassignedObservations) }
+(11 matching properties omitted from actual)
+   → expected 36 to be null
+   → expected undefined to deeply equal ArrayContaining{…}
+ × server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point undefined 3ms
+   → expected 36 to be null
+   → expected { studyId: 1, …(10) } to match object { Object (unassignedObservations) }
+(11 matching properties omitted from actual)
+   → expected 36 to be null
+   → expected undefined to deeply equal ArrayContaining{…}
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > does not create an unassigned measured-point hold for missing result null 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > does not create an unassigned measured-point hold for missing result undefined 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > does not create an unassigned measured-point hold for missing result "" 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > does not create an unassigned measured-point hold for missing result " " 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > names an unreadable selected payload while retaining the valid contributor assessment
+AssertionError: expected { parameter: 'Assay', …(17) } to match object { assessable: true, …(2) }
+(25 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -5,9 +5,9 @@
+      "B2",
+    ],
+    "excludedBatches": [
+      {
+        "batchId": "B3",
+-       "reason": StringMatching /could not be read/i,
++       "reason": "Did not record Assay.",
+      },
+    ],
+  }
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:44:42
+     42|     const before = globalThis.structuredClone(data);
+     43|     const outcome = await pooled(data);
+     44|     expect.soft(assessments(outcome)[0]).toMatchObject({
+       |                                          ^
+     45|       assessable: true,
+     46|       contributingBatches: ['B1', 'B2'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > names an unreadable selected payload while retaining the valid contributor assessment
+AssertionError: expected 36 to be null
+
+- Expected:
+null
+
++ Received:
+36
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:49:50
+     47|       excludedBatches: [{ batchId: 'B3', reason: expect.stringMatching…
+     48|     });
+     49|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+       |                                                  ^
+     50|     expect.soft(outcome.data.limitingParameter).toBeNull();
+     51|     expect.soft(outcome.data.claimWithheldReasons).toEqual(expect.arra…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > names an unreadable selected payload while retaining the valid contributor assessment
+AssertionError: expected 'Assay' to be null
+
+- Expected:
+null
+
++ Received:
+"Assay"
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:50:49
+     48|     });
+     49|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+     50|     expect.soft(outcome.data.limitingParameter).toBeNull();
+       |                                                 ^
+     51|     expect.soft(outcome.data.claimWithheldReasons).toEqual(expect.arra…
+     52|     expect.soft(data).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > names an unreadable selected payload while retaining the valid contributor assessment
+AssertionError: expected undefined to deeply equal ArrayContaining{…}
+
+- Expected:
+ArrayContaining [
+  StringMatching /B3.*could not be read/i,
+]
+
++ Received:
+undefined
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:51:52
+     49|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+     50|     expect.soft(outcome.data.limitingParameter).toBeNull();
+     51|     expect.soft(outcome.data.claimWithheldReasons).toEqual(expect.arra…
+       |                                                    ^
+     52|     expect.soft(data).toEqual(before);
+     53|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'no results'
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'two numeric results'
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'no usable criterion'
+AssertionError: expected 36 to be null
+
+- Expected:
+null
+
++ Received:
+36
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:66:50
+     64|       excludedBatches: [expect.objectContaining({ batchId: 'B3' })],
+     65|     });
+     66|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+       |                                                  ^
+     67|     expect.soft(outcome.data.claimWithheldReasons).toEqual(expect.arra…
+     68|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'no results'
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'two numeric results'
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'no usable criterion'
+AssertionError: expected undefined to deeply equal ArrayContaining{…}
+
+- Expected:
+ArrayContaining [
+  StringMatching /Assay.*B3/i,
+]
+
++ Received:
+undefined
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:67:52
+     65|     });
+     66|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+     67|     expect.soft(outcome.data.claimWithheldReasons).toEqual(expect.arra…
+       |                                                    ^
+     68|   });
+     69|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the programme claim if one independent attribute lacks full selected-batch coverage
+AssertionError: expected 36 to be null
+
+- Expected:
+null
+
++ Received:
+36
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:77:50
+     75|       expect.objectContaining({ parameter: 'Water', assessable: true, …
+     76|     ]);
+     77|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+       |                                                  ^
+     78|     expect.soft(outcome.data.claimWithheldReasons).toEqual(expect.arra…
+     79|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the programme claim if one independent attribute lacks full selected-batch coverage
+AssertionError: expected undefined to deeply equal ArrayContaining{…}
+
+- Expected:
+ArrayContaining [
+  StringMatching /Water.*B3/,
+]
+
++ Received:
+undefined
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:78:52
+     76|     ]);
+     77|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+     78|     expect.soft(outcome.data.claimWithheldReasons).toEqual(expect.arra…
+       |                                                    ^
+     79|   });
+     80|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > retains a fully covered valid attribute if another recorded attribute cannot be assessed
+AssertionError: expected 36 to be null
+
+- Expected:
+null
+
++ Received:
+36
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:88:50
+     86|       expect.objectContaining({ parameter: 'Water', assessable: false …
+     87|     ]);
+     88|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+       |                                                  ^
+     89|     expect.soft(outcome.data.claimWithheldReasons).toEqual(expect.arra…
+     90|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > retains a fully covered valid attribute if another recorded attribute cannot be assessed
+AssertionError: expected undefined to deeply equal { Object ($$typeof, sample, ...) }
+
+- Expected:
+ArrayContaining [
+  StringMatching /Water/,
+]
+
++ Received:
+undefined
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:89:52
+     87|     ]);
+     88|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+     89|     expect.soft(outcome.data.claimWithheldReasons).toEqual(expect.arra…
+       |                                                    ^
+     90|   });
+     91|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'mixed conditions' instead of pooling it
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'a different explicit condition' instead of pooling it
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'conflicting condition aliases' instead of pooling it
+AssertionError: expected { parameter: 'Assay', …(17) } to match object { assessable: false, …(1) }
+(26 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "assessable": false,
+-   "excludedBatches": [
+-     {
+-       "batchId": "B1",
+-       "reason": StringMatching /condition.*row|row.*condition/i,
+-     },
+-   ],
++   "assessable": true,
++   "excludedBatches": [],
+  }
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:109:42
+    107|     const before = globalThis.structuredClone(selected);
+    108|     const outcome = await pooled(selected);
+    109|     expect.soft(assessments(outcome)[0]).toMatchObject({
+       |                                          ^
+    110|       assessable: false,
+    111|       excludedBatches: expect.arrayContaining([{ batchId: 'B1', reason…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'mixed conditions' instead of pooling it
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'a different explicit condition' instead of pooling it
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'conflicting condition aliases' instead of pooling it
+AssertionError: expected 36 to be null
+
+- Expected:
+null
+
++ Received:
+36
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:113:50
+    111|       excludedBatches: expect.arrayContaining([{ batchId: 'B1', reason…
+    112|     });
+    113|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+       |                                                  ^
+    114|     expect.soft(selected).toEqual(before);
+    115|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > retains the valid independent parameter when another has mixed conditions
+AssertionError: expected [ { parameter: 'Assay', …(17) }, …(1) ] to deeply equal [ ObjectContaining{…}, …(1) ]
+
+- Expected
++ Received
+
+@@ -1,9 +1,79 @@
+  [
+    {
+-     "assessable": false,
++     "assessable": true,
++     "batchPointCounts": [
++       {
++         "batchId": "B1",
++         "pointsRecorded": 7,
++         "pointsUsable": 7,
++       },
++       {
++         "batchId": "B2",
++         "pointsRecorded": 7,
++         "pointsUsable": 7,
++       },
++       {
++         "batchId": "B3",
++         "pointsRecorded": 7,
++         "pointsUsable": 7,
++       },
++     ],
++     "batches": 3,
++     "contributingBatches": [
++       "B1",
++       "B2",
++       "B3",
++     ],
++     "decision": "pooled",
++     "direction": "decreasing",
++     "excludedBatches": [],
++     "interceptTest": {
++       "dfDenominator": 17,
++       "dfNumerator": 2,
++       "f": 0,
++       "pValue": 1,
++       "poolable": true,
++     },
++     "notes": [
++       "ICH Q1E combinability test at the 0.25 significance level (sequential: slopes, then intercepts).",
++       "Batches are combinable — shelf life is from the single pooled regression.",
++     ],
+      "parameter": "Assay",
++     "perBatchShelfLives": [
++       {
++         "batchId": "B1",
++         "exceedsEvaluatedRange": false,
++         "shelfLife": 36,
++         "statisticalCrossing": 49.12,
++       },
++       {
++         "batchId": "B2",
++         "exceedsEvaluatedRange": false,
++         "shelfLife": 36,
++         "statisticalCrossing": 49.12,
++       },
++       {
++         "batchId": "B3",
++         "exceedsEvaluatedRange": false,
++         "shelfLife": 36,
++         "statisticalCrossing": 49.12,
++       },
++     ],
++     "poolable": true,
++     "pooledShelfLife": 36,
++     "shelfLife": 36,
++     "slopeTest": {
++       "dfDenominator": 15,
++       "dfNumerator": 2,
++       "f": 0,
++       "pValue": 1,
++       "poolable": true,
++     },
++     "specLimit": 95,
++     "statisticalCrossing": 49.66,
++     "totalPoints": 21,
+    },
+    {
+      "assessable": true,
+      "batchPointCounts": [
+        {
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:121:39
+    119|     const good = points('Potency').map(point => ({ ...point, condition…
+    120|     const outcome = await pooled([study(1, [...bad, ...good]), study(2…
+    121|     expect.soft(assessments(outcome)).toEqual([
+       |                                       ^
+    122|       expect.objectContaining({ parameter: 'Assay', assessable: false …
+    123|       expect.objectContaining({ parameter: 'Potency', assessable: true…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > retains the valid independent parameter when another has mixed conditions
+AssertionError: expected 36 to be null
+
+- Expected:
+null
+
++ Received:
+36
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:125:50
+    123|       expect.objectContaining({ parameter: 'Potency', assessable: true…
+    124|     ]);
+    125|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+       |                                                  ^
+    126|   });
+    127|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different ordinary lower bound' in shelf life, trending and pooling
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different criterion direction' in shelf life, trending and pooling
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'an uninterpretable later criterion' in shelf life, trending and pooling
+AssertionError: expected { parameter: 'Assay', …(17) } to match object { estimable: false, …(1) }
+(26 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "estimable": false,
+-   "reason": StringMatching /criterion|criteria/i,
++   "estimable": true,
+  }
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:152:42
+    150|     const shelf = await estimateRecordedShelfLife(study(1, data));
+    151|     if (!shelf.ok) throw new Error(shelf.error);
+    152|     expect.soft(shelf.data.estimates[0]).toMatchObject({ estimable: fa…
+       |                                          ^
+    153|     expect.soft(shelf.data.supportedShelfLife).toBeNull();
+    154|     const trend = assessRecordedTrending(study(1, data));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different ordinary lower bound' in shelf life, trending and pooling
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different criterion direction' in shelf life, trending and pooling
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'an uninterpretable later criterion' in shelf life, trending and pooling
+AssertionError: expected 36 to be null
+
+- Expected:
+null
+
++ Received:
+36
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:153:48
+    151|     if (!shelf.ok) throw new Error(shelf.error);
+    152|     expect.soft(shelf.data.estimates[0]).toMatchObject({ estimable: fa…
+    153|     expect.soft(shelf.data.supportedShelfLife).toBeNull();
+       |                                                ^
+    154|     const trend = assessRecordedTrending(study(1, data));
+    155|     if (!trend.ok) throw new Error(trend.error);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different ordinary lower bound' in shelf life, trending and pooling
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different criterion direction' in shelf life, trending and pooling
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'an uninterpretable later criterion' in shelf life, trending and pooling
+AssertionError: expected { ok: true, …(12) } to match object { Object (ok, detail) }
+(25 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "detail": StringMatching /criterion|criteria/i,
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:156:47
+    154|     const trend = assessRecordedTrending(study(1, data));
+    155|     if (!trend.ok) throw new Error(trend.error);
+    156|     expect.soft(trend.data.series[0].outcome).toMatchObject({ ok: fals…
+       |                                               ^
+    157|     const pool = await pooled([study(1, data), study(2), study(3)]);
+    158|     expect.soft(assessments(pool)[0]).toMatchObject({ assessable: fals…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different ordinary lower bound' in shelf life, trending and pooling
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different criterion direction' in shelf life, trending and pooling
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'an uninterpretable later criterion' in shelf life, trending and pooling
+AssertionError: expected { parameter: 'Assay', …(17) } to match object { assessable: false, …(1) }
+(26 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "assessable": false,
+-   "excludedBatches": [
+-     {
+-       "batchId": "B1",
+-       "reason": StringMatching /criterion|criteria/i,
+-     },
+-   ],
++   "assessable": true,
++   "excludedBatches": [],
+  }
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:158:39
+    156|     expect.soft(trend.data.series[0].outcome).toMatchObject({ ok: fals…
+    157|     const pool = await pooled([study(1, data), study(2), study(3)]);
+    158|     expect.soft(assessments(pool)[0]).toMatchObject({ assessable: fals…
+       |                                       ^
+    159|     expect.soft(pool.data.supportedShelfLife).toBeNull();
+    160|     expect.soft(data).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different ordinary lower bound' in shelf life, trending and pooling
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different criterion direction' in shelf life, trending and pooling
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'an uninterpretable later criterion' in shelf life, trending and pooling
+AssertionError: expected 36 to be null
+
+- Expected:
+null
+
++ Received:
+36
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:159:47
+    157|     const pool = await pooled([study(1, data), study(2), study(3)]);
+    158|     expect.soft(assessments(pool)[0]).toMatchObject({ assessable: fals…
+    159|     expect.soft(pool.data.supportedShelfLife).toBeNull();
+       |                                               ^
+    160|     expect.soft(data).toEqual(before);
+    161|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > checks the upper bound of every two-sided criterion within a recorded series
+AssertionError: expected { parameter: 'Assay', …(18) } to match object { estimable: false, …(1) }
+(32 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "estimable": false,
+-   "reason": StringMatching /different|conflict/i,
++   "estimable": true,
+  }
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:167:42
+    165|     const shelf = await estimateRecordedShelfLife(study(1, data));
+    166|     if (!shelf.ok) throw new Error(shelf.error);
+    167|     expect.soft(shelf.data.estimates[0]).toMatchObject({ estimable: fa…
+       |                                          ^
+    168|     const pool = await pooled([study(1, data), study(2, data)]);
+    169|     expect.soft(assessments(pool)[0].assessable).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > checks the upper bound of every two-sided criterion within a recorded series
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:169:50
+    167|     expect.soft(shelf.data.estimates[0]).toMatchObject({ estimable: fa…
+    168|     const pool = await pooled([study(1, data), study(2, data)]);
+    169|     expect.soft(assessments(pool)[0].assessable).toBe(false);
+       |                                                  ^
+    170|     expect.soft(pool.data.supportedShelfLife).toBeNull();
+    171|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > checks the upper bound of every two-sided criterion within a recorded series
+AssertionError: expected 36 to be null
+
+- Expected:
+null
+
++ Received:
+36
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:170:47
+    168|     const pool = await pooled([study(1, data), study(2, data)]);
+    169|     expect.soft(assessments(pool)[0].assessable).toBe(false);
+    170|     expect.soft(pool.data.supportedShelfLife).toBeNull();
+       |                                               ^
+    171|   });
+    172|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > keeps valid independent attribute estimates while withholding the incomplete programme claim
+AssertionError: expected [ { parameter: 'Assay', …(17) }, …(1) ] to deeply equal [ ObjectContaining{…}, …(1) ]
+
+- Expected
++ Received
+
+@@ -1,9 +1,39 @@
+  [
+    {
+-     "estimable": false,
++     "cappedByExtrapolationLimit": true,
++     "condition": "25°C/60%RH",
++     "confidence": {
++       "alpha": 0.05,
++       "bound": "lower",
++       "tQuantile": 2.015,
++     },
++     "direction": "decreasing",
++     "estimable": true,
++     "exceedsEvaluatedRange": false,
++     "extrapolationLimit": 36,
++     "nominalCrossing": 50.09,
++     "notes": [
++       "ICH Q1E single-batch/attribute estimate using the 95% one-sided mean confidence limit. No multi-batch poolability (ANCOVA) performed.",
++       "The 95% confidence limit crosses the specification at 49.12, beyond what ICH Q1E permits to be extrapolated from 24 months of data — up to twice, and not more than twelve months beyond, the observed period. The supportable period is 36; extending it requires longer-term data, not a longer regression.",
++     ],
++     "observedPeriod": 24,
+      "parameter": "Assay",
++     "pointsRecorded": 7,
++     "pointsUsable": 7,
++     "pointsUsed": 7,
++     "regression": {
++       "df": 5,
++       "intercept": 100.0013,
++       "n": 7,
++       "r2": 0.9993,
++       "residualSd": 0.025,
++       "slope": -0.0999,
++     },
++     "shelfLife": 36,
++     "specLimit": 95,
++     "statisticalCrossing": 49.12,
+    },
+    {
+      "cappedByExtrapolationLimit": true,
+      "condition": "25°C/60%RH",
+      "confidence": {
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:192:39
+    190|     const shelf = await estimateRecordedShelfLife(study(1, data));
+    191|     if (!shelf.ok) throw new Error(shelf.error);
+    192|     expect.soft(shelf.data.estimates).toEqual([
+       |                                       ^
+    193|       expect.objectContaining({ parameter: 'Assay', estimable: false }…
+    194|       expect.objectContaining({ parameter: 'Potency', estimable: true …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > keeps valid independent attribute estimates while withholding the incomplete programme claim
+AssertionError: expected 36 to be null
+
+- Expected:
+null
+
++ Received:
+36
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:196:48
+    194|       expect.objectContaining({ parameter: 'Potency', estimable: true …
+    195|     ]);
+    196|     expect.soft(shelf.data.supportedShelfLife).toBeNull();
+       |                                                ^
+    197|   });
+    198|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > preserves the existing Module 3 raw table and names the series refusal
+AssertionError: expected 'Stability studies for the drug substa…' to match /trend not assessed:.*(?:different|co…/i
+
+- Expected:
+/trend not assessed:.*(?:different|conflict).*criteria/i
+
++ Received:
+"Stability studies for the drug substance were conducted under [condition not specified] . The 7 recorded result(s) are tabulated in the stability results table. All 7 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug substance under the proposed storage conditions. Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): Assay (25°C/60%RH): no out-of-trend points across 7 time points; slope -0.0999 per month (95% CI -0.103 to -0.0967) is significantly non-zero; trend toward the limit projected at 50.09 months (lower limit 95)."
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:207:41
+    205|     expect.soft(table.rows).toHaveLength(7);
+    206|     expect.soft(table.rows[3]).toContain('>= 99%');
+    207|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+       |                                         ^
+    208|     expect.soft(section.narrativeDraft).not.toMatch(/trend toward the …
+    209|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > preserves the existing Module 3 raw table and names the series refusal
+AssertionError: expected 'Stability studies for the drug substa…' not to match /trend toward the limit projected/
+
+- Expected:
+/trend toward the limit projected/
+
++ Received:
+"Stability studies for the drug substance were conducted under [condition not specified] . The 7 recorded result(s) are tabulated in the stability results table. All 7 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug substance under the proposed storage conditions. Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): Assay (25°C/60%RH): no out-of-trend points across 7 time points; slope -0.0999 per month (95% CI -0.103 to -0.0967) is significantly non-zero; trend toward the limit projected at 50.09 months (lower limit 95)."
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:208:45
+    206|     expect.soft(table.rows[3]).toContain('>= 99%');
+    207|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+    208|     expect.soft(section.narrativeDraft).not.toMatch(/trend toward the …
+       |                                             ^
+    209|   });
+    210|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > withholds the aggregate for cross-batch criterion conflict while retaining another assessed parameter
+AssertionError: expected 36 to be null
+
+- Expected:
+null
+
++ Received:
+36
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:221:50
+    219|       expect.objectContaining({ parameter: 'Potency', assessable: true…
+    220|     ]);
+    221|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+       |                                                  ^
+    222|   });
+    223| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point ""
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point "   "
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point undefined
+AssertionError: expected 36 to be null
+
+- Expected:
+null
+
++ Received:
+36
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:232:48
+    230|     if (!shelf.ok) throw new Error(shelf.error);
+    231|     expect.soft(shelf.data.estimates[0].estimable).toBe(true);
+    232|     expect.soft(shelf.data.supportedShelfLife).toBeNull();
+       |                                                ^
+    233|     expect.soft(shelf.data).toMatchObject({ unassignedObservations: [{…
+    234|     const pool = await pooled([study(1, data), study(2)]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point ""
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point "   "
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point undefined
+AssertionError: expected { studyId: 1, …(10) } to match object { Object (unassignedObservations) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "unassignedObservations": [
++   "basis": "ICH Q1E — ordinary least squares, one-sided 95% mean confidence limit vs the specification limit",
++   "batchNumber": "B1",
++   "estimates": [
+      {
+-       "reason": StringMatching /parameter/i,
+-       "row": 8,
++       "cappedByExtrapolationLimit": true,
++       "condition": "25°C/60%RH",
++       "confidence": {
++         "alpha": 0.05,
++         "bound": "lower",
++         "tQuantile": 2.015,
++       },
++       "direction": "decreasing",
++       "estimable": true,
++       "exceedsEvaluatedRange": false,
++       "extrapolationLimit": 36,
++       "nominalCrossing": 50.09,
++       "notes": [
++         "ICH Q1E single-batch/attribute estimate using the 95% one-sided mean confidence limit. No multi-batch poolability (ANCOVA) performed.",
++         "The 95% confidence limit crosses the specification at 49.12, beyond what ICH Q1E permits to be extrapolated from 24 months of data — up to twice, and not more than twelve months beyond, the observed period. The supportable period is 36; extending it requires longer-term data, not a longer regression.",
++       ],
++       "observedPeriod": 24,
++       "parameter": "Assay",
++       "pointsRecorded": 7,
++       "pointsUsable": 7,
++       "pointsUsed": 7,
++       "regression": {
++         "df": 5,
++         "intercept": 100.0013,
++         "n": 7,
++         "r2": 0.9993,
++         "residualSd": 0.025,
++         "slope": -0.0999,
+        },
++       "shelfLife": 36,
++       "specLimit": 95,
++       "statisticalCrossing": 49.12,
++     },
+    ],
++   "limitingParameter": "Assay",
++   "maxTimeEvaluated": 120,
++   "productName": "Recorded Product",
++   "scopeLimit": "Single attribute, single factor, one batch. Batch poolability (ICH Q1E ANCOVA) is assessed separately and is not implied by this estimate.",
++   "storageConditions": [
++     "25°C/60%RH",
++   ],
++   "studyId": 1,
++   "studyTitle": "Study 1",
++   "supportedShelfLife": 36,
+  }
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:233:29
+    231|     expect.soft(shelf.data.estimates[0].estimable).toBe(true);
+    232|     expect.soft(shelf.data.supportedShelfLife).toBeNull();
+    233|     expect.soft(shelf.data).toMatchObject({ unassignedObservations: [{…
+       |                             ^
+    234|     const pool = await pooled([study(1, data), study(2)]);
+    235|     expect.soft(assessments(pool)[0].assessable).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point ""
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point "   "
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point undefined
+AssertionError: expected 36 to be null
+
+- Expected:
+null
+
++ Received:
+36
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:236:47
+    234|     const pool = await pooled([study(1, data), study(2)]);
+    235|     expect.soft(assessments(pool)[0].assessable).toBe(true);
+    236|     expect.soft(pool.data.supportedShelfLife).toBeNull();
+       |                                               ^
+    237|     expect.soft(pool.data.claimWithheldReasons).toEqual(expect.arrayCo…
+    238|     expect.soft(data).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/57]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point ""
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point "   "
+ FAIL  server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point undefined
+AssertionError: expected undefined to deeply equal ArrayContaining{…}
+
+- Expected:
+ArrayContaining [
+  StringMatching /B1.*row 8.*parameter/i,
+]
+
++ Received:
+undefined
+
+ ❯ server/services/cmc/__tests__/recorded-series-qualification.test.ts:237:49
+    235|     expect.soft(assessments(pool)[0].assessable).toBe(true);
+    236|     expect.soft(pool.data.supportedShelfLife).toBeNull();
+    237|     expect.soft(pool.data.claimWithheldReasons).toEqual(expect.arrayCo…
+       |                                                 ^
+    238|     expect.soft(data).toEqual(before);
+    239|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/57]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  20 failed | 8 passed (28)
+   Start at  10:19:24
+   Duration  1.15s (transform 557ms, setup 103ms, import 532ms, tests 166ms, environment 0ms)

@@ -223,7 +223,7 @@ describe('POST /stability-studies/poolability — per-attribute honesty', () => 
         id: 3,
         batchNumber: 'B-003',
         stabilityData: {
-          results: [{ timePoint: '0', parameter: 'Assay', result: 'conforms', specification: '>= 95.0%' }],
+          results: [{ timePoint: '0', parameter: 'Assay', result: '100', specification: '>= 95.0%' }],
         },
       }),
     ]);
@@ -233,8 +233,10 @@ describe('POST /stability-studies/poolability — per-attribute honesty', () => 
     expect(assay.excludedBatches).toEqual([
       { batchId: 'B-003', reason: expect.stringMatching(/at least 3 numeric results/) },
     ]);
-    // Two batches still qualify, so the assessment itself proceeds.
+    // Two batches still qualify, so their subset assessment proceeds. The
+    // excluded selected batch prevents a claim for the full programme.
     expect(assay.assessable).toBe(true);
+    expect(r.body.data.supportedShelfLife).toBeNull();
   });
 
   it('will not assess an attribute only one batch recorded', async () => {

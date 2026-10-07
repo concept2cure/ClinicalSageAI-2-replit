@@ -1,0 +1,121 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+xxxxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status content drift during ingestion and compensates admission
+AssertionError: {"outcome":{"kind":"filed","vaultDocumentId":"5e478410-1084-4bd4-a449-4f4bcf14f3f7","folder":{"folderId":null,"folderLabel":"","evidenceKind":null,"ctdSection":null,"placementStatus":"NEEDS_REVIEW","confidence":null,"rationale":null,"needsReview":true},"sha256":"e6dc1f70e95885f3d52793daf3323d99805634b3b95f6f21311d2899bf8ffaf5","format":"pdf","fileName":"Working_CSR.pdf","programId":"76d7610b-cc1b-421f-b5d3-18e9c1e7627d","sealed":false,"approval":{"carried":false,"reason":"Working draft"}},"originalDigest":"5d7ab58da30a3d175e1941d2508b52e5e253630391921440f65bf6950fdd5f5c","history":[{"doc_sha256":"7222ce654390048d9f28966c964e919287c0dabdd655534430629875ac56badb","metadata":{"format":"pdf","exportId":"5541f81b-e42f-4509-9cbb-3aa574cda941","fileName":"Working_CSR.pdf","folderId":null,"programId":"76d7610b-cc1b-421f-b5d3-18e9c1e7627d","filedToVault":true,"artifactSha256":"e6dc1f70e95885f3d52793daf3323d99805634b3b95f6f21311d2899bf8ffaf5","documentStatus":"draft","placementStatus":"NEEDS_REVIEW","vaultDocumentId":"5e478410-1084-4bd4-a449-4f4bcf14f3f7"}}],"vault":{"deleted_at":null,"content_hash":"e6dc1f70e95885f3d52793daf3323d99805634b3b95f6f21311d2899bf8ffaf5"},"audit":[{"operation":"EXPORT"},{"operation":"authoring.document.file_to_vault"}],"status":"draft"}: expected { kind: 'filed', …(8) } to match object { kind: 'refused', status: 409, …(1) }
+(18 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "DOCUMENT_CHANGED_DURING_FILING",
+-   "kind": "refused",
+-   "status": 409,
++   "kind": "filed",
+  }
+
+ ❯ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts:144:104
+    142|     const outcome = await file(d);
+    143|     const after = await facts(d);
+    144|     expect(outcome, JSON.stringify({ outcome, originalDigest: sections…
+       |                                                                                                        ^
+    145|       kind: 'refused', status: 409, code: 'DOCUMENT_CHANGED_DURING_FIL…
+    146|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status title drift during ingestion and compensates admission
+AssertionError: {"outcome":{"kind":"filed","vaultDocumentId":"d03a1d90-ef6f-49b3-8359-f42843da570b","folder":{"folderId":null,"folderLabel":"","evidenceKind":null,"ctdSection":null,"placementStatus":"NEEDS_REVIEW","confidence":null,"rationale":null,"needsReview":true},"sha256":"cf6dde7eb44515d0d76c33f0b4617cd8666fadc846dee51ca3029435181bfb9c","format":"pdf","fileName":"Working_CSR.pdf","programId":"88921ef6-8677-4041-b32d-1636661626f9","sealed":false,"approval":{"carried":false,"reason":"Working draft"}},"originalDigest":"5d7ab58da30a3d175e1941d2508b52e5e253630391921440f65bf6950fdd5f5c","history":[{"doc_sha256":"5d7ab58da30a3d175e1941d2508b52e5e253630391921440f65bf6950fdd5f5c","metadata":{"format":"pdf","exportId":"5591be6e-864c-4bb1-8516-ffa8b1069bfb","fileName":"Working_CSR.pdf","folderId":null,"programId":"88921ef6-8677-4041-b32d-1636661626f9","filedToVault":true,"artifactSha256":"cf6dde7eb44515d0d76c33f0b4617cd8666fadc846dee51ca3029435181bfb9c","documentStatus":"draft","placementStatus":"NEEDS_REVIEW","vaultDocumentId":"d03a1d90-ef6f-49b3-8359-f42843da570b"}}],"vault":{"deleted_at":null,"content_hash":"cf6dde7eb44515d0d76c33f0b4617cd8666fadc846dee51ca3029435181bfb9c"},"audit":[{"operation":"EXPORT"},{"operation":"authoring.document.file_to_vault"}],"status":"draft"}: expected { kind: 'filed', …(8) } to match object { kind: 'refused', status: 409, …(1) }
+(18 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "DOCUMENT_CHANGED_DURING_FILING",
+-   "kind": "refused",
+-   "status": 409,
++   "kind": "filed",
+  }
+
+ ❯ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts:144:104
+    142|     const outcome = await file(d);
+    143|     const after = await facts(d);
+    144|     expect(outcome, JSON.stringify({ outcome, originalDigest: sections…
+       |                                                                                                        ^
+    145|       kind: 'refused', status: 409, code: 'DOCUMENT_CHANGED_DURING_FIL…
+    146|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status order drift during ingestion and compensates admission
+AssertionError: {"outcome":{"kind":"filed","vaultDocumentId":"62a3c91c-0da9-41b4-b98e-491498bf5e81","folder":{"folderId":null,"folderLabel":"","evidenceKind":null,"ctdSection":null,"placementStatus":"NEEDS_REVIEW","confidence":null,"rationale":null,"needsReview":true},"sha256":"0faf0f596dabb00069680f01cfe303b19be13f1d477026ab3131951f46be689f","format":"pdf","fileName":"Working_CSR.pdf","programId":"a343d6a9-53ee-4c7d-a869-d6e153210ac9","sealed":false,"approval":{"carried":false,"reason":"Working draft"}},"originalDigest":"5d7ab58da30a3d175e1941d2508b52e5e253630391921440f65bf6950fdd5f5c","history":[{"doc_sha256":"4e4e83fbe6012ae67f8cce0a01254d04c444d4ed3c6adb61bfdbf2112258db0f","metadata":{"format":"pdf","exportId":"9ed86b59-0168-4474-ad09-416a9ba7e62a","fileName":"Working_CSR.pdf","folderId":null,"programId":"a343d6a9-53ee-4c7d-a869-d6e153210ac9","filedToVault":true,"artifactSha256":"0faf0f596dabb00069680f01cfe303b19be13f1d477026ab3131951f46be689f","documentStatus":"draft","placementStatus":"NEEDS_REVIEW","vaultDocumentId":"62a3c91c-0da9-41b4-b98e-491498bf5e81"}}],"vault":{"deleted_at":null,"content_hash":"0faf0f596dabb00069680f01cfe303b19be13f1d477026ab3131951f46be689f"},"audit":[{"operation":"EXPORT"},{"operation":"authoring.document.file_to_vault"}],"status":"draft"}: expected { kind: 'filed', …(8) } to match object { kind: 'refused', status: 409, …(1) }
+(18 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "DOCUMENT_CHANGED_DURING_FILING",
+-   "kind": "refused",
+-   "status": 409,
++   "kind": "filed",
+  }
+
+ ❯ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts:144:104
+    142|     const outcome = await file(d);
+    143|     const after = await facts(d);
+    144|     expect(outcome, JSON.stringify({ outcome, originalDigest: sections…
+       |                                                                                                        ^
+    145|       kind: 'refused', status: 409, code: 'DOCUMENT_CHANGED_DURING_FIL…
+    146|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status added section drift during ingestion and compensates admission
+AssertionError: {"outcome":{"kind":"filed","vaultDocumentId":"a84fd26f-14dc-4a23-8dee-6fe8921b5a03","folder":{"folderId":null,"folderLabel":"","evidenceKind":null,"ctdSection":null,"placementStatus":"NEEDS_REVIEW","confidence":null,"rationale":null,"needsReview":true},"sha256":"38874041a51d1d85a4142dc8efc72e9c041deccdc998d5b1e3edc796d97dea7b","format":"pdf","fileName":"Working_CSR.pdf","programId":"5222968e-3fea-4eee-a009-f95043a20083","sealed":false,"approval":{"carried":false,"reason":"Working draft"}},"originalDigest":"5d7ab58da30a3d175e1941d2508b52e5e253630391921440f65bf6950fdd5f5c","history":[{"doc_sha256":"324e10fdbe474174b5cac93391de76ba3f269f6965ef6fd6ee7ecebbe2e8d5a0","metadata":{"format":"pdf","exportId":"4b1a33b6-fefd-456a-9433-92534f006f3d","fileName":"Working_CSR.pdf","folderId":null,"programId":"5222968e-3fea-4eee-a009-f95043a20083","filedToVault":true,"artifactSha256":"38874041a51d1d85a4142dc8efc72e9c041deccdc998d5b1e3edc796d97dea7b","documentStatus":"draft","placementStatus":"NEEDS_REVIEW","vaultDocumentId":"a84fd26f-14dc-4a23-8dee-6fe8921b5a03"}}],"vault":{"deleted_at":null,"content_hash":"38874041a51d1d85a4142dc8efc72e9c041deccdc998d5b1e3edc796d97dea7b"},"audit":[{"operation":"EXPORT"},{"operation":"authoring.document.file_to_vault"}],"status":"draft"}: expected { kind: 'filed', …(8) } to match object { kind: 'refused', status: 409, …(1) }
+(18 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "DOCUMENT_CHANGED_DURING_FILING",
+-   "kind": "refused",
+-   "status": 409,
++   "kind": "filed",
+  }
+
+ ❯ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts:144:104
+    142|     const outcome = await file(d);
+    143|     const after = await facts(d);
+    144|     expect(outcome, JSON.stringify({ outcome, originalDigest: sections…
+       |                                                                                                        ^
+    145|       kind: 'refused', status: 409, code: 'DOCUMENT_CHANGED_DURING_FIL…
+    146|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > files a stable working snapshot with its canonical digest and locks sections before the final read/history
+AssertionError: expected -1 to be greater than or equal to 0
+ ❯ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts:172:25
+    170|     const history = h.sql.findIndex(sql => /INSERT INTO authoring_expo…
+    171|     const commit = h.sql.findIndex((sql, index) => index > history && …
+    172|     expect(sectionLock).toBeGreaterThanOrEqual(0);
+       |                         ^
+    173|     expect(finalSectionRead).toBeGreaterThan(sectionLock);
+    174|     expect(history).toBeGreaterThan(finalSectionRead);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  10:36:44
+   Duration  4.95s (transform 542ms, setup 106ms, import 281ms, tests 4.20s, environment 0ms)

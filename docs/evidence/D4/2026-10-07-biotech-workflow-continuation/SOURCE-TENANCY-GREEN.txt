@@ -1,0 +1,77 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > refuses a legacy 'foreign' recorded tenant despite a matching program and valid catalog 54ms
+ ✓ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > refuses a legacy 'unassigned' recorded tenant despite a matching program and valid catalog 19ms
+ ✓ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > retains exact source verification when the document and program agree on the tenant 19ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > excludes a correctly hashed cataloged predecessor from hits AND counts, retaining its stored history 390ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > reports no catalog current successor as unsearchable without returning the old summary 26ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > reports extracted current successor as unsearchable without returning the old summary 19ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > reports cataloged without embedding current successor as unsearchable without returning the old summary 15ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > reports stale catalog current successor as unsearchable without returning the old summary 16ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > ignores a deleted successor, making the surviving predecessor current under the canonical family rule 17ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an original under an invalid cross-program successor link 15ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an original under an invalid cross-organization successor link 12ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an original under an invalid cross-code successor link 12ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an original under an invalid unknown organization successor link 12ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an unrelated same-code document without a successor pointer 12ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current evidence remains organization/project scoped > isolates the open program, organization-wide search and a foreign program 33ms
+stdout | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-07T14:43:57.832Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T14:43:57.833Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-07T14:43:57.834Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/draft-source-references.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-07T14:43:57.947Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > keeps only identity/version/span, never caller qualification or source text 4ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references null 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references undefined 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":10,"totalChars":20}} 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"file_9_chat","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"missing","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":1,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":-1,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":21,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":12001,"totalChars":20000}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":1.5,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses aggregate excerpt budget overflow 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > retains source references but strips fabricated document-level verified provenance 2ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references rather than silently dropping them on parse 1ms
+
+ Test Files  3 passed (3)
+      Tests  30 passed (30)
+   Start at  10:43:44
+   Duration  13.99s (transform 2.23s, setup 146ms, import 5.68s, tests 7.31s, environment 1ms)

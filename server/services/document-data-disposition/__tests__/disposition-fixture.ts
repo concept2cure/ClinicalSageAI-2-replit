@@ -47,7 +47,8 @@ const DDL = `
   CREATE TABLE rag_documents (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id integer NOT NULL, document_id text);
   CREATE TABLE rag_chunks (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), document_id uuid, content text);
   CREATE TABLE vault.document_catalog (document_id uuid PRIMARY KEY, key_data jsonb, content_hash CHAR(64) NOT NULL);
-  CREATE TABLE authoring_documents (id uuid PRIMARY KEY, tenant_id integer, status text, approved_at timestamptz, frozen_at timestamptz, locked_at timestamptz);
+  CREATE TABLE authoring_documents (id uuid PRIMARY KEY, tenant_id integer, status text, approved_at timestamptz, frozen_at timestamptz, locked_at timestamptz,
+    client_program_id uuid, provenance jsonb);
   CREATE TABLE authoring_sections (id uuid PRIMARY KEY, doc_id uuid, tenant_id integer);
   CREATE TABLE authoring_citations (id uuid PRIMARY KEY, section_id uuid, tenant_id integer, source text, reference_id text);
   CREATE TABLE c2c_documents (id text PRIMARY KEY, org_id integer, project_id uuid, status text);

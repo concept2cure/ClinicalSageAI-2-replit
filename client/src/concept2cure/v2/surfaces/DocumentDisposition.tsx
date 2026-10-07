@@ -41,6 +41,7 @@ function knownLinks(p: DocumentDispositionPreview): boolean {
 }
 function knownDecisionMetadata(p: DocumentDispositionPreview): boolean {
   return Array.isArray(p.blockers) && p.blockers.every(b => typeof b === 'string') &&
+    (p.dataWithdrawalBlockers === undefined || Array.isArray(p.dataWithdrawalBlockers) && p.dataWithdrawalBlockers.every(b => typeof b === 'string')) &&
     Array.isArray(p.allowedChoices) && p.allowedChoices.every(c => Object.hasOwn(CHOICES, c)) &&
     typeof p.previewToken === 'string' && p.previewToken.length > 0 && Number.isFinite(Date.parse(p.expiresAt));
 }
@@ -59,8 +60,13 @@ function decisionReady({ preview, choice, reason, replacementDraft, replacementI
 }): boolean {
   if (!preview || !choice || busy || expired) return false;
   const validReplacement = choice !== 'supersede' || Boolean(replacementId && replacementDraft.trim() === replacementId && preview.replacement?.id === replacementId);
-  return Date.parse(preview.expiresAt) > Date.now() && preview.allowedChoices.includes(choice) && preview.blockers.length === 0 &&
-    (!preview.currentDisposition || preview.currentDisposition.choice === 'keep_data') && reason.trim().length >= DOCUMENT_DISPOSITION_REASON_MIN && validReplacement;
+  return Date.parse(preview.expiresAt) > Date.now() && availableDataChoice(preview, choice) &&
+    reason.trim().length >= DOCUMENT_DISPOSITION_REASON_MIN && validReplacement;
+}
+function availableDataChoice(preview: DocumentDispositionPreview, choice: DocumentDispositionChoice): boolean {
+  return preview.allowedChoices.includes(choice) && preview.blockers.length === 0 &&
+    (choice === 'keep_data' || !preview.dataWithdrawalBlockers?.length) &&
+    (!preview.currentDisposition || preview.currentDisposition.choice === 'keep_data');
 }
 function recordedDecision(value: unknown, request: DocumentDispositionRequest): boolean {
   const r = value as { id?: string; choice?: string; target?: { id?: string; type?: string }; auditReceipt?: { id?: string; sha256Chain?: string } } | null;
@@ -174,6 +180,7 @@ function DispositionImpact({ preview }: { preview: DocumentDispositionPreview })
     <p className="sec-sub">Retention until: {preview.retention.retentionUntil ? new Date(preview.retention.retentionUntil).toLocaleString() : 'No date recorded'}. Linked original files: {preview.linkedIds.uploadIds.length}; captured sources: {preview.linkedIds.capturedSourceIds.length}; Vault versions: {preview.linkedIds.vaultDocumentIds.length}.</p>
     <p className="sec-sub">Existing citations and downstream references are preserved for review. This decision does not approve data or rewrite a draft.</p>
     {preview.blockers.length > 0 && <div role="alert"><strong>Removal is blocked.</strong><ul>{preview.blockers.map((b, i) => <li key={i}>{b}</li>)}</ul></div>}
+    {Boolean(preview.dataWithdrawalBlockers?.length) && <div role="alert"><strong>Withdrawing or replacing data requires review.</strong><ul>{preview.dataWithdrawalBlockers?.map((b, i) => <li key={i}>{b}</li>)}</ul></div>}
     {preview.currentDisposition && <p role="status">{preview.currentDisposition.choice === 'keep_data'
       ? 'The earlier retention decision and its receipt remain recorded. Withdrawing or replacing the retained data adds a new decision and reason.'
       : 'A terminal decision is already recorded for this document. Reload the project to see it.'}</p>}
@@ -192,7 +199,7 @@ function DispositionForm({ actions: a, title, targetType, targetId }: { actions:
         <legend>Choose the data decision</legend>
         {(Object.keys(CHOICES) as DocumentDispositionChoice[]).map(c => <label key={c} style={{ display: 'block', margin: '8px 0', fontSize: 12 }}>
           <input type="radio" name={`disposition-${targetType}-${targetId}`} checked={a.choice === c}
-            disabled={c !== 'supersede' && Boolean(a.preview && !a.preview.allowedChoices.includes(c))} onChange={() => a.choose(c)} /> {CHOICES[c].label}
+            disabled={c === 'supersede' ? Boolean(a.preview?.dataWithdrawalBlockers?.length) : Boolean(a.preview && !a.preview.allowedChoices.includes(c))} onChange={() => a.choose(c)} /> {CHOICES[c].label}
           <span className="sec-sub" style={{ display: 'block', marginLeft: 20 }}>{CHOICES[c].description}</span>
         </label>)}
       </fieldset>

@@ -262,6 +262,78 @@ export function groupByParameter(
   return byParameter;
 }
 
+interface UnassignedObservation {
+  row: number;
+  reason: string;
+}
+
+/** A present result cannot silently disappear because its attribute is unnamed. */
+function unassignedObservations(points: StabilityPointRecord[]): UnassignedObservation[] {
+  return points.flatMap((point, index) => {
+    const present = point.result != null && !(typeof point.result === 'string' && !point.result.trim());
+    return present && !String(point.parameter ?? '').trim()
+      ? [{ row: index + 1, reason: 'A present recorded result has no assigned parameter. Clarify its attribute before making a programme shelf-life claim.' }]
+      : [];
+  });
+}
+
+/** Compare the full parsed criterion; no unit equivalence is inferred. */
+function criterionKey(criterion: ParsedAcceptanceCriterion): string {
+  return `${criterion.direction}:${criterion.limit}:${criterion.upperLimit ?? ''}:${criterion.twoSided}`;
+}
+
+/**
+ * Every nonblank criterion in a fitted series must be readable and agree.
+ * The public criterion parser retains its field-fallback contract; this check
+ * is specifically for recorded observations being fitted as one series.
+ */
+export function inspectRecordedSeriesCriterion(points: StabilityPointRecord[]): {
+  criterion: ParsedAcceptanceCriterion | null;
+  reason: string | null;
+} {
+  const unsupported = unsupportedCriterionReason(points.map(point => point.specification));
+  if (unsupported) return { criterion: null, reason: unsupported };
+  const recorded = points.flatMap((point, index) => {
+    const text = String(point.specification ?? '').trim();
+    return text ? [{ row: index + 1, text, criterion: parseAcceptanceCriterion([point.specification]) }] : [];
+  });
+  const unreadable = recorded.filter(entry => !entry.criterion);
+  if (unreadable.length) {
+    return {
+      criterion: null,
+      reason: `Recorded acceptance criterion(s) at ${unreadable.map(entry => `row ${entry.row} ("${entry.text}")`).join(', ')} cannot be interpreted. Clarify them before fitting this series; no limit was inferred from its other rows.`,
+    };
+  }
+  const distinct = new Set(recorded.map(entry => criterionKey(entry.criterion!)));
+  if (distinct.size > 1) {
+    return {
+      criterion: null,
+      reason: `This series records different acceptance criteria (${recorded.map(entry => `row ${entry.row}: "${entry.text}"`).join('; ')}). Reconcile the conflicting criteria before fitting; no first criterion was selected in place of the others.`,
+    };
+  }
+  return { criterion: recorded[0]?.criterion ?? null, reason: null };
+}
+
+/** Pooling requires the recorded points to belong to the declared condition. */
+function poolabilityConditionReason(points: StabilityPointRecord[], declaredCondition: string): string | null {
+  const issues: string[] = [];
+  points.forEach((point, index) => {
+    const condition = String(point.condition ?? '').trim();
+    const alias = String(point.storageCondition ?? '').trim();
+    if (condition && alias && condition !== alias) {
+      issues.push(`row ${index + 1} has conflicting condition aliases ("${condition}" and "${alias}")`);
+      return;
+    }
+    const effective = condition || alias || declaredCondition;
+    if (effective !== declaredCondition) {
+      issues.push(`row ${index + 1} records condition "${effective}" instead of the selected study condition "${declaredCondition || '(not recorded)'}"`);
+    }
+  });
+  return issues.length
+    ? `Recorded storage condition evidence is unresolved: ${issues.join('; ')}. Clarify the conditions before pooling this attribute; no condition equivalence was inferred.`
+    : null;
+}
+
 /** The condition SET a study is placed at, order-independent. */
 export function conditionKey(codes: unknown): string {
   return (Array.isArray(codes) ? codes : [codes])
@@ -416,10 +488,14 @@ export async function assessRecordedPoolability(
     };
   }
 
-  const perStudy = studies.map(s => ({
-    study: s,
-    byParameter: groupByParameter(readRecordedStabilityResults(s.stabilityData).points),
-  }));
+  const perStudy = studies.map(study => {
+    const read = readRecordedStabilityResults(study.stabilityData);
+    return { study, read, byParameter: groupByParameter(read.points), unassigned: unassignedObservations(read.points) };
+  });
+  const claimWithheldReasons: string[] = perStudy.flatMap(({ study, read, unassigned }) => [
+    ...(read.unreadable ? [`Batch ${study.batchNumber} (study ${study.id}): recorded pull-point results could not be read.`] : []),
+    ...unassigned.map(issue => `Batch ${study.batchNumber} (study ${study.id}), row ${issue.row}: ${issue.reason}`),
+  ]);
 
   const parameters = Array.from(
     new Set(perStudy.flatMap(p => Array.from(p.byParameter.keys())))
@@ -428,7 +504,9 @@ export async function assessRecordedPoolability(
     return {
       ok: false,
       status: 409,
-      error: 'None of the selected studies has recorded pull-point results — there is nothing to fit.',
+      error: claimWithheldReasons.length
+        ? `The selected recorded evidence cannot support a poolability assessment. ${claimWithheldReasons.join(' ')}`
+        : 'None of the selected studies has recorded pull-point results — there is nothing to fit.',
     };
   }
 
@@ -439,7 +517,6 @@ export async function assessRecordedPoolability(
   const maxTime = durations.length ? Math.max(120, Math.max(...durations) * 2) : 120;
 
   const assessments: Array<Record<string, unknown>> = [];
-  let unresolvedNumericEvidence = false;
   for (const parameter of parameters) {
     /* A batch contributes only if it can be fitted. Q1E needs ≥3 numeric points
        over ≥2 distinct times per batch — the engine enforces this too, but
@@ -451,8 +528,13 @@ export async function assessRecordedPoolability(
     const batchPointCounts: Array<{ batchId: string; pointsRecorded: number; pointsUsable: number }> = [];
     let invalidRecordedEvidence = false;
 
-    for (const { study, byParameter } of perStudy) {
+    for (const { study, read, byParameter } of perStudy) {
       const batchId = String(study.batchNumber);
+      if (read.unreadable) {
+        batchPointCounts.push({ batchId, pointsRecorded: 0, pointsUsable: 0 });
+        excluded.push({ batchId, reason: 'The recorded pull-point results could not be read; whether this batch recorded the attribute cannot be established.' });
+        continue;
+      }
       const points = byParameter.get(parameter);
       if (!points || points.length === 0) {
         batchPointCounts.push({ batchId, pointsRecorded: 0, pointsUsable: 0 });
@@ -461,11 +543,11 @@ export async function assessRecordedPoolability(
       }
       const inspected = numericSeries(points);
       batchPointCounts.push({ batchId, pointsRecorded: points.length, pointsUsable: inspected.pointsUsable });
-      const unsupportedCriterion = unsupportedCriterionReason(points.map(p => p.specification));
-      if (!inspected.ok || unsupportedCriterion) {
-        excluded.push({ batchId, reason: !inspected.ok ? inspected.reason : unsupportedCriterion! });
+      const criterionInspection = inspectRecordedSeriesCriterion(points);
+      const conditionReason = poolabilityConditionReason(points, conditions[0]);
+      if (!inspected.ok || criterionInspection.reason || conditionReason) {
+        excluded.push({ batchId, reason: !inspected.ok ? inspected.reason : criterionInspection.reason ?? conditionReason! });
         invalidRecordedEvidence = true;
-        unresolvedNumericEvidence = true;
         continue;
       }
       const usable = inspected.points;
@@ -476,7 +558,7 @@ export async function assessRecordedPoolability(
         });
         continue;
       }
-      const criterion = parseAcceptanceCriterion(points.map(p => p.specification));
+      const criterion = criterionInspection.criterion;
       if (!criterion) {
         excluded.push({ batchId, reason: 'No numeric acceptance criterion recorded against these results.' });
         continue;
@@ -485,12 +567,16 @@ export async function assessRecordedPoolability(
       criteria.push({ batchId, ...criterion });
     }
 
+    if (excluded.length) {
+      claimWithheldReasons.push(`${parameter}: selected batch(es) ${excluded.map(batch => batch.batchId).join(', ')} did not contribute to this assessment. The assessment of the readable contributors does not establish a shelf life for the full selection.`);
+    }
+
     if (invalidRecordedEvidence) {
       assessments.push({
         parameter,
         batchPointCounts,
         assessable: false,
-        reason: 'A selected batch has uninterpretable recorded numeric evidence for this attribute. Clarify the excluded batch/row reasons before poolability is assessed; the other selected batches were not fitted in its place.',
+        reason: 'A selected batch has unresolved recorded observations, conditions or acceptance criteria for this attribute. Clarify the excluded batch/row reasons before poolability is assessed; the other selected batches were not fitted in its place.',
         contributingBatches: contributing.map(c => c.batchId),
         excludedBatches: excluded,
       });
@@ -515,7 +601,7 @@ export async function assessRecordedPoolability(
        judged by. Report the conflict; do not pick one. */
     /* Keyed on the WHOLE criterion: two batches recorded against "4.5 - 6.0"
        and "4.5 - 6.5" share a lower bound and used to pool as if they agreed. */
-    const distinctCriteria = Array.from(new Set(criteria.map(c => `${c.direction}:${c.limit}:${c.upperLimit ?? ''}`)));
+    const distinctCriteria = Array.from(new Set(criteria.map(criterionKey)));
     if (distinctCriteria.length > 1) {
       assessments.push({
         parameter,
@@ -581,7 +667,10 @@ export async function assessRecordedPoolability(
     statisticalCrossing?: number;
     decision: string;
   }>;
-  const limiting = !unresolvedNumericEvidence && assessed.length ? assessed.reduce(moreConstraining) : null;
+  for (const assessment of assessments) {
+    if (!assessment.assessable) claimWithheldReasons.push(`${assessment.parameter}: ${assessment.reason}`);
+  }
+  const limiting = claimWithheldReasons.length === 0 && assessed.length ? assessed.reduce(moreConstraining) : null;
 
   return {
     ok: true,
@@ -599,6 +688,7 @@ export async function assessRecordedPoolability(
       limitingParameter: limiting ? limiting.parameter : null,
       supportedShelfLife: limiting ? limiting.shelfLife : null,
       limitingDecision: limiting ? limiting.decision : null,
+      claimWithheldReasons,
       assessments,
     },
   };
@@ -647,6 +737,7 @@ export type RecordedShelfLifeOutcome =
         maxTimeEvaluated: number;
         limitingParameter: string | null;
         supportedShelfLife: number | null;
+        unassignedObservations: UnassignedObservation[];
         estimates: Array<Record<string, unknown>>;
       };
     };
@@ -684,6 +775,7 @@ export async function estimateRecordedShelfLife(
   const seriesRefusal = refuseUnfittableSeries(read);
   if (seriesRefusal) return { ok: false, error: seriesRefusal };
   const series = read.points;
+  const unassigned = unassignedObservations(series);
 
   const placedAt = (Array.isArray(study.storageConditions) ? study.storageConditions : [])
     .map((c) => String(c ?? '').trim())
@@ -720,24 +812,24 @@ export async function estimateRecordedShelfLife(
   const maxTime = Number.isFinite(duration) && duration > 0 ? Math.max(120, duration * 2) : 120;
 
   const estimates: Array<Record<string, unknown>> = [];
-  let unresolvedNumericEvidence = false;
+  let unresolvedRecordedEvidence = unassigned.length > 0;
   for (const [parameter, condition, points] of byParameter) {
     const inspected = numericSeries(points);
-    const unsupportedCriterion = unsupportedCriterionReason(points.map(p => p.specification));
-    if (!inspected.ok || unsupportedCriterion) {
-      unresolvedNumericEvidence = true;
+    const criterionInspection = inspectRecordedSeriesCriterion(points);
+    if (!inspected.ok || criterionInspection.reason) {
+      unresolvedRecordedEvidence = true;
       estimates.push({
         parameter,
         condition: condition || null,
         estimable: false,
-        reason: !inspected.ok ? inspected.reason : unsupportedCriterion,
+        reason: !inspected.ok ? inspected.reason : criterionInspection.reason,
         pointsRecorded: points.length,
         pointsUsable: inspected.pointsUsable,
       });
       continue;
     }
     const usable = inspected.points;
-    const criterion = parseAcceptanceCriterion(points.map((p) => p.specification));
+    const criterion = criterionInspection.criterion;
 
     if (usable.length < 3) {
       estimates.push({
@@ -840,7 +932,7 @@ export async function estimateRecordedShelfLife(
     shelfLife: number;
     statisticalCrossing?: number;
   }>;
-  const limiting = !unresolvedNumericEvidence && estimable.length ? estimable.reduce(moreConstraining) : null;
+  const limiting = !unresolvedRecordedEvidence && estimable.length ? estimable.reduce(moreConstraining) : null;
 
   return {
     ok: true,
@@ -856,6 +948,7 @@ export async function estimateRecordedShelfLife(
       maxTimeEvaluated: maxTime,
       limitingParameter: limiting ? limiting.parameter : null,
       supportedShelfLife: limiting ? limiting.shelfLife : null,
+      unassignedObservations: unassigned,
       estimates,
     },
   };
@@ -894,6 +987,7 @@ export type RecordedTrendingOutcome =
         studyId: number | string;
         basis: string;
         alpha: number;
+        unassignedObservations: UnassignedObservation[];
         series: RecordedTrendSeries[];
       };
     };
@@ -925,8 +1019,8 @@ export function assessRecordedTrending(study: RecordedTrendingStudy): RecordedTr
       .map(p => String(p.specification ?? '').trim())
       .filter(Boolean);
     const criterionRecordedAs = recordedCriteria[0] ?? null;
-    const criterion = parseAcceptanceCriterion(group.points.map(p => p.specification));
-    const unsupportedCriterion = unsupportedCriterionReason(group.points.map(p => p.specification));
+    const criterionInspection = inspectRecordedSeriesCriterion(group.points);
+    const criterion = criterionInspection.criterion;
 
     let outcome: TrendOutcome;
     if (spansConditions && group.conditionInheritedFromStudy) {
@@ -947,7 +1041,7 @@ export function assessRecordedTrending(study: RecordedTrendingStudy): RecordedTr
       outcome = {
         ok: false,
         reason: 'CRITERION_UNPARSEABLE',
-        detail: unsupportedCriterion ?? `the acceptance criterion is recorded as "${criterionRecordedAs}", which states no comparator or range a limit can be read from`,
+        detail: criterionInspection.reason ?? `the acceptance criterion is recorded as "${criterionRecordedAs}", which states no comparator or range a limit can be read from`,
         pointsUsable: inspected.pointsUsable,
       };
     } else {
@@ -971,6 +1065,7 @@ export function assessRecordedTrending(study: RecordedTrendingStudy): RecordedTr
       basis:
         'PhRMA CMC Statistics and Stability Expert Teams out-of-trend method — regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points; slope with 95% CI over the whole series; projected crossing of the recorded acceptance criterion where the slope heads toward it',
       alpha: TRENDING_ALPHA,
+      unassignedObservations: unassignedObservations(read.points),
       series,
     },
   };

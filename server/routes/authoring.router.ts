@@ -97,6 +97,7 @@ import {
   anySignatureCovers,
   EXPORT_FORMATS,
 } from '../services/authoring/authoring-export';
+import { SavedDraftSourceError, withSavedDraftSourceReservation } from '../services/authoring/draft-source-references';
 import {
   fileAuthoringDocumentToVault,
   isPlausibleFolderId,
@@ -5764,6 +5765,20 @@ function exportFailureVerdict(recordConfirmed: boolean, recordAttempted: boolean
   };
 }
 
+function sendExportFailure(error: unknown, res: Response, recordConfirmed: boolean, recordAttempted: boolean): void {
+  if (error instanceof SavedDraftSourceError) {
+    res.status(409).json({ error: 'Saved source references require review', code: error.code, message: error.message });
+    return;
+  }
+  // The caught detail belongs in the log; the client receives the receipt verdict.
+  console.error('Export error:', error);
+  if (res.headersSent) { res.destroy(); return; }
+  res.removeHeader('Content-Disposition');
+  res.removeHeader('Content-Type');
+  res.removeHeader('Content-Length');
+  res.status(500).json({ error: 'Export failed', ...exportFailureVerdict(recordConfirmed, recordAttempted) });
+}
+
 // POST /api/authoring/docs/:docId/export - Export document in various formats
 router.post('/docs/:docId/export', async (req: Request, res: Response) => {
   // Rendering, recording, and delivering are different outcomes. Once the
@@ -5790,7 +5805,7 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
 
     // Get document and sections
     const docResult = await pool.query(
-      'SELECT id, title, module, product_code, locale, status, created_at, updated_at, created_by, template_id, submitted_at, current_workflow_id, approved_at, frozen_at, locked_at, locked_by, tenant_id, version FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+      "SELECT id, title, module, product_code, locale, status, created_at, updated_at, created_by, template_id, submitted_at, current_workflow_id, approved_at, frozen_at, locked_at, locked_by, tenant_id, version, to_jsonb(authoring_documents)->'provenance' AS provenance, to_jsonb(authoring_documents)->>'client_program_id' AS client_program_id FROM authoring_documents WHERE id = $1 AND tenant_id = $2",
       [docId, tenantId]
     );
 
@@ -5868,36 +5883,40 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
       });
     }
 
-    // Create audit event
-    await createAuditTrail(req, docId, null, 'EXPORT', null, null, null, { format, exportId, options });
+    // Source-linked renditions reserve current versions before their EXPORT
+    // event and keep them stable through rendering and receipt commit.
+    const rendered = await withSavedDraftSourceReservation(doc, pool, tenantId, async executor => {
+      await createAuditTrail(req, docId, null, 'EXPORT', null, null, null, { format, exportId, options }, executor);
 
-    /* The rendering — the §11.50(b) manifest, figures, cross-references,
-       citations and captions resolved once, and the XML / DOCX / PDF branches —
-       is services/authoring/authoring-export.ts renderAuthoringExport, shared
-       with the project-vault filing so the two cannot drift. */
-    const rendered = await renderAuthoringExport({
-      executor: pool,
-      tenantId,
-      doc,
-      sections: sectionsResult.rows,
-      format,
-      signatures: exportSignatures,
-    });
+      /* The rendering — the §11.50(b) manifest, figures, cross-references,
+         citations and captions resolved once, and the XML / DOCX / PDF branches —
+         is services/authoring/authoring-export.ts renderAuthoringExport, shared
+         with the project-vault filing so the two cannot drift. */
+      const output = await renderAuthoringExport({
+        executor,
+        tenantId,
+        doc,
+        sections: sectionsResult.rows,
+        format,
+        signatures: exportSignatures,
+      });
 
-    /* §11.10(b): the record carries a hash of the SOURCE section rows
-       (doc_sha256, for content_changed_since_last_export) AND of the DELIVERED
-       ARTIFACT BYTES (artifactSha256), so it can attest that a re-download is
-       the identical artifact. */
-    recordAttempted = true;
-    await logExport(pool, {
-      docId: String(docId),
-      format,
-      docSha256: fileHash,
-      exportedBy: exportedBy as string,
-      fileName: rendered.fileName,
-      fileSize: rendered.fileContent.length,
-      metadata: { options, exportId, artifactSha256: rendered.artifactSha256 },
-      tenantId,
+      /* §11.10(b): the record carries a hash of the SOURCE section rows
+         (doc_sha256, for content_changed_since_last_export) AND of the DELIVERED
+         ARTIFACT BYTES (artifactSha256), so it can attest that a re-download is
+         the identical artifact. */
+      recordAttempted = true;
+      await logExport(executor, {
+        docId: String(docId),
+        format,
+        docSha256: fileHash,
+        exportedBy: exportedBy as string,
+        fileName: output.fileName,
+        fileSize: output.fileContent.length,
+        metadata: { options, exportId, artifactSha256: output.artifactSha256 },
+        tenantId,
+      });
+      return output;
     });
     recordConfirmed = true;
 
@@ -5905,19 +5924,7 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     res.setHeader('Content-Disposition', `attachment; filename="${rendered.fileName}"`);
     res.send(rendered.fileContent);
   } catch (error) {
-    // The raw error goes to the LOG only. This body feeds the client's export
-    // toast verbatim, and a library/DB message here was the one remaining path
-    // for exception text to reach the UI (BP-W0-5).
-    console.error('Export error:', error);
-    // A partial stream cannot be replaced with a JSON error body.
-    if (res.headersSent) { res.destroy(); return; }
-    res.removeHeader('Content-Disposition');
-    res.removeHeader('Content-Type');
-    res.removeHeader('Content-Length');
-    res.status(500).json({
-      error: 'Export failed',
-      ...exportFailureVerdict(recordConfirmed, recordAttempted),
-    });
+    sendExportFailure(error, res, recordConfirmed, recordAttempted);
   }
 });
 

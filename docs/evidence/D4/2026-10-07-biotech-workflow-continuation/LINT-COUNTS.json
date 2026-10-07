@@ -1,0 +1,142 @@
+{
+  "files": 27,
+  "errors": 0,
+  "warnings": 48,
+  "fileCounts": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentDisposition.test.tsx",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/DocumentDisposition.tsx",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "errors": 0,
+      "warnings": 24
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-project-sources.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/ana/draft-project-sources.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/authoring/__tests__/saved-draft-source-export.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/authoring/__tests__/saved-draft-source-reservation.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/authoring/authoring-export.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/authoring/authoring-file-to-vault.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/authoring/draft-source-references.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/cmc/__tests__/recorded-series-qualification.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/cmc/recorded-stability.ts",
+      "errors": 0,
+      "warnings": 5
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/disposition-fixture.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/saved-draft-impact.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/derived-impact.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/impact.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/service.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/document-data-disposition/types.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/module3Composer.ts",
+      "errors": 0,
+      "warnings": 19
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/vault/document-catalog.service.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "shared/document-data-disposition.ts",
+      "errors": 0,
+      "warnings": 0
+    }
+  ]
+}

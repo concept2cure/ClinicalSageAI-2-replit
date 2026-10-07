@@ -20,6 +20,7 @@ export interface Snapshot {
   retention: DocumentDispositionPreview['retention'];
   approvals: DocumentDispositionPreview['approvals'];
   blockers: string[];
+  dataWithdrawalBlockers?: string[];
   replacement: DocumentDispositionTarget | null;
   currentDisposition: DocumentDispositionPreview['currentDisposition'];
   fingerprints: Record<string, string>;

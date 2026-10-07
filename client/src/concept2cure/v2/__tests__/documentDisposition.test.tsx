@@ -182,3 +182,24 @@ describe('removal context changes', () => {
     expect(posts()).toHaveLength(1);
   });
 });
+
+describe('derived source review', () => {
+  it('explains derived-data review while keeping the retain-data decision available', async () => {
+    apiRequest.mockResolvedValue(reply(200, { preview: preview({ dataWithdrawalBlockers: ['Review the edited endpoint workbook before withdrawing parent values.'], allowedChoices: ['keep_data'] }) }));
+    pane();
+    await screen.findByText('Review the edited endpoint workbook before withdrawing parent values.');
+    expect((screen.getByRole('radio', { name: /Remove file and withdraw extracted data/ }) as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByRole('radio', { name: /Replace with a named newer document/ }) as HTMLInputElement).disabled).toBe(true);
+    choose(/Remove file; retain extracted data/); reason();
+    expect(confirm().disabled).toBe(false);
+    expect(posts()).toHaveLength(0);
+  });
+
+  it('refuses inconsistent terminal permission when the preview requires derived-data review', async () => {
+    apiRequest.mockResolvedValue(reply(200, { preview: preview({ dataWithdrawalBlockers: ['Derived data requires review.'] }) }));
+    pane(); await screen.findByText('Derived data requires review.');
+    choose(/Remove file and withdraw extracted data/); reason();
+    expect(confirm().disabled).toBe(true);
+    expect(posts()).toHaveLength(0);
+  });
+});

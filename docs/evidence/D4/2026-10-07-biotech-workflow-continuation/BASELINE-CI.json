@@ -1,0 +1,184 @@
+{
+  "source": "3400f1f32f7bed7bfa041e390b67407420a30d2d",
+  "canonicalBranch": "concept2cure-v2",
+  "observedRuns": [
+    {
+      "id": 37607803498,
+      "name": "CI",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37607803498"
+    },
+    {
+      "id": 37607803063,
+      "name": "Repo Health Baseline Refresh",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37607803063"
+    },
+    {
+      "id": 37607803009,
+      "name": "Tier 5 Browser Smoke",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37607803009"
+    },
+    {
+      "id": 37607803049,
+      "name": "C2C Agent — Validate & Audit",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37607803049"
+    },
+    {
+      "id": 37607803055,
+      "name": "CodeQL",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37607803055"
+    },
+    {
+      "id": 37607803098,
+      "name": "Semgrep",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37607803098"
+    }
+  ],
+  "ciJobs": [
+    {
+      "id": 112747480045,
+      "name": "Secret scan (full history)",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeSteps": []
+    },
+    {
+      "id": 112747480127,
+      "name": "Security Contract Tests",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeSteps": []
+    },
+    {
+      "id": 112747480203,
+      "name": "Lint",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeSteps": [
+        {
+          "name": "Run TypeScript check (no regression vs baseline)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run beta-slice TypeScript check",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 112747480278,
+      "name": "Security Scan",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeSteps": []
+    },
+    {
+      "id": 112747481693,
+      "name": "Nightly Governance Strict",
+      "conclusion": "skipped",
+      "failedSteps": [],
+      "typeSteps": []
+    },
+    {
+      "id": 112752740035,
+      "name": "Test",
+      "conclusion": "failure",
+      "failedSteps": [
+        "Run tests"
+      ],
+      "typeSteps": []
+    },
+    {
+      "id": 112752740038,
+      "name": "Integration Tests",
+      "conclusion": "failure",
+      "failedSteps": [
+        "Run integration tests"
+      ],
+      "typeSteps": []
+    },
+    {
+      "id": 112752740152,
+      "name": "AnA Readiness Tests",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeSteps": []
+    },
+    {
+      "id": 112752740205,
+      "name": "Blank DB Provisioning + Deploy Migration",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeSteps": []
+    },
+    {
+      "id": 112752740285,
+      "name": "Coverage (ratchet)",
+      "conclusion": "failure",
+      "failedSteps": [
+        "Coverage may not go down"
+      ],
+      "typeSteps": []
+    },
+    {
+      "id": 112752740294,
+      "name": "Production Boot Smoke (RLS on, non-superuser role)",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeSteps": []
+    },
+    {
+      "id": 112752740344,
+      "name": "AIOS Audit Assets",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeSteps": []
+    },
+    {
+      "id": 112752740347,
+      "name": "Production Image Boot (built image, empty database, sign-in)",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeSteps": []
+    },
+    {
+      "id": 112785965811,
+      "name": "Build",
+      "conclusion": "skipped",
+      "failedSteps": [],
+      "typeSteps": []
+    },
+    {
+      "id": 112785967112,
+      "name": "Assemble Release Evidence",
+      "conclusion": "skipped",
+      "failedSteps": [],
+      "typeSteps": []
+    },
+    {
+      "id": 112785968121,
+      "name": "Release evidence gate",
+      "conclusion": "skipped",
+      "failedSteps": [],
+      "typeSteps": []
+    }
+  ],
+  "limitation": "Decoded failed-job logs could not be retrieved through the GitHub connector. These are observed job/step verdicts, not an attribution of the causes."
+}
