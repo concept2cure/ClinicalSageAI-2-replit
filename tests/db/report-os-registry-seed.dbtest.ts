@@ -126,7 +126,7 @@ describe('report type registry seed (D2)', () => {
   it('applies to the provisioned database and registers every in-code type, column for column', async () => {
     await applySeed();
     const rows = await seededRows();
-    expect(rows.map((r) => r.type_id)).toEqual([...SEEDED_IDS].sort());
+    expect(rows.map((r) => r.type_id).sort()).toEqual([...SEEDED_IDS].sort());
     const byId = new Map(rows.map((r) => [r.type_id, r]));
     for (const t of REPORT_TYPE_REGISTRY_SEED) {
       // The JSON text is what drizzle's json column sends for these values.

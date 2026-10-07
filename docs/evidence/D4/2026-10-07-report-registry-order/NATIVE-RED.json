@@ -1,0 +1,20 @@
+{
+  "source": "4d1252fde561c663ef6b018f65c918bd087ce91e",
+  "run": 37683490033,
+  "artifact": 11511776693,
+  "artifactSha256": "a3ad2a08dc62bbfc76e83622e907cc7bb7028bdd75138313093aa12ad72a49a5",
+  "failure": {
+    "file": "/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/report-os-registry-seed.dbtest.ts",
+    "message": "",
+    "assertions": [
+      {
+        "title": "report type registry seed (D2) applies to the provisioned database and registers every in-code type, column for column",
+        "status": "failed",
+        "failure": [
+          "AssertionError: expected [ \u2026(61) ] to deeply equal [ \u2026(61) ]\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/report-os-registry-seed.dbtest.ts:129:40\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+        ]
+      }
+    ]
+  },
+  "limitation": "The artifact does not expose the complete actual/expected ID lists; exact original cause is unproven."
+}

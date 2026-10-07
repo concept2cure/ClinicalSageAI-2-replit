@@ -1,0 +1,90 @@
+{
+  "success": true,
+  "controls": 20,
+  "rows": 61,
+  "actualNativeCallbackExecuted": true,
+  "actualMigrationApplierExecuted": true,
+  "mode": "isolated PGlite; native PostgreSQL/RLS/route rerun remains required",
+  "records": [
+    {
+      "name": "all 61 seeded rows with every metadata field",
+      "result": "passed"
+    },
+    {
+      "name": "complete unchanged rows reversed",
+      "result": "passed"
+    },
+    {
+      "name": "complete unchanged rows rotated",
+      "result": "passed"
+    },
+    {
+      "name": "one seeded ID missing",
+      "result": "refused corruption"
+    },
+    {
+      "name": "extra duplicate ID",
+      "result": "refused corruption"
+    },
+    {
+      "name": "same-count duplicate replacing a missing ID",
+      "result": "refused corruption"
+    },
+    {
+      "name": "same-count unknown replacement ID",
+      "result": "refused corruption"
+    },
+    {
+      "name": "changed label",
+      "result": "refused corruption"
+    },
+    {
+      "name": "changed family",
+      "result": "refused corruption"
+    },
+    {
+      "name": "changed allowed_scopes",
+      "result": "refused corruption"
+    },
+    {
+      "name": "changed allowed_personas",
+      "result": "refused corruption"
+    },
+    {
+      "name": "changed allowed_client_segments",
+      "result": "refused corruption"
+    },
+    {
+      "name": "changed data_dependencies",
+      "result": "refused corruption"
+    },
+    {
+      "name": "changed artifact_dependencies",
+      "result": "refused corruption"
+    },
+    {
+      "name": "changed workflow_dependencies",
+      "result": "refused corruption"
+    },
+    {
+      "name": "changed ana_modules",
+      "result": "refused corruption"
+    },
+    {
+      "name": "changed export_template",
+      "result": "refused corruption"
+    },
+    {
+      "name": "changed governance_requirements",
+      "result": "refused corruption"
+    },
+    {
+      "name": "changed truthfulness_rules",
+      "result": "refused corruption"
+    },
+    {
+      "name": "seed replay restores metadata and preserves operator disable",
+      "result": "passed"
+    }
+  ]
+}
