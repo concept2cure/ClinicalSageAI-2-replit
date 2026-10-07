@@ -10,6 +10,13 @@ evidence consumers. It adds no surface, dependency, model, statistical engine,
 store, production index or migration. Historical evidence and audit identities
 remain intact. This increment does not close D4 or D1–D10.
 
+The latest published stability-summary fix and its exact-source remote results
+are recorded in [QOS-REMOTE-GATES-RESULTS.md](QOS-REMOTE-GATES-RESULTS.md).
+Its [83-file / 1,511-case regression](QOS-INTEGRATED-MANIFEST.json) preserves
+both materials' complete existing qualification narratives. Remote compiler,
+scanner and other job verdicts are pinned to their actual source commits;
+broader/native-database and release qualification remain independent gates.
+
 ## Resulting behavior
 
 | Existing workflow boundary | Qualified software behavior |

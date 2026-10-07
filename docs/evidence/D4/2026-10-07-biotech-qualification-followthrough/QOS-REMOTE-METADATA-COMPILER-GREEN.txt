@@ -1,0 +1,12 @@
+Source commit: 2c7b8bec41727a091a815f0f9fa99f0864b66133
+Source tree: eb095d2e9ccc9dba4bdc54179fef77746a73653f
+Workflow run: 37677745714 (C2C Agent — Validate & Audit)
+Job: 112985499361 (typecheck)
+Job conclusion: success
+All runtime/test/CI/schema sources are identical to fdd507a91.
+This is a second exact-commit remote full compiler execution, not an inference
+from the parent's compilation or from local builds/tests.
+
+2026-10-07T19:53:26.8703358Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-07T19:56:31.9569818Z [ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+2026-10-07T19:56:31.9571491Z [ci:typecheck-no-regression] OK — error count 0 matches baseline.

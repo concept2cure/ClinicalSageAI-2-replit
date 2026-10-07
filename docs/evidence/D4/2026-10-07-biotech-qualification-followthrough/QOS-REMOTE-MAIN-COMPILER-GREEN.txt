@@ -1,0 +1,12 @@
+Source commit: fdd507a91c6b7c7976c78eae4fa9755f87326782
+Source tree: 09bdd1233c21b130b533c24c705d00a3855400c8
+Workflow run: 37676477898 (CI)
+Job: 112981179868 (Lint)
+Job conclusion: success
+The whole-project semantic compiler ran remotely with its existing 24-GiB
+configuration. All preceding guardrails, ESLint and the beta-slice check also
+completed success. The overall CI run remains separate from this job verdict.
+
+2026-10-07T19:58:13.1953858Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-07T20:01:04.6227525Z [ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+2026-10-07T20:01:04.6228450Z [ci:typecheck-no-regression] OK — error count 0 matches baseline.

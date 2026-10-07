@@ -1,0 +1,100 @@
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import { composeModule3FromCanonicalSources } from '/workspace/scratch/bd36ee581acd/concept2cure/server/services/module3Composer.ts';
+import { buildM23QualityOverallSummary } from '/workspace/scratch/bd36ee581acd/concept2cure/server/services/m2-summary-builders.ts';
+import { m2SummaryToSections, renderM2SummaryPdf } from '/workspace/scratch/bd36ee581acd/concept2cure/server/services/authoring/m2-summary-renderer.ts';
+import { toWinAnsiSafe } from '/workspace/scratch/bd36ee581acd/concept2cure/server/services/ectd/leaf-pdf-renderer.ts';
+import { inspectRecordedSeriesCriterion, assessRecordedTrending, unassignedObservations, type StabilityPointRecord } from '/workspace/scratch/bd36ee581acd/concept2cure/server/services/cmc/recorded-stability.ts';
+
+const output = '/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-consumer-check';
+const condition = '25°C/60%RH';
+const monthly = Array.from({ length: 37 }, (_, time) => time);
+const short = [0, 3, 6, 9, 12, 18, 24];
+const points = (times: number[], parameter = 'Assay'): StabilityPointRecord[] => times.map((timePoint, index) => ({
+  timePoint, parameter, result: 100 - timePoint * 0.1 + [0.03, -0.02, 0.01][index % 3], specification: '>= 95%',
+}));
+const unnamed = (timePoint: number): StabilityPointRecord => ({ timePoint, result: 99, specification: '>= 95%' });
+const normalize = (text: string) => text.replace(/\s+/g, ' ').trim();
+
+async function main() {
+  await mkdir(output, { recursive: true });
+  const results: Array<Record<string, unknown>> = [];
+  for (const material of ['drug_substance', 'drug_product'] as const) {
+    const caseInputs = [
+      { name: 'monthly_unnamed', times: monthly, data: [...points(monthly), unnamed(36)], second: null },
+      { name: 'conflicting_criteria', times: short, data: points(short).map((point, index) => ({ ...point, specification: index < 3 ? '>= 95%' : '>= 90%' })), second: null },
+      { name: 'short_water_trend', times: short, data: [...points(short), ...points(short, 'Water').slice(0, 2).map(point => ({ ...point, result: 0.3, specification: '<= 2%' }))], second: null },
+      { name: 'later_study_unnamed', times: monthly, data: points(monthly), second: [unnamed(36)] },
+    ];
+    for (const input of caseInputs) {
+      const key = `${material}_${input.name}`;
+      try {
+        const source = (id: number, data: StabilityPointRecord[]) => ({
+          id: `recorded-study-${id}`, sourceType: 'stability' as const, sourceHash: `audit-fixture-${id}`,
+          sourcePayload: {
+            studyName: `Recorded LT ${id}`, stabilityScope: material,
+            storageCondition: condition, storageConditions: [condition], timePoints: input.times,
+            drugSubstanceTimePoints: material === 'drug_substance' ? input.times : null,
+            drugSubstanceStorageCondition: material === 'drug_substance' ? condition : null,
+            drugProductShelfLifeClaim: material === 'drug_product' ? '24 months' : null,
+            shelfLifeClaim: '24 months', batchesStudied: [`B${id}`], results: data,
+          },
+        });
+        const sources = [source(41, input.data), ...(input.second ? [source(42, input.second)] : [])];
+        const sourceBefore = JSON.stringify(sources);
+        const upstream = composeModule3FromCanonicalSources(sources);
+        const upstreamBefore = JSON.stringify(upstream);
+        const section = upstream.find(item => item.sectionKey === (material === 'drug_substance' ? '3.2.S.7' : '3.2.P.8'))!;
+        const qos = buildM23QualityOverallSummary({ module3Sections: upstream });
+        const qosBefore = JSON.stringify(qos);
+        const renderSections = m2SummaryToSections(qos);
+        assert.equal(renderSections[0].body, qos.narrative);
+        assert(qos.narrative.includes(section.narrativeDraft));
+        const reasons: string[] = [];
+        if (input.name === 'conflicting_criteria') reasons.push(inspectRecordedSeriesCriterion(input.data).reason!);
+        if (input.name === 'short_water_trend') {
+          const trend = assessRecordedTrending({ id: 41, storageConditions: [condition], stabilityData: input.data });
+          assert(trend.ok);
+          if (!trend.ok) throw new Error(trend.error);
+          const water = trend.data.series.find(item => item.parameter === 'Water')!.outcome;
+          assert.equal(water.ok, false);
+          if (water.ok) throw new Error('Expected the existing short-series refusal');
+          reasons.push(`Water (${condition}): trend not assessed: ${water.detail}.`);
+        }
+        for (const study of sources) for (const issue of unassignedObservations(study.sourcePayload.results)) {
+          reasons.push(`Stability source ${study.id}, row ${issue.row}: ${issue.reason}`);
+        }
+        assert(reasons.length > 0);
+        for (const reason of reasons) assert(section.narrativeDraft.includes(reason));
+        const pdf = await renderM2SummaryPdf(qos);
+        const pdfPath = `${output}/${key}.pdf`;
+        await writeFile(pdfPath, pdf);
+        const text = execFileSync('pdftotext', ['-raw', pdfPath, '-'], { encoding: 'utf8' });
+        await writeFile(`${output}/${key}.txt`, text);
+        const extracted = normalize(text);
+        assert(extracted.includes(normalize(toWinAnsiSafe(qos.narrative))), 'the complete QOS narrative must survive rendered PDF extraction');
+        for (const reason of reasons) assert(extracted.includes(normalize(toWinAnsiSafe(reason))), 'a source/row or existing engine refusal disappeared');
+        if (section.narrativeDraft.includes('NOT established')) assert(extracted.includes('NOT established'));
+        assert.equal(JSON.stringify(sources), sourceBefore);
+        assert.equal(JSON.stringify(upstream), upstreamBefore);
+        assert.equal(JSON.stringify(qos), qosBefore);
+        const info = execFileSync('pdfinfo', [pdfPath], { encoding: 'utf8' });
+        const pages = Number(info.match(/^Pages:\s*(\d+)/m)?.[1]);
+        const verdict = { key, status: 'passed', pages, pdfBytes: pdf.length, fullQosNarrativeCharacters: qos.narrative.length, reasons: reasons.length, pdfPath };
+        results.push(verdict);
+        console.log(JSON.stringify(verdict));
+      } catch (error) {
+        const verdict = { key, status: 'failed', error: error instanceof Error ? error.message : String(error) };
+        results.push(verdict);
+        console.log(JSON.stringify(verdict));
+      }
+    }
+  }
+  await writeFile(`${output}/manifest.json`, JSON.stringify(results, null, 2) + '\n');
+  const failed = results.filter(item => item.status === 'failed').length;
+  console.log(`RESULT ${results.length - failed} passed / ${failed} failed; actual public composers/renderer and Poppler extraction; no mocks/provider/database calls`);
+  process.exitCode = failed ? 1 : 0;
+}
+
+main().catch(error => { console.error(error); process.exitCode = 1; });

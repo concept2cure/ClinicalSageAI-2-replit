@@ -1,0 +1,25 @@
+Source commit: fdd507a91c6b7c7976c78eae4fa9755f87326782
+Source tree: 09bdd1233c21b130b533c24c705d00a3855400c8
+Workflow run: 37676477898
+Job: 112989315125 (Blank DB Provisioning + Deploy Migration)
+Conclusion: success
+Actual provisioned native PostgreSQL, deploy migration/replay, tenant-RLS,
+readiness invariants and live-schema gate ran. The original known 39 absent
+references remain baselined; zero NEW missing references were found.
+This does not qualify the separate native-database Vitest step or broader
+integration job.
+
+2026-10-07T20:03:08.4424758Z [ci:tables-live-schema] 1297 relations on the live database; 758 referenced by server SQL; 13 resolved as functions; 39 absent
+2026-10-07T20:03:08.4427818Z [ci:tables-live-schema] ✅ no NEW references to tables missing from the live schema (39 baselined)
+
+Step verdicts:
+Deploy migration must REFUSE an unprovisioned database: success
+Provision from scratch: success
+Deploy migration succeeds on the provisioned database: success
+RLS coverage after the FIRST deploy (a new database is isolated before any re-run): success
+Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it): success
+RLS coverage — every org-keyed table carries the tenant policy: success
+RLS parent-scope delegates exist (the coverage gate depends on them): success
+Verify the readiness contract independently: success
+Post-deploy invariants hold on the real deployed database: success
+Server SQL resolves against the LIVE provisioned schema (ratchet): success
