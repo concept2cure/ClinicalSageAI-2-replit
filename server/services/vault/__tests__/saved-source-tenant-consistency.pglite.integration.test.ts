@@ -7,10 +7,18 @@ import { createJourneyDb, assertNoSchemaGaps, type JourneyDb } from '../../../..
 import { PREREQ, VAULT_DDL, PROGRAM, ORG } from '../../../routes/__tests__/_authoring-canvas-fixture';
 
 vi.mock('../../../db.js', () => ({ pool: { query: vi.fn() } }));
-import { loadDocumentForOrg } from '../document-catalog.service';
+import { loadDocumentForOrg, type Queryable } from '../document-catalog.service';
 import { verifyDraftSourceReferences } from '../../authoring/draft-source-references';
 
 let db: JourneyDb;
+// The journey pool hides rowCount in its declared interface. These source
+// readers only issue SELECTs: preserve actual SQL rows and report their count.
+const sourceExecutor: Queryable = {
+  query: async (text, values) => {
+    const { rows } = await db.pool.query(text, values);
+    return { rows, rowCount: rows.length };
+  },
+};
 beforeAll(async () => {
   db = await createJourneyDb({
     prereqSql: PREREQ + VAULT_DDL,
@@ -38,18 +46,18 @@ describe('new current-only saved-source admission requires a consistent recorded
     { label: 'unassigned', organizationId: null },
   ])('refuses a legacy $label recorded tenant despite a matching program and valid catalog', async ({ organizationId }) => {
     const { id, hash } = await source(organizationId);
-    const read = await loadDocumentForOrg(id, ORG, { executor: db.pool, programId: PROGRAM, currentOnly: true, includeText: true });
+    const read = await loadDocumentForOrg(id, ORG, { executor: sourceExecutor, programId: PROGRAM, currentOnly: true, includeText: true });
     expect.soft(read).toBeNull();
-    await expect.soft(verifyDraftSourceReferences(references(id, hash), db.pool, ORG, PROGRAM)).rejects.toThrow(/could not be verified/);
+    await expect.soft(verifyDraftSourceReferences(references(id, hash), sourceExecutor, ORG, PROGRAM)).rejects.toThrow(/could not be verified/);
     expect((await db.pool.query('SELECT organization_id,program_id,content_hash FROM vault.documents WHERE id=$1', [id])).rows)
       .toEqual([{ organization_id: organizationId, program_id: PROGRAM, content_hash: hash }]);
   });
 
   it('retains exact source verification when the document and program agree on the tenant', async () => {
     const { id, hash } = await source(ORG);
-    expect(await loadDocumentForOrg(id, ORG, { executor: db.pool, programId: PROGRAM, currentOnly: true, includeText: true }))
+    expect(await loadDocumentForOrg(id, ORG, { executor: sourceExecutor, programId: PROGRAM, currentOnly: true, includeText: true }))
       .toMatchObject({ id, programId: PROGRAM, contentHash: hash, catalog: { status: 'extracted', contentHash: hash } });
-    expect(await verifyDraftSourceReferences(references(id, hash), db.pool, ORG, PROGRAM))
+    expect(await verifyDraftSourceReferences(references(id, hash), sourceExecutor, ORG, PROGRAM))
       .toEqual([expect.objectContaining({ documentId: id, programId: PROGRAM, contentHash: hash })]);
   });
 });

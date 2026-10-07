@@ -70,3 +70,26 @@ Earlier read-only neighbors passed 5 files / 61 cases (17.15s), plus the
 This is SQL/admission consistency qualification, not runtime-role RLS,
 independent connection concurrency, full-tree semantic TypeScript or final
 release qualification. Control tower owns the integrated checks.
+
+## TypeScript fixture contract follow-through
+
+The exact-source GitHub TypeScript check found four errors in this new test:
+`JourneyDb.pool` declares only `{ rows: unknown[] }`, while canonical catalog
+`Queryable` also requires `rowCount`. The pool's runtime shim executes real
+SQL, but passing its narrower declared shape directly did not satisfy that
+service boundary. The published exact-source check's 16 fixture errors (including
+these four) are recorded by control tower; no production error is claimed
+here.
+
+This test now passes an explicitly typed `Queryable` adapter at the fixture
+seam. It delegates every source SELECT to the same actual journey pool,
+preserves returned rows, and provides `rowCount` from those rows. Source
+inserts and stored-identity checks still use the actual pool directly. No
+production interface, harness, query, assertion, schema, TypeScript baseline,
+or rule suppression changes. The adapter introduces no `any` or type cast.
+
+Post-adapter Vitest: **1 file / 3 cases passed**, 6.37s
+(`SOURCE-TENANCY-TYPED-GREEN.txt`). New test ESLint exits 0 with **0 errors /
+0 warnings** (`SOURCE-TENANCY-TYPED-LINT.txt`), and `git diff --check` passes.
+Control tower owns the full semantic TypeScript rerun; local runtime and
+lint success do not replace that check. No commit or push by this worker.

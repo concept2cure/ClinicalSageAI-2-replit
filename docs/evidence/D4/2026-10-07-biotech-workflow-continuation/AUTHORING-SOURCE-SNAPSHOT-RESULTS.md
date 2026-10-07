@@ -105,6 +105,29 @@ compensation and approval-carryover SQL suites. Owned test ESLint in
 `authoring-owned-eslint.txt` reports **0 errors / 0 warnings**. The npm
 environment emitted its existing unknown `http-proxy` configuration notice.
 
+## Published TypeScript RED and fixture typing repair
+
+The first published exact source,
+`326af268b8028802508e42f7c356e5eb612f3b65`, failed the canonical full-tree
+`npm run ci:typecheck:no-regression` gate against baseline zero: **16 errors**,
+`tsc` exit 2. The exact receipt is [INTEGRATED-TYPECHECK-RED.txt](INTEGRATED-TYPECHECK-RED.txt),
+from [GitHub job 112855820207](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37639918392/job/112855820207).
+All reported diagnostics were in three new test fixtures; none was in a
+production source file. Six belonged to this filing snapshot fixture because
+untyped PGlite query results default to `unknown` rows. The other fixture
+repairs belong to their root/tenancy owners.
+
+The filing fixture now supplies narrow result-row types for the exact history,
+admitted Vault, audit operation and document-status projections through
+`query<T>`. SQL and behavioral assertions are unchanged. No `any`, diagnostic
+suppression or baseline change was introduced.
+
+After this repair the same five-case focused command above passed:
+`filing-snapshot-typed-green.txt`, **5 passed**, exit 0, 7.97 seconds.
+`filing-snapshot-typed-eslint.txt` reports **0 errors / 0 warnings**.
+These runtime/lint receipts do not replace a full semantic TypeScript verdict;
+the root owns the corrected exact-source publication and canonical CI rerun.
+
 ## Qualification boundary and ownership
 
 These focused checks use the existing single-connection PGlite fixture.

@@ -70,6 +70,10 @@ beforeEach(() => {
 });
 
 type WorkingDraft = { f: DispositionFixture; docId: string; sections: ExportSectionRow[]; admittedId: string };
+type FilingHistoryRow = { doc_sha256: string | null; metadata: Record<string, unknown> | null };
+type AdmittedVaultRow = { deleted_at: Date | null; content_hash: string | null };
+type FilingAuditRow = { operation: string | null };
+type DocumentStatusRow = { status: string | null };
 
 async function workingDraft(): Promise<WorkingDraft> {
   const f = await harness.seed();
@@ -115,10 +119,10 @@ async function file(d: WorkingDraft) {
 
 async function facts(d: WorkingDraft) {
   return {
-    history: (await d.f.pg.query('SELECT doc_sha256,metadata FROM authoring_export_history WHERE document_id=$1 AND tenant_id=$2', [d.docId, d.f.org])).rows,
-    vault: (await d.f.pg.query('SELECT deleted_at,content_hash FROM vault.documents WHERE id=$1 AND program_id=$2', [d.admittedId, d.f.program])).rows[0],
-    audit: (await d.f.pg.query('SELECT operation FROM test_filing_audit WHERE tenant_id=$1', [d.f.org])).rows,
-    status: (await d.f.pg.query('SELECT status FROM authoring_documents WHERE id=$1 AND tenant_id=$2', [d.docId, d.f.org])).rows[0].status,
+    history: (await d.f.pg.query<FilingHistoryRow>('SELECT doc_sha256,metadata FROM authoring_export_history WHERE document_id=$1 AND tenant_id=$2', [d.docId, d.f.org])).rows,
+    vault: (await d.f.pg.query<AdmittedVaultRow>('SELECT deleted_at,content_hash FROM vault.documents WHERE id=$1 AND program_id=$2', [d.admittedId, d.f.program])).rows[0],
+    audit: (await d.f.pg.query<FilingAuditRow>('SELECT operation FROM test_filing_audit WHERE tenant_id=$1', [d.f.org])).rows,
+    status: (await d.f.pg.query<DocumentStatusRow>('SELECT status FROM authoring_documents WHERE id=$1 AND tenant_id=$2', [d.docId, d.f.org])).rows[0].status,
   };
 }
 

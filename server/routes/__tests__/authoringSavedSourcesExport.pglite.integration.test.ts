@@ -168,7 +168,7 @@ describe('sealed source-linked /export uses persisted source receipts', () => {
     expect(result.status, JSON.stringify(result.body)).toBe(200);
     expect(result.text).toContain(SECTION_CONTENT);
     expect(h.audit).toHaveBeenCalledOnce();
-    const rows = (await f.pg.query('SELECT metadata FROM authoring_export_history WHERE document_id=$1 AND tenant_id=$2', [docId, f.org])).rows;
+    const rows = (await f.pg.query<{ metadata: unknown }>('SELECT metadata FROM authoring_export_history WHERE document_id=$1 AND tenant_id=$2', [docId, f.org])).rows;
     expect(rows).toHaveLength(1);
     expect(rows[0].metadata).toHaveProperty('artifactSha256');
     const begin = h.sql.findIndex(sql => /^BEGIN/.test(sql));

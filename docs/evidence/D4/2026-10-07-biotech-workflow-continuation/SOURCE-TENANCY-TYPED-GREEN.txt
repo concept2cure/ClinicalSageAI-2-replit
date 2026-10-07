@@ -1,0 +1,12 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > refuses a legacy 'foreign' recorded tenant despite a matching program and valid catalog 29ms
+ ✓ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > refuses a legacy 'unassigned' recorded tenant despite a matching program and valid catalog 13ms
+ ✓ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > retains exact source verification when the document and program agree on the tenant 13ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  10:58:54
+   Duration  6.37s (transform 1.15s, setup 196ms, import 2.45s, tests 2.91s, environment 0ms)

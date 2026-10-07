@@ -63,6 +63,16 @@ build and scoped tests are not presented as semantic TypeScript qualification.
 The local pre-push receipt explicitly stops before the TypeScript gate and is
 not described as a complete pre-push-hook pass.
 
+The first publication's canonical full TypeScript gate exposed **16 errors**
+([exact-source RED](INTEGRATED-TYPECHECK-RED.txt)). The printed diagnostic tail
+identified untyped SQL results and incomplete query receipts in new fixtures;
+review also found an untyped history metadata row in the new HTTP export test.
+Four test fixtures now declare their real SQL result shapes and supply the
+catalog query contract's required `rowCount`. Queries, runtime assertions,
+production code, compiler settings and the zero-error baseline are unchanged.
+The affected 19-case rerun is [TYPED-FIXTURE-REGRESSION.txt](TYPED-FIXTURE-REGRESSION.txt).
+Final semantic qualification depends on the corrected exact-source GitHub gate.
+
 This does **not close D4 or D1–D10**. Production image/staging execution,
 independent-session locking/RLS/runtime-privilege and contention tests,
 scientific dataset/intended-use qualification, provider model PQ, accountable

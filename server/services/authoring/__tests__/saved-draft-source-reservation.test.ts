@@ -11,8 +11,8 @@ const doc = { client_program_id: program, provenance: { projectSourceReferences:
     programId: program, contentHash: 'a'.repeat(64), span: { start: 0, end: 20, totalChars: 20 } }] }] } };
 function harness() {
   const events: string[] = [];
-  const q = { query: vi.fn(async (sql: string) => { events.push(sql); return { rows: [] }; }), release: vi.fn() };
-  const pool = { query: vi.fn(async () => ({ rows: [] })), connect: vi.fn(async () => q) };
+  const q = { query: vi.fn(async (sql: string) => { events.push(sql); return { rows: [], rowCount: 0 }; }), release: vi.fn() };
+  const pool = { query: vi.fn(async () => ({ rows: [], rowCount: 0 })), connect: vi.fn(async () => q) };
   const work = vi.fn(async (executor: Queryable) => { events.push('receipt'); return executor; });
   return { events, q, pool, work };
 }
@@ -51,7 +51,7 @@ describe('source reservations contain new rendition receipts', () => {
     h.q.query.mockImplementation(async sql => {
       h.events.push(sql);
       if (sql.startsWith('LOCK TABLE')) throw Object.assign(new Error('source check-in is in flight'), { code: '55P03' });
-      return { rows: [] };
+      return { rows: [], rowCount: 0 };
     });
     await expect(withSavedDraftSourceReservation(doc, h.pool, 7, h.work)).rejects.toMatchObject({ code: 'SOURCE_REFERENCES_UNAVAILABLE' });
     expect(m.load).not.toHaveBeenCalled();
