@@ -57,3 +57,36 @@ Independent read-only review preserved transaction/forUpdate behavior, writer co
 The final test-only readonly Diagnostic annotation correction passes isolated strict compilation; this file is outside the repository application tsconfig, and no full local typecheck ran.
 
 Qualification remains open: client-source builds, scientific/regulatory SME review, approved high-risk model PQ, regional dataset/safety-message/technical package and transmission qualification are not proved by these results. Scheduled/manual high-risk audit jobs skipped on a push are not a qualification pass.
+
+Final tested source revision: 4a6e037200eb46e29096597e3845890c3555798c
+Verified tree: ff5e60af3ba4aea0ef2535d10196bb7383e7bb5d
+Observed: 2026-10-07T03:26:50.427Z
+This revision adds the isolated test-helper typing correction and evidence; its production source is identical to 40953b587.
+
+Canonical C2C Validate & Audit run 37566216355, typecheck job 112614426512: completed / success.
+https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37566216355
+The full application TypeScript compiler returned 0 errors, exit 0, baseline 0 unchanged.
+ESLint completed with 0 errors, 6258 existing warnings.
+final-typecheck-green.txt preserves exact log lines.
+Isolated strict compilation of the actual excluded test file also passed; its red/green evidence is preserved.
+
+Broader CI run 37566216569:
+https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37566216569
+Security Contract Tests | 112614427221 | completed | success
+Security Scan | 112614427404 | completed | success
+Lint | 112614427450 | in_progress | pending
+  Proof tier — schema contracts + golden journeys + export contracts: in_progress, pending
+Secret scan (full history) | 112614427475 | completed | success
+Nightly Governance Strict | 112614428329 | completed | skipped
+No in-progress or unstarted release job is a pass. No complete fresh-source live-schema/Blank DB result is claimed.
+
+Associated exact-source workflows:
+CodeQL | 37566216347 | in_progress | pending | https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37566216347
+Semgrep | 37566216435 | in_progress | pending | https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37566216435
+Repo Health Baseline Refresh | 37566216428 | completed | success | https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37566216428
+CI | 37566216569 | in_progress | pending | https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37566216569
+Tier 5 Browser Smoke | 37566216382 | completed | success | https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37566216382
+C2C Agent — Validate & Audit | 37566216355 | completed | success | https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37566216355
+
+The source revision's authenticated browser + real DB smoke run 37566216382 passed.
+Readiness, scientific adequacy, agency technical conformance and transmission qualification remain outside these software checks.
