@@ -1,0 +1,17 @@
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > EU CTA uses the medicinal-product CTIS dossier, not a marketing CTD > has explicit Form/MSC, Part I and Part II authoring groups 2ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > EU CTA uses the medicinal-product CTIS dossier, not a marketing CTD > covers scientific trial and product documents with justified alternatives 1ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > EU CTA uses the medicinal-product CTIS dossier, not a marketing CTD > covers national Part II without treating every possible attachment as universal 1ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > places clinical documents in Module 1 and quality information in Modules 2–3 1ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > keeps authorization/reference, site timing and format exceptions explicit 1ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > exposes a genuinely separate amendment outline with no initial-only PSEAT 2ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > requires changed protocol evidence for a clinical amendment without making it a quality-only requirement 1ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > regional blueprint provenance and compatibility > publishes dated official source provenance for both regional outlines 1ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > regional blueprint provenance and compatibility > retains existing task ids while correcting trial-stage quality and site descriptions 1ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  22:13:11
+   Duration  484ms (transform 100ms, setup 87ms, import 39ms, tests 13ms, environment 0ms)

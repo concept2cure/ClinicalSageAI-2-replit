@@ -1,0 +1,26 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > EU_MAA uses the project catalog in persistence, resolution, readiness and packaging 5ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_NDS uses the project catalog in persistence, resolution, readiness and packaging 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > JP_MKT_APPROVAL uses the project catalog in persistence, resolution, readiness and packaging 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > EU_CTA uses the project catalog in persistence, resolution, readiness and packaging 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_CTA uses the project catalog in persistence, resolution, readiness and packaging 0ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_CTA_A uses the project catalog in persistence, resolution, readiness and packaging 0ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > JP_CTN uses the project catalog in persistence, resolution, readiness and packaging 0ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > US_IND_AMENDMENT uses the project catalog in persistence, resolution, readiness and packaging 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > ICH_NONCLIN_SUMMARY uses the project catalog in persistence, resolution, readiness and packaging 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > DSUR uses the existing E2F record, including section 20 Conclusions 0ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CSR uses the canonical E3 top-level record through saved outlines and manifests 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > an approved DSUR scaffold cannot imply assessed filing readiness or package completeness 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > EU_CTA requires a conditional-scope assessment even with approved baseline rows 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_CTA requires a conditional-scope assessment even with approved baseline rows 0ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_CTA_A requires a conditional-scope assessment even with approved baseline rows 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > JP_CTN requires a conditional-scope assessment even with approved baseline rows 0ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > US_IND_AMENDMENT requires a conditional-scope assessment even with approved baseline rows 0ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  22:21:53
+   Duration  1.64s (transform 756ms, setup 83ms, import 1.24s, tests 20ms, environment 0ms)

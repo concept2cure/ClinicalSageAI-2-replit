@@ -9,15 +9,17 @@
  */
 
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
-import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap.js';
+import { getResolvedSectionBlueprint, getSectionBlueprintContext, requiresSectionApplicabilityAssessment } from './sectionBlueprintCatalog.js';
 import { getRegionProfile } from '../../../shared/regulatory/region-profiles.js';
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
-import { getRequiredArtifacts } from './requiredArtifactMatrix.js';
+import { getRequiredArtifacts, hasArtifactMatrix } from './requiredArtifactMatrix.js';
 import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface PackageManifest {
+  /** Scope/provenance limits of the authoring scaffold, when present. */
+  outlineLimitations?: string[];
   /** Registry entry ID */
   registryId: string;
   /** Application display name */
@@ -60,6 +62,8 @@ export interface PackageArtifact {
 }
 
 export interface PackageMetadata {
+  artifactRequirementsAssessed?: boolean;
+  sectionApplicabilityAssessed?: boolean;
   generatedAt: string;
   projectId: string;
   totalSections: number;
@@ -101,7 +105,7 @@ export function buildPackageManifest(
 
   if (!entry) return null;
 
-  const sectionBlueprint = getSectionBlueprintForEntry(entry);
+  const sectionBlueprint = getResolvedSectionBlueprint(entry);
   const requiredArtifacts = getRequiredArtifacts(registryId);
   const regionProfile = getRegionProfile(entry.region);
 
@@ -149,17 +153,23 @@ export function buildPackageManifest(
   const presentArtifacts = requiredArtifactsList.filter(a => a.status !== 'missing');
 
   return {
+    outlineLimitations: [...getSectionBlueprintContext(entry.id).limitations,
+      ...(requiresSectionApplicabilityAssessment(entry.id) ? ['Artifact rows are baseline template expectations; conditional content and permitted alternatives have not been assessed.'] : [])],
     registryId: entry.id,
     applicationName: entry.displayName,
     dossierStandard: entry.dossierStandard,
     agency: entry.agency,
     region: entry.region,
     country: entry.country,
-    submissionGateway: regionProfile?.submissionGateway ?? null,
+    submissionGateway: entry.id === 'EU_CTA' ? 'CTIS'
+      : ['CA_CTA', 'CA_CTA_A', 'JP_CTN'].includes(entry.id) || entry.region === 'GLOBAL' ? null
+      : regionProfile?.submissionGateway ?? null,
     sections,
     artifacts,
     validationRules,
     metadata: {
+      artifactRequirementsAssessed: hasArtifactMatrix(registryId) && !requiresSectionApplicabilityAssessment(registryId),
+      ...(requiresSectionApplicabilityAssessment(registryId) ? { sectionApplicabilityAssessed: false } : {}),
       generatedAt: new Date().toISOString(),
       projectId,
       totalSections: sections.length,
@@ -169,6 +179,7 @@ export function buildPackageManifest(
       requiredArtifacts: requiredArtifactsList.length,
       presentArtifacts: presentArtifacts.length,
       packageComplete:
+        hasArtifactMatrix(registryId) && !requiresSectionApplicabilityAssessment(registryId) &&
         completedSections.length === requiredSectionsList.length &&
         presentArtifacts.length === requiredArtifactsList.length,
     },
@@ -179,6 +190,12 @@ export function buildPackageManifest(
 
 function getPackageValidationRules(entry: RegulatoryApplicationType): string[] {
   const rules: string[] = ['all_required_sections_present', 'all_required_artifacts_present'];
+  if (!hasArtifactMatrix(entry.id)) rules.push('artifact_requirements_not_modelled');
+  if (requiresSectionApplicabilityAssessment(entry.id)) rules.push('section_applicability_not_assessed');
+  if (entry.id === 'EU_CTA') return [...rules, 'ctis_form_and_part_i_ii_validation_required', 'msc_language_and_disclosure_review_required'];
+  if (entry.id === 'CA_CTA' || entry.id === 'CA_CTA_A') return [...rules, 'canadian_trial_modules_1_to_3_review_required', 'trial_format_and_delivery_not_assessed'];
+  if (entry.id === 'JP_CTN') return [...rules, 'pmda_notification_pdf_xml_validation_required', 'notification_category_timing_and_attachments_review_required'];
+  if (entry.region === 'GLOBAL') return [...rules, 'receiving_agency_and_document_placement_not_assessed'];
 
   if (entry.dossierStandard === 'eCTD') {
     rules.push('ectd_structure_valid', 'ectd_checksums_valid', 'ectd_xml_valid');

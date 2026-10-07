@@ -34,10 +34,26 @@ describe('drafting scope must precede regional filing instructions', () => {
     expect(r.requirementsSource).toContain('lifecycle-record');
     expect(resolveDraftingRequirements('ICH_DSUR', '3.2.S').requirements).toBeNull();
   });
-  it.each(['EU_CTA', 'CA_CTA', 'CA_CTA_A', 'JP_CTN', 'ICH_NONCLIN_SUMMARY', 'US_IND_AMENDMENT'])('%s cannot draft against a known wrong or fallback scaffold', (type) => {
-    const r = resolveDraftingRequirements(type, '3.2.S');
-    expect(r.requirementsSource).toContain('not-indexed');
-    expect(r.requirements).toContain('current agency/client template');
-    expect(r.requirements).not.toContain('Governing standard: ICH M4Q');
+  it.each([
+    ['EU_CTA', 'PART_I.PROTOCOL', 'CTIS'], ['CA_CTA', '1.7.1', 'version number'],
+    ['CA_CTA_A', '1.0.1', 'Module 1'], ['JP_CTN', 'ctn.notification', 'notification'],
+    ['US_IND_AMENDMENT', 'amendment.protocol', '312.30'], ['ICH_NONCLIN_SUMMARY', '2.6.2', 'Pharmacology'],
+  ])('%s drafts from its exact scoped outline', (type, code, expected) => {
+    const r = resolveDraftingRequirements(type, code);
+    expect(r.requirements).toContain(expected);
+    expect(r.requirementsSource).not.toContain('not-indexed-outline');
+  });
+  it.each(['CA_CTA', 'CA_CTA_A', 'ICH_NONCLIN_SUMMARY'])('%s rejects marketing CTD guidance outside its selected scope', type => {
+    for (const section of ['2', 'Module 2', '2.4', 'Nonclinical Overview', '2.7.4 Clinical Safety', '5.3.5.1']) {
+      const r = resolveDraftingRequirements(type, section);
+      expect(r.requirementsSource).toBe('record:outside-outline');
+      expect(r.requirements).toContain('outside');
+    }
+  });
+  it('CTIS groups and conditional attachments are not described as CTD modules or optional waivers', () => {
+    const r = resolveDraftingRequirements('EU_CTA', 'PART_I.GMP').requirements!;
+    expect(r).toContain('applicability is unresolved');
+    expect(r).toContain('not CTD module designations');
+    expect(r).not.toContain('Optional section');
   });
 });

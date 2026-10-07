@@ -1,0 +1,170 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Japan clinical trial notification — its own notification record > does not send a trial notification through a full marketing CTD 8ms
+   → expected 'Japan CTN Sections (CTD + PMDA Module…' not to match /CTD|Module 1/i
+ × server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Japan clinical trial notification — its own notification record > separates notification fields from conditional attachments and lifecycle details 1ms
+   → ctn.notification: expected undefined to be defined
+ × server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Japan clinical trial notification — its own notification record > preserves task identity without blanket 30-day, bridging or Japanese-language claims 8ms
+   → expected '{"id":"jp_ctn_tasks","name":"Japan CT…' not to contain '30-day review before trial start'
+ × server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > US IND amendments — subtype determines the evidence > has an exact amendment record rather than a default CTD fallback 8ms
+   → expected 'default_sections' to be 'us_ind_amendment_sections' // Object.is equality
+ × server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > US IND amendments — subtype determines the evidence > reuses lifecycle component titles and treats evidence branches as conditional 3ms
+   → expected undefined to be 'New Protocol or Description of Protoc…' // Object.is equality
+ × server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Nonclinical summaries — only the canonical CTD 2.6 subtree > projects canonical summaries without adding all Module 2 or a second heading tree 6ms
+   → expected [ …(6) ] to deeply equal [ [ '2.6.1', …(2) ], …(6) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Japan clinical trial notification — its own notification record > does not send a trial notification through a full marketing CTD
+AssertionError: expected 'Japan CTN Sections (CTD + PMDA Module…' not to match /CTD|Module 1/i
+
+- Expected:
+/CTD|Module 1/i
+
++ Received:
+"Japan CTN Sections (CTD + PMDA Module 1)"
+
+ ❯ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts:19:45
+     17|   it('does not send a trial notification through a full marketing CTD'…
+     18|     expect(japan.sectionBlueprint.id).toBe(getApplicationType('JP_CTN'…
+     19|     expect(japan.sectionBlueprint.name).not.toMatch(/CTD|Module 1/i);
+       |                                             ^
+     20|     expect(japan.sectionBlueprint.sections.every(s => s.code.startsWit…
+     21|     expect(japan.sectionBlueprint.sections.some(s => s.module > 1)).to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Japan clinical trial notification — its own notification record > separates notification fields from conditional attachments and lifecycle details
+AssertionError: ctn.notification: expected undefined to be defined
+ ❯ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts:26:53
+     24|     const rows = japan.sectionBlueprint.sections;
+     25|     for (const code of ['ctn.notification', 'ctn.parties', 'ctn.produc…
+     26|       expect(rows.find(s => s.code === code), code).toBeDefined();
+       |                                                     ^
+     27|     }
+     28|     for (const code of ['ctn.supporting', 'ctn.quality', 'ctn.change']…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Japan clinical trial notification — its own notification record > preserves task identity without blanket 30-day, bridging or Japanese-language claims
+AssertionError: expected '{"id":"jp_ctn_tasks","name":"Japan CT…' not to contain '30-day review before trial start'
+
+Expected: "30-day review before trial start"
+Received: "{"id":"jp_ctn_tasks","name":"Japan CTN Task Blueprint","milestones":[{"id":"ms_consultation","title":"PMDA Consultation & Bridging Strategy","description":"Early PMDA consultation and ICH E5 ethnic-bridging assessment","phase":"pre_submission","order":0,"tasks":[{"id":"t_pmda_consult","title":"PMDA Consultation (対面助言)","description":"Request PMDA face-to-face consultation on the development plan","assigneeRole":"regulatory_lead","estimatedDays":30},{"id":"t_bridging","title":"Ethnic Bridging Strategy (ICH E5)","description":"Assess need for Japanese bridging data","assigneeRole":"clinical_lead","estimatedDays":10}]},{"id":"ms_protocol","title":"Protocol & IB (Japanese)","description":"Clinical protocol and Investigator Brochure prepared for Japan","phase":"authoring","order":1,"tasks":[{"id":"t_protocol","title":"Clinical Protocol (治験実施計画書)","description":"Draft protocol per ICH E6(R2), Japanese translation","assigneeRole":"clinical_lead","estimatedDays":20},{"id":"t_ib","title":"Investigator Brochure (治験薬概要書)","description":"Per ICH E6(R2) section 7, Japanese translation","assigneeRole":"clinical_lead","estimatedDays":15},{"id":"t_quality","title":"Quality (CMC) Information","description":"Module 3 quality package supporting the CTN","assigneeRole":"cmc_lead","estimatedDays":20}]},{"id":"ms_ctn","title":"CTN Preparation","description":"Assemble the Clinical Trial Notification (治験届)","phase":"authoring","order":2,"tasks":[{"id":"t_ctn_form","title":"Clinical Trial Notification Form (治験届書)","description":"Complete the PMDA CTN form","assigneeRole":"regulatory_lead","estimatedDays":5},{"id":"t_caretaker","title":"In-Country Caretaker Designation (国内管理人)","description":"Designate the in-country caretaker for a foreign sponsor","assigneeRole":"regulatory_lead","estimatedDays":3},{"id":"t_irb","title":"IRB Review","description":"Institutional Review Board review at each site","assigneeRole":"clinical_lead","estimatedDays":15}]},{"id":"ms_submit","title":"Submission","description":"Submit CTN to PMDA (30-day review before trial start)","phase":"finalization","order":3,"tasks":[{"id":"t_submit","title":"PMDA Submission","description":"Submit the Clinical Trial Notification to PMDA","assigneeRole":"regulatory_lead","estimatedDays":2}]}]}"
+
+ ❯ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts:39:26
+     37|     ]);
+     38|     const taskText = JSON.stringify(japan.taskBlueprint);
+     39|     expect(taskText).not.toContain('30-day review before trial start');
+       |                          ^
+     40|     expect(taskText).not.toContain('Module 3 quality package');
+     41|     expect(taskText).not.toContain('per ICH E6(R2)');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > US IND amendments — subtype determines the evidence > has an exact amendment record rather than a default CTD fallback
+AssertionError: expected 'default_sections' to be 'us_ind_amendment_sections' // Object.is equality
+
+Expected: "us_ind_amendment_sections"
+Received: "default_sections"
+
+ ❯ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts:48:24
+     46|   it('has an exact amendment record rather than a default CTD fallback…
+     47|     const outline = await repairedOrExisting('US_IND_AMENDMENT', '../b…
+     48|     expect(outline.id).toBe(getApplicationType('US_IND_AMENDMENT')!.de…
+       |                        ^
+     49|     expect(outline.sections.every(s => s.code.startsWith('amendment.')…
+     50|     expect(outline.sections.some(s => s.code === 'amendment.new_invest…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > US IND amendments — subtype determines the evidence > reuses lifecycle component titles and treats evidence branches as conditional
+AssertionError: expected undefined to be 'New Protocol or Description of Protoc…' // Object.is equality
+
+- Expected:
+"New Protocol or Description of Protocol Change"
+
++ Received:
+undefined
+
+ ❯ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts:58:80
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Nonclinical summaries — only the canonical CTD 2.6 subtree > projects canonical summaries without adding all Module 2 or a second heading tree
+AssertionError: expected [ …(6) ] to deeply equal [ [ '2.6.1', …(2) ], …(6) ]
+
+- Expected
++ Received
+
+  [
+    [
+-     "2.6.1",
+-     "Introduction (Nonclinical Written and Tabulated Summaries)",
++     "2.2",
++     "Introduction",
+      "narrative",
+    ],
+    [
+-     "2.6.2",
+-     "Pharmacology Written Summary",
++     "2.3",
++     "Quality Overall Summary",
+      "narrative",
+    ],
+    [
+-     "2.6.3",
+-     "Pharmacology Tabulated Summary",
+-     "table",
+-   ],
+-   [
+-     "2.6.4",
+-     "Pharmacokinetics Written Summary",
++     "2.4",
++     "Nonclinical Overview",
+      "narrative",
+    ],
+    [
+-     "2.6.5",
+-     "Pharmacokinetics Tabulated Summary",
+-     "table",
++     "2.5",
++     "Clinical Overview",
++     "narrative",
+    ],
+    [
+-     "2.6.6",
+-     "Toxicology Written Summary",
+-     "narrative",
++     "2.6",
++     "Nonclinical Summaries",
++     "mixed",
+    ],
+    [
+-     "2.6.7",
+-     "Toxicology Tabulated Summary",
+-     "table",
++     "2.7",
++     "Clinical Summary",
++     "mixed",
+    ],
+  ]
+
+ ❯ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts:73:73
+     71|     const canonical = Object.values(CTD_AUTHORING_GUIDANCE).filter(s =…
+     72|     expect(outline.id).toBe(getApplicationType('ICH_NONCLIN_SUMMARY')!…
+     73|     expect(outline.sections.map(s => [s.code, s.title, s.contentType])…
+       |                                                                         ^
+     74|     expect(outline.sections.map(s => s.code)).toEqual(['2.6.1', '2.6.2…
+     75|     expect(outline.sections.every(s => s.module === 2)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  22:10:29
+   Duration  999ms (transform 489ms, setup 81ms, import 501ms, tests 39ms, environment 0ms)

@@ -43,19 +43,20 @@ describe('existing template tool — regional preparation reaches real Anna path
     }
     throw new Error('CSR outline pagination did not terminate');
   });
-  it('does not hide missing region-specific trial outlines behind a default CTD', async () => {
+  it('returns the repaired region-specific trial outline and its limitations', async () => {
     for (const registry_id of ['EU_CTA', 'CA_CTA', 'CA_CTA_A', 'JP_CTN']) {
       const out = await call({ registry_id });
       expect(out.ok, registry_id).toBe(true);
-      expect(out.outlineAvailable).toBe(false);
-      expect(out.template).toBeUndefined();
+      expect(out.outlineAvailable).toBe(true);
+      expect(out.template.sections.length).toBeGreaterThan(0);
+      expect(out.template.outlineLimitations.join(' ')).toMatch(/applicab|scope|scaffold/i);
       expect(out.preparation.regionalRoute).toBeDefined();
     }
   });
   it('reports available and unavailable existing types in a regional coverage page', async () => {
     const out = await call({ coverage: true, market: 'CA', limit: 30 });
     expect(out.ok).toBe(true);
-    expect(out.coverage.some((r: {registryId: string;outlineAvailable:boolean}) => r.registryId === 'CA_CTA' && !r.outlineAvailable)).toBe(true);
+    expect(out.coverage.some((r: {registryId: string;outlineAvailable:boolean}) => r.registryId === 'CA_CTA' && r.outlineAvailable)).toBe(true);
     expect(out.coverage.some((r: {registryId: string;outlineAvailable:boolean}) => r.registryId === 'CA_NDS' && r.outlineAvailable)).toBe(true);
     expect(out.readiness).toBe('not_assessed');
   });

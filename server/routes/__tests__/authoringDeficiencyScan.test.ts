@@ -121,6 +121,31 @@ describe('POST /sections/:id/ai/deficiency-scan', () => {
     expect(withList).toBe(withoutList + 1);
   });
 
+  it.each(['CTIS Form/MSC', 'CTIS Part I', 'CTIS Part II', 'Notification', 'Amendment', 'Document', 'Unknown module'])('does not substitute chemistry expectations for %s', async module => {
+    wireSection('scoped.document', '', module);
+    const response = await scan();
+    expect(response.status).toBe(200);
+    const result = response.body.scan_results;
+
+    expect(result.deficiencies.filter((d: any) => d.type === 'missing_keyword')).toEqual([]);
+    // Four generic checks run. Only placeholder_text passes for empty content;
+    // an unsupported keyword profile is neither performed nor counted as a pass.
+    expect(result.checks_run).toBe(4);
+    expect(result.checks_passed).toBe(1);
+    expect(result.quality_score).toBe(25);
+    expect(result.checks_skipped).toEqual([
+      { id: 'module_keywords', reason: `No heuristic keyword profile is defined for document module "${module}".` },
+    ]);
+  });
+
+  it('still applies the existing keyword profile to supported CTD modules', async () => {
+    wireSection('3.2.P.1', '', 'M3');
+    const result = (await scan()).body.scan_results;
+    expect(result.deficiencies.filter((d: any) => d.type === 'missing_keyword')).toHaveLength(6);
+    expect(result.checks_run).toBe(5);
+    expect(result.checks_skipped).toBeUndefined();
+  });
+
   it('frames its output as a signal, never as a compliance determination', async () => {
     wireSection('3.2.S.1', 'x'.repeat(400));
     const body = (await scan()).body;

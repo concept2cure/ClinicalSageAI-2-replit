@@ -149,7 +149,7 @@ function catalogPage(rows: unknown[], offset: number, limit: number, key: string
 function outlinePage(template: DocumentTemplateStructure, offset: number, limit: number, preparation: Preparation | undefined): string {
   return boundedPage(template.sections.length, offset, limit,
     (count, nextOffset) => JSON.stringify({
-      ok: true, template: { ...template, sections: template.sections.slice(offset, offset + count) },
+      ok: true, outlineAvailable: true, template: { ...template, sections: template.sections.slice(offset, offset + count) },
       sectionsTotal: template.sections.length, nextOffset, ...(preparation ? { preparation } : {}),
       note: 'Outline page only. Follow nextOffset to read the remaining headings before drafting; no evidence or filing readiness has been assessed.',
     }),

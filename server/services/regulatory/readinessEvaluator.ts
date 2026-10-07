@@ -9,10 +9,9 @@
  */
 
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
-import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap.js';
+import { getResolvedSectionBlueprint, getSectionBlueprintContext, requiresSectionApplicabilityAssessment } from './sectionBlueprintCatalog.js';
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
 import {
-  getRequiredArtifacts,
   getMandatoryArtifacts,
   hasArtifactMatrix,
   type ArtifactRequirement,
@@ -103,8 +102,7 @@ export function evaluateReadiness(input: ReadinessInput): ReadinessResult {
     return buildFallbackResult(input);
   }
 
-  const sectionBlueprint = getSectionBlueprintForEntry(entry);
-  const requiredArtifacts = getMandatoryArtifacts(registryId);
+  const sectionBlueprint = getResolvedSectionBlueprint(entry);
 
   /* NOTHING ASSESSED IS NOT ASSESSED-AND-CLEAR.
      `getMandatoryArtifacts` returns [] both for a filing type whose matrix lists
@@ -117,7 +115,11 @@ export function evaluateReadiness(input: ReadinessInput): ReadinessResult {
      buildFallbackResult below already refuses to do this for an UNRESOLVED
      registry id and says why; this is the same failure one branch over, where
      the id resolves but the requirements are unknown. */
-  const artifactsAssessed = hasArtifactMatrix(registryId);
+  const artifactMatrixKnown = hasArtifactMatrix(registryId);
+  const applicabilityUnassessed = requiresSectionApplicabilityAssessment(registryId);
+  // A baseline matrix cannot decide eligible alternatives or conditional trial scope.
+  const artifactsAssessed = artifactMatrixKnown && !applicabilityUnassessed;
+  const requiredArtifacts = artifactsAssessed ? getMandatoryArtifacts(registryId) : [];
 
   // Evaluate sections
   const sectionReadiness = evaluateSections(sectionBlueprint.sections, input.sections);
@@ -141,14 +143,21 @@ export function evaluateReadiness(input: ReadinessInput): ReadinessResult {
   if (!artifactsAssessed) {
     gaps.push({
       type: 'artifact',
-      code: 'ARTIFACT_REQUIREMENTS_NOT_MODELLED',
+      code: artifactMatrixKnown ? 'ARTIFACT_APPLICABILITY_NOT_ASSESSED' : 'ARTIFACT_REQUIREMENTS_NOT_MODELLED',
       title: 'Artifact requirements not assessed',
       severity: 'critical',
       message:
-        `No required-artifact matrix is defined for "${entry.displayName}" (${registryId}), ` +
+        (artifactMatrixKnown
+          ? `The baseline artifact matrix for "${entry.displayName}" (${registryId}) does not resolve conditional scope or permitted alternatives, `
+          : `No required-artifact matrix is defined for "${entry.displayName}" (${registryId}), `) +
         'so no artifact was checked against a known requirement set. This score reflects ' +
         'section completeness only — treat the artifact half as unassessed, not as complete.',
     });
+  }
+
+  if (requiresSectionApplicabilityAssessment(registryId)) {
+    gaps.push({ type: 'section', code: 'SECTION_APPLICABILITY_NOT_ASSESSED', title: 'Conditional trial scope not assessed', severity: 'critical',
+      message: 'Baseline scaffold completion does not resolve product, amendment, attachment or local applicability. Review the selected scope and source evidence through the governed trial workflow before treating this filing as ready.' });
   }
 
   // Regional warnings
@@ -156,7 +165,7 @@ export function evaluateReadiness(input: ReadinessInput): ReadinessResult {
 
   return {
     score: overallScore,
-    level: scoreToLevel(overallScore),
+    level: gaps.some(g => g.severity === 'critical') ? 'not_ready' : scoreToLevel(overallScore),
     applicationDisplayName: entry.displayName,
     dossierStandard: entry.dossierStandard,
     sectionReadiness,
@@ -271,7 +280,10 @@ function getRegionalWarnings(
   entry: RegulatoryApplicationType,
   input: ReadinessInput
 ): string[] {
-  const warnings: string[] = [];
+  const warnings: string[] = [...getSectionBlueprintContext(entry.id).limitations];
+  if (requiresSectionApplicabilityAssessment(entry.id)) {
+    return warnings;
+  }
 
   if (entry.region === 'EU' && !input.artifacts.some(a => a.type === 'rmp')) {
     warnings.push('EU submissions typically require a Risk Management Plan (RMP)');

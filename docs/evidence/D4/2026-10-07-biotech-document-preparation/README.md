@@ -51,15 +51,17 @@ finished document is scientifically correct. Legacy protocol/GCP references,
 US-oriented consent scaffolds and regional labeling limitations must remain
 visible to the author.
 
-`EU_CTA`, `CA_CTA`, `CA_CTA_A`, `JP_CTN` and `ICH_NONCLIN_SUMMARY` outlines are explicitly
-withheld here pending correction/review of their existing scaffolds. A withheld
+At this candidate snapshot, `EU_CTA`, `CA_CTA`, `CA_CTA_A`, `JP_CTN` and
+`ICH_NONCLIN_SUMMARY` outlines were explicitly withheld pending correction/review.
+The [subsequent outline repair](../2026-10-07-biotech-outline-repairs/README.md)
+corrects these five structures and adds the exact `US_IND_AMENDMENT` scaffold. A withheld
 outline is not a claim that the entire platform lacks the corresponding
 workflow. Coverage output records both available outlines and gaps; the
 separately generated coverage JSON is the snapshot to inspect for exact counts.
 
-The four requested markets plus shared ICH components contain **87** active
-biotech registry entries: **81** have an indexed scaffold and **6** require a
-source template or correction. The sixth gap is `US_IND_AMENDMENT`, which has
+At this candidate snapshot, the four requested markets plus shared ICH
+components contained **87** active biotech registry entries: **81** had an
+indexed scaffold and **6** required a source template or correction. The sixth gap is `US_IND_AMENDMENT`, which has
 no exact existing outline. These counts measure outline availability only.
 
 Section drafting uses the same canonical component records, including the full
@@ -128,15 +130,17 @@ meanings and must not be collapsed into one status.
 | Canonical push preflight preceding TypeScript | All preceding checks passed: `push-preflight.txt`; this is not a full pre-push pass |
 | Required full-project TypeScript gate | **Blocked by host capacity.** Default 24 GB heap was killed by the 8 GiB host; 4 GB and 6 GB runs exhausted their heaps: `typecheck.txt`, `typecheck-retry.txt`, `typecheck-six-gb.txt` |
 
-The parent for changed-file comparisons is
-`2c989403a8f8e92c0a4a5d2451524c106091d49d`. Full typechecking must complete
-through the canonical gate before the branch is updated; an OOM termination
-is not a typecheck pass. The implementation is a reviewable candidate, and the
-remote `concept2cure-v2` ref has not been advanced. The existing CI can check a
-branch update, but no existing workflow accepts an unreferenced candidate SHA
-as a checkout input. A larger execution host or explicit permission to rely on
-CI for this required gate is needed to complete branch publication. No baseline
-or repository gate was weakened.
+The parent for this snapshot is
+`2c989403a8f8e92c0a4a5d2451524c106091d49d`. The user authorized publication
+with the full-project TypeScript gate performed by GitHub CI after the local
+host exhausted memory. Commit `c3163b5cc165616842391b02f25e837fd7a7471c`
+was published on `concept2cure-v2`. GitHub's canonical baseline-gated typecheck
+completed successfully: **0 errors, tsc exit 0** in
+[run 37560444499](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37560444499),
+job 112596241299. The [follow-up evidence](../2026-10-07-biotech-outline-repairs/ci-typecheck-c316.txt)
+records the relevant decoded log lines. This resolves this snapshot's
+TypeScript publication blocker; it does not validate later source changes.
+No baseline or repository gate was weakened.
 
 The neighboring logs record failing-before-fix and passing-after-fix checks for
 outline availability/provenance, tool schema/description, preparation and

@@ -27,7 +27,7 @@ import { and, eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { canonicalDocuments } from '../../../shared/schema/canonical_documents';
 import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge';
-import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap';
+import { getResolvedSectionBlueprint } from './sectionBlueprintCatalog';
 import type { SectionDefinition } from '../../../shared/regulatory/document-taxonomy';
 import {
   buildSignatureEvent,
@@ -122,7 +122,7 @@ export function resolveOutlineForType(documentType: string): SectionDefinition[]
   try {
     const entry = resolveToRegistryEntry(documentType);
     if (!entry) return [];
-    return getSectionBlueprintForEntry(entry).sections ?? [];
+    return getResolvedSectionBlueprint(entry).sections ?? [];
   } catch {
     // The outline is an enhancement, never a precondition for creating a
     // governed document. If registry resolution is unavailable, create the

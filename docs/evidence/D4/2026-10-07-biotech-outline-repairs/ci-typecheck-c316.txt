@@ -1,0 +1,10 @@
+GitHub CI typecheck for c3163b5cc165616842391b02f25e837fd7a7471c
+Run: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37560444499
+Job: 112596241299, TypeScript type check (baseline-gated), success.
+This is the first published preparation update; it does not typecheck later uncommitted repairs.
+Selected decoded job-log lines:
+2026-10-07T02:07:33.9120354Z [command]/usr/bin/git checkout --progress --force -B concept2cure-v2 refs/remotes/origin/concept2cure-v2
+2026-10-07T02:08:25.9088812Z > node scripts/ci/typecheck-no-regression.mjs
+2026-10-07T02:08:25.9416390Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-07T02:11:55.0995562Z [ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+2026-10-07T02:11:55.0997242Z [ci:typecheck-no-regression] OK — error count 0 matches baseline.

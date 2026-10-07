@@ -31,7 +31,7 @@ import { GLOBAL_REGISTRY, getApplicationType } from '../../../shared/regulatory/
 import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap';
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy';
 import { ICH_E2F_DSUR_SECTIONS } from '../ind/ctd/lifecycle-document-types';
-import { getSectionBlueprint as getDedicatedSectionBlueprint } from '../regulatory/sectionBlueprintCatalog';
+import { getSectionBlueprint as getDedicatedSectionBlueprint, getSectionBlueprintContext } from '../regulatory/sectionBlueprintCatalog';
 
 export interface TemplateSection {
   /** Section number within the document (e.g. "2.5.4", "4.1", "I.1"). */
@@ -89,14 +89,11 @@ const PROJECT_OUTLINE_LIMITATIONS = [
 ];
 
 /**
- * These exact legacy blueprints are known to be mis-scoped: trial applications
- * reuse the full CTD or have unresolved regional content, and the nonclinical
- * summary returns all Module 2 summaries rather than the 2.6 subtree. Surface
- * the gap instead of giving AnA a plausible-looking wrong outline.
+ * Withhold exact outlines when a future review identifies a scope defect.
+ * The previously listed trial/nonclinical defects are repaired in the catalog;
+ * their source and applicability limitations remain visible in every projection.
  */
-const BLUEPRINTS_REQUIRING_REVIEW: ReadonlySet<string> = new Set([
-  'EU_CTA', 'CA_CTA', 'CA_CTA_A', 'JP_CTN', 'ICH_NONCLIN_SUMMARY',
-]);
+const BLUEPRINTS_REQUIRING_REVIEW: ReadonlySet<string> = new Set();
 
 function exactBlueprint(entry: RegulatoryApplicationType): SectionBlueprint | undefined {
   const blueprint = getSectionBlueprintForEntry(entry);
@@ -117,17 +114,18 @@ function projectOutline(
   id = entry.id,
   sourceKind: 'project-blueprint' | 'dedicated-blueprint' = 'project-blueprint',
 ): DocumentTemplateStructure {
+  const context = getSectionBlueprintContext(entry.id);
   return withBasis({
     id,
     title: entry.displayName,
     families: authoringFamilies(entry),
-    basis: {
+    basis: context.basis ?? {
       ref: `Concept2Cure existing project blueprint ${blueprint.id}`,
       confidence: 'platform-convention',
       note: `Headings and scaffold expectations read from ${sourceKind === 'dedicated-blueprint' ? 'server/services/regulatory/sectionBlueprintCatalog.ts' : 'shared/regulatory/project-bootstrap.ts'}; not independently verified current regional requirements.`,
     },
     outlineSource: { kind: sourceKind, registryId: entry.id, blueprintId: blueprint.id },
-    outlineLimitations: [...PROJECT_OUTLINE_LIMITATIONS],
+    outlineLimitations: [...PROJECT_OUTLINE_LIMITATIONS, ...context.limitations],
     sections: blueprint.sections.map((s) => ({
       number: s.code,
       heading: s.title,

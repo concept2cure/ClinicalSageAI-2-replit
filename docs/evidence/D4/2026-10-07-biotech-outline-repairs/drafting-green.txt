@@ -1,0 +1,138 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-07T02:19:54.698Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T02:19:54.699Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-07T02:19:54.700Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a drug CMC section in its ICH guidance (matched by code or title) 10ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a device section in the device blueprint (not the drug CTD) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds an IVD performance section for an IVD marketing type 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null when the submission type is absent or unresolvable 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null for a section the blueprint does not contain 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs 2.7.4, 5.3.5.3 and 3.2.P.5 from the record (the blueprint had no row for them) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > names a US IND's 1.2 the cover letter, never the blueprint's 'Administrative Forms' 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs a US IND's 1.14.4.1 as the Investigator's Brochure 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > says a CTD code the record does not index is not indexed, instead of returning nothing 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never gives an EU MAA the US Module 1 or the blueprint's Module 1 row 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs Modules 2–5 from the ICH record for a non-US CTD entry 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > answers a unique canonical title with that section, and lists every code for an ambiguous one 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > adds the record brief to a blueprint title match outside Module 1 (US IND "Drug Substance" → 3.2.S) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never briefs a non-CTD blueprint section as a CTD module (510(k) §3, an IB section 3) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > answers a title from the entry's own blueprint row before a same-titled canonical section elsewhere 1ms
+ × server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > treats a leading section code as the code whatever title follows it, and says when the title disagrees 9ms
+   → expected 'blueprint+record:ctd-section:2.7.4:ex…' to be 'record:ctd-section:2.7.4:exact+title-…' // Object.is equality
+ × server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata 2ms
+   → expected 'blueprint+record:ctd-section:2.7.4:ex…' to be 'record:ctd-section:2.7.4:exact' // Object.is equality
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > records a 510(k) section as blueprint-sourced and sends no CTD brief 0ms
+stdout | server/services/ana/__tests__/drafting-regional-context.test.ts
+{
+  "timestamp": "2026-10-07T02:19:57.687Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T02:19:57.688Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/drafting-regional-context.test.ts
+{
+  "timestamp": "2026-10-07T02:19:57.689Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/drafting-regional-context.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_DSUR is a harmonised document, not a filing to ICH 3ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_SAP is a harmonised document, not a filing to ICH 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_PROTOCOL is a harmonised document, not a filing to ICH 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ISO_CIP preserves its own global reference body 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > IEC_62304 preserves its own global reference body 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > QMS_MDSAP preserves its own global reference body 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ambiguous CTA needs jurisdiction before drafting to a trial route 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ambiguous  cta  needs jurisdiction before drafting to a trial route 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > exact regional trial identity still delivers the applicable context 3ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > DSUR section drafting uses the corrected E2F record through section 20 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > EU_CTA drafts from its exact scoped outline 2ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA drafts from its exact scoped outline 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA_A drafts from its exact scoped outline 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > JP_CTN drafts from its exact scoped outline 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > US_IND_AMENDMENT drafts from its exact scoped outline 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_NONCLIN_SUMMARY drafts from its exact scoped outline 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA rejects marketing CTD guidance outside its selected scope 3ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA_A rejects marketing CTD guidance outside its selected scope 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_NONCLIN_SUMMARY rejects marketing CTD guidance outside its selected scope 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CTIS groups and conditional attachments are not described as CTD modules or optional waivers 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > treats a leading section code as the code whatever title follows it, and says when the title disagrees
+AssertionError: expected 'blueprint+record:ctd-section:2.7.4:ex…' to be 'record:ctd-section:2.7.4:exact+title-…' // Object.is equality
+
+Expected: "record:ctd-section:2.7.4:exact+title-mismatch"
+Received: "blueprint+record:ctd-section:2.7.4:exact+title-mismatch"
+
+ ❯ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts:196:34
+    194|   it('treats a leading section code as the code whatever title follows…
+    195|     const r = resolveDraftingRequirements('US_NDA', '2.7.4 Clinical Sa…
+    196|     expect(r.requirementsSource).toBe('record:ctd-section:2.7.4:exact+…
+       |                                  ^
+    197|     expect(r.requirements).toContain(firstLine('2.7.4'));
+    198|     expect(r.requirements).toContain('"Clinical Safety"');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata
+AssertionError: expected 'blueprint+record:ctd-section:2.7.4:ex…' to be 'record:ctd-section:2.7.4:exact' // Object.is equality
+
+Expected: "record:ctd-section:2.7.4:exact"
+Received: "blueprint+record:ctd-section:2.7.4:exact"
+
+ ❯ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts:222:46
+    220|     const user = sent.messages.find((m) => m.role === 'user')!.content;
+    221|     expect(user).toContain(renderSectionBrief('2.7.4')!.split('\n')[0]…
+    222|     expect(sent.metadata.requirementsSource).toBe('record:ctd-section:…
+       |                                              ^
+    223|   });
+    224|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 36 passed (38)
+   Start at  22:19:48
+   Duration  10.92s (transform 5.34s, setup 100ms, import 10.21s, tests 62ms, environment 0ms)

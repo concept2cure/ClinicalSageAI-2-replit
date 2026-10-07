@@ -264,16 +264,26 @@ describe('document template library — existing biotech structures are reachabl
 
   it('unknown or missing blueprints never fall back to a full CTD dossier', async () => {
     expect(await getRegistryDocumentTemplate('no_such_registry_entry')).toBeUndefined();
-    const dedicatedIds = new Set(await Promise.all(GLOBAL_REGISTRY.map(async (e) => (await getDedicatedSectionBlueprint(e.id)) ? e.id : '')));
-    const missing = GLOBAL_REGISTRY.find((e) => e.active && e.segment === 'pharma_biotech' && !dedicatedIds.has(e.id) && getSectionBlueprintForEntry(e).id !== e.defaultSectionBlueprint)!;
-    expect(missing, 'the coverage audit exercises a real default fallback').toBeDefined();
-    expect(await getRegistryDocumentTemplate(missing.id)).toBeUndefined();
+    // All current rows now have indexed scaffolds. Exercise a newly registered
+    // type with an unimplemented blueprint so the fallback guard remains tested.
+    const missing = { ...getApplicationType('US_IND_AMENDMENT')!, id: '__unimplemented_outline__', defaultSectionBlueprint: '__unimplemented_sections__' };
+    GLOBAL_REGISTRY.push(missing);
+    try {
+      expect(getSectionBlueprintForEntry(missing).id).not.toBe(missing.defaultSectionBlueprint);
+      expect(await getRegistryDocumentTemplate(missing.id)).toBeUndefined();
+      expect((await registryDocumentTemplateCoverage()).find(r => r.registryId === missing.id)).toMatchObject({ outlineAvailable: false, reason: 'no_dedicated_existing_outline' });
+    } finally {
+      GLOBAL_REGISTRY.splice(GLOBAL_REGISTRY.indexOf(missing), 1);
+    }
   });
 
-  it.each(['EU_CTA', 'CA_CTA', 'CA_CTA_A', 'JP_CTN', 'ICH_NONCLIN_SUMMARY'])('withholds known mis-scoped %s scaffolds pending regional/content review', async (registryId) => {
-    expect(await getRegistryDocumentTemplate(registryId)).toBeUndefined();
+  it.each(['EU_CTA', 'CA_CTA', 'CA_CTA_A', 'JP_CTN', 'ICH_NONCLIN_SUMMARY', 'US_IND_AMENDMENT'])('exposes the corrected exact %s scaffold with its scope limitations', async (registryId) => {
+    const outline = await getRegistryDocumentTemplate(registryId);
+    expect(outline?.sections.length).toBeGreaterThan(0);
+    expect(outline?.outlineSource).toMatchObject({ registryId, kind: 'dedicated-blueprint' });
+    expect(outline?.outlineLimitations?.join(' ')).toMatch(/applicab|scope|scaffold/i);
     expect((await registryDocumentTemplateCoverage()).find((r) => r.registryId === registryId)).toMatchObject({
-      outlineAvailable: false, reason: 'existing_blueprint_requires_regional_review',
+      outlineAvailable: true,
     });
   });
 
@@ -281,7 +291,6 @@ describe('document template library — existing biotech structures are reachabl
     const coverage = await registryDocumentTemplateCoverage();
     expect(coverage.map((r) => r.registryId)).toEqual(GLOBAL_REGISTRY.filter((e) => e.active && e.segment === 'pharma_biotech').map((e) => e.id));
     expect(new Set(coverage.map((r) => r.registryId)).size).toBe(coverage.length);
-    expect(coverage.some((r) => !r.outlineAvailable)).toBe(true);
     for (const row of coverage) {
       expect(row.outlineAvailable, row.registryId).toBe(Boolean(await getRegistryDocumentTemplate(row.registryId)));
       if (!row.outlineAvailable) expect(row.reason, row.registryId).toBeTruthy();

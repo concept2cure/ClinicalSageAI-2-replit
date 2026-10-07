@@ -38,7 +38,7 @@ import {
   resolveToRegistryEntry,
   getSubmissionTypeContext,
 } from '../../../shared/regulatory/submission-type-bridge.js';
-import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap.js';
+import { getResolvedSectionBlueprint, getExactSectionBlueprint, getSectionBlueprintContext } from '../regulatory/sectionBlueprintCatalog.js';
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy.js';
 import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { resolveRequirements } from '../ind/ctd/requirements-resolver.js';
@@ -336,9 +336,10 @@ function blueprintLines(entry: RegulatoryApplicationType, section: SectionBluepr
     `SECTION REQUIREMENTS (from the ${entry.displayName} authoring blueprint):`,
     `- Section: ${section.code} — ${section.title}`,
     `- Content type: ${section.contentType}`,
-    `- ${section.required ? 'REQUIRED section' : 'Optional section'}`,
+    `- ${section.required ? 'Expected in the selected platform scaffold; confirm agency and client applicability' : 'Conditional or optional scaffold branch; applicability is unresolved, not waived'}`,
   ];
-  if (section.guidance) lines.push(`- Governing standard: ${section.guidance} (cite it and draft to its structure)`);
+  if (section.guidance) lines.push(`- Recorded authoring guidance: ${section.guidance}`);
+  lines.push(...getSectionBlueprintContext(entry.id).limitations.map(s => `- Scope limitation: ${s}`));
   return lines.join('\n');
 }
 
@@ -487,8 +488,8 @@ export function resolveDraftingRequirements(
   const entry = resolveToRegistryEntry(submissionType);
   if (!entry) return none;
 
-  const blueprint = getSectionBlueprintForEntry(entry);
-  if (registryOutlineRequiresReview(entry.id) || blueprint.id !== entry.defaultSectionBlueprint) {
+  const blueprint = getResolvedSectionBlueprint(entry);
+  if (registryOutlineRequiresReview(entry.id) || (!getExactSectionBlueprint(entry.id) && blueprint.id !== entry.defaultSectionBlueprint)) {
     return {
       requirements: `SECTION REQUIREMENTS: A suitable exact ${entry.displayName} outline is not indexed or requires review. Use the current agency/client template; do not substitute the platform's default CTD or supply section requirements from memory.`,
       requirementsSource: 'record:not-indexed-outline',
@@ -516,7 +517,26 @@ export function resolveDraftingRequirements(
     sectionType,
   };
   const lead = leadingSectionCode(sectionType);
+  const scoped = scopedCtdRequirements(ctx, lead, matchRow);
+  if (scoped) return scoped;
   return lead ? codeRequirements(ctx, lead) : titleRequirements(ctx, matchRow) ?? none;
+}
+
+/** Scope the repaired trial/nonclinical subtree before asking the CTD record. */
+function scopedCtdRequirements(ctx: CtdDraftContext, lead: ReturnType<typeof leadingSectionCode>, matchRow: (s: BlueprintRow) => boolean): DraftingRequirements | null {
+  const { entry, blueprint, sectionType } = ctx;
+  if (!['CA_CTA', 'CA_CTA_A', 'ICH_NONCLIN_SUMMARY'].includes(entry.id)) return null;
+  const requestedModule = /^module\s+([1-5])$/i.exec(sectionType.trim())?.[1];
+  const codes = lead ? [lead.code] : requestedModule ? [requestedModule] : canonicalCodesForTitle(sectionType);
+  const inScope = (code: string) => blueprint.sections.some(s => sameCode(s.code, code) || code.toLowerCase().startsWith(`${s.code.toLowerCase()}.`));
+  if (codes.length && !codes.some(inScope)) {
+    return { requirements: `SECTION REQUIREMENTS: "${sectionType}" is outside the selected ${entry.displayName} outline. Confirm the document and applicable section; do not substitute a full marketing CTD.`, requirementsSource: 'record:outside-outline' };
+  }
+  // Native Canadian rows describe phase/product-specific trial scope. Never
+  // replace their Module 1 with FDA guidance or their quality alternatives
+  // with an unconditional marketing dossier requirement.
+  const local = entry.region === 'CA' ? blueprint.sections.find(matchRow) : undefined;
+  return local ? { requirements: blueprintLines(entry, local), requirementsSource: 'blueprint:regional' } : null;
 }
 
 /** The requirements block alone; resolveDraftingRequirements also names its source. */

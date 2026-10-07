@@ -1,0 +1,179 @@
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > EU CTA uses the medicinal-product CTIS dossier, not a marketing CTD > has explicit Form/MSC, Part I and Part II authoring groups 8ms
+   → expected undefined to be 1 // Object.is equality
+ × server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > EU CTA uses the medicinal-product CTIS dossier, not a marketing CTD > covers scientific trial and product documents with justified alternatives 1ms
+   → PART_I.PROTOCOL: expected undefined to be true // Object.is equality
+ × server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > EU CTA uses the medicinal-product CTIS dossier, not a marketing CTD > covers national Part II without treating every possible attachment as universal 1ms
+   → PART_II.SITES: expected undefined to be true // Object.is equality
+ × server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > places clinical documents in Module 1 and quality information in Modules 2–3 1ms
+   → 1.0.1: expected undefined to be 1 // Object.is equality
+ × server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > keeps authorization/reference, site timing and format exceptions explicit 4ms
+   → expected true to be false // Object.is equality
+ × server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > exposes a genuinely separate amendment outline with no initial-only PSEAT 1ms
+   → expected undefined to be defined
+ × server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > requires changed protocol evidence for a clinical amendment without making it a quality-only requirement 0ms
+   → expected undefined to be defined
+ × server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > regional blueprint provenance and compatibility > publishes dated official source provenance for both regional outlines 0ms
+   → expected undefined to be defined
+ × server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > regional blueprint provenance and compatibility > retains existing task ids while correcting trial-stage quality and site descriptions 2ms
+   → expected 'Module 3 quality summary supporting t…' to match /Module 2.*Module 3/i
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > EU CTA uses the medicinal-product CTIS dossier, not a marketing CTD > has explicit Form/MSC, Part I and Part II authoring groups
+AssertionError: expected undefined to be 1 // Object.is equality
+
+- Expected:
+1
+
++ Received:
+undefined
+
+ ❯ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts:11:64
+      9|   it('has explicit Form/MSC, Part I and Part II authoring groups', () …
+     10|     expect(euCta.sectionBlueprint.name).toContain('CTIS');
+     11|     expect(find(euCta.sectionBlueprint, 'FORM.COVER')?.module).toBe(1);
+       |                                                                ^
+     12|     expect(find(euCta.sectionBlueprint, 'MSC')?.module).toBe(1);
+     13|     expect(find(euCta.sectionBlueprint, 'PART_I.PROTOCOL')?.module).to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > EU CTA uses the medicinal-product CTIS dossier, not a marketing CTD > covers scientific trial and product documents with justified alternatives
+AssertionError: PART_I.PROTOCOL: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts:21:66
+     19|   it('covers scientific trial and product documents with justified alt…
+     20|     for (const code of ['PART_I.PROTOCOL', 'PART_I.SYNOPSIS', 'PART_I.…
+     21|       expect(find(euCta.sectionBlueprint, code)?.required, code).toBe(…
+       |                                                                  ^
+     22|     }
+     23|     expect(find(euCta.sectionBlueprint, 'PART_I.IB_SMPC')?.guidance).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > EU CTA uses the medicinal-product CTIS dossier, not a marketing CTD > covers national Part II without treating every possible attachment as universal
+AssertionError: PART_II.SITES: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts:34:66
+     32|   it('covers national Part II without treating every possible attachme…
+     33|     for (const code of ['PART_II.SITES', 'PART_II.RECRUITMENT', 'PART_…
+     34|       expect(find(euCta.sectionBlueprint, code)?.required, code).toBe(…
+       |                                                                  ^
+     35|     }
+     36|     for (const code of ['FORM.FEES', 'PART_II.DATA_PROTECTION', 'PART_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > places clinical documents in Module 1 and quality information in Modules 2–3
+AssertionError: 1.0.1: expected undefined to be 1 // Object.is equality
+
+- Expected:
+1
+
++ Received:
+undefined
+
+ ❯ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts:47:68
+     45|   it('places clinical documents in Module 1 and quality information in…
+     46|     for (const code of ['1.0.1', '1.2.1', '1.3.4', '1.4.1', '1.7.1', '…
+     47|       expect(find(canadaCta.sectionBlueprint, code)?.module, code).toB…
+       |                                                                    ^
+     48|       expect(find(canadaCta.sectionBlueprint, code)?.required, code).t…
+     49|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > keeps authorization/reference, site timing and format exceptions explicit
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts:59:63
+     57|
+     58|   it('keeps authorization/reference, site timing and format exceptions…
+     59|     expect(find(canadaCta.sectionBlueprint, '2.3')?.required).toBe(fal…
+       |                                                               ^
+     60|     expect(find(canadaCta.sectionBlueprint, '2.3')?.guidance).toMatch(…
+     61|     expect(find(canadaCta.sectionBlueprint, '3.2')?.required).toBe(fal…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > exposes a genuinely separate amendment outline with no initial-only PSEAT
+AssertionError: expected undefined to be defined
+ ❯ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts:73:23
+     71|   it('exposes a genuinely separate amendment outline with no initial-o…
+     72|     const amendment = canadaCta.amendmentSectionBlueprint;
+     73|     expect(amendment).toBeDefined();
+       |                       ^
+     74|     expect(amendment.id).toBe('ca_cta_a_sections');
+     75|     expect(amendment).not.toBe(canadaCta.sectionBlueprint);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > requires changed protocol evidence for a clinical amendment without making it a quality-only requirement
+AssertionError: expected undefined to be defined
+ ❯ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts:84:23
+     82|   it('requires changed protocol evidence for a clinical amendment with…
+     83|     const amendment = canadaCta.amendmentSectionBlueprint;
+     84|     expect(amendment).toBeDefined();
+       |                       ^
+     85|     const protocol = find(amendment, '1.7.1');
+     86|     expect(protocol?.required).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > regional blueprint provenance and compatibility > publishes dated official source provenance for both regional outlines
+AssertionError: expected undefined to be defined
+ ❯ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts:101:44
+     99| describe('regional blueprint provenance and compatibility', () => {
+    100|   it('publishes dated official source provenance for both regional out…
+    101|     expect(euCta.EU_CTA_BLUEPRINT_SOURCES).toBeDefined();
+       |                                            ^
+    102|     expect(canadaCta.CA_CTA_BLUEPRINT_SOURCES).toBeDefined();
+    103|     for (const source of [...euCta.EU_CTA_BLUEPRINT_SOURCES, ...canada…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > regional blueprint provenance and compatibility > retains existing task ids while correcting trial-stage quality and site descriptions
+AssertionError: expected 'Module 3 quality summary supporting t…' to match /Module 2.*Module 3/i
+
+- Expected:
+/Module 2.*Module 3/i
+
++ Received:
+"Module 3 quality summary supporting the CTA"
+
+ ❯ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts:117:76
+    115|     expect(euTasks.map(task => task.id)).toEqual(['t_protocol', 't_imp…
+    116|     expect(caTasks.map(task => task.id)).toEqual(['t_protocol', 't_ib'…
+    117|     expect(caTasks.find(task => task.id === 't_cta_quality')?.descript…
+       |                                                                            ^
+    118|     expect(caTasks.find(task => task.id === 't_qidp')?.description).to…
+    119|     expect(caTasks.find(task => task.id === 't_reb')?.description).toM…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
+   Start at  22:10:16
+   Duration  784ms (transform 125ms, setup 86ms, import 121ms, tests 25ms, environment 0ms)

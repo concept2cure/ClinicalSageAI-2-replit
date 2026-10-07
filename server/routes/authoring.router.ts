@@ -3899,6 +3899,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
        and it lets the response say "passed N of M" instead of asking a reader
        to trust a bare number. */
     const checks: Array<{ id: string; flagged: boolean }> = [];
+    const checksSkipped: Array<{ id: string; reason: string }> = [];
     const runCheck = (id: string, fn: () => void) => {
       const before = deficiencies.length;
       fn();
@@ -3920,7 +3921,9 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
       }
     });
 
-    // Check for required regulatory keywords based on module
+    // Keyword expectations exist only for the five supported CTD module labels.
+    // CTIS groups, notifications and other document labels must not inherit CMC
+    // expectations or count an unsupported profile as a performed check.
     const requiredKeywords: Record<string, string[]> = {
       M3: ['specification', 'validation', 'stability', 'quality', 'manufacture', 'control'],
       M5: ['efficacy', 'safety', 'adverse', 'clinical', 'endpoint', 'statistical'],
@@ -3929,20 +3932,26 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
       M1: ['form', 'administrative', 'regulatory'],
     };
 
-    runCheck('module_keywords', () => {
-      const moduleKeywords = requiredKeywords[section.module] || requiredKeywords['M3'];
-      moduleKeywords.forEach(keyword => {
-        if (!contentLower.includes(keyword)) {
-          deficiencies.push({
-            type: 'missing_keyword',
-            severity: 'medium',
-            message: `Missing expected regulatory term: "${keyword}"`,
-            recommendation: `Include discussion of ${keyword} as required by ${region} guidelines`,
-            location: 'content',
-          });
-        }
+    const moduleLabel = String(section.module ?? '');
+    const moduleKeywords = Object.prototype.hasOwnProperty.call(requiredKeywords, moduleLabel)
+      ? requiredKeywords[moduleLabel] : undefined;
+    if (moduleKeywords) {
+      runCheck('module_keywords', () => {
+        moduleKeywords.forEach(keyword => {
+          if (!contentLower.includes(keyword)) {
+            deficiencies.push({
+              type: 'missing_keyword',
+              severity: 'medium',
+              message: `Missing expected regulatory term: "${keyword}"`,
+              recommendation: `Include discussion of ${keyword} as required by ${region} guidelines`,
+              location: 'content',
+            });
+          }
+        });
       });
-    });
+    } else {
+      checksSkipped.push({ id: 'module_keywords', reason: `No heuristic keyword profile is defined for document module "${moduleLabel}".` });
+    }
 
     /* CTD required-element check, migrated from POST /ai/validate-compliance.
        That endpoint was a second, callerless implementation of this same
@@ -4051,6 +4060,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
            rather than hardcoding a number that drifts from the code. */
         checks_run: checksRun,
         checks_passed: checksPassed,
+        ...(checksSkipped.length ? { checks_skipped: checksSkipped } : {}),
         status:
           qualityScore >= 80
             ? 'heuristic_ok'
