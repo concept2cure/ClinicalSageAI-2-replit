@@ -100,6 +100,9 @@ Contracts and scoped evidence:
 - [Canonical resolved-path containment](RESOLVED-PATH-CONTAINMENT.md)
 - [Verified adoption and rollback behavior](ADOPTION-VERIFICATION.md)
 - [Control-tower continuation: 974 shared tests and boundaries](CONTINUATION.md)
+- [Original upload byte-persistence refusal](UPLOAD-DURABILITY.md)
+- [Control-tower upload follow-through: 1029 runtime regressions](UPLOAD-FOLLOW-THROUGH.md)
+- [Prioritized scientific qualification and handoff gaps](NEXT-QUALIFICATION.md)
 
 Capture retains the original and explicitly leaves extraction pending. These
 checks are not scientific qualification, an automatic filing action, symlink

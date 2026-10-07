@@ -73,7 +73,7 @@ function appAs(userId: number | null = LEAD, role = 'member', orgId: number | nu
   app.use('/api/c2c/projects', router);
   return app;
 }
-const adopt = (app = appAs(), program = PROGRAM, body: unknown = { fileUploadId: FILE }) =>
+const adopt = (app = appAs(), program = PROGRAM, body: object = { fileUploadId: FILE }) =>
   request(app).post(`/api/c2c/projects/${program}/adopt`).send(body);
 const sqlCalls = () => mocks.txQuery.mock.calls.map(call => String(call[0]));
 const noCapture = () => {
