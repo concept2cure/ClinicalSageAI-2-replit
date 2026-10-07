@@ -29,7 +29,7 @@ has its own three-failure RED against the pending canonical lineage repair.
 Later isolated-original controls and fixture/runner failures are explicitly
 labeled; no failed or empty execution is represented as GREEN.
 
-## Final integration evidence
+## First publication integration evidence
 
 - [Combined regression](COMBINED-REGRESSION.txt): **69 physical files,
   1341/1341 cases passed, zero skipped/todo, exit 0, 224.99 seconds**. Runs use
@@ -57,6 +57,32 @@ Under the user's continuing authorization, this publication's full semantic
 gate is verified in GitHub after publication. That verdict is pending when
 this receipt is filed; the exact-source GitHub job, not local tests or builds,
 supplies its final result.
+
+## Broad CI fixture follow-up
+
+The prior broad CI artifacts later identified 54 failed assertions across
+eleven physical suites, including the citation fixture setup failure already
+repaired by the first publication. The remaining ten suites reproduced all
+54 failures on current source before any follow-up test edit. The bounded
+[CI-FOLLOWUP-PLAN.md](CI-FOLLOWUP-PLAN.md) approves fixture/prerequisite and
+stale test-contract corrections while preserving production refusal gates.
+Original forbidden inputs remain explicit refusal controls.
+
+[CI-FOLLOWUP-RESULTS.md](CI-FOLLOWUP-RESULTS.md) records the corrections and
+limits. The final expanded regression passed **80 physical files / 1470 cases,
+zero failed/pending/skipped/todo, exit 0, 275.21 seconds**, including all first
+publication suites, all ten corrected suites and the existing migration-list
+closure contract. [CI-COMBINED-EXECUTION-MANIFEST.json](CI-COMBINED-EXECUTION-MANIFEST.json)
+verifies requested and executed files, actual assertion statuses and the ten
+changed test blobs. Scoped lint has zero errors and one unchanged inherited
+warning; the per-file warning ratchet passed. Production source and all 27
+earlier qualified blobs are unchanged, so existing build receipts apply.
+`CI-BRANCH-GATES.txt` supplies the follow-up's actual local publication gates.
+
+These results qualify the scoped existing contracts. The exact final GitHub
+semantic TypeScript, scanner and broad CI verdicts remain pending at filing;
+queued jobs are not passes. Full release/intended-use qualification remains
+open.
 
 ## Evidence scanner correction
 

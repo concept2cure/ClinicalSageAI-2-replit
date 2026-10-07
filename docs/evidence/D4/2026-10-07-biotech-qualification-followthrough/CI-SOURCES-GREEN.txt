@@ -1,0 +1,1029 @@
+Final six-file manifest including the explicit original NULL-organization no-write refusal.
+Only test prerequisites changed; production guards and original assertions preserved.
+One fork; NODE_OPTIONS=--max-old-space-size=4096
+["npx", "vitest", "run", "--config", "vitest.config.ts", "server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts", "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts", "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts", "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts", "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts", "server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts", "--reporter=dot", "--reporter=json", "--outputFile.json=/workspace/scratch/c2099bdce0e4/ci-sources-green-final.json"]
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+✅ Template tables initialized
+
+·stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction
+{
+  "timestamp": "2026-10-07T17:10:39.111Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REFRESHED on doc ed57238d-6eb9-4363-a45f-e88634db820b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction
+{
+  "timestamp": "2026-10-07T17:10:39.174Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc 1b07768c-d46b-4a3f-b9e7-487ff83ba91f by a***@canvas.example",
+  "context": {}
+}
+
+···stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing an already-cited source keeps the checksum recorded at cite time and writes nothing
+{
+  "timestamp": "2026-10-07T17:10:39.202Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc 452d6d47-ef07-4a4e-8c02-12e08b531493 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone
+{
+  "timestamp": "2026-10-07T17:10:39.251Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc cdf3cb22-b050-4d00-b418-ed42b6932b35 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone
+{
+  "timestamp": "2026-10-07T17:10:39.282Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_UPDATED on doc cdf3cb22-b050-4d00-b418-ed42b6932b35 by a***@canvas.example",
+  "context": {}
+}
+
+··stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+{
+  "timestamp": "2026-10-07T17:10:39.307Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc a0aa36c4-d486-49ff-acae-52bae66d7e55 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+{
+  "timestamp": "2026-10-07T17:10:39.327Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REMOVED on doc a0aa36c4-d486-49ff-acae-52bae66d7e55 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > the free-text cite: CITATION_ADDED in the same transaction
+{
+  "timestamp": "2026-10-07T17:10:39.345Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc b018a802-cd89-4613-a92b-f383cdaabf9e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section
+{
+  "timestamp": "2026-10-07T17:10:39.375Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REFRESHED on doc 6afcc31b-4b19-4f7a-b8a4-cf481c00a2a3 by a***@canvas.example",
+  "context": {}
+}
+
+····stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source
+CRITICAL: Failed to create audit trail: error: test: audit row refused for CITATION_ADDED
+    at pe.Le (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 159,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '142b815a-edcf-4598-b338-f68cc9fe95d8',
+    'd0b69759-dc5f-4c8f-82b6-1b0acd010d1c',
+    'CITATION_ADDED',
+    'author@canvas.example',
+    'unknown',
+    null,
+    '{"id":"0c262792-03df-4947-b467-b97985e60d4c","section_id":"d0b69759-dc5f-4c8f-82b6-1b0acd010d1c","source":"cre_evidence_source","reference_id":"12","citation_text":null,"payload_sha256":"sha-fc-add"}',
+    null,
+    '11e35afe2ee548f61222ba28355f4c192a9878c3f805ef127c7c8abb679997cc',
+    'Source cited',
+    {
+      citation_id: '0c262792-03df-4947-b467-b97985e60d4c',
+      source: 'cre_evidence_source',
+      reference_id: '12',
+      previous_sha256: null,
+      sha256: 'sha-fc-add'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '307081f0-4d6a-4a2c-b164-973d9f2b2393',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source
+POST /sections/:sectionId/cite-source error: test: audit row refused for CITATION_ADDED
+    at pe.Le (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 159,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '142b815a-edcf-4598-b338-f68cc9fe95d8',
+    'd0b69759-dc5f-4c8f-82b6-1b0acd010d1c',
+    'CITATION_ADDED',
+    'author@canvas.example',
+    'unknown',
+    null,
+    '{"id":"0c262792-03df-4947-b467-b97985e60d4c","section_id":"d0b69759-dc5f-4c8f-82b6-1b0acd010d1c","source":"cre_evidence_source","reference_id":"12","citation_text":null,"payload_sha256":"sha-fc-add"}',
+    null,
+    '11e35afe2ee548f61222ba28355f4c192a9878c3f805ef127c7c8abb679997cc',
+    'Source cited',
+    {
+      citation_id: '0c262792-03df-4947-b467-b97985e60d4c',
+      source: 'cre_evidence_source',
+      reference_id: '12',
+      previous_sha256: null,
+      sha256: 'sha-fc-add'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '307081f0-4d6a-4a2c-b164-973d9f2b2393',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite
+CRITICAL: Failed to create audit trail: error: test: audit row refused for CITATION_REMOVED
+    at pe.Le (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 161,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'a98b4a48-fb8c-4416-8e36-88d5b84e75b8',
+    '15b03495-f418-4d89-8e97-1d50418b06bc',
+    'CITATION_REMOVED',
+    'author@canvas.example',
+    'unknown',
+    '{"id":"92a544e2-37ed-41c9-989c-71ebc68fd007","section_id":"15b03495-f418-4d89-8e97-1d50418b06bc","source":"cre_evidence_source","reference_id":"13","citation_text":"as cited","payload_sha256":"sha-fc-del","anchor":null,"created_by":"9","created_at":"2026-10-07T17:10:39.427Z"}',
+    null,
+    '5a78ccca1b644be6f11992c4ac2d6338c6aa158379d2a0771597915352f84a39',
+    null,
+    'Citation removed',
+    {
+      citation_id: '92a544e2-37ed-41c9-989c-71ebc68fd007',
+      source: 'cre_evidence_source',
+      reference_id: '13',
+      previous_sha256: 'sha-fc-del',
+      sha256: null
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    'd0fea31d-451a-424b-86fe-ff7a87964c4e',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite
+DELETE /sections/:sectionId/cite-source/:sourceId error: test: audit row refused for CITATION_REMOVED
+    at pe.Le (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 161,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'a98b4a48-fb8c-4416-8e36-88d5b84e75b8',
+    '15b03495-f418-4d89-8e97-1d50418b06bc',
+    'CITATION_REMOVED',
+    'author@canvas.example',
+    'unknown',
+    '{"id":"92a544e2-37ed-41c9-989c-71ebc68fd007","section_id":"15b03495-f418-4d89-8e97-1d50418b06bc","source":"cre_evidence_source","reference_id":"13","citation_text":"as cited","payload_sha256":"sha-fc-del","anchor":null,"created_by":"9","created_at":"2026-10-07T17:10:39.427Z"}',
+    null,
+    '5a78ccca1b644be6f11992c4ac2d6338c6aa158379d2a0771597915352f84a39',
+    null,
+    'Citation removed',
+    {
+      citation_id: '92a544e2-37ed-41c9-989c-71ebc68fd007',
+      source: 'cre_evidence_source',
+      reference_id: '13',
+      previous_sha256: 'sha-fc-del',
+      sha256: null
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    'd0fea31d-451a-424b-86fe-ff7a87964c4e',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token
+CRITICAL: Failed to create audit trail: error: test: audit row refused for CITATION_REFRESHED
+    at pe.Le (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 163,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'fc95d329-6d15-46eb-b645-58ac18df3f21',
+    '6ad6812e-fe1d-4ea9-b428-2ea9fe0af729',
+    'CITATION_REFRESHED',
+    'author@canvas.example',
+    'unknown',
+    '{"id":"5a85bad4-05c4-43ca-bfd7-33e51d285e24","section_id":"6ad6812e-fe1d-4ea9-b428-2ea9fe0af729","source":"cre_evidence_source","reference_id":"14","citation_text":"as cited","payload_sha256":"sha-fc-rr-1"}',
+    '{"id":"5a85bad4-05c4-43ca-bfd7-33e51d285e24","section_id":"6ad6812e-fe1d-4ea9-b428-2ea9fe0af729","source":"cre_evidence_source","reference_id":"14","citation_text":"as cited","payload_sha256":"sha-fc-rr-2"}',
+    '5040c5330740c9771e88bd942baccea6146bfb73b8587dd31fdc191d400d2f6e',
+    '26ceac1221835eb4b3058b2804f8f69655ea6dc284078bb673824c2927d66e79',
+    'Source re-read: its checksum changed since the citation was recorded',
+    {
+      citation_id: '5a85bad4-05c4-43ca-bfd7-33e51d285e24',
+      source: 'cre_evidence_source',
+      reference_id: '14',
+      previous_sha256: 'sha-fc-rr-1',
+      sha256: 'sha-fc-rr-2'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '58c3fdc9-71fc-4fd8-8ebd-1eeed373603b',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token
+Error refreshing token: error: test: audit row refused for CITATION_REFRESHED
+    at pe.Le (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 163,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'fc95d329-6d15-46eb-b645-58ac18df3f21',
+    '6ad6812e-fe1d-4ea9-b428-2ea9fe0af729',
+    'CITATION_REFRESHED',
+    'author@canvas.example',
+    'unknown',
+    '{"id":"5a85bad4-05c4-43ca-bfd7-33e51d285e24","section_id":"6ad6812e-fe1d-4ea9-b428-2ea9fe0af729","source":"cre_evidence_source","reference_id":"14","citation_text":"as cited","payload_sha256":"sha-fc-rr-1"}',
+    '{"id":"5a85bad4-05c4-43ca-bfd7-33e51d285e24","section_id":"6ad6812e-fe1d-4ea9-b428-2ea9fe0af729","source":"cre_evidence_source","reference_id":"14","citation_text":"as cited","payload_sha256":"sha-fc-rr-2"}',
+    '5040c5330740c9771e88bd942baccea6146bfb73b8587dd31fdc191d400d2f6e',
+    '26ceac1221835eb4b3058b2804f8f69655ea6dc284078bb673824c2927d66e79',
+    'Source re-read: its checksum changed since the citation was recorded',
+    {
+      citation_id: '5a85bad4-05c4-43ca-bfd7-33e51d285e24',
+      source: 'cre_evidence_source',
+      reference_id: '14',
+      previous_sha256: 'sha-fc-rr-1',
+      sha256: 'sha-fc-rr-2'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '58c3fdc9-71fc-4fd8-8ebd-1eeed373603b',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+{
+  "timestamp": "2026-10-07T17:10:39.460Z",
+  "level": "error",
+  "message": "[authoring-router] saving refresh token failed",
+  "context": {
+    "err": "test: audit row refused for CITATION_REFRESHED",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure
+CRITICAL: Failed to create audit trail: error: test: audit row refused for CITATION_REFRESHED
+    at pe.Le (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 163,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'dbaa7abf-b660-4b20-b92c-1dc275701753',
+    '18c3da78-fc94-49ef-81fb-9c3d69e74128',
+    'CITATION_REFRESHED',
+    'author@canvas.example',
+    'unknown',
+    '{"id":"71803b72-f1e7-43e9-a405-9e2b7ec7654e","section_id":"18c3da78-fc94-49ef-81fb-9c3d69e74128","source":"cre_evidence_source","reference_id":"15","citation_text":"as cited","payload_sha256":"sha-fc-all-a1"}',
+    '{"id":"71803b72-f1e7-43e9-a405-9e2b7ec7654e","section_id":"18c3da78-fc94-49ef-81fb-9c3d69e74128","source":"cre_evidence_source","reference_id":"15","citation_text":"as cited","payload_sha256":"sha-fc-all-a2"}',
+    '0689abf88980a7eee9613ee6b96b3cc0f6bbcb677480a24c563369c3563f6310',
+    'bb04f5eb9e8c90c49057e01ac779a28ba58a9a80f8a70de2352b0f846d35e1b0',
+    'Source re-read: its checksum changed since the citation was recorded',
+    {
+      citation_id: '71803b72-f1e7-43e9-a405-9e2b7ec7654e',
+      source: 'cre_evidence_source',
+      reference_id: '15',
+      previous_sha256: 'sha-fc-all-a1',
+      sha256: 'sha-fc-all-a2'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '3be7d606-e66d-47b8-9b7f-46682268ff30',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure
+POST /docs/:id/refresh-all error: test: audit row refused for CITATION_REFRESHED
+    at pe.Le (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 163,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'dbaa7abf-b660-4b20-b92c-1dc275701753',
+    '18c3da78-fc94-49ef-81fb-9c3d69e74128',
+    'CITATION_REFRESHED',
+    'author@canvas.example',
+    'unknown',
+    '{"id":"71803b72-f1e7-43e9-a405-9e2b7ec7654e","section_id":"18c3da78-fc94-49ef-81fb-9c3d69e74128","source":"cre_evidence_source","reference_id":"15","citation_text":"as cited","payload_sha256":"sha-fc-all-a1"}',
+    '{"id":"71803b72-f1e7-43e9-a405-9e2b7ec7654e","section_id":"18c3da78-fc94-49ef-81fb-9c3d69e74128","source":"cre_evidence_source","reference_id":"15","citation_text":"as cited","payload_sha256":"sha-fc-all-a2"}',
+    '0689abf88980a7eee9613ee6b96b3cc0f6bbcb677480a24c563369c3563f6310',
+    'bb04f5eb9e8c90c49057e01ac779a28ba58a9a80f8a70de2352b0f846d35e1b0',
+    'Source re-read: its checksum changed since the citation was recorded',
+    {
+      citation_id: '71803b72-f1e7-43e9-a405-9e2b7ec7654e',
+      source: 'cre_evidence_source',
+      reference_id: '15',
+      previous_sha256: 'sha-fc-all-a1',
+      sha256: 'sha-fc-all-a2'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '3be7d606-e66d-47b8-9b7f-46682268ff30',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+·····stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction
+{
+  "timestamp": "2026-10-07T17:10:39.512Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc 7d5cee47-23ca-4b0c-9210-71802b1ec537 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a parent comment on another section, and writes nothing
+{
+  "timestamp": "2026-10-07T17:10:39.530Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc def6ffb3-c7be-465b-8b9d-779787531532 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section
+{
+  "timestamp": "2026-10-07T17:10:39.561Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc f9bcd808-a2d3-4f7b-8076-a0d2fa3417c2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section
+{
+  "timestamp": "2026-10-07T17:10:39.576Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: reply_added on doc f9bcd808-a2d3-4f7b-8076-a0d2fa3417c2 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved
+CRITICAL: Failed to create audit trail: error: test: audit row refused for comment_added
+    at pe.Le (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 158,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '11ca8b4e-df9f-4b8e-b212-421df0b9310d',
+    '696bb99c-3f06-4ee8-8cdc-e02c72242bfd',
+    'comment_added',
+    'author@canvas.example',
+    'unknown',
+    null,
+    'Unrecorded',
+    null,
+    '8526102b84851637a9b6eecf62b2a9e95c096f45d654d667c6473cf7481bc0c4',
+    null,
+    {
+      comment_id: '786a0f7a-a068-456a-bfdb-5e55c16532c9',
+      section_id: '696bb99c-3f06-4ee8-8cdc-e02c72242bfd',
+      parent_comment_id: null,
+      anchor: null,
+      quote: null,
+      quoteSha256: null,
+      sectionContentSha256: 'bda1ead50954efed8dc2c731404edc3e5a733657cd7edc14acf56667eb110391'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '2474a25e-a43a-4cd1-91a2-e86ed422ef7a',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved
+Error adding comment: error: test: audit row refused for comment_added
+    at pe.Le (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 158,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '11ca8b4e-df9f-4b8e-b212-421df0b9310d',
+    '696bb99c-3f06-4ee8-8cdc-e02c72242bfd',
+    'comment_added',
+    'author@canvas.example',
+    'unknown',
+    null,
+    'Unrecorded',
+    null,
+    '8526102b84851637a9b6eecf62b2a9e95c096f45d654d667c6473cf7481bc0c4',
+    null,
+    {
+      comment_id: '786a0f7a-a068-456a-bfdb-5e55c16532c9',
+      section_id: '696bb99c-3f06-4ee8-8cdc-e02c72242bfd',
+      parent_comment_id: null,
+      anchor: null,
+      quote: null,
+      quoteSha256: null,
+      sectionContentSha256: 'bda1ead50954efed8dc2c731404edc3e5a733657cd7edc14acf56667eb110391'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '2474a25e-a43a-4cd1-91a2-e86ed422ef7a',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+{
+  "timestamp": "2026-10-07T17:10:39.594Z",
+  "level": "error",
+  "message": "[authoring-router] saving comment failed",
+  "context": {
+    "err": "test: audit row refused for comment_added",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+·····stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it
+{
+  "timestamp": "2026-10-07T17:10:45.539Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it
+{
+  "timestamp": "2026-10-07T17:10:45.542Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it
+{
+  "timestamp": "2026-10-07T17:10:45.542Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker
+{
+  "timestamp": "2026-10-07T17:10:45.788Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker
+{
+  "timestamp": "2026-10-07T17:10:45.790Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker
+{
+  "timestamp": "2026-10-07T17:10:45.790Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+·····stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T17:10:47.042Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > retains current, project-verified source references in saved provenance and CREATE audit metadata
+{
+  "timestamp": "2026-10-07T17:10:55.806Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e42dd66d-1a54-4ffc-b2ab-9b4c64b65a26 by a***@canvas.example",
+  "context": {}
+}
+
+······stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows
+{
+  "timestamp": "2026-10-07T17:10:55.997Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "err": "Test embedding unavailable"
+  }
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "timestamp": "2026-10-07T17:10:56.039Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b22e01fe-464c-4cd4-81e0-18b93c592db8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "timestamp": "2026-10-07T17:10:56.051Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b22e01fe-464c-4cd4-81e0-18b93c592db8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "timestamp": "2026-10-07T17:10:56.063Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b22e01fe-464c-4cd4-81e0-18b93c592db8 by a***@canvas.example",
+  "context": {}
+}
+
+······stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "timestamp": "2026-10-07T17:10:56.112Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f5222bcf-554c-4561-9890-8bd4f60e6bb0 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "timestamp": "2026-10-07T17:10:56.130Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f5222bcf-554c-4561-9890-8bd4f60e6bb0 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "timestamp": "2026-10-07T17:10:56.141Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f5222bcf-554c-4561-9890-8bd4f60e6bb0 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a failed write reaches the model as a plain refusal, never the driver’s message
+{
+  "timestamp": "2026-10-07T17:10:56.180Z",
+  "level": "error",
+  "message": "[draft-authoring-document-tool] draft_authoring_document failed",
+  "context": {
+    "err": "relation \"authoring_sections\" does not exist"
+  }
+}
+
+···stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "timestamp": "2026-10-07T17:10:56.215Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 07bec4df-c053-49d0-8ebf-f09e4524d99c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "timestamp": "2026-10-07T17:10:56.229Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 07bec4df-c053-49d0-8ebf-f09e4524d99c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "timestamp": "2026-10-07T17:10:56.242Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 07bec4df-c053-49d0-8ebf-f09e4524d99c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — governed source withdrawal before save > CONTROL: an unchanged eligible source still saves through the registered tool
+{
+  "timestamp": "2026-10-07T17:10:56.288Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 703ee681-e0a8-4deb-8601-2a6882ddff15 by a***@canvas.example",
+  "context": {}
+}
+
+······stderr | server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts
+{
+  "timestamp": "2026-10-07T17:10:58.674Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+························stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it
+{
+  "timestamp": "2026-10-07T17:11:11.453Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 8,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-10-07T17:11:11.515Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": null,
+        "documentUuid": "44444444-4444-4444-8444-444444444444",
+        "reason": "vault document not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-10-07T17:11:11.516Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 7,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+··
+
+ Test Files  6 passed (6)
+      Tests  72 passed (72)
+   Start at  13:10:30
+   Duration  41.53s (transform 7.40s, setup 166ms, import 15.48s, tests 24.49s, environment 1ms)
+
+JSON report written to /workspace/scratch/c2099bdce0e4/ci-sources-green-final.json
+
+PROCESS_EXIT_CODE=0

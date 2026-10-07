@@ -1,0 +1,76 @@
+{
+  "source": "714506d7cd8ac499e07450542b74e72ec5630a5c plus frozen test-only CI follow-up",
+  "files": 10,
+  "exit_code": 0,
+  "errors": 0,
+  "warnings": 1,
+  "per_file": [
+    {
+      "path": "server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts",
+      "errors": 0,
+      "warnings": 1,
+      "messages": [
+        {
+          "line": 135,
+          "rule": "no-undef",
+          "severity": 1,
+          "message": "'setImmediate' is not defined."
+        }
+      ]
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "tests/regulatory/regulatory-basis.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ]
+}

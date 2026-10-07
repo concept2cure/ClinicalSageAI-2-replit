@@ -1,0 +1,87 @@
+{
+  "source": "714506d7cd8ac499e07450542b74e72ec5630a5c",
+  "method": "ESLint API: original Git source linted under each canonical filename versus the current owned tests; this is not semantic TypeScript validation",
+  "comparisons": [
+    {
+      "filePath": "tests/regulatory/regulatory-basis.test.ts",
+      "before": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "after": {
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    {
+      "filePath": "server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts",
+      "before": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "after": {
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    {
+      "filePath": "server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts",
+      "before": {
+        "errors": 0,
+        "warnings": 1
+      },
+      "after": {
+        "errors": 0,
+        "warnings": 1
+      }
+    },
+    {
+      "filePath": "server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts",
+      "before": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "after": {
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  ],
+  "unchangedProductionGuards": [
+    {
+      "path": "shared/regulatory/regulatory-basis.ts",
+      "before_blob": "68b11e688485badea3178f901f9acf1b41ea918a",
+      "after_blob": "68b11e688485badea3178f901f9acf1b41ea918a"
+    },
+    {
+      "path": "server/services/audit/audit-immutability-triggers.ts",
+      "before_blob": "a42be3423e93efafc2bed2f852f78a559655bc54",
+      "after_blob": "a42be3423e93efafc2bed2f852f78a559655bc54"
+    },
+    {
+      "path": "migrations/20261001_domain_history_append_only.sql",
+      "before_blob": "cf1e744c3747da5f2e643b6bc3f314da4f572198",
+      "after_blob": "cf1e744c3747da5f2e643b6bc3f314da4f572198"
+    },
+    {
+      "path": "migrations/20261005c_cmc_module3_history_append_only.sql",
+      "before_blob": "6f7391317535791fada7393a96ae9a199ea7341b",
+      "after_blob": "6f7391317535791fada7393a96ae9a199ea7341b"
+    },
+    {
+      "path": "server/services/submission-gateways/governed-transmit-checks.ts",
+      "before_blob": "4e08f7ab0f12cca2646cf5378fd6933b8cbc2cc8",
+      "after_blob": "4e08f7ab0f12cca2646cf5378fd6933b8cbc2cc8"
+    },
+    {
+      "path": "server/services/governance/separation-of-duties.ts",
+      "before_blob": "58c953f4811a5864f0bd92e77bc4164e41515325",
+      "after_blob": "58c953f4811a5864f0bd92e77bc4164e41515325"
+    },
+    {
+      "path": "server/services/intelligence/regulatory-intelligence.ts",
+      "before_blob": "2bb13007d8c0fe334e98132294e00ed3f9959fa8",
+      "after_blob": "2bb13007d8c0fe334e98132294e00ed3f9959fa8"
+    }
+  ]
+}

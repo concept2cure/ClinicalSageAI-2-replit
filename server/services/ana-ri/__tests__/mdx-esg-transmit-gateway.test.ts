@@ -36,13 +36,16 @@ import { fingerprintPackageContent, sha256Hex, type PackageContentRow } from '..
 
 interface QueryRecord { sql: string; args: unknown[] }
 
-const { poolQueries, storedBundle, httpsRequests, mdnResponse, audit, recordGovernedAction, signerOnFile } =
+const { poolQueries, storedBundle, httpsRequests, mdnResponse, audit, recordGovernedAction, signerOnFile, packageCreator } =
   vi.hoisted(() => ({
     poolQueries:   [] as QueryRecord[],
     // Off by default, so every test above the §11.50 block sees the lookup it
     // always saw. On, the signer resolves and electronic_signatures accepts the
     // row, so the governed signature write runs to COMMIT (2026-09-28, GP-P-2).
     signerOnFile:  { value: false },
+    // The fixture package records its creator; user 7 transmits as a colleague.
+    // Negative controls explicitly remove that record or name user 7 instead.
+    packageCreator: { value: 8 as number | null },
     storedBundle:  { value: null as unknown },
     httpsRequests: [] as Array<{ options: any; body: Buffer }>,
     // `sent` is the body as delivered, with {{MESSAGE_ID}} echoing the request's
@@ -70,7 +73,7 @@ function queryImpl(sql: string, args: unknown[] = []) {
     return Promise.resolve({ rows: [{ id: 9001, signed_at: new Date() }], rowCount: 1 });
   }
   if (sql.includes('FROM c2c_submission_packages')) {
-    return Promise.resolve({ rows: [{ metadata: { bundle: storedBundle.value } }], rowCount: 1 });
+    return Promise.resolve({ rows: [{ created_by_id: packageCreator.value, metadata: { bundle: storedBundle.value } }], rowCount: 1 });
   }
   if (sql.includes('FROM c2c_package_sections')) {
     return Promise.resolve({
@@ -227,6 +230,7 @@ beforeEach(() => {
   _resetMdxToolRateLimitersForTests();
   poolQueries.length = 0;
   signerOnFile.value = false;
+  packageCreator.value = 8;
   httpsRequests.length = 0;
   mdnResponse.statusCode = 200;
   mdnResponse.body =
@@ -294,6 +298,8 @@ describe('the 510(k) transmit affordance reaches the real FDA ESG AS2 transport'
     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
 
     expect(r.success, `handler refused: ${r.message}`).toBe(true);
+    const creatorRead = poolQueries.find(q => q.sql.includes('SELECT created_by_id FROM c2c_submission_packages'));
+    expect(creatorRead?.args).toEqual([String(TRANSMIT_PARAMS.packageId), SIGNED_CTX.organizationId]);
 
     // 1. The bytes actually reached the transport.
     expect(httpsRequests).toHaveLength(1);
@@ -479,6 +485,22 @@ describe('the ESG NextGen REST transport is selectable behind the same path and 
 });
 
 describe('the package gate travels with the transmit, wherever it is invoked from', () => {
+  it.each([
+    { creator: null, error: 'SIGNER_INDEPENDENCE_UNRESOLVED' },
+    { creator: SIGNED_CTX.userId, error: 'SIGNER_IS_AUTHOR' },
+  ])('refuses a recorded package creator of $creator before any transmission or signature', async ({ creator, error }) => {
+    configureEsgCredentials();
+    packageCreator.value = creator;
+    const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    expect(r.success).toBe(false);
+    expect(r.error).toBe(error);
+    expect(r.message).toMatch(/Nothing was transmitted/);
+    expect(httpsRequests).toHaveLength(0);
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(poolQueries.some(q => q.sql.includes('INSERT INTO submission_transmittals'))).toBe(false);
+    expect(poolQueries.some(q => q.sql.includes('INSERT INTO electronic_signatures'))).toBe(false);
+  });
+
   it('refuses a package whose descriptor carries no structural-validation evidence', async () => {
     configureEsgCredentials();
     storedBundle.value = {
@@ -582,7 +604,8 @@ describe('a check that failed without blocking is recorded, not dropped', () => 
  * stamped 'approval' for everyone before. These pin the rest of the path: the
  * value reaches the sign ledger, the electronic_signatures row and the
  * transmittal, and the route's mapping onto the canonical spelling is
- * load-bearing — the dialog's raw token is refused by the signature writer.
+ * load-bearing. An agency release never uses an authorship meaning; the
+ * independence guard refuses either spelling before bytes or signatures.
  */
 describe('the transmit records the declared signature meaning', () => {
   const ctxDeclaring = (signaturePurpose: string) => ({
@@ -590,44 +613,41 @@ describe('the transmit records the declared signature meaning', () => {
     signoff: { ...SIGNED_CTX.signoff, signaturePurpose },
   });
 
-  it('a signer who declared Authorship is recorded as Authorship on the ledger, the signature row and the transmittal', async () => {
+  it('an independent signer who declared Responsibility is recorded as Responsibility on the ledger, signature row and transmittal', async () => {
     configureEsgCredentials();
     signerOnFile.value = true;
 
-    const r = await esgTransmit(ctxDeclaring('authorship') as any, TRANSMIT_PARAMS);
+    const r = await esgTransmit(ctxDeclaring('responsibility') as any, TRANSMIT_PARAMS);
     expect(r.success, `handler refused: ${r.message}`).toBe(true);
 
     const ledger = recordGovernedAction.mock.calls[0]![1] as any;
-    expect(ledger.payload.meaning).toBe('authorship');
+    expect(ledger.payload.meaning).toBe('responsibility');
 
     const sig = poolQueries.find((q) => q.sql.includes('INSERT INTO electronic_signatures'));
     expect(sig, 'no electronic_signatures row was written').toBeDefined();
     // $16 signature_meaning, $17 signature_manifest (persistElectronicSignature).
-    expect(sig!.args[15]).toBe('authorship');
-    expect(JSON.parse(String(sig!.args[16])).meaning).toBe('authorship');
+    expect(sig!.args[15]).toBe('responsibility');
+    expect(JSON.parse(String(sig!.args[16])).meaning).toBe('responsibility');
     expect(sig!.args).not.toContain('approval');
 
     const stamped = poolQueries.find(
       (q) => q.sql.includes('UPDATE submission_transmittals') && String(q.args[0]).includes('"signature"'),
     );
-    expect(JSON.parse(String(stamped!.args[0])).signature.meaning).toBe('authorship');
+    expect(JSON.parse(String(stamped!.args[0])).signature.meaning).toBe('responsibility');
     expect(poolQueries.some((q) => q.sql.trim() === 'COMMIT')).toBe(true);
   });
 
-  it("the dialog's raw token is not a meaning the signature writer accepts — the route's mapping is what makes it one", async () => {
+  it.each(['authorship', 'AUTHOR'])('refuses the original authorship meaning %s before the wire or any governed write', async meaning => {
     configureEsgCredentials();
     signerOnFile.value = true;
 
-    await esgTransmit(ctxDeclaring('AUTHOR') as any, TRANSMIT_PARAMS);
-
-    // Refused before any signature INSERT, and the sign transaction rolled
-    // back — after the bytes had already reached the agency.
-    expect(httpsRequests).toHaveLength(1);
+    const r = await esgTransmit(ctxDeclaring(meaning) as any, TRANSMIT_PARAMS);
+    expect(r.success).toBe(false);
+    expect(r.error).toBe('AUTHORSHIP_NOT_A_RELEASE');
+    expect(r.message).toMatch(/Nothing was transmitted/);
+    expect(httpsRequests).toHaveLength(0);
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(poolQueries.some(q => q.sql.includes('INSERT INTO submission_transmittals'))).toBe(false);
     expect(poolQueries.some((q) => q.sql.includes('INSERT INTO electronic_signatures'))).toBe(false);
-    expect(poolQueries.some((q) => q.sql.trim() === 'ROLLBACK')).toBe(true);
-    const row = audit.logAction.mock.calls
-      .map((c: any[]) => c[0])
-      .find((e: any) => e?.action === 'agent.ana.k510_workflow.transmit');
-    expect(row?.details?.ledgerWriteFailed).toBe(true);
   });
 });

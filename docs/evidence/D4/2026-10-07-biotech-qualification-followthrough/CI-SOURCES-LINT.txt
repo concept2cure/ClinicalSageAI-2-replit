@@ -1,0 +1,6 @@
+Final six owned test suites.
+["npx", "eslint", "server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts", "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts", "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts", "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts", "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts", "server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts"]
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+PROCESS_EXIT_CODE=0

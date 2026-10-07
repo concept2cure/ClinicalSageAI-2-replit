@@ -11,7 +11,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
-import { PREREQ, VAULT_DDL, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG, AUTHOR, M25_SECTIONS } from '../../../routes/__tests__/_authoring-canvas-fixture';
+import { PREREQ, VAULT_DDL, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG, OTHER_ORG, AUTHOR, M25_SECTIONS } from '../../../routes/__tests__/_authoring-canvas-fixture';
 import { DRAFT_AUTHORING_DOCUMENT_NO_PROJECT } from '../../authoring/authoring-draft-tool';
 import { approvedToolHandler } from './support/approved-tool-handler';
 import { createDocumentDispositionService } from '../../document-data-disposition/service';
@@ -96,10 +96,13 @@ beforeAll(async () => {
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
-  for (const [id, program, hash] of [[SOURCE_ID, PROGRAM, 'a'], [OTHER_SOURCE_ID, PROGRAM_B, 'b'], [FOREIGN_SOURCE_ID, OTHER_PROGRAM, 'c']]) {
+  // Current-source admission requires the recorded tenant to agree with the
+  // programme; keep the foreign fixture owned by its actual other tenant.
+  for (const [id, program, organizationId, hash] of [[SOURCE_ID, PROGRAM, ORG, 'a'],
+    [OTHER_SOURCE_ID, PROGRAM_B, ORG, 'b'], [FOREIGN_SOURCE_ID, OTHER_PROGRAM, OTHER_ORG, 'c']] as const) {
     await jdb.pool.query(`INSERT INTO vault.documents
-      (id, program_id, document_code, document_title, document_type, file_name, content_hash, extracted_text)
-      VALUES ($1::uuid,$2,$1::text,'Processed CSR','csr','csr.pdf',$3,$4)`, [id, program, hash.repeat(64), SOURCE_TEXT]);
+      (id, program_id, organization_id, document_code, document_title, document_type, file_name, content_hash, extracted_text)
+      VALUES ($1::uuid,$2,$3,$1::text,'Processed CSR','csr','csr.pdf',$4,$5)`, [id, program, organizationId, hash.repeat(64), SOURCE_TEXT]);
     await jdb.pool.query(`INSERT INTO vault.document_catalog
       (document_id,content_hash,catalog_status,extraction_method,char_count)
       VALUES ($1,$2,'extracted','pdf-text',$3)`, [id, hash.repeat(64), SOURCE_TEXT.length]);
@@ -144,6 +147,20 @@ describe('draft_authoring_document — durable project source references', () =>
     const auditRow = audit.rows[0] as { metadata: { provenance: { projectSourceReferences: unknown } } };
     expect(auditRow.metadata.provenance.projectSourceReferences).toEqual(out.projectSourceReferences);
     expect(JSON.stringify(out.projectSourceReferences)).not.toContain(SOURCE_TEXT);
+  });
+
+  it('retains the original legacy NULL-organization source as a no-write admission refusal', async () => {
+    await jdb.pool.query('UPDATE vault.documents SET organization_id=NULL WHERE id=$1', [SOURCE_ID]);
+    const before = await authoringCounts();
+    try {
+      const out = JSON.parse(await handler(sourcedInput(), { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true }));
+      expect(out.error).toMatch(/source references.*could not be verified/i);
+      expect(out.saved).toBeUndefined();
+      expect(out.authoringDocId).toBeUndefined();
+      expect(await authoringCounts()).toEqual(before);
+    } finally {
+      await jdb.pool.query('UPDATE vault.documents SET organization_id=$2 WHERE id=$1', [SOURCE_ID, ORG]);
+    }
   });
 
   it.each([[OTHER_SOURCE_ID, 'b'], [FOREIGN_SOURCE_ID, 'c'], [SOURCE_ID, 'd']])('refuses wrong-project, foreign-tenant or stale-version source %s before creating anything', async (id, hash) => {

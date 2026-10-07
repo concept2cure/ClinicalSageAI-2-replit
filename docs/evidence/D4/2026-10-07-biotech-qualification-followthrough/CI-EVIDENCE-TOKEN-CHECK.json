@@ -1,0 +1,33 @@
+{
+  "checked_receipts": [
+    "CI-BRANCH-GATES-RED.txt",
+    "CI-BRANCH-GATES.txt",
+    "CI-COMBINED-EXECUTION-MANIFEST.json",
+    "CI-COMBINED-LINT.json",
+    "CI-COMBINED-REGRESSION.txt",
+    "CI-COMBINED-REQUESTED-FILES.txt",
+    "CI-CONTRACTS-GREEN-INITIAL.txt",
+    "CI-CONTRACTS-GREEN.txt",
+    "CI-CONTRACTS-LINT.txt",
+    "CI-CONTRACTS-MANIFEST.txt",
+    "CI-CONTRACTS-RED.txt",
+    "CI-CONTRACTS-RESULTS.md",
+    "CI-CONTRACTS-STATIC.txt",
+    "CI-EVIDENCE-TOKEN-CHECK.json",
+    "CI-FOLLOWUP-PLAN.md",
+    "CI-FOLLOWUP-RESULTS.md",
+    "CI-PRIOR-FAILURE-SUMMARY.json",
+    "CI-RATCHET-RUNNER-RECOVERY.json",
+    "CI-SOURCE-INVARIANCE.json",
+    "CI-SOURCES-GREEN-SETUP.txt",
+    "CI-SOURCES-GREEN.txt",
+    "CI-SOURCES-LINT.txt",
+    "CI-SOURCES-RED.txt",
+    "CI-SOURCES-RESULTS.md",
+    "CI-SOURCES-SCOPE.json",
+    "CI-WARNING-RATCHET.txt"
+  ],
+  "opaque_preview_token_findings": 0,
+  "private_key_marker_findings": 0,
+  "scope": "Receipt text pattern check only; not the remote Semgrep/full-history scanner verdict."
+}

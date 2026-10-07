@@ -1,0 +1,110 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope 1775ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder 7ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error 5ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records the transmittal in transit — never rejected, never an acknowledgement — on HTTP 500 after the whole bundle 5ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > names every missing FDA_ESG_* variable and transmits nothing 5ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > is the same refusal for staging — no environment quietly simulates 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothing on the wire, no identifier 3ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest without REST credentials → GATEWAY_NOT_CONFIGURED naming the REST variables 3ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a recorded package creator of null before any transmission or signature 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a recorded package creator of 7 before any transmission or signature 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package whose descriptor carries no structural-validation evidence 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package with error-severity structural findings 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a descriptor pointing outside the submission-bundle namespace 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses when the package has never been assembled 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > a check that failed without blocking is recorded, not dropped > carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data 6ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > an independent signer who declared Responsibility is recorded as Responsibility on the ledger, signature row and transmittal 6ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > refuses the original authorship meaning authorship before the wire or any governed write 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > refuses the original authorship meaning AUTHOR before the wire or any governed write 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > shared/regulatory/regulatory-basis.ts is the one provenance type > imports nothing, so client and server can both use it 3ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > shared/regulatory/regulatory-basis.ts is the one provenance type > lists exactly the regulator hosts the record accepts 2ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > accepts regulator-text with a regulator URL (subdomains included) and a checked date 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > accepts regulator-text read from a vendored regulator artifact with a checked date 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses regulator-text without a checked date 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses regulator-text with neither a URL nor a vendored artifact 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses regulator-text whose URL is not on a regulator host, including look-alikes 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses a URL that does not parse or is not http(s) 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses a checked value that is not a real ISO calendar date 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses a vendored path that is absolute or leaves the repository 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses an empty ref and an unknown confidence 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > accepts recall and platform convention with no URL or date, and with a secondary-source URL 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > says a recalled fact was not checked against the regulator text 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > says a platform convention is not a regulatory requirement 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > gives the checked date for well-formed regulator text 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > never presents a malformed regulator-text claim as checked 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > ind/ctd/types.ts declares no provenance type of its own 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > the types are identical 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > every basis constant the CSR record ships is well formed under the shared rules 2ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > the IVD Citation carries provenance from the same type > confidence and checked are typed from shared/regulatory/regulatory-basis 0ms
+stdout | server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — cold start > returns rule-based + cold_start predictions when no model and no priors exist
+{
+  "timestamp": "2026-10-07T17:09:39.247Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 9 sections",
+  "context": {}
+}
+
+stdout | server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — network prior available, model untrained > uses the network prior as the predicted probability
+{
+  "timestamp": "2026-10-07T17:09:39.254Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 9 sections",
+  "context": {}
+}
+
+stdout | server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — trained model + prior > blends the local model with the network prior weighted by sample size
+{
+  "timestamp": "2026-10-07T17:09:39.256Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 9 sections",
+  "context": {}
+}
+
+stdout | server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — persistence > writes a risk_predictions row for an assessed NDA score call
+{
+  "timestamp": "2026-10-07T17:09:39.258Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — persistence > refuses the original PMA request before prediction, prior/model lookup or persistence
+{
+  "timestamp": "2026-10-07T17:09:39.259Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: PMA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — band derivation > escalates the band as risk probability rises
+{
+  "timestamp": "2026-10-07T17:09:39.262Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+ ✓ server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — cold start > returns rule-based + cold_start predictions when no model and no priors exist 10ms
+ ✓ server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — network prior available, model untrained > uses the network prior as the predicted probability 2ms
+ ✓ server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — trained model + prior > blends the local model with the network prior weighted by sample size 1ms
+ ✓ server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — persistence > writes a risk_predictions row for an assessed NDA score call 1ms
+ ✓ server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — persistence > refuses the original PMA request before prediction, prior/model lookup or persistence 3ms
+ ✓ server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — band derivation > escalates the band as risk probability rises 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names every authoring trigger file the registry names, literally 4185ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports ok after the real trigger migrations have been applied 174ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > stays ok when the migrations replay (they re-run on every deploy, CLAUDE.md Rule 1) 211ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > refuses the Module 3 history migration when its real domain-function prerequisite is missing 138ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a dropped trigger 144ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled trigger — the catalog row exists, the protection does not 162ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled Vault record guard (VR-06): a recorded version is rewritable again 164ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports an absent store (fresh install before deploy-migrate) as missing its triggers 260ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > does not count a same-named trigger on another table 161ms
+
+ Test Files  4 passed (4)
+      Tests  53 passed (53)
+   Start at  13:09:31
+   Duration  14.52s (transform 4.04s, setup 244ms, import 5.36s, tests 7.59s, environment 1ms)

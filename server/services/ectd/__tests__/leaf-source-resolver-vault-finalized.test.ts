@@ -20,7 +20,7 @@
  * so nothing is grandfathered.
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { promises as fs } from 'fs';
+import { readFileSync, promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 import { createHash, randomUUID } from 'crypto';
@@ -115,6 +115,9 @@ beforeAll(async () => {
       deleted_at TIMESTAMPTZ
     );
   `);
+  // The real binary-availability predicate requires the existing disposition
+  // ledger; apply its canonical constraints and guards to exercise that read.
+  await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261006_document_data_dispositions.sql', import.meta.url), 'utf8'));
   await harness.pglite.query(`INSERT INTO regulatory_programs (id, organization_id) VALUES ($1::uuid, $2)`, [PROGRAM, ORG]);
   stageDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vault-finalized-'));
 });
