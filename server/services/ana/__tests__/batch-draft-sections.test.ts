@@ -7,6 +7,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const batchDraftMock = vi.fn();
+const sourceMocks = vi.hoisted(() => ({ scope: vi.fn(), load: vi.fn() }));
+vi.mock('../catalog-scope', () => ({ catalogScope: sourceMocks.scope }));
+vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForOrg: sourceMocks.load }));
 vi.mock('../AnaDocumentDraftingService', () => ({
   getAnaDraftingService: () => ({ batchDraft: batchDraftMock }),
 }));
@@ -17,6 +20,8 @@ const ctx = { organizationId: 7, userId: 3, projectId: 11 } as any;
 
 beforeEach(() => {
   batchDraftMock.mockReset();
+  sourceMocks.scope.mockReset();
+  sourceMocks.load.mockReset();
 });
 
 describe('batch_draft_sections', () => {
@@ -91,6 +96,40 @@ describe('batch_draft_sections', () => {
 });
 
 describe('batch draft recovery receipts', () => {
+  it('uses actual processed source records and returns version-bound receipts without copying raw text', async () => {
+    const id = '10000000-0000-4000-8000-000000000001';
+    const program = '20000000-0000-4000-8000-000000000001';
+    sourceMocks.scope.mockResolvedValue({ programId: program });
+    sourceMocks.load.mockResolvedValue({ id, programId: program, contentHash: 'a'.repeat(64),
+      documentTitle: 'Study CSR', extractedText: 'Actual processed study results',
+      catalog: { status: 'extracted', extractionMethod: 'pdf-text', extractionConfidence: null } });
+    batchDraftMock.mockResolvedValue([{ content: 'Grounded draft', model: 'm', latencyMs: 1 }]);
+    const out = JSON.parse(await getToolHandler('batch_draft_sections')!({
+      sections: [{ section_type: '2.5', instructions: 'Draft from the project CSR', source_document_ids: [id],
+        sourceContext: { status: 'loaded', sources: [{ text: 'fabricated model evidence' }] } }],
+    }, { ...ctx, projectRef: program }));
+    expect(batchDraftMock.mock.calls[0][0].requests[0].sourceContext.sources[0].text).toBe('Actual processed study results');
+    expect(out.sections[0]).toMatchObject({ sourceStatus: 'loaded', sourceQualification: 'unassessed',
+      sources: [{ documentId: id, contentHash: 'a'.repeat(64) }] });
+    expect(out.sections[0].sources[0]).not.toHaveProperty('text');
+    expect(JSON.stringify(out)).not.toContain('fabricated model evidence');
+  });
+
+  it('blocks generation for unavailable selected sources while retaining other section drafts', async () => {
+    const id = '10000000-0000-4000-8000-000000000001';
+    sourceMocks.scope.mockResolvedValue({ programId: id });
+    sourceMocks.load.mockRejectedValue(new Error('private SQL connection detail'));
+    batchDraftMock.mockResolvedValue([{ content: 'Planning draft', model: 'm', latencyMs: 1 }]);
+    const out = JSON.parse(await getToolHandler('batch_draft_sections')!({ sections: [
+      { section_type: '2.5', instructions: 'Evidence-based draft', source_document_ids: [id] },
+      { section_type: 'protocol', instructions: 'Planning only' },
+    ] }, ctx));
+    expect(batchDraftMock.mock.calls[0][0].requests.map((r: any) => r.requestIndex)).toEqual([1]);
+    expect(out).toMatchObject({ status: 'partial', retryIndices: [0], count: 1 });
+    expect(out.sections[1]).toMatchObject({ sourceStatus: 'unassessed', sources: [] });
+    expect(JSON.stringify(out)).not.toContain('private SQL');
+  });
+
   it('uses the open program UUID before a legacy project ID for drafting context', async () => {
     batchDraftMock.mockResolvedValue([{ content: 'Scoped draft', model: 'm', latencyMs: 1 }]);
     await getToolHandler('batch_draft_sections')!({

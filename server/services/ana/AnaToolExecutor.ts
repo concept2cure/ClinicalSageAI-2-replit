@@ -15580,6 +15580,7 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
         organizationId: ctx?.organizationId ?? undefined,
         userId: ctx?.userId ?? undefined,
         projectId: ctx?.projectRef ?? ctx?.projectId ?? undefined,
+        sourceContext: undefined as import('./draft-project-sources.js').DraftSourceContext | undefined,
       };
     })
     .filter((r): r is NonNullable<typeof r> => r !== null);
@@ -15590,8 +15591,21 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
 
   try {
     const { getAnaDraftingService } = await import('./AnaDocumentDraftingService.js');
+    const { loadDraftProjectSources } = await import('./draft-project-sources.js');
+    const sourceFailures = new Map<number, import('./batch-draft-result.js').BatchDraftFailure>();
+    for (const request of requests) {
+      try {
+        request.sourceContext = await loadDraftProjectSources(batchSectionRecord(rawSections[request.requestIndex]).source_document_ids, ctx);
+      } catch {
+        sourceFailures.set(request.requestIndex, { sectionType: request.sectionType, error: 'DRAFT_FAILED',
+          message: 'Selected project sources could not be loaded safely. Check the open project, source IDs, current versions and extraction status; retry this section only. No source-grounded draft was generated.' });
+      }
+    }
     const service = getAnaDraftingService();
-    const results = await service.batchDraft({ requests, concurrency: 5 });
+    const ready = requests.filter(r => !sourceFailures.has(r.requestIndex));
+    const generated = ready.length ? await service.batchDraft({ requests: ready, concurrency: 5 }) : [];
+    let generatedIndex = 0;
+    const results = requests.map(r => sourceFailures.get(r.requestIndex) ?? generated[generatedIndex++]);
     // A section that could not be drafted arrives as a failure result in its
     // own slot (batch-draft-result.ts); the other sections' drafts are kept
     // and reported. `count` is the number actually drafted.

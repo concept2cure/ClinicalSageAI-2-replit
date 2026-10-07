@@ -54,7 +54,7 @@ export function batchSectionRecord(raw: unknown): Record<string, unknown> {
 
 export function batchDraftReceipt(
   rawSections: unknown[],
-  requests: Array<{ requestIndex: number; sectionType: string }>,
+  requests: Array<{ requestIndex: number; sectionType: string; sourceContext?: import('./draft-project-sources.js').DraftSourceContext }>,
   results: BatchDraftResult[],
 ) {
   const byIndex = new Map(requests.map((r, i) => [r.requestIndex, results[i]]));
@@ -72,7 +72,11 @@ export function batchDraftReceipt(
     if (!result || !result.content?.trim()) {
       return { ...base, status: 'failed', error: 'DRAFT_FAILED', message: 'No usable draft was returned for this section. Retry this section only.' };
     }
-    return { ...base, status: 'drafted', content: result.content, model: result.model, latencyMs: result.latencyMs };
+    const context = requests.find(r => r.requestIndex === requestIndex)?.sourceContext;
+    return { ...base, status: 'drafted', content: result.content, model: result.model, latencyMs: result.latencyMs,
+      sourceStatus: context?.status ?? 'unassessed',
+      sources: context?.sources.map(({ text: _text, ...receipt }) => receipt) ?? [],
+      sourceQualification: 'unassessed' };
   });
   const retryIndices = sections.filter((s) => s.status === 'failed').map((s) => s.requestIndex);
   const failed = retryIndices.length;

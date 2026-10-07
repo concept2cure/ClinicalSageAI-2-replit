@@ -698,6 +698,7 @@ export const BATCH_DRAFT_SECTIONS: AnaTool = {
             section_type: { type: 'string', description: 'Document section / CTD type to draft (e.g. "2.5", "nonclinical_overview", "device_description").' },
             instructions: { type: 'string', description: 'What this section must contain / how to draft it.' },
             existing_content: { type: 'string', description: 'Optional existing content to revise rather than draft from scratch.' },
+            source_document_ids: { type: 'array', minItems: 1, maxItems: 8, items: { type: 'string', format: 'uuid' }, description: 'Select existing processed Vault document IDs discovered with list_project_documents/search_project_documents. The backend loads current extracted text from the open project, not pasted/model-supplied evidence. Use these sources before asking the client for facts already in their project. Receipts identify hashes and bounded excerpts; loaded is not qualified or approved. Failed source loading prevents generation for this section. Omit only for an explicitly ungrounded planning draft.' },
           },
           required: ['section_type', 'instructions'],
         },

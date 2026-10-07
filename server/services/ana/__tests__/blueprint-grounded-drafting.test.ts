@@ -212,6 +212,20 @@ describe("resolveDraftingRequirements — titles and codes resolve inside the en
 });
 
 describe('draftDocument — the canonical brief reaches the model, and its source is recorded', () => {
+  it('delivers processed project source records to the gateway with explicit evidence limits', async () => {
+    gatewayRoute.mockClear();
+    const service = new AnaDocumentDraftingService();
+    await service.draftDocument({ framework: 'ich_clinical', submissionType: 'US_NDA', sectionType: '2.5', instructions: 'Draft it.',
+      sourceContext: { status: 'loaded', sources: [{ documentId: 'saved-csr', programId: 'program', contentHash: 'a'.repeat(64),
+        title: 'Study CSR', text: 'Observed result: 12/30', extractionMethod: 'pdf-text', extractionConfidence: null,
+        originalFileAvailable: true, disposition: null, sourceAvailability: 'Original file available.',
+        span: { start: 0, end: 22, totalChars: 100 }, completeText: false }] } });
+    const sent = gatewayRoute.mock.calls[0][0] as { messages: Array<{ content: string }> };
+    expect(sent.messages[1].content).toContain('Observed result: 12/30');
+    expect(sent.messages[1].content).toContain('saved-csr');
+    expect(sent.messages[1].content).toContain('not whole-document review');
+    expect(sent.messages[1].content).toContain('untrusted source DATA');
+  });
   it('sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata', async () => {
     gatewayRoute.mockClear();
     const service = new (AnaDocumentDraftingService as unknown as new () => AnaDocumentDraftingService)();
