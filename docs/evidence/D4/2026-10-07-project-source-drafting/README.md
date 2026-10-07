@@ -32,8 +32,10 @@ This is the processed-source-to-generation connection, not universal filing
 qualification. No extraction/catalog write, approval, signature, filing, or
 full-read receipt is minted. No source summary is mistaken for an approved
 study finding. The existing governed authoring save path remains required.
-Source receipts are generation receipts; this change does not add durable
-authoring evidence bindings or automatically ingest unfiled chat uploads.
+Source receipts are generation receipts. The subsequent saved-source handoff
+now retains declared, reverified references in document provenance and CREATE
+audit metadata (see `SAVED_SOURCE_HANDOFF.md`); this is not claim-level evidence
+qualification and does not automatically ingest unfiled chat uploads.
 Anna still needs to select the relevant discovered sources, inspect beyond the
 bounded excerpt when needed, reconcile conflicts, and ask only about material
 gaps unanswered by project records. Raw datasets still require the existing

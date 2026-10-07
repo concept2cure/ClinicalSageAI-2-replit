@@ -10,7 +10,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
-import { PREREQ, PROGRAM, OTHER_PROGRAM, ORG, AUTHOR, M25_SECTIONS } from '../../../routes/__tests__/_authoring-canvas-fixture';
+import { PREREQ, VAULT_DDL, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG, AUTHOR, M25_SECTIONS } from '../../../routes/__tests__/_authoring-canvas-fixture';
 import { DRAFT_AUTHORING_DOCUMENT_NO_PROJECT } from '../../authoring/authoring-draft-tool';
 import { approvedToolHandler } from './support/approved-tool-handler';
 
@@ -29,7 +29,7 @@ let handler: (input: Record<string, unknown>, ctx?: Record<string, unknown>) => 
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ,
+    prereqSql: PREREQ + VAULT_DDL,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
@@ -49,10 +49,20 @@ beforeAll(async () => {
       'migrations/20260814d_document_alias_map.sql',
       'migrations/20260921_audit_logs_chain_seq.sql',
       'migrations/20260921_authoring_document_provenance.sql',
+      'migrations/20260905_document_catalog.sql',
+      'migrations/20261006_document_data_dispositions.sql',
     ],
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
+  for (const [id, program, hash] of [[SOURCE_ID, PROGRAM, 'a'], [OTHER_SOURCE_ID, PROGRAM_B, 'b'], [FOREIGN_SOURCE_ID, OTHER_PROGRAM, 'c']]) {
+    await jdb.pool.query(`INSERT INTO vault.documents
+      (id, program_id, document_code, document_title, document_type, file_name, content_hash, extracted_text)
+      VALUES ($1::uuid,$2,$1::text,'Processed CSR','csr','csr.pdf',$3,$4)`, [id, program, hash.repeat(64), SOURCE_TEXT]);
+    await jdb.pool.query(`INSERT INTO vault.document_catalog
+      (document_id,content_hash,catalog_status,extraction_method,char_count)
+      VALUES ($1,$2,'extracted','pdf-text',$3)`, [id, hash.repeat(64), SOURCE_TEXT.length]);
+  }
   // Importing the executor registers every handler as an import side effect.
   await import('../AnaToolExecutor');
   const found = approvedToolHandler('draft_authoring_document');
@@ -70,6 +80,53 @@ const input = {
   documentType: 'clinical_overview',
   sections: M25_SECTIONS,
 };
+
+const SOURCE_ID = '10000000-0000-4000-8000-000000000001';
+const OTHER_SOURCE_ID = '10000000-0000-4000-8000-000000000002';
+const FOREIGN_SOURCE_ID = '10000000-0000-4000-8000-000000000003';
+const SOURCE_TEXT = 'Processed study report: endpoint observed in 12 of 30 subjects.';
+const sourceRef = (documentId = SOURCE_ID, hash = 'a') => ({ documentId, contentHash: hash.repeat(64),
+  span: { start: 0, end: SOURCE_TEXT.length, totalChars: SOURCE_TEXT.length } });
+const sourcedInput = (reference = sourceRef()) => ({ ...input,
+  sections: [{ ...M25_SECTIONS[0], sourceReferences: [reference] }] });
+
+describe('draft_authoring_document — durable project source references', () => {
+  it('retains current, project-verified source references in saved provenance and CREATE audit metadata', async () => {
+    const out = JSON.parse(await handler(sourcedInput(), { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true }));
+    expect(out.saved).toBe(true);
+    const saved = await jdb.pool.query('SELECT provenance FROM authoring_documents WHERE id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
+    expect(saved.rows[0].provenance.projectSourceReferences).toEqual(out.projectSourceReferences);
+    expect(out.projectSourceReferences[0]).toMatchObject({ sectionCode: M25_SECTIONS[0].code, verification: 'current_at_save', qualification: 'unassessed',
+      sources: [{ documentId: SOURCE_ID, contentHash: 'a'.repeat(64), completeText: true }] });
+    const audit = await jdb.pool.query('SELECT metadata FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
+    expect(audit.rows[0].metadata.provenance.projectSourceReferences).toEqual(out.projectSourceReferences);
+    expect(JSON.stringify(out.projectSourceReferences)).not.toContain(SOURCE_TEXT);
+  });
+
+  it.each([[OTHER_SOURCE_ID, 'b'], [FOREIGN_SOURCE_ID, 'c'], [SOURCE_ID, 'd']])('refuses wrong-project, foreign-tenant or stale-version source %s before creating anything', async (id, hash) => {
+    const before = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM authoring_documents');
+    const out = JSON.parse(await handler(sourcedInput(sourceRef(id, hash)), { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true }));
+    expect(out.error).toMatch(/source references.*could not be verified/i);
+    expect(out.saved).toBeUndefined();
+    const after = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM authoring_documents');
+    expect(after.rows[0].n).toBe(before.rows[0].n);
+  });
+
+  it.each(['failed-extraction', 'stale-extraction'])('refuses a %s catalog record without creating a document', async kind => {
+    const before = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM authoring_documents');
+    await jdb.pool.query('UPDATE vault.document_catalog SET catalog_status=$1,content_hash=$2 WHERE document_id=$3',
+      [kind === 'failed-extraction' ? 'extraction_failed' : 'extracted', (kind === 'stale-extraction' ? 'd' : 'a').repeat(64), SOURCE_ID]);
+    try {
+      const out = JSON.parse(await handler(sourcedInput(), { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true }));
+      expect(out.error).toMatch(/source references.*could not be verified/i);
+      const after = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM authoring_documents');
+      expect(after.rows[0].n).toBe(before.rows[0].n);
+    } finally {
+      await jdb.pool.query("UPDATE vault.document_catalog SET catalog_status='extracted',content_hash=$1 WHERE document_id=$2", ['a'.repeat(64), SOURCE_ID]);
+    }
+  });
+
+});
 
 describe('draft_authoring_document', () => {
   it('is in the tool catalog the model sees', async () => {

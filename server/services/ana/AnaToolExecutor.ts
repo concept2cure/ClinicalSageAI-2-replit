@@ -15614,7 +15614,7 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
       ...receipt,
       engine: 'framework-grade',
       instruction:
-        'These are generated first drafts, NOT saved documents. For a requested deliverable, use draft_authoring_document with the successful section content through its existing confirmation and qualification gates. Report saved only after it returns an authoringDocId. Preserve each saved ID; never rerun creation for a section already saved. Saving a draft is not approval or filing. State completeness gaps honestly; do not present unknown values as established.' +
+        'These are generated first drafts, NOT saved documents. For a requested deliverable, use draft_authoring_document with the successful section content through its existing confirmation and qualification gates. Carry each section sources[] receipt into sourceReferences so current source versions are rechecked and retained with the saved draft. Report saved only after it returns an authoringDocId. Preserve each saved ID; never rerun creation for a section already saved. Saving a draft is not approval or filing. State completeness gaps honestly; do not present unknown values as established.' +
         (receipt.failed > 0
           ? ` ${receipt.failed} section(s) were not drafted; each carries its original requestIndex and reason. Repair and retry only retryIndices, preserving successful drafts. A section refused for size needs its existing content shortened or split before retrying.`
           : ''),

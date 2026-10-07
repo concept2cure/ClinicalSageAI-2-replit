@@ -15,6 +15,7 @@
  */
 
 import { programInOrganization } from '../c2c/program-access';
+import { parseDraftSourceReferences, verifyDraftSourceReferences, type DraftSourceReference, type VerifiedDraftSourceReference } from './draft-source-references';
 import crypto from 'crypto';
 import { ANA_MACHINE_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
 import { columnState, type Queryable } from './authoring-evidence';
@@ -39,6 +40,9 @@ export const PROVENANCE_SOURCES: readonly ProvenanceSource[] = ['ana', 'seed', '
 
 /** What `authoring_documents.provenance` holds (migrations/20260921_authoring_document_provenance.sql). */
 export interface DocumentProvenance {
+  /** Declared references checked against current project records at save.
+   * This is not claim-level support, generation proof, approval, or filing readiness. */
+  projectSourceReferences?: Array<{ sectionCode: string; sources: VerifiedDraftSourceReference[]; qualification: 'unassessed'; verification: 'current_at_save' }>;
   source: ProvenanceSource;
   conversationId?: string;
   turnId?: string;
@@ -52,7 +56,7 @@ export interface DocumentProvenance {
   recordedAt: string;
 }
 
-export type ProvenanceInput = Omit<DocumentProvenance, 'recordedAt'>;
+export type ProvenanceInput = Omit<DocumentProvenance, 'recordedAt' | 'projectSourceReferences'>;
 
 const PROVENANCE_TEXT_KEYS = ['conversationId', 'turnId', 'model', 'note'] as const;
 
@@ -107,6 +111,7 @@ export interface DraftSectionInput {
   code: string;
   title: string;
   content: string;
+  sourceReferences?: DraftSourceReference[];
 }
 
 export interface CreateDocumentFromDraftInput {
@@ -138,7 +143,11 @@ function parseDraftSections(raw: unknown): Parsed<DraftSectionInput[]> {
     if (sec.content !== undefined && typeof sec.content !== 'string') {
       return { ok: false, error: `sections[${i}]: content must be a string (HTML)` };
     }
-    sections.push({ code, title, content: (sec.content as string | undefined) ?? '' });
+    let sourceReferences: DraftSourceReference[];
+    try { sourceReferences = parseDraftSourceReferences(sec.sourceReferences); }
+    catch { return { ok: false, error: `sections[${i}]: invalid sourceReferences; retain the document IDs, hashes and spans from the batch source receipts` }; }
+    sections.push({ code, title, content: (sec.content as string | undefined) ?? '',
+      sourceReferences });
   }
   return { ok: true, value: sections };
 }
@@ -218,11 +227,26 @@ export async function createDocumentFromDraft(
         '), so the draft was not saved. Nothing was created. Apply migrations/20260921_authoring_document_provenance.sql.',
     };
   }
+  const parsedProvenance = parseProvenance(input.provenance);
+  if (!parsedProvenance.ok) return { kind: 'refused', status: 400, error: parsedProvenance.error };
   const provenance: DocumentProvenance = {
-    ...input.provenance,
+    ...parsedProvenance.value,
     ...(input.module ? {} : { moduleDefaulted: true }),
     recordedAt: new Date().toISOString(),
   };
+  try {
+    const references: NonNullable<DocumentProvenance['projectSourceReferences']> = [];
+    for (const section of input.sections) {
+      if (!section.sourceReferences?.length) continue;
+      // Validate again even for typed internal callers; parsed/model receipts are not trusted facts.
+      const refs = parseDraftSourceReferences(section.sourceReferences);
+      const sources = await verifyDraftSourceReferences(refs, ctx.pool, ctx.tenantId, input.programId);
+      references.push({ sectionCode: section.code, sources, qualification: 'unassessed', verification: 'current_at_save' });
+    }
+    if (references.length) provenance.projectSourceReferences = references;
+  } catch {
+    return { kind: 'refused', status: 409, error: 'Project source references are unavailable, changed, or could not be verified. Refresh the source records and draft receipts before saving. Nothing was created.' };
+  }
   const docId = crypto.randomUUID();
   // The same binding rule as POST /docs: the project's filing keeps one editing
   // copy; every further document is created in the project unbound, with the

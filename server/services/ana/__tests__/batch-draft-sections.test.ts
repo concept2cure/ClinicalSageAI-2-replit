@@ -102,7 +102,7 @@ describe('batch draft recovery receipts', () => {
     sourceMocks.scope.mockResolvedValue({ programId: program });
     sourceMocks.load.mockResolvedValue({ id, programId: program, contentHash: 'a'.repeat(64),
       documentTitle: 'Study CSR', extractedText: 'Actual processed study results',
-      catalog: { status: 'extracted', extractionMethod: 'pdf-text', extractionConfidence: null } });
+      catalog: { contentHash: 'a'.repeat(64), status: 'extracted', extractionMethod: 'pdf-text', extractionConfidence: null } });
     batchDraftMock.mockResolvedValue([{ content: 'Grounded draft', model: 'm', latencyMs: 1 }]);
     const out = JSON.parse(await getToolHandler('batch_draft_sections')!({
       sections: [{ section_type: '2.5', instructions: 'Draft from the project CSR', source_document_ids: [id],

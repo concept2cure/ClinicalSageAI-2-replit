@@ -48,6 +48,7 @@ export interface DraftToolContext {
 }
 
 export interface DraftToolResult {
+  projectSourceReferences: NonNullable<import('./authoring-from-draft').DocumentProvenance['projectSourceReferences']>;
   status: 'generated';
   saved: true;
   documentStatus: 'draft';
@@ -138,6 +139,7 @@ export async function draftAuthoringDocumentTool(
     );
     if (outcome.kind === 'refused') return JSON.stringify({ error: outcome.error });
     const result: DraftToolResult = {
+      projectSourceReferences: outcome.provenance.projectSourceReferences ?? [],
       status: 'generated',
       saved: true,
       documentStatus: 'draft',

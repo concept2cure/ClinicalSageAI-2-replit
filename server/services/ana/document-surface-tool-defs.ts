@@ -157,6 +157,10 @@ export const DRAFT_AUTHORING_DOCUMENT: AnaTool = {
             code: { type: 'string', description: "Section code, e.g. '2.5.1'." },
             title: { type: 'string', description: 'Section title.' },
             content: { type: 'string', description: 'Section body as HTML.' },
+            sourceReferences: { type: 'array', minItems: 1, maxItems: 8, description: 'Carry the batch draft source receipts into the saved document. Each reference requires documentId, contentHash and span {start:0,end,totalChars}; the backend rechecks current project records and versions before any creation. These are declared source references, not claim-level scientific qualification or proof that the model used them.', items: { type: 'object', properties: {
+              documentId: { type: 'string', format: 'uuid' }, contentHash: { type: 'string', pattern: '^[0-9a-fA-F]{64}$' },
+              span: { type: 'object', properties: { start: { type: 'integer', const: 0 }, end: { type: 'integer', minimum: 1, maximum: 12000 }, totalChars: { type: 'integer', minimum: 1 } }, required: ['start', 'end', 'totalChars'] },
+            }, required: ['documentId', 'contentHash', 'span'] } },
           },
           required: ['code', 'title', 'content'],
         },

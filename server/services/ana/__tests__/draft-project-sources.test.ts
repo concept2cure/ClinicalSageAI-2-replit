@@ -8,7 +8,7 @@ const program = '20000000-0000-4000-8000-000000000001';
 const ctx = { organizationId: 7, userId: 3, projectRef: program };
 const doc = () => ({ id, programId: program, contentHash: 'a'.repeat(64), documentTitle: 'Study A CSR',
   fileName: 'csr.pdf', extractedText: 'Prespecified primary endpoint: 12 of 30 subjects.',
-  catalog: { status: 'extracted', extractionMethod: 'pdf-text', extractionConfidence: null } });
+  catalog: { contentHash: 'a'.repeat(64), status: 'extracted', extractionMethod: 'pdf-text', extractionConfidence: null } });
 beforeEach(() => { vi.clearAllMocks(); mocks.scope.mockResolvedValue({ programId: program }); mocks.load.mockResolvedValue(doc()); });
 describe('processed project sources for regulatory drafting', () => {
   it('loads saved text, binds source identity/version/span, and deduplicates IDs', async () => {
@@ -42,6 +42,7 @@ describe('processed project sources for regulatory drafting', () => {
   it.each([
     null, { ...doc(), contentHash: 'missing' }, { ...doc(), extractedText: '' },
     { ...doc(), catalog: null }, { ...doc(), catalog: { status: 'extraction_failed' } },
+    { ...doc(), catalog: { ...doc().catalog, contentHash: 'b'.repeat(64) } },
     { ...doc(), disposition: 'supersede' }, { ...doc(), disposition: 'remove_data' },
   ])('fails closed for unavailable or unusable source %j', async bad => {
     mocks.load.mockResolvedValueOnce(doc()).mockResolvedValueOnce(bad);
@@ -53,7 +54,7 @@ describe('processed project sources for regulatory drafting', () => {
   });
   it('honestly bounds excerpts and preserves OCR/withdrawal caveats', async () => {
     mocks.load.mockResolvedValue({ ...doc(), originalFileAvailable: false, disposition: 'keep_data',
-      extractedText: 'x'.repeat(18000), catalog: { status: 'cataloged', extractionMethod: 'pdf-ocr', extractionConfidence: 71 } });
+      extractedText: 'x'.repeat(18000), catalog: { contentHash: 'a'.repeat(64), status: 'cataloged', extractionMethod: 'pdf-ocr', extractionConfidence: 71 } });
     const result = await loadDraftProjectSources([id], ctx);
     expect(result.sources[0]).toMatchObject({ completeText: false, originalFileAvailable: false,
       span: { start: 0, end: 12000, totalChars: 18000 }, extractionConfidence: 71 });

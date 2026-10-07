@@ -31,7 +31,7 @@ function selectedIds(raw: unknown): string[] {
 function readableVersion(doc: CatalogDocumentRow | null, meta: CatalogDocumentRow, programId: string) {
   if (!doc || doc.programId.toLowerCase() !== programId.toLowerCase() ||
       doc.contentHash !== meta.contentHash || !/^[0-9a-f]{64}$/i.test(doc.contentHash) ||
-      !doc.catalog || !['extracted', 'cataloged'].includes(doc.catalog.status) ||
+      !doc.catalog || doc.catalog.contentHash !== doc.contentHash || !['extracted', 'cataloged'].includes(doc.catalog.status) ||
       doc.disposition === 'remove_data' || doc.disposition === 'supersede' ||
       !doc.extractedText?.trim()) throw new Error('SOURCE_UNAVAILABLE');
   return { ...doc, catalog: doc.catalog, extractedText: doc.extractedText };

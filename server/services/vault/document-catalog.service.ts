@@ -145,6 +145,7 @@ export interface CatalogDocumentRow {
   ctdSection: string | null;
   placementStatus: string;
   catalog: {
+    contentHash?: string;
     status: CatalogStatus;
     extractionMethod: string | null;
     extractionConfidence: number | null;
@@ -163,25 +164,26 @@ export interface CatalogDocumentRow {
 export async function loadDocumentForOrg(
   documentId: string,
   organizationId: number,
-  opts: { includeText?: boolean } = {},
+  opts: { includeText?: boolean; executor?: Pick<typeof pool, 'query'>; programId?: string } = {},
 ): Promise<CatalogDocumentRow | null> {
   const textCol = opts.includeText ? 'd.extracted_text' : 'NULL::text AS extracted_text';
-  const res = await pool.query(
+  const programClause = opts.programId ? ' AND d.program_id = $3::uuid' : '';
+  const res = await (opts.executor ?? pool).query(
     `SELECT d.id, d.program_id, d.document_code, d.document_title, d.document_type,
             d.file_name, d.mime_type, d.content_hash, ${textCol},
             ${vaultDispositionChoiceSql('d')} AS disposition,
             ${vaultBinaryAvailableSql('d')} AS original_file_available,
             d.folder_id, d.evidence_kind, d.ctd_section, d.placement_status,
-            c.catalog_status, c.extraction_method, c.extraction_confidence,
+            c.catalog_status, c.content_hash AS catalog_content_hash, c.extraction_method, c.extraction_confidence,
             c.extraction_error, c.char_count, c.word_count, c.page_count,
             c.document_kind, c.purpose, c.summary, c.key_data, c.cataloged_at
        FROM vault.documents d
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE d.id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
+      WHERE d.id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}
         AND EXISTS (SELECT 1 FROM regulatory_programs rp
                      WHERE rp.id = d.program_id AND rp.organization_id = $2)
       LIMIT 1`,
-    [documentId, organizationId],
+    opts.programId ? [documentId, organizationId, opts.programId] : [documentId, organizationId],
   );
   const r = res.rows[0];
   if (!r) return null;
@@ -204,6 +206,7 @@ export async function loadDocumentForOrg(
     catalog: r.catalog_status
       ? {
           status: r.catalog_status,
+          contentHash: r.catalog_content_hash,
           extractionMethod: r.extraction_method,
           extractionConfidence: r.extraction_confidence,
           extractionError: r.extraction_error,
