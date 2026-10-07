@@ -114,10 +114,16 @@ all ordinary positive rows eligible. These separate runs do not isolate the
 assembly wrapper's cost. Relative overhead remains material, and production
 performance remains unqualified.
 
-The preceding publication's Semgrep, full-history secret scan, security
-contracts/scan, CodeQL and authenticated browser smoke passed. Final-source
-GitHub compiler and broad release CI remain independent publication gates,
-pending when these receipts are filed. D4 and D1–D10 remain open.
+The qualified code publication is
+[`a5dc3f3d84ba62a06806f8455897fe0554ae654d`](https://github.com/concept2cure/ClinicalSageAI-2-replit/commit/a5dc3f3d84ba62a06806f8455897fe0554ae654d).
+[Verified publication results](REMOTE-PUBLICATION-RESULTS.md) now record both
+full GitHub compilers with zero errors, all 214 Node CI guard controls passed,
+the live provisioned-schema gate with zero new missing relations, and successful
+security scans, authenticated browser, RLS boot and production image sign-in.
+Actual compiler/live-schema/count excerpts are preserved alongside their job
+links. Broad integration, tests and coverage remain in progress at that snapshot;
+queued or running jobs supply no pass. Earlier pending-at-filing statements are
+historical snapshots. D4 and D1–D10 remain open.
 
 ## Evidence scanner correction
 
@@ -126,8 +132,9 @@ preview-token strings in two RED receipts. [EVIDENCE-SCAN-RED.json](EVIDENCE-SCA
 records the exact rule, source, job, paths and counts. Those three strings are
 replaced with a synthetic-token redaction marker; assertions, SQL, failure
 counts and verdicts are preserved. New receipts are checked for the same token
-shape. No scanner rule, ignore list or baseline is weakened. The new source's
-actual remote scan verdict remains a separate release gate.
+shape. No scanner rule, ignore list or baseline is weakened. The exact qualified
+publication's Semgrep and full-history secret scans completed successfully,
+as recorded in [REMOTE-PUBLICATION-RESULTS.md](REMOTE-PUBLICATION-RESULTS.md).
 
 ## Remaining qualification
 

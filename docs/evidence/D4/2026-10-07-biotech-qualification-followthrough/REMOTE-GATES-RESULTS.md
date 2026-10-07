@@ -164,6 +164,15 @@ Those prior-source verdicts do not supply the new commit's compiler or full CI
 result. The 24-GiB exact-source GitHub compiler is required after publication;
 no full local compiler is run on the 8-GiB host.
 
+The exact code publication is `a5dc3f3d84ba62a06806f8455897fe0554ae654d`.
+[REMOTE-PUBLICATION-RESULTS.md](REMOTE-PUBLICATION-RESULTS.md) supplies its
+verified GitHub verdicts: both full compilers measured zero errors and exit 0;
+the live-schema gate reports zero new missing relations against its unchanged
+baseline; all 214 Node CI controls, security scans, authenticated browser,
+RLS boot and production image sign-in passed. Broad tests, integration and
+coverage still have no final verdict at that snapshot. The preceding-source
+failures and earlier pending statements above remain preserved as history.
+
 D4 and D1–D10 remain open. Production volume/plans/RLS/races, complete intended
 use, live provider/transport PQ and signed human/scientific validation remain
 owed. Software fixture and parser repairs do not establish those qualifications.
