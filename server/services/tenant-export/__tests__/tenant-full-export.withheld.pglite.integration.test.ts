@@ -23,6 +23,10 @@ const OTHER = 8;
 const ACCESS = ['ya29', 'a0AfB', 'fixture'].join('.');
 const REFRESH = ['1', '', 'refresh', 'fixture'].join('/');
 const CIPHER = ['v1', 'iv', 'tag', 'ciphertext-fixture'].join(':');
+const LICENSE_ACCESS = ['license', 'access', 'fixture'].join('.');
+const MAILBOX_REFERENCE = ['credential-store', 'mailbox', 'fixture'].join('/');
+const P8_TOKENS = { STUDY_NAME: 'ACM stability', DURATION_MONTHS: 24, RESULTS_SUMMARY: '12 test results recorded' };
+const AUDIT_SEAL = 'record-integrity-seal-fixture';
 
 beforeAll(async () => {
   db = await PGlite.create();
@@ -37,6 +41,20 @@ beforeAll(async () => {
       sender_identifier TEXT, credentials_ciphertext TEXT, credential_fields TEXT[]
     );
     CREATE TABLE regulatory_programs (id SERIAL PRIMARY KEY, organization_id INTEGER, name TEXT);
+    CREATE TABLE licenses (
+      id SERIAL PRIMARY KEY, organization_id INTEGER, access_token TEXT, license_type TEXT, status TEXT
+    );
+    CREATE TABLE c2c_mailbox_connections (
+      id SERIAL PRIMARY KEY, organization_id INTEGER, token_reference TEXT, provider TEXT,
+      mailbox_identifier TEXT, auth_state TEXT, scopes JSONB
+    );
+    CREATE TABLE stab_exports (
+      id SERIAL PRIMARY KEY, organization_id INTEGER, study_id TEXT, export_type TEXT,
+      tokens JSONB, markdown TEXT
+    );
+    CREATE TABLE audit_events (
+      id SERIAL PRIMARY KEY, organization_id INTEGER, hmac_seal TEXT, action TEXT, record_hash TEXT
+    );
   `);
   await db.query(`INSERT INTO integration_tokens (organization_id, provider, access_token, refresh_token) VALUES ($1,'google',$2,$3), ($1,'box',NULL,NULL), ($4,'google',$2,$3)`, [ORG, ACCESS, REFRESH, OTHER]);
   await db.query(
@@ -45,6 +63,31 @@ beforeAll(async () => {
     [ORG, CIPHER],
   );
   await db.query(`INSERT INTO regulatory_programs (organization_id, name) VALUES ($1, 'ACM-101 IND')`, [ORG]);
+  await db.query(
+    `INSERT INTO licenses (organization_id, access_token, license_type, status)
+     VALUES ($1,$2,'enterprise','active'), ($1,NULL,'trial','expired'), ($3,$2,'enterprise','active')`,
+    [ORG, LICENSE_ACCESS, OTHER],
+  );
+  await db.query(
+    `INSERT INTO c2c_mailbox_connections (organization_id, token_reference, provider, mailbox_identifier, auth_state, scopes)
+     VALUES ($1,$2,'microsoft365','regulatory@acme.example','connected','["Mail.Read"]'),
+            ($1,NULL,'manual','archive','disconnected','[]'),
+            ($3,$2,'microsoft365','other@example.test','connected','[]')`,
+    [ORG, MAILBOX_REFERENCE, OTHER],
+  );
+  await db.query(
+    `INSERT INTO stab_exports (organization_id, study_id, export_type, tokens, markdown)
+     VALUES ($1,'study-acm','p8_authoring',$2,'## 3.2.P.8 Stability'),
+            ($3,'study-other','p8_authoring','{}','other content')`,
+    [ORG, JSON.stringify(P8_TOKENS), OTHER],
+  );
+  await db.query(
+    `INSERT INTO audit_events (organization_id, hmac_seal, action, record_hash)
+     VALUES ($1,$2,'document.exported','record-hash-fixture'),
+            ($1,NULL,'document.created','unsealed-record-hash'),
+            ($3,$2,'other.action','other-record-hash')`,
+    [ORG, AUDIT_SEAL, OTHER],
+  );
 });
 
 afterAll(async () => {
@@ -78,7 +121,7 @@ describe('exportTenantFull withholds credential material', () => {
 
   it('no withheld value appears anywhere in the export', async () => {
     const text = JSON.stringify(await exportTenantFull(asClient(), ORG));
-    for (const secret of [ACCESS, REFRESH, CIPHER]) expect(text).not.toContain(secret);
+    for (const secret of [ACCESS, REFRESH, CIPHER, LICENSE_ACCESS, MAILBOX_REFERENCE]) expect(text).not.toContain(secret);
   });
 
   it('a table with nothing to withhold is returned as stored, with no withheld list', async () => {
@@ -91,5 +134,46 @@ describe('exportTenantFull withholds credential material', () => {
     const tokens = tableOf(await exportTenantFull(asClient(), ORG), 'integration_tokens');
     expect(tokens.rowCount).toBe(2);
     expect(tokens.rows.every((r) => r.organization_id === ORG)).toBe(true);
+  });
+
+  it('withholds license access material while returning license facts and retaining null', async () => {
+    const licenses = tableOf(await exportTenantFull(asClient(), ORG), 'licenses');
+    expect(licenses.withheldColumns).toEqual(['access_token']);
+    expect(licenses.rows.find((r) => r.license_type === 'enterprise')).toMatchObject({
+      access_token: '[withheld: a license access token]', license_type: 'enterprise', status: 'active',
+    });
+    expect(licenses.rows.find((r) => r.license_type === 'trial')).toMatchObject({ access_token: null, status: 'expired' });
+  });
+
+  it('withholds a mailbox token reference while returning connection facts and retaining null', async () => {
+    const mailboxes = tableOf(await exportTenantFull(asClient(), ORG), 'c2c_mailbox_connections');
+    expect(mailboxes.withheldColumns).toEqual(['token_reference']);
+    expect(mailboxes.rows.find((r) => r.provider === 'microsoft365')).toMatchObject({
+      token_reference: '[withheld: a mailbox token or credential-store reference]',
+      mailbox_identifier: 'regulatory@acme.example', auth_state: 'connected', scopes: ['Mail.Read'],
+    });
+    expect(mailboxes.rows.find((r) => r.provider === 'manual')).toMatchObject({ token_reference: null, auth_state: 'disconnected' });
+  });
+
+  it('returns the recorded P.8 authoring tokens as customer data', async () => {
+    const stability = tableOf(await exportTenantFull(asClient(), ORG), 'stab_exports');
+    expect(stability.withheldColumns).toBeUndefined();
+    expect(stability.rows[0]).toMatchObject({ tokens: P8_TOKENS, study_id: 'study-acm', markdown: '## 3.2.P.8 Stability' });
+  });
+
+  it('returns audit integrity seals unchanged and keeps an unsealed record null', async () => {
+    const audit = tableOf(await exportTenantFull(asClient(), ORG), 'audit_events');
+    expect(audit.withheldColumns).toBeUndefined();
+    expect(audit.rows.find((r) => r.action === 'document.exported')).toMatchObject({ hmac_seal: AUDIT_SEAL, record_hash: 'record-hash-fixture' });
+    expect(audit.rows.find((r) => r.action === 'document.created')!.hmac_seal).toBeNull();
+  });
+
+  it('isolates tenant rows in all four newly classified tables', async () => {
+    const exp = await exportTenantFull(asClient(), ORG);
+    for (const [name, count] of [['licenses', 2], ['c2c_mailbox_connections', 2], ['stab_exports', 1], ['audit_events', 2]] as const) {
+      const table = tableOf(exp, name);
+      expect(table.rowCount).toBe(count);
+      expect(table.rows.every((r) => r.organization_id === ORG)).toBe(true);
+    }
   });
 });

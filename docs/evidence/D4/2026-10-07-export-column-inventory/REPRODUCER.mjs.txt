@@ -1,0 +1,78 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { execFileSync } from 'node:child_process';
+
+const repo=process.env.C2C_REPO ?? process.cwd();
+const require=createRequire(`${repo}/package.json`);
+const {PGlite}=require('@electric-sql/pglite');
+const {require:tsx}=require('tsx/cjs/api');
+const ts=require('typescript');
+const {expect:matcher}=require('expect');
+const nativePath='tests/db/tenant-export-withheld-columns.dbtest.ts';
+const servicePath='server/services/tenant-export/tenant-full-export.service.ts';
+const base='0cc794720c3a0b38d10d95dcb7928347b91b11dd';
+const service=tsx(`${repo}/${servicePath}`,import.meta.url);
+const native=fs.readFileSync(`${repo}/${nativePath}`,'utf8');
+const policy=process.argv.includes('--red')
+ ?execFileSync('git',['show',`${base}:${servicePath}`],{cwd:repo,encoding:'utf8'})
+ :fs.readFileSync(`${repo}/${servicePath}`,'utf8');
+const parse=source=>ts.createSourceFile('source.ts',source,ts.ScriptTarget.Latest,true);
+const ast=parse(native),policyAst=parse(policy);
+assert.deepEqual(ast.parseDiagnostics,[]);assert.deepEqual(policyAst.parseDiagnostics,[]);
+const declarations=(tree,names)=>tree.statements.flatMap(s=>ts.isVariableStatement(s)?s.declarationList.declarations:[])
+ .filter(d=>ts.isIdentifier(d.name)&&names.includes(d.name.text))
+ .map(d=>`const ${d.getText(tree)};`).join('\n');
+let load,check;
+for(const statement of ast.statements){
+ if(ts.isExpressionStatement(statement)&&ts.isCallExpression(statement.expression)&&statement.expression.expression.getText(ast)==='beforeAll')load=statement.expression.arguments[0].getText(ast);
+}
+const visit=n=>{
+ if(ts.isCallExpression(n)&&ts.isIdentifier(n.expression)&&n.expression.text==='it'&&n.arguments[0]?.text==='every text-like secret-shaped column is withheld or recorded as not a secret')check=n.arguments[1].getText(ast);
+ ts.forEachChild(n,visit);
+};visit(ast);assert.ok(load&&check);
+const transpile=s=>ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
+const lists=new Function(transpile(declarations(policyAst,['EXPORT_WITHHELD_COLUMNS','EXPORT_COLUMNS_NOT_SECRET']))+'return {EXPORT_WITHHELD_COLUMNS,EXPORT_COLUMNS_NOT_SECRET};')();
+const code=transpile('let pool; let columns=[];\n'+declarations(ast,['SECRET_SHAPED','TEXT_LIKE','listed'])+`\nconst load=${load}; const check=${check};`);
+const db=await PGlite.create();
+const decisions=[['EXPORT_WITHHELD_COLUMNS','licenses','access_token'],['EXPORT_WITHHELD_COLUMNS','c2c_mailbox_connections','token_reference'],['EXPORT_COLUMNS_NOT_SECRET','stab_exports','tokens'],['EXPORT_COLUMNS_NOT_SECRET','audit_events','hmac_seal']];
+const expected=decisions.map(([,table,column])=>`${table}.${column} (${column==='tokens'?'jsonb':'text'})`).sort();
+const records=[];let status=0;
+try{
+ // Deliberately four-table isolated catalog; not the full provisioned native schema.
+ await db.exec(`CREATE TABLE licenses (organization_id INTEGER, access_token TEXT);
+ CREATE TABLE c2c_mailbox_connections (organization_id INTEGER, token_reference TEXT);
+ CREATE TABLE stab_exports (organization_id INTEGER, tokens JSONB);
+ CREATE TABLE audit_events (organization_id INTEGER, hmac_seal TEXT);`);
+ const Pool=class {query(sql,params){return db.query(sql,params);}async end(){}};
+ const run=async(policyLists)=>{
+  const actual=new Function('Pool','databaseUrl','discoverTenantTables','expect','EXPORT_WITHHELD_COLUMNS','EXPORT_COLUMNS_NOT_SECRET',code+'return {load,check,getColumns:()=>columns};')
+   (Pool,'',service.discoverTenantTables,(received,_description)=>matcher(received),policyLists.EXPORT_WITHHELD_COLUMNS,policyLists.EXPORT_COLUMNS_NOT_SECRET);
+  await actual.load();actual.check();return actual.getColumns();
+ };
+ if(process.argv.includes('--red')){
+  try{await run(lists);throw new Error('Expected unchanged guard to reject the four undecided columns');}
+  catch(error){
+   assert.ok(error.matcherResult,'must be an actual equality assertion failure');
+   assert.deepEqual(error.matcherResult.actual.toSorted(),expected);
+   console.log(JSON.stringify({success:false,actualNativeLoaderAndAssertionExecuted:true,mode:'isolated four-table PGlite catalog; not full native qualification',undecided:error.matcherResult.actual,error:String(error.message)},null,2));
+   status=1;
+  }
+ }else{
+  const columns=await run(lists);
+  records.push({name:'actual native guard accepts all four source-grounded decisions',result:'passed',columns});
+  for(const [list,table,column]of decisions){
+   const removed=structuredClone(lists);delete removed[list][table][column];
+   try{await run(removed);throw new Error('Removed decision was not refused');}
+   catch(error){assert.ok(error.matcherResult);assert.deepEqual(error.matcherResult.actual,[`${table}.${column} (${column==='tokens'?'jsonb':'text'})`]);}
+   records.push({name:`remove ${table}.${column} decision`,result:'refused'});
+  }
+  await db.exec('ALTER TABLE licenses ADD COLUMN refresh_token TEXT');
+  try{await run(lists);throw new Error('Unknown credential column was not refused');}
+  catch(error){assert.ok(error.matcherResult);assert.deepEqual(error.matcherResult.actual,['licenses.refresh_token (text)']);}
+  records.push({name:'new unclassified credential column',result:'refused'});
+  console.log(JSON.stringify({success:true,controls:records.length,actualNativeLoaderAndAssertionExecuted:true,mode:'isolated four-table PGlite catalog; not full native qualification',records},null,2));
+ }
+}catch(error){status=2;console.error(String(error.stack));}
+finally{await db.close();}
+process.exitCode=status;

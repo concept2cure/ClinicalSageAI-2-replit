@@ -1,0 +1,19 @@
+{
+  "source": "4d1252fde561c663ef6b018f65c918bd087ce91e",
+  "run": 37683490033,
+  "artifact": 11511776693,
+  "failure": {
+    "file": "/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/tenant-export-withheld-columns.dbtest.ts",
+    "message": "",
+    "assertions": [
+      {
+        "title": "the tenant export decides every secret-shaped column it reads every text-like secret-shaped column is withheld or recorded as not a secret",
+        "status": "failed",
+        "failure": [
+          "AssertionError: add each to EXPORT_WITHHELD_COLUMNS or, with a reason, EXPORT_COLUMNS_NOT_SECRET: expected [ 'stab_exports.tokens (jsonb)', \u2026(3) ] to deeply equal []\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/tenant-export-withheld-columns.dbtest.ts:67:107\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"
+        ]
+      }
+    ]
+  },
+  "limitation": "Only stab_exports.tokens is visible; three additional names are truncated. Four source-grounded decisions are not a claim of complete native enumeration."
+}

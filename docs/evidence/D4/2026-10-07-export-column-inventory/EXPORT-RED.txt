@@ -1,0 +1,84 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > replaces each withheld value with a marker naming what it was, and keeps null as null 30ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > returns the rest of a gateway account: which gateway, which mode, which identity, which fields 20ms
+ × server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > no withheld value appears anywhere in the export 24ms
+   → expected '{"schemaVersion":"2.0","exportedAt":"…' not to contain 'license.access.fixture'
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > a table with nothing to withhold is returned as stored, with no withheld list 13ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > still returns only the tenant’s own rows 18ms
+ × server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > withholds license access material while returning license facts and retaining null 14ms
+   → expected undefined to deeply equal [ 'access_token' ]
+ × server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > withholds a mailbox token reference while returning connection facts and retaining null 11ms
+   → expected undefined to deeply equal [ 'token_reference' ]
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > returns the recorded P.8 authoring tokens as customer data 16ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > returns audit integrity seals unchanged and keeps an unsealed record null 10ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > isolates tenant rows in all four newly classified tables 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > no withheld value appears anywhere in the export
+AssertionError: expected '{"schemaVersion":"2.0","exportedAt":"…' not to contain 'license.access.fixture'
+
+Expected: "license.access.fixture"
+Received: "{"schemaVersion":"2.0","exportedAt":"2026-10-07T22:33:02.756Z","organization":{"id":7,"slug":"acme","name":"Acme Bio","status":"active"},"coverage":{"tablesDiscovered":7,"tablesExported":7,"tablesEmpty":0,"tablesFailed":[],"totalRows":12,"truncatedTables":[]},"tables":[{"table":"audit_events","tenantColumn":"organization_id","rowCount":2,"truncated":false,"rows":[{"id":1,"organization_id":7,"hmac_seal":"record-integrity-seal-fixture","action":"document.exported","record_hash":"record-hash-fixture"},{"id":2,"organization_id":7,"hmac_seal":null,"action":"document.created","record_hash":"unsealed-record-hash"}]},{"table":"c2c_mailbox_connections","tenantColumn":"organization_id","rowCount":2,"truncated":false,"rows":[{"id":1,"organization_id":7,"token_reference":"credential-store/mailbox/fixture","provider":"microsoft365","mailbox_identifier":"regulatory@acme.example","auth_state":"connected","scopes":["Mail.Read"]},{"id":2,"organization_id":7,"token_reference":null,"provider":"manual","mailbox_identifier":"archive","auth_state":"disconnected","scopes":[]}]},{"table":"integration_tokens","tenantColumn":"organization_id","rowCount":2,"truncated":false,"withheldColumns":["access_token","refresh_token"],"rows":[{"id":1,"organization_id":7,"provider":"google","access_token":"[withheld: an OAuth access token]","refresh_token":"[withheld: an OAuth refresh token]"},{"id":2,"organization_id":7,"provider":"box","access_token":null,"refresh_token":null}]},{"table":"licenses","tenantColumn":"organization_id","rowCount":2,"truncated":false,"rows":[{"id":1,"organization_id":7,"access_token":"license.access.fixture","license_type":"enterprise","status":"active"},{"id":2,"organization_id":7,"access_token":null,"license_type":"trial","status":"expired"}]},{"table":"organization_gateway_accounts","tenantColumn":"organization_id","rowCount":2,"truncated":false,"withheldColumns":["credentials_ciphertext"],"rows":[{"id":1,"organization_id":7,"gateway":"esg","account_mode":"client","sender_identifier":"ACME-ESG-01","credentials_ciphertext":"[withheld: agency gateway credentials, encrypted under a platform key]","credential_fields":["username","password"]},{"id":2,"organization_id":7,"gateway":"cesp","account_mode":"platform","sender_identifier":null,"credentials_ciphertext":null,"credential_fields":[]}]},{"table":"regulatory_programs","tenantColumn":"organization_id","rowCount":1,"truncated":false,"rows":[{"id":1,"organization_id":7,"name":"ACM-101 IND"}]},{"table":"stab_exports","tenantColumn":"organization_id","rowCount":1,"truncated":false,"rows":[{"id":1,"organization_id":7,"study_id":"study-acm","export_type":"p8_authoring","tokens":{"STUDY_NAME":"ACM stability","DURATION_MONTHS":24,"RESULTS_SUMMARY":"12 test results recorded"},"markdown":"## 3.2.P.8 Stability"}]}]}"
+
+ ❯ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts:124:105
+    122|   it('no withheld value appears anywhere in the export', async () => {
+    123|     const text = JSON.stringify(await exportTenantFull(asClient(), ORG…
+    124|     for (const secret of [ACCESS, REFRESH, CIPHER, LICENSE_ACCESS, MAI…
+       |                                                                                                         ^
+    125|   });
+    126|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > withholds license access material while returning license facts and retaining null
+AssertionError: expected undefined to deeply equal [ 'access_token' ]
+
+- Expected:
+[
+  "access_token",
+]
+
++ Received:
+undefined
+
+ ❯ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts:141:38
+    139|   it('withholds license access material while returning license facts …
+    140|     const licenses = tableOf(await exportTenantFull(asClient(), ORG), …
+    141|     expect(licenses.withheldColumns).toEqual(['access_token']);
+       |                                      ^
+    142|     expect(licenses.rows.find((r) => r.license_type === 'enterprise'))…
+    143|       access_token: '[withheld: a license access token]', license_type…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > withholds a mailbox token reference while returning connection facts and retaining null
+AssertionError: expected undefined to deeply equal [ 'token_reference' ]
+
+- Expected:
+[
+  "token_reference",
+]
+
++ Received:
+undefined
+
+ ❯ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts:150:39
+    148|   it('withholds a mailbox token reference while returning connection f…
+    149|     const mailboxes = tableOf(await exportTenantFull(asClient(), ORG),…
+    150|     expect(mailboxes.withheldColumns).toEqual(['token_reference']);
+       |                                       ^
+    151|     expect(mailboxes.rows.find((r) => r.provider === 'microsoft365')).…
+    152|       token_reference: '[withheld: a mailbox token or credential-store…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 passed (10)
+   Start at  18:32:59
+   Duration  3.53s (transform 135ms, setup 104ms, import 82ms, tests 3.02s, environment 0ms)
+

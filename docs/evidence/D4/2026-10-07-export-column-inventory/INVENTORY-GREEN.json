@@ -1,0 +1,74 @@
+{
+  "success": true,
+  "controls": 6,
+  "actualNativeLoaderAndAssertionExecuted": true,
+  "mode": "isolated four-table PGlite catalog; not full native qualification",
+  "records": [
+    {
+      "name": "actual native guard accepts all four source-grounded decisions",
+      "result": "passed",
+      "columns": [
+        {
+          "label": "licenses",
+          "column": "organization_id",
+          "type": "integer"
+        },
+        {
+          "label": "licenses",
+          "column": "access_token",
+          "type": "text"
+        },
+        {
+          "label": "c2c_mailbox_connections",
+          "column": "organization_id",
+          "type": "integer"
+        },
+        {
+          "label": "c2c_mailbox_connections",
+          "column": "token_reference",
+          "type": "text"
+        },
+        {
+          "label": "stab_exports",
+          "column": "organization_id",
+          "type": "integer"
+        },
+        {
+          "label": "stab_exports",
+          "column": "tokens",
+          "type": "jsonb"
+        },
+        {
+          "label": "audit_events",
+          "column": "organization_id",
+          "type": "integer"
+        },
+        {
+          "label": "audit_events",
+          "column": "hmac_seal",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "name": "remove licenses.access_token decision",
+      "result": "refused"
+    },
+    {
+      "name": "remove c2c_mailbox_connections.token_reference decision",
+      "result": "refused"
+    },
+    {
+      "name": "remove stab_exports.tokens decision",
+      "result": "refused"
+    },
+    {
+      "name": "remove audit_events.hmac_seal decision",
+      "result": "refused"
+    },
+    {
+      "name": "new unclassified credential column",
+      "result": "refused"
+    }
+  ]
+}
