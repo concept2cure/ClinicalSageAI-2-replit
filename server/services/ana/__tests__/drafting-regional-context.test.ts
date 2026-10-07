@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { resolveDraftingRequirements, resolveSystemPrompt } from '../AnaDocumentDraftingService';
+import { getLifecycleDocumentType } from '../../ind/ctd/index';
+import { resolveRequirements } from '../../ind/ctd/requirements-resolver';
 
 describe('drafting scope must precede regional filing instructions', () => {
   it.each(['ICH_DSUR', 'ICH_SAP', 'ICH_PROTOCOL'])('%s is a harmonised document, not a filing to ICH', (type) => {
@@ -55,5 +57,72 @@ describe('drafting scope must precede regional filing instructions', () => {
     expect(r).toContain('applicability is unresolved');
     expect(r).toContain('not CTD module designations');
     expect(r).not.toContain('Optional section');
+  });
+});
+
+
+describe('current M11 protocol requirements are consumed by section drafting', () => {
+  it('a parent objective section briefs its current child headings from the canonical outline', () => {
+    const r = resolveDraftingRequirements('ICH_PROTOCOL', '3');
+    expect(r.requirementsSource).toBe('record:outline:protocol-m11:3:exact');
+    expect(r.requirements).toContain('TRIAL OBJECTIVES AND ASSOCIATED ESTIMANDS');
+    expect(r.requirements).toContain('3.1 Primary Objective(s) and Associated Estimand(s)');
+    expect(r.requirements).toContain('3.2 Secondary Objective(s) and Associated Estimand(s)');
+    expect(r.requirements).toContain('FDA May 2026');
+    expect(r.requirements).toContain('Existing E6(R2) projects require a reviewed mapping');
+  });
+
+  it('an applicable assessment carries scope limits without implying universal assessment requirements', () => {
+    const r = resolveDraftingRequirements('ICH_PROTOCOL', '8.7 Immunogenicity Assessments');
+    expect(r.requirementsSource).toBe('record:outline:protocol-m11:8.7:exact');
+    expect(r.requirements).toContain('assess whether its content applies to this trial');
+    expect(r.requirements).toContain('Purpose notes are platform authoring summaries');
+    expect(r.requirements).toContain('does not implement or validate M11 technical specification exchange');
+    expect(r.requirements).toContain('interventional clinical trial protocols');
+  });
+
+  it.each(['8.7.1', '15', '3.2.S'])('an unmodelled protocol heading %s is explicit and never replaced by another document framework', section => {
+    const r = resolveDraftingRequirements('ICH_PROTOCOL', section);
+    expect(r.requirementsSource).toBe('record:protocol-m11:not-indexed');
+    expect(r.requirements).toContain('not encoded in the current M11 outline');
+    expect(r.requirements).toContain('do not supply its requirements from memory');
+    expect(r.requirements).not.toContain('Drug Substance');
+  });
+});
+
+
+describe('current US IND safety reporting remains subtype and route scoped', () => {
+  it('section drafting includes the canonical current route limits before any form or placement assumptions', () => {
+    const r = resolveDraftingRequirements('US_IND_SR', 'safety.cover');
+    expect(r.requirementsSource).toBe('record:lifecycle:ind_safety_report:safety.cover');
+    expect(r.requirements).toContain('commercial/noncommercial status');
+    expect(r.requirements).toContain('AEMS');
+    expect(r.requirements).toContain('noncommercial INDs are exempt');
+    expect(r.requirements).toContain('Reports under (ii), (iii) and (iv) use eCTD');
+    expect(r.requirements).toContain('no universal Module 5 assignment');
+    expect(r.requirements).toContain('does not build, validate or transmit an E2B(R3) message');
+    expect(resolveDraftingRequirements('US_IND_SR', '1').requirementsSource).toBe(r.requirementsSource);
+  });
+
+  it('lifecycle timing distinguishes determination-based 15-day reporting, receipt-based 7-day reporting and prompt follow-up', () => {
+    const dt = getLifecycleDocumentType('ind_safety_report')!;
+    expect(dt.timing).toContain('sponsor determination');
+    expect(dt.timing).toContain('initial receipt');
+    expect(dt.timing).toContain('as soon as the information is available');
+    expect(dt.timing).not.toContain('Follow-up information is submitted within 15');
+    expect(dt.components.find(c => c.code === 'safety.followup')!.authoringGuidance).not.toContain('within 15 calendar days of the sponsor receiving');
+    expect(dt.components.find(c => c.code === 'safety.cover')!.generationPrompt).toContain('only where the selected route requires');
+    expect(dt.components.find(c => c.code === 'safety.icsr')!.generationPrompt).toContain('not an E2B(R3) message');
+  });
+
+  it('the bounded canonical lifecycle brief keeps current route and timing and an unknown section stays unindexed', () => {
+    const answer = resolveRequirements({ document: 'ind_safety_report' });
+    expect(answer.kind).toBe('answer');
+    if (answer.kind !== 'answer') throw new Error('IND safety record missing');
+    expect(answer.requirements).toContain('AEMS');
+    expect(answer.requirements).toContain('sponsor determination');
+    expect(answer.requirements).toContain('as soon as the information is available');
+    expect(answer.requirements).not.toContain('December 2015, draft');
+    expect(resolveDraftingRequirements('US_IND_SR', '5.3.5.1').requirementsSource).toBe('record:ind-safety:not-indexed');
   });
 });

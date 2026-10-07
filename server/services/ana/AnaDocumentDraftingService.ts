@@ -44,7 +44,12 @@ import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { resolveRequirements } from '../ind/ctd/requirements-resolver.js';
 import { CTD_AUTHORING_GUIDANCE } from '../ind/ctd/authoring-guidance.js';
 import { BIOTECH_DRAFTING_GUIDANCE, buildDocumentPreparation } from '../market-specs/document-preparation.js';
-import { componentTemplateIdForRegistry, getDocumentTemplate, registryOutlineRequiresReview } from '../market-specs/document-template-library.js';
+import { componentTemplateIdForRegistry, getDocumentTemplate, registryOutlineRequiresReview, type TemplateSection } from '../market-specs/document-template-library.js';
+import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance.js';
+import { renderOutlineBrief } from '../ind/ctd/section-brief.js';
+import { ICH_M11_PROTOCOL_LIMITATIONS } from '../../../shared/regulatory/protocol-m11.js';
+import { getLifecycleDocumentTypeForRegistry } from '../ind/ctd/index.js';
+import { IND_SAFETY_REPORT_ROUTE_LIMITS, IND_SAFETY_REPORT_TIMING } from '../ind/ctd/lifecycle-document-types.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Regulatory System Prompts (cached for cost efficiency)
@@ -353,10 +358,30 @@ function componentRequirements(entry: RegulatoryApplicationType, sectionType: st
   if (!template) return null;
   const target = normTitle(sectionType);
   const section = template.sections.find(s => [s.number, s.heading, `${s.number} ${s.heading}`].some(v => normTitle(v) === target));
+  if (entry.id === 'ICH_PROTOCOL') return protocolRequirements(section, sectionType);
   if (!section) return { requirements: null, requirementsSource: 'none' };
   return {
     requirements: `SECTION AUTHORING GUIDANCE (existing ${template.title} record):\n- Section: ${section.number} — ${section.heading}\n- ${section.purpose}\n- Recorded basis: ${template.regulatoryBasis}\n- Confirm applicability and the current agency/client template; platform required flags are not a completeness or approval verdict.`,
     requirementsSource: `outline:${template.outlineSource?.kind ?? 'canonical-record'}:${entry.id}:${section.number}`,
+  };
+}
+
+/** The current M11 record uses the existing outline renderer, including parent
+ * child headings. An unavailable deeper heading cannot become legacy E6/CTD
+ * guidance or a model-supplied requirement. */
+function protocolRequirements(
+  section: TemplateSection | undefined,
+  requested: string,
+): DraftingRequirements {
+  const limits = ICH_M11_PROTOCOL_LIMITATIONS.map(s => `- Scope limitation: ${s}`).join('\n');
+  const brief = section && renderOutlineBrief(ICH_M11_PROTOCOL_OUTLINE, /^\d/.test(section.number) ? section.number : section.heading);
+  if (!section || !brief) return {
+    requirements: `SECTION AUTHORING GUIDANCE: "${requested}" is not encoded in the current M11 outline; do not supply its requirements from memory. Obtain the applicable final template section and approved sponsor material before drafting it.\n${limits}`,
+    requirementsSource: 'record:protocol-m11:not-indexed',
+  };
+  return {
+    requirements: `SECTION AUTHORING GUIDANCE (canonical M11 protocol outline; retain the heading and assess content applicability):\n${brief}\n\n${limits}`,
+    requirementsSource: `record:outline:protocol-m11:${section.number}:exact`,
   };
 }
 
@@ -500,6 +525,8 @@ export function resolveDraftingRequirements(
   const matchRow = (s: BlueprintRow) =>
     norm(s.code) === target || norm(s.title) === target || norm(`${s.code} ${s.title}`) === target;
 
+  if (entry.id === 'US_IND_SR') return indSafetyRequirements(sectionType, blueprint, matchRow);
+
   if (!isCtdFramework(entry, blueprint)) {
     const component = componentRequirements(entry, sectionType);
     if (component) return component;
@@ -520,6 +547,28 @@ export function resolveDraftingRequirements(
   const scoped = scopedCtdRequirements(ctx, lead, matchRow);
   if (scoped) return scoped;
   return lead ? codeRequirements(ctx, lead) : titleRequirements(ctx, matchRow) ?? none;
+}
+
+/** Safety report subtype and sponsor status decide delivery; a narrative is
+ * never silently treated as an E2B message or universal Module 5 package. */
+function indSafetyRequirements(requested: string, blueprint: SectionBlueprint, matchRow: (s: BlueprintRow) => boolean): DraftingRequirements {
+  const doc = getLifecycleDocumentTypeForRegistry('US_IND_SR');
+  const target = normTitle(requested);
+  const legacyRow = blueprint.sections.find(matchRow);
+  const legacyIndex = legacyRow ? blueprint.sections.indexOf(legacyRow) : -1;
+  const component = doc?.components.find(c => [c.code, c.title, `${c.code} ${c.title}`].some(v => normTitle(v) === target))
+    // Existing six-row scaffold compatibility. Its numbers are document
+    // grouping keys, not CTD Module 5 placement or route requirements.
+    ?? (doc && doc.components.length === blueprint.sections.length && legacyIndex >= 0 ? doc.components[legacyIndex] : undefined);
+  const limits = `Determine report subtype and commercial/noncommercial status from provided records before choosing a route; leave them unresolved when absent.\n${IND_SAFETY_REPORT_ROUTE_LIMITS}\n${IND_SAFETY_REPORT_TIMING}\nThis authoring path does not build, validate or transmit an E2B(R3) message, calculate a case deadline or certify submission readiness.`;
+  if (!component) return {
+    requirements: `SECTION AUTHORING GUIDANCE: "${requested}" is not indexed for this IND safety report; do not supply requirements or CTD placement from memory.\n${limits}`,
+    requirementsSource: 'record:ind-safety:not-indexed',
+  };
+  return {
+    requirements: `SECTION AUTHORING GUIDANCE (current IND safety lifecycle record):\n${limits}\n\n${component.code} — ${component.title}\n${component.authoringGuidance}\n${component.keyContentElements.map(s => `- ${s}`).join('\n')}`,
+    requirementsSource: `record:lifecycle:ind_safety_report:${component.code}`,
+  };
 }
 
 /** Scope the repaired trial/nonclinical subtree before asking the CTD record. */

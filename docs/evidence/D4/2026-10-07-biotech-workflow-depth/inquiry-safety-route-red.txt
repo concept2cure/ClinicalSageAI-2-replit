@@ -1,0 +1,52 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × shared/regulatory/__tests__/ind-safety-route.test.ts > FDA IND safety registry — subtype-dependent delivery > cannot promise a universal eCTD Module 5 route for IND safety reports 10ms
+   → expected 'eCTD' to be 'regional' // Object.is equality
+ × shared/regulatory/__tests__/ind-safety-route.test.ts > FDA IND safety registry — subtype-dependent delivery > preserves the parent IND and distinguishes reporting clocks by trigger 2ms
+   → expected 'Expedited safety reports of serious a…' to match /15.*determination/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  shared/regulatory/__tests__/ind-safety-route.test.ts > FDA IND safety registry — subtype-dependent delivery > cannot promise a universal eCTD Module 5 route for IND safety reports
+AssertionError: expected 'eCTD' to be 'regional' // Object.is equality
+
+Expected: "regional"
+Received: "eCTD"
+
+ ❯ shared/regulatory/__tests__/ind-safety-route.test.ts:9:35
+      7|   it('cannot promise a universal eCTD Module 5 route for IND safety re…
+      8|     const entry = getApplicationType('US_IND_SR')!;
+      9|     expect(entry.dossierStandard).toBe('regional');
+       |                                   ^
+     10|     expect(entry.submissionFormat).toMatch(/E2B\(R3\).*eCTD/);
+     11|     expect(entry.ctdModule).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  shared/regulatory/__tests__/ind-safety-route.test.ts > FDA IND safety registry — subtype-dependent delivery > preserves the parent IND and distinguishes reporting clocks by trigger
+AssertionError: expected 'Expedited safety reports of serious a…' to match /15.*determination/
+
+- Expected:
+/15.*determination/
+
++ Received:
+"Expedited safety reports of serious and unexpected adverse reactions within 15 days (7 days for fatal/life-threatening)"
+
+ ❯ shared/regulatory/__tests__/ind-safety-route.test.ts:24:31
+     22|     const entry = getApplicationType('US_IND_SR')!;
+     23|     expect(entry.parentApplicationType).toBe('US_IND');
+     24|     expect(entry.description).toMatch(/15.*determination/);
+       |                               ^
+     25|     expect(entry.description).toMatch(/7.*initial receipt/);
+     26|     expect(entry.description).toMatch(/fatal|life-threatening/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  22:49:39
+   Duration  477ms (transform 145ms, setup 85ms, import 98ms, tests 15ms, environment 0ms)
+

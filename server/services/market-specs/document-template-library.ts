@@ -31,6 +31,8 @@ import { GLOBAL_REGISTRY, getApplicationType } from '../../../shared/regulatory/
 import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap';
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy';
 import { ICH_E2F_DSUR_SECTIONS } from '../ind/ctd/lifecycle-document-types';
+import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance';
+import { ICH_M11_PROTOCOL_LIMITATIONS, ICH_M11_PROTOCOL_SECTIONS } from '../../../shared/regulatory/protocol-m11';
 import { getSectionBlueprint as getDedicatedSectionBlueprint, getSectionBlueprintContext } from '../regulatory/sectionBlueprintCatalog';
 
 export interface TemplateSection {
@@ -60,7 +62,7 @@ export interface DocumentTemplateStructure {
   /** Which existing platform record supplies the headings; distinct from evidence of an agency requirement. */
   outlineSource?:
     | { kind: 'project-blueprint' | 'dedicated-blueprint'; registryId: string; blueprintId: string }
-    | { kind: 'lifecycle-record'; registryId: string; record: string };
+    | { kind: 'lifecycle-record' | 'document-outline'; registryId: string; record: string };
   /** Scope/currency limitations the author must see before using an existing scaffold. */
   outlineLimitations?: string[];
   sections: TemplateSection[];
@@ -155,9 +157,20 @@ function namedProjectOutline(id: string, registryId: string, ctdSection?: string
 }
 
 const EXISTING_BIOTECH_COMPONENT_OUTLINES: DocumentTemplateStructure[] = [
-  ...namedProjectOutline('protocol', 'ICH_PROTOCOL', undefined, [
-    'Legacy ICH E6(R2) project outline. Confirm current ICH E6/M11 adoption and the agency or client protocol template; this is not a claim that these exact headings are the current mandatory format.',
-  ]),
+  withBasis({
+    id: 'protocol',
+    title: ICH_M11_PROTOCOL_OUTLINE.title,
+    families: ['ectd', 'ctis'],
+    basis: ICH_M11_PROTOCOL_OUTLINE.governing[0],
+    outlineSource: { kind: 'document-outline', registryId: 'ICH_PROTOCOL', record: 'ICH_M11_PROTOCOL_OUTLINE' },
+    outlineLimitations: [...ICH_M11_PROTOCOL_LIMITATIONS],
+    sections: ICH_M11_PROTOCOL_SECTIONS.map((s) => ({
+      number: s.code,
+      heading: s.title,
+      purpose: s.purpose,
+      required: true,
+    })),
+  }),
   ...namedProjectOutline('statistical_analysis_plan', 'ICH_SAP'),
   ...namedProjectOutline('informed_consent', 'ICH_ICF', undefined, [
     'The existing consent scaffold is US-oriented. Confirm the country, site, language and ethics-approved template. Executed participant consent forms remain site records; this outline is for a specimen form.',
@@ -463,6 +476,7 @@ const BY_ID = new Map(DOCUMENT_TEMPLATES.map((t) => [t.id, t]));
 
 /** Compatibility names share the existing object; no new id or heading copy. */
 const TEMPLATE_ALIASES: Readonly<Record<string, string>> = {
+  'protocol-m11': 'protocol',
   investigator_brochure: 'investigators_brochure',
   rmp: 'risk_management_plan',
 };
@@ -484,6 +498,8 @@ const REGISTRY_COMPONENT_TEMPLATES: Readonly<Record<string, string>> = {
   EU_RMP: 'risk_management_plan',
   ICH_QOS: 'quality_overall_summary',
   ICH_NONCLIN_OVERVIEW: 'nonclinical_overview',
+  ICH_CLIN_OVERVIEW: 'clinical_overview',
+  ICH_CLIN_SUMMARY: 'clinical_summary',
 };
 
 /** Share component identity with inquiry and drafting without copying this map. */

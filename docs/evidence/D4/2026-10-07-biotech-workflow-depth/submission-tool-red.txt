@@ -1,0 +1,134 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/ana/__tests__/submission-package-project-scope.test.ts
+{
+  "timestamp": "2026-10-07T02:48:15.643Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T02:48:15.645Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/submission-package-project-scope.test.ts
+{
+  "timestamp": "2026-10-07T02:48:15.645Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/submission-package-project-scope.test.ts
+[database] Database connection successful
+
+ × server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > requires an active project by default even if the model supplies a project id and approvals 37ms
+   → expected 'computed' to be 'needs_project' // Object.is equality
+ × server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > ignores model approval and project claims when a project is open 2ms
+   → expected undefined to be 'saved_canonical_projection' // Object.is equality
+ × server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > explicit hypothetical scenarios cannot certify a completed client package 2ms
+   → expected 'computed' to be 'hypothetical' // Object.is equality
+ × server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > does not turn a failed saved-record read into an empty successful assessment 1ms
+   → expected 'computed' to be 'error' // Object.is equality
+ × server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > refuses a project that cannot be resolved in this tenant 1ms
+   → expected 'computed' to be 'needs_project' // Object.is equality
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > asks for a recognized filing scope before any project read 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > requires an active project by default even if the model supplies a project id and approvals
+AssertionError: expected 'computed' to be 'needs_project' // Object.is equality
+
+Expected: "needs_project"
+Received: "computed"
+
+ ❯ server/services/ana/__tests__/submission-package-project-scope.test.ts:25:24
+     23|   it('requires an active project by default even if the model supplies…
+     24|     const out = await call(input);
+     25|     expect(out.status).toBe('needs_project');
+       |                        ^
+     26|     expect(h.load).not.toHaveBeenCalled();
+     27|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > ignores model approval and project claims when a project is open
+AssertionError: expected undefined to be 'saved_canonical_projection' // Object.is equality
+
+- Expected:
+"saved_canonical_projection"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/submission-package-project-scope.test.ts:32:33
+     30|     const out = await call(input, context);
+     31|     expect(out.status).toBe('computed');
+     32|     expect(out.assessmentBasis).toBe('saved_canonical_projection');
+       |                                 ^
+     33|     expect(out.result.metadata.projectId).toBe(program);
+     34|     expect(out.result.metadata.packageComplete).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > explicit hypothetical scenarios cannot certify a completed client package
+AssertionError: expected 'computed' to be 'hypothetical' // Object.is equality
+
+Expected: "hypothetical"
+Received: "computed"
+
+ ❯ server/services/ana/__tests__/submission-package-project-scope.test.ts:41:24
+     39|   it('explicit hypothetical scenarios cannot certify a completed clien…
+     40|     const out = await call({ ...input, mode: 'hypothetical' }, context…
+     41|     expect(out.status).toBe('hypothetical');
+       |                        ^
+     42|     expect(out.result.metadata.packageComplete).toBe(false);
+     43|     expect(out.result.metadata.sourceIdentityAssessed).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > does not turn a failed saved-record read into an empty successful assessment
+AssertionError: expected 'computed' to be 'error' // Object.is equality
+
+Expected: "error"
+Received: "computed"
+
+ ❯ server/services/ana/__tests__/submission-package-project-scope.test.ts:51:24
+     49|     h.load.mockRejectedValue(new Error('database unavailable'));
+     50|     const out = await call(input, context);
+     51|     expect(out.status).toBe('error');
+       |                        ^
+     52|     expect(out.result).toBeUndefined();
+     53|     expect(out.error).toMatch(/read|assess/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > refuses a project that cannot be resolved in this tenant
+AssertionError: expected 'computed' to be 'needs_project' // Object.is equality
+
+Expected: "needs_project"
+Received: "computed"
+
+ ❯ server/services/ana/__tests__/submission-package-project-scope.test.ts:59:24
+     57|     h.load.mockResolvedValue(null);
+     58|     const out = await call(input, context);
+     59|     expect(out.status).toBe('needs_project');
+       |                        ^
+     60|     expect(out.result).toBeUndefined();
+     61|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  22:48:12
+   Duration  8.98s (transform 5.69s, setup 84ms, import 8.55s, tests 48ms, environment 0ms)
+

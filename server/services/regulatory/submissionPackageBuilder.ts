@@ -8,6 +8,7 @@
  * @module server/services/regulatory/submissionPackageBuilder
  */
 
+import { evidenceIsApproved, evidenceIsRetired, groupSubmissionEvidence, submissionEvidenceState } from './submissionEvidenceStatus.js';
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
 import { getResolvedSectionBlueprint, getSectionBlueprintContext, requiresSectionApplicabilityAssessment } from './sectionBlueprintCatalog.js';
 import { getRegionProfile } from '../../../shared/regulatory/region-profiles.js';
@@ -58,11 +59,17 @@ export interface PackageArtifact {
   required: boolean;
   status: 'missing' | 'present' | 'approved' | 'locked';
   documentId?: string;
+  /** All current source documents in this requirement group. */
+  documentIds?: string[];
   validationRules: string[];
 }
 
 export interface PackageMetadata {
   artifactRequirementsAssessed?: boolean;
+  /** Every requirement carries an explicit source identity; this does not verify it. */
+  sourceIdentitiesPresent?: boolean;
+  /** Approved required artifact groups, separate from presence. */
+  approvedArtifacts?: number;
   sectionApplicabilityAssessed?: boolean;
   generatedAt: string;
   projectId: string;
@@ -107,38 +114,34 @@ export function buildPackageManifest(
 
   const sectionBlueprint = getResolvedSectionBlueprint(entry);
   const requiredArtifacts = getRequiredArtifacts(registryId);
-  const regionProfile = getRegionProfile(entry.region);
 
   // Map actual data
-  const sectionMap = new Map(projectSections.map(s => [s.code, s]));
-  const artifactMap = new Map(projectArtifacts.map(a => [a.type, a]));
+  const sectionMap = groupSubmissionEvidence(projectSections, s => s.code);
+  const artifactMap = groupSubmissionEvidence(projectArtifacts, a => a.type);
 
   // Build section list
   const sections: PackageSection[] = sectionBlueprint.sections.map(s => {
-    const actual = sectionMap.get(s.code);
+    const actual = (sectionMap.get(s.code) ?? []).filter(r => !evidenceIsRetired(r.status));
     return {
       code: s.code,
       title: s.title,
       module: s.module,
       required: s.required,
-      status: actual
-        ? (['approved', 'locked', 'signed'].includes(actual.status) ? (actual.status === 'locked' ? 'locked' : 'approved') : 'present')
-        : 'missing',
-      documentIds: actual?.documentIds ?? [],
+      status: submissionEvidenceState(actual.map(r => (r.documentIds ?? []).some(id => typeof id === 'string' && id.trim()) ? r.status : 'missing')),
+      documentIds: [...new Set(actual.flatMap(r => r.documentIds ?? []).filter(id => typeof id === 'string' && id.trim()))],
     };
   });
 
   // Build artifact list
   const artifacts: PackageArtifact[] = requiredArtifacts.map(a => {
-    const actual = artifactMap.get(a.artifactType);
+    const actual = (artifactMap.get(a.artifactType) ?? []).filter(r => !evidenceIsRetired(r.status));
     return {
       artifactType: a.artifactType,
       label: a.label,
       required: a.required,
-      status: actual
-        ? (['approved', 'locked', 'signed'].includes(actual.status) ? 'approved' : 'present')
-        : 'missing',
-      documentId: actual?.documentId,
+      status: submissionEvidenceState(actual.map(r => r.status)),
+      documentId: actual.length === 1 ? actual[0].documentId : undefined,
+      documentIds: [...new Set(actual.map(r => r.documentId).filter((id): id is string => typeof id === 'string' && Boolean(id.trim())))],
       validationRules: a.validationRules,
     };
   });
@@ -151,6 +154,11 @@ export function buildPackageManifest(
   const completedSections = requiredSectionsList.filter(s => ['approved', 'locked'].includes(s.status));
   const requiredArtifactsList = artifacts.filter(a => a.required);
   const presentArtifacts = requiredArtifactsList.filter(a => a.status !== 'missing');
+  const approvedArtifacts = requiredArtifactsList.filter(a => evidenceIsApproved(a.status));
+  const sourceIdentitiesPresent = hasArtifactMatrix(registryId) && requiredArtifactsList.every(a => {
+    const current = (artifactMap.get(a.artifactType) ?? []).filter(r => !evidenceIsRetired(r.status));
+    return current.length > 0 && current.every(r => Boolean(r.documentId?.trim()));
+  }) && requiredSectionsList.every(s => s.documentIds.length > 0);
 
   return {
     outlineLimitations: [...getSectionBlueprintContext(entry.id).limitations,
@@ -161,15 +169,15 @@ export function buildPackageManifest(
     agency: entry.agency,
     region: entry.region,
     country: entry.country,
-    submissionGateway: entry.id === 'EU_CTA' ? 'CTIS'
-      : ['CA_CTA', 'CA_CTA_A', 'JP_CTN'].includes(entry.id) || entry.region === 'GLOBAL' ? null
-      : regionProfile?.submissionGateway ?? null,
+    submissionGateway: packageSubmissionGateway(entry),
     sections,
     artifacts,
     validationRules,
     metadata: {
       artifactRequirementsAssessed: hasArtifactMatrix(registryId) && !requiresSectionApplicabilityAssessment(registryId),
       ...(requiresSectionApplicabilityAssessment(registryId) ? { sectionApplicabilityAssessed: false } : {}),
+      sourceIdentitiesPresent,
+      approvedArtifacts: approvedArtifacts.length,
       generatedAt: new Date().toISOString(),
       projectId,
       totalSections: sections.length,
@@ -181,17 +189,24 @@ export function buildPackageManifest(
       packageComplete:
         hasArtifactMatrix(registryId) && !requiresSectionApplicabilityAssessment(registryId) &&
         completedSections.length === requiredSectionsList.length &&
-        presentArtifacts.length === requiredArtifactsList.length,
+        sourceIdentitiesPresent && approvedArtifacts.length === requiredArtifactsList.length,
     },
   };
 }
 
 // ─── Validation Rules ─────────────────────────────────────────────────────────
 
+function packageSubmissionGateway(entry: RegulatoryApplicationType): string | null {
+  if (entry.id === 'EU_CTA') return 'CTIS';
+  if (['CA_CTA', 'CA_CTA_A', 'JP_CTN', 'US_IND_SR'].includes(entry.id) || entry.region === 'GLOBAL') return null;
+  return getRegionProfile(entry.region)?.submissionGateway ?? null;
+}
+
 function getPackageValidationRules(entry: RegulatoryApplicationType): string[] {
-  const rules: string[] = ['all_required_sections_present', 'all_required_artifacts_present'];
+  const rules: string[] = ['all_required_sections_present', 'all_required_artifacts_present', 'all_required_content_approved', 'saved_source_identities_required'];
   if (!hasArtifactMatrix(entry.id)) rules.push('artifact_requirements_not_modelled');
   if (requiresSectionApplicabilityAssessment(entry.id)) rules.push('section_applicability_not_assessed');
+  if (entry.id === 'US_IND_SR') return [...rules, 'ind_safety_subtype_and_commercial_status_not_assessed', 'e2b_aems_or_ectd_route_review_required'];
   if (entry.id === 'EU_CTA') return [...rules, 'ctis_form_and_part_i_ii_validation_required', 'msc_language_and_disclosure_review_required'];
   if (entry.id === 'CA_CTA' || entry.id === 'CA_CTA_A') return [...rules, 'canadian_trial_modules_1_to_3_review_required', 'trial_format_and_delivery_not_assessed'];
   if (entry.id === 'JP_CTN') return [...rules, 'pmda_notification_pdf_xml_validation_required', 'notification_category_timing_and_attachments_review_required'];

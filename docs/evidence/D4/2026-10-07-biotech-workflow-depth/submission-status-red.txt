@@ -1,0 +1,158 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > draft artifacts are present but incomplete and produce review gaps 19ms
+   → expected 100 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > missing records cannot satisfy requirements 1ms
+   → expected 7 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > not_started records cannot satisfy requirements 1ms
+   → expected 7 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > todo records cannot satisfy requirements 1ms
+   → expected 7 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > superseded records cannot satisfy requirements 1ms
+   → expected 7 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > withdrawn records cannot satisfy requirements 1ms
+   → expected 7 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > archived records cannot satisfy requirements 3ms
+   → expected 7 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > deleted records cannot satisfy requirements 4ms
+   → expected 7 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > invented_status records cannot satisfy requirements 1ms
+   → expected 7 to be +0 // Object.is equality
+ × server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > one required section still in review prevents a ready verdict even above 90 percent 2ms
+   → expected 'ready' to be 'nearly_ready' // Object.is equality
+ × server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > an empty approved section cannot be counted as completed evidence 1ms
+   → expected 66 to be 65 // Object.is equality
+ × server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > approval without an artifact identity cannot complete the package 2ms
+   → expected true to be false // Object.is equality
+ × server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > duplicate current records with inconsistent states never select an approval by input order 1ms
+   → expected 7 to be 6 // Object.is equality
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > a retired version does not defeat a current approved replacement 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > draft artifacts are present but incomplete and produce review gaps
+AssertionError: expected 100 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 100
+
+ ❯ server/services/regulatory/__tests__/submission-evidence-status.test.ts:20:56
+     18|     expect(result.artifactReadiness.present).toBe(result.artifactReadi…
+     19|     expect(result.artifactReadiness.approved).toBe(0);
+     20|     expect(result.artifactReadiness.completionPercent).toBe(0);
+       |                                                        ^
+     21|     expect(result.artifactReadiness.unapproved).toHaveLength(result.ar…
+     22|     expect(result.gaps.filter(g => g.type === 'artifact')).toHaveLengt…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > missing records cannot satisfy requirements
+ FAIL  server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > not_started records cannot satisfy requirements
+ FAIL  server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > todo records cannot satisfy requirements
+ FAIL  server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > superseded records cannot satisfy requirements
+ FAIL  server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > withdrawn records cannot satisfy requirements
+ FAIL  server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > archived records cannot satisfy requirements
+ FAIL  server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > deleted records cannot satisfy requirements
+ FAIL  server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > invented_status records cannot satisfy requirements
+AssertionError: expected 7 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 7
+
+ ❯ server/services/regulatory/__tests__/submission-evidence-status.test.ts:29:46
+     27|   it.each(['missing', 'not_started', 'todo', 'superseded', 'withdrawn'…
+     28|     const result = evaluateReadiness({ registryIdOrLegacy: filing, sec…
+     29|     expect(result.artifactReadiness.present).toBe(0);
+       |                                              ^
+     30|     expect(result.artifactReadiness.missing).toHaveLength(result.artif…
+     31|     expect(result.level).toBe('not_ready');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > one required section still in review prevents a ready verdict even above 90 percent
+AssertionError: expected 'ready' to be 'nearly_ready' // Object.is equality
+
+Expected: "nearly_ready"
+Received: "ready"
+
+ ❯ server/services/regulatory/__tests__/submission-evidence-status.test.ts:42:26
+     40|     const result = evaluateReadiness({ registryIdOrLegacy: filing, sec…
+     41|     expect(result.score).toBeGreaterThanOrEqual(90);
+     42|     expect(result.level).toBe('nearly_ready');
+       |                          ^
+     43|     expect(result.gaps.some(g => g.type === 'section' && g.code === ac…
+     44|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > an empty approved section cannot be counted as completed evidence
+AssertionError: expected 66 to be 65 // Object.is equality
+
+- Expected
++ Received
+
+- 65
++ 66
+
+ ❯ server/services/regulatory/__tests__/submission-evidence-status.test.ts:51:47
+     49|     actual[0].documentIds = [];
+     50|     const result = evaluateReadiness({ registryIdOrLegacy: filing, sec…
+     51|     expect(result.sectionReadiness.completed).toBe(actual.length - 1);
+       |                                               ^
+     52|     expect(result.level).not.toBe('ready');
+     53|     const manifest = buildPackageManifest(filing, 'project', actual, a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > approval without an artifact identity cannot complete the package
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/regulatory/__tests__/submission-evidence-status.test.ts:61:47
+     59|     const actual = artifacts().map(({ documentId: _id, ...a }) => a);
+     60|     const manifest = buildPackageManifest(filing, 'project', sections(…
+     61|     expect(manifest.metadata.packageComplete).toBe(false);
+       |                                               ^
+     62|     expect(manifest.metadata.sourceIdentityAssessed).toBe(false);
+     63|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > duplicate current records with inconsistent states never select an approval by input order
+AssertionError: expected 7 to be 6 // Object.is equality
+
+- Expected
++ Received
+
+- 6
++ 7
+
+ ❯ server/services/regulatory/__tests__/submission-evidence-status.test.ts:72:49
+     70|     ]) {
+     71|       const result = evaluateReadiness({ registryIdOrLegacy: filing, s…
+     72|       expect(result.artifactReadiness.approved).toBe(result.artifactRe…
+       |                                                 ^
+     73|       expect(result.level).not.toBe('ready');
+     74|       expect(buildPackageManifest(filing, 'project', sections(), actua…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 1 passed (14)
+   Start at  22:46:56
+   Duration  1.88s (transform 743ms, setup 85ms, import 1.37s, tests 41ms, environment 0ms)
+

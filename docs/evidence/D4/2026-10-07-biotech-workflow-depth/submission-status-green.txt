@@ -1,0 +1,60 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > draft artifacts are present but incomplete and produce review gaps 8ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > missing records cannot satisfy requirements 3ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > not_started records cannot satisfy requirements 2ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > todo records cannot satisfy requirements 2ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > superseded records cannot satisfy requirements 3ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > withdrawn records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > archived records cannot satisfy requirements 2ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > deleted records cannot satisfy requirements 2ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > invented_status records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > one required section still in review prevents a ready verdict even above 90 percent 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > an empty approved section cannot be counted as completed evidence 2ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > approval without an artifact identity cannot complete the package 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > duplicate current records with inconsistent states never select an approval by input order 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > a retired version does not defeat a current approved replacement 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > EU_MAA uses the project catalog in persistence, resolution, readiness and packaging 6ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_NDS uses the project catalog in persistence, resolution, readiness and packaging 2ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > JP_MKT_APPROVAL uses the project catalog in persistence, resolution, readiness and packaging 2ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > EU_CTA uses the project catalog in persistence, resolution, readiness and packaging 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_CTA uses the project catalog in persistence, resolution, readiness and packaging 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_CTA_A uses the project catalog in persistence, resolution, readiness and packaging 0ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > JP_CTN uses the project catalog in persistence, resolution, readiness and packaging 0ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > US_IND_AMENDMENT uses the project catalog in persistence, resolution, readiness and packaging 0ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > ICH_NONCLIN_SUMMARY uses the project catalog in persistence, resolution, readiness and packaging 0ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > DSUR uses the existing E2F record, including section 20 Conclusions 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CSR uses the canonical E3 top-level record through saved outlines and manifests 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > an approved DSUR scaffold cannot imply assessed filing readiness or package completeness 2ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > EU_CTA requires a conditional-scope assessment even with approved baseline rows 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_CTA requires a conditional-scope assessment even with approved baseline rows 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_CTA_A requires a conditional-scope assessment even with approved baseline rows 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > JP_CTN requires a conditional-scope assessment even with approved baseline rows 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > US_IND_AMENDMENT requires a conditional-scope assessment even with approved baseline rows 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > the premise this test rests on > US_ANDA resolves in the registry but has no artifact matrix 2ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > the premise this test rests on > most of the registry has no artifact matrix, so this is the common path 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — unmodelled artifact requirements > does NOT report 100% artifact completeness 2ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — unmodelled artifact requirements > marks the artifact half as not assessed 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — unmodelled artifact requirements > raises a critical gap naming the cause 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — unmodelled artifact requirements > does not fold a fabricated artifact figure into the overall score 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — modelled artifact requirements still score normally > US_IND is assessed, and a missing required artifact still counts against it 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.fallback.test.ts > readinessEvaluator — unresolved registry entry fails closed > does NOT claim 100% artifact completeness when requirements are unknown 3ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.fallback.test.ts > readinessEvaluator — unresolved registry entry fails closed > surfaces a CRITICAL gap so the orchestrator raises a blocker 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.fallback.test.ts > readinessEvaluator — unresolved registry entry fails closed > reports the strongest not-ready level, never "early" 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.fallback.test.ts > readinessEvaluator — unresolved registry entry fails closed > a RESOLVABLE registry id is unaffected by the fallback change 1ms
+ ✓ tests/regulatory/readinessEvaluator.test.ts > Readiness Evaluator > returns low readiness for empty project 2ms
+ ✓ tests/regulatory/readinessEvaluator.test.ts > Readiness Evaluator > returns higher readiness with some completed sections 1ms
+ ✓ tests/regulatory/readinessEvaluator.test.ts > Readiness Evaluator > identifies gaps for missing required sections 1ms
+ ✓ tests/regulatory/readinessEvaluator.test.ts > Readiness Evaluator > identifies missing required artifacts 0ms
+ ✓ tests/regulatory/readinessEvaluator.test.ts > Readiness Evaluator > adds regional warnings for EU submissions 0ms
+ ✓ tests/regulatory/readinessEvaluator.test.ts > Readiness Evaluator > handles legacy submission types 0ms
+ ✓ tests/regulatory/readinessEvaluator.test.ts > Readiness Evaluator > fails closed on an unknown type: not ready, zero score, and a gap that names the id 0ms
+ ✓ tests/regulatory/readinessEvaluator.test.ts > Readiness Evaluator > returns ready for fully completed project 1ms
+
+ Test Files  5 passed (5)
+      Tests  50 passed (50)
+   Start at  22:47:25
+   Duration  3.67s (transform 823ms, setup 136ms, import 2.35s, tests 85ms, environment 1ms)
+

@@ -23,6 +23,8 @@
  * @module server/services/regulatory/sectionBlueprintCatalog
  */
 
+import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
+import { ICH_M11_PROTOCOL_BASIS, ICH_M11_PROTOCOL_LIMITATIONS } from '../../../shared/regulatory/protocol-m11.js';
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy.js';
 import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap.js';
@@ -120,7 +122,7 @@ export function getResolvedSectionBlueprint(entry: RegulatoryApplicationType): S
   return getExactSectionBlueprint(entry.id) ?? getSectionBlueprintForEntry(entry);
 }
 
-const APPLICABILITY_REVIEW_IDS = new Set(['EU_CTA', 'CA_CTA', 'CA_CTA_A', 'JP_CTN', 'US_IND_AMENDMENT']);
+const APPLICABILITY_REVIEW_IDS = new Set(['EU_CTA', 'CA_CTA', 'CA_CTA_A', 'JP_CTN', 'US_IND_AMENDMENT', 'US_IND_SR']);
 
 /** These scaffolds encode conditional branches, but no client applicability decision. */
 export function requiresSectionApplicabilityAssessment(registryId: string): boolean {
@@ -129,6 +131,11 @@ export function requiresSectionApplicabilityAssessment(registryId: string): bool
 
 /** Provenance and limitations travel with the repaired outline through all authoring paths. */
 export function getSectionBlueprintContext(registryId: string): { basis?: RegulatoryBasis; limitations: readonly string[] } {
+  if (registryId === 'ICH_PROTOCOL') return { basis: ICH_M11_PROTOCOL_BASIS, limitations: ICH_M11_PROTOCOL_LIMITATIONS };
+  if (registryId === 'US_IND_SR') return {
+    basis: { ref: 'FDA IND Safety Reporting: 21 CFR 312.32 subtype-specific formats, checked 2026-10-07', confidence: 'regulator-text', url: 'https://www.fda.gov/drugs/investigational-new-drug-application-ind/ind-application-reporting-ind-safety-reports', checked: '2026-10-07' },
+    limitations: [getApplicationType(registryId)?.moduleAuthority ?? 'Confirm the current FDA IND safety-reporting format before package creation.', 'Select the report subtype, commercial status and follow-up scope before deciding the format or delivery route. This authoring scaffold does not create or validate an E2B message or certify reportability, deadlines or transmission.'],
+  };
   if (registryId === 'JP_CTN') return { basis: japanCtn.outlineBasis, limitations: japanCtn.outlineLimitations };
   if (registryId === 'US_IND_AMENDMENT') return { basis: usIndAmendment.outlineBasis, limitations: usIndAmendment.outlineLimitations };
   if (registryId === 'ICH_NONCLIN_SUMMARY') return { basis: nonclinicalSummary.outlineBasis, limitations: nonclinicalSummary.outlineLimitations };

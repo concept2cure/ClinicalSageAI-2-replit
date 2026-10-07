@@ -1,0 +1,74 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > reads only this project and tenant, using exact saved document types and placements 23ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > empty content and incomplete approval projections cannot vouch for completed evidence 12ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > wrong-meaning, malformed or stale-bound signatures cannot count as approved progress 16ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > retired empty projections retain their retired status and cannot defeat current evidence 19ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > a foreign or deleted active project cannot be assessed 3ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > a failed content query throws instead of returning a successful empty inventory 5ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > requires an active project by default even if the model supplies a project id and approvals 31ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > ignores model approval and project claims when a project is open 5ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > explicit hypothetical scenarios cannot certify a completed client package 2ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > invalid hypothetical rows produce an actionable refusal 0ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > invalid hypothetical rows produce an actionable refusal 0ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > invalid hypothetical rows produce an actionable refusal 0ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > does not turn a failed saved-record read into an empty successful assessment 1ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > reports the assessment limit without suggesting an endlessly failing retry 1ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > refuses a project that cannot be resolved in this tenant 1ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > asks for a recognized filing scope before any project read 1ms
+stdout | server/services/ana/__tests__/submission-intelligence-tools.test.ts
+{
+  "timestamp": "2026-10-07T02:55:22.988Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T02:55:22.989Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/submission-intelligence-tools.test.ts
+{
+  "timestamp": "2026-10-07T02:55:22.989Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/submission-intelligence-tools.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/submission-intelligence-tools.test.ts > submission-intelligence tools — registration > both tools are registered 3ms
+ ✓ server/services/ana/__tests__/submission-intelligence-tools.test.ts > benchmark_precedent_trials > summarizes a distribution when N is sufficient and is honest when not 14ms
+ ✓ server/services/ana/__tests__/submission-intelligence-tools.test.ts > benchmark_precedent_trials > reports assessable:false for too few trials rather than fabricating 0ms
+ ✓ server/services/ana/__tests__/submission-intelligence-tools.test.ts > assess_submission_package > flags missing required sections for a known submission type 8ms
+ ✓ server/services/ana/__tests__/submission-intelligence-tools.test.ts > assess_submission_package > returns needs_parameters for an unknown submission type 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > draft artifacts are present but incomplete and produce review gaps 9ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > a signature state without an approval meaning is present but unapproved 2ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > missing records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > not_started records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > todo records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > superseded records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > withdrawn records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > archived records cannot satisfy requirements 2ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > deleted records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > invented_status records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > one required section still in review prevents a ready verdict even above 90 percent 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > an empty approved section cannot be counted as completed evidence 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > approval without an artifact identity cannot complete the package 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > duplicate current records with inconsistent states never select an approval by input order 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > IND safety routing remains unresolved without report subtype and commercial status 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > a retired version does not defeat a current approved replacement 1ms
+
+ Test Files  4 passed (4)
+      Tests  37 passed (37)
+   Start at  22:55:10
+   Duration  14.82s (transform 5.28s, setup 151ms, import 11.43s, tests 2.39s, environment 0ms)
+

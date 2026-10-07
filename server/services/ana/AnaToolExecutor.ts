@@ -16501,32 +16501,9 @@ registerToolHandler('benchmark_precedent_trials', async (input: Record<string, u
   })
 );
 
-registerToolHandler('assess_submission_package', async (input: Record<string, unknown>) => {
-  try {
-    const { buildPackageManifest } = await import('../regulatory/submissionPackageBuilder.js');
-    const manifest = buildPackageManifest(
-      input.submissionType as string,
-      input.projectId as string,
-      (input.sections as any[]) ?? [],
-      (input.artifacts as any[]) ?? []
-    );
-    if (manifest === null) {
-      return JSON.stringify({
-        status: 'needs_parameters',
-        message:
-          "Unrecognized submissionType. Provide a known application type/registry id (e.g. '510k', 'ind', 'nda', 'bla', 'cer').",
-      });
-    }
-    return JSON.stringify({
-      status: 'computed',
-      engine: 'deterministic',
-      result: manifest,
-      instruction:
-        'List the MISSING required sections/artifacts first, then present/approved ones, and state packageComplete. Do not claim readiness the manifest does not show.',
-    });
-  } catch (err: any) {
-    return JSON.stringify({ error: `assess_submission_package failed: ${err?.message || 'unknown error'}` });
-  }
+registerToolHandler('assess_submission_package', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const { assessSubmissionPackageTool } = await import('./submission-package-tool.js');
+  return assessSubmissionPackageTool(input, ctx);
 });
 
 // Device/IVD eSTAR assembly state (510(k) / De Novo / PMA) for the OPEN

@@ -12,6 +12,15 @@
  */
 import type { E3Basis, LifecycleDocumentType } from './types.js';
 import { recall } from './regulatory-basis.js';
+import { getApplicationType } from '../../../../shared/regulatory/global-document-registry';
+
+/** One route fact: the checked registry authority is shared by inquiry, package and drafting. */
+export const IND_SAFETY_REPORT_ROUTE_LIMITS = getApplicationType('US_IND_SR')?.moduleAuthority
+  ?? 'IND safety report route not indexed; confirm report subtype and sponsor commercial/noncommercial status before choosing an electronic format or placement.';
+
+/** Current FDA reporting clocks; case dates and calculated due dates require approved source records. */
+export const IND_SAFETY_REPORT_TIMING = 'Initial reports under 312.32(c)(1)(i)-(iv): as soon as possible, no later than 15 calendar days after sponsor determination that the information qualifies. Unexpected fatal or life-threatening suspected adverse reactions: as soon as possible, no later than 7 calendar days after initial receipt. Relevant follow-up information: submit as soon as the information is available under 312.32(d)(2). If investigation changes an initially nonreportable event to reportable, the 15-day limit runs from the determination under 312.32(d)(3). Record the applicable trigger and approved dates; do not assume one receipt-based clock for every report.';
+
 
 // ── FDA formal meetings (PDUFA products) ─────────────────────────────────────
 // One table for every meeting deadline AnA states. The meeting entries below
@@ -1673,7 +1682,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
     "category": "safety",
     "family": "IND",
     "agency": "FDA",
-    "description": "An expedited safety report submitted to the reviewing division under an active IND to notify FDA (and all participating investigators) of a serious and unexpected suspected adverse reaction, a finding from clinical or nonclinical studies suggesting a significant human risk, or a clinically important increase in the rate of a serious suspected adverse reaction over that listed in the protocol or Investigator Brochure. The trigger for an individual case is a suspected adverse reaction (an adverse event for which there is a reasonable possibility the drug caused the event) that is both serious and unexpected. It is a stand-alone, event-driven administrative submission — not a CTD dossier section — transmitted on a statutory clock.",
+    "description": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Confirm the sponsor-approved reporting decision and source records before drafting. This is a route-dependent safety report, not a universal CTD section or form package.`,
     "regulatoryBasis": [
       "21 CFR 312.32 (IND safety reporting)",
       "21 CFR 312.32(a) (definitions: adverse event, suspected adverse reaction, serious, unexpected, life-threatening)",
@@ -1681,39 +1690,39 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       "21 CFR 312.32(d) (follow-up)",
       "21 CFR 312.55 (Investigator Brochure / informing investigators)",
       "21 CFR 312.64(b) (investigator reporting of adverse events to sponsor)",
-      "FDA Guidance for Industry: Safety Reporting Requirements for INDs and BA/BE Studies (December 2012)",
-      "FDA Guidance: Safety Assessment for IND Safety Reporting (December 2015, draft)",
       "ICH E2A: Clinical Safety Data Management — Definitions and Standards for Expedited Reporting",
-      "ICH E2B(R3): Electronic Transmission of Individual Case Safety Reports"
+      "ICH E2B(R3): Electronic Transmission of Individual Case Safety Reports",
+      "FDA Sponsor Responsibilities — Safety Reporting Requirements and Safety Assessment for IND and Bioavailability/Bioequivalence Studies (final December 2025)",
+      "FDA Providing Regulatory Submissions in Electronic Format: IND Safety Reports (final April 2024); current implementation described in FDA IND Application Reporting: IND Safety Reports, checked 2026-10-07"
     ],
     "components": [
       {
         "code": "safety.cover",
-        "title": "IND Safety Report Cover Letter / Transmittal (with Form FDA 1571)",
+        "title": "IND Safety Report Identification / Route-Dependent Transmittal",
         "required": true,
         "contentType": "narrative",
-        "guidance": "21 CFR 312.32(c); 21 CFR 312.23(a)(1) (Form FDA 1571); FDA Safety Reporting Guidance (Dec 2012)",
-        "authoringGuidance": "The cover letter transmits the expedited report to the reviewing division and orients the reviewer within seconds: it must prominently identify the submission as an IND Safety Report and state which reporting clock is being met (7-day for fatal/life-threatening, 15-day otherwise). An FDA reviewer reads it first to triage severity and to confirm the sponsor made the two required determinations — serious and unexpected, with a reasonable possibility of causal relationship. It is acceptable when it names the specific basis under 312.32(c)(1), records day-zero and the resulting due date, and cross-references prior related reports so the reviewer can see an emerging signal rather than an isolated case. Common deficiencies that draw FDA information requests: failing to state day-zero (making timeliness unverifiable), omitting the reporting category, burying or omitting the causality determination, and inconsistent event characterization between the letter and the attached ICSR.",
+        "guidance": "21 CFR 312.32(c) and (d); FDA Sponsor Responsibilities safety guidance (final December 2025); current FDA IND safety report submission instructions",
+        "authoringGuidance": "Confirm the report subtype under 312.32(c)(1)(i)-(iv), commercial/noncommercial status, and initial/follow-up status before selecting a route or transmittal form. A cover letter or Form FDA 1571 is not a universal requirement for an E2B(R3) report to AEMS; prepare it only where the selected route requires it. Identify the IND, sponsor, safety finding and prior related reports from controlled records. Use the applicable receipt or sponsor-determination date and approved deadline calculation; never infer a reporting decision or due date from an incomplete case. Do not assume every report is an individual serious and unexpected suspected adverse reaction, or assert notifications were completed without records.",
         "keyContentElements": [
           "IND number, product name (established/proprietary), and sponsor of record",
-          "Explicit heading 'IND Safety Report' and the reporting category invoked (7-day fatal/life-threatening vs 15-day serious unexpected)",
-          "Day-zero date (date sponsor first received information qualifying the case) and calculated due date demonstrating timeliness",
+          "Report subtype under 312.32(c)(1)(i)-(iv), commercial/noncommercial status, and sponsor-approved reporting decision",
+          "Applicable trigger date: initial receipt for the 7-day category or sponsor determination for the 15-day category; approved due date calculation and follow-up status",
           "Submission serial number and cross-reference to related prior IND safety reports (same event term / same signal)",
           "Whether this is an initial report or a follow-up (and follow-up number)",
           "One-line clinical characterization of the reported event(s) with MedDRA Preferred Term(s)",
-          "Statement of the source form used (MedWatch 3500A or CIOMS I) and format (paper/eCTD/E2B)",
+          "Confirmed applicable AEMS E2B(R3), eCTD or exempt-report route; any transmittal form only where that route requires it",
           "Sponsor safety physician / pharmacovigilance contact name, telephone, and email",
-          "Confirmation that participating investigators and IRBs are being notified per 312.32(c)(1) and 312.55"
+          "Documented notification to FDA and participating investigators; applicable ethics/IRB obligations and status separately verified"
         ],
-        "generationPrompt": "Draft an IND Safety Report cover letter for {{SPONSOR}}'s {{PRODUCT_NAME}} (IND for {{INDICATION}}, {{PHASE}}). Prominently label it an IND Safety Report, state whether the 7-day or 15-day clock applies, and include IND number, day-zero date and due date, serial number, initial-vs-follow-up status, a one-line MedDRA-coded event characterization, the source form used, and the sponsor safety contact. Do not invent case facts — insert bracketed placeholders for event term, dates, and subject identifiers. Confirm investigator/IRB notification per 21 CFR 312.32(c)(1) and 312.55."
+        "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Draft an IND safety report identification or transmittal for {{SPONSOR}} and {{PRODUCT_NAME}} using the documented report subtype, commercial/noncommercial status and initial/follow-up status. Produce a cover letter or Form FDA 1571 content only where the selected route requires it. State applicable receipt/determination dates and approved due dates from source records; do not calculate or invent them. Include documented case/finding identifiers, prior report linkage and safety contact. Describe notification status only where supported; mark unresolved route or reporting decisions for sponsor safety review.`
       },
       {
         "code": "safety.icsr",
-        "title": "Individual Case Safety Report (MedWatch Form FDA 3500A or CIOMS I)",
+        "title": "Individual Case Safety Report (Applicable Case Reporting Route)",
         "required": true,
         "contentType": "form",
-        "guidance": "21 CFR 312.32(c)(1); FDA Safety Reporting Guidance (Dec 2012); ICH E2A; ICH E2B(R3) for electronic submission",
-        "authoringGuidance": "The ICSR is the structured case itself — the four minimum-valid-case elements (identifiable patient, identifiable reporter, a suspect drug, and a suspect adverse reaction) plus the full clinical narrative. FDA reviewers read the narrative for a coherent chronology: baseline status, drug exposure with dates and dose, event onset relative to dosing (temporal plausibility), treatment, de-challenge/re-challenge outcome, and outcome/seriousness criterion. A complete 3500A/CIOMS I carries concomitant medications, relevant medical history, relevant lab/diagnostic results with units and reference ranges, and the reporter's and sponsor's causality. Deficiencies that trigger information requests: missing dechallenge/rechallenge information, narratives that omit dose or dates, seriousness criterion not marked, absent or non-coded event terms, and no assessment of confounders (concomitant meds, underlying disease).",
+        "guidance": "21 CFR 312.32(c)(1)(i); FDA Sponsor Responsibilities safety guidance (final December 2025); ICH E2B(R3) and current FDA electronic submission instructions",
+        "authoringGuidance": "For a case-based report, prepare a source-grounded case narrative and structured information for the applicable safety-system workflow. For required commercial 312.32(c)(1)(i) reports, a MedWatch/CIOMS document is not a substitute for the required E2B(R3) AEMS submission. Noncommercial exemption must be established from sponsor records; reports under (ii), (iii) and (iv) are not automatically individual case forms. Document identifiable patient/reporter, suspect product, suspected reaction, chronology, dose/dates, seriousness, outcome, relevant tests and reporter/sponsor assessments only as supported. Missing case facts remain explicit gaps. This authoring record does not construct or validate an E2B message.",
         "keyContentElements": [
           "Four valid-case minimum elements: identifiable patient, identifiable reporter, suspect product, suspect adverse reaction",
           "Which seriousness criterion is met (death, life-threatening, hospitalization/prolongation, disability/incapacity, congenital anomaly, other medically important event)",
@@ -1726,7 +1735,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Patient demographics (age, sex, weight) and study/site/subject identifiers (de-identified per privacy rules)",
           "Case status: initial vs follow-up, and receipt/date fields supporting the reporting clock"
         ],
-        "generationPrompt": "Structure an ICSR (MedWatch 3500A or CIOMS I) for a suspected adverse reaction to {{SPONSOR}}'s {{PRODUCT_NAME}} in a {{PHASE}} study for {{INDICATION}}. Lay out the four valid-case elements, the seriousness criterion checkboxes, suspect-drug dose/dates/lot, MedDRA-coded event terms, and a chronological clinical narrative template covering exposure, onset, treatment, dechallenge/rechallenge, and outcome. Use bracketed placeholders for all patient-specific facts and lab values — do not fabricate results. Include fields for reporter and sponsor causality."
+        "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Prepare an ICSR narrative and source-data checklist only when the confirmed report subtype calls for case information. This is not an E2B(R3) message and does not validate or transmit one. Do not substitute a MedWatch/CIOMS document for a required commercial AEMS submission. Preserve approved case identifiers, exposure chronology, seriousness, outcome, tests and sponsor/reporter assessments; use explicit gaps for absent facts and confirm the approved pharmacovigilance workflow.`
       },
       {
         "code": "safety.causality",
@@ -1745,7 +1754,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Sponsor's causality conclusion distinct from the investigator/reporter's conclusion, with any disagreement reconciled",
           "For events where a single case is uninformative (e.g., events also common in the study population), reference to the aggregate analysis"
         ],
-        "generationPrompt": "Draft the causality assessment for a serious adverse event reported in {{SPONSOR}}'s {{PHASE}} study of {{PRODUCT_NAME}} for {{INDICATION}}. Apply the 21 CFR 312.32(a) 'reasonable possibility' standard explicitly and structure the reasoning around temporal relationship, dechallenge/rechallenge, biological plausibility versus known pharmacology, and alternative etiologies (concomitant meds, underlying disease). State the sponsor conclusion separately from the reporter's. Use placeholders for case-specific facts; do not fabricate outcomes."
+        "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Draft the causality assessment for a serious adverse event reported in {{SPONSOR}}'s {{PHASE}} study of {{PRODUCT_NAME}} for {{INDICATION}}. Apply the 21 CFR 312.32(a) 'reasonable possibility' standard explicitly and structure the reasoning around temporal relationship, dechallenge/rechallenge, biological plausibility versus known pharmacology, and alternative etiologies (concomitant meds, underlying disease). State the sponsor conclusion separately from the reporter's. Use placeholders for case-specific facts; do not fabricate outcomes.`
       },
       {
         "code": "safety.expectedness",
@@ -1764,15 +1773,15 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Conclusion: expected or unexpected, feeding the reporting decision under 312.32(c)",
           "Note of any pending IB update that would change future expectedness classification"
         ],
-        "generationPrompt": "Draft the expectedness assessment for an adverse event in {{SPONSOR}}'s development of {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Identify the controlling Investigator Brochure edition/date as Reference Safety Information, compare the MedDRA-coded event term against the specific IB-listed reactions, and apply the specificity-and-severity test to conclude expected vs unexpected. Quote bracketed placeholders for the IB language and event term. Flag whether an IB update is pending."
+        "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Draft the expectedness assessment for an adverse event in {{SPONSOR}}'s development of {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Identify the controlling Investigator Brochure edition/date as Reference Safety Information, compare the MedDRA-coded event term against the specific IB-listed reactions, and apply the specificity-and-severity test to conclude expected vs unexpected. Quote bracketed placeholders for the IB language and event term. Flag whether an IB update is pending.`
       },
       {
         "code": "safety.aggregate",
         "title": "Aggregate / Similar-Events and Increased-Rate Analysis",
         "required": false,
         "contentType": "mixed",
-        "guidance": "21 CFR 312.32(c)(1)(i)(C) (aggregate analysis of specific events); 21 CFR 312.32(c)(1)(iv) (clinically important increased rate); FDA Safety Assessment for IND Safety Reporting (Dec 2015 draft)",
-        "authoringGuidance": "Required when the individual case is uninformative on its own — typically serious events that are anticipated to occur in the study population or disease under study (e.g., disease progression, expected complications) — the sponsor must judge whether the aggregate of accumulating cases indicates the drug caused the events, or whether the observed rate clinically importantly exceeds the expected rate. Reviewers look for a pre-specified safety surveillance plan, comparison of observed versus anticipated (control-arm or historical) rates, and unblinded aggregate review by a party independent of the trial teams where feasible. Acceptable analyses state the denominators, the comparison basis, and the decision rule. Deficiencies: reporting each anticipated serious event as an isolated 15-day case (over-reporting that obscures signals), or conversely never performing the aggregate analysis and missing a rate increase; and failing to describe who performs the unblinded review.",
+        "guidance": "21 CFR 312.32(c)(1)(i)(C) (aggregate analysis of specific events); 21 CFR 312.32(c)(1)(iv) (clinically important increased rate); FDA Sponsor Responsibilities safety guidance (final December 2025)",
+        "authoringGuidance": "Confirm whether the sponsor determination invokes 312.32(c)(1)(i)(C) or (iv): an aggregate analysis does not by itself identify the submission route. Use the approved surveillance plan, observed counts and denominators, comparison population/rates, decision rule and documented review responsibilities. Commercial (i)(C) reporting follows the applicable AEMS E2B(R3) route; (iv) reports follow eCTD. Do not invent counts, independently declare a regulatory reporting determination, or treat an unresolved subtype as a waiver.",
         "keyContentElements": [
           "The specific serious event(s) under aggregate evaluation and why single cases are uninformative",
           "Observed count and exposure denominator (person-time or number of subjects) for the event",
@@ -1783,18 +1792,18 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Blinding-management approach and rationale for any unblinding",
           "Reference to the safety surveillance plan governing the analysis"
         ],
-        "generationPrompt": "Draft an aggregate / similar-events analysis for anticipated serious events in {{SPONSOR}}'s {{PHASE}} program for {{PRODUCT_NAME}} in {{INDICATION}}. Structure it around the observed count and exposure denominator, the anticipated rate and its basis (control or historical), a pre-specified decision rule for a clinically important increase, and the unblinded aggregate-review process. State the reporting determination under 21 CFR 312.32(c)(1)(i)(C) or (c)(1)(iv). Use placeholders for all counts and rates; do not fabricate data."
+        "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Draft an aggregate / similar-events analysis for anticipated serious events in {{SPONSOR}}'s {{PHASE}} program for {{PRODUCT_NAME}} in {{INDICATION}}. Structure it around the observed count and exposure denominator, the anticipated rate and its basis (control or historical), a pre-specified decision rule for a clinically important increase, and the unblinded aggregate-review process. State the reporting determination under 21 CFR 312.32(c)(1)(i)(C) or (c)(1)(iv). Use placeholders for all counts and rates; do not fabricate data.`
       },
       {
         "code": "safety.followup",
         "title": "Follow-Up Report",
         "required": false,
         "contentType": "mixed",
-        "guidance": "21 CFR 312.32(d) (follow-up information); FDA Safety Reporting Guidance (Dec 2012)",
-        "authoringGuidance": "A follow-up conveys material new information obtained after the initial report — final outcome, autopsy/pathology results, corrected coding, revised causality or expectedness, or the results of a promised investigation. Reviewers reconcile the follow-up against the initial case and read it for whether the assessment has changed (e.g., a fatal outcome now met, an event now considered related). Acceptable follow-ups clearly flag what changed, preserve version/serial linkage to the initial ICSR, and are submitted within 15 calendar days of the sponsor receiving the new information. Deficiencies: submitting follow-ups without identifying what is new, breaking the linkage to the parent case, and delaying beyond the 15-day clock when the follow-up itself upgrades the case (e.g., non-fatal to fatal).",
+        "guidance": "21 CFR 312.32(d) (follow-up information); FDA Sponsor Responsibilities safety guidance (final December 2025)",
+        "authoringGuidance": "Preserve linkage to the initial report, identify relevant new information and its availability date, and state supported changes in outcome, coding, causality or expectedness. Under 312.32(d)(2), relevant follow-up is submitted as soon as the information is available; there is no blanket 15-day-after-receipt follow-up allowance. Under (d)(3), if investigation makes an initially nonreportable event reportable, report as soon as possible and no later than 15 calendar days after determination. Reassess applicable subtype, reporting obligations and route from sponsor-approved records; do not invent a new deadline or claim submission or notification occurred.",
         "keyContentElements": [
           "Clear linkage to the initial report (case number, serial number, initial submission date)",
-          "Follow-up sequence number and the date new information was received (new day-zero for the 15-day follow-up clock)",
+          "Follow-up sequence number, date relevant new information became available, and any sponsor determination that changes reportability",
           "Explicit description of what changed since the prior version (outcome, coding, causality, expectedness)",
           "Updated seriousness, causality, and expectedness determinations if altered",
           "New clinical/diagnostic/autopsy information and its impact on the assessment",
@@ -1802,11 +1811,11 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Whether the case is now complete or further follow-up is pending",
           "Confirmation of investigator/IRB notification of the updated information where warranted"
         ],
-        "generationPrompt": "Draft a follow-up IND safety report for a case in {{SPONSOR}}'s {{PHASE}} study of {{PRODUCT_NAME}} ({{INDICATION}}). Link it to the initial report, state the date the new information was received, and clearly flag what changed (outcome, coding, causality, or expectedness) and whether the reporting category is upgraded. Update the seriousness/causality/expectedness conclusions accordingly. Use placeholders for case-specific facts; do not fabricate results."
+        "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Draft a source-grounded follow-up narrative linked to the prior IND safety report. Identify what changed and when relevant new information became available; apply prompt follow-up under 312.32(d)(2), without a blanket 15-day allowance. Distinguish a new reportability determination under (d)(3) using sponsor-approved dates and decisions. Confirm subtype and applicable route before placement. Do not invent case facts, due dates, completed transmissions or notification status.`
       }
     ],
     "registryId": "US_IND_SR",
-    "timing": "7 calendar days (fatal or life-threatening, unexpected, suspected adverse reaction — initial notification, which may be by telephone or fax/electronic) / 15 calendar days (other serious and unexpected suspected adverse reactions; findings from other studies or class; clinically important rate increase). Clock starts on day zero — the day the sponsor first receives information meeting the reporting criteria. Follow-up information is submitted within 15 calendar days of receipt."
+    "timing": IND_SAFETY_REPORT_TIMING
   },
   {
     "id": "ind_annual_report",

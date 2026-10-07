@@ -66,6 +66,7 @@ describe('benchmark_precedent_trials', () => {
 describe('assess_submission_package', () => {
   it('flags missing required sections for a known submission type', async () => {
     const out = await call('assess_submission_package', {
+      mode: 'hypothetical',
       submissionType: '510k',
       projectId: 'proj-1',
       sections: [{ code: 'device-description', status: 'approved', documentIds: ['d1'] }],
@@ -73,8 +74,8 @@ describe('assess_submission_package', () => {
     });
     // Either a manifest (known type) or a clear needs_parameters (type id differs);
     // both are valid deterministic outcomes — assert it never throws/returns error.
-    expect(['computed', 'needs_parameters']).toContain(out.status);
-    if (out.status === 'computed') {
+    expect(['hypothetical', 'needs_parameters']).toContain(out.status);
+    if (out.status === 'hypothetical') {
       expect(out.result.metadata).toBeTruthy();
       expect(typeof out.result.metadata.packageComplete).toBe('boolean');
       expect(Array.isArray(out.result.sections)).toBe(true);

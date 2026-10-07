@@ -11,8 +11,8 @@
  *       present vs missing for a submission type, given the project's current
  *       state. Resolves the expected blueprint from the in-memory registry.
  *
- * Both engines are deterministic and structured-input (no DB inside the call),
- * so the handlers in AnaToolExecutor.ts are thin pass-throughs.
+ * Both engines are deterministic. Package assessment reads the active project’s
+ * saved canonical projection; supplied statuses are hypothetical only.
  *
  * @module server/services/ana/submissionIntelligenceTools
  */
@@ -52,15 +52,16 @@ export const BENCHMARK_PRECEDENT_TRIALS: AnaTool = {
 export const ASSESS_SUBMISSION_PACKAGE: AnaTool = {
   name: 'assess_submission_package',
   description:
-    "Assess a submission package's completeness for a given submission type: compare the project's current sections and artifacts against the required blueprint for that type (e.g. 510k, IND, NDA, BLA, CER) and return which required sections/artifacts are present, approved, locked, or MISSING, plus package-level metadata (completed vs required counts, packageComplete). DETERMINISTIC. Use to answer 'what is still missing before this submission is ready?'. Returns null-handling: if the submission type is unrecognized, the tool reports needs_parameters with the accepted types.",
+    "Assess saved package progress for the active client project and a confirmed registry filing type. Reads the organization-scoped canonical lifecycle projection and explicit filing placements; model-supplied project IDs, sections and approval statuses are ignored in project mode. Reports missing projection rows and required content awaiting review. The projection is not a full inventory: unlinked working documents may exist. No scientific, source-store, signature, dataset, technical-package or transmission readiness is certified. With no accessible active project, asks for one. Use mode hypothetical only for an explicitly requested scenario; hypothetical input can never certify a completed client package.",
   input_schema: {
     type: 'object',
     properties: {
       submissionType: { type: 'string', description: "Submission/application type or registry id (e.g. '510k', 'ind', 'nda', 'bla', 'cer')." },
-      projectId: { type: 'string', description: 'Project identifier (for the manifest metadata).' },
+      mode: { type: 'string', enum: ['project', 'hypothetical'], description: 'Default project: read saved active-project evidence. Hypothetical: explicitly requested modeled scenario only.' },
+      projectId: { type: 'string', description: 'Legacy field ignored in project mode; the active project comes from authenticated context.' },
       sections: {
         type: 'array',
-        description: "The project's current sections.",
+        description: "Hypothetical section states only; ignored in project mode.",
         items: {
           type: 'object',
           properties: {
@@ -73,7 +74,7 @@ export const ASSESS_SUBMISSION_PACKAGE: AnaTool = {
       },
       artifacts: {
         type: 'array',
-        description: "The project's current artifacts.",
+        description: "Hypothetical artifact states only; ignored in project mode.",
         items: {
           type: 'object',
           properties: {
@@ -85,7 +86,7 @@ export const ASSESS_SUBMISSION_PACKAGE: AnaTool = {
         },
       },
     },
-    required: ['submissionType', 'projectId', 'sections', 'artifacts'],
+    required: ['submissionType'],
   },
 };
 

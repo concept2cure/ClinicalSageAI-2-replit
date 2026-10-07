@@ -18,7 +18,12 @@ import { assembleTechDoc } from '../../pathway-engines/mdr-ivdr/tech-doc-assembl
 import { getApplicationType, GLOBAL_REGISTRY } from '../../../../shared/regulatory/global-document-registry';
 import { getSectionBlueprintForEntry } from '../../../../shared/regulatory/project-bootstrap';
 import { ICH_E2F_DSUR_SECTIONS } from '../../ind/ctd/lifecycle-document-types';
+import { getLifecycleDocumentType } from '../../ind/ctd/index';
 import { getSectionBlueprint as getDedicatedSectionBlueprint } from '../../regulatory/sectionBlueprintCatalog';
+import { ICH_M11_PROTOCOL_SECTIONS } from '../../../../shared/regulatory/protocol-m11';
+import { ICH_M11_PROTOCOL_OUTLINE } from '../../ind/ctd/protocol-m11-guidance';
+import { renderOutlineBrief } from '../../ind/ctd/section-brief';
+import { basisProblems } from '../../../../shared/regulatory/regulatory-basis';
 
 describe('document template library — consistency', () => {
   it('has unique ids and at least one section per template', () => {
@@ -196,7 +201,6 @@ describe('document template library — lookups', () => {
 
 describe('document template library — existing biotech structures are reachable honestly', () => {
   const projected = [
-    ['protocol', 'ICH_PROTOCOL'],
     ['statistical_analysis_plan', 'ICH_SAP'],
     ['informed_consent', 'ICH_ICF'],
     ['drug_substance', 'ICH_M3_DS'],
@@ -217,11 +221,9 @@ describe('document template library — existing biotech structures are reachabl
     expect(t!.outlineLimitations?.join(' ')).toMatch(/required.*scaffold/i);
   });
 
-  it('the protocol says its E6(R2) outline is legacy and requires current regional/template review', () => {
-    const t = getDocumentTemplate('protocol')!;
-    expect(t, 'protocol').toBeDefined();
-    expect(t.outlineLimitations?.join(' ')).toMatch(/legacy.*E6\(R2\)/i);
-    expect(t.outlineLimitations?.join(' ')).toMatch(/M11|current.*template/i);
+  it('clinical overview and summary registry ids share their existing component sections', async () => {
+    expect((await getRegistryDocumentTemplate('ICH_CLIN_OVERVIEW'))?.sections).toBe(getDocumentTemplate('clinical_overview')?.sections);
+    expect((await getRegistryDocumentTemplate('ICH_CLIN_SUMMARY'))?.sections).toBe(getDocumentTemplate('clinical_summary')?.sections);
   });
 
   it('aliases for existing IB and RMP resolve the very same template and never add a second outline', () => {
@@ -296,5 +298,77 @@ describe('document template library — existing biotech structures are reachabl
       if (!row.outlineAvailable) expect(row.reason, row.registryId).toBeTruthy();
     }
     for (const region of ['US', 'EU', 'CA', 'JP']) expect(coverage.some((r) => r.region === region)).toBe(true);
+  });
+});
+
+
+describe('document template library — current canonical M11 protocol', () => {
+  it('the protocol projects the current M11 retained headings including estimands, immunogenicity and quality management', () => {
+    const t = getDocumentTemplate('protocol')!;
+    expect(t, 'protocol').toBeDefined();
+    expect(t.sections.find((s) => s.number === '3')?.heading).toBe('TRIAL OBJECTIVES AND ASSOCIATED ESTIMANDS');
+    expect(t.sections.find((s) => s.number === '8.7')?.heading).toBe('Immunogenicity Assessments');
+    expect(t.sections.find((s) => s.number === '11.6')?.heading).toBe('Risk-Based Quality Management');
+    expect(t.sections.filter((s) => /^\d+$/.test(s.number)).map((s) => s.number)).toEqual(Array.from({ length: 14 }, (_, i) => String(i + 1)));
+    expect(t.sections).toHaveLength(87);
+    expect(t.basis?.confidence).toBe('regulator-text');
+    expect(t.basis?.url).toBe('https://www.fda.gov/media/192647/download');
+    expect(t.outlineLimitations?.join(' ')).toMatch(/interventional/i);
+    expect(t.outlineLimitations?.join(' ')).toMatch(/technical.*exchange|exchange.*technical/i);
+  });
+
+  it('named, registry and project protocols share one current tree without a CTD module placement claim', async () => {
+    const t = getDocumentTemplate('protocol')!;
+    const entry = getApplicationType('ICH_PROTOCOL')!;
+    const blueprint = getSectionBlueprintForEntry(entry);
+    expect(blueprint.id).toBe('ich_protocol_sections');
+    expect(blueprint.sections.map((s) => [s.code, s.title])).toEqual(ICH_M11_PROTOCOL_SECTIONS.map((s) => [s.code, s.title]));
+    expect(blueprint.sections.every((s) => s.module === 0)).toBe(true);
+    expect((await getRegistryDocumentTemplate(entry.id))?.sections).toBe(t.sections);
+    expect(t.outlineSource).toEqual({ kind: 'document-outline', registryId: entry.id, record: 'ICH_M11_PROTOCOL_OUTLINE' });
+    expect(t.ctdSection).toBeUndefined();
+    expect(getDocumentTemplate('protocol-m11')).toBe(t);
+    expect(t.outlineLimitations?.join(' ')).toMatch(/Existing E6\(R2\).*reviewed mapping/);
+    expect(basisProblems(t.basis!)).toEqual([]);
+  });
+
+  it('the existing outline renderer explains heading retention, applicable content and deeper unmodelled fields', () => {
+    expect(ICH_M11_PROTOCOL_OUTLINE.owner).toBe('shared/regulatory/protocol-m11.ts');
+    const rendered = renderOutlineBrief(ICH_M11_PROTOCOL_OUTLINE, '8.7')!;
+    expect(rendered).toContain('Immunogenicity Assessments');
+    expect(rendered).toMatch(/assess whether its content applies/i);
+    expect(rendered).toMatch(/purposes are platform summaries/i);
+    expect(rendered).toMatch(/no technical exchange or filing approval assessment/i);
+    expect(rendered).toMatch(/checked against the regulator's text on 2026-10-07/);
+    expect(renderOutlineBrief(ICH_M11_PROTOCOL_OUTLINE, '8.7.1')).toBeNull();
+    expect(renderOutlineBrief(ICH_M11_PROTOCOL_OUTLINE, '15')).toBeNull();
+    expect(ICH_M11_PROTOCOL_OUTLINE.nodes.some((n) => n.number === '0')).toBe(false);
+  });
+});
+
+
+describe('document template library — subtype-scoped IND safety scaffold', () => {
+  it('keeps numeric compatibility keys without assigning all safety reports to Module 5 or requiring every case component', async () => {
+    const entry = getApplicationType('US_IND_SR')!;
+    const blueprint = getSectionBlueprintForEntry(entry);
+    const components = getLifecycleDocumentType('ind_safety_report')!.components;
+    expect(blueprint.sections.map(s => s.code)).toEqual(['1', '2', '3', '4', '5', '6']);
+    expect(blueprint.sections.every(s => s.module === 0)).toBe(true);
+    expect(blueprint.sections.map(s => s.title)).toEqual(components.map(c => c.title));
+    expect(blueprint.sections.map(s => s.required)).toEqual([true, false, false, false, false, false]);
+    const outline = await getRegistryDocumentTemplate(entry.id);
+    expect(outline?.sections.map(s => s.required)).toEqual([true, false, false, false, false, false]);
+    expect(outline?.sections[0].purpose).toContain('not a universal cover-letter');
+    expect(outline?.sections[1].purpose).toContain('not evidence that an ICSR is always required');
+    expect(outline?.outlineLimitations?.join(' ')).toMatch(/subtype/i);
+  });
+});
+
+
+describe('current protocol registry authority', () => {
+  it('identifies the current M11 structure and keeps the separate SAP discoverable', () => {
+    const protocol = GLOBAL_REGISTRY.find(e => e.id === 'ICH_PROTOCOL')!;
+    expect(protocol.moduleAuthority).toMatch(/M11.*May 2026/);
+    expect(protocol.synonyms).not.toContain('SAP');
   });
 });
