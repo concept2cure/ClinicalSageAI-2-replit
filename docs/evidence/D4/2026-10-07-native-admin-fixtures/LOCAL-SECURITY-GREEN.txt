@@ -1,0 +1,314 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s an admin of a DIFFERENT organization (tenant scoping) 33ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s a non-admin member of the target org 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when the reason is missing 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when no profile field is provided 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > updates and audits for an org admin (reason recorded) 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > allows platform staff into any org 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 404s when the organization does not exist 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > platform staff acting on another organization > opens the system scope only for staff acting on ANOTHER org 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 403s a non-admin member 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s the governed form without a reason 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > writes through the one settings writer: laid over the stored settings, its sections and reason (DP-73) 11ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > still accepts the legacy bare-partial body (recorded with no reason) 4ms
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text
+Error updating organization settings: audit_logs refused the row: secret-detail
+
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing
+{
+  "timestamp": "2026-10-07T21:25:21.994Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "resourceType": "organization",
+    "resourceId": 7,
+    "reason": "relation \"audit_logs\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 404s when there is no such organization, and claims nothing 32ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change that would move the connector is refused by the writer: 403, nothing written 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s an empty settings object 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a written row says so 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > GET /api/organizations lists every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > GET /api/organizations lists every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a grant for a role this router does not accept (support) is not staff 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an org admin reading their OWN organization costs no grant lookup 2ms
+stdout | server/services/entitlements/__tests__/master-admin.test.ts
+{
+  "timestamp": "2026-10-07T21:25:23.666Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T21:25:23.669Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/master-admin.test.ts
+{
+  "timestamp": "2026-10-07T21:25:23.669Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/entitlements/__tests__/master-admin.test.ts
+[database] Database connection successful
+
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > masterAdminEmails — the allowlist > is empty when MASTER_ADMIN_EMAILS is unset — no address is the owner by default 2ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > masterAdminEmails — the allowlist > is empty when the value is blank or whitespace-only 1ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > masterAdminEmails — the allowlist > names no address in the source: the owner is configuration, not code 1ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > masterAdminEmails — the allowlist > parses a comma-separated list, trimming and lower-casing each entry 1ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > masterAdminEmails — the allowlist > drops empty entries produced by stray commas 1ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — email signal > no address carries the signal when MASTER_ADMIN_EMAILS is unset 0ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — email signal > matches an allowlisted address case- and whitespace-insensitively 1ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — email signal > moving the allowlist moves the signal 0ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — email signal > does not match an unrelated address 0ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — email signal > does not match a federated (SAML) session: its e-mail is the identity provider's word 1ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — no request role is a signal > a role of super_admin is not the owner signal, however it is spelled 0ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — no request role is a signal > a roles[] entry of super_admin is not the owner signal 0ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — no request role is a signal > MASTER_ADMIN_ROLES contains super_admin and nothing else 1ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — no request role is a signal > does NOT grant staff or tenant roles — the boundary vs requirePlatformAdmin 1ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — no request role is a signal > does not grant a role that merely contains super_admin as a substring 0ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — absent identity > an empty identity is never the owner 0ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — absent identity > null/undefined/empty fields are never the owner 0ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdmin(req) — the request adapter > reads the top-level userEmail set by auth middleware 0ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdmin(req) — the request adapter > falls back to req.user.email when userEmail is absent 0ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdmin(req) — the request adapter > reads the session provider the authenticator recorded, and refuses a federated e-mail 0ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdmin(req) — the request adapter > does not read userRole or req.user.role / req.user.roles (the tenant membership role) 0ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdmin(req) — the request adapter > an unauthenticated request is never the owner 0ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdmin(req) — the request adapter > a normal tenant admin request is not the owner 0ms
+ ✓ server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdmin(req) — the request adapter > honors a relocated allowlist through the request path too 0ms
+stderr | server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > fails CLOSED when the owner lookup throws — a database error is not a grant
+{
+  "timestamp": "2026-10-07T21:25:23.998Z",
+  "level": "error",
+  "message": "[master-admin] master-admin designation lookup failed — treating as not the owner",
+  "context": {
+    "userId": 77,
+    "err": "connection refused"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > fails CLOSED when the platform lookup throws, and never asks the owner lookup
+{
+  "timestamp": "2026-10-07T21:25:24.001Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {}
+}
+
+stderr | server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > does not cache a failure — one blip must not grey the owner for the whole window
+{
+  "timestamp": "2026-10-07T21:25:24.003Z",
+  "level": "error",
+  "message": "[master-admin] master-admin designation lookup failed — treating as not the owner",
+  "context": {
+    "userId": 77,
+    "err": "connection refused"
+  }
+}
+
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > honors a designation the sync check cannot see 3ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > asks only about master-admin roles, never the broader platform set 1ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > a support designation opens the console and is not the owner 0ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > does not query at all when the sync signals already say owner 1ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > a request role of super_admin is no sync owner signal: without a grant row it is not the owner 0ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > is not the owner when there is no designation 0ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > fails CLOSED when the owner lookup throws — a database error is not a grant 2ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > fails CLOSED when the platform lookup throws, and never asks the owner lookup 2ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > does not cache a failure — one blip must not grey the owner for the whole window 1ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > an unauthenticated request is never the owner, and is never looked up 1ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > reuses an owner-designation result within the window, and re-asks after it 2ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > loses the grant at once when the last platform standing is revoked — no window 0ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > caches per user, not globally 0ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveAdminStanding — the owner grant never exceeds platform administration > an allowlisted address the platform guard refuses is not the owner, and is not looked up 1ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveAdminStanding — the owner grant never exceeds platform administration > a federated session carrying the allowlisted address is not the owner, even as staff 0ms
+ ✓ server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveAdminStanding — the owner grant never exceeds platform administration > never answers masterAdmin without platformAdmin, across every combination of signals 3ms
+stdout | server/middleware/__tests__/platform-role-escalation.test.ts
+{
+  "timestamp": "2026-10-07T21:25:25.503Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T21:25:25.505Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/middleware/__tests__/platform-role-escalation.test.ts
+{
+  "timestamp": "2026-10-07T21:25:25.505Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/middleware/__tests__/platform-role-escalation.test.ts
+[database] Database connection successful
+
+ ✓ server/middleware/__tests__/platform-role-escalation.test.ts > requireRole — an org admin cannot stand in for platform staff > refuses an org admin on a platform-scoped guard 21ms
+ ✓ server/middleware/__tests__/platform-role-escalation.test.ts > requireRole — an org admin cannot stand in for platform staff > refuses an org admin for every platform role spelling 19ms
+ ✓ server/middleware/__tests__/platform-role-escalation.test.ts > requireRole — an org admin cannot stand in for platform staff > still admits genuine platform staff 3ms
+ ✓ server/middleware/__tests__/platform-role-escalation.test.ts > requireRole — an org admin cannot stand in for platform staff > honours an explicit grant of admin alongside platform roles 4ms
+ ✓ server/middleware/__tests__/platform-role-escalation.test.ts > requireRole — the org-scoped stand-in survives, because it must > still lets an org admin reach an author-guarded route 3ms
+ ✓ server/middleware/__tests__/platform-role-escalation.test.ts > requireRole — the org-scoped stand-in survives, because it must > does not extend the stand-in to non-admin org roles 4ms
+ ✓ server/middleware/__tests__/platform-role-escalation.test.ts > requireRole — the org-scoped stand-in survives, because it must > rejects an unauthenticated caller before any role logic 3ms
+ ✓ server/middleware/__tests__/platform-role-escalation.test.ts > one module behind every specifier (M-5 consolidation holds) > the bare specifier binds the very same functions as auth.ts 1ms
+ ✓ server/middleware/__tests__/platform-role-escalation.test.ts > one module behind every specifier (M-5 consolidation holds) > requireRole is variadic, so a second role is never silently dropped 0ms
+ ✓ server/middleware/__tests__/platform-role-escalation.test.ts > one module behind every specifier (M-5 consolidation holds) > requireSameOrganization is the requireOrgAccess guard 0ms
+ ✓ server/middleware/__tests__/platform-role-escalation.test.ts > requireOrgAccess (canonical, as production runs it) — platform staff only > denies an org admin another organization’s id 3ms
+ ✓ server/middleware/__tests__/platform-role-escalation.test.ts > requireOrgAccess (canonical, as production runs it) — platform staff only > still allows an org admin their own organization 2ms
+ ✓ server/middleware/__tests__/platform-role-escalation.test.ts > requireOrgAccess (canonical, as production runs it) — platform staff only > allows platform staff any organization 2ms
+stderr | server/routes/admin/__tests__/master-admin.test.ts > access gating > 403s an org member
+{
+  "timestamp": "2026-10-07T21:25:26.509Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 2,
+    "role": "member",
+    "email": "u***@x.io",
+    "path": "/api/admin/master/overview"
+  }
+}
+
+stderr | server/routes/admin/__tests__/master-admin.test.ts > access gating > 403s a tenant membership role of super_admin with no platform grant
+{
+  "timestamp": "2026-10-07T21:25:26.514Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 3,
+    "role": "super_admin",
+    "email": "t***@x.io",
+    "path": "/api/admin/master/overview"
+  }
+}
+
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > access gating > 401s an unauthenticated request 25ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > access gating > 403s an org member 5ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > access gating > 403s a tenant membership role of super_admin with no platform grant 5ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > access gating > 200s a platform admin 5ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > reads > lists tenants 4ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > reads > reports system health from the pool 4ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > reads > paginates the audit explorer and accepts the client filter 3ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > rejects a tenant status change without a reason 15ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > rejects an invalid tenant status value 3ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > applies a tenant suspension and writes an audit entry 4ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > applies a user suspension and writes an audit entry 3ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > rejects a module toggle without moduleId 3ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > toggles a module entitlement and audits it 4ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > 404s a feature flag toggle for an unknown key 4ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > toggles a known feature flag and audits it 3ms
+stderr | server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — platformAdmin agrees with requirePlatformAdmin > a customer org admin: platformAdmin false, and the console refuses them
+{
+  "timestamp": "2026-10-07T21:25:26.936Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 1,
+    "role": "admin",
+    "email": "j***@concept2cure.pro",
+    "path": "/api/admin/master/licensing"
+  }
+}
+
+stderr | server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — platformAdmin agrees with requirePlatformAdmin > a membership role of super_admin with no grant: platformAdmin false, and the console refuses them
+{
+  "timestamp": "2026-10-07T21:25:26.944Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 2,
+    "role": "super_admin",
+    "email": "o***@example.com",
+    "path": "/api/admin/master/licensing"
+  }
+}
+
+stderr | server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — platformAdmin agrees with requirePlatformAdmin > a grant lookup that fails: platformAdmin false, the same way the guard denies
+{
+  "timestamp": "2026-10-07T21:25:26.963Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — platformAdmin agrees with requirePlatformAdmin > a grant lookup that fails: platformAdmin false, the same way the guard denies
+{
+  "timestamp": "2026-10-07T21:25:26.966Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — platformAdmin agrees with requirePlatformAdmin > a grant lookup that fails: platformAdmin false, the same way the guard denies
+{
+  "timestamp": "2026-10-07T21:25:26.966Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 5,
+    "role": "member",
+    "email": "h***@example.com",
+    "path": "/api/admin/master/licensing"
+  }
+}
+
+stderr | server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — the owner grant never exceeds platform administration (finding 43) > an address on MASTER_ADMIN_EMAILS alone is not the owner: both answers say no
+{
+  "timestamp": "2026-10-07T21:25:26.972Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 6,
+    "role": "admin",
+    "email": "o***@example.com",
+    "path": "/api/admin/master/licensing"
+  }
+}
+
+ ✓ server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — platformAdmin agrees with requirePlatformAdmin > a customer org admin: platformAdmin false, and the console refuses them 22ms
+ ✓ server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — platformAdmin agrees with requirePlatformAdmin > a membership role of super_admin with no grant: platformAdmin false, and the console refuses them 8ms
+ ✓ server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — platformAdmin agrees with requirePlatformAdmin > an email on PLATFORM_ADMIN_EMAILS: platformAdmin true, and the console admits them 8ms
+ ✓ server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — platformAdmin agrees with requirePlatformAdmin > an in-app support designation: console yes, commercial unlock no — the two fields differ 6ms
+ ✓ server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — platformAdmin agrees with requirePlatformAdmin > a grant lookup that fails: platformAdmin false, the same way the guard denies 7ms
+ ✓ server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — the owner grant never exceeds platform administration (finding 43) > an address on MASTER_ADMIN_EMAILS alone is not the owner: both answers say no 5ms
+ ✓ server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — the owner grant never exceeds platform administration (finding 43) > the same address, admitted by the platform guard, is the owner: both answers say yes 3ms
+ ✓ server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — the owner grant never exceeds platform administration (finding 43) > an in-app super_admin designation: console yes, commercial unlock yes 4ms
+
+ Test Files  6 passed (6)
+      Tests  110 passed (110)
+   Start at  17:25:19
+   Duration  7.28s (transform 1.54s, setup 197ms, import 3.72s, tests 1.77s, environment 1ms)
+

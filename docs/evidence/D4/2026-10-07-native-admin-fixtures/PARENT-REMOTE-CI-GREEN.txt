@@ -1,0 +1,30 @@
+2026-10-07T20:38:16.3189716Z 4d1252fde561c663ef6b018f65c918bd087ce91e
+2026-10-07T20:38:18.5023272Z 4d1252fde561c663ef6b018f65c918bd087ce91e
+2026-10-07T20:53:21.7702733Z ok 152 - native verdict and its retained report precede the broad suite
+2026-10-07T20:53:21.7706172Z ok 153 - both suites run when shared preparation and native checks pass
+2026-10-07T20:53:21.7710863Z ok 154 - Provision a deploy-shaped database for the real-database tests fails the job while the independent broad suite still runs
+2026-10-07T20:53:21.7716027Z ok 155 - Run real-database tests (unmocked pg, RLS_ENFORCE=on) fails the job while the independent broad suite still runs
+2026-10-07T20:53:21.7719906Z ok 156 - Upload real-database test results fails the job while the independent broad suite still runs
+2026-10-07T20:53:21.7724373Z ok 157 - shared preparation failure at actions/checkout@11d5960a326750d5838078e36cf38b85af677262 blocks both suites
+2026-10-07T20:53:21.7730870Z ok 158 - shared preparation failure at Setup Node.js blocks both suites
+2026-10-07T20:53:21.7734456Z ok 159 - shared preparation failure at Install dependencies blocks both suites
+2026-10-07T20:53:21.7737900Z ok 160 - shared preparation failure at Install Postgres client blocks both suites
+2026-10-07T20:53:21.7741280Z ok 161 - shared preparation failure at Apply GCC migrations blocks both suites
+2026-10-07T20:53:21.7745913Z ok 162 - shared preparation failure at Smoke — apply RLS rollout migrations (0019/0020/0021) blocks both suites
+2026-10-07T20:53:21.7749652Z ok 163 - a broad failure retains the earlier native verdict and fails the job
+2026-10-07T20:53:21.7753561Z ok 164 - cancellation and missing or failed shared preparation cannot start the broad suite
+2026-10-07T20:53:21.7757515Z ok 165 - native and broad failures remain blocking for build and release evidence
+2026-10-07T20:53:21.7760944Z ok 166 - native and broad suites retain distinct databases and production RLS
+2026-10-07T20:53:21.7764612Z ok 167 - both artifacts upload after failures with the existing pinned action and paths
+2026-10-07T20:53:21.7768532Z ok 168 - Run real-database tests (unmocked pg, RLS_ENFORCE=on) propagates the actual shell failure status
+2026-10-07T20:53:21.7772276Z ok 169 - Run integration tests propagates the actual shell failure status
+2026-10-07T20:53:21.7776275Z ok 170 - a failed fresh install cannot execute the deploy migration
+2026-10-07T20:53:22.8833504Z # tests 233
+2026-10-07T20:53:22.8834135Z # pass 233
+2026-10-07T20:53:22.8834419Z # fail 0
+2026-10-07T20:53:22.8834701Z # cancelled 0
+2026-10-07T20:53:22.8835022Z # skipped 0
+2026-10-07T20:53:23.0409181Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-07T20:56:27.8323573Z [ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+2026-10-07T20:56:27.8324482Z [ci:typecheck-no-regression] OK — error count 0 matches baseline.
+

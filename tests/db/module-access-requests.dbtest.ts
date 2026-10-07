@@ -195,7 +195,7 @@ beforeAll(async () => {
   // so this precedes every server import below.
   savedAppDatabaseUrl = process.env.APP_DATABASE_URL;
   process.env.APP_DATABASE_URL = runtimeUrl;
-  // The owner is identified by the super_admin role below; the default
+  // The owner is identified by the super_admin platform grant below; the default
   // allowlist entry must not make any fixture identity the owner by accident.
   savedMasterEmails = process.env.MASTER_ADMIN_EMAILS;
   process.env.MASTER_ADMIN_EMAILS = 'dbtd-nobody@example.invalid';
@@ -258,8 +258,9 @@ beforeAll(async () => {
   }
   await owner.query(
     `INSERT INTO platform_role_grants (user_id, role, granted_by, reason)
-     VALUES ($1, 'support', 'dbtd-fixture', $2)`,
-    [people.staffA.id, why('fixture staff designation')],
+     VALUES ($1, 'support', 'dbtd-fixture', $2),
+            ($3, 'super_admin', 'dbtd-fixture', $4)`,
+    [people.staffA.id, why('fixture staff designation'), people.owner.id, why('fixture owner designation')],
   );
 
   // Only now load the server.
