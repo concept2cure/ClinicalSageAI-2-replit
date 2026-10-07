@@ -19,6 +19,7 @@ import { describe, it, expect } from 'vitest';
 import {
   GET_DOCUMENT_TEMPLATE,
   TEMPLATE_OUTLINES_FROM_RECORD,
+  TEMPLATE_OUTLINES_FROM_BLUEPRINT,
 } from '../submission-center-tool-defs';
 import {
   DOCUMENT_TEMPLATES,
@@ -26,11 +27,15 @@ import {
 } from '../../market-specs/document-template-library';
 import { e3TopLevel } from '../../ind/ctd/index.js';
 import { SMPC_QRD_SECTIONS } from '../../labeling/smpc-qrd-catalog';
+import { ICH_E2F_DSUR_SECTIONS } from '../../ind/ctd/lifecycle-document-types';
+import { getApplicationType } from '../../../../shared/regulatory/global-document-registry';
+import { getSectionBlueprintForEntry } from '../../../../shared/regulatory/project-bootstrap';
 
 const description = GET_DOCUMENT_TEMPLATE.description;
-const RECORD_MARK = 'Read from a canonical record';
+const RECORD_MARK = 'Record-derived';
+const BLUEPRINT_MARK = 'Blueprint scaffolds';
 const HAND_MARK = 'Kept by hand';
-const INSTRUCTION = "Present a hand-kept outline as the platform's outline, not as the guidance's own text, and name its cited basis.";
+const INSTRUCTION = "Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text.";
 
 /**
  * OpenAI-compatible providers trim a tool description to 1023 characters plus an
@@ -49,7 +54,8 @@ function between(start: string, end?: string): string {
   const j = description.indexOf(end);
   return j > i ? description.slice(i, j) : '';
 }
-const recordClause = between(RECORD_MARK, HAND_MARK);
+const recordClause = between(RECORD_MARK, BLUEPRINT_MARK);
+const blueprintClause = between(BLUEPRINT_MARK, HAND_MARK);
 // The hand-kept list is the last clause, so a trim can only drop trailing ids.
 const handClause = between(HAND_MARK);
 
@@ -71,6 +77,10 @@ const RECORD_PROOFS: Record<string, () => void> = {
     const sections = getDocumentTemplate('smpc')!.sections;
     expect(sections.length).toBeGreaterThan(0);
     for (const s of sections) expect(record.get(s.number), `smpc ${s.number}`).toBe(s.heading);
+  },
+  dsur: () => {
+    expect(getDocumentTemplate('dsur')!.sections.map((s) => s.heading)).toEqual(ICH_E2F_DSUR_SECTIONS.map((s) => s.title));
+    expect(getDocumentTemplate('dsur')!.outlineSource).toMatchObject({ kind: 'lifecycle-record', record: 'ICH_E2F_DSUR_SECTIONS' });
   },
 };
 
@@ -96,7 +106,7 @@ describe('get_document_template description — says which outlines are canonica
   it('names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them', () => {
     expect(handClause).not.toBe('');
     for (const t of DOCUMENT_TEMPLATES) {
-      if (t.id in TEMPLATE_OUTLINES_FROM_RECORD) continue;
+      if (t.id in TEMPLATE_OUTLINES_FROM_RECORD || t.id in TEMPLATE_OUTLINES_FROM_BLUEPRINT) continue;
       expect(entryFor(handClause, t.id), t.id).not.toBe('');
       expect(entryFor(recordClause, t.id), t.id).toBe('');
     }
@@ -105,9 +115,25 @@ describe('get_document_template description — says which outlines are canonica
     }
   });
 
+  it('separates existing platform blueprints from agency records and verifies each projection against its source', () => {
+    const projected = DOCUMENT_TEMPLATES.filter((t) => t.outlineSource?.kind === 'project-blueprint');
+    expect(Object.keys(TEMPLATE_OUTLINES_FROM_BLUEPRINT).sort()).toEqual(projected.map((t) => t.id).sort());
+    for (const t of projected) {
+      const source = t.outlineSource!;
+      if (source.kind !== 'project-blueprint') throw new Error('not a project blueprint');
+      expect(TEMPLATE_OUTLINES_FROM_BLUEPRINT[t.id]).toBe(source.blueprintId);
+      expect(entryFor(blueprintClause, t.id), t.id).not.toBe('');
+      expect(entryFor(recordClause, t.id), t.id).toBe('');
+      expect(entryFor(handClause, t.id), t.id).toBe('');
+      const blueprint = getSectionBlueprintForEntry(getApplicationType(source.registryId)!);
+      expect(t.sections.map((s) => `${s.number} ${s.heading}`)).toEqual(blueprint.sections.map((s) => `${s.code} ${s.title}`));
+      expect(t.basis?.confidence).toBe('platform-convention');
+    }
+  });
+
   it('says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text', () => {
-    expect(entryFor(handClause, 'pbrer')).toMatch(/interim copy of the ICH E2C\(R2\)/);
-    expect(entryFor(handClause, 'cover_letter')).toMatch(/not a regulator's text/);
+    expect(entryFor(handClause, 'pbrer')).toMatch(/interim.*E2C\(R2\)/);
+    expect(entryFor(handClause, 'cover_letter')).toMatch(/platform headings/);
   });
 
   it("tells AnA to present a hand-kept outline as the platform's, not as the guidance's text", () => {
@@ -123,7 +149,8 @@ describe('get_document_template description — says which outlines are canonica
     expect(recordClause).not.toBe('');
     expect(head).toContain(recordClause);
     expect(description.indexOf(INSTRUCTION)).toBeLessThan(description.indexOf(RECORD_MARK));
-    expect(description.indexOf(RECORD_MARK)).toBeLessThan(description.indexOf(HAND_MARK));
+    expect(description.indexOf(RECORD_MARK)).toBeLessThan(description.indexOf(BLUEPRINT_MARK));
+    expect(description.indexOf(BLUEPRINT_MARK)).toBeLessThan(description.indexOf(HAND_MARK));
     expect(description.trimEnd().endsWith(handClause.trimEnd())).toBe(true);
   });
 
@@ -132,5 +159,19 @@ describe('get_document_template description — says which outlines are canonica
     expect(GET_DOCUMENT_TEMPLATE.input_schema.required).toEqual([]);
     expect(description).toMatch(/`template_id`/);
     expect(description).toMatch(/`family`/);
+  });
+
+  it('advertises preparation as questions and regional route, with no evidence or readiness claim', () => {
+    expect(head).toMatch(/not drafted prose, verified evidence or readiness/i);
+    expect(head).toMatch(/exact active `registry_id`.*never guess/i);
+    expect(head).toMatch(/`market`\+`prepare`.*regional route.*at most 3 focused questions/i);
+    expect(head).toMatch(/`discussed_topics`.*prevents re-asking/i);
+    const props = GET_DOCUMENT_TEMPLATE.input_schema.properties!;
+    expect(props.market).toMatchObject({ enum: ['US', 'EU', 'CA', 'JP'] });
+    expect(props.offset).toMatchObject({ type: 'integer', minimum: 0, default: 0 });
+    expect(props.limit).toMatchObject({ type: 'integer', minimum: 1, maximum: 30, default: 12 });
+    expect(props.prepare).toMatchObject({ type: 'boolean' });
+    expect(props.coverage).toMatchObject({ type: 'boolean' });
+    expect(props.discussed_topics).toMatchObject({ type: 'array', items: { enum: ['scope', 'source_versions', 'data_cutoff', 'statistical_results', 'estimands', 'safety', 'quality', 'local_requirements', 'japan_evidence', 'agency_commitments', 'review_owners'] } });
   });
 });

@@ -43,6 +43,8 @@ import type { RegulatoryApplicationType, SectionBlueprint } from '../../../share
 import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { resolveRequirements } from '../ind/ctd/requirements-resolver.js';
 import { CTD_AUTHORING_GUIDANCE } from '../ind/ctd/authoring-guidance.js';
+import { BIOTECH_DRAFTING_GUIDANCE, buildDocumentPreparation } from '../market-specs/document-preparation.js';
+import { componentTemplateIdForRegistry, getDocumentTemplate, registryOutlineRequiresReview } from '../market-specs/document-template-library.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Regulatory System Prompts (cached for cost efficiency)
@@ -106,7 +108,7 @@ DOCUMENT STANDARDS:
   ich_clinical: `You are AnA, a senior regulatory intelligence operator and clinical development strategist with deep expertise in ICH guidelines. You assess with the rigor of someone who has designed pivotal trials and defended statistical analysis plans before FDA and EMA review divisions.
 
 KEY REGULATORY FRAMEWORK:
-- ICH E6(R2) — Good Clinical Practice
+- ICH E6(R3) Principles and Annex 1 — confirm regional adoption and effective date; verify Annex 2 separately
 - ICH E8(R1) — General Considerations for Clinical Studies
 - ICH E9(R1) — Statistical Principles for Clinical Trials (with Estimands)
 - ICH E10 — Choice of Control Group
@@ -114,10 +116,10 @@ KEY REGULATORY FRAMEWORK:
 - ICH M4 — Common Technical Document (CTD) structure
 
 DOCUMENT STANDARDS:
-- Protocol design per ICH E6(R2) requirements
+- Protocol design using the applicable current agency/client template, ICH M11 and regional GCP expectations
 - Statistical analysis plans per ICH E9(R1)
 - Safety reporting per ICH E2A/E2B
-- CTD Module 2.5 (Clinical Overview) and Module 2.7 (Clinical Summary) format`,
+- Apply CTD Modules 2.5/2.7 to their clinical overviews/summaries when applicable; trial applications and standalone study documents follow their own regional/document structure`,
 
   cer_clinical_evaluation: `You are AnA, a senior regulatory intelligence operator specializing in Clinical Evaluation Reports under EU MDR 2017/745. You assess with the rigor of a Notified Body clinical assessor who has returned dozens of inadequate CERs and knows exactly what separates a defensible equivalence argument from a vulnerable one.
 
@@ -156,28 +158,47 @@ const SUBMISSION_TYPE_TO_FRAMEWORK: Record<string, string> = {
   maa: 'ich_clinical', cta: 'ich_clinical',
 };
 
+function preparationRoute(entry: RegulatoryApplicationType | null) {
+  if (!entry || entry.segment !== 'pharma_biotech' || !['US', 'EU', 'CA', 'JP'].includes(entry.region)) return null;
+  return buildDocumentPreparation({ registryId: entry.id }).regionalRoute;
+}
+
+function harmonisedDocumentPrompt(entry: RegulatoryApplicationType): string {
+  return `${REGULATORY_SYSTEM_PROMPTS.general_regulatory}
+
+DOCUMENT CONTEXT:
+- Document: ${entry.displayName} (${entry.id})
+${entry.agency === 'ICH' ? '- ICH is a standards body, not the receiving regulatory agency.' : `- Reference body: ${entry.agency}; this does not identify a receiving regulatory agency.\n- Recorded document context: ${entry.description}`}
+- Regional filing context: unconfirmed. Confirm the receiving jurisdiction, application/lifecycle purpose and current agency/client template in the client interview.
+- Follow the applicable document outline and supplied evidence. Do not infer an eCTD channel, regional Module 1, primary CTD module, language or local filing requirement from this global document identity.
+- Until the regional context is supplied, mark delivery and local requirements unresolved; do not claim submission readiness.`;
+}
+
 function buildDynamicSystemPrompt(submissionType: string): string {
   const ctx = getSubmissionTypeContext(submissionType);
   if (!ctx) return REGULATORY_SYSTEM_PROMPTS.general_regulatory;
+  const entry = resolveToRegistryEntry(submissionType);
+  if (entry?.region === 'GLOBAL') return harmonisedDocumentPrompt(entry);
+  const route = preparationRoute(entry);
 
   return `You are AnA, a senior regulatory intelligence operator with deep expertise in ${ctx.displayName} submissions for ${ctx.agency}. You write with the precision and judgment authority of someone who has prepared dozens of ${ctx.displayName} filings and understands ${ctx.agency} reviewer expectations.
 
 KEY REGULATORY CONTEXT:
 - Filing Type: ${ctx.displayName} (${ctx.registryId})
 - Region: ${ctx.region} — Agency: ${ctx.agency}
-- Dossier Standard: ${ctx.dossierStandard}
+- Authoring/delivery scope: ${route ? `${route.channel}. ${route.scope}` : ctx.dossierStandard}
 ${ctx.segment ? `- Segment: ${ctx.segment}` : ''}
 ${ctx.category ? `- Category: ${ctx.category}` : ''}
-${ctx.submissionFormat ? `- Submission Format: ${ctx.submissionFormat}` : ''}
-${ctx.ctdModule ? `- Primary CTD Module: ${ctx.ctdModule}` : ''}
-${ctx.description ? `\nSCOPE: ${ctx.description}` : ''}
+${!route && ctx.submissionFormat ? `- Submission Format: ${ctx.submissionFormat}` : ''}
+${!route && ctx.ctdModule ? `- Primary CTD Module: ${ctx.ctdModule}` : ''}
+${!route && ctx.description ? `\nSCOPE: ${ctx.description}` : ''}
 
 DOCUMENT STANDARDS:
 - Use formal regulatory language appropriate for ${ctx.agency} submissions
-- Follow the ${ctx.dossierStandard} dossier structure
+- Follow the applicable document outline and the regional authoring/delivery scope above
 - Cite applicable regulations and guidance documents for the ${ctx.region} region
 - Ensure consistency with ${ctx.agency} formatting expectations
-${ctx.submissionFormat ? `- Use ${ctx.submissionFormat} formatting requirements` : ''}
+${!route && ctx.submissionFormat ? `- Use ${ctx.submissionFormat} formatting requirements` : ''}
 
 QUALITY REQUIREMENTS:
 - Every claim must be supported by evidence or regulatory reference
@@ -323,6 +344,21 @@ function blueprintLines(entry: RegulatoryApplicationType, section: SectionBluepr
 
 type BlueprintRow = SectionBlueprint['sections'][number];
 
+/** Reuse the same component record exposed by get_document_template; a DSUR
+ * section must not revert to the legacy eleven-heading project copy. */
+function componentRequirements(entry: RegulatoryApplicationType, sectionType: string): DraftingRequirements | null {
+  const componentId = componentTemplateIdForRegistry(entry.id);
+  const template = componentId ? getDocumentTemplate(componentId) : undefined;
+  if (!template) return null;
+  const target = normTitle(sectionType);
+  const section = template.sections.find(s => [s.number, s.heading, `${s.number} ${s.heading}`].some(v => normTitle(v) === target));
+  if (!section) return { requirements: null, requirementsSource: 'none' };
+  return {
+    requirements: `SECTION AUTHORING GUIDANCE (existing ${template.title} record):\n- Section: ${section.number} — ${section.heading}\n- ${section.purpose}\n- Recorded basis: ${template.regulatoryBasis}\n- Confirm applicability and the current agency/client template; platform required flags are not a completeness or approval verdict.`,
+    requirementsSource: `outline:${template.outlineSource?.kind ?? 'canonical-record'}:${entry.id}:${section.number}`,
+  };
+}
+
 /** A CTD-framework entry, its blueprint rows outside Module 1 (`outline`), and the request. */
 interface CtdDraftContext {
   entry: RegulatoryApplicationType;
@@ -447,17 +483,25 @@ export function resolveDraftingRequirements(
   sectionType: string,
 ): DraftingRequirements {
   const none: DraftingRequirements = { requirements: null, requirementsSource: 'none' };
-  if (!submissionType) return none;
+  if (!submissionType || submissionType.trim().toUpperCase() === 'CTA') return none;
   const entry = resolveToRegistryEntry(submissionType);
   if (!entry) return none;
 
   const blueprint = getSectionBlueprintForEntry(entry);
+  if (registryOutlineRequiresReview(entry.id) || blueprint.id !== entry.defaultSectionBlueprint) {
+    return {
+      requirements: `SECTION REQUIREMENTS: A suitable exact ${entry.displayName} outline is not indexed or requires review. Use the current agency/client template; do not substitute the platform's default CTD or supply section requirements from memory.`,
+      requirementsSource: 'record:not-indexed-outline',
+    };
+  }
   const norm = (s: string) => s.trim().toLowerCase();
   const target = norm(sectionType);
   const matchRow = (s: BlueprintRow) =>
     norm(s.code) === target || norm(s.title) === target || norm(`${s.code} ${s.title}`) === target;
 
   if (!isCtdFramework(entry, blueprint)) {
+    const component = componentRequirements(entry, sectionType);
+    if (component) return component;
     const section = blueprint.sections.find(matchRow);
     return section ? { requirements: blueprintLines(entry, section), requirementsSource: 'blueprint' } : none;
   }
@@ -488,23 +532,22 @@ export function resolveSectionRequirements(
  * Checks hardcoded frameworks first, then builds a dynamic prompt from registry data.
  */
 export function resolveSystemPrompt(submissionType: string): string {
+  if (submissionType.trim().toUpperCase() === 'CTA') {
+    return `${REGULATORY_SYSTEM_PROMPTS.general_regulatory}\n\nCTA jurisdiction is unconfirmed. Confirm the receiving market and exact trial application type in the client interview before applying a regional outline or filing route. Mark regional requirements unresolved in a section draft.\n\n${BIOTECH_DRAFTING_GUIDANCE}`;
+  }
   // Direct framework key (e.g. 'fda_510k', 'ich_clinical') — backward compatible.
   if (REGULATORY_SYSTEM_PROMPTS[submissionType]) {
-    return REGULATORY_SYSTEM_PROMPTS[submissionType];
-  }
-  const frameworkKey = SUBMISSION_TYPE_TO_FRAMEWORK[submissionType];
-  if (frameworkKey && REGULATORY_SYSTEM_PROMPTS[frameworkKey]) {
-    return REGULATORY_SYSTEM_PROMPTS[frameworkKey];
+    return `${REGULATORY_SYSTEM_PROMPTS[submissionType]}\n\n${BIOTECH_DRAFTING_GUIDANCE}`;
   }
   const entry = resolveToRegistryEntry(submissionType);
   if (entry) {
     const idKey = SUBMISSION_TYPE_TO_FRAMEWORK[entry.id];
     if (idKey && REGULATORY_SYSTEM_PROMPTS[idKey]) {
-      return REGULATORY_SYSTEM_PROMPTS[idKey];
+      return `${REGULATORY_SYSTEM_PROMPTS[idKey]}\n\n${buildDynamicSystemPrompt(entry.id)}\n\n${BIOTECH_DRAFTING_GUIDANCE}`;
     }
-    return buildDynamicSystemPrompt(entry.id);
+    return `${buildDynamicSystemPrompt(entry.id)}\n\n${BIOTECH_DRAFTING_GUIDANCE}`;
   }
-  return REGULATORY_SYSTEM_PROMPTS.general_regulatory;
+  return `${REGULATORY_SYSTEM_PROMPTS.general_regulatory}\n\n${BIOTECH_DRAFTING_GUIDANCE}`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -641,7 +684,7 @@ export class AnaDocumentDraftingService {
     // submissionType is supplied; otherwise use the hardcoded framework prompt.
     const systemPrompt = req.submissionType
       ? resolveSystemPrompt(req.submissionType)
-      : REGULATORY_SYSTEM_PROMPTS[req.framework] || REGULATORY_SYSTEM_PROMPTS.general_regulatory;
+      : resolveSystemPrompt(req.framework);
 
     // Build user prompt with project context
     let userPrompt = '';

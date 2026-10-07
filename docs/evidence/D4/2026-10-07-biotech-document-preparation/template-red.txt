@@ -1,0 +1,274 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > has unique ids and at least one section per template 15ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > every template requires at least one section 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > Clinical Overview matches the ICH M4E 2.5.1–2.5.6 spine 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > 510(k) Summary carries the 21 CFR 807.92 elements incl. substantial equivalence 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > SmPC has the 10 top-level sections 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > GSPR checklist maps to MDR Annex I chapters I–III 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no template serves both eu_mdr and eu_ivdr under one Annex I numbering 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no eu_ivdr template cites MDR Annex I numbering 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > gspr_checklist is the MDR checklist: MDR only, MDR Annex I basis, recall-labelled 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > ivdr_gspr_checklist cites IVDR Annex I: Ch I §1–8, Ch II §9–19, Ch III §20 (label 20.2, IFU 20.4) 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR checklist's Chapter III and the IVD labelling record cite the same section 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > each EU device submission type points its GSPR row at its own regulation's checklist 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR technical-file assembler places a leaf typed ivdr_gspr_checklist in the GSPR slot 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the MDR technical-file assembler does not take the IVDR checklist as its GSPR by type 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > filters by family 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > resolves a template by CTD section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > returns undefined for an unknown id 0ms
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > protocol reads the existing ICH_PROTOCOL project blueprint rather than another heading tree 5ms
+   → protocol: expected undefined to be defined
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > statistical_analysis_plan reads the existing ICH_SAP project blueprint rather than another heading tree 1ms
+   → statistical_analysis_plan: expected undefined to be defined
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > informed_consent reads the existing ICH_ICF project blueprint rather than another heading tree 1ms
+   → informed_consent: expected undefined to be defined
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_substance reads the existing ICH_M3_DS project blueprint rather than another heading tree 1ms
+   → drug_substance: expected undefined to be defined
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_product reads the existing ICH_M3_DP project blueprint rather than another heading tree 1ms
+   → drug_product: expected undefined to be defined
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > the protocol says its E6(R2) outline is legacy and requires current regional/template review 1ms
+   → protocol: expected undefined to be defined
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > aliases for existing IB and RMP resolve the very same template and never add a second outline 3ms
+   → expected undefined to be { id: 'investigators_brochure', …(4) } // Object.is equality
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > DSUR reads the corrected E2F record including all 20 numbered sections and the unnumbered front/back matter 1ms
+   → dsur: expected undefined to be defined
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > registry requests reuse the named canonical clinical and quality outlines 1ms
+   → getRegistryDocumentTemplate is not a function
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > a registry outline keeps its exact existing blueprint and labels its required flags as platform scaffolding 1ms
+   → getRegistryDocumentTemplate is not a function
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > unknown or missing blueprints never fall back to a full CTD dossier 0ms
+   → getRegistryDocumentTemplate is not a function
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped EU_CTA scaffolds pending regional/content review 0ms
+   → getRegistryDocumentTemplate is not a function
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped CA_CTA scaffolds pending regional/content review 1ms
+   → getRegistryDocumentTemplate is not a function
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped JP_CTN scaffolds pending regional/content review 0ms
+   → getRegistryDocumentTemplate is not a function
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped ICH_NONCLIN_SUMMARY scaffolds pending regional/content review 0ms
+   → getRegistryDocumentTemplate is not a function
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > coverage lists every active biotech entry once and says explicitly which outlines remain unavailable 1ms
+   → registryDocumentTemplateCoverage is not a function
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > protocol reads the existing ICH_PROTOCOL project blueprint rather than another heading tree
+AssertionError: protocol: expected undefined to be defined
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:207:19
+    205|   it.each(projected)('%s reads the existing %s project blueprint rathe…
+    206|     const t = getDocumentTemplate(id);
+    207|     expect(t, id).toBeDefined();
+       |                   ^
+    208|     const entry = getApplicationType(registryId)!;
+    209|     const blueprint = getSectionBlueprintForEntry(entry);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > statistical_analysis_plan reads the existing ICH_SAP project blueprint rather than another heading tree
+AssertionError: statistical_analysis_plan: expected undefined to be defined
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:207:19
+    205|   it.each(projected)('%s reads the existing %s project blueprint rathe…
+    206|     const t = getDocumentTemplate(id);
+    207|     expect(t, id).toBeDefined();
+       |                   ^
+    208|     const entry = getApplicationType(registryId)!;
+    209|     const blueprint = getSectionBlueprintForEntry(entry);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > informed_consent reads the existing ICH_ICF project blueprint rather than another heading tree
+AssertionError: informed_consent: expected undefined to be defined
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:207:19
+    205|   it.each(projected)('%s reads the existing %s project blueprint rathe…
+    206|     const t = getDocumentTemplate(id);
+    207|     expect(t, id).toBeDefined();
+       |                   ^
+    208|     const entry = getApplicationType(registryId)!;
+    209|     const blueprint = getSectionBlueprintForEntry(entry);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_substance reads the existing ICH_M3_DS project blueprint rather than another heading tree
+AssertionError: drug_substance: expected undefined to be defined
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:207:19
+    205|   it.each(projected)('%s reads the existing %s project blueprint rathe…
+    206|     const t = getDocumentTemplate(id);
+    207|     expect(t, id).toBeDefined();
+       |                   ^
+    208|     const entry = getApplicationType(registryId)!;
+    209|     const blueprint = getSectionBlueprintForEntry(entry);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_product reads the existing ICH_M3_DP project blueprint rather than another heading tree
+AssertionError: drug_product: expected undefined to be defined
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:207:19
+    205|   it.each(projected)('%s reads the existing %s project blueprint rathe…
+    206|     const t = getDocumentTemplate(id);
+    207|     expect(t, id).toBeDefined();
+       |                   ^
+    208|     const entry = getApplicationType(registryId)!;
+    209|     const blueprint = getSectionBlueprintForEntry(entry);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > the protocol says its E6(R2) outline is legacy and requires current regional/template review
+AssertionError: protocol: expected undefined to be defined
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:221:27
+    219|   it('the protocol says its E6(R2) outline is legacy and requires curr…
+    220|     const t = getDocumentTemplate('protocol')!;
+    221|     expect(t, 'protocol').toBeDefined();
+       |                           ^
+    222|     expect(t.outlineLimitations?.join(' ')).toMatch(/legacy.*E6\(R2\)/…
+    223|     expect(t.outlineLimitations?.join(' ')).toMatch(/M11|current.*temp…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > aliases for existing IB and RMP resolve the very same template and never add a second outline
+AssertionError: expected undefined to be { id: 'investigators_brochure', …(4) } // Object.is equality
+
+- Expected:
+{
+  "families": [
+    "ectd",
+    "ctis",
+  ],
+  "id": "investigators_brochure",
+  "regulatoryBasis": "ICH E6(R2) Good Clinical Practice §7",
+  "sections": [
+    {
+      "heading": "Summary",
+      "number": "1",
+      "purpose": "Concise summary of the significant physical, chemical, pharmaceutical, pharmacological, toxicological, and clinical information.",
+      "required": true,
+    },
+    {
+      "heading": "Introduction",
+      "number": "2",
+      "purpose": "Chemical/generic name, properties, rationale, and anticipated indications.",
+      "required": true,
+    },
+    {
+      "heading": "Physical, Chemical and Pharmaceutical Properties and Formulation",
+      "number": "3",
+      "purpose": "Description of the substance and formulation.",
+      "required": true,
+    },
+    {
+      "heading": "Nonclinical Studies",
+      "number": "4",
+      "purpose": "Nonclinical pharmacology, pharmacokinetics, and toxicology results.",
+      "required": true,
+    },
+    {
+      "heading": "Effects in Humans",
+      "number": "5",
+      "purpose": "Pharmacokinetics, safety, efficacy, and marketing experience in humans.",
+      "required": true,
+    },
+    {
+      "heading": "Summary of Data and Guidance for the Investigator",
+      "number": "6",
+      "purpose": "Overall discussion and guidance on recognising/treating possible overdose and adverse reactions.",
+      "required": true,
+    },
+  ],
+  "title": "Investigator's Brochure (IB)",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:227:58
+    225|
+    226|   it('aliases for existing IB and RMP resolve the very same template a…
+    227|     expect(getDocumentTemplate('investigator_brochure')).toBe(getDocum…
+       |                                                          ^
+    228|     expect(getDocumentTemplate('rmp')).toBe(getDocumentTemplate('risk_…
+    229|     expect(documentTemplateIds()).not.toContain('investigator_brochure…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > DSUR reads the corrected E2F record including all 20 numbered sections and the unnumbered front/back matter
+AssertionError: dsur: expected undefined to be defined
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:235:23
+    233|   it('DSUR reads the corrected E2F record including all 20 numbered se…
+    234|     const t = getDocumentTemplate('dsur')!;
+    235|     expect(t, 'dsur').toBeDefined();
+       |                       ^
+    236|     expect(t.sections.map((s) => s.heading)).toEqual(ICH_E2F_DSUR_SECT…
+    237|     expect(t.sections.filter((s) => /^\d+$/.test(s.number)).map((s) =>…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > registry requests reuse the named canonical clinical and quality outlines
+TypeError: getRegistryDocumentTemplate is not a function
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:247:54
+    245|
+    246|   it('registry requests reuse the named canonical clinical and quality…
+    247|     for (const [id, registryId] of projected) expect(getRegistryDocume…
+       |                                                      ^
+    248|     expect(getRegistryDocumentTemplate('ICH_DSUR')?.sections).toBe(get…
+    249|     expect(getRegistryDocumentTemplate('ICH_CSR')?.sections).toBe(getD…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > a registry outline keeps its exact existing blueprint and labels its required flags as platform scaffolding
+TypeError: getRegistryDocumentTemplate is not a function
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:253:15
+    251|
+    252|   it('a registry outline keeps its exact existing blueprint and labels…
+    253|     const t = getRegistryDocumentTemplate('CA_NDS')!;
+       |               ^
+    254|     expect(t, 'CA_NDS has a dedicated existing scaffold').toBeDefined(…
+    255|     const entry = getApplicationType('CA_NDS')!;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > unknown or missing blueprints never fall back to a full CTD dossier
+TypeError: getRegistryDocumentTemplate is not a function
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:264:12
+    262|
+    263|   it('unknown or missing blueprints never fall back to a full CTD doss…
+    264|     expect(getRegistryDocumentTemplate('no_such_registry_entry')).toBe…
+       |            ^
+    265|     const missing = GLOBAL_REGISTRY.find((e) => e.active && e.segment …
+    266|     expect(missing, 'the coverage audit exercises a real default fallb…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped EU_CTA scaffolds pending regional/content review
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped CA_CTA scaffolds pending regional/content review
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped JP_CTN scaffolds pending regional/content review
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped ICH_NONCLIN_SUMMARY scaffolds pending regional/content review
+TypeError: getRegistryDocumentTemplate is not a function
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:271:12
+    269|
+    270|   it.each(['EU_CTA', 'CA_CTA', 'JP_CTN', 'ICH_NONCLIN_SUMMARY'])('with…
+    271|     expect(getRegistryDocumentTemplate(registryId)).toBeUndefined();
+       |            ^
+    272|     expect(registryDocumentTemplateCoverage().find((r) => r.registryId…
+    273|       outlineAvailable: false, reason: 'existing_blueprint_requires_re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > coverage lists every active biotech entry once and says explicitly which outlines remain unavailable
+TypeError: registryDocumentTemplateCoverage is not a function
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:278:22
+    276|
+    277|   it('coverage lists every active biotech entry once and says explicit…
+    278|     const coverage = registryDocumentTemplateCoverage();
+       |                      ^
+    279|     expect(coverage.map((r) => r.registryId)).toEqual(GLOBAL_REGISTRY.…
+    280|     expect(new Set(coverage.map((r) => r.registryId)).size).toBe(cover…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  16 failed | 17 passed (33)
+   Start at  21:41:47
+   Duration  2.01s (transform 1.16s, setup 109ms, import 1.22s, tests 54ms, environment 0ms)
+

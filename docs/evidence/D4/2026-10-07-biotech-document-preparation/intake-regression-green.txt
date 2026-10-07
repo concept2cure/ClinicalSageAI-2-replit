@@ -1,0 +1,151 @@
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > startFlow > returns initial state with entry node, empty answers, and section progress 3ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > startFlow > filters a field whose visibleWhen is not met (empty answers at start) 2ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > startFlow > throws for an unknown category 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — answer storage & progression > stores answers, marks node complete, and advances currentNodeId 3ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — answer storage & progression > returns validation issues and does NOT advance on a missing required field 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — branch resolution > routes to the branch goto target when the predicate matches 0ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — branch resolution > falls back to defaultNext when no branch matches 0ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — completion > produces a complete event with start_war_game suggested action at a terminal node 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > resumeFlow > returns the current node event for an in-progress state 0ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > resumeFlow > returns the complete event for a completed state 0ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > visibleWhen filtering with accumulated answers > keeps a conditional field once a prior answer satisfies its predicate 0ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > visibleWhen filtering with accumulated answers > filters the conditional field when the prior answer does not satisfy it 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > exposes a non-empty set of flows and every definition resolves 3ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > has no duplicate node ids 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > entryNode references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > every section.nodeIds entry references a real node 2ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > every branch goto target references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > every non-null defaultNext references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > every predicate field references a field defined somewhere in the flow 2ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > every section.nodeIds entry references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > every branch goto target references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > every non-null defaultNext references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > every predicate field references a field defined somewhere in the flow 2ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > every section.nodeIds entry references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > every non-null defaultNext references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > every section.nodeIds entry references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > has at least one terminal path (a node with defaultNext === null) 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > every section.nodeIds entry references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > every non-null defaultNext references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > every section.nodeIds entry references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > every non-null defaultNext references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > every predicate field references a field defined somewhere in the flow 2ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > entryNode references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > every section.nodeIds entry references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > every non-null defaultNext references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > every predicate field references a field defined somewhere in the flow 2ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > every section.nodeIds entry references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > every non-null defaultNext references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > every non-null defaultNext references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > every predicate field references a field defined somewhere in the flow 2ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > every section.nodeIds entry references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > every non-null defaultNext references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > has at least one terminal path (a node with defaultNext === null) 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > has at least one terminal path (a node with defaultNext === null) 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: protocol_development > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: csr_report > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: ind_submission > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: sop_development > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: device_510k > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: cer_report > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: nda_submission > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: bla_submission > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: device_pma > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: cmc_specification > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: risk_management > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: safety_narrative > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: labeling > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: briefing_book > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: stability_study > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: project_setup > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > documents the current per-flow vocabularies (informational snapshot) 6ms
+
+ Test Files  2 passed (2)
+      Tests  142 passed (142)
+   Start at  21:52:29
+   Duration  2.25s (transform 1.07s, setup 135ms, import 1.19s, tests 91ms, environment 0ms)
+

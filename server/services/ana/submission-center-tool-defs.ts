@@ -566,23 +566,33 @@ export const GET_MARKET_SUBMISSION_SPEC: AnaTool = {
  * against the record and fails on an entry it cannot prove.
  */
 export const TEMPLATE_OUTLINES_FROM_RECORD: Readonly<Record<string, string>> = {
-  clinical_study_report: 'the ICH E3 tree',
-  smpc: 'the QRD SmPC record',
+  clinical_study_report: 'ICH E3',
+  smpc: 'QRD SmPC',
+  dsur: 'corrected ICH E2F',
 };
+
+/** These are canonical platform scaffolds, not a verified agency document structure. */
+export const TEMPLATE_OUTLINES_FROM_BLUEPRINT: Readonly<Record<string, string>> = Object.fromEntries(
+  DOCUMENT_TEMPLATES.flatMap((t) => t.outlineSource?.kind === 'project-blueprint'
+    ? [[t.id, t.outlineSource.blueprintId]]
+    : []),
+);
 
 /** What a hand-kept outline is, where that needs saying. Kept terse: see the order note below. */
 const HAND_KEPT_OUTLINE_NOTES: Readonly<Record<string, string>> = {
-  pbrer: 'interim copy of the ICH E2C(R2) numbering',
-  cover_letter: "platform headings, not a regulator's text",
+  pbrer: 'interim E2C(R2)',
+  cover_letter: 'platform headings',
 };
 
 const recordDerivedOutlines = DOCUMENT_TEMPLATES
   .filter((t) => t.id in TEMPLATE_OUTLINES_FROM_RECORD)
-  .map((t) => `${t.id} (from ${TEMPLATE_OUTLINES_FROM_RECORD[t.id]})`)
+  .map((t) => `${t.id} (${TEMPLATE_OUTLINES_FROM_RECORD[t.id]})`)
   .join('; ');
 
+const blueprintOutlines = Object.keys(TEMPLATE_OUTLINES_FROM_BLUEPRINT).join('; ');
+
 const handKeptOutlines = DOCUMENT_TEMPLATES
-  .filter((t) => !(t.id in TEMPLATE_OUTLINES_FROM_RECORD))
+  .filter((t) => !(t.id in TEMPLATE_OUTLINES_FROM_RECORD) && !(t.id in TEMPLATE_OUTLINES_FROM_BLUEPRINT))
   .map((t) => (HAND_KEPT_OUTLINE_NOTES[t.id] ? `${t.id} (${HAND_KEPT_OUTLINE_NOTES[t.id]})` : t.id))
   .join('; ');
 
@@ -597,15 +607,29 @@ const handKeptOutlines = DOCUMENT_TEMPLATES
 export const GET_DOCUMENT_TEMPLATE: AnaTool = {
   name: 'get_document_template',
   description:
-    "Look up the SECTION STRUCTURE of a key submission document: ordered sections (number, heading, purpose, required) and the basis the outline cites. Not drafted prose; use it to scaffold authoring or check completeness. Read-only reference data. " +
-    "Present a hand-kept outline as the platform's outline, not as the guidance's own text, and name its cited basis. " +
-    "Pass `template_id` for one (e.g. 'clinical_overview', 'smpc'), or `family` (ectd|estar|eu_mdr|eu_ivdr|ctis) for a family's templates. " +
-    `Read from a canonical record: ${recordDerivedOutlines}. ` +
-    `Kept by hand against the cited basis, not from a canonical record: ${handKeptOutlines}.`,
+    'Paged authoring outlines; not drafted prose, verified evidence or readiness. ' +
+    'Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list components/biotech gaps. ' +
+    '`offset`/`limit` page results. `market`+`prepare` adds a regional route and at most 3 focused questions. ' +
+    '`discussed_topics` only prevents re-asking. ' +
+    "Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. " +
+    `Record-derived: ${recordDerivedOutlines}. ` +
+    `Blueprint scaffolds: ${blueprintOutlines}. ` +
+    `Kept by hand: ${handKeptOutlines}.`,
   input_schema: {
     type: 'object',
     properties: {
       template_id: { type: 'string', description: "A specific template id, e.g. 'clinical_overview', 'k510_summary', 'smpc', 'gspr_checklist'." },
+      registry_id: { type: 'string', description: 'Exact active global registry ID, such as US_IND, EU_MAA, CA_NDS or JP_MKT_APPROVAL. With template_id: sets filing context for preparation. Alone: reads the existing filing scaffold, with explicit unavailability when it is absent or needs review. Never guess an ID.' },
+      market: { type: 'string', enum: ['US', 'EU', 'CA', 'JP'], description: 'Confirmed target jurisdiction for preparation; do not infer from the conversation language.' },
+      prepare: { type: 'boolean', description: 'Include a regional route and up to 3 prioritized client questions. This creates an inquiry brief, not a readiness or evidence-sufficiency verdict.' },
+      discussed_topics: {
+        type: 'array',
+        description: 'Topics already discussed in this conversation, to avoid asking them again. These are conversational markers only; they never establish that source data are supplied, verified or sufficient.',
+        items: { type: 'string', enum: ['scope', 'source_versions', 'data_cutoff', 'statistical_results', 'estimands', 'safety', 'quality', 'local_requirements', 'japan_evidence', 'agency_commitments', 'review_owners'] },
+      },
+      coverage: { type: 'boolean', description: 'Without template_id or registry_id: list existing biotech registry outline coverage, including missing or withheld outlines. Scaffold availability is not qualified builder or filing capability.' },
+      offset: { type: 'integer', minimum: 0, default: 0, description: 'Zero-based catalog/section offset. Continue with nextOffset when one is returned.' },
+      limit: { type: 'integer', minimum: 1, maximum: 30, default: 12, description: 'Maximum catalog entries or template sections to return in this page.' },
       family: {
         type: 'string',
         enum: ['ectd', 'estar', 'eu_mdr', 'eu_ivdr', 'ctis'],

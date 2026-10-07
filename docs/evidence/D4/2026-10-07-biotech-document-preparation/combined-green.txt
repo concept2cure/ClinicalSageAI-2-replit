@@ -1,0 +1,222 @@
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/ana/__tests__/document-template-preparation.test.ts
+{
+  "timestamp": "2026-10-07T01:45:44.742Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:45:44.744Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-template-preparation.test.ts
+{
+  "timestamp": "2026-10-07T01:45:44.745Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-template-preparation.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > registered tool exposes the prepared outline and stays read-only 7ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > new named builds are discoverable without a second tool or renderer 7ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > pages through CSR sections without truncation or skipping headings 2ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > does not hide missing region-specific trial outlines behind a default CTD 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > reports available and unavailable existing types in a regional coverage page 4ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > returns catalog summaries and a continuation, not a truncated whole library 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"market":"UK"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"registry_id":"CTA"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"offset":-1} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"limit":0} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"prepare":"yes"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"discussed_topics":["approved"]} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"template_id":"missing"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"template_id":"protocol","registry_id":"CA_CTA","market":"EU"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > exposes the preparation fields in Anna’s actual schema 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > passes preparation instructions and the correct region to drafting rather than only the ICH generic prompt 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > makes the same preparation rule available to conversation 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name IND 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name US_IND 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name FDA IND submission 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name Investigational new drug application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name NDA 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name US_NDA 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name New drug application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name BLA 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name US_BLA 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name Biologics license application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name ind_submission 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name nda_submission 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name bla_submission 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: marketing application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: biologic 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: biologics 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: indication summary 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: bladder evaluation 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: standardization report 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: labelled specimen 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign EU_CTA to a US application interview 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign EU_MAA to a US application interview 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign CA_CTA to a US application interview 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign CA_NDS to a US application interview 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign JP_CTN to a US application interview 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign JP_MKT_APPROVAL to a US application interview 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name EU marketing application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name EMA NDA-equivalent marketing application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name European investigational new drug application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name Canadian new drug application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name Health Canada BLA-equivalent application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name Japanese NDA 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name PMDA biologics license application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name New drug application (Japan) 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name New drug application for Canada 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Clinical study report for an IND 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Clinical study report summarizing the protocol 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Safety narrative for IND 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for CMC specification for IND 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Standard operating procedure for IND 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Briefing document for BLA 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Stability study protocol 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for 510(k) submission 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for EU_CTA clinical protocol 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for CA_NDS clinical study report 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for JP_MKT_APPROVAL safety narrative 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for EU_CTA while retaining shared clinical flows 14ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for EU_MAA while retaining shared clinical flows 4ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for CA_CTA while retaining shared clinical flows 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for CA_NDS while retaining shared clinical flows 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for JP_CTN while retaining shared clinical flows 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for JP_MKT_APPROVAL while retaining shared clinical flows 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for MAA while retaining shared clinical flows 4ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for NDS while retaining shared clinical flows 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for JNDA while retaining shared clinical flows 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for EMA marketing application while retaining shared clinical flows 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for Health Canada CTA while retaining shared clinical flows 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for PMDA approval application while retaining shared clinical flows 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context undefined 9ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context null 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context US_IND 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context US_NDA 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context US_BLA 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context IND 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context NDA 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context BLA 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > has unique ids and at least one section per template 14ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > every template requires at least one section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > Clinical Overview matches the ICH M4E 2.5.1–2.5.6 spine 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > 510(k) Summary carries the 21 CFR 807.92 elements incl. substantial equivalence 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > SmPC has the 10 top-level sections 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > GSPR checklist maps to MDR Annex I chapters I–III 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no template serves both eu_mdr and eu_ivdr under one Annex I numbering 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no eu_ivdr template cites MDR Annex I numbering 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > gspr_checklist is the MDR checklist: MDR only, MDR Annex I basis, recall-labelled 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > ivdr_gspr_checklist cites IVDR Annex I: Ch I §1–8, Ch II §9–19, Ch III §20 (label 20.2, IFU 20.4) 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR checklist's Chapter III and the IVD labelling record cite the same section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > each EU device submission type points its GSPR row at its own regulation's checklist 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR technical-file assembler places a leaf typed ivdr_gspr_checklist in the GSPR slot 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the MDR technical-file assembler does not take the IVDR checklist as its GSPR by type 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > filters by family 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > resolves a template by CTD section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > returns undefined for an unknown id 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > protocol reads the existing ICH_PROTOCOL project blueprint rather than another heading tree 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > statistical_analysis_plan reads the existing ICH_SAP project blueprint rather than another heading tree 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > informed_consent reads the existing ICH_ICF project blueprint rather than another heading tree 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_substance reads the existing ICH_M3_DS project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_product reads the existing ICH_M3_DP project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > the protocol says its E6(R2) outline is legacy and requires current regional/template review 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > aliases for existing IB and RMP resolve the very same template and never add a second outline 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > DSUR reads the corrected E2F record including all 20 numbered sections and the unnumbered front/back matter 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > registry requests reuse the named canonical clinical and quality outlines 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > a registry outline prefers the dedicated existing regional blueprint and labels its required flags as platform scaffolding 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > unknown or missing blueprints never fall back to a full CTD dossier 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped EU_CTA scaffolds pending regional/content review 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped CA_CTA scaffolds pending regional/content review 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped JP_CTN scaffolds pending regional/content review 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped ICH_NONCLIN_SUMMARY scaffolds pending regional/content review 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > coverage lists every active biotech entry once and says explicitly which outlines remain unavailable 6ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record 4ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them 4ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > separates existing platform blueprints from agency records and verifies each projection against its source 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the input contract 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > advertises preparation as questions and regional route, with no evidence or readiness claim 1ms
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-07T01:45:54.055Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:45:54.057Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-07T01:45:54.057Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a drug CMC section in its ICH guidance (matched by code or title) 5ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a device section in the device blueprint (not the drug CTD) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds an IVD performance section for an IVD marketing type 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null when the submission type is absent or unresolvable 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null for a section the blueprint does not contain 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs 2.7.4, 5.3.5.3 and 3.2.P.5 from the record (the blueprint had no row for them) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > names a US IND's 1.2 the cover letter, never the blueprint's 'Administrative Forms' 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs a US IND's 1.14.4.1 as the Investigator's Brochure 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > says a CTD code the record does not index is not indexed, instead of returning nothing 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never gives an EU MAA the US Module 1 or the blueprint's Module 1 row 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs Modules 2–5 from the ICH record for a non-US CTD entry 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > answers a unique canonical title with that section, and lists every code for an ambiguous one 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > adds the record brief to a blueprint title match outside Module 1 (US IND "Drug Substance" → 3.2.S) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never briefs a non-CTD blueprint section as a CTD module (510(k) §3, an IB section 3) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > answers a title from the entry's own blueprint row before a same-titled canonical section elsewhere 2ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > treats a leading section code as the code whatever title follows it, and says when the title disagrees 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > records a 510(k) section as blueprint-sourced and sends no CTD brief 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > asks three decisive questions and never certifies readiness 4ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > continues an interview without re-asking answered topics or promoting them to evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps all discussion markers from becoming a filing-ready verdict 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps an EU CTA on CTIS, with national documents and disclosure questions 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not confuse Canada CTA with a full marketing dossier 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not re-label a Japanese trial notification as a marketing eCTD 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > makes Japanese language and ethnic evidence conditional 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps pediatric and advanced-therapy overlays conditional 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not infer an application from an ambiguous alias or an unknown id 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > rejects contradictory market and filing identity 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not assume a drug pathway for a device entry 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > routes all four marketing regions with independent regional requirements 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > uses document-specific questions, not trial results for every build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps safety messages and datasets outside generic prose build claims 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > rejects unrecognized topics instead of silently skipping questions 0ms
+
+ Test Files  6 passed (6)
+      Tests  159 passed (159)
+   Start at  21:45:41
+   Duration  13.29s (transform 7.28s, setup 168ms, import 11.63s, tests 212ms, environment 1ms)
+

@@ -1,0 +1,822 @@
+{
+  "date": "2026-10-07",
+  "branch": "concept2cure-v2",
+  "meaning": "Existing authoring outline availability; not verified agency completeness or qualified end-to-end build capability.",
+  "counts": {
+    "US": {
+      "indexed": 32,
+      "outlineAvailable": 31,
+      "unavailable": 1
+    },
+    "EU": {
+      "indexed": 22,
+      "outlineAvailable": 21,
+      "unavailable": 1
+    },
+    "CA": {
+      "indexed": 8,
+      "outlineAvailable": 6,
+      "unavailable": 2
+    },
+    "JP": {
+      "indexed": 8,
+      "outlineAvailable": 7,
+      "unavailable": 1
+    },
+    "GLOBAL": {
+      "indexed": 17,
+      "outlineAvailable": 16,
+      "unavailable": 1
+    }
+  },
+  "rows": [
+    {
+      "registryId": "US_PRE_IND",
+      "displayName": "Pre-IND Meeting Request",
+      "region": "US",
+      "applicationFamily": "pre_submission",
+      "requestedBlueprintId": "us_pre_ind_sections",
+      "blueprintId": "us_pre_ind_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_IND",
+      "displayName": "Investigational New Drug Application",
+      "region": "US",
+      "applicationFamily": "clinical_trial",
+      "requestedBlueprintId": "us_ind_sections",
+      "blueprintId": "us_ind_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_IND_AMENDMENT",
+      "displayName": "IND Amendment",
+      "region": "US",
+      "applicationFamily": "clinical_trial",
+      "requestedBlueprintId": "us_ind_amendment_sections",
+      "outlineAvailable": false,
+      "reason": "no_dedicated_existing_outline"
+    },
+    {
+      "registryId": "US_NDA",
+      "displayName": "New Drug Application",
+      "region": "US",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "us_nda_sections",
+      "blueprintId": "us_nda_full_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_BLA",
+      "displayName": "Biologics License Application",
+      "region": "US",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "us_bla_sections",
+      "blueprintId": "us_bla_full_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_ANDA",
+      "displayName": "Abbreviated New Drug Application",
+      "region": "US",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "us_anda_sections",
+      "blueprintId": "us_anda_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_505B2",
+      "displayName": "505(b)(2) Application",
+      "region": "US",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "us_505b2_sections",
+      "blueprintId": "us_505b2_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_NDA_SUPP",
+      "displayName": "NDA/BLA Supplement (Prior Approval)",
+      "region": "US",
+      "applicationFamily": "supplement",
+      "requestedBlueprintId": "us_nda_supp_sections",
+      "blueprintId": "us_nda_supp_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_BLA_SUPP",
+      "displayName": "BLA Supplement (sBLA)",
+      "region": "US",
+      "applicationFamily": "supplement",
+      "requestedBlueprintId": "us_bla_supp_sections",
+      "blueprintId": "us_bla_supp_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_DMF",
+      "displayName": "Drug Master File",
+      "region": "US",
+      "applicationFamily": "master_file",
+      "requestedBlueprintId": "us_dmf_sections",
+      "blueprintId": "us_dmf_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_CTA",
+      "displayName": "Clinical Trial Application (EU CTR)",
+      "region": "EU",
+      "applicationFamily": "clinical_trial",
+      "requestedBlueprintId": "eu_cta_sections",
+      "blueprintId": "eu_cta_sections",
+      "outlineAvailable": false,
+      "reason": "existing_blueprint_requires_regional_review"
+    },
+    {
+      "registryId": "EU_MAA",
+      "displayName": "Marketing Authorisation Application",
+      "region": "EU",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "eu_maa_sections",
+      "blueprintId": "eu_maa_full_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_ASMF",
+      "displayName": "Active Substance Master File",
+      "region": "EU",
+      "applicationFamily": "master_file",
+      "requestedBlueprintId": "eu_asmf_sections",
+      "blueprintId": "eu_asmf_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_VARIATION_IA",
+      "displayName": "Type IA Variation (Minor)",
+      "region": "EU",
+      "applicationFamily": "variation",
+      "requestedBlueprintId": "eu_variation_ia_sections",
+      "blueprintId": "eu_variation_ia_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_VARIATION_IB",
+      "displayName": "Type IB Variation",
+      "region": "EU",
+      "applicationFamily": "variation",
+      "requestedBlueprintId": "eu_variation_ib_sections",
+      "blueprintId": "eu_variation_ib_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_VARIATION_II",
+      "displayName": "Type II Variation (Major)",
+      "region": "EU",
+      "applicationFamily": "variation",
+      "requestedBlueprintId": "eu_variation_ii_sections",
+      "blueprintId": "eu_variation_ii_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_PIP",
+      "displayName": "Paediatric Investigation Plan",
+      "region": "EU",
+      "applicationFamily": "pediatric",
+      "requestedBlueprintId": "eu_pip_sections",
+      "blueprintId": "eu_pip_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_ORPHAN",
+      "displayName": "Orphan Drug Designation (ODD)",
+      "region": "EU",
+      "applicationFamily": "orphan",
+      "requestedBlueprintId": "eu_orphan_sections",
+      "blueprintId": "eu_orphan_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_RMP",
+      "displayName": "Risk Management Plan",
+      "region": "EU",
+      "applicationFamily": "safety_report",
+      "requestedBlueprintId": "eu_rmp_sections",
+      "blueprintId": "eu_rmp_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_PSUR",
+      "displayName": "PSUR / PBRER",
+      "region": "EU",
+      "applicationFamily": "safety_report",
+      "requestedBlueprintId": "eu_psur_sections",
+      "blueprintId": "eu_psur_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_RENEWAL",
+      "displayName": "Renewal Application",
+      "region": "EU",
+      "applicationFamily": "renewal",
+      "requestedBlueprintId": "eu_renewal_sections",
+      "blueprintId": "eu_renewal_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "CA_CTA",
+      "displayName": "Clinical Trial Application (Canada)",
+      "region": "CA",
+      "applicationFamily": "clinical_trial",
+      "requestedBlueprintId": "ca_cta_sections",
+      "blueprintId": "ca_cta_sections",
+      "outlineAvailable": false,
+      "reason": "existing_blueprint_requires_regional_review"
+    },
+    {
+      "registryId": "CA_CTA_A",
+      "displayName": "Clinical Trial Application Amendment",
+      "region": "CA",
+      "applicationFamily": "clinical_trial",
+      "requestedBlueprintId": "ca_cta_a_sections",
+      "blueprintId": "ca_cta_a_sections",
+      "outlineAvailable": false,
+      "reason": "existing_blueprint_requires_regional_review"
+    },
+    {
+      "registryId": "CA_NDS",
+      "displayName": "New Drug Submission (NDS)",
+      "region": "CA",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "ca_nds_sections",
+      "blueprintId": "ca_nds_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "CA_SNDS",
+      "displayName": "Supplemental New Drug Submission",
+      "region": "CA",
+      "applicationFamily": "supplement",
+      "requestedBlueprintId": "ca_snds_sections",
+      "blueprintId": "ca_snds_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "CA_ANDS",
+      "displayName": "Abbreviated New Drug Submission",
+      "region": "CA",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "ca_ands_sections",
+      "blueprintId": "ca_ands_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "CA_SANDS",
+      "displayName": "Supplemental Abbreviated New Drug Submission",
+      "region": "CA",
+      "applicationFamily": "supplement",
+      "requestedBlueprintId": "ca_sands_sections",
+      "blueprintId": "ca_sands_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "CA_MF",
+      "displayName": "Master File (Canada)",
+      "region": "CA",
+      "applicationFamily": "master_file",
+      "requestedBlueprintId": "ca_mf_sections",
+      "blueprintId": "ca_mf_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "JP_CTN",
+      "displayName": "Clinical Trial Notification",
+      "region": "JP",
+      "applicationFamily": "clinical_trial",
+      "requestedBlueprintId": "jp_ctn_sections",
+      "blueprintId": "jp_ctn_sections",
+      "outlineAvailable": false,
+      "reason": "existing_blueprint_requires_regional_review"
+    },
+    {
+      "registryId": "JP_MKT_APPROVAL",
+      "displayName": "Marketing Approval Application (Japan)",
+      "region": "JP",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "jp_mkt_approval_sections",
+      "blueprintId": "jp_maa_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "JP_MF",
+      "displayName": "Master File (Japan)",
+      "region": "JP",
+      "applicationFamily": "master_file",
+      "requestedBlueprintId": "jp_mf_sections",
+      "blueprintId": "jp_mf_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "JP_PARTIAL_CHANGE",
+      "displayName": "Partial Change Application",
+      "region": "JP",
+      "applicationFamily": "variation",
+      "requestedBlueprintId": "jp_partial_change_sections",
+      "blueprintId": "jp_partial_change_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "JP_MINOR_CHANGE",
+      "displayName": "Minor Change Notification",
+      "region": "JP",
+      "applicationFamily": "variation",
+      "requestedBlueprintId": "jp_minor_change_sections",
+      "blueprintId": "jp_minor_change_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_SCIENTIFIC_ADVICE",
+      "displayName": "Scientific Advice / Protocol Assistance",
+      "region": "EU",
+      "applicationFamily": "pre_submission",
+      "requestedBlueprintId": "eu_scientific_advice_sections",
+      "blueprintId": "eu_scientific_advice_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_ORPHAN",
+      "displayName": "Orphan Drug Designation (ODD)",
+      "region": "US",
+      "applicationFamily": "orphan",
+      "requestedBlueprintId": "us_orphan_sections",
+      "blueprintId": "us_orphan_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_BTD",
+      "displayName": "Breakthrough Therapy Designation (BTD)",
+      "region": "US",
+      "applicationFamily": "designation",
+      "requestedBlueprintId": "us_btd_sections",
+      "blueprintId": "us_btd_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_PRIME",
+      "displayName": "PRIME Designation",
+      "region": "EU",
+      "applicationFamily": "designation",
+      "requestedBlueprintId": "eu_prime_sections",
+      "blueprintId": "eu_prime_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_FAST_TRACK",
+      "displayName": "Fast Track Designation",
+      "region": "US",
+      "applicationFamily": "designation",
+      "requestedBlueprintId": "us_fast_track_sections",
+      "blueprintId": "us_fast_track_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_RMAT",
+      "displayName": "Regenerative Medicine Advanced Therapy (RMAT)",
+      "region": "US",
+      "applicationFamily": "designation",
+      "requestedBlueprintId": "us_rmat_sections",
+      "blueprintId": "us_rmat_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_IND_SR",
+      "displayName": "IND Safety Reports (IND-SR)",
+      "region": "US",
+      "applicationFamily": "safety_report",
+      "requestedBlueprintId": "us_ind_sr_sections",
+      "blueprintId": "us_ind_sr_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_IND_ANNUAL",
+      "displayName": "Annual Report (IND)",
+      "region": "US",
+      "applicationFamily": "safety_report",
+      "requestedBlueprintId": "us_ind_annual_sections",
+      "blueprintId": "us_ind_annual_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_DSUR",
+      "displayName": "Development Safety Update Report (DSUR)",
+      "region": "GLOBAL",
+      "applicationFamily": "safety_report",
+      "requestedBlueprintId": "ich_dsur_sections",
+      "blueprintId": "ich_dsur_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_PROTOCOL",
+      "displayName": "Protocol & Protocol Amendments",
+      "region": "GLOBAL",
+      "applicationFamily": "clinical_document",
+      "requestedBlueprintId": "ich_protocol_sections",
+      "blueprintId": "ich_protocol_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_IB",
+      "displayName": "Investigator’s Brochure (IB)",
+      "region": "GLOBAL",
+      "applicationFamily": "clinical_document",
+      "requestedBlueprintId": "ich_ib_sections",
+      "blueprintId": "ich_ib_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_ICF",
+      "displayName": "Informed Consent Form (ICF)",
+      "region": "GLOBAL",
+      "applicationFamily": "clinical_document",
+      "requestedBlueprintId": "ich_icf_sections",
+      "blueprintId": "ich_icf_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_CSR",
+      "displayName": "Clinical Study Report (CSR)",
+      "region": "GLOBAL",
+      "applicationFamily": "clinical_document",
+      "requestedBlueprintId": "ich_csr_sections",
+      "blueprintId": "ich_csr_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_SAP",
+      "displayName": "Statistical Analysis Plan (SAP)",
+      "region": "GLOBAL",
+      "applicationFamily": "clinical_document",
+      "requestedBlueprintId": "ich_sap_sections",
+      "blueprintId": "ich_sap_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_351K",
+      "displayName": "Biosimilar Application (351(k))",
+      "region": "US",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "us_351k_sections",
+      "blueprintId": "us_351k_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_ACCEL_APPROVAL",
+      "displayName": "Accelerated Approval Application",
+      "region": "US",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "us_accel_approval_sections",
+      "blueprintId": "us_accel_approval_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_CMA",
+      "displayName": "Conditional Marketing Authorisation",
+      "region": "EU",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "eu_cma_sections",
+      "blueprintId": "eu_cma_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_ROLLING",
+      "displayName": "Rolling Submission / Review",
+      "region": "US",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "us_rolling_sections",
+      "blueprintId": "us_rolling_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_PSP",
+      "displayName": "Pediatric Study Plan (PSP)",
+      "region": "US",
+      "applicationFamily": "pediatric",
+      "requestedBlueprintId": "us_psp_sections",
+      "blueprintId": "us_psp_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_CBE",
+      "displayName": "CBE-30 / CBE-0 Supplement",
+      "region": "US",
+      "applicationFamily": "supplement",
+      "requestedBlueprintId": "us_cbe_sections",
+      "blueprintId": "us_cbe_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_NDA_ANNUAL",
+      "displayName": "Annual Report (NDA/BLA)",
+      "region": "US",
+      "applicationFamily": "safety_report",
+      "requestedBlueprintId": "us_nda_annual_sections",
+      "blueprintId": "us_nda_annual_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_REMS",
+      "displayName": "Risk Evaluation & Mitigation Strategy (REMS)",
+      "region": "US",
+      "applicationFamily": "safety_report",
+      "requestedBlueprintId": "us_rems_sections",
+      "blueprintId": "us_rems_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_PMR",
+      "displayName": "Post-Marketing Requirement (PMR) / PMC",
+      "region": "US",
+      "applicationFamily": "post_market",
+      "requestedBlueprintId": "us_pmr_sections",
+      "blueprintId": "us_pmr_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_SUPAC",
+      "displayName": "SUPAC Supplement",
+      "region": "US",
+      "applicationFamily": "supplement",
+      "requestedBlueprintId": "us_supac_sections",
+      "blueprintId": "us_supac_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_ICSR_15DAY",
+      "displayName": "15-Day Alert Report (ICSR)",
+      "region": "US",
+      "applicationFamily": "safety_report",
+      "requestedBlueprintId": "us_icsr_15day_sections",
+      "blueprintId": "us_icsr_15day_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_PADER",
+      "displayName": "Periodic Adverse Drug Experience Report (PADER)",
+      "region": "US",
+      "applicationFamily": "safety_report",
+      "requestedBlueprintId": "us_pader_sections",
+      "blueprintId": "us_pader_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_M3_DS",
+      "displayName": "Module 3.2.S — Drug Substance",
+      "region": "GLOBAL",
+      "applicationFamily": "quality_cmc",
+      "requestedBlueprintId": "ich_m3_ds_sections",
+      "blueprintId": "ich_m3_ds_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_M3_DP",
+      "displayName": "Module 3.2.P — Drug Product",
+      "region": "GLOBAL",
+      "applicationFamily": "quality_cmc",
+      "requestedBlueprintId": "ich_m3_dp_sections",
+      "blueprintId": "ich_m3_dp_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_QOS",
+      "displayName": "Quality Overall Summary (QOS)",
+      "region": "GLOBAL",
+      "applicationFamily": "quality_cmc",
+      "requestedBlueprintId": "ich_qos_sections",
+      "blueprintId": "ich_qos_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_COMPARABILITY",
+      "displayName": "Comparability Protocol",
+      "region": "GLOBAL",
+      "applicationFamily": "quality_cmc",
+      "requestedBlueprintId": "ich_comparability_sections",
+      "blueprintId": "ich_comparability_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_EA",
+      "displayName": "Environmental Assessment (EA)",
+      "region": "US",
+      "applicationFamily": "quality_cmc",
+      "requestedBlueprintId": "us_ea_sections",
+      "blueprintId": "us_ea_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_TYPE_A_MEETING",
+      "displayName": "Type A Meeting",
+      "region": "US",
+      "applicationFamily": "pre_submission",
+      "requestedBlueprintId": "us_type_a_meeting_sections",
+      "blueprintId": "us_type_a_meeting_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_TYPE_B_MEETING",
+      "displayName": "Type B Meeting",
+      "region": "US",
+      "applicationFamily": "pre_submission",
+      "requestedBlueprintId": "us_type_b_meeting_sections",
+      "blueprintId": "us_type_b_meeting_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_TYPE_C_MEETING",
+      "displayName": "Type C Meeting",
+      "region": "US",
+      "applicationFamily": "pre_submission",
+      "requestedBlueprintId": "us_type_c_meeting_sections",
+      "blueprintId": "us_type_c_meeting_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "CA_PRESUB_MEETING",
+      "displayName": "Pre-submission Meeting (Health Canada)",
+      "region": "CA",
+      "applicationFamily": "pre_submission",
+      "requestedBlueprintId": "ca_presub_meeting_sections",
+      "blueprintId": "ca_presub_meeting_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "JP_PRE_CONSULT",
+      "displayName": "Pre-application Consultation (PMDA)",
+      "region": "JP",
+      "applicationFamily": "pre_submission",
+      "requestedBlueprintId": "jp_pre_consult_sections",
+      "blueprintId": "jp_pre_consult_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "JP_SAKIGAKE",
+      "displayName": "Sakigake Designation",
+      "region": "JP",
+      "applicationFamily": "designation",
+      "requestedBlueprintId": "jp_sakigake_sections",
+      "blueprintId": "jp_sakigake_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "US_PRIORITY_REVIEW",
+      "displayName": "Priority Review",
+      "region": "US",
+      "applicationFamily": "designation",
+      "requestedBlueprintId": "us_priority_review_sections",
+      "blueprintId": "us_priority_review_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_ACCEL_ASSESS",
+      "displayName": "Accelerated Assessment",
+      "region": "EU",
+      "applicationFamily": "designation",
+      "requestedBlueprintId": "eu_accel_assess_sections",
+      "blueprintId": "eu_accel_assess_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_BIOSIMILAR_MAA",
+      "displayName": "Biosimilar MAA",
+      "region": "EU",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "eu_biosimilar_maa_sections",
+      "blueprintId": "eu_biosimilar_maa_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "JP_BIOSIMILAR",
+      "displayName": "Biosimilar (Japan)",
+      "region": "JP",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "jp_biosimilar_sections",
+      "blueprintId": "jp_biosimilar_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_GENERIC_DCP",
+      "displayName": "Generic Decentralized (DCP)",
+      "region": "EU",
+      "applicationFamily": "marketing_authorization",
+      "requestedBlueprintId": "eu_generic_dcp_sections",
+      "blueprintId": "eu_generic_dcp_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_CLIN_OVERVIEW",
+      "displayName": "Clinical Overview (M2.5)",
+      "region": "GLOBAL",
+      "applicationFamily": "clinical_document",
+      "requestedBlueprintId": "ich_clin_overview_sections",
+      "blueprintId": "ich_clin_overview_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_CLIN_SUMMARY",
+      "displayName": "Clinical Summary (M2.7)",
+      "region": "GLOBAL",
+      "applicationFamily": "clinical_document",
+      "requestedBlueprintId": "ich_clin_summary_sections",
+      "blueprintId": "ich_clin_summary_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_NONCLIN_OVERVIEW",
+      "displayName": "Nonclinical Overview (M2.4)",
+      "region": "GLOBAL",
+      "applicationFamily": "clinical_document",
+      "requestedBlueprintId": "ich_nonclin_overview_sections",
+      "blueprintId": "ich_nonclin_overview_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_NONCLIN_SUMMARY",
+      "displayName": "Nonclinical Summary (M2.6)",
+      "region": "GLOBAL",
+      "applicationFamily": "clinical_document",
+      "requestedBlueprintId": "ich_nonclin_summary_sections",
+      "blueprintId": "ich_nonclin_summary_sections",
+      "outlineAvailable": false,
+      "reason": "existing_blueprint_requires_regional_review"
+    },
+    {
+      "registryId": "ICH_TABULATED_SUMMARIES",
+      "displayName": "Tabulated Summaries (M2.7.4)",
+      "region": "GLOBAL",
+      "applicationFamily": "clinical_document",
+      "requestedBlueprintId": "ich_tabulated_summaries_sections",
+      "blueprintId": "ich_tabulated_summaries_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_LINE_EXTENSION",
+      "displayName": "Line Extension",
+      "region": "EU",
+      "applicationFamily": "variation",
+      "requestedBlueprintId": "eu_line_extension_sections",
+      "blueprintId": "eu_line_extension_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_EUDRAVIGILANCE_ICSR",
+      "displayName": "EudraVigilance Report",
+      "region": "EU",
+      "applicationFamily": "safety_report",
+      "requestedBlueprintId": "eu_eudravigilance_icsr_sections",
+      "blueprintId": "eu_eudravigilance_icsr_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_SUSAR",
+      "displayName": "SUSAR Report",
+      "region": "GLOBAL",
+      "applicationFamily": "safety_report",
+      "requestedBlueprintId": "ich_susar_sections",
+      "blueprintId": "ich_susar_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_CEP",
+      "displayName": "Certificate of Suitability (CEP)",
+      "region": "EU",
+      "applicationFamily": "quality_cmc",
+      "requestedBlueprintId": "eu_cep_sections",
+      "blueprintId": "eu_cep_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_GMP_CERT",
+      "displayName": "GMP Certificate",
+      "region": "EU",
+      "applicationFamily": "quality_cmc",
+      "requestedBlueprintId": "eu_gmp_cert_sections",
+      "blueprintId": "eu_gmp_cert_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "ICH_STABILITY_PROTOCOL",
+      "displayName": "Stability Protocol",
+      "region": "GLOBAL",
+      "applicationFamily": "quality_cmc",
+      "requestedBlueprintId": "ich_stability_protocol_sections",
+      "blueprintId": "ich_stability_protocol_sections",
+      "outlineAvailable": true
+    },
+    {
+      "registryId": "EU_MDR_ART117_NBOP",
+      "displayName": "Notified Body Opinion — MDR Art. 117",
+      "region": "EU",
+      "applicationFamily": "pre_submission",
+      "requestedBlueprintId": "eu_mdr_art117_nbop_sections",
+      "blueprintId": "eu_mdr_art117_nbop_sections",
+      "outlineAvailable": true
+    }
+  ]
+}

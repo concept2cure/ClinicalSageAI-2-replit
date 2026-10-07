@@ -1,0 +1,715 @@
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > has unique ids and at least one section per template 30ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > every template requires at least one section 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > Clinical Overview matches the ICH M4E 2.5.1–2.5.6 spine 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > 510(k) Summary carries the 21 CFR 807.92 elements incl. substantial equivalence 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > SmPC has the 10 top-level sections 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > GSPR checklist maps to MDR Annex I chapters I–III 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no template serves both eu_mdr and eu_ivdr under one Annex I numbering 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no eu_ivdr template cites MDR Annex I numbering 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > gspr_checklist is the MDR checklist: MDR only, MDR Annex I basis, recall-labelled 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > ivdr_gspr_checklist cites IVDR Annex I: Ch I §1–8, Ch II §9–19, Ch III §20 (label 20.2, IFU 20.4) 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR checklist's Chapter III and the IVD labelling record cite the same section 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > each EU device submission type points its GSPR row at its own regulation's checklist 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR technical-file assembler places a leaf typed ivdr_gspr_checklist in the GSPR slot 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the MDR technical-file assembler does not take the IVDR checklist as its GSPR by type 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > filters by family 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > resolves a template by CTD section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > returns undefined for an unknown id 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > protocol reads the existing ICH_PROTOCOL project blueprint rather than another heading tree 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > statistical_analysis_plan reads the existing ICH_SAP project blueprint rather than another heading tree 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > informed_consent reads the existing ICH_ICF project blueprint rather than another heading tree 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_substance reads the existing ICH_M3_DS project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_product reads the existing ICH_M3_DP project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > the protocol says its E6(R2) outline is legacy and requires current regional/template review 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > aliases for existing IB and RMP resolve the very same template and never add a second outline 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > DSUR reads the corrected E2F record including all 20 numbered sections and the unnumbered front/back matter 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > registry requests reuse the named canonical clinical and quality outlines 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > a registry outline prefers the dedicated existing regional blueprint and labels its required flags as platform scaffolding 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > unknown or missing blueprints never fall back to a full CTD dossier 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped EU_CTA scaffolds pending regional/content review 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped CA_CTA scaffolds pending regional/content review 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped CA_CTA_A scaffolds pending regional/content review 4ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped JP_CTN scaffolds pending regional/content review 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped ICH_NONCLIN_SUMMARY scaffolds pending regional/content review 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > coverage lists every active biotech entry once and says explicitly which outlines remain unavailable 9ms
+stdout | server/services/ana/__tests__/drafting-regional-context.test.ts
+{
+  "timestamp": "2026-10-07T01:53:52.822Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:53:52.824Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/drafting-regional-context.test.ts
+{
+  "timestamp": "2026-10-07T01:53:52.824Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/drafting-regional-context.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_DSUR is a harmonised document, not a filing to ICH 3ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_SAP is a harmonised document, not a filing to ICH 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_PROTOCOL is a harmonised document, not a filing to ICH 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ambiguous CTA needs jurisdiction before drafting to a trial route 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ambiguous  cta  needs jurisdiction before drafting to a trial route 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > exact regional trial identity still delivers the applicable context 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > DSUR section drafting uses the corrected E2F record through section 20 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > EU_CTA cannot draft against a known wrong or fallback scaffold 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA cannot draft against a known wrong or fallback scaffold 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA_A cannot draft against a known wrong or fallback scaffold 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > JP_CTN cannot draft against a known wrong or fallback scaffold 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_NONCLIN_SUMMARY cannot draft against a known wrong or fallback scaffold 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > US_IND_AMENDMENT cannot draft against a known wrong or fallback scaffold 0ms
+stdout | server/services/ana/__tests__/submission-center-tools.test.ts
+{
+  "timestamp": "2026-10-07T01:53:57.076Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:53:57.077Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/submission-center-tools.test.ts
+{
+  "timestamp": "2026-10-07T01:53:57.077Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/submission-center-tools.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > registers a handler for every submission-center tool 5ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > exposes every submission-center tool in ALL_ANA_TOOLS with a valid schema 17ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > diffs prior vs desired and assigns operations 36ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > forwards the prior leaf ID + backbone and prior_sequence_prefix so a replace names the leaf it supersedes 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > never names a prior leaf by its file path: listed with only an href, a replace carries no pointer 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > refuses to auto-load a prior sequence without tenant context (org from ToolContext only) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > does NOT engage auto-load when explicit prior_leaves are supplied (org not required) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > maps v3 operations to RPS and emits one document + CoU per leaf 397ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > points relatedContextOfUse at the prior sequence for a lifecycle op 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > returns serialized RPS message XML when include_xml is set 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > produces one stf-<study-id>.xml per study, pointing at index.xml leaf IDs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a leaf has no index.xml leaf ID 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > check_ectd_cross_references (pure) > resolves present references and flags missing targets 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > validate_ectd_package (pure) > returns a verdict, score, and findings for a leaf set 79ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > explain_validation_findings refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > cross_region_gap_analysis validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > dispatch_qc_check refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > trace_provenance refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence refuses without org/user context (upsertLeaf is tenant-scoped) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence validates required inputs before touching the core 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > check_consistency validates required inputs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules returns the corpus without tenant context 21ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules validates the region enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec returns a single spec by id 25ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec filters by market without tenant context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec validates the family enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template returns a document spine by id 13ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template lists a family without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting enforces a spec and flags a bad name 11ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting errors on an unknown spec 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_submission_requirements returns and assesses a type 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility checks all-criteria-met 10ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility errors on an unknown designation 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change recommends a category from flags 13ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change lists the catalog without flags 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure gap-checks a CER 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device applies the MDR rules 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_reviewer_checklist returns the 510(k) reviewer questions 31ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device validates the framework 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_biocompatibility_endpoints returns endpoints for a permanent implant 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure now handles rmf 11ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint assembles the reverse-workflow view 29ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint validates the submission type 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer refuses without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer requires a report_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy maps device evidence across regions 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy validates the kind 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_regulatory_timeline returns the 510(k) RTA + decision goal 9ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint now includes a readiness scorecard 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_udi computes the GS1 check digit 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_electrical_standards adds collaterals from facts 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_sterilization_requirements resolves the method standard 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_regulatory_capabilities enumerates the layer 9ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product maps PMOA to the lead center 6ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product validates components 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_qms returns the clause structure and gap-checks 19ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_labeling adds sterile elements for a sterile device 17ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document requires a numeric document_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document validates required inputs 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name IND 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name US_IND 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name FDA IND submission 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name Investigational new drug application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name NDA 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name US_NDA 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name New drug application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name BLA 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name US_BLA 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name Biologics license application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name ind_submission 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name nda_submission 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name bla_submission 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: marketing application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: biologic 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: biologics 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: indication summary 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: bladder evaluation 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: standardization report 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: labelled specimen 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign EU_CTA to a US application interview 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign EU_MAA to a US application interview 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign CA_CTA to a US application interview 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign CA_NDS to a US application interview 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign JP_CTN to a US application interview 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign JP_MKT_APPROVAL to a US application interview 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name EU marketing application 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name EMA NDA-equivalent marketing application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name European investigational new drug application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name Canadian new drug application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name Health Canada BLA-equivalent application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name Japanese NDA 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name PMDA biologics license application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name New drug application (Japan) 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name New drug application for Canada 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Clinical study report for an IND 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Clinical study report summarizing the protocol 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Safety narrative for IND 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for CMC specification for IND 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Standard operating procedure for IND 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Briefing document for BLA 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Stability study protocol 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for 510(k) submission 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for EU_CTA clinical protocol 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for CA_NDS clinical study report 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for JP_MKT_APPROVAL safety narrative 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for EU_CTA while retaining shared clinical flows 12ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for EU_MAA while retaining shared clinical flows 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for CA_CTA while retaining shared clinical flows 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for CA_NDS while retaining shared clinical flows 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for JP_CTN while retaining shared clinical flows 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for JP_MKT_APPROVAL while retaining shared clinical flows 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for MAA while retaining shared clinical flows 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for NDS while retaining shared clinical flows 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for JNDA while retaining shared clinical flows 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for EMA marketing application while retaining shared clinical flows 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for Health Canada CTA while retaining shared clinical flows 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for PMDA approval application while retaining shared clinical flows 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context undefined 7ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context null 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context US_IND 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context US_NDA 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context US_BLA 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context IND 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context NDA 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context BLA 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > exposes a non-empty set of flows and every definition resolves 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > every section.nodeIds entry references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: protocol_development > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: csr_report > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > every section.nodeIds entry references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: ind_submission > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: sop_development > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > has no duplicate node ids 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_510k > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cer_report > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: nda_submission > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: bla_submission > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: device_pma > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: cmc_specification > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: risk_management > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: safety_narrative > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > every non-null defaultNext references a real node 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: labeling > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: briefing_book > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > every predicate field references a field defined somewhere in the flow 1ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: stability_study > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > has no duplicate node ids 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > entryNode references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > every section.nodeIds entry references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > every branch goto target references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > every non-null defaultNext references a real node 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > every predicate field references a field defined somewhere in the flow 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > flow registry consistency > flow: project_setup > has at least one terminal path (a node with defaultNext === null) 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: protocol_development > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: csr_report > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: ind_submission > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: sop_development > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: device_510k > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: cer_report > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: nda_submission > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: bla_submission > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: device_pma > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: cmc_specification > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: risk_management > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: safety_narrative > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: labeling > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: briefing_book > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: stability_study > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > flow: project_setup > every predicate value on a controlled field is producible by that field 0ms
+ ✓ tests/ana-intelligence/flow-registry-consistency.test.ts > value-vocabulary alignment probe > documents the current per-flow vocabularies (informational snapshot) 3ms
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-07T01:54:04.438Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:54:04.440Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-07T01:54:04.440Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a drug CMC section in its ICH guidance (matched by code or title) 7ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a device section in the device blueprint (not the drug CTD) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds an IVD performance section for an IVD marketing type 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null when the submission type is absent or unresolvable 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null for a section the blueprint does not contain 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs 2.7.4, 5.3.5.3 and 3.2.P.5 from the record (the blueprint had no row for them) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > names a US IND's 1.2 the cover letter, never the blueprint's 'Administrative Forms' 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs a US IND's 1.14.4.1 as the Investigator's Brochure 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > says a CTD code the record does not index is not indexed, instead of returning nothing 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never gives an EU MAA the US Module 1 or the blueprint's Module 1 row 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs Modules 2–5 from the ICH record for a non-US CTD entry 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > answers a unique canonical title with that section, and lists every code for an ambiguous one 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > adds the record brief to a blueprint title match outside Module 1 (US IND "Drug Substance" → 3.2.S) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never briefs a non-CTD blueprint section as a CTD module (510(k) §3, an IB section 3) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > answers a title from the entry's own blueprint row before a same-titled canonical section elsewhere 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > treats a leading section code as the code whatever title follows it, and says when the title disagrees 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > records a 510(k) section as blueprint-sourced and sends no CTD brief 0ms
+stdout | server/services/ana/__tests__/document-template-preparation.test.ts
+{
+  "timestamp": "2026-10-07T01:54:05.980Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:54:05.982Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-template-preparation.test.ts
+{
+  "timestamp": "2026-10-07T01:54:05.982Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-template-preparation.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > registered tool exposes the prepared outline and stays read-only 5ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > new named builds are discoverable without a second tool or renderer 4ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > pages through CSR sections without truncation or skipping headings 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > does not hide missing region-specific trial outlines behind a default CTD 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > reports available and unavailable existing types in a regional coverage page 2ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > returns catalog summaries and a continuation, not a truncated whole library 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > explicit prepare:false returns an outline-only page even with a confirmed registry id 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > outline-only cannot bypass the registry and market scope checks: {"registry_id":"CTA","prepare":false} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > outline-only cannot bypass the registry and market scope checks: {"registry_id":"EU_CTA","market":"US","prepare":false} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > registry-only components receive their document-specific inquiry profile 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps k510_summary available as an outline but refuses medicinal preparation 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps gspr_checklist available as an outline but refuses medicinal preparation 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps ivdr_gspr_checklist available as an outline but refuses medicinal preparation 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps performance_evaluation_report available as an outline but refuses medicinal preparation 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > preserves an exact device registry outline without allowing a drug preparation plan 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted smpc build, including outline-only 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted impd build, including outline-only 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted risk_management_plan build, including outline-only 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted rmp build, including outline-only 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"market":"UK"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"registry_id":"CTA"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"offset":-1} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"offset":null} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"limit":0} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"limit":null} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"prepare":"yes"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"discussed_topics":["approved"]} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"template_id":"missing"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"template_id":"protocol","registry_id":"CA_CTA","market":"EU"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > exposes the preparation fields in Anna’s actual schema 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > passes preparation instructions and the correct region to drafting rather than only the ICH generic prompt 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > makes the same preparation rule available to conversation 1ms
+stdout | server/services/ana/__tests__/governed-toolset.test.ts
+{
+  "timestamp": "2026-10-07T01:54:09.385Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:54:09.388Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/governed-toolset.test.ts
+{
+  "timestamp": "2026-10-07T01:54:09.388Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/governed-toolset.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > removes a denied tool from the surface the model is offered 4ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > returns everything when the tenant denies nothing 2ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > does NOT apply the allowlist — that would strip every search tool 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > skips the policy lookup entirely when there is no organization 4ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > ignores a non-numeric organization id rather than passing it to the query 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > is default-allow when the policy cannot be read 2ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer the catalog tools to an organization whose catalog is off 2ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > offers them when the catalog is on 2ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > fails closed when the toggle cannot be read — a tool that would refuse is not offered 3ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer them to an org-less turn, which they refuse outright 2ms
+stdout | server/services/ana/__tests__/ana-launch-scope.test.ts
+{
+  "timestamp": "2026-10-07T01:54:11.246Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:54:11.249Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-launch-scope.test.ts
+{
+  "timestamp": "2026-10-07T01:54:11.249Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ana-launch-scope.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/ana-launch-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ana-launch-scope.test.ts
+{
+  "timestamp": "2026-10-07T01:54:12.321Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ana-launch-scope.test.ts
+Loaded 0 academic documents
+
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every enabled tool: a new one must be added as hiddenApp or inScope 4ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every platform command 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > names only real tools and commands, and only surfaces outside the launch catalog 9ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > brings a tool back when its surface joins the launch catalog, without editing the inventory 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > in production, withholds tools that serve only hidden apps and keeps the rest 5ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > withholds them for a request with no organisation too 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > with launch scope off (a development server), offers everything 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record 3ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > separates existing platform blueprints from agency records and verifies each projection against its source 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the input contract 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > advertises preparation as questions and regional route, with no evidence or readiness claim 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > startFlow > returns initial state with entry node, empty answers, and section progress 4ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > startFlow > filters a field whose visibleWhen is not met (empty answers at start) 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > startFlow > throws for an unknown category 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — answer storage & progression > stores answers, marks node complete, and advances currentNodeId 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — answer storage & progression > returns validation issues and does NOT advance on a missing required field 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — branch resolution > routes to the branch goto target when the predicate matches 0ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — branch resolution > falls back to defaultNext when no branch matches 0ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > advanceFlow — completion > produces a complete event with start_war_game suggested action at a terminal node 1ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > resumeFlow > returns the current node event for an in-progress state 0ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > resumeFlow > returns the complete event for a completed state 0ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > visibleWhen filtering with accumulated answers > keeps a conditional field once a prior answer satisfies its predicate 0ms
+ ✓ tests/ana-intelligence/engine.test.ts > engine (synthetic flow via mocked registry) > visibleWhen filtering with accumulated answers > filters the conditional field when the prior answer does not satisfy it 0ms
+stdout | server/services/ana/__tests__/ana-launch-scope-execution.test.ts
+{
+  "timestamp": "2026-10-07T01:54:20.278Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:54:20.280Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-launch-scope-execution.test.ts
+{
+  "timestamp": "2026-10-07T01:54:20.280Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ana-launch-scope-execution.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > the probes stand for hidden tools and one in-scope tool 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, is refused and its handler never runs (the CMC interview fast path included) 4ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, a hidden write is refused before a person is asked to confirm it 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, an in-scope tool still runs 3ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > with launch scope off (a development server), a hidden tool runs 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > asks three decisive questions and never certifies readiness 4ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > continues an interview without re-asking answered topics or promoting them to evidence 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps all discussion markers from becoming a filing-ready verdict 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps an EU CTA on CTIS, with national documents and disclosure questions 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not confuse Canada CTA with a full marketing dossier 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not re-label a Japanese trial notification as a marketing eCTD 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > makes Japanese language and ethnic evidence conditional 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps pediatric and advanced-therapy overlays conditional 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > does not infer an application from an ambiguous alias or an unknown id 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > rejects contradictory market and filing identity 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > does not assume a drug pathway for a device entry 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > routes all four marketing regions with independent regional requirements 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > uses document-specific questions, not trial results for every build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > uses the shared component mapping for registry-only protocol and SAP builds 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses device component preparation without requiring a registry id 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses smpc as a direct non-EU build 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses impd as a direct non-EU build 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses risk_management_plan as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses rmp as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > keeps safety messages and datasets outside generic prose build claims 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > rejects unrecognized topics instead of silently skipping questions 0ms
+stdout | server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts
+{
+  "timestamp": "2026-10-07T01:54:24.094Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:54:24.096Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts
+{
+  "timestamp": "2026-10-07T01:54:24.096Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > a tenant with no placement policy is offered none of them 3ms
+ ✓ server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > an opted-in tenant is offered web search and web fetch, never code execution 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > a private-lane tenant is offered none, whatever its opt-in says 0ms
+ ✓ server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > a zero-retention or residency-bound tenant is offered none 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > a policy that cannot be read offers none (fail closed) 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > an org-less turn is offered none 0ms
+stdout | server/services/ana/__tests__/governed-toolset-sub-agents.test.ts
+{
+  "timestamp": "2026-10-07T01:54:25.164Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:54:25.165Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/governed-toolset-sub-agents.test.ts
+{
+  "timestamp": "2026-10-07T01:54:25.166Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/governed-toolset-sub-agents.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > in production it is withheld unless switched on (ADR-0015 §2)
+{
+  "timestamp": "2026-10-07T01:54:25.213Z",
+  "level": "error",
+  "message": "[launch-scope] [launch-scope] LAUNCH_SCOPE_ENFORCE=off in production: the launch boundary is off and every surface outside the launch catalog is served",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > a door that does not host agents is never offered it 4ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > a hosting turn is offered it 2ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > the kill switch withholds it even from a hosting turn 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > in production it is withheld unless switched on (ADR-0015 §2) 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > an org-less turn is never offered it 0ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a strict read error withholds run_agent; the rest is what the soft read gives 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a strict read that resolves applies the deny list to the whole set 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a tenant that denies run_agent is never offered it 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a door that does not host keeps the soft read, untouched 1ms
+
+ Test Files  15 passed (15)
+      Tests  441 passed (441)
+   Start at  21:53:46
+   Duration  38.55s (transform 11.69s, setup 387ms, import 32.65s, tests 1.24s, environment 2ms)
+

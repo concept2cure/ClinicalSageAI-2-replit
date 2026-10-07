@@ -144,7 +144,7 @@ describe('resolveSectionRequirements — CTD entries draft against the canonical
       expect(r, `${type} / ${section}`).not.toBeNull();
       expect(r).not.toContain('Module 3');
       expect(r).not.toContain('## Drafting');
-      expect(r).toContain('authoring blueprint');
+      expect(r).toMatch(/authoring blueprint|SECTION AUTHORING GUIDANCE/);
     }
     expect(resolveSectionRequirements('fda_510k', 'Device Description')).toContain('Device Description');
   });

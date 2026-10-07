@@ -1,0 +1,309 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/ana/__tests__/document-template-preparation.test.ts
+{
+  "timestamp": "2026-10-07T01:48:54.611Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:48:54.613Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-template-preparation.test.ts
+{
+  "timestamp": "2026-10-07T01:48:54.613Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-template-preparation.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > registered tool exposes the prepared outline and stays read-only 4ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > new named builds are discoverable without a second tool or renderer 3ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > pages through CSR sections without truncation or skipping headings 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > does not hide missing region-specific trial outlines behind a default CTD 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > reports available and unavailable existing types in a regional coverage page 3ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > returns catalog summaries and a continuation, not a truncated whole library 0ms
+ × server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > explicit prepare:false returns an outline-only page even with a confirmed registry id 7ms
+   → expected { kind: 'document_preparation', …(13) } to be undefined
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > outline-only cannot bypass the registry and market scope checks: {"registry_id":"CTA","prepare":false} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > outline-only cannot bypass the registry and market scope checks: {"registry_id":"EU_CTA","market":"US","prepare":false} 0ms
+ × server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > registry-only components receive their document-specific inquiry profile 3ms
+   → expected 'safety' to be 'estimands' // Object.is equality
+ × server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > keeps k510_summary available as an outline but refuses medicinal preparation 2ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > keeps gspr_checklist available as an outline but refuses medicinal preparation 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > keeps ivdr_gspr_checklist available as an outline but refuses medicinal preparation 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > keeps performance_evaluation_report available as an outline but refuses medicinal preparation 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > preserves an exact device registry outline without allowing a drug preparation plan 1ms
+   → expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > requires EU scope for a targeted smpc build, including outline-only 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > requires EU scope for a targeted impd build, including outline-only 0ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > requires EU scope for a targeted risk_management_plan build, including outline-only 0ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > requires EU scope for a targeted rmp build, including outline-only 0ms
+   → .toMatch() expects to receive a string, but got undefined
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"market":"UK"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"registry_id":"CTA"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"offset":-1} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"limit":0} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"prepare":"yes"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"discussed_topics":["approved"]} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"template_id":"missing"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > rejects invalid scope without a successful build claim: {"template_id":"protocol","registry_id":"CA_CTA","market":"EU"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > exposes the preparation fields in Anna’s actual schema 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > passes preparation instructions and the correct region to drafting rather than only the ICH generic prompt 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > makes the same preparation rule available to conversation 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > asks three decisive questions and never certifies readiness 3ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > continues an interview without re-asking answered topics or promoting them to evidence 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps all discussion markers from becoming a filing-ready verdict 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps an EU CTA on CTIS, with national documents and disclosure questions 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not confuse Canada CTA with a full marketing dossier 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not re-label a Japanese trial notification as a marketing eCTD 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > makes Japanese language and ethnic evidence conditional 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps pediatric and advanced-therapy overlays conditional 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not infer an application from an ambiguous alias or an unknown id 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > rejects contradictory market and filing identity 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not assume a drug pathway for a device entry 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > routes all four marketing regions with independent regional requirements 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > uses document-specific questions, not trial results for every build 0ms
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > uses the shared component mapping for registry-only protocol and SAP builds 7ms
+   → expected 'safety' to be 'estimands' // Object.is equality
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > refuses device component preparation without requiring a registry id 2ms
+   → expected [Function] to throw an error
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > refuses smpc as a direct non-EU build 1ms
+   → expected [Function] to throw an error
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > refuses impd as a direct non-EU build 1ms
+   → expected [Function] to throw an error
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > refuses risk_management_plan as a direct non-EU build 0ms
+   → expected [Function] to throw an error
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > refuses rmp as a direct non-EU build 1ms
+   → expected [Function] to throw an error
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps safety messages and datasets outside generic prose build claims 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > rejects unrecognized topics instead of silently skipping questions 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > explicit prepare:false returns an outline-only page even with a confirmed registry id
+AssertionError: expected { kind: 'document_preparation', …(13) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "applicabilityQuestions": [
+    "Pediatric population: determine US iPSP and EU PIP applicability separately, including waivers or deferrals.",
+    "Biologics, vaccines, biosimilars, cell or gene therapies: determine immunogenicity, potency, comparability and long-term follow-up needs from the product and evidence.",
+    "Orphan, accelerated/conditional routes, GMO/environmental assessments, companion diagnostics and combination products: include only applicable regional obligations.",
+  ],
+  "cautions": [
+    "An outline is an authoring scaffold; its required flags are not a determination that every section applies or that this is every document the agency needs.",
+    "E2B safety messages, validated datasets, define.xml and eCTD backbones require their dedicated recorded-data and technical validation workflows; prose authoring does not qualify them.",
+    "Current protocol template, GCP revision, regional adoption/effective date and eCTD version must be checked through regulatory currency and agency sources at filing. A draft guidance is not an operative requirement.",
+  ],
+  "discussedTopics": [],
+  "discussionNotice": "Discussion markers only prevent repeat questions. They do not verify answers, evidence, review approval or filing readiness. Read current project sources before asking the client for information already present.",
+  "evidenceReviewed": false,
+  "kind": "document_preparation",
+  "market": "CA",
+  "questions": [
+    {
+      "question": "Which product, indication, study phase, target authority/procedure and filing date does this document serve?",
+      "requestedEvidence": "Open project identity, intended use/indication and confirmed filing objective.",
+      "topic": "scope",
+      "why": "These determine applicability and the scientific claim the reviewer must evaluate.",
+    },
+    {
+      "question": "Which current source versions govern this build, and do any records conflict or supersede earlier data?",
+      "requestedEvidence": "Protocol/amendments, SAP approval and timing, IB, source reports and agency correspondence with version/date and source locations.",
+      "topic": "source_versions",
+      "why": "A draft must follow the current evidence and preserve the history of changed findings.",
+    },
+    {
+      "question": "What exposure, serious events, deaths, discontinuations, emerging signals and reference safety information support the safety assessment?",
+      "requestedEvidence": "Reconciled safety outputs, coding versions, exposure and event definitions, RSI version and medical review.",
+      "topic": "safety",
+      "why": "Omitted unfavorable evidence or inconsistent denominators can change the benefit-risk conclusion.",
+    },
+  ],
+  "readiness": "not_assessed",
+  "regionalEvidenceSources": [],
+  "regionalRoute": {
+    "basis": {
+      "confidence": "platform-convention",
+      "ref": "Existing filing registry and ICH CTD authoring plan",
+    },
+    "channel": "Health_Canada: NDS",
+    "scope": "CTD Modules 2–5 with regional Module 1, product-specific evidence and current agency technical specifications; a shared CTD does not establish regional conformance.",
+  },
+  "registryId": "CA_NDS",
+  "remainingTopics": [
+    "quality",
+    "statistical_results",
+    "agency_commitments",
+    "local_requirements",
+    "review_owners",
+  ],
+  "reviewGates": [
+    "Read and cite current source versions; resolve contradictory and superseded evidence without deleting lineage.",
+    "Use deterministic analyses for numbers; distinguish prespecified from exploratory findings and disclose uncertainty.",
+    "Independent medical, statistical, quality and regulatory review as applicable.",
+    "Save through draft_authoring_document; approval, filing, package validation and agency transmission remain separate.",
+  ],
+}
+
+ ❯ server/services/ana/__tests__/document-template-preparation.test.ts:75:29
+     73|     expect(out.ok).toBe(true);
+     74|     expect(out.template.id).toBe('CA_NDS');
+     75|     expect(out.preparation).toBeUndefined();
+       |                             ^
+     76|     expect(out.template.sections.length).toBeGreaterThan(0);
+     77|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > registry-only components receive their document-specific inquiry profile
+AssertionError: expected 'safety' to be 'estimands' // Object.is equality
+
+Expected: "estimands"
+Received: "safety"
+
+ ❯ server/services/ana/__tests__/document-template-preparation.test.ts:90:50
+     88|       const out = await call({ registry_id, prepare: true });
+     89|       expect(out.ok).toBe(true);
+     90|       expect(out.preparation.questions[2].topic).toBe('estimands');
+       |                                                  ^
+     91|       if (registry_id === 'ICH_SAP') expect(out.preparation.remainingT…
+     92|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > keeps k510_summary available as an outline but refuses medicinal preparation
+ FAIL  server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > keeps gspr_checklist available as an outline but refuses medicinal preparation
+ FAIL  server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > keeps ivdr_gspr_checklist available as an outline but refuses medicinal preparation
+ FAIL  server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > keeps performance_evaluation_report available as an outline but refuses medicinal preparation
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/ana/__tests__/document-template-preparation.test.ts:99:28
+     97|     expect(reference.preparation).toBeUndefined();
+     98|     const prepared = await call({ template_id, prepare: true });
+     99|     expect(prepared.error).toMatch(/biotech medicinal-product/i);
+       |                            ^
+    100|   });
+    101|   it('preserves an exact device registry outline without allowing a dr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > preserves an exact device registry outline without allowing a drug preparation plan
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/document-template-preparation.test.ts:103:26
+    101|   it('preserves an exact device registry outline without allowing a dr…
+    102|     const reference = await call({ registry_id: 'US_510K', prepare: fa…
+    103|     expect(reference.ok).toBe(true);
+       |                          ^
+    104|     expect(reference.preparation).toBeUndefined();
+    105|     expect((await call({ registry_id: 'US_510K', prepare: true })).err…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > requires EU scope for a targeted smpc build, including outline-only
+ FAIL  server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > requires EU scope for a targeted impd build, including outline-only
+ FAIL  server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > requires EU scope for a targeted risk_management_plan build, including outline-only
+ FAIL  server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > requires EU scope for a targeted rmp build, including outline-only
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/ana/__tests__/document-template-preparation.test.ts:111:70
+    109|     for (const market of ['US', 'CA', 'JP']) {
+    110|       for (const prepare of [true, false]) {
+    111|         expect((await call({ template_id, market, prepare })).error).t…
+       |                                                                      ^
+    112|       }
+    113|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > uses the shared component mapping for registry-only protocol and SAP builds
+AssertionError: expected 'safety' to be 'estimands' // Object.is equality
+
+Expected: "estimands"
+Received: "safety"
+
+ ❯ server/services/market-specs/__tests__/document-preparation.test.ts:88:36
+     86|     for (const registryId of ['ICH_PROTOCOL', 'ICH_SAP']) {
+     87|       const p = buildDocumentPreparation({ registryId });
+     88|       expect(p.questions[2].topic).toBe('estimands');
+       |                                    ^
+     89|       if (registryId === 'ICH_SAP') expect(p.remainingTopics).not.toCo…
+     90|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > refuses device component preparation without requiring a registry id
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/market-specs/__tests__/document-preparation.test.ts:93:76
+     91|   });
+     92|   it('refuses device component preparation without requiring a registr…
+     93|     expect(() => buildDocumentPreparation({ templateId: 'k510_summary'…
+       |                                                                            ^
+     94|   });
+     95|   it.each(['smpc', 'impd', 'risk_management_plan', 'rmp'])('refuses %s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > refuses smpc as a direct non-EU build
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > refuses impd as a direct non-EU build
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > refuses risk_management_plan as a direct non-EU build
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > refuses rmp as a direct non-EU build
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/market-specs/__tests__/document-preparation.test.ts:96:74
+     94|   });
+     95|   it.each(['smpc', 'impd', 'risk_management_plan', 'rmp'])('refuses %s…
+     96|     expect(() => buildDocumentPreparation({ templateId, market: 'US' }…
+       |                                                                          ^
+     97|     expect(() => buildDocumentPreparation({ templateId, registryId: 'C…
+     98|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  17 failed | 34 passed (51)
+   Start at  21:48:50
+   Duration  9.72s (transform 5.91s, setup 141ms, import 8.58s, tests 61ms, environment 0ms)
+

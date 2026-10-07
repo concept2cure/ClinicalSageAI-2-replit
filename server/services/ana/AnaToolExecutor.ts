@@ -10035,24 +10035,8 @@ registerToolHandler('get_market_submission_spec', async (input) => {
 });
 
 registerToolHandler('get_document_template', async (input) => {
-  // Static reference data — not tenant-specific, so no org/user context required.
-  const templateId = typeof input.template_id === 'string' ? input.template_id : '';
-  const family = typeof input.family === 'string' ? input.family : '';
-  const FAMILIES = ['ectd', 'estar', 'eu_mdr', 'eu_ivdr', 'ctis'];
-  if (family && !FAMILIES.includes(family)) {
-    return JSON.stringify({ error: `family must be one of: ${FAMILIES.join(', ')}.` });
-  }
-  try {
-    const m = await import('../market-specs/document-template-library.js');
-    if (templateId) {
-      const t = m.getDocumentTemplate(templateId);
-      return t ? JSON.stringify({ ok: true, template: t }) : JSON.stringify({ error: `No document template "${templateId}".` });
-    }
-    const templates = family ? m.templatesForFamily(family as 'ectd' | 'estar' | 'eu_mdr' | 'eu_ivdr' | 'ctis') : m.DOCUMENT_TEMPLATES;
-    return JSON.stringify({ ok: true, templates });
-  } catch (err) {
-    return JSON.stringify({ error: `get_document_template failed: ${err instanceof Error ? err.message : String(err)}` });
-  }
+  const { documentTemplateTool } = await import('./document-template-tool.js');
+  return documentTemplateTool(input);
 });
 
 registerToolHandler('search_ivd_knowledge', async (input) => {

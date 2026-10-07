@@ -27,6 +27,11 @@
 import { e3TopLevel, e3Children, type E3Section } from '../ind/ctd/index.js';
 import { SMPC_QRD_SECTIONS } from '../labeling/smpc-qrd-catalog';
 import { basisLabel, type RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
+import { GLOBAL_REGISTRY, getApplicationType } from '../../../shared/regulatory/global-document-registry';
+import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap';
+import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy';
+import { ICH_E2F_DSUR_SECTIONS } from '../ind/ctd/lifecycle-document-types';
+import { getSectionBlueprint as getDedicatedSectionBlueprint } from '../regulatory/sectionBlueprintCatalog';
 
 export interface TemplateSection {
   /** Section number within the document (e.g. "2.5.4", "4.1", "I.1"). */
@@ -52,6 +57,12 @@ export interface DocumentTemplateStructure {
   regulatoryBasis: string;
   /** The structured basis, where one is recorded (shared/regulatory/regulatory-basis.ts). */
   basis?: RegulatoryBasis;
+  /** Which existing platform record supplies the headings; distinct from evidence of an agency requirement. */
+  outlineSource?:
+    | { kind: 'project-blueprint' | 'dedicated-blueprint'; registryId: string; blueprintId: string }
+    | { kind: 'lifecycle-record'; registryId: string; record: string };
+  /** Scope/currency limitations the author must see before using an existing scaffold. */
+  outlineLimitations?: string[];
   sections: TemplateSection[];
 }
 
@@ -66,6 +77,115 @@ function e3TemplateSection(s: E3Section): TemplateSection {
     ?? (s.contains?.length ? s.contains.join('; ') : `Covers ${e3Children(s.number).map((c) => `${c.number} ${c.title}`).join('; ')}.`);
   return { number: s.number, heading: s.title, purpose, required: s.applies === 'always' };
 }
+
+/**
+ * Existing project scaffolds are useful authoring spines, but their `required`
+ * flag is a platform expectation, not proof of a present agency requirement.
+ * Never turn project-bootstrap's default CTD fallback into a document outline.
+ */
+const PROJECT_OUTLINE_LIMITATIONS = [
+  'The required flags describe the existing platform scaffold; they do not establish mandatory agency content.',
+  'This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.',
+];
+
+/**
+ * These exact legacy blueprints are known to be mis-scoped: trial applications
+ * reuse the full CTD or have unresolved regional content, and the nonclinical
+ * summary returns all Module 2 summaries rather than the 2.6 subtree. Surface
+ * the gap instead of giving AnA a plausible-looking wrong outline.
+ */
+const BLUEPRINTS_REQUIRING_REVIEW: ReadonlySet<string> = new Set([
+  'EU_CTA', 'CA_CTA', 'CA_CTA_A', 'JP_CTN', 'ICH_NONCLIN_SUMMARY',
+]);
+
+function exactBlueprint(entry: RegulatoryApplicationType): SectionBlueprint | undefined {
+  const blueprint = getSectionBlueprintForEntry(entry);
+  return blueprint.id === entry.defaultSectionBlueprint && blueprint.sections.length > 0 ? blueprint : undefined;
+}
+
+/** Logical authoring families only; an unmodeled regional format is never defaulted to eCTD. */
+function authoringFamilies(entry: RegulatoryApplicationType): DocumentTemplateStructure['families'] {
+  if (entry.submissionFormat === 'CTIS') return ['ctis'];
+  if (entry.dossierStandard === 'eSTAR') return ['estar'];
+  if (['eCTD', 'CTD', 'NeeS'].includes(entry.dossierStandard)) return ['ectd'];
+  return [];
+}
+
+function projectOutline(
+  entry: RegulatoryApplicationType,
+  blueprint: SectionBlueprint,
+  id = entry.id,
+  sourceKind: 'project-blueprint' | 'dedicated-blueprint' = 'project-blueprint',
+): DocumentTemplateStructure {
+  return withBasis({
+    id,
+    title: entry.displayName,
+    families: authoringFamilies(entry),
+    basis: {
+      ref: `Concept2Cure existing project blueprint ${blueprint.id}`,
+      confidence: 'platform-convention',
+      note: `Headings and scaffold expectations read from ${sourceKind === 'dedicated-blueprint' ? 'server/services/regulatory/sectionBlueprintCatalog.ts' : 'shared/regulatory/project-bootstrap.ts'}; not independently verified current regional requirements.`,
+    },
+    outlineSource: { kind: sourceKind, registryId: entry.id, blueprintId: blueprint.id },
+    outlineLimitations: [...PROJECT_OUTLINE_LIMITATIONS],
+    sections: blueprint.sections.map((s) => ({
+      number: s.code,
+      heading: s.title,
+      purpose: s.guidance
+        ? `${s.title}. The existing scaffold cites ${s.guidance}; confirm the current applicable guidance and populate from sponsor source records.`
+        : `Populate ${s.title} from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.`,
+      required: s.required,
+    })),
+  });
+}
+
+/** Named component outlines are projections, never a second heading tree. */
+function namedProjectOutline(id: string, registryId: string, ctdSection?: string, limitations: string[] = []): DocumentTemplateStructure[] {
+  const entry = getApplicationType(registryId);
+  const blueprint = entry && exactBlueprint(entry);
+  if (!entry || !blueprint) return [];
+  const outline = projectOutline(entry, blueprint, id);
+  return [{
+    ...outline,
+    // A component can be reused by CTIS even when its registry row has no
+    // standalone submission format (e.g. a SAP). This is authoring reuse,
+    // never a claim that it is a standalone eCTD filing.
+    families: ctdSection ? ['ectd'] : ['ectd', 'ctis'],
+    ...(ctdSection ? { ctdSection } : {}),
+    outlineLimitations: [...PROJECT_OUTLINE_LIMITATIONS, ...limitations],
+  }];
+}
+
+const EXISTING_BIOTECH_COMPONENT_OUTLINES: DocumentTemplateStructure[] = [
+  ...namedProjectOutline('protocol', 'ICH_PROTOCOL', undefined, [
+    'Legacy ICH E6(R2) project outline. Confirm current ICH E6/M11 adoption and the agency or client protocol template; this is not a claim that these exact headings are the current mandatory format.',
+  ]),
+  ...namedProjectOutline('statistical_analysis_plan', 'ICH_SAP'),
+  ...namedProjectOutline('informed_consent', 'ICH_ICF', undefined, [
+    'The existing consent scaffold is US-oriented. Confirm the country, site, language and ethics-approved template. Executed participant consent forms remain site records; this outline is for a specimen form.',
+  ]),
+  ...namedProjectOutline('drug_substance', 'ICH_M3_DS', '3.2.S'),
+  ...namedProjectOutline('drug_product', 'ICH_M3_DP', '3.2.P'),
+  withBasis({
+    id: 'dsur',
+    title: 'Development Safety Update Report (DSUR)',
+    families: ['ectd', 'ctis'],
+    basis: { ...ICH_E2F_DSUR_SECTIONS[0].basis[0], ref: 'ICH E2F — Development Safety Update Report section structure' },
+    outlineSource: { kind: 'lifecycle-record', registryId: 'ICH_DSUR', record: 'ICH_E2F_DSUR_SECTIONS' },
+    outlineLimitations: [
+      'All sections are retained; where information is absent or not applicable, state that explicitly. A populated outline is not a completed safety assessment.',
+      'Confirm the region-specific filing route and administrative requirements; this harmonised structure does not establish regional placement or transmission capability.',
+    ],
+    // The corrected E2F record has 20 numbered sections plus unnumbered
+    // front/back matter. Never reuse the legacy 11-section project outline.
+    sections: ICH_E2F_DSUR_SECTIONS.map((s) => ({
+      number: s.number ?? s.title.toLowerCase().replace(/\s+/g, '_'),
+      heading: s.title,
+      purpose: s.guidance,
+      required: s.required,
+    })),
+  }),
+];
 
 /** What each top-level SmPC section is for, keyed by QRD section number (sections 1–10). */
 const SMPC_PURPOSE: Record<string, string> = {
@@ -336,14 +456,98 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     regulatoryBasis: 'ICH E3 — Structure and Content of Clinical Study Reports (canonical tree: server/services/ind/ctd/csr-e3-guidance.ts, with a basis per section)',
     sections: e3TopLevel().map(e3TemplateSection),
   },
+  ...EXISTING_BIOTECH_COMPONENT_OUTLINES,
 ];
 
 // ── Lookups (pure) ────────────────────────────────────────────────────────────
 
 const BY_ID = new Map(DOCUMENT_TEMPLATES.map((t) => [t.id, t]));
 
+/** Compatibility names share the existing object; no new id or heading copy. */
+const TEMPLATE_ALIASES: Readonly<Record<string, string>> = {
+  investigator_brochure: 'investigators_brochure',
+  rmp: 'risk_management_plan',
+};
+
 export function getDocumentTemplate(id: string): DocumentTemplateStructure | undefined {
-  return BY_ID.get(id);
+  return BY_ID.get(TEMPLATE_ALIASES[id] ?? id);
+}
+
+/** Existing component records win over older project heading copies. */
+const REGISTRY_COMPONENT_TEMPLATES: Readonly<Record<string, string>> = {
+  ICH_PROTOCOL: 'protocol',
+  ICH_SAP: 'statistical_analysis_plan',
+  ICH_ICF: 'informed_consent',
+  ICH_M3_DS: 'drug_substance',
+  ICH_M3_DP: 'drug_product',
+  ICH_DSUR: 'dsur',
+  ICH_CSR: 'clinical_study_report',
+  ICH_IB: 'investigators_brochure',
+  EU_RMP: 'risk_management_plan',
+  ICH_QOS: 'quality_overall_summary',
+  ICH_NONCLIN_OVERVIEW: 'nonclinical_overview',
+};
+
+/** Share component identity with inquiry and drafting without copying this map. */
+export function componentTemplateIdForRegistry(registryId: string): string | undefined {
+  return REGISTRY_COMPONENT_TEMPLATES[registryId];
+}
+
+/** Known existing structures whose scope still needs regional review. */
+export function registryOutlineRequiresReview(registryId: string): boolean {
+  return BLUEPRINTS_REQUIRING_REVIEW.has(registryId);
+}
+
+/**
+ * A registry-driven outline for an existing authoring type. Missing, fallback
+ * and known mis-scoped structures stay unavailable. Registry metadata alone
+ * never becomes a claim that AnA has a qualified document builder.
+ */
+export async function getRegistryDocumentTemplate(registryId: string): Promise<DocumentTemplateStructure | undefined> {
+  const entry = getApplicationType(registryId);
+  if (!entry?.active || registryOutlineRequiresReview(entry.id)) return undefined;
+  const component = componentTemplateIdForRegistry(entry.id);
+  if (component) {
+    const outline = getDocumentTemplate(component);
+    return outline ? { ...outline, id: entry.id } : undefined;
+  }
+  // Mirror project creation/preview precedence. The dedicated catalog contains
+  // the regional marketing outlines that the shared registry cannot supply.
+  const dedicated = await getDedicatedSectionBlueprint(entry.id);
+  if (dedicated) return projectOutline(entry, dedicated, entry.id, 'dedicated-blueprint');
+  const shared = exactBlueprint(entry);
+  return shared ? projectOutline(entry, shared) : undefined;
+}
+
+export interface RegistryDocumentTemplateCoverage {
+  registryId: string;
+  displayName: string;
+  region: RegulatoryApplicationType['region'];
+  applicationFamily: RegulatoryApplicationType['applicationFamily'];
+  requestedBlueprintId: string;
+  blueprintId?: string;
+  outlineAvailable: boolean;
+  reason?: 'existing_blueprint_requires_regional_review' | 'no_dedicated_existing_outline';
+}
+
+/** Every active biotech type, including the gaps; no guessed universal CTD fallback. */
+export async function registryDocumentTemplateCoverage(): Promise<RegistryDocumentTemplateCoverage[]> {
+  return Promise.all(GLOBAL_REGISTRY.filter((e) => e.active && e.segment === 'pharma_biotech').map(async (entry) => {
+    const outline = await getRegistryDocumentTemplate(entry.id);
+    const blueprint = await getDedicatedSectionBlueprint(entry.id) ?? exactBlueprint(entry);
+    return {
+      registryId: entry.id,
+      displayName: entry.displayName,
+      region: entry.region,
+      applicationFamily: entry.applicationFamily,
+      requestedBlueprintId: entry.defaultSectionBlueprint,
+      ...(blueprint ? { blueprintId: blueprint.id } : {}),
+      outlineAvailable: Boolean(outline),
+      ...(!outline ? { reason: BLUEPRINTS_REQUIRING_REVIEW.has(entry.id)
+        ? 'existing_blueprint_requires_regional_review' as const
+        : 'no_dedicated_existing_outline' as const } : {}),
+    };
+  }));
 }
 
 /** Templates applicable to a submission family. */
@@ -368,4 +572,6 @@ export default {
   templatesForFamily,
   templateForCtdSection,
   documentTemplateIds,
+  getRegistryDocumentTemplate,
+  registryDocumentTemplateCoverage,
 };

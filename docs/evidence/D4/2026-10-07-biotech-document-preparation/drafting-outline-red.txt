@@ -1,0 +1,119 @@
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/ana/__tests__/drafting-regional-context.test.ts
+{
+  "timestamp": "2026-10-07T01:49:27.193Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:49:27.195Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/drafting-regional-context.test.ts
+{
+  "timestamp": "2026-10-07T01:49:27.196Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/drafting-regional-context.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_DSUR is a harmonised document, not a filing to ICH 2ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_SAP is a harmonised document, not a filing to ICH 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_PROTOCOL is a harmonised document, not a filing to ICH 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ambiguous CTA needs jurisdiction before drafting to a trial route 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ambiguous  cta  needs jurisdiction before drafting to a trial route 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > exact regional trial identity still delivers the applicable context 1ms
+ × server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > DSUR section drafting uses the corrected E2F record through section 20 4ms
+   → the given combination of arguments (null and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > EU_CTA cannot draft against a known wrong or fallback scaffold 3ms
+   → expected 'blueprint' to contain 'not-indexed'
+ × server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA cannot draft against a known wrong or fallback scaffold 4ms
+   → expected 'blueprint+record:ctd-section:3.2.S:pa…' to contain 'not-indexed'
+ × server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > JP_CTN cannot draft against a known wrong or fallback scaffold 2ms
+   → expected 'blueprint+record:ctd-section:3.2.S:pa…' to contain 'not-indexed'
+ × server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_NONCLIN_SUMMARY cannot draft against a known wrong or fallback scaffold 1ms
+   → expected 'record:ctd-section:3.2.S:parent' to contain 'not-indexed'
+ × server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > US_IND_AMENDMENT cannot draft against a known wrong or fallback scaffold 1ms
+   → expected 'blueprint+record:ctd-section:3.2.S:pa…' to contain 'not-indexed'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > DSUR section drafting uses the corrected E2F record through section 20
+AssertionError: the given combination of arguments (null and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ server/services/ana/__tests__/drafting-regional-context.test.ts:27:28
+     25|   it('DSUR section drafting uses the corrected E2F record through sect…
+     26|     const r = resolveDraftingRequirements('ICH_DSUR', '20');
+     27|     expect(r.requirements).toContain('Conclusions');
+       |                            ^
+     28|     expect(r.requirementsSource).toContain('lifecycle-record');
+     29|     expect(resolveDraftingRequirements('ICH_DSUR', '3.2.S').requiremen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > EU_CTA cannot draft against a known wrong or fallback scaffold
+AssertionError: expected 'blueprint' to contain 'not-indexed'
+
+Expected: "not-indexed"
+Received: "blueprint"
+
+ ❯ server/services/ana/__tests__/drafting-regional-context.test.ts:33:34
+     31|   it.each(['EU_CTA', 'CA_CTA', 'JP_CTN', 'ICH_NONCLIN_SUMMARY', 'US_IN…
+     32|     const r = resolveDraftingRequirements(type, '3.2.S');
+     33|     expect(r.requirementsSource).toContain('not-indexed');
+       |                                  ^
+     34|     expect(r.requirements).toContain('current agency/client template');
+     35|     expect(r.requirements).not.toContain('Governing standard: ICH M4Q'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA cannot draft against a known wrong or fallback scaffold
+ FAIL  server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > JP_CTN cannot draft against a known wrong or fallback scaffold
+ FAIL  server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > US_IND_AMENDMENT cannot draft against a known wrong or fallback scaffold
+AssertionError: expected 'blueprint+record:ctd-section:3.2.S:pa…' to contain 'not-indexed'
+
+Expected: "not-indexed"
+Received: "blueprint+record:ctd-section:3.2.S:parent"
+
+ ❯ server/services/ana/__tests__/drafting-regional-context.test.ts:33:34
+     31|   it.each(['EU_CTA', 'CA_CTA', 'JP_CTN', 'ICH_NONCLIN_SUMMARY', 'US_IN…
+     32|     const r = resolveDraftingRequirements(type, '3.2.S');
+     33|     expect(r.requirementsSource).toContain('not-indexed');
+       |                                  ^
+     34|     expect(r.requirements).toContain('current agency/client template');
+     35|     expect(r.requirements).not.toContain('Governing standard: ICH M4Q'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_NONCLIN_SUMMARY cannot draft against a known wrong or fallback scaffold
+AssertionError: expected 'record:ctd-section:3.2.S:parent' to contain 'not-indexed'
+
+Expected: "not-indexed"
+Received: "record:ctd-section:3.2.S:parent"
+
+ ❯ server/services/ana/__tests__/drafting-regional-context.test.ts:33:34
+     31|   it.each(['EU_CTA', 'CA_CTA', 'JP_CTN', 'ICH_NONCLIN_SUMMARY', 'US_IN…
+     32|     const r = resolveDraftingRequirements(type, '3.2.S');
+     33|     expect(r.requirementsSource).toContain('not-indexed');
+       |                                  ^
+     34|     expect(r.requirements).toContain('current agency/client template');
+     35|     expect(r.requirements).not.toContain('Governing standard: ICH M4Q'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 6 passed (12)
+   Start at  21:49:24
+   Duration  5.70s (transform 3.74s, setup 89ms, import 5.23s, tests 25ms, environment 0ms)
+

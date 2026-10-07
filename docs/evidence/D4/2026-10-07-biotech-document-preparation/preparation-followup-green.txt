@@ -1,0 +1,133 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > has unique ids and at least one section per template 20ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > every template requires at least one section 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > Clinical Overview matches the ICH M4E 2.5.1–2.5.6 spine 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > 510(k) Summary carries the 21 CFR 807.92 elements incl. substantial equivalence 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > SmPC has the 10 top-level sections 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > GSPR checklist maps to MDR Annex I chapters I–III 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no template serves both eu_mdr and eu_ivdr under one Annex I numbering 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no eu_ivdr template cites MDR Annex I numbering 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > gspr_checklist is the MDR checklist: MDR only, MDR Annex I basis, recall-labelled 4ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > ivdr_gspr_checklist cites IVDR Annex I: Ch I §1–8, Ch II §9–19, Ch III §20 (label 20.2, IFU 20.4) 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR checklist's Chapter III and the IVD labelling record cite the same section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > each EU device submission type points its GSPR row at its own regulation's checklist 10ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR technical-file assembler places a leaf typed ivdr_gspr_checklist in the GSPR slot 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the MDR technical-file assembler does not take the IVDR checklist as its GSPR by type 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > filters by family 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > resolves a template by CTD section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > returns undefined for an unknown id 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > protocol reads the existing ICH_PROTOCOL project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > statistical_analysis_plan reads the existing ICH_SAP project blueprint rather than another heading tree 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > informed_consent reads the existing ICH_ICF project blueprint rather than another heading tree 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_substance reads the existing ICH_M3_DS project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_product reads the existing ICH_M3_DP project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > the protocol says its E6(R2) outline is legacy and requires current regional/template review 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > aliases for existing IB and RMP resolve the very same template and never add a second outline 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > DSUR reads the corrected E2F record including all 20 numbered sections and the unnumbered front/back matter 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > registry requests reuse the named canonical clinical and quality outlines 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > a registry outline prefers the dedicated existing regional blueprint and labels its required flags as platform scaffolding 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > unknown or missing blueprints never fall back to a full CTD dossier 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped EU_CTA scaffolds pending regional/content review 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped CA_CTA scaffolds pending regional/content review 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped JP_CTN scaffolds pending regional/content review 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped ICH_NONCLIN_SUMMARY scaffolds pending regional/content review 4ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > coverage lists every active biotech entry once and says explicitly which outlines remain unavailable 7ms
+stdout | server/services/ana/__tests__/document-template-preparation.test.ts
+{
+  "timestamp": "2026-10-07T01:51:06.446Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:51:06.448Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-template-preparation.test.ts
+{
+  "timestamp": "2026-10-07T01:51:06.448Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-template-preparation.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > registered tool exposes the prepared outline and stays read-only 6ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > new named builds are discoverable without a second tool or renderer 4ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > pages through CSR sections without truncation or skipping headings 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > does not hide missing region-specific trial outlines behind a default CTD 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > reports available and unavailable existing types in a regional coverage page 3ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > returns catalog summaries and a continuation, not a truncated whole library 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > explicit prepare:false returns an outline-only page even with a confirmed registry id 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > outline-only cannot bypass the registry and market scope checks: {"registry_id":"CTA","prepare":false} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > outline-only cannot bypass the registry and market scope checks: {"registry_id":"EU_CTA","market":"US","prepare":false} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > registry-only components receive their document-specific inquiry profile 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps k510_summary available as an outline but refuses medicinal preparation 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps gspr_checklist available as an outline but refuses medicinal preparation 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps ivdr_gspr_checklist available as an outline but refuses medicinal preparation 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps performance_evaluation_report available as an outline but refuses medicinal preparation 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > preserves an exact device registry outline without allowing a drug preparation plan 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted smpc build, including outline-only 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted impd build, including outline-only 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted risk_management_plan build, including outline-only 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted rmp build, including outline-only 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"market":"UK"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"registry_id":"CTA"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"offset":-1} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"offset":null} 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"limit":0} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"limit":null} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"prepare":"yes"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"discussed_topics":["approved"]} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"template_id":"missing"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"template_id":"protocol","registry_id":"CA_CTA","market":"EU"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > exposes the preparation fields in Anna’s actual schema 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > passes preparation instructions and the correct region to drafting rather than only the ICH generic prompt 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > makes the same preparation rule available to conversation 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance 3ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record 6ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them 9ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > separates existing platform blueprints from agency records and verifies each projection against its source 7ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the input contract 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > advertises preparation as questions and regional route, with no evidence or readiness claim 5ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > asks three decisive questions and never certifies readiness 4ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > continues an interview without re-asking answered topics or promoting them to evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps all discussion markers from becoming a filing-ready verdict 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps an EU CTA on CTIS, with national documents and disclosure questions 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not confuse Canada CTA with a full marketing dossier 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not re-label a Japanese trial notification as a marketing eCTD 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > makes Japanese language and ethnic evidence conditional 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps pediatric and advanced-therapy overlays conditional 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > does not infer an application from an ambiguous alias or an unknown id 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > rejects contradictory market and filing identity 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > does not assume a drug pathway for a device entry 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > routes all four marketing regions with independent regional requirements 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > uses document-specific questions, not trial results for every build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > uses the shared component mapping for registry-only protocol and SAP builds 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses device component preparation without requiring a registry id 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses smpc as a direct non-EU build 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses impd as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses risk_management_plan as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses rmp as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > keeps safety messages and datasets outside generic prose build claims 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > rejects unrecognized topics instead of silently skipping questions 0ms
+
+ Test Files  4 passed (4)
+      Tests  96 passed (96)
+   Start at  21:50:59
+   Duration  19.16s (transform 10.87s, setup 212ms, import 16.56s, tests 167ms, environment 1ms)
+
