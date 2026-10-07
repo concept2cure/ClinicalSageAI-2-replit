@@ -32,12 +32,13 @@ describe('recorded numeric lexemes', () => {
     expect(parseNumeric(input)).toBe(expected);
   });
 
-  it.each([
+  const unsupportedValues: unknown[] = [
     '<0.1%', '≤0.1%', '>95', 'NMT 0.1%', 'BLQ', 'ND', '1,000', '1 000', '1_000',
     '12abc', '1.2.3', '12 mg', '1e', '1e+', '1e309', '1e-999', 'NaN', 'Infinity',
     '', ' ', null, undefined, true, false, [12], { value: 12 }, { toString: () => '12' },
     NaN, Infinity, '0x10', '12%%', '12 months',
-  ])('refuses an inexact or unsupported value %j', (input) => {
+  ];
+  it.each(unsupportedValues.map(input => ({ input })))('refuses an inexact or unsupported value $input', ({ input }) => {
     expect(parseNumeric(input)).toBeNull();
   });
 
