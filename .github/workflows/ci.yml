@@ -1441,6 +1441,7 @@ jobs:
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
       - name: Smoke — apply RLS rollout migrations (0019/0020/0021)
+        id: integration_prerequisites
         # These migrations target the production schema. The smoke runs
         # against a SEPARATE fresh DB (not the one the GCC migrations
         # mutated above) so it tests "SQL parses + executes cleanly on
@@ -1463,32 +1464,9 @@ jobs:
           DATABASE_URL_ADMIN: postgresql://postgres@localhost:5432/postgres
           DATABASE_URL_SMOKE: postgresql://postgres@localhost:5432/concept2cure-ri_rls_smoke
 
-      - name: Run integration tests
-        # vitest tests read DATABASE_URL via server/db/runtime.ts (per
-        # server/db/getDatabaseUrl.ts the env-var fallback order is
-        # DATABASE_URL → NEON_DATABASE_URL → DATABASE_NEON_NEW_SECRET).
-        # The job had only TEST_DATABASE_URL set, so the pool couldn't
-        # connect and ~100 server-side test files failed with
-        # "Database connection not available." Mirror the value to
-        # DATABASE_URL so the runtime actually sees it.
-        run: npm test
-        env:
-          CI: true
-          RUN_INTEGRATION_TESTS: 'true'
-          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
-          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
-
-      - name: Upload integration test results
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: integration-tests-results
-          path: test-results/
-          if-no-files-found: warn
-
       # ── The step that actually uses the database this job provisions ────────
       #
-      # Everything above runs under tests/setup.ts, which mocks `pg` process-
+      # The broad npm test suite below uses tests/setup.ts, which mocks `pg` process-
       # wide. That mock is right for unit tests and wrong here: it meant this
       # job — a real PostgreSQL service, real migrations applied to it — never
       # opened a socket from a test. `new Pool().query(...)` answered
@@ -1514,9 +1492,9 @@ jobs:
       # workflow-approval-tables with `42P01 relation "unified_documents" does
       # not exist` — 18 assertions never ran.
       #
-      # Nobody had seen it: this step only executes when the step above it
-      # passes, and that one had been failing. The moment it went green, these
-      # two surfaced.
+      # Originally this step followed the broad suite and ran only after it
+      # passed; its failures were invisible until that suite went green. Run
+      # this separate database lane first so its verdict and report are early.
       #
       # The right database for a suite whose whole premise is "the real deployed
       # shape" is one built the way a deployment builds it. install-fresh cannot
@@ -1539,8 +1517,8 @@ jobs:
           APP_SERVICE_DB_PASSWORD: ci-dbtest-app-service-password
 
       - name: Run real-database tests (unmocked pg, RLS_ENFORCE=on)
-        # The broad artifact above is uploaded BEFORE this unmocked step.
-        # Preserve this execution separately, including failures: its complete
+        # Preserve this execution separately before the long broad suite,
+        # including failures: its complete
         # combined job log can be too large for diagnostic retrieval.
         run: |
           mkdir -p test-results-db
@@ -1559,6 +1537,32 @@ jobs:
         with:
           name: real-database-test-results
           path: test-results-db/
+          if-no-files-found: warn
+
+      - name: Run integration tests
+        # Independent verdict: run after native failure only when the shared
+        # setup succeeded, and keep the job failed if either suite failed.
+        if: "!cancelled() && steps.integration_prerequisites.conclusion == 'success'"
+        # vitest tests read DATABASE_URL via server/db/runtime.ts (per
+        # server/db/getDatabaseUrl.ts the env-var fallback order is
+        # DATABASE_URL → NEON_DATABASE_URL → DATABASE_NEON_NEW_SECRET).
+        # The job had only TEST_DATABASE_URL set, so the pool couldn't
+        # connect and ~100 server-side test files failed with
+        # "Database connection not available." Mirror the value to
+        # DATABASE_URL so the runtime actually sees it.
+        run: npm test
+        env:
+          CI: true
+          RUN_INTEGRATION_TESTS: 'true'
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: integration-tests-results
+          path: test-results/
           if-no-files-found: warn
 
   # ── Blank-database provisioning + deploy-migration proof ──────────────────
