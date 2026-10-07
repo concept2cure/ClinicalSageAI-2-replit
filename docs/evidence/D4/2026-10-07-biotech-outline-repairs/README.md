@@ -78,7 +78,9 @@ preparation continues to report `not_assessed` and `evidenceReviewed: false`.
 | Server bundle | `build-server.txt`; client sources unchanged from the parent successful production build |
 | Existing Authoring canvas path | `canvas-path.txt`: unchanged gate passed |
 | Canonical preflight before TypeScript | All preceding hook checks passed: `push-preflight.txt`; zero lint errors and net one fewer warning. This is not a full local pre-push pass. |
-| Current-head full-project TypeScript | GitHub CI is the authorized execution host; the parent CI result does not substitute for the new head's check. |
+| Published-source full-project TypeScript and ESLint | Both passed for `4be7a67a18ca4a328149099de8e6f523df6f426d`: zero TypeScript errors, tsc exit 0. `ci-validation-4be7.txt` links the exact GitHub run/job. |
+| Source resolution and clause lineage | Four passing PGlite integration tests: `source-lineage-green.txt`. The isolated fixture emits a nonfatal audit-startup warning; this verifies the resolver and clause-lineage gate, not production audit qualification. |
+| CI security, secrets and security contracts | All passed for the same published source commit; exact jobs recorded in `ci-validation-4be7.txt`. The broader proof/build/release workflow remained in progress at capture. |
 
 `existing-consumers.txt` and earlier `drafting-green.txt` record intermediate
 regression failures discovered when adopting dedicated marketing blueprints;
@@ -95,3 +97,9 @@ The remote advanced to `f2a4ebec7dfa80f932cb7ff311e18d25249a7302` during
 verification through the existing repo-health baseline bot. Only its two report
 files changed. Those updates are preserved as the direct parent of this repair;
 they do not alter the source code validated against `c3163b5cc`.
+
+Final local verification totals **450 passing tests in 17 files**. The source
+repair and this evidence were pushed directly to `concept2cure-v2`; no PR or
+feature branch was created. Current-source TypeScript, lint and security checks
+are complete. Regulatory/production qualification remains bounded by the
+client-data, expert-review and technical-validation work described above.
