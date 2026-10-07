@@ -1,0 +1,15 @@
+{
+  "verified_prior_lint_copies_moved_outside_source_and_test_roots": [
+    {
+      "path": "server/services/__eslint_ratchet_prev__.m2-summary-builders.ts",
+      "base_source": "server/services/m2-summary-builders.ts",
+      "verified_blob": "b57dd4457989cd24a3ec57b808f6900d54010d3f"
+    },
+    {
+      "path": "server/services/__tests__/__eslint_ratchet_prev__.m2-summary-builders.test.ts",
+      "base_source": "server/services/__tests__/m2-summary-builders.test.ts",
+      "verified_blob": "f74d5eecb5f639b6ede4e873dc39af5644acb6d3"
+    }
+  ],
+  "extra_source_or_test_files_published": false
+}

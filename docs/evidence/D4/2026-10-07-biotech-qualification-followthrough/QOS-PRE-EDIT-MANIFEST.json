@@ -1,0 +1,24 @@
+{
+  "source": "d46fca15b9454c89ea3eb56351488df1ff3ee1a7",
+  "code_identical_to": "a5dc3f3d84ba62a06806f8455897fe0554ae654d",
+  "pre_edit_source_blobs": {
+    "server/services/m2-summary-builders.ts": "b57dd4457989cd24a3ec57b808f6900d54010d3f",
+    "server/services/__tests__/m2-summary-builders.test.ts": "f74d5eecb5f639b6ede4e873dc39af5644acb6d3",
+    "server/services/module3Composer.ts": "4886edc9e562ea6d6883f71382bb2898b512410e",
+    "server/services/cmc/recorded-stability.ts": "1e5f2ac619fe31830318d6c010e9860c86b0d23e",
+    ".github/workflows/ci.yml": "8e04f9392b6a6fed48bfe5f820871852c3400afb"
+  },
+  "red_command": [
+    "node",
+    "--max-old-space-size=2048",
+    "--import",
+    "/workspace/scratch/bd36ee581acd/concept2cure/node_modules/tsx/dist/loader.mjs",
+    "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/qos-hold-red.ts"
+  ],
+  "red_cases": 14,
+  "passed": 4,
+  "failed": 10,
+  "exit": 1,
+  "reproducer_sha256": "18fbd91a0bc8b2d3a4917aca7c52609bfe6c60525fc1303be4b52b93e2517517",
+  "receipt_sha256": "50e08e5468dce72ebbd6fdb9c068d8bca93a07c2184b736407b02eb2797109ad"
+}

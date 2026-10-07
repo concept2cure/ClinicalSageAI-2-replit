@@ -125,6 +125,29 @@ links. Broad integration, tests and coverage remain in progress at that snapshot
 queued or running jobs supply no pass. Earlier pending-at-filing statements are
 historical snapshots. D4 and D1–D10 remain open.
 
+## Continued review: Module 2 stability propagation
+
+The next bounded review reproduced a remaining downstream CMC defect: fixed
+500-character QOS excerpts could discard the existing Module 3 stability hold
+and named refusal/trend reasons. [QOS-RESULTS.md](QOS-RESULTS.md) records the
+pre-edit RED and narrow two-expression repair. Both drug substance and drug
+product QOS stability paragraphs now retain the upstream qualification intact;
+all other excerpts, assessment rules, data, tables and metadata remain.
+
+The new combined regression passes **83 physical suites / 1511 cases**, zero
+failed/pending/skipped/todo, exit 0, with all eleven source blobs frozen through
+the execution. The original unchanged 14-case reproducer and all 214 Node CI
+guard controls also pass. Scoped lint has zero errors and no warning growth;
+the production server builds.
+
+The same increment adds a separate always-uploaded JSON result for the existing
+unmocked real-database CI step, preserving all database/RLS bindings and failure
+status. The preceding broader integration failure remains unexplained; its
+successful mocked-stage artifact cannot qualify the later failing database
+step. Nine additional read-only lineage controls found no new defect. Exact new
+source compiler and broad/database release CI remain independent publication
+gates. D4 and D1–D10 remain open.
+
 ## Evidence scanner correction
 
 The prior Semgrep blocking differential scan found three synthetic opaque

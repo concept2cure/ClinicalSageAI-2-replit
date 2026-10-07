@@ -1,0 +1,4 @@
++PASS workflow parses; all original database/RLS bindings retained; same test command with JSON reporter; separate always-uploaded pinned artifact; all other workflow data unchanged.
+Actual process exit: 0.
+Existing database isolation guard: 150 real-database test files run unmocked; every mocked Vitest config excludes them; exit 0.
+No local native PostgreSQL runtime is available. No real-database test execution is claimed by this static workflow check.

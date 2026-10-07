@@ -1,0 +1,60 @@
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { createDispositionHarness } from '/workspace/scratch/bd36ee581acd/concept2cure/server/services/document-data-disposition/__tests__/disposition-fixture';
+import { atomDataEligibleSql, atomOriginalFileAvailableSql, uploadedBinaryAvailableSql } from '/workspace/scratch/bd36ee581acd/concept2cure/server/services/document-data-disposition/eligibility';
+
+async function main() {
+  const harness = await createDispositionHarness();
+  let controls = 0;
+  try {
+    const removed = await harness.seed();
+    await removed.apply('remove_data');
+    const file = randomUUID();
+    const hash = 'b'.repeat(64);
+    await harness.pg.query(`INSERT INTO file_uploads VALUES ($1,$2,$3,$4,'processed')`,
+      [file, removed.org, hash, `uploads/org-${removed.org}/${file}`]);
+    const capture = (await harness.pg.query<{id:number}>(`INSERT INTO cre_evidence_sources
+      (organization_id,client_program_id,source_type,title,checksum,extraction_status,ingestion_status,provenance,metadata,is_current)
+      VALUES ($1,$2,'client_document','Recorded child.xlsx',$3,'extracted','ingested',$4,'{}',true) RETURNING id`,
+      [removed.org,removed.program,hash,JSON.stringify({fileUploadId:file,origin:'spreadsheet_edit',
+        derivedFromFileId:removed.upload,derivedFromSha256:'a'.repeat(64),parentSourceIds:[removed.capture]})])).rows[0].id;
+    for (const [label,data] of [
+      ['sourceId numeric', {sourceId:capture}],
+      ['sourceId string', {sourceId:String(capture)}],
+      ['supportingSourceIds string array', {supportingSourceIds:[String(capture)]}],
+      ['contradictingSourceIds string array', {contradictingSourceIds:[String(capture)]}],
+    ] as const) {
+      const result = (await harness.pg.query(`SELECT ${atomDataEligibleSql('a')} AS eligible,
+        ${atomOriginalFileAvailableSql('a')} AS available FROM
+        (SELECT $1::integer organization_id,'clinical_regulatory_evidence'::text source_type,
+        'assessment'::text source_id,$2::json structured_data) a`,[removed.org,JSON.stringify(data)])).rows;
+      assert.deepEqual(result,[{eligible:false,available:false}], label);
+      console.log(`PASS normalized cached refusal: ${label}`); controls++;
+    }
+    const retained = await harness.seed();
+    await retained.apply('keep_data');
+    for (const [label,patch,expected] of [
+      ['valid identity', {}, true],
+      ['wrong table binding', {table_name:'other_table'}, false],
+      ['wrong target binding', {target:'file_upload:other_file'}, false],
+      ['wrong operation binding', {operation:'other_operation'}, false],
+      ['wrong child identity', {fileId:'other_file'}, false],
+    ] as const) {
+      const fileId=randomUUID(); const childHash='c'.repeat(64);
+      await harness.pg.query(`INSERT INTO file_uploads VALUES ($1,$2,$3,$4,'uploaded')`,
+        [fileId,retained.org,childHash,`uploads/org-${retained.org}/${fileId}`]);
+      const details={operation:'spreadsheet_edit',fileId,checksumSha256:childHash,
+        sourceFileId:retained.upload,sourceSha256:'a'.repeat(64),parentSourceIds:[],...patch};
+      await harness.pg.query(`INSERT INTO audit_logs (id,tenant_id,action,table_name,record_id,target,new_values)
+        VALUES ($1,$2,'file_upload.derived',$3,$4,$5,$6::json)`,
+        [randomUUID(),retained.org,('table_name' in patch ? patch.table_name : 'file_upload'),fileId,
+        ('target' in patch ? patch.target : `file_upload:${fileId}`),JSON.stringify(details)]);
+      const actual=(await harness.pg.query<{available:boolean}>(`SELECT ${uploadedBinaryAvailableSql('u')} available
+        FROM file_uploads u WHERE u.id=$1`,[fileId])).rows[0].available;
+      assert.equal(actual,expected,label);
+      console.log(`PASS canonical audit binding: ${label} => ${actual}`); controls++;
+    }
+    console.log(`AUDIT PROBE RESULT: ${controls} passed / 0 failed. No new defect proven by these controls.`);
+  } finally { await harness.close(); }
+}
+main().catch(error=>{ console.error(error); process.exitCode=1; });

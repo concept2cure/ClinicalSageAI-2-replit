@@ -1,0 +1,4 @@
+✅ Server build complete → dist/index.js
+
+Actual process exit: 0. Existing server build command: node scripts/build-server.mjs
+Server build is separate from full semantic TypeScript proof.

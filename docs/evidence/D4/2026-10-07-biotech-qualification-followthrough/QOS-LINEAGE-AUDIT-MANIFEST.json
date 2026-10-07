@@ -1,0 +1,38 @@
+{
+  "baselineSource": "a5dc3f3d84ba62a06806f8455897fe0554ae654d",
+  "headAtProbe": "d46fca15b9454c89ea3eb56351488df1ff3ee1a7",
+  "command": "NODE_OPTIONS=--max-old-space-size=2048 node --import /workspace/scratch/bd36ee581acd/concept2cure/node_modules/tsx/dist/loader.mjs /workspace/scratch/c2099bdce0e4/lineage-readiness-audit/targeted-probe.ts",
+  "productionWrites": false,
+  "scope": "W3 / D4 read-only audit, no intended-use qualification",
+  "sha256": {
+    "server/services/document-data-disposition/recorded-lineage.ts": "b34a7050ca1868c339f8dbe10f0d60a50ea443b415fbadb820708005befa9733",
+    "server/services/document-data-disposition/derived-impact.ts": "cc94f15eab5296c942210cebaaba7f5715f1cd590c34d427deb958e30a539dc3",
+    "server/services/document-data-disposition/eligibility.ts": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f",
+    "server/services/document-data-disposition/impact.ts": "e3eeb1939678bd8d2b08d5a72e42b758ab867aad83e131757410b1e11b9e0288",
+    "server/services/document-data-disposition/service.ts": "bad02257299c83bd923adade7067ea50aa40c34729e9271f5c61a1d31d64388a",
+    "server/services/document-data-disposition/__tests__/disposition-fixture.ts": "ca839c935f34a57a1e656ae0300a6fad638626264bf4e58e6ca59df2070e7bf3",
+    "server/routes/c2c/projects.ts": "de0204ef60de412d957fd996db0005cb1da9263640fc79f2c502be07adeb55da",
+    "server/services/ana/uploaded-file-access.ts": "be78920588751f70dd2b3ea5279a55f2a3ef712d4cbb398bfa22030886c9cf2e",
+    "migrations/20261006_document_data_dispositions.sql": "84a14559d159d2df78ffa71c6ebe03783bf804b56c8b8a4ae9587733a9f43568"
+  },
+  "scriptSha256": "93393d8ead6a2bc8465af9411b0e0addc06cee6428f0de047392e09b9aaa1ad2",
+  "initialCommand": "NODE_OPTIONS=--max-old-space-size=2048 node /workspace/scratch/bd36ee581acd/concept2cure/node_modules/tsx/dist/cli.mjs /workspace/scratch/c2099bdce0e4/lineage-readiness-audit/targeted-probe.ts",
+  "exitCode": 0,
+  "passedControls": 9,
+  "failedControls": 0,
+  "runnerFailure": "runner-ipc-unavailable.txt: initial tsx CLI failed before assertions with listen EPERM. Node --import loader rerun executed all controls.",
+  "sourceHashesUnchanged": true,
+  "headAfterProbe": "d46fca15b9454c89ea3eb56351488df1ff3ee1a7",
+  "outputSha256": "ad79f094ad1214b2c5e7e2f1e0edcd49239529522f35a2fecc3a0d69c5feea45",
+  "baselineCodeInvariant": {
+    "server/services/document-data-disposition/recorded-lineage.ts": true,
+    "server/services/document-data-disposition/derived-impact.ts": true,
+    "server/services/document-data-disposition/eligibility.ts": true,
+    "server/services/document-data-disposition/impact.ts": true,
+    "server/services/document-data-disposition/service.ts": true,
+    "server/services/document-data-disposition/__tests__/disposition-fixture.ts": true,
+    "server/routes/c2c/projects.ts": true,
+    "server/services/ana/uploaded-file-access.ts": true,
+    "migrations/20261006_document_data_dispositions.sql": true
+  }
+}

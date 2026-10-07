@@ -176,7 +176,7 @@ export function buildM23QualityOverallSummary(ctx: M23BuildContext): M2Summary {
     sSpec ? excerpt(sSpec.narrativeDraft, 500) : `[Section 3.2.S.4 not yet composed — specification missing]`,
     ``,
     `2.3.S.7 Stability`,
-    sStab ? excerpt(sStab.narrativeDraft, 500) : `[Section 3.2.S.7 not yet composed — stability data missing]`,
+    sStab ? sStab.narrativeDraft : `[Section 3.2.S.7 not yet composed — stability data missing]`,
     ``,
     `2.3.P DRUG PRODUCT`,
     `2.3.P.1 Description and Composition`,
@@ -192,7 +192,7 @@ export function buildM23QualityOverallSummary(ctx: M23BuildContext): M2Summary {
     pSpec ? excerpt(pSpec.narrativeDraft, 500) : `[Section 3.2.P.5 not yet composed]`,
     ``,
     `2.3.P.8 Stability`,
-    pStab ? excerpt(pStab.narrativeDraft, 500) : `[Section 3.2.P.8 not yet composed]`,
+    pStab ? pStab.narrativeDraft : `[Section 3.2.P.8 not yet composed]`,
     ``,
     `Cross-references: Full data and analytical methods are provided in Module 3.`,
   ].join('\n');

@@ -1,0 +1,10 @@
+PASS normalized cached refusal: sourceId numeric
+PASS normalized cached refusal: sourceId string
+PASS normalized cached refusal: supportingSourceIds string array
+PASS normalized cached refusal: contradictingSourceIds string array
+PASS canonical audit binding: valid identity => true
+PASS canonical audit binding: wrong table binding => false
+PASS canonical audit binding: wrong target binding => false
+PASS canonical audit binding: wrong operation binding => false
+PASS canonical audit binding: wrong child identity => false
+AUDIT PROBE RESULT: 9 passed / 0 failed. No new defect proven by these controls.

@@ -1539,7 +1539,12 @@ jobs:
           APP_SERVICE_DB_PASSWORD: ci-dbtest-app-service-password
 
       - name: Run real-database tests (unmocked pg, RLS_ENFORCE=on)
-        run: npm run test:db
+        # The broad artifact above is uploaded BEFORE this unmocked step.
+        # Preserve this execution separately, including failures: its complete
+        # combined job log can be too large for diagnostic retrieval.
+        run: |
+          mkdir -p test-results-db
+          npm run test:db -- --reporter=verbose --reporter=json --outputFile.json=test-results-db/vitest.json
         env:
           CI: true
           NODE_ENV: test
@@ -1547,6 +1552,14 @@ jobs:
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
           APP_DATABASE_URL: postgresql://app_service:ci-dbtest-app-service-password@localhost:5432/concept2cure-ri_dbtest
+
+      - name: Upload real-database test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: real-database-test-results
+          path: test-results-db/
+          if-no-files-found: warn
 
   # ── Blank-database provisioning + deploy-migration proof ──────────────────
   #
