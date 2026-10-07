@@ -1,0 +1,69 @@
+{
+  "success": true,
+  "controls": 10,
+  "mode": "exact historical source identity and changed-checksum refusal; not native scanner execution",
+  "onlyFiveExactHistoryFingerprintsAdded": true,
+  "previousDispositionsAndLiveStatusesBytePreserved": true,
+  "records": [
+    {
+      "originCommit": "db89074184a2b59e228fb311babf23e0a7c6cbeb",
+      "manifestPath": "docs/evidence/D4/2026-10-07-native-admin-fixtures/SCOPE.json",
+      "line": 54,
+      "rule": "generic-api-key",
+      "sourcePath": "server/routes/module-access-requests.ts",
+      "computedGitBlob": "fbe8e3e6b8eba318d948f675ac134c7f9f40ec5a",
+      "sourceBytes": 22272,
+      "recordedIdentifierMatchesSource": true,
+      "changedIdentifierRefused": true,
+      "fingerprint": "db89074184a2b59e228fb311babf23e0a7c6cbeb:docs/evidence/D4/2026-10-07-native-admin-fixtures/SCOPE.json:generic-api-key:54"
+    },
+    {
+      "originCommit": "0cc794720c3a0b38d10d95dcb7928347b91b11dd",
+      "manifestPath": "docs/evidence/D4/2026-10-07-report-registry-order/SCOPE.json",
+      "line": 44,
+      "rule": "generic-api-key",
+      "sourcePath": "server/routes/module-access-requests.ts",
+      "computedGitBlob": "fbe8e3e6b8eba318d948f675ac134c7f9f40ec5a",
+      "sourceBytes": 22272,
+      "recordedIdentifierMatchesSource": true,
+      "changedIdentifierRefused": true,
+      "fingerprint": "0cc794720c3a0b38d10d95dcb7928347b91b11dd:docs/evidence/D4/2026-10-07-report-registry-order/SCOPE.json:generic-api-key:44"
+    },
+    {
+      "originCommit": "0cc794720c3a0b38d10d95dcb7928347b91b11dd",
+      "manifestPath": "docs/evidence/D4/2026-10-07-report-registry-order/SCOPE.json",
+      "line": 49,
+      "rule": "generic-api-key",
+      "sourcePath": "tests/db/module-access-requests.dbtest.ts",
+      "computedGitBlob": "ba595c1559b782a53d24c78444669ed50af56e03",
+      "sourceBytes": 49861,
+      "recordedIdentifierMatchesSource": true,
+      "changedIdentifierRefused": true,
+      "fingerprint": "0cc794720c3a0b38d10d95dcb7928347b91b11dd:docs/evidence/D4/2026-10-07-report-registry-order/SCOPE.json:generic-api-key:49"
+    },
+    {
+      "originCommit": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+      "manifestPath": "docs/evidence/D4/2026-10-07-export-column-inventory/SCOPE.json",
+      "line": 52,
+      "rule": "generic-api-key",
+      "sourcePath": "server/routes/module-access-requests.ts",
+      "computedGitBlob": "fbe8e3e6b8eba318d948f675ac134c7f9f40ec5a",
+      "sourceBytes": 22272,
+      "recordedIdentifierMatchesSource": true,
+      "changedIdentifierRefused": true,
+      "fingerprint": "6a54db14cc6a41727c5f46103afbab2ac9609047:docs/evidence/D4/2026-10-07-export-column-inventory/SCOPE.json:generic-api-key:52"
+    },
+    {
+      "originCommit": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+      "manifestPath": "docs/evidence/D4/2026-10-07-export-column-inventory/SCOPE.json",
+      "line": 56,
+      "rule": "generic-api-key",
+      "sourcePath": "tests/db/module-access-requests.dbtest.ts",
+      "computedGitBlob": "ba595c1559b782a53d24c78444669ed50af56e03",
+      "sourceBytes": 49861,
+      "recordedIdentifierMatchesSource": true,
+      "changedIdentifierRefused": true,
+      "fingerprint": "6a54db14cc6a41727c5f46103afbab2ac9609047:docs/evidence/D4/2026-10-07-export-column-inventory/SCOPE.json:generic-api-key:56"
+    }
+  ]
+}

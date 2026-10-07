@@ -1,0 +1,30 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 ci:committed-secrets:selftest
+> node scripts/ci/check-committed-secrets.selftest.mjs
+
+  ✓ RED — INF-22 as committed: a neondb_owner URI as the e2e seed fallback
+  ✓ RED — INF-22 in the doc: the URL, and the bare npg_ password on its own line
+  ✓ RED — a password URI to a live host: all nine schemes, and hosts that begin with, contain or end like a non-live name
+  ✓ RED — PLACEHOLDER judges the whole password: a stand-in word inside it, or a $VAR-like opening, does not excuse it
+  ✓ RED — one of each provider family: AWS, GitHub, Slack, Stripe live, LLM, PKCS#8 private key
+  ✓ RED — every variant inside a family: AWS ASIA, GitHub gho_/ghs_/ghu_, Slack xoxp/xoxa/xoxr/xoxs, RSA/EC/OPENSSH key headers
+  ✓ RED — a placeholder is judged on the secret, not the line ("example"/"placeholder" nearby do not excuse it)
+  ✓ RED — the escape hatch is same-line only: a marker on the line above excuses nothing
+  ✓ RED — only the scanner's own file is exempt: a sibling CI script, or a same-named file elsewhere, is scanned
+  ✓ RED — --json carries each finding with file, line, rule and the same shape-only preview, and still exits 1
+  ✓ quiet — docs show the URL shape with stand-ins for the password, against live hosts
+  ✓ quiet — real-looking passwords aimed at hosts that cannot be live (CI service containers, reserved names)
+  ✓ quiet — provider near-misses: Stripe test and publishable keys, a bare PEM marker, an empty PEM template
+  ✓ quiet — the escape hatch on the same line excuses a negative-test vector
+  ✓ quiet — a gitignored local .env holding the live URL is not a committed secret
+  ✓ quiet — this selftest's own source, committed, does not trip the gate it tests
+
+  Known gaps of the gate — reported, not asserted (see this file's header):
+    - not caught: a private key committed as an ordinary multi-line PEM file
+    - not caught: an OpenPGP armored private key (its header ends PRIVATE KEY BLOCK)
+    - not caught: a live-host password of word characters that begins with a stand-in word (admin…)
+    - not caught: a Slack xoxe- refresh token
+    - not caught: a GitHub ghr_ refresh token
+
+[ci:committed-secrets:selftest] 16 passed — the gate fails on what it exists to catch.

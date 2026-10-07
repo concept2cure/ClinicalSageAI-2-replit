@@ -1,0 +1,13 @@
+Exact base: 6a54db14cc6a41727c5f46103afbab2ac9609047
+CI run: 37697288645
+Job: 113052022121 (Secret scan, full history)
+Pinned scanner: gitleaks v8.28.0
+Scope: actual exact-source remote failure; no finding metadata in this nonverbose log.
+
+2026-10-07T22:37:02.5043648Z ##[group]Run go install github.com/zricethezav/gitleaks/v8@v8.28.0
+2026-10-07T22:37:02.5043985Z go install github.com/zricethezav/gitleaks/v8@v8.28.0
+2026-10-07T22:37:24.2389398Z ##[group]Run gitleaks git --no-banner --redact --config .gitleaks.toml --log-opts="--full-history --diff-filter=tuxdb HEAD" .
+2026-10-07T22:38:53.7780271Z 10:38PM INF 9681 commits scanned.
+2026-10-07T22:38:53.7780712Z 10:38PM INF scanned ~531436588 bytes (531.44 MB) in 1m29.5s
+2026-10-07T22:38:53.7781108Z 10:38PM WRN leaks found: 5
+2026-10-07T22:38:53.7874307Z ##[error]Process completed with exit code 1.

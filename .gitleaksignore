@@ -149,3 +149,18 @@ bea4192be4854027f7e23e82b5b8a062cd6e9dcf:docs/evidence/D3/2026-10-04-pre-auth-na
 #   the source-checksum comparison are recorded under D4's
 #   2026-10-07-biotech-qualification-followthrough/QOS-SECRET-FINDING-PLAN.md.
 fdd507a91c6b7c7976c78eae4fa9755f87326782:docs/evidence/D4/2026-10-07-biotech-qualification-followthrough/QOS-LINEAGE-AUDIT-MANIFEST.json:generic-api-key:15
+
+# status: not a secret
+# reason: five Git blob identifiers recorded in qualification SCOPE manifests.
+#   The route and native fixture paths contain access, so generic-api-key reads
+#   their 40-character source digests as credentials. Each value was recomputed
+#   from its exact historical source bytes using Git's blob header and hash;
+#   all five match. These are source identity pins, not access material.
+#   Only the original commit/path/rule/line fingerprints are dispositioned.
+#   Scanner config, command, version and live-history entries stay intact.
+#   Evidence: docs/evidence/D4/2026-10-07-history-scan-dispositions/.
+db89074184a2b59e228fb311babf23e0a7c6cbeb:docs/evidence/D4/2026-10-07-native-admin-fixtures/SCOPE.json:generic-api-key:54
+0cc794720c3a0b38d10d95dcb7928347b91b11dd:docs/evidence/D4/2026-10-07-report-registry-order/SCOPE.json:generic-api-key:44
+0cc794720c3a0b38d10d95dcb7928347b91b11dd:docs/evidence/D4/2026-10-07-report-registry-order/SCOPE.json:generic-api-key:49
+6a54db14cc6a41727c5f46103afbab2ac9609047:docs/evidence/D4/2026-10-07-export-column-inventory/SCOPE.json:generic-api-key:52
+6a54db14cc6a41727c5f46103afbab2ac9609047:docs/evidence/D4/2026-10-07-export-column-inventory/SCOPE.json:generic-api-key:56
