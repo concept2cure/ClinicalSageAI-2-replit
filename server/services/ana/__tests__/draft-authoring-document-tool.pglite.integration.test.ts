@@ -9,10 +9,47 @@
  * the stream's artifact_draft event needs (authoringDocId, programId, content).
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { randomUUID } from 'node:crypto';
 import { createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
 import { PREREQ, VAULT_DDL, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG, AUTHOR, M25_SECTIONS } from '../../../routes/__tests__/_authoring-canvas-fixture';
 import { DRAFT_AUTHORING_DOCUMENT_NO_PROJECT } from '../../authoring/authoring-draft-tool';
 import { approvedToolHandler } from './support/approved-tool-handler';
+import { createDocumentDispositionService } from '../../document-data-disposition/service';
+
+/** TEST-ONLY impact-store prerequisites, matching disposition-fixture.ts.
+ * Authoring and catalog tables still use their canonical migrations below.
+ * These empty stores let the REAL withdrawal preview/apply read and lock its
+ * complete impact, without bypassing scope, authorization, audit or locking.
+ */
+const DISPOSITION_IMPACT_PREREQ = `
+  ALTER TABLE regulatory_programs ADD COLUMN lead_user_id INTEGER;
+  ALTER TABLE c2c_documents ADD COLUMN status TEXT;
+  CREATE TABLE cre_evidence_sources (
+    id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, client_program_id UUID,
+    source_type TEXT, title TEXT, checksum TEXT, extraction_status TEXT, ingestion_status TEXT,
+    previous_version_id INTEGER, provenance JSONB, metadata JSONB, is_current BOOLEAN,
+    deleted_at TIMESTAMPTZ, updated_at TIMESTAMPTZ DEFAULT NOW()
+  );
+  CREATE TABLE file_uploads (id TEXT PRIMARY KEY, organization_id INTEGER NOT NULL,
+    checksum_sha256 TEXT, storage_path TEXT, status TEXT);
+  CREATE TABLE concept2cure_artifacts (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL,
+    project_id INTEGER, artifact_id TEXT, content_hash TEXT, content TEXT, status TEXT, metadata JSON);
+  CREATE TABLE lumen_data_atoms (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL,
+    source_type TEXT, source_id TEXT, structured_data JSON, status TEXT, content TEXT);
+  CREATE TABLE vault.document_chunks (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), document_id UUID, chunk_text TEXT);
+  CREATE TABLE rag_documents (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), organization_id INTEGER NOT NULL, document_id TEXT);
+  CREATE TABLE rag_chunks (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), document_id UUID, content TEXT);
+  CREATE TABLE c2c_document_sections (id BIGSERIAL PRIMARY KEY, document_id TEXT, status TEXT);
+  CREATE TABLE cmc_source_evidence (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), organization_id INTEGER,
+    program_id UUID, vault_document_id UUID, unlinked_at TIMESTAMPTZ);
+  CREATE TABLE governed_dependencies (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), organization_id INTEGER,
+    project_id INTEGER, source_type TEXT, source_id TEXT);
+  CREATE TABLE vault.evidence_citations (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), source_document_id UUID, evidence_document_id UUID);
+  CREATE TABLE vault.legal_holds (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), organization_id INTEGER,
+    program_id UUID, document_id UUID, lifted_at TIMESTAMPTZ);
+  CREATE TABLE canonical_documents (canonical_id TEXT PRIMARY KEY, organization_id INTEGER, source_refs JSONB, stage TEXT);
+  CREATE TABLE test_disposition_audit (id UUID PRIMARY KEY, organization_id INTEGER NOT NULL, entry JSONB NOT NULL);
+`;
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown, beforeEmbedding: null as (() => Promise<void>) | null }));
 vi.mock('../../enhancedEmbeddingService.js', () => ({ getEmbeddingService: () => ({ embed: async () => {
@@ -33,7 +70,7 @@ let handler: (input: Record<string, unknown>, ctx?: Record<string, unknown>) => 
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ + VAULT_DDL,
+    prereqSql: PREREQ + VAULT_DDL + DISPOSITION_IMPACT_PREREQ,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
@@ -272,5 +309,162 @@ describe('draft_authoring_document', () => {
   it('refuses malformed input as an error the model can read, not a crash', async () => {
     const out = JSON.parse(await handler({ title: 'No sections', sections: [] }, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectRef: PROGRAM }));
     expect(String(out.error)).toMatch(/sections/);
+  });
+});
+
+const withdrawalContext = { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true };
+
+async function seedWithdrawalSource(hashCharacter: string) {
+  const documentId = randomUUID();
+  const contentHash = hashCharacter.repeat(64);
+  await jdb.pool.query(`INSERT INTO vault.documents
+    (id,program_id,organization_id,document_code,document_title,document_type,file_name,content_hash,extracted_text,processing_status)
+    VALUES ($1::uuid,$2,$3,$1::text,'Withdrawal test CSR','csr','withdrawal.pdf',$4,$5,'INDEXED')`,
+  [documentId, PROGRAM, ORG, contentHash, SOURCE_TEXT]);
+  await jdb.pool.query(`INSERT INTO vault.document_catalog
+    (document_id,content_hash,catalog_status,extraction_method,char_count)
+    VALUES ($1,$2,'extracted','pdf-text',$3)`, [documentId, contentHash, SOURCE_TEXT.length]);
+  return { documentId, contentHash, span: { start: 0, end: SOURCE_TEXT.length, totalChars: SOURCE_TEXT.length } };
+}
+
+function withdrawalService() {
+  return createDocumentDispositionService({
+    db: jdb.pool,
+    enabled: () => true, // TEST-ONLY activation; existing dispositions never have a consumer bypass.
+    tokenSecret: 'source-withdrawal-test-secret-at-least-32-characters',
+    // TEST-ONLY audit dependency, as in disposition-fixture.ts: persisted
+    // in the same real transaction and checked by the service before append.
+    audit: async (q, entry) => {
+      const id = randomUUID();
+      await q.query('INSERT INTO test_disposition_audit VALUES ($1,$2,$3)', [id, ORG, JSON.stringify(entry)]);
+      return { id, sha256Chain: 'f'.repeat(64) };
+    },
+  });
+}
+
+const withdrawalScope = (documentId: string) => ({
+  organizationId: ORG, programId: PROGRAM, actorId: Number(AUTHOR.id), orgRole: 'manager',
+  targetType: 'vault_document' as const, targetId: documentId,
+});
+
+async function authoringCounts() {
+  const result = await jdb.pool.query(`SELECT
+    (SELECT COUNT(*)::int FROM authoring_documents WHERE tenant_id=$1) AS documents,
+    (SELECT COUNT(*)::int FROM authoring_sections WHERE tenant_id=$1) AS sections,
+    (SELECT COUNT(*)::int FROM doc_revisions WHERE tenant_id=$1) AS revisions,
+    (SELECT COUNT(*)::int FROM authoring_audit_trail WHERE tenant_id=$1 AND operation_type='CREATE') AS creates`, [ORG]);
+  return result.rows[0] as { documents: number; sections: number; revisions: number; creates: number };
+}
+
+async function expectWithdrawalCommitted(documentId: string) {
+  const records = await jdb.pool.query(`SELECT choice,audit_receipt FROM document_data_dispositions
+    WHERE organization_id=$1 AND program_id=$2 AND vault_document_id=$3`, [ORG, PROGRAM, documentId]);
+  expect(records.rows).toHaveLength(1);
+  const record = records.rows[0] as { choice: string; audit_receipt: { id: string } };
+  expect(record.choice).toBe('remove_data');
+  const audit = await jdb.pool.query('SELECT id FROM test_disposition_audit WHERE id=$1 AND organization_id=$2', [record.audit_receipt.id, ORG]);
+  expect(audit.rows).toHaveLength(1);
+  const { loadDocumentForOrg } = await import('../../vault/document-catalog.service');
+  expect(await loadDocumentForOrg(documentId, ORG, { includeText: true })).toBeNull();
+}
+
+describe('draft_authoring_document — governed source withdrawal before save', () => {
+  it('CONTROL: an unchanged eligible source still saves through the registered tool', async () => {
+    const source = await seedWithdrawalSource('e');
+    const before = await authoringCounts();
+    const calls: Array<{ channel: 'pool' | 'transaction'; sql: string; params?: unknown[] }> = [];
+    const originalPool = h.pool;
+    h.pool = {
+      query: async (sql: string, params?: unknown[]) => {
+        calls.push({ channel: 'pool', sql, params });
+        return jdb.pool.query(sql, params);
+      },
+      connect: async () => {
+        const client = await jdb.pool.connect();
+        return {
+          query: async (sql: string, params?: unknown[]) => {
+            calls.push({ channel: 'transaction', sql, params });
+            return client.query(sql, params);
+          },
+          release: () => client.release(),
+        };
+      },
+    };
+    let out: Record<string, unknown>;
+    try {
+      out = JSON.parse(await handler(sourcedInput(source), withdrawalContext));
+    } finally {
+      h.pool = originalPool;
+    }
+    expect(out.error, JSON.stringify(out)).toBeUndefined();
+    expect(out.saved).toBe(true);
+    expect(out.projectSourceReferences).toEqual([expect.objectContaining({ verification: 'current_at_save', sources: [expect.objectContaining({ documentId: source.documentId, disposition: null })] })]);
+    const after = await authoringCounts();
+    expect(after).toEqual({ documents: before.documents + 1, sections: before.sections + 1, revisions: before.revisions + 1, creates: before.creates + 1 });
+    // The shared program lock must precede source checks and authoring writes.
+    // Merely repeating an unlocked pool preflight would leave the race open.
+    const transaction = calls.filter(call => call.channel === 'transaction');
+    const begin = transaction.findIndex(call => /^BEGIN\b/i.test(call.sql));
+    const lock = transaction.findIndex(call => /pg_advisory_xact_lock/.test(call.sql) && /hashtext\('document_data_dispositions'\)/.test(call.sql));
+    const sourceRead = transaction.findIndex(call => /FROM vault\.documents d/.test(call.sql) && /d\.extracted_text/.test(call.sql));
+    const firstWrite = transaction.findIndex(call => /^\s*INSERT INTO authoring_/i.test(call.sql));
+    expect(begin).toBeGreaterThanOrEqual(0);
+    expect(lock).toBeGreaterThan(begin);
+    expect(transaction[lock].params).toEqual([`${ORG}:${PROGRAM}`]);
+    expect(sourceRead).toBeGreaterThan(lock);
+    expect(firstWrite).toBeGreaterThan(sourceRead);
+    expect(calls.filter(call => call.channel === 'pool' && /FROM vault\.documents d/.test(call.sql) && /d\.extracted_text/.test(call.sql))).toHaveLength(0);
+  });
+
+  it('refuses when normal remove_data commits immediately before authoring connect, without any authoring writes', async () => {
+    const source = await seedWithdrawalSource('f');
+    const service = withdrawalService();
+    const scope = withdrawalScope(source.documentId);
+    const preview = await service.preview(scope);
+    expect(preview.allowedChoices).toContain('remove_data');
+    const before = await authoringCounts();
+    let withdrawalCommitted = false;
+    const originalPool = h.pool;
+    // PGlite cannot schedule two simultaneous connections. This deterministic
+    // interleaving commits the real governed workflow in the gap BEFORE the
+    // author's BEGIN; it neither rewrites the source/hash nor simulates a
+    // latest-family requirement for an explicit historical source reference.
+    h.pool = {
+      query: jdb.pool.query,
+      connect: async () => {
+        if (!withdrawalCommitted) {
+          await service.apply({ ...scope, choice: 'remove_data', reason: 'Withdraw source evidence before authoring save', previewToken: preview.previewToken });
+          withdrawalCommitted = true;
+        }
+        return jdb.pool.connect();
+      },
+    };
+    let out: Record<string, unknown>;
+    try {
+      out = JSON.parse(await handler(sourcedInput(source), withdrawalContext));
+    } finally {
+      h.pool = originalPool;
+    }
+    expect(withdrawalCommitted).toBe(true);
+    await expectWithdrawalCommitted(source.documentId);
+    expect(out.saved, JSON.stringify(out)).toBeUndefined();
+    expect(out.authoringDocId).toBeUndefined();
+    expect(out.error).toEqual(expect.stringMatching(/source references.*could not be verified/i));
+    expect(await authoringCounts()).toEqual(before);
+  });
+
+  it('CONTROL: a source already withdrawn by normal apply refuses with zero authoring writes', async () => {
+    const source = await seedWithdrawalSource('9');
+    const service = withdrawalService();
+    const scope = withdrawalScope(source.documentId);
+    const preview = await service.preview(scope);
+    await service.apply({ ...scope, choice: 'remove_data', reason: 'Withdraw source evidence before authoring request', previewToken: preview.previewToken });
+    const before = await authoringCounts();
+    const out = JSON.parse(await handler(sourcedInput(source), withdrawalContext));
+    await expectWithdrawalCommitted(source.documentId);
+    expect(out.error).toMatch(/source references.*could not be verified/i);
+    expect(out.saved).toBeUndefined();
+    expect(out.authoringDocId).toBeUndefined();
+    expect(await authoringCounts()).toEqual(before);
   });
 });

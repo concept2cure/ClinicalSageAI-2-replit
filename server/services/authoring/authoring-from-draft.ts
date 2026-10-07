@@ -16,6 +16,7 @@
 
 import { programInOrganization } from '../c2c/program-access';
 import { parseDraftSourceReferences, verifyDraftSourceReferences, type DraftSourceReference, type VerifiedDraftSourceReference } from './draft-source-references';
+import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
 import crypto from 'crypto';
 import { ANA_MACHINE_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
 import { columnState, type Queryable } from './authoring-evidence';
@@ -206,6 +207,27 @@ const CHANGE_REASON: Record<ProvenanceSource, string> = {
  * nothing written — when the deployment cannot record provenance: a document
  * that claims AnA drafted it must be able to say so.
  */
+type SelectedDraftSources = Array<{ sectionCode: string; refs: DraftSourceReference[] }>;
+class DraftSourceVerificationError extends Error {}
+const SOURCE_VERIFICATION_REFUSAL: Refusal = { kind: 'refused', status: 409, error: 'Project source references are unavailable, changed, or could not be verified. Refresh the source records and draft receipts before saving. Nothing was created.' };
+
+async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, programId: string, selected: SelectedDraftSources, provenance: DocumentProvenance): Promise<void> {
+  if (!selected.length) return;
+  try {
+    await lockDocumentDispositionProgram(q, ctx.tenantId, programId);
+    const references: NonNullable<DocumentProvenance['projectSourceReferences']> = [];
+    for (const section of selected) {
+      const sources = await verifyDraftSourceReferences(section.refs, q, ctx.tenantId, programId);
+      references.push({ sectionCode: section.sectionCode, sources, qualification: 'unassessed', verification: 'current_at_save' });
+    }
+    // Keep the same object used by the document and every CREATE audit row.
+    provenance.projectSourceReferences = references;
+    provenance.recordedAt = new Date().toISOString();
+  } catch {
+    throw new DraftSourceVerificationError();
+  }
+}
+
 export async function createDocumentFromDraft(
   ctx: CreateContext,
   input: CreateDocumentFromDraftInput,
@@ -234,18 +256,13 @@ export async function createDocumentFromDraft(
     ...(input.module ? {} : { moduleDefaulted: true }),
     recordedAt: new Date().toISOString(),
   };
+  let selectedSources: SelectedDraftSources;
   try {
-    const references: NonNullable<DocumentProvenance['projectSourceReferences']> = [];
-    for (const section of input.sections) {
-      if (!section.sourceReferences?.length) continue;
-      // Validate again even for typed internal callers; parsed/model receipts are not trusted facts.
-      const refs = parseDraftSourceReferences(section.sourceReferences);
-      const sources = await verifyDraftSourceReferences(refs, ctx.pool, ctx.tenantId, input.programId);
-      references.push({ sectionCode: section.code, sources, qualification: 'unassessed', verification: 'current_at_save' });
-    }
-    if (references.length) provenance.projectSourceReferences = references;
+    // Parse even for typed callers; actual source reads occur only inside BEGIN.
+    selectedSources = input.sections.filter(s => s.sourceReferences?.length)
+      .map(s => ({ sectionCode: s.code, refs: parseDraftSourceReferences(s.sourceReferences) }));
   } catch {
-    return { kind: 'refused', status: 409, error: 'Project source references are unavailable, changed, or could not be verified. Refresh the source records and draft receipts before saving. Nothing was created.' };
+    return SOURCE_VERIFICATION_REFUSAL;
   }
   const docId = crypto.randomUUID();
   // The same binding rule as POST /docs: the project's filing keeps one editing
@@ -257,7 +274,7 @@ export async function createDocumentFromDraft(
     ? [{ id: ANA_MACHINE_AUTHOR_ID, name: MACHINE_AUTHOR_IDS[ANA_MACHINE_AUTHOR_ID] }]
     : [];
 
-  const { document, binding } = await insertDocumentTx(
+  const inserted = await insertDocumentTx(
     ctx,
     {
       docId,
@@ -282,7 +299,13 @@ export async function createDocumentFromDraft(
       contributors,
       lineage: { machineDraft: isMachineDraft ? { authorId: ANA_MACHINE_AUTHOR_ID } : null },
     })),
-  );
+    client => verifySourcesInsideSave(client, ctx, input.programId, selectedSources, provenance),
+  ).catch(err => {
+    if (err instanceof DraftSourceVerificationError) return null;
+    throw err;
+  });
+  if (!inserted) return SOURCE_VERIFICATION_REFUSAL;
+  const { document, binding } = inserted;
   await grantCreatorOwnership(ctx, docId);
 
   const sections = await ctx.pool.query(

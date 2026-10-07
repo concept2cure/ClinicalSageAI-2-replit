@@ -314,26 +314,30 @@ export async function insertDocumentTx(
   ctx: CreateContext,
   spec: DocumentRowSpec,
   seeds: SectionSeed[],
+  beforeInsert?: (client: Queryable) => Promise<void>,
 ): Promise<{ document: Record<string, unknown>; binding: Binding }> {
   const { pool, tenantId, actor } = ctx;
-  // Build the INSERT so the program-scope / binding / provenance columns are
-  // referenced ONLY when supplied, so a create without them emits the exact
-  // original statement and databases lacking those migrations keep working.
-  const cols = ['id', 'title', 'module', 'product_code', 'locale', 'status', 'created_by', 'created_at', 'updated_at', 'tenant_id', 'template_id'];
-  const vals = ['$1', '$2', '$3', '$4', '$5', `'draft'`, '$6', 'NOW()', 'NOW()', '$7', '$8'];
-  const args: unknown[] = [spec.docId, spec.title, spec.module, spec.productCode, spec.locale, actor.id, tenantId, spec.templateId];
-  const addCol = (col: string, value: unknown, cast = '') => {
-    args.push(value);
-    cols.push(col);
-    vals.push(`$${args.length}${cast}`);
-  };
-  if (spec.clientProgramId) addCol('client_program_id', spec.clientProgramId);
-  if (spec.binding.documentId) addCol('c2c_document_id', spec.binding.documentId);
-  if (spec.provenance) addCol('provenance', JSON.stringify(spec.provenance), '::jsonb');
-
   const client: TxClient = await pool.connect();
   try {
     await client.query('BEGIN');
+    // Source eligibility must be checked/locked before any regulated write,
+    // and before provenance is serialized into the INSERT arguments.
+    await beforeInsert?.(client);
+    // Build the INSERT so the program-scope / binding / provenance columns are
+    // referenced ONLY when supplied, so a create without them emits the exact
+    // original statement and databases lacking those migrations keep working.
+    const cols = ['id', 'title', 'module', 'product_code', 'locale', 'status', 'created_by', 'created_at', 'updated_at', 'tenant_id', 'template_id'];
+    const vals = ['$1', '$2', '$3', '$4', '$5', `'draft'`, '$6', 'NOW()', 'NOW()', '$7', '$8'];
+    const args: unknown[] = [spec.docId, spec.title, spec.module, spec.productCode, spec.locale, actor.id, tenantId, spec.templateId];
+    const addCol = (col: string, value: unknown, cast = '') => {
+      args.push(value);
+      cols.push(col);
+      vals.push(`$${args.length}${cast}`);
+    };
+    if (spec.clientProgramId) addCol('client_program_id', spec.clientProgramId);
+    if (spec.binding.documentId) addCol('c2c_document_id', spec.binding.documentId);
+    if (spec.provenance) addCol('provenance', JSON.stringify(spec.provenance), '::jsonb');
+
     const result = await client.query(
       `INSERT INTO authoring_documents (${cols.join(', ')})
        VALUES (${vals.join(', ')})

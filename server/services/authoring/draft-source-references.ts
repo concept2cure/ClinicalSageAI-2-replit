@@ -1,6 +1,6 @@
 /** Durable declared source references, reverified at save; not proof of claim support. */
 import type { DraftSource } from '../ana/draft-project-sources.js';
-import type { AuthoringPool } from './authoring-documents.js';
+import type { Queryable } from '../vault/document-catalog.service.js';
 import { sourceAvailabilityPresentation } from '../vault/document-catalog-eligibility.js';
 
 export type DraftSourceReference = Pick<DraftSource, 'documentId' | 'contentHash' | 'span'>;
@@ -28,7 +28,7 @@ export function parseDraftSourceReferences(raw: unknown): DraftSourceReference[]
 }
 
 export async function verifyDraftSourceReferences(
-  refs: DraftSourceReference[], pool: AuthoringPool, organizationId: number, programId: string,
+  refs: DraftSourceReference[], pool: Queryable, organizationId: number, programId: string,
 ): Promise<VerifiedDraftSourceReference[]> {
   const { loadDocumentForOrg } = await import('../vault/document-catalog.service.js');
   const verified: VerifiedDraftSourceReference[] = [];

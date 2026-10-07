@@ -164,7 +164,7 @@ export interface CatalogDocumentRow {
 export async function loadDocumentForOrg(
   documentId: string,
   organizationId: number,
-  opts: { includeText?: boolean; executor?: Pick<typeof pool, 'query'>; programId?: string } = {},
+  opts: { includeText?: boolean; executor?: Queryable; programId?: string } = {},
 ): Promise<CatalogDocumentRow | null> {
   const textCol = opts.includeText ? 'd.extracted_text' : 'NULL::text AS extracted_text';
   const programClause = opts.programId ? ' AND d.program_id = $3::uuid' : '';

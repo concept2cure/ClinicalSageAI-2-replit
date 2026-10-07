@@ -6,6 +6,7 @@ import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import { DispositionError, DISPOSITION_UUID as UUID, DISPOSITION_HASH as HASH, type DispositionPreviewInput, type DispositionApplyInput, type DispositionQueryable, type DispositionServiceDependencies, type Snapshot } from './types';
 import { createDispositionTokenCodec, hashSnapshot } from './tokens';
 import { readDispositionSnapshot } from './impact';
+import { lockDocumentDispositionProgram } from './program-lock';
 export * from './types';
 
 /** All records contributing to the preview are write-locked during confirmation.
@@ -87,9 +88,8 @@ export function createDocumentDispositionService(deps: DispositionServiceDepende
       const decoded = decode(input);
       return transaction(async q => {
         await scoped(q,input,true);
-        await q.query("SET LOCAL lock_timeout = '5s'");
         await q.query("SET LOCAL statement_timeout = '30s'");
-        await q.query(`SELECT pg_advisory_xact_lock(hashtext('document_data_dispositions'),hashtext($1))`,[`${input.organizationId}:${input.programId}`]);
+        await lockDocumentDispositionProgram(q, input.organizationId, input.programId);
         // A missing impact store refuses; it is never silently treated as zero.
         await q.query(`LOCK TABLE ${IMPACT_TABLES.join(', ')} IN SHARE MODE`);
         await q.query(`LOCK TABLE public.document_data_dispositions IN SHARE ROW EXCLUSIVE MODE`);
