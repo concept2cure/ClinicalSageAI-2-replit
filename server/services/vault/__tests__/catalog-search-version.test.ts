@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const h = vi.hoisted(() => ({ query: vi.fn(), embed: vi.fn() }));
 vi.mock('../../../db.js', () => ({ pool: { query: h.query } }));
 vi.mock('../../enhancedEmbeddingService.js', () => ({ getEmbeddingService: () => ({ embed: h.embed }) }));
-import { searchCatalog } from '../document-catalog-search';
+import { searchCatalog, CatalogSearchUnavailableError } from '../document-catalog-search';
+import { supersededSql } from '../vault-version-family';
 beforeEach(() => {
   vi.clearAllMocks();
   h.embed.mockResolvedValue({ embedding: [1, 2, 3] });
@@ -19,9 +20,22 @@ describe('semantic catalog source-version query contract', () => {
       expect(sql).toContain('c.content_hash = d.content_hash');
       expect(sql).toContain('rp.organization_id = $1');
       expect(sql).toContain('d.deleted_at IS NULL');
+      expect(sql).toContain(`AND NOT ${supersededSql('d')}`);
     }
     expect(countSql).toContain('LEFT JOIN vault.document_catalog');
     expect(countArgs).toEqual([7, programId]);
     expect(hitArgs).toEqual([7, '[1,2,3]', 0.15, 8, programId]);
+  });
+
+  it('keeps provider failure unavailable rather than an empty current corpus', async () => {
+    h.embed.mockRejectedValueOnce(new Error('Embedding unavailable'));
+    await expect(searchCatalog(7, 'study endpoint')).rejects.toBeInstanceOf(CatalogSearchUnavailableError);
+    expect(h.query).not.toHaveBeenCalled();
+  });
+
+  it('does not turn a database failure into no current matches', async () => {
+    h.query.mockReset().mockRejectedValueOnce(new Error('Database unavailable'));
+    await expect(searchCatalog(7, 'study endpoint')).rejects.toThrow('Database unavailable');
+    expect(h.query).toHaveBeenCalledTimes(1);
   });
 });
