@@ -171,7 +171,9 @@ describe('a question sent here while AnA is still answering', () => {
     // A send now would be refused by the hook's re-entrancy guard — the
     // question would be dropped without a word. It is held instead.
     expect(chat.send).not.toHaveBeenCalled();
-    const composer = screen.getByLabelText('Reply to AnA') as HTMLTextAreaElement;
+    /* While her run is in flight the composer steers it (ONE_ANA_ONE_CANVAS.md,
+       slice 4), so it is labelled for that; the question still waits in it. */
+    const composer = screen.getByLabelText('Steer this run') as HTMLTextAreaElement;
     expect(composer.value).toBe('What blocks the Module 3 freeze?');
     expect(screen.getByText(/your question has not been sent/)).toBeTruthy();
     expect(shownTurns()).toEqual(['Walk me through the vault for BX-301.']);
