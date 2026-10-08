@@ -82,7 +82,7 @@ import {
 import { getAnaLockedScreens } from './anaLockedScreens';
 import { isAnaRunPolicy, stepLabels } from '@shared/ana/run-policy';
 import { clientContinuationContext } from '@shared/ana/continuation-context';
-import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
+import { MAX_INTERJECTION_CHARS, type AnaRunPolicy } from '@shared/ana/run-control-limits';
 import { readGroundingStrip, readStoredVerification } from './anaAnswerCheck';
 
 import type {
@@ -454,6 +454,57 @@ export function streamRefusalText(err: unknown): string {
   return "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved.";
 }
 
+interface SteerAttempt {
+  id: number;
+  message: string;
+  echoText: string;
+  status: 'awaiting' | 'accepted' | 'refused';
+}
+
+interface SteerLedger {
+  runId: string;
+  attempts: SteerAttempt[];
+  receipts: number[][];
+}
+
+/** The control endpoint trims/caps; the queue drain trims again before SSE. */
+function normalizedSteer(message: string): string {
+  return message.trim().slice(0, MAX_INTERJECTION_CHARS).trim();
+}
+
+/**
+ * HTTP and SSE have no shared request ID. A receipt can confirm one accepted
+ * matching submission already started when it arrived, not a later one.
+ * Duplicate text is reconciled by count, never by claiming an exact identity.
+ */
+function steersStillWaiting(ledger: SteerLedger): string[] {
+  const accepted = new Set(ledger.attempts.filter(attempt => attempt.status === 'accepted').map(attempt => attempt.id));
+  const confirmed = new Set<number>();
+  for (const eligible of ledger.receipts) {
+    const id = eligible.find(candidate => accepted.has(candidate) && !confirmed.has(candidate));
+    if (id !== undefined) confirmed.add(id);
+  }
+  return ledger.attempts
+    .filter(attempt => accepted.has(attempt.id) && !confirmed.has(attempt.id))
+    .map(attempt => attempt.message);
+}
+
+/** Capture eligibility once, outside React's repeatable state updater. */
+function recordSteerReceipt(
+  ledger: SteerLedger | null,
+  turnRunId: string | null,
+  currentRunId: string | null,
+  message: string,
+): string[] | undefined {
+  if (!ledger || ledger.runId !== turnRunId || currentRunId !== turnRunId) return;
+  const eligible = ledger.attempts
+    .filter(attempt => attempt.status !== 'refused' && attempt.echoText === message)
+    .map(attempt => attempt.id);
+  if (eligible.length === 0) return;
+  ledger.receipts.push(eligible);
+  return steersStillWaiting(ledger);
+}
+
 /** Recovery beside a partial draft must not describe an already-started reply as unsent. */
 function partialReplyRecoveryText(err: unknown): string {
   const failure = err as { code?: string; status?: number } | undefined;
@@ -620,12 +671,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   // lands at the NEXT round boundary, which can be many seconds away; until
   // the `interjected` event confirms it, this is the only evidence it exists.
   const [pendingSteers, setPendingSteers] = useState<string[]>([]);
+  const steerLedgerRef = useRef<SteerLedger | null>(null);
+  const steerSequenceRef = useRef(0);
   /* A person's steer into a run — the one path for it, whether typed into the
      composer (`interject`) or into the drive strip (a drive turn's controls).
      Accepted, it waits in `pendingSteers` until the server's `interjected`
-     echo confirms it spliced. The echo is matched by POSITION, so a steer the
-     server accepted without being queued here would consume the confirmation
-     meant for another, still-waiting one.
+     echo confirms it spliced. An echo can arrive before the HTTP response,
+     so record the attempt before dispatch without showing it as accepted.
 
      Queued only if its run is still in flight when the acceptance arrives. A
      run whose last round ended while the request was out never splices it,
@@ -636,9 +688,20 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
      run, like any steer the run never reached. */
   const steerRun = useCallback(
     async (runId: string | null, message: string) => {
+      let ledger: SteerLedger | null = null;
+      let attempt: SteerAttempt | null = null;
+      if (runId !== null && runIdRef.current === runId) {
+        if (steerLedgerRef.current?.runId !== runId) {
+          steerLedgerRef.current = { runId, attempts: [], receipts: [] };
+        }
+        ledger = steerLedgerRef.current;
+        attempt = { id: ++steerSequenceRef.current, message, echoText: normalizedSteer(message), status: 'awaiting' };
+        ledger.attempts.push(attempt);
+      }
       const ok = await controlRun(runId, 'interject', message);
-      if (ok && runId !== null && runIdRef.current === runId) {
-        setPendingSteers(prev => [...prev, message]);
+      if (attempt && ledger && steerLedgerRef.current === ledger && runIdRef.current === runId) {
+        attempt.status = ok ? 'accepted' : 'refused';
+        setPendingSteers(steersStillWaiting(ledger));
       }
       return ok;
     },
@@ -748,6 +811,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     setRunStatus(null);
     setRunHold(null);
     setTurnRunPolicy(null);
+    steerLedgerRef.current = null;
     setPendingSteers([]);
     abandoned?.abort();
   }, [haltTurnDrive]);
@@ -962,6 +1026,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       setIsStreaming(true);
       // Fresh run: clear any prior run's control id/status until `run_started`.
       runIdRef.current = null;
+      steerLedgerRef.current = null;
       setRunStatus(null);
       setRunHold(null);
       const sentPolicy = sendOpts?.runPolicy ?? options.runPolicy;
@@ -1374,12 +1439,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // Surface the accepted steer as a small note on the assistant turn.
               const msg: string = typeof event.message === 'string' ? event.message : '';
               if (msg) {
-                // Confirmed spliced into a round: it is no longer waiting. The
-                // oldest pending steer is the one consumed — the server drains
-                // its queue in order and echoes each as it goes — and it is
-                // matched by position, not text, because the echo is trimmed
-                // and capped server-side and a long steer would never match.
-                setPendingSteers(prev => (prev.length > 0 ? prev.slice(1) : prev));
+                // Match only attempts already started for this run and the
+                // service's canonical text. Keep the receipt while HTTP is
+                // pending, so a delayed acceptance cannot resurrect the steer.
+                const waiting = recordSteerReceipt(steerLedgerRef.current, turnRunId, runIdRef.current, msg);
+                setPendingSteers(prev => waiting ?? prev);
                 // Under Manual a steer may REPLACE the held step: it never ran.
                 const replaced = frameLabels(event.replaced);
                 setMessages(prev =>
@@ -1930,6 +1994,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           setRunStatus(null);
           setRunHold(null);
           setTurnRunPolicy(null);
+          steerLedgerRef.current = null;
           // A steer the run never reached is not pending anymore; it was lost
           // with the run, and the transcript's interjections say which landed.
           setPendingSteers([]);

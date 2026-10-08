@@ -1,0 +1,165 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > does not queue an already-landed steer when its SSE receipt arrives before HTTP success 27ms
+   → expected [ 'Use the current protocol' ] to deeply equal []
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > shows accepted work waiting when HTTP succeeds first, then clears it on SSE confirmation 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > never shows an unaccepted steer after a control refusal 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > never shows an unaccepted steer after a control timeout 3ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > reconciles one duplicate receipt with success and refusal in failure-first order 4ms
+   → expected [ 'Use the source catalog' ] to deeply equal []
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > reconciles one duplicate receipt with success and refusal in success-first order 3ms
+   → expected [ 'Use the source catalog' ] to deeply equal []
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > keeps exactly one duplicate pending after one receipt and out-of-order HTTP successes 3ms
+   → expected [ 'Check the evidence' ] to deeply equal []
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > does not use an earlier same-text receipt to confirm a later submission 4ms
+   → expected [ 'Review the source', …(1) ] to deeply equal [ 'Review the source' ]
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > does not consume unrelated pending work on an unmatched external echo 4ms
+   → expected [] to deeply equal [ 'Review the protocol' ]
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > matches the server whitespace and character-cap normalization without losing payload text 2ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > preserves accepted-but-abandoned acknowledgment without affecting a replacement run 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > does not queue an already-landed steer when its SSE receipt arrives before HTTP success
+AssertionError: expected [ 'Use the current protocol' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Use the current protocol",
++ ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts:97:44
+     95|     expect(f.result.current.messages.at(-1)?.interjections).toEqual(['…
+     96|     expect(await f.reply(0, true, pending)).toBe(true);
+     97|     expect(f.result.current.pendingSteers).toEqual([]);
+       |                                            ^
+     98|   });
+     99|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > reconciles one duplicate receipt with success and refusal in failure-first order
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > reconciles one duplicate receipt with success and refusal in success-first order
+AssertionError: expected [ 'Use the source catalog' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Use the source catalog",
++ ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts:133:44
+    131|       expect(await f.reply(0, false, first.pending)).toBe(false);
+    132|     }
+    133|     expect(f.result.current.pendingSteers).toEqual([]);
+       |                                            ^
+    134|     expect(f.result.current.messages.at(-1)?.interjections).toEqual(['…
+    135|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > keeps exactly one duplicate pending after one receipt and out-of-order HTTP successes
+AssertionError: expected [ 'Check the evidence' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Check the evidence",
++ ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts:143:44
+    141|     await f.echo('Check the evidence');
+    142|     expect(await f.reply(1, true, second.pending)).toBe(true);
+    143|     expect(f.result.current.pendingSteers).toEqual([]);
+       |                                            ^
+    144|     expect(await f.reply(0, true, first.pending)).toBe(true);
+    145|     expect(f.result.current.pendingSteers).toEqual(['Check the evidenc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > does not use an earlier same-text receipt to confirm a later submission
+AssertionError: expected [ 'Review the source', …(1) ] to deeply equal [ 'Review the source' ]
+
+- Expected
++ Received
+
+  [
+    "Review the source",
++   "Review the source",
+  ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts:157:44
+    155|     expect(await f.reply(0, true, first.pending)).toBe(true);
+    156|     expect(await f.reply(1, true, second.pending)).toBe(true);
+    157|     expect(f.result.current.pendingSteers).toEqual(['Review the source…
+       |                                            ^
+    158|     await f.echo('Review the source');
+    159|     expect(f.result.current.pendingSteers).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > does not consume unrelated pending work on an unmatched external echo
+AssertionError: expected [] to deeply equal [ 'Review the protocol' ]
+
+- Expected
++ Received
+
+- [
+-   "Review the protocol",
+- ]
++ []
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts:167:44
+    165|     expect(await f.reply(0, true, pending)).toBe(true);
+    166|     await f.echo('An instruction from another controller');
+    167|     expect(f.result.current.pendingSteers).toEqual(['Review the protoc…
+       |                                            ^
+    168|     await f.echo('Review the protocol');
+    169|     expect(f.result.current.pendingSteers).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > matches the server whitespace and character-cap normalization without losing payload text
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  ",
++ ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts:178:44
+    176|     await f.echo(message.trim().slice(0, MAX_INTERJECTION_CHARS));
+    177|     expect(await f.reply(0, true, pending)).toBe(true);
+    178|     expect(f.result.current.pendingSteers).toEqual([]);
+       |                                            ^
+    179|     expect(f.result.current.messages.at(-1)?.interjections).toEqual(['…
+    180|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 4 passed (11)
+   Start at  13:03:15
+   Duration  1.04s (transform 242ms, setup 164ms, import 283ms, tests 66ms, environment 407ms)
