@@ -611,10 +611,9 @@ export function SubmissionCenter({
   /* F10: opened on the submission, sequence and tab a sender named (Place into
      filing's "Open in Submission Center"). Read once on mount; opened against
      the rows the server returned, after the reset above, never guessed. */
-  const [navTarget] = React.useState(() => {
-    const p = consumeNavParams('submission-center');
-    return p ? readSubmissionNavTarget({ submissionId: p.submissionId, sequenceId: p.sequenceId, ws: p.ws }) : null;
-  });
+  const [navParams] = React.useState(() => consumeNavParams('submission-center'));
+  const [navTarget] = React.useState(() =>
+    navParams ? readSubmissionNavTarget({ submissionId: navParams.submissionId, sequenceId: navParams.sequenceId, ws: navParams.ws }) : null);
   const navMiss = useOpenOnNavTarget(navTarget, {
     subs, sub, seqs, ws, selSeq, selectSubmission: setSelSub, selectSequence: setSelSeq, openWorkspace: setWs,
   });
@@ -638,7 +637,9 @@ export function SubmissionCenter({
    * body targeted a different, unmounted router's schema; every submit
    * answered 400 VALIDATION.)
    */
-  const [newOpen, setNewOpen] = React.useState(false);
+  /* F9: the project page's "Add a market" opens this form on arrival — only
+     with a project open, since the submission is that project's (F20). */
+  const [newOpen, setNewOpen] = React.useState(() => navParams?.newSubmission === '1' && !!openProgramId);
   const [creating, setCreating] = React.useState(false);
   const createSubmission = async (v: Record<string, string>) => {
     if (creating) return;

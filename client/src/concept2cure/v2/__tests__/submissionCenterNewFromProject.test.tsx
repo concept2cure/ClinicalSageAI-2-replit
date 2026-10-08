@@ -29,6 +29,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { SubmissionCenter } from '../surfaces/SubmissionCenter';
+import { clearNavParams, stashNavParamsForTarget } from '../navParams';
 
 const PID = '4c2a9e1b-7d3f-4a51-9b8e-2f6d0c1a3f20';
 const res = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
@@ -94,7 +95,31 @@ async function openNew() {
 
 afterEach(() => {
   cleanup();
+  clearNavParams();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+});
+
+/* F9: the project page's "Add a market" sends { ws: 'portfolio',
+   newSubmission: '1' }; the form is open on arrival, on the project's filing.
+   Without a project open there is no project to add a market to, so the
+   list is shown and nothing opens. */
+describe('"Add a market" opens New submission on arrival (F9)', () => {
+  it('with the project open, the form is open on arrival with its filing preselected', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'ONC-221', ws: 'Pharma' };
+    serve();
+    stashNavParamsForTarget('submission-center', { ws: 'portfolio', newSubmission: '1' });
+    render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+    await screen.findByLabelText(/Title/);
+    await waitFor(() => expect(select(/Application type/).value).toBe('nda'));
+  });
+
+  it('with no project open, nothing opens on its own', async () => {
+    serve();
+    stashNavParamsForTarget('submission-center', { ws: 'portfolio', newSubmission: '1' });
+    render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+    await screen.findByRole('button', { name: /New submission/ });
+    expect(screen.queryByLabelText(/Title/)).toBeNull();
+  });
 });
 
 describe('New submission takes the open project\'s filing (F20)', () => {
