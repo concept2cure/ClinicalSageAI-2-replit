@@ -252,7 +252,7 @@ describe('mandatory authoring object authorization middleware', () => {
      filing artifact, filed to the vault as a sealed record, or sent to the
      packager. They are now the `export` action: any status, and a grant that
      produces the record (OWNER, AUTHOR, APPROVER). */
-  it.each(['export', 'file-to-vault', 'send-to-packager'])(
+  it.each(['export', 'file-to-vault', 'send-to-packager', 'working-copy'])(
     'lets the record be produced from a FROZEN document: POST /docs/:id/%s',
     async route => {
       for (const role of ['OWNER', 'AUTHOR', 'APPROVER']) {
@@ -269,7 +269,7 @@ describe('mandatory authoring object authorization middleware', () => {
     },
   );
 
-  it.each(['export', 'file-to-vault', 'send-to-packager'])(
+  it.each(['export', 'file-to-vault', 'send-to-packager', 'working-copy'])(
     'still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/%s',
     async route => {
       for (const role of ['REVIEWER', 'VIEWER']) {

@@ -39,7 +39,8 @@ function actionFromPath(path: string): AuthoringPermissionAction {
   if (/(?:^|\/)(?:comment|comments)(?:\/|$)/.test(lower)) return 'comment';
   // Produce the record without changing the document — see the 'export'
   // action in authoring-permissions.ts (2026-09-28).
-  if (/(?:^|\/)(?:export|file-to-vault|send-to-packager)(?:\/|$)/.test(lower)) return 'export';
+  // A working copy is produced the same way and needs the same permission.
+  if (/(?:^|\/)(?:export|file-to-vault|send-to-packager|working-copy)(?:\/|$)/.test(lower)) return 'export';
   return 'edit';
 }
 

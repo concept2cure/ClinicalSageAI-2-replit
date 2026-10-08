@@ -1,0 +1,457 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > is the renderer actually in use unless a Puppeteer driver is installed
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > keeps table cells, list numbering, figures and entities readable 195ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > renders a placeholder rather than an empty page for empty input 10ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > is deterministic for identical input 22ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > says on the page that it is a plain-text rendering 9ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > puts the notice before the content, not after it 8ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > does not alter the content it is warning about 7ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > is the renderer actually in use unless a Puppeteer driver is installed 18ms
+ × server/export/__tests__/renderers-fallback.test.ts > renderFallbackPdf — a page banner on every page > prints the banner at the top and bottom of every page of a multi-page document 48ms
+   → page 1: expected +0 to be 2 // Object.is equality
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderFallbackPdf — a page banner on every page > prints no banner when none is asked for 27ms
+stderr | server/routes/__tests__/authoringWorkingCopy.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringWorkingCopy.test.ts
+{
+  "timestamp": "2026-10-08T01:23:11.747Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWorkingCopy.test.ts
+✅ Template tables initialized
+
+ × server/routes/__tests__/authoringWorkingCopy.test.ts > a working copy of a draft > PDF: every page carries the uncontrolled-copy banner; no signature manifestation 46ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/authoringWorkingCopy.test.ts > a working copy of a draft > DOCX: the banner is in the page header and footer parts; no signature manifestation 8ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/authoringWorkingCopy.test.ts > a working copy of a draft > is recorded once, with the delivered bytes' hash, and writes no export-history row 5ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/authoringWorkingCopy.test.ts > a working copy of a draft > is not sent when it cannot be recorded 5ms
+   → expected 404 to be 503 // Object.is equality
+ × server/routes/__tests__/authoringWorkingCopy.test.ts > a working copy of a draft > is DOCX or PDF only 6ms
+   → expected 404 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/authoringWorkingCopy.test.ts > a working copy of a draft > leaves the controlled export as it was: the same draft is still refused 6ms
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > denies a same-tenant authenticated user with no object permission
+{
+  "timestamp": "2026-10-08T01:23:14.791Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "unrelated-user",
+    "method": "PATCH",
+    "path": "/authoring/sections/20000000-0000-4000-8000-000000000001",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": "20000000-0000-4000-8000-000000000001",
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a REVIEWER comment but does not let the reviewer edit content
+{
+  "timestamp": "2026-10-08T01:23:14.794Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "reviewer-user",
+    "method": "PATCH",
+    "path": "/authoring/sections/20000000-0000-4000-8000-000000000001",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": "20000000-0000-4000-8000-000000000001",
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a section-scoped APPROVER reach an approval action but not an ordinary edit
+{
+  "timestamp": "2026-10-08T01:23:14.795Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "approver-user",
+    "method": "DELETE",
+    "path": "/authoring/sections/20000000-0000-4000-8000-000000000001",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": "20000000-0000-4000-8000-000000000001",
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > classes /docs/:id/e-sign as an approval action, so a FROZEN document can be signed (VSR-001 F-12)
+{
+  "timestamp": "2026-10-08T01:23:14.796Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "approver-user",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/e-sign",
+    "action": "approve",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/export
+{
+  "timestamp": "2026-10-08T01:23:14.805Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/export",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/export
+{
+  "timestamp": "2026-10-08T01:23:14.806Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/export",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/file-to-vault
+{
+  "timestamp": "2026-10-08T01:23:14.807Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/file-to-vault",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/file-to-vault
+{
+  "timestamp": "2026-10-08T01:23:14.807Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/file-to-vault",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/send-to-packager
+{
+  "timestamp": "2026-10-08T01:23:14.808Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/send-to-packager",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/send-to-packager
+{
+  "timestamp": "2026-10-08T01:23:14.811Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/send-to-packager",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > fails closed with 503 when the permission store cannot be queried
+{
+  "timestamp": "2026-10-08T01:23:14.816Z",
+  "level": "error",
+  "message": "[authoring-object-authorization] Authoring authorization unavailable; denying mutation",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "PATCH",
+    "path": "/authoring/sections/20000000-0000-4000-8000-000000000001",
+    "error": "permission store unavailable"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies a same-tenant member with no doc_permissions grant — this is the case the fix exists for
+{
+  "timestamp": "2026-10-08T01:23:14.818Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-outsider",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies the same caller on the bulk route identically
+{
+  "timestamp": "2026-10-08T01:23:14.819Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-outsider",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions/bulk",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > a REVIEWER who can review but not edit is still refused here — the same person can accept via /sections/:id, so this is not a workflow lockout
+{
+  "timestamp": "2026-10-08T01:23:14.820Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-reviewer",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > ignores non-authoring API mutations at the shared /api mount 3ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > allows document creation so the database trigger can seed OWNER and AUTHOR 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > allows a document author to edit the section 3ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > denies a same-tenant authenticated user with no object permission 3ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a REVIEWER comment but does not let the reviewer edit content 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a section-scoped APPROVER reach an approval action but not an ordinary edit 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > classes /docs/:id/e-sign as an approval action, so a FROZEN document can be signed (VSR-001 F-12) 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/export 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/file-to-vault 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/send-to-packager 1ms
+ × server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/working-copy 5ms
+   → OWNER refused working-copy on a FROZEN document (409): expected "vi.fn()" to be called once, but got 0 times
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/export 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/file-to-vault 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/send-to-packager 4ms
+ × server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/working-copy 4ms
+   → expected 409 to be 403 // Object.is equality
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > blocks content mutation after the document becomes immutable 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > fails closed with 503 when the permission store cannot be queried 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > rejects a mutation when verified principal or tenant context is missing 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > does not impose mutation permission checks on safe reads 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies a same-tenant member with no doc_permissions grant — this is the case the fix exists for 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies the same caller on the bulk route identically 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > still allows the document author — an AUTHOR grant is enough to record a decision 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > a REVIEWER who can review but not edit is still refused here — the same person can accept via /sections/:id, so this is not a workflow lockout 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > refuses a FROZEN document with 409, not a silent pass-through 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > does not match a document id that merely starts with "docs" or an unrelated /documents/ route 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/export/__tests__/renderers-fallback.test.ts > renderFallbackPdf — a page banner on every page > prints the banner at the top and bottom of every page of a multi-page document
+AssertionError: page 1: expected +0 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ server/export/__tests__/renderers-fallback.test.ts:165:62
+    163|     expect(text.length).toBeGreaterThan(2);
+    164|     for (const [i, page] of text.entries()) {
+    165|       expect(page.split(BANNER).length - 1, `page ${i + 1}`).toBe(2);
+       |                                                              ^
+    166|     }
+    167|     // Stamping the banner added no page of its own.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/working-copy
+AssertionError: OWNER refused working-copy on a FROZEN document (409): expected "vi.fn()" to be called once, but got 0 times
+ ❯ server/middleware/__tests__/authoringObjectAuthorization.test.ts:267:91
+    265|           next,
+    266|         );
+    267|         expect(next, `${role} refused ${route} on a FROZEN document ($…
+       |                                                                                           ^
+    268|       }
+    269|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/working-copy
+AssertionError: expected 409 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 409
+
+ ❯ server/middleware/__tests__/authoringObjectAuthorization.test.ts:285:32
+    283|         );
+    284|         expect(next).not.toHaveBeenCalled();
+    285|         expect(res.statusCode).toBe(403);
+       |                                ^
+    286|       }
+    287|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/routes/__tests__/authoringWorkingCopy.test.ts > a working copy of a draft > PDF: every page carries the uncontrolled-copy banner; no signature manifestation
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/authoringWorkingCopy.test.ts:99:24
+     97|       request(app()).post('/api/authoring/docs/D1/working-copy').set('…
+     98|     );
+     99|     expect(res.status).toBe(200);
+       |                        ^
+    100|     expect(res.headers['content-type']).toContain('application/pdf');
+    101|     expect(res.headers['content-disposition']).toContain('working_copy…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/routes/__tests__/authoringWorkingCopy.test.ts > a working copy of a draft > DOCX: the banner is in the page header and footer parts; no signature manifestation
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/authoringWorkingCopy.test.ts:112:24
+    110|       request(app()).post('/api/authoring/docs/D1/working-copy').set('…
+    111|     );
+    112|     expect(res.status).toBe(200);
+       |                        ^
+    113|     const zip = await JSZip.loadAsync(res.body as Buffer);
+    114|     const names = Object.keys(zip.files);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/routes/__tests__/authoringWorkingCopy.test.ts > a working copy of a draft > is recorded once, with the delivered bytes' hash, and writes no export-history row
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/authoringWorkingCopy.test.ts:130:24
+    128|       request(app()).post('/api/authoring/docs/D1/working-copy').set('…
+    129|     );
+    130|     expect(res.status).toBe(200);
+       |                        ^
+    131|     const rows = auditRows();
+    132|     expect(rows).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/routes/__tests__/authoringWorkingCopy.test.ts > a working copy of a draft > is not sent when it cannot be recorded
+AssertionError: expected 404 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 404
+
+ ❯ server/routes/__tests__/authoringWorkingCopy.test.ts:144:24
+    142|       request(app()).post('/api/authoring/docs/D1/working-copy').set('…
+    143|     );
+    144|     expect(res.status).toBe(503);
+       |                        ^
+    145|     expect(res.headers['content-type']).toContain('application/json');
+    146|     expect((res.body as Buffer).toString()).not.toContain('%PDF');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/routes/__tests__/authoringWorkingCopy.test.ts > a working copy of a draft > is DOCX or PDF only
+AssertionError: expected 404 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 404
+
+ ❯ server/routes/__tests__/authoringWorkingCopy.test.ts:152:24
+    150|   it('is DOCX or PDF only', async () => {
+    151|     const res = await request(app()).post('/api/authoring/docs/D1/work…
+    152|     expect(res.status).toBe(400);
+       |                        ^
+    153|     expect(res.body.code).toBe('WORKING_COPY_FORMAT');
+    154|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  8 failed | 32 passed (40)
+   Start at  01:23:07
+   Duration  6.86s (transform 2.80s, setup 141ms, import 5.60s, tests 472ms, environment 0ms)
+
