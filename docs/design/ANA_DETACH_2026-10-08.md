@@ -1,37 +1,68 @@
 # AnA detach: a turn that outlives its page, and any device that can rejoin it
 
-**Date:** 2026-10-08. **Status:** design only. No product code was changed. Checked against `concept2cure-v2` at `24ad99898` (S1–S5 landed: `6df767850`, `546a989e7`, `d6e0be49b`, `1f2557255`, `24ad99898`).
-**Asked by:** decision 2 (b) of `docs/design/ANA_AGENT_WORK_VIEW_2026-10-08.md` ("Decisions taken", line 586): *"A turn keeps running when the page closes or the phone locks, inside the API process, with D1 built alongside it. It gets its own design after S4."* Recorded in `docs/LAUNCH_DEFINITION_OF_DONE.md:373` (P-24).
-**Revision:** second draft. The first draft was critiqued in a governance/security pass and a product/UX pass; §11 lists every point and how it was handled, and says how those passes were run.
+**Date:** 2026-10-08. **Status:** design only; no product code was changed. Checked against `concept2cure-v2` at `c33211ee2` (S1–S5 landed: `6df767850`, `546a989e7`, `d6e0be49b`, `1f2557255`, `24ad99898`).
+
+**Asked by:** decision 2 (b) of `docs/design/ANA_AGENT_WORK_VIEW_2026-10-08.md` ("Decisions taken", line 586): *"A turn keeps running when the page closes or the phone locks, inside the API process, with D1 built alongside it. It gets its own design after S4."* It is recorded as P-24 in `docs/LAUNCH_DEFINITION_OF_DONE.md:373`.
+
+**Revision:** third draft.
+- The second draft (`c33211ee2`) was reviewed by two independent reviewers, one for governance and security and one for product and UX.
+- Every finding is addressed in the body. §11 records each finding and how it was handled.
+- The decisions are now taken (§9).
 
 ## Summary
 
-Today a dropped socket is a stop. The route's `close` handler marks the run `cancelled` with reason `client_disconnected` and aborts the work (`server/routes/ana-ri/stream.ts:901-929`, `server/services/ana/run-control.ts:638-676`). Detaching means not doing that. The route's handler already continues after its socket is gone, because nothing but the abort signal stops it. Four things make that safe and honest. Each is a defect or gap that exists now:
+**Today.** A dropped socket is a stop: the route's `close` handler marks the run `cancelled` with reason `client_disconnected` and aborts the work (`server/routes/ana-ri/stream.ts:901-929`, `server/services/ana/run-control.ts:638-676`).
 
-1. **The run's heartbeat rides the SSE keepalive** (`stream.ts:806-831`), which is cleared when the response closes. Without its own timer, a detached run would be reaped as `orphaned` five minutes later while it was still running (`run-status.ts:316`, `run-control.ts:745-760`).
-2. **A reaped or otherwise terminated row does not stop the turn.** Only `cancelled` aborts (`run-control.ts:181-188`), and the default hold reads any other non-paused status as "carry on" (`run-hold.ts:272`). A detached run that loses its row would keep calling models and then seal a record contradicting its row.
-3. **Nothing stops two live turns in one conversation** (no guard in `beginRun`, `run-control.ts:228-276`). Detach turns "I closed the tab and asked again" into two concurrent turns writing one thread.
-4. **Nobody can see a run that has no socket.** D1's append-only `public.ana_run_events` table is the live copy of the timeline that S4 already emits from one producer (`server/services/ana/turn-timeline-emitter.ts:93-101`). Any device reads it by polling with `after=seq` until the sealed record exists, then hands over to the record's Summary.
+**What detach means.** Detach means not doing that. The request handler already keeps running after its socket is gone, because nothing but the abort signal stops it. Making that safe and honest takes the following, each grounded in a gap that exists now:
 
-The design adds one table, two read routes, a process-wide heartbeat, one rule per thread, and a detached ceiling that reuses an existing number. It adds no worker (P-10), no model call, and no tool. Sub-agents stay unhosted and off in production. Manual holds and approval timeouts behave exactly as they do today. A deploy or crash still ends a detached run, now with an honest closing row and the steps that were saved as they ran. It ships as five slices, DT1–DT5, with the server state change (DT3) landing together with its client.
+1. **A heartbeat that does not depend on the socket.** Today's heartbeat rides the SSE keepalive, which is cleared on close (`stream.ts:816-831`).
+2. **A run that settles honestly.**
+   - Today's disconnect handler sets `runSettled` first (`stream.ts:902-903`), so a detached run would never reach `endRun`.
+   - Only `cancelled` aborts the owner (`run-control.ts:181-188`).
+   - The default hold reads any other status as "carry on" (`run-hold.ts:272`).
+3. **A verified thread, and one run per conversation.**
+   - `beginRun` stamps the thread id the client sent before the thread is resolved (`stream.ts:852-858` against `:1103-1131`).
+   - A brand-new conversation's run is left with `thread_id` null.
+   - Nothing limits live runs per thread or per person.
+4. **A run that cannot outlive its person's authority.** Sign-out, a revoked session, a password change, a deactivated account, and a suspended or deleting organisation all stop the person's or organisation's live runs. Each round re-checks the session and the organisation.
+5. **A bound on unwatched work.** No tenant spend bound exists in the gateway. A run nobody is watching stops after 15 minutes unwatched, and never later than 40 minutes from its start.
+6. **A way to see a run that has no socket.** D1's append-only `public.ana_run_events` mirrors the timeline that S4 already emits from one producer (`server/services/ana/turn-timeline-emitter.ts:93-101`). Any permitted device polls it with `after=seq` and hands over to the sealed record's Summary.
+
+**What this adds:**
+- one table, behind a governed delete door;
+- additive columns on `ana_runs`;
+- three read routes;
+- a process heartbeat;
+- the run limits.
+
+**What it does not add:** no worker (P-10), no model call, no tool. Sub-agents stay unhosted and off in production.
+
+**Unchanged:** Manual holds and approval timeouts. A deploy or crash still ends a detached run, with an honest closing row and the steps that were saved as they ran.
+
+**Slices.** Four, DT1–DT4. The server change and its client ship together in DT3.
+
+**Prerequisite (P-A).** Approval authority is fixed separately (§2.7). DT2 does not start until it has landed.
 
 ---
 
 ## 0. Where this sits
 
-- **Lane.** `ANA-SUMMARY`, the founder-directed exception to Rule 2 recorded as P-24 (`LAUNCH_DEFINITION_OF_DONE.md:356-373`). It moves no D-row. Evidence goes to `docs/evidence/ANA-SUMMARY/<date>/DT<n>-<name>/`, beside S1–S5 (`docs/evidence/ANA-SUMMARY/2026-10-08/`).
+- **Lane.** `ANA-SUMMARY`, the founder-directed exception to Rule 2 recorded as P-24 (`LAUNCH_DEFINITION_OF_DONE.md:356-373`).
+  - It moves no D-row.
+  - Evidence goes to `docs/evidence/ANA-SUMMARY/<date>/DT<n>-<name>/`.
 - **Directory set:**
-  - `server/services/ana/`
-  - `server/routes/ana-ri/`
-  - `server/startup/shutdown.ts` (DT4 only)
-  - `server/services/tenant/tenant-offboarding.ts` (one list entry)
-  - `scripts/db/migration-set.mjs`, `migrations/`, `db/migrations/20260917_ana_runs.sql`
-  - `shared/ana/`
-  - `client/src/concept2cure/components/ana/`, `client/src/concept2cure/v2/`
-- **No new surface.** Rejoin happens inside the conversation and the Summary panel or sheet that S4 built (`client/src/concept2cure/v2/TurnSummary.tsx`, `AnaWorkPanel.tsx`). The one notification (DT5, decision D-5) uses the existing in-app notification table (`server/services/notifications/notification-service.ts:61`), which the AnA dock already reads.
-- **Rule 2, the model narrates.** Every line this design adds to the screen comes from a fixed table: the run row's status and reason, the `STOP_LINES` table (`client/src/concept2cure/v2/anaWorkModel.ts:42-55`), and the timeline events the server wrote. No model is asked whether a run is alive, finished or worth notifying about.
-- **P-10.** The turn keeps running inside the API request handler that started it. There is no queue, no worker and no hand-off between processes. A run lives and dies with the process that owns it.
-- **ADR-0015 §2.** The stream does not host `run_agent` (`server/services/ana/governed-toolset.ts:74, 96`; the stream passes no `hostsSubAgents`), and `subAgentsEnabled()` is off in production (`server/services/ana/sub-agent-limits.ts:26-35`). Detach changes neither. When ADR-0015 S6 hosts agents, a child runs under the parent's `cancelSignal`, so a detached parent's children obey the same stop, ceiling and reaper.
+  - `server/services/ana/` and `server/routes/ana-ri/`;
+  - `server/routes/auth.ts`, `server/services/account-standing.ts` and `server/services/token-revocation.ts`, for the session-end hooks only;
+  - `server/services/tenant/`, for the purge door and the lifecycle hooks;
+  - `server/startup/shutdown.ts`;
+  - `scripts/db/migration-set.mjs`, `migrations/` and `db/migrations/20260917_ana_runs.sql`;
+  - `shared/ana/`;
+  - `client/src/concept2cure/components/ana/` and `client/src/concept2cure/v2/`.
+- **No new surface.** Rejoin happens inside the conversation and in the Summary panel or sheet that S4 built (`TurnSummary.tsx`, `AnaWorkPanel.tsx`). The conversation list gains a "Working" marker. The notification uses the existing in-app inbox, which `TaskTray.tsx` reads (`:104-107`, `:344-352`).
+- **Rule 2, the model narrates.** Every line this design adds comes from a fixed table. The sources are the run row's status and reason, the `STOP_LINES` table (`client/src/concept2cure/v2/anaWorkModel.ts:42-55`), and server-written timeline events. No model decides whether a run is alive, finished or worth a notification.
+- **P-10.** The turn keeps running inside the API request handler that started it. There is no queue, no worker and no hand-off. A run lives and dies with its owner process.
+- **ADR-0015 §2.** The stream hosts no `run_agent` (`server/services/ana/governed-toolset.ts:74, 96`; the stream passes no `hostsSubAgents`). `subAgentsEnabled()` is off in production (`server/services/ana/sub-agent-limits.ts:26-35`). Detach changes neither.
+- **One clock.** Every time this design stores or sends is written by the server, as ISO-8601 UTC (`now()` in SQL, `Date.now()` on the owner). Each poll response carries `serverNow`, and the client computes elapsed times against it, never against its own clock.
 
 ---
 
@@ -39,22 +70,21 @@ The design adds one table, two read routes, a process-wide heartbeat, one rule p
 
 | # | Step | Where |
 |---|---|---|
-| 1 | A 15 s interval writes `: heartbeat` to the socket **and** refreshes the run's `heartbeat_at`. The comment explains why the beat rides the keepalive. | `stream.ts:806-825`; the beat itself is `run-control.ts:265-272` |
-| 2 | The interval is cleared on `res` `close` and `finish`, and on `req` `close` when aborted. **After a drop, the run's heartbeat stops.** | `stream.ts:826-831` |
-| 3 | `disconnectRun` is registered on `res` `close` and on an aborted `req` `close`. It returns early if the run already settled or the response ended normally. | `stream.ts:901-903, 928-929` |
-| 4 | Unless a person's Stop already aborted the run, it records the cause on the turn policy (`noteDisconnected`). `turnStoppedReason` later maps the loop's `cancelled` to `client_disconnected`. | `stream.ts:905`; `turn-run-policy.ts:188-190`; `run-status.ts:184-194` |
-| 5 | A turn with no run row (no resolvable organisation) aborts its local-only handle and writes a warning into its record. | `stream.ts:906-913`; `run-control.ts:290-299` |
-| 6 | A turn with a row calls `stopRunInternally(…, 'client_disconnected')`. That aborts the local controller first, then writes `status='cancelled', stopped_reason='client_disconnected'`, guarded on a live status, in the run's own tenant scope. No control event is written, because nobody decided anything. | `stream.ts:926`; `run-control.ts:638-676` |
-| 7 | A socket that closed while `beginRun` was awaiting is settled after the recorder opens. | `stream.ts:950-953` |
-| 8 | The abort reaches the gateway call and the tool dispatcher through `runSignal`. The error path persists the streamed text as a stopped answer, ends the timeline as `stopped` with reason `client_disconnected`, and files the turn record as `stopped`. | `stream.ts:2056`, `3497-3527`; `post-processing.ts:312` |
-| 9 | The `finally` releases the local run. `endRun` is skipped because the disconnect already settled the row. | `stream.ts:3529-3546` |
-| 10 | Three wait loops also test for a gone client, with `res.writableEnded`: the pause hold (`clientGone` → `stopForDisconnect`), the approval wait, and the Live Drive move settle. Node sets `writableEnded` only once `res.end()` has been called, so **none of these three ever sees a dropped socket**. A drop reaches them only through the abort from step 6. | `stream.ts:517-523`; `run-hold.ts:205-207`; `stream.ts:2324-2327`; `stream.ts:3214` |
-| 11 | S4's closing row reads "Stopped: this page lost its connection." with Continue. | `anaWorkModel.ts:53-54` |
-| 12 | **Client.** Four paths drop the socket, and only Stop sends a cancel first: Stop (awaits `cancel`, then aborts, `useAnaChat.ts:745-773`); unmount, except a turn that is driving (`:778-797`); switching or reloading the conversation (`abandonTurn`, `:806-819`, called by `loadThread`, `:828-830`); the 90 s idle timer (`:122`, `:1056-1063`). Each non-Stop path marks the turn interrupted (`:1903-1975`) and asks for the record by run id twice, at 1.5 s and 4 s (`:179`, `:737-743`; `anaTurnTimeline.ts:81-100`). | as cited |
-| 13 | The request's lazy DB client is released on `close` (`establishRequestTenantScope.ts:160-170`). The stream does not use it: it queries through `getPool()` under the tenant scope that `runWithTenantScope(…, next)` set (`establishRequestTenantScope.ts:274-277`), and that scope is AsyncLocalStorage, which outlives the socket. A detached turn keeps its tenant scope. | as cited |
-| 14 | A graceful shutdown drains HTTP connections for up to 10 s (`server/startup/shutdown.ts:41-53`), returns the LISTEN client (`:89-96`) and ends the pool. Nothing in it addresses live runs. An attached run is cut when its socket is force-closed, and a run without a socket would not be waited for at all. | as cited |
-
-**What the reaper does.** `reapOrphanedRuns` marks every live row whose `heartbeat_at` is older than `STALE_AFTER_MS` (5 min) as `failed` with reason `orphaned`, estate-wide, under the system scope (`run-control.ts:745-760`). It runs only opportunistically, after a new run opens (`stream.ts:867`). It sends no notification, so the owner, if it is alive, does not learn that it was reaped.
+| 1 | A 15 s interval writes `: heartbeat` to the socket and also refreshes the run's `heartbeat_at`. | `stream.ts:806-825`; `run-control.ts:265-272` |
+| 2 | The interval is cleared on `res` `close` and `finish`, and on an aborted `req` `close`. After a drop, the run's heartbeat stops. | `stream.ts:826-831` |
+| 3 | `disconnectRun` is registered on both closes. Its first act is `runSettled = true` (unless the run already settled, or the response ended normally). | `stream.ts:901-903, 928-929` |
+| 4 | Unless a Stop already aborted the run, it notes the disconnect on the policy, which later maps the loop's `cancelled` to `client_disconnected`. | `stream.ts:905`; `turn-run-policy.ts:188-190`; `run-status.ts:184-194` |
+| 5 | A turn with no run row aborts its local-only handle and writes a warning into its record. | `stream.ts:906-913`; `run-control.ts:290-299` |
+| 6 | A turn with a row calls `stopRunInternally(…,'client_disconnected')`. That aborts the local controller, then writes `cancelled`/`client_disconnected`, guarded on a live status, in the run's tenant scope. No control event is written. | `stream.ts:926`; `run-control.ts:638-676` |
+| 7 | A close that happened during `beginRun` is settled after the recorder opens. | `stream.ts:950-953` |
+| 8 | The abort reaches the gateway and the tools through `runSignal`. The error path saves the streamed text as a stopped answer, ends the timeline, and files the record as `stopped`. | `stream.ts:2056, 3497-3527`; `post-processing.ts:312` |
+| 9 | `finally` releases the local run. `endRun` is skipped because `runSettled` is already true. | `stream.ts:3529-3546` |
+| 10 | The pause hold, the approval wait and the Live Drive move settle each test `res.writableEnded`. Node sets that flag only after `res.end()`, so none of them sees a dropped socket; a drop reaches them only through step 6's abort. | `stream.ts:517-523, 2324-2327, 3214`; `run-hold.ts:205-207` |
+| 11 | S4's closing row reads "Stopped: this page lost its connection." with Continue. | `anaWorkModel.ts:53-54`; `isContinuable`, `:218-232` |
+| 12 | **The client.** The four ways the client drops the socket, and the confirm waits that follow:<ul><li>Stop sends `cancel` and awaits it, but aborts **even when the cancel failed**: "A failed cancel must not leave the client streaming; abort anyway." (`useAnaChat.ts:745-771`)</li><li>Unmount, except a driving turn (`:778-797`).</li><li>Switching or reloading the conversation (`abandonTurn` `:806-819`; `loadThread` `:828-830`).</li><li>The 90 s idle timer (`:122, 1056-1063`).</li></ul>Each non-Stop path marks the turn interrupted (`:1903-1975`). It then asks for the record by run id at 1.5 s and 4 s (`:179, 737-743`; `anaTurnTimeline.ts:81-100`). | as cited |
+| 13 | The request's lazy DB client is released on close (`establishRequestTenantScope.ts:160-170`). The stream does not use it. It queries `getPool()` under the AsyncLocalStorage tenant scope set by `runWithTenantScope(…, next)` (`:274-277`), and that scope outlives the socket. Timers created later inherit whatever context created them (`run-control.ts:63-76`). | as cited |
+| 14 | Graceful shutdown drains HTTP for up to 10 s (`server/startup/shutdown.ts:41-53`), returns the LISTEN client (`:89-96`) and ends the pool. Nothing in it addresses live runs. | as cited |
+| 15 | **The reaper** marks live rows whose heartbeat is older than `STALE_AFTER_MS` (5 min, `run-status.ts:316`) as `failed`/`orphaned`, estate-wide, under the system scope (`run-control.ts:745-760`).<ul><li>It runs only after a run opens (`stream.ts:867`).</li><li>It notifies nobody.</li><li>Nothing deletes or ages out `ana_runs` rows. The migration's "these rows are reaped" (`db/migrations/20260917_ana_runs.sql`) means marked, not deleted.</li><li>`ana_runs` has no retention job.</li></ul> | as cited |
 
 ---
 
@@ -62,109 +92,191 @@ The design adds one table, two read routes, a process-wide heartbeat, one rule p
 
 ### 2.1 Which turns detach
 
-A turn **detaches** on disconnect, and keeps running, when all of these hold:
-- it has a run row (`runId` non-empty);
-- it has an owner (`isHoldable`, `run-status.ts`; `user_id` non-null), because a run nobody owns can be stopped by nobody (`applyControl`, `run-control.ts:470-472`);
-- it is not driving the screen (`driveState.enabled` false, `stream.ts:961-971`). A Live Drive turn's work is moving a screen that is gone. Its moves cannot land, and `settleMoves` would wait out `MOVE_SETTLE_MAX_MS` on every round for nothing.
+**A turn detaches on disconnect when:**
+- it has a run row;
+- it has an owner (`user_id` non-null; `isHoldable`, `run-status.ts`);
+- its request did not ask to drive (`live_drive !== true`, read at request parse, `stream.ts:731`).
 
-Every other turn **stops on disconnect exactly as today** (§1, rows 3–9), with "Stopped: this page lost its connection."
+**Why the request flag and not the drive state.** `driveState` is not known until context assembly resolves (created at `:967`, awaited at `:1354`). A drive is enabled only when the request asked for one, so the request flag is known from the first line and is never wrong in the unsafe direction.
 
-One predicate, `detachable({ runId, runUserId, driveEnabled })`, goes in `run-status.ts` beside `isHoldable`. `disconnectRun` branches on it:
-- **Detachable.** Record `detachedAt` on the turn policy and write it into the recorder as a warning line ("The page closed at 14:02:11; the turn continued."). Arm the detached ceiling (§2.6). Do not abort.
-- **Otherwise.** Today's path.
+**What still stops on disconnect.** A turn that asked to drive stops exactly as today, because its work is a screen that is gone (D-7). So do a turn with no row and a turn with no owner.
 
-`detachedAt` goes to the record so an inspector can see the turn ran unwatched. It is **not** a human control and is never written to `control_events`, for the reason `stopRunInternally` gives (`run-control.ts:631-637`): a page closing is not a decision (§11, G-3).
+**The predicate.** `detachable({ runId, runUserId, liveDriveRequested })` goes in `run-status.ts` beside `isHoldable`.
 
-### 2.2 Ownership
+**The detach branch of `disconnectRun`:**
+- returns **before** `runSettled = true`;
+- does not call `noteDisconnected`;
+- does not abort.
 
-`ana_runs.owner_instance` is the process that holds the run's `AbortController` (`run-control.ts:170, 231-241`). It does not change for the life of the run, and nothing migrates a run. Detach changes only one thing: the owner's request handler keeps executing after its socket is gone.
+It records `detachedAt` (ISO UTC) and the armed limits on the turn, and writes them into the recorder as a warning, for example: "The page closed at 2026-10-08T14:02:11Z; the turn continued. Unattended limit: stops after 15 minutes with nobody watching, and no later than 2026-10-08T14:40:00Z." That is a fact an inspector can read. It is never written to `control_events`, because a page closing is not a person's decision (`run-control.ts:631-637`).
+
+**How the run ends.** The detached run reaches `finally` like any turn, and `endRun` writes `finished` or `failed` (`stream.ts:3539-3545`).
+
+### 2.2 Ownership, and the watched state
+
+- **Owner.** `ana_runs.owner_instance` is the process holding the run's `AbortController` (`run-control.ts:170, 231-241`). It never changes. Detach changes only one thing: the owner's handler keeps executing after its socket is gone.
+- **Watched** is a separate fact from detached:
+  - A run is **watched** while its originating socket is attached, or while the asker's poll stamped `ana_runs.last_watched_at` within the last 15 s.
+  - The poll stamps at most once every 5 s, and only while the page is visible. A hidden page does not poll (§4.1).
+  - An admin's poll does not count. Watching is the asker's.
+- **What keys on unwatched.** The unattended limit (§2.6) and the notification (§5.4) key on **unwatched**, not on detached.
 
 ### 2.3 Heartbeat: one per process, independent of any socket
 
-- **What moves.** The beat moves out of the keepalive (`stream.ts:816-824`) into `run-control.ts`. One process-wide interval, armed by the first `beginRun` and idle while `localRuns` is empty, beats every run this process owns:
+The beat moves out of the keepalive (`stream.ts:816-824`) into `run-control.ts`. One process-wide interval beats every run this process owns. It is armed by the first `beginRun` and idle while `localRuns` is empty.
 
-  ```sql
-  UPDATE ana_runs AS r
-     SET heartbeat_at = now(), timeline_seq = v.seq
-    FROM unnest($1::text[], $2::int[]) AS v(id, seq)
-   WHERE r.id = v.id AND r.status IN ('running','paused','awaiting_approval')
-  ```
+```sql
+UPDATE ana_runs AS r
+   SET heartbeat_at = now(), timeline_seq = v.seq
+  FROM unnest($1::text[], $2::int[]) AS v(id, seq)
+ WHERE r.id = v.id
+   AND r.owner_instance = $3
+   AND r.status IN ('running','paused','awaiting_approval')
+```
 
-- **Interval.** `RUN_HEARTBEAT_MS = 15_000`, equal to today's keepalive. The SSE comment ping stays on the response for proxies; it no longer touches the database.
-- **Scope.** The interval runs under `runWithSystemTenantScope('ana-run-control:heartbeat', …)` per firing, for the reason the poll fallback gives (`run-control.ts:837-850`).
-- **Round number.** The per-round `heartbeat(round)` at checkpoints (`stream.ts:3245-3248`) stays, because it stamps `current_round`. It is the same `UPDATE` scoped to one id, so there is still one heartbeat writer.
-- **`timeline_seq`** is the emitter's latest `seq` (§3.6). It lets a reader know how many events exist even when some failed to be written.
-- **Lifetime.** A run leaves the beat set in `releaseLocalRun` (`run-control.ts:336-338`), which every exit path already reaches (`stream.ts:3537`). A process that dies stops beating, and the reaper takes the row 5 minutes later.
+- **Interval.** `RUN_HEARTBEAT_MS = 15_000`, today's keepalive interval. The SSE comment ping stays on the response for proxies and no longer touches the database.
+- **Scope.** Each firing opens `runWithSystemTenantScope('ana-run-control:heartbeat', …)`, as the poll fallback does (`run-control.ts:837-850`). `owner_instance = $3` limits the write to this process's rows: a process can never beat another's run back to life.
+- **One heartbeat writer.** The checkpoint's `heartbeat(round)` (`stream.ts:3245-3248`) becomes the same statement for one id plus `current_round`.
+- **Lifetime.** A run leaves the beat set in `releaseLocalRun` (`run-control.ts:336-338`).
 
 ### 2.4 Reaper, and an owner that learns its row ended
 
-- **Reaper, unchanged.** Same predicate and status (`failed`/`orphaned`). Two additions:
-  - it `RETURNING id`s and sends `pg_notify(RUN_CONTROL_CHANNEL, id)` for each, so a live owner that was wrongly reaped (a partition, §7) is told;
-  - it also runs, rate-limited to once per 30 s per process, from the new run read routes (§3.7). A viewer of a dead run does not have to wait for someone else to start a turn.
-- **Any terminal row stops the owner.** `driveLocalRun` (`run-control.ts:181-188`) aborts on **every** terminal status that this process did not write itself, not only `cancelled`. It aborts with `controller.abort(reason)`, where `reason` is the row's `stopped_reason`. The default hold's `leave` (`run-hold.ts:272`) returns `'cancelled'` for any terminal status, not only `cancelled`. Manual's `settleHold` already fails closed on a non-live row (`turn-run-policy.ts:301-303`).
-- **The row's reason wins.** The error path (`stream.ts:3497-3527`) reads `runSignal.reason`, when it is a `RunStoppedReason`, in place of `turnPolicyOf.stoppedReason('cancelled')`. The stopped answer, the `end` event and the record then all say `orphaned` when the row says `orphaned`. A record never says "answered" for a run whose row says it failed.
+- **The reaper's statement and threshold are unchanged.** Three additions:
+  - it returns the reaped ids and sends `pg_notify(RUN_CONTROL_CHANNEL, id)` for each;
+  - it also runs from the run read routes, at most once per 30 s per process;
+  - its pass deletes the mirror rows of runs whose record exists, through the door (§3.2).
+- **Which writes abort the owner.** `driveLocalRun` aborts on `cancelled` (today) **and on `failed`**. `failed` is written by the reaper, by shutdown, or by the session-end stop. It never aborts on `finished`.
+  - That matters because the owner's own `endHeldRun` writes `paused → finished` and drives the local run (`run-control.ts:954-964`). The turn must then write its closing answer, and an abort would kill it.
+  - The owner's `endRun` does not drive its local run, and it releases the run (`:309-327`).
+  - So **no terminal write the owner makes about itself aborts its own post-processing.** That post-processing is not awaited by the handler (`stream.ts:3452`, `void runStreamPostProcessing`) and runs after `releaseLocalRun`.
+- **How the reason travels.** `controller.abort(new RunStopped(reason))`, where `RunStopped extends Error` with `name = 'AbortError'` and a `stoppedReason` field.
+  - It is never a string. Abort consumers that throw `signal.reason` keep receiving an `Error` named `AbortError`. `Semaphore.acquire` rejects with `signal.reason` (`server/services/ai-gateway/concurrency.ts:24, 38, 60`), and the gateway converts any error on an aborted signal to `GatewayAbortedError` (`gateway.ts:1966-1986`), so failover and the circuit breaker see a cancel, as today.
+  - DT3 test 9 runs this through a stand-in provider, both mid-call and while queued for a permit.
+- **The row's reason wins.** The error path (`stream.ts:3497-3527`) takes the stop reason from `runSignal.reason.stoppedReason` when it is a `RunStopped`. The stopped answer, the `end` event and the record then say what the row says. A record never says "answered" for a run whose row says `failed`.
+- **Holds.** The default hold's `leave` (`run-hold.ts:272`) returns `'cancelled'` for any terminal status. Manual's `settleHold` already fails closed (`turn-run-policy.ts:301-303`).
 
 ### 2.5 Control from another device
 
-There is nothing new here. Control is a row write accepted on any instance, delivered to the owner by NOTIFY, with a 2 s poll as the declared fallback (`run-control.ts:30-46, 783-862`).
-- **Who.** Cancel, pause, resume and steer stay owner-only: another organisation gets 404 and a colleague 403 (`run-control.ts:451-475`; `stream.ts:3640-3653`). Another device of the same person is the same user, so it may control the run.
-- **Effect.** A cancel aborts in-flight model and tool work on the owner (`run-control.ts:609-627`, `181-188`).
-- **Two devices.** A second Stop on a run that already stopped gets 409 `Run already cancelled` (`stream.ts:3560-3577`). The client reads that as done, not as an error (DT2).
+**Cancel, pause, resume and steer.** They stay owner-only, unchanged. Control is a row write accepted anywhere and delivered to the owner by NOTIFY, with a 2 s poll fallback (`run-control.ts:30-46, 451-502, 783-862`). Another organisation gets 404 and a colleague 403 (`stream.ts:3560-3577`). The same person on another device is the same user.
 
-### 2.6 The round budget, and a ceiling for a run nobody watches
+**A second Stop** gets 409 `Run already cancelled`, and the client reads that as stopped (DT2).
 
-- **Round budgets are unchanged** (P-24 line 372): Fast 4; Balanced 6 + 2; Thorough 10 + 4; Auto 20 absolute (`agentic-loop.ts:294-372`; `shared/ana/run-control-limits.ts:49`). A detached turn earns no extra rounds.
-- **The gap.** A turn with no run policy has a round ceiling and no clock. A hung tool or a stalled provider can hold a round open indefinitely, and nobody is watching to press Stop.
-- **The ceiling.** A detached run is bounded by the existing Auto wall clock, `AUTO_WALL_MS` (40 min, `run-control-limits.ts:64`), measured from the turn's start. No new number is added.
-  - The check is a timer armed at detach, not a round-boundary check, so it fires inside a hung round.
-  - At the ceiling the owner aborts with reason `budget_exhausted`, and the closing row reads "Stopped at the time limit." (`anaWorkModel.ts:49`).
-  - Auto's own 15-minute active-work budget still applies at round boundaries (`run-status.ts:208-221`).
-  - The founder may choose a different bound (decision D-2).
-- **Cost bound.** A detached turn makes at most:
-  - one model call per round up to the round ceiling (14 for Thorough, 20 for Auto);
+**Admin or owner cancel (new; cancel only, never approve).** `applyControl` admits `cancel` from an organisation admin or owner (`readsEveryRecord`, `server/routes/ana-ri/turn-records.ts:65-69`) on any live run in their organisation:
+- The organisation is in the SQL as today, so another organisation gets 404.
+- The control event records the admin's `byUserId` and `byRole: 'admin'` at acceptance, in `control_events`, which already is the decision lineage.
+- An audit row goes to the chained audit trail through the existing audit service, as every governed control does.
+- Pause, resume, steer and any approval stay the asker's alone.
+- The closing row reads "Stopped by an administrator."
+
+### 2.6 Budgets, and the unattended limit
+
+- **Round budgets are unchanged** (P-24): Fast 4, Balanced 6 + 2, Thorough 10 + 4, Auto 20 absolute (`server/services/ana/agentic-loop.ts:294-372`; `shared/ana/run-control-limits.ts:49`). A detached turn earns no extra rounds.
+- **No tenant spend bound exists.** The gateway caps in-flight calls per process (`concurrency.ts:1-13`, default 20) and refuses a request too large for the model's context. It has no per-tenant or per-turn token or cost budget (`gateway.ts`; `context-budget.ts`). Nothing in this design invents one.
+- **The unattended limit (decided).**
+  - **Clock.** Auto's work budget, `AUTO_ACTIVE_MS` (15 min, `run-control-limits.ts:57`), counted while the run is **unwatched** (§2.2). It starts when the run becomes unwatched and resets when someone watches again.
+  - **Hard cap.** `AUTO_WALL_MS` (40 min, `:64`) from the turn's start, which no watching resets.
+  - **When the 15 minutes run out at a round boundary,** the loop's `stopWhen` makes the next model call the closing answer, the way `budget_exhausted` does (`run-status.ts:208-221`).
+  - **When they run out inside a round** (a hung tool or a stalled provider), a timer gives a closing-answer grace of `DETACHED_CLOSE_GRACE_MS = 120_000`. This is the one new number. It lets the round finish and the closing answer be written. Past it, the owner aborts with `RunStopped('unattended_limit')`.
+  - **New reason `unattended_limit`,** line "Stopped: nobody was watching for 15 minutes." It is continuable.
+  - **The 40-minute cap** uses the same path with `budget_exhausted` ("Stopped at the time limit.").
+  - **Where the armed limit is written:** into the record (§2.1), and on the follower and conversation-list views as "Stops by 14:31 if nobody opens it".
+- **Cost bound.** An unwatched turn makes at most:
+  - one call per round up to its ceiling;
   - one closing call;
-  - the post-turn answer check (`post-processing.ts`);
-  - model calls inside tools (`usedModel`), which already count against nothing today and are unchanged.
+  - the post-turn answer check;
+  - model calls inside tools, which are unchanged.
 
-  This is the same envelope as an attached turn whose person walked away from the screen. Detach adds the one-live-run rule (§2.8) and the ceiling above. A per-person limit on live runs is decision D-3.
+  All of these fall within 15 minutes unwatched and 40 minutes in all. Every call is in the gateway audit (`server/services/ai-gateway/audit.ts`).
 
-### 2.7 Holds and approvals while nobody is watching
+### 2.7 Holds and approvals while nobody watches
 
-All unchanged. The table shows what each case does with no socket. The timeouts are `MAX_PAUSE_MS` (10 min, `run-control-limits.ts:26`).
+**Prerequisite P-A (approval authority).**
+- **The gap.** `readPendingApproval`, `recordApprovalDecision` (`run-control.ts:1064-1116`) and `resolveAuthorisedAction` (`server/routes/ana-ri/utility.ts:75-123`) never compare `ana_runs.user_id` with the decider.
+- **The fix.** It is being made separately from detach, by the coordinator, on 2026-10-08: asker only, 403 for anyone else, and no admin approval.
+- **Status in this checkout.** At `c33211ee2` it has not yet landed: `utility.ts` has no such comparison. DT2, which first exposes a pending approval to a second device, does not start until it has landed and its test is green.
 
-| Case | Today, attached | Detached |
+**Unchanged by detach.** The timeouts are `MAX_PAUSE_MS` (10 min, `run-control-limits.ts:26`).
+
+| Case | Attached (today) | Detached |
 |---|---|---|
-| Person's pause, no policy | Resumed as abandoned at 10 min, with no control event (`run-control.ts:911-918`; `stream.ts:517-525`) | Same. The run continues. |
-| Manual hold, or a pause in a Manual turn | Ended at 10 min: `paused → finished`, `hold_expired` (`run-control.ts:954-964`) | Same: "Stopped waiting for you." |
-| Approval, no policy | Denied at 10 min, recorded with `byUserId: null`; the step reads "Nobody authorised this within the time allowed, so it did not run. Nothing was changed." The turn continues without it (`stream.ts:2344-2358`) | Same. |
-| Approval, Manual or Auto | Same denial, then the turn ends with `approval_timeout` (`run-status.ts:208-216`) | Same: "Stopped: an approval was not answered." |
-| Approval decided on another device | Woken by NOTIFY (`run-control.ts:1095-1116`) | Same. The asker's other device gets the sign-off from the run read (§3.7). |
+| A person's pause, no policy | Resumed as abandoned at 10 min, with no control event (`run-control.ts:911-918`) | Same |
+| Manual hold, or a pause in a Manual turn | Ended at 10 min, `hold_expired` (`run-control.ts:954-964`) | Same: "Stopped waiting for you." |
+| Approval, no policy | Denied at 10 min with `byUserId: null`; the step reads "Nobody authorised this within the time allowed, so it did not run. Nothing was changed."; the turn continues (`stream.ts:2344-2358`) | Same |
+| Approval, Manual or Auto | The same denial, then the turn ends `approval_timeout` (`run-status.ts:208-216`) | Same: "Stopped: an approval was not answered." |
+| Approval decided on another device | Woken by NOTIFY (`run-control.ts:1095-1116`) | Same; the asker's other device gets the sign-off from the run read |
 
-The approval wait's `res.writableEnded` test (`stream.ts:2324-2327`) and the hold's `clientGone` (`run-hold.ts:205-207`, `stream.ts:521-523`) are deleted in DT3. They never detected a drop (§1, row 10). A drop is acted on in one place, `disconnectRun`, which either detaches or stops.
+**The expected failure.** An approval nobody answers within 10 minutes fails. That is the decided behaviour, and DT3's acceptance files it as the expected result (§8). The notification and the closing row say so in words:
+- the Summary's closing row, and the "finished" notification, add "1 step was not authorised and did not run." The count comes from `heldBack` steps in the timeline;
+- push for approvals is a later founder option (§10).
 
-### 2.8 One live run per conversation
+**Dead checks.** The approval wait's `res.writableEnded` test (`stream.ts:2324-2327`) and the hold's `clientGone` (`run-hold.ts:205-207`; `stream.ts:521-523`) never detected a drop (§1, row 10). They are deleted in DT3. A drop is acted on in one place, `disconnectRun`.
 
-`beginRun` takes `pg_advisory_xact_lock(hashtext('ana_runs:' || org || ':' || thread_id))` in a transaction, reaps stale rows for that thread, and refuses when a live row exists for the same `(organization_id, thread_id)`. The index already exists: `idx_ana_runs_org_thread`, `db/migrations/20260917_ana_runs.sql:131-132`.
+### 2.8 A verified thread, one run per conversation, three per person
 
-- **Why not a unique index.** A partial unique index would fail to build on any database that holds two live rows for one thread. Two open tabs make that possible today, and Rule 1 replays the file on every deploy. The lock needs no schema.
-- **The refusal.** It comes before the question is saved (`beginRun` at `stream.ts:852`, `saveMessage` at `:1131`). It is a frame, `{type:'error', code:'RUN_IN_PROGRESS', runId}`, followed by `end`, because the SSE head is already written (`stream.ts:799-804`).
-  - The asker's client rejoins that run.
-  - The copy is "AnA is still working on the last message in this conversation."
-- **Escape hatch.** A stale row from a dead process blocks the thread until the reaper's 5 minutes pass, or until the asker presses Stop. A cancel makes the row terminal even with no owner alive (`run-control.ts:606-628`).
-- **Threadless turns** (`thread_id` null) are not limited by this rule.
+**Thread verification moves before the run lock.** Today the order is:
+1. the run is stamped with the client-sent `thread_id` (`stream.ts:852-858`);
+2. `getOrCreateThread` then resolves it (`:1103-1131`).
 
-### 2.9 What still ends a detached run
+`getOrCreateThread` resolves "in the caller's organization and to the caller's own thread, or mints a fresh one; a colleague's thread id is refused outright" (`:1103-1108`). A new conversation's run therefore keeps `thread_id` null forever. That run cannot be listed by thread for rejoin, and it escapes a per-thread rule.
 
-| Cause | How it ends |
-|---|---|
-| The answer | As today. |
-| The person's Stop | From any device. |
-| A round ceiling | As today. |
-| The detached ceiling | §2.6. |
-| A hold or approval timeout | §2.7. |
-| An error | As today. |
-| A graceful shutdown | DT4: `orphaned`, with a stopped answer and record when they can be written in the drain window. |
-| A crash | The reaper, `orphaned`, after 5 min. The events saved so far remain. |
+**`beginRun` becomes one transaction:**
+1. `pg_advisory_xact_lock(hashtext('ana_runs:user:' || org || ':' || user))`. Count the person's live runs in the organisation. If there are 3 or more, refuse with `RUN_LIMIT` (D-3).
+2. If the client sent a thread id, verify it under the same rule as `getOrCreateThread`, without minting. Then take `pg_advisory_xact_lock(hashtext('ana_runs:thread:' || org || ':' || thread))`, reap that thread's stale rows, and refuse with `RUN_IN_PROGRESS` if a live run holds it.
+3. Insert the run with the **verified** thread id, or null for a new conversation.
+
+**After `getOrCreateThread` mints a new conversation's thread,** the same UPDATE that writes `user_message_id` writes `thread_id`. It takes the thread lock and is guarded `WHERE NOT EXISTS` (a live run on that thread).
+
+**Why locks and not a unique index.** A partial unique index would fail to build on any database that already holds two live rows for one thread (Rule 1 replay). The locks need no schema.
+
+**Both refusals come before the question is saved.** They are frames, `{type:'error', code, runId?}`, then `end`, because the SSE head is written first (`stream.ts:799-804`).
+- `RUN_IN_PROGRESS` reads: "AnA is still working on the last message in this conversation." The asker's client rejoins that run.
+- `RUN_LIMIT` reads: "You have three turns running. Stop one, or wait for one to finish." It links to the Working conversations (§5.1).
+
+**Escape hatch.** A stale row from a dead process blocks its thread only until the reaper, or until the asker or an admin presses Stop. A cancel makes the row terminal with no owner alive (`run-control.ts:606-628`).
+
+### 2.9 A run cannot outlive its person's authority
+
+**Immediate stop.** `stopRunsFor({ organizationId, userId? }, 'session_ended')` in `run-control.ts`:
+- writes `cancelled`/`session_ended` on the matching live rows, guarded on a live status, in that organisation's scope;
+- writes no control event;
+- notifies each run, so every owner aborts with `RunStopped('session_ended')`.
+
+It is called from:
+
+| Trigger | Hook | Scope of the stop |
+|---|---|---|
+| Sign-out | `POST /api/auth/logout`, after `revokeToken` (`server/routes/auth.ts:1344-1378`) | All of that person's live runs, on every device. This is the conservative reading of "the session ended". |
+| Sign out everywhere, suspension, deprovisioning | `endEverySessionOf` (`server/services/account-standing.ts:206-216`, called at `auth.ts:1319`) | The person's runs |
+| Password change or reset | The writer of `users.password_changed_at` (`server/routes/auth.ts`, `server/auth.ts`) | The person's runs |
+| Organisation suspension | The writer that sets a denying `organizations.status` (`tenant-lifecycle.ts:101`) | The organisation's runs |
+| Deletion requested | `requestDeletion` (`server/services/tenant/tenant-offboarding.ts:127`) | The organisation's runs |
+| Purge | `purgeTenant` (`:789`), **first**, before any table is purged | The organisation's runs |
+
+**The backstop at each round boundary.** The checkpoint re-checks before the next model call:
+- **the session:** `verifyLiveToken(token, undefined, { activity: false })` (`server/services/token-revocation.ts:289-311`) on the credential the request was authenticated with, held in the owner's memory only. That one call covers revocation, an inactive account, a password change, sign-out everywhere, and the idle, lifetime and superseded windows. `activity: false` is the flag for "not the user acting" (`server/services/session-inactivity.ts:462-467`), as the collaboration socket's re-check uses it;
+- **the organisation:** `shouldProcessTenantInBackground(orgId)` (`server/services/tenant/tenant-lifecycle.ts:413-424`). It permits only `allow`, so `pending_deletion` (read-only), `suspended` and `inactive` all stop the turn.
+
+A failed or refused check stops the run with `session_ended`. **A check that cannot be read also stops it,** because the turn fails closed.
+
+**What a missed hook costs.** At most one round, plus the unattended limit.
+
+**Copy:** "Stopped: the session that started this turn ended." It is continuable once the person is signed in again.
+
+### 2.10 What ends a detached run
+
+| Cause | Reason | Line |
+|---|---|---|
+| The answer | — | — |
+| A person's Stop, from any device | `cancelled` | today's |
+| An admin's cancel | `cancelled`, with an admin control event | "Stopped by an administrator." |
+| A round ceiling | `max_rounds` | today's |
+| Unattended for 15 minutes | `unattended_limit` | "Stopped: nobody was watching for 15 minutes." |
+| 40 minutes from start | `budget_exhausted` | "Stopped at the time limit." |
+| A hold or approval timeout | today's | today's |
+| The session or organisation ended | `session_ended` | §2.9 |
+| A deploy (graceful) | `server_shutdown` | "Stopped: the server restarted for an update." |
+| A crash, or a partitioned owner | `orphaned` | "Stopped: the server handling this turn stopped responding." |
+| An error | `error` | "Stopped: the turn ended with an error." |
 
 ---
 
@@ -172,7 +284,7 @@ The approval wait's `res.writableEnded` test (`stream.ts:2324-2327`) and the hol
 
 ### 3.1 Schema
 
-New file `migrations/<DT1 date>_ana_run_events.sql`. It is listed in `C2C_MIGRATION_FILES` directly above `UUID_TENANT_ISOLATION_NONPUBLIC` (`scripts/db/migration-set.mjs:3098`), so it is above the final pair `CHILD_TABLE_PARENT_SCOPE`, `TENANT_ISOLATION_SWEEP` (`:3114, 3128`) that `ci:migration-set-order` pins.
+**New file `migrations/<DT1 date>_ana_run_events.sql`.** It goes in `C2C_MIGRATION_FILES` directly above `UUID_TENANT_ISOLATION_NONPUBLIC` (`scripts/db/migration-set.mjs:3100`), so it sits above the final pair `CHILD_TABLE_PARENT_SCOPE` (`:3117`) and `TENANT_ISOLATION_SWEEP` (`:3128`), which `ci:migration-set-order` pins.
 
 ```sql
 CREATE TABLE IF NOT EXISTS public.ana_run_events (
@@ -185,43 +297,54 @@ CREATE TABLE IF NOT EXISTS public.ana_run_events (
   PRIMARY KEY (run_id, seq)
 );
 CREATE INDEX IF NOT EXISTS idx_ana_run_events_org_run ON public.ana_run_events (organization_id, run_id, seq);
+CREATE INDEX IF NOT EXISTS idx_ana_run_events_written ON public.ana_run_events (written_at);
 ```
 
-- **Tenancy (Rule 1, corollary 3).** `public` with `organization_id integer NOT NULL`, so the integer sweep `20260801_tenant_isolation_sweep.sql` gives it a policy. The `organization_id` is the run's, never the caller's: the insert takes it from the run row (§3.4).
-- **Its own key.** The FK to `ana_runs(id)` has no cascade, because `ana_runs` has no cascade target to inherit and the purge lists both tables explicitly (§3.3). The table does not inherit `ana_runs`'s RLS; it has its own `organization_id`.
-- **`event`** is exactly the `TimelineEvent` as `emitTimeline` serialised it (`turn-timeline-emitter.ts:93-101`), or the truncation marker (§3.5). A note's text is inline here. The sealed record keeps it as a `TextRef`.
-- **Replay.** Additive and `IF NOT EXISTS` throughout. No DROP. `ci:migration-drop-safety` has nothing to check, and the file says so in its header.
+- **Tenancy (Rule 1).** `public`, with an integer `organization_id NOT NULL`, so the integer sweep (`20260801_tenant_isolation_sweep.sql`) gives the table a policy. The organisation is always the run's, copied from the run row by the insert (§3.4).
+- **`event`.** Exactly the `TimelineEvent` that `emitTimeline` serialised, or the truncation marker (§3.5).
+- **Replay.** Additive and `IF NOT EXISTS` throughout. No DROP.
 
-**`ana_runs` amendments**, in place in `db/migrations/20260917_ana_runs.sql`, as `ADD COLUMN IF NOT EXISTS` below the `CREATE TABLE`, with a dated note. The file's own header says this is how a column is added (`:33-39`).
-- `timeline_seq integer NOT NULL DEFAULT 0`, the high-water mark (§2.3, §3.6).
-- `user_message_id text`. The question this run answers, written when the question is saved (`stream.ts:1131`). It places a live or unsealed run in the transcript after reload. This is the same join-by-id rule S4 uses for records (design §3.5).
+**`ana_runs` amendments.** These go in place in `db/migrations/20260917_ana_runs.sql`, as `ADD COLUMN IF NOT EXISTS` below the `CREATE TABLE`, with a dated note. The file's own header says this is the way to add a column (`:33-39`).
 
-### 3.2 Append-only trigger
+| Column | Purpose |
+|---|---|
+| `timeline_seq integer NOT NULL DEFAULT 0` | The high-water mark (§2.3, §3.6) |
+| `user_message_id text` | The question this run answers (§2.8) |
+| `run_policy text` | `manual`, `auto` or null, written at insert; for followers (§3.7) |
+| `hold jsonb` | `{ reason, next }` while a Manual hold or a person's pause is open; written by `holdForPerson` and the hold's announcement, cleared on leave; for followers |
+| `last_watched_at timestamptz` | §2.2 |
+| `released_at timestamptz` | When the owner finished trying to record the turn: post-processing's end, whatever came of the record write. A reader uses it to stop waiting (§4.3). |
 
-`public.ana_run_events_guard()`, `BEFORE UPDATE OR DELETE` per row and `BEFORE TRUNCATE` per statement. It follows the shape of `20260926_ana_turn_records.sql:161-207`:
+### 3.2 Append-only, and a governed delete door
 
-- **UPDATE:** always refused, with `IMMUTABILITY_VIOLATION`.
-- **TRUNCATE:** always refused.
-- **DELETE:** allowed only when
-  - (a) a turn record exists for `(OLD.organization_id, OLD.run_id)`. This is the post-seal cleanup: the record holds the same events. Or
-  - (b) `organizations.status = 'pending_deletion'` for `OLD.organization_id`. This is the tenant purge, the same precondition the turn-record door checks (`20260926_ana_turn_records.sql:308-312`).
+`public.ana_run_events_guard()` follows `20260926_ana_turn_records.sql:161-207`. It fires `BEFORE UPDATE OR DELETE` per row, `BEFORE INSERT` per row, and `BEFORE TRUNCATE` per statement.
 
-  Anything else is refused. In particular, the events of a run that crashed with no record cannot be deleted. They are its only trace.
-- **INSERT:** refused when a turn record already exists for `(NEW.organization_id, NEW.run_id)`. This puts "no writes once sealed" in the database, not only in the writer.
+- **UPDATE and TRUNCATE:** always refused, with `IMMUTABILITY_VIOLATION`.
+- **INSERT:** refused once a turn record exists for `(NEW.organization_id, NEW.run_id)`.
+- **DELETE:** refused unless `current_user = 'ana_run_events_purger'`, a NOLOGIN, NOINHERIT, NOBYPASSRLS role created and verified exactly as `ana_record_purger` is (`20260926_ana_turn_records.sql:243-262, 329-345`).
 
-The table is **working data, not the retained record.** The sealed `ana_turn_records` row stays the Part 11 record. That is why DELETE has a door here and not a dedicated purger role: a role would claim a retention status the table does not have.
+Three SECURITY DEFINER functions are owned by that role. Each restates its own preconditions inside the function, the way `purge_tenant_turn_records` does (`:295-325`), and each has EXECUTE granted to `app_service` only.
 
-### 3.3 Purge, export, sweep
+| Function | Who calls it | Preconditions checked inside |
+|---|---|---|
+| `release_sealed_run_events(org int, run text)` | The owner after sealing; the reaper's pass | The caller's tenant scope is `org`. A turn record exists for `(org, run)`. No active legal hold for `org` in `vault.legal_holds`. Deletes only that run's rows. |
+| `expire_orphaned_run_events(org int, older_than timestamptz)` | The reaper's pass, per organisation (D-4) | `ana_runs.status` is terminal for each run. No record exists. `written_at < older_than`. `older_than` is at least the decided retention period before `now()`. No active legal hold for `org`. |
+| `purge_tenant_run_events(org int)` | `purgeTenant`, through `PURGE_DOORS` | The platform scope. `organizations.status = 'pending_deletion'`. No active legal hold. Copied from `:303-321`. |
 
-- `PURGE_CHILD_TABLES` (`server/services/tenant/tenant-offboarding.ts:886-892`) gains `'ana_run_events'`, **before** `'ana_runs'`, because of the FK. The trigger admits the DELETE because the purge runs only on a `pending_deletion` organisation. `ci:purge-coverage` and its selftest cover the entry.
-- The full tenant export discovers tenant-keyed tables from the catalog (`server/services/tenant-export/tenant-full-export.service.ts:24-28`), so the table is exported with no list change.
-- The integer sweep policies it. The tenant-isolation contract tests and `ci:tenant-isolation` run unchanged and must stay green.
+**The tenant purge** goes through `PURGE_DOORS` (`server/services/tenant/tenant-offboarding.ts:563-578`), not `PURGE_CHILD_TABLES`, because the table refuses a plain DELETE. The door runs before `'ana_runs'` is purged (`:894`), which the FK requires. `ci:purge-coverage` and its selftest cover it.
+
+**The table is working data, not the retained record.** The sealed `ana_turn_records` row stays the Part 11 record. The door keeps every deletion of this table to three named, precondition-checked paths. In particular, the mirror rows of a run that crashed without a record are kept until the governed expiry, and never while a legal hold is active.
+
+**Export.** The full tenant export discovers tenant-keyed tables from the catalog (`server/services/tenant-export/tenant-full-export.service.ts:24-28`), so the table is exported with no change.
+
+### 3.3 Retention (D-4)
+
+- **Expiry.** Mirror rows of a run that ended without a record are expired through `expire_orphaned_run_events` after **90 days**, recommended. The period is the founder's call. Expiry is legal-hold aware and runs from the reaper's pass, so there is no new job.
+- **`ana_runs` itself has no retention job today** (§1, row 15). This design does not add one. That is noted for the working-data retention schedule.
 
 ### 3.4 Write rules
 
-**One writer.** `TurnTimeline` gets a third sink beside the recorder and the socket: `mirror`, a per-run ordered queue in `server/services/ana/run-events.ts`. `emitTimeline` stays the one producer (`turn-timeline-emitter.ts:93-101`). It now appends to the recorder, enqueues to the mirror, and writes the frame.
-
-**The statement.** A batched multi-row insert, at most one in flight per run, flushed every 250 ms or every 20 events:
+**One producer, a third sink.** `emitTimeline` stays the one producer (`turn-timeline-emitter.ts:93-101`). It appends to the recorder, enqueues to the mirror, and writes the frame. The mirror is a per-run ordered queue in `server/services/ana/run-events.ts`. It flushes every 250 ms or every 20 events, with one batch in flight.
 
 ```sql
 INSERT INTO ana_run_events (organization_id, run_id, seq, at, event)
@@ -231,74 +354,69 @@ SELECT r.organization_id, r.id, v.seq, v.at, v.event
 ON CONFLICT (run_id, seq) DO NOTHING
 ```
 
-- **Owner instance only.** The predicate on `owner_instance` is in SQL. A process that is not the owner writes zero rows.
-- **While no record exists.** The insert trigger enforces this (§3.2).
-- **Not guarded on a live status.** Rows written after a cancel are kept, as the first design required (`ANA_AGENT_WORK_VIEW_2026-10-08.md:539`; its §2.2 "cancel case").
-- **Idempotent.** A retried batch writes nothing twice.
-- **Failures.** A failed batch is retried twice, with 250 ms and 1 s waits. If it still fails, those events are dropped from the mirror and logged at error level. The next batch carries on, so the gap is visible by `seq` (§3.6).
-  - The run is **not** failed for a mirror failure. The recorder still holds every event, and the record will carry them.
-  - Failing a regulatory turn because a progress mirror could not be written would trade a visible gap for a lost answer.
-- **Cleanup.** After `fileTurnRecord` reports the record written (`post-processing.ts:595-606`, `stream.ts:617-622`), the owner deletes the run's rows. A delete that fails, or a process that dies first, leaves rows that the reaper's pass removes, bounded:
-
-  ```sql
-  DELETE FROM ana_run_events e USING ana_turn_records t
-   WHERE t.organization_id = e.organization_id AND t.run_id = e.run_id
-  ```
-
-  (`LIMIT` via a `ctid` subselect.)
+- **Owner only.** The owner-instance predicate is in SQL.
+- **While no record exists.** Enforced by the trigger.
+- **Not guarded on a live status,** so the rows after a cancel are kept.
+- **Idempotent** under retry.
+- **Tenant scope.** Every flush runs inside `runWithTenantScope({ tenantId: String(run.organizationId), … caller: 'ana-run-events:flush' })`, opened explicitly per flush. It is never inherited from whatever context created the timer (§1, row 13).
+- **Failures.** A failed batch is retried twice, at 250 ms and at 1 s. It is then dropped from the mirror and logged at error level. The gap is visible by `seq` and `timeline_seq` (§3.6). The run is not failed for it: the recorder still holds every event, and the record will carry them.
+- **Flush, then seal, then release.**
+  - Post-processing **awaits `mirror.close()`** before `fileTurnRecord` (`post-processing.ts:595-606`; `stream.ts:617-622`), because the trigger refuses inserts once a record exists.
+  - If the close fails, the mirror stamps `timeline_seq` past the last row written, which marks the gap, and the record is sealed anyway. A record is never withheld for a mirror.
+  - After the record is written, the owner calls `release_sealed_run_events`. It then writes `released_at`, whether or not the record was written.
+  - Rows a crash leaves behind are released by the reaper's pass.
 
 ### 3.5 The cap and its marker
 
-- **Limits.** Seq 1–1,999 are events. Seq 2,000 is the marker `{ kind: 'truncated', seq: 2000, at, round }`. Nothing is written after it. The `CHECK (seq BETWEEN 1 AND 2000)` makes the cap a database fact.
-- **The type.** The marker is a new member of `TimelineEvent` in `shared/ana/turn-timeline.ts`. It is server-written, never counted, never sealed, and never part of the record: the recorder holds every event, uncapped, as today.
-- **On screen.** "Only the first 1,999 steps are shown while AnA works. The full list appears when the turn is recorded."
-- **The `end` event** is the one event that matters most to a reader, and past the cap it is not mirrored. The reader does not need it: a terminal `ana_runs.status` and `stopped_reason` give the closing row (§4.3).
+- **Numbers.** Seq 1–1,999 are events. Seq 2,000 is `{ kind: 'truncated', seq: 2000, at, round }`, a new `TimelineEvent` member in `shared/ana/turn-timeline.ts`. Nothing is written after it, and the CHECK makes 2,000 a database fact.
+- **The record keeps everything.** The recorder is uncapped, so the record holds every event.
+- **Copy:** "Only the first 1,999 steps are shown while AnA works. The full list appears when the turn is recorded."
 
 ### 3.6 Gaps
 
-A reader holds `events` (sorted by `seq`) and the run row's `timeline_seq`.
-- A missing `seq` below the cap is a dropped write.
-- `timeline_seq` greater than the last `seq` read, on a terminal run with no record, is a set of trailing writes that were lost.
-
-Either shows one line, never an empty list: "Some steps could not be shown live. The full list appears when the turn is recorded." If no record follows, the turn's footer reads "Not recorded" (S4, design §2.7).
+A missing `seq` below the cap is a dropped write. So is a `timeline_seq` above the last row on a released run. Either shows one line, never an empty list: "Some steps could not be shown live. The full list appears when the turn is recorded."
 
 ### 3.7 The read routes
 
-New `server/routes/ana-ri/runs.ts`, mounted beside the stream routes. Two routes:
+New `server/routes/ana-ri/runs.ts`, mounted beside the stream routes.
 
 ```
-GET /api/ana-ri/runs?thread_id=<id>
-  → { runs: [{ runId, userMessageId, status, startedAt }] }
-    The thread's runs that are live, or ended without a sealed record; newest first; at most 5.
-
+GET /api/ana-ri/runs?thread_id=<id>     the thread's runs that are live, or released without a record; newest first; ≤ 5
+GET /api/ana-ri/runs?mine=live          the caller's live runs, any conversation (the "Working" marker, D-3 copy)
 GET /api/ana-ri/runs/:runId/events?after=<seq>
-  → { runId, threadId, userMessageId, status, stoppedReason, round, startedAt,
-      lastBeatAt, highWater, events: TimelineEvent[] (seq > after, ≤ 200),
+  → { runId, threadId, threadTitle, userMessageId, status, stoppedReason, round,
+      runPolicy, hold: { reason, next } | null, plan: PlanStep[] | null,
+      startedAt, detachedAt, unattendedStopsAt, lastBeatAt, releasedAt, serverNow,
+      highWater, events: TimelineEvent[] (seq > after, ≤ 200),
       controls: TimelineControl[] | null,
       sealed: { recordId, assistantMessageId } | null,
-      approval: <the sign-off envelope> | { waiting: true } | null,
-      canControl: boolean }
+      approval: <sign-off envelope> | null, canControl: boolean }
 ```
 
-**Access**, one function, `runReadAccess(req, runId)`, used by both routes:
-1. The organisation comes from `resolveOrgId(req)`, the resolver `beginRun` stamped the row with and the one the control route uses (`stream.ts:3632-3637`). With none, the answer is 404.
-2. `SELECT … FROM ana_runs WHERE id = $1 AND organization_id = $2`, with the organisation **in the SQL**, as `applyControl` does (`run-control.ts:454-460`). No row means 404, so another organisation's run cannot be confirmed to exist. The events query repeats `organization_id = $2`.
-3. A row with `user_id IS NULL` is refused to anyone but an admin or owner, with 403. This mirrors `applyControl`'s rule that an unattributed run belongs to nobody (`run-control.ts:464-472`).
-4. **Allowed:** the asker (`user_id` = caller); an admin or owner (`readsEveryRecord`, `turn-records.ts:65-69`); or anyone who may read the thread's transcript (`transcriptReadable`, `turn-records.ts:97-100`). The last is decision 6 of the first design, as applied to the Summary (`turn-records.ts:120-121`): the live events are the same redacted rows the Summary shows. Anyone else gets 403 with "This turn's progress is visible to the person who asked and to administrators."
-5. `readsEveryRecord` and `transcriptReadable` move out of `turn-records.ts` into `server/routes/ana-ri/record-access.ts`, and both route files import them. That keeps one rule.
+**Access (D-1, decided: (b)).** Live reads are for **the asker and the organisation's admins and owners only**, until project access control exists.
+- The first draft's rule, "anyone who may read the thread", would have meant the whole organisation, because thread transcripts are organisation-readable (`threads.ts:188-210`; `turn-records.ts:97-100`).
+- The sealed Summary keeps decision 6's rule. That decision is the first design's, and it is unchanged here.
 
-**What the payload carries, by allow-list, never by spreading the row:**
-- `events`: the mirror rows.
-- `controls`: from `control_events` through `controlsOf`, exported from `server/services/ana/turn-summary.ts:57-71`. It carries the person's pause, steer and stop without who took them, exactly as the sealed Summary does.
-- `approval`:
-  - For **the asker only**: the envelope rebuilt by `buildHumanConfirmationRequiredResult(pending.command, pending.params, pending.tier)` from the row's `pending_approval`, which is what the live `approval_required` frame carries (`stream.ts:2300-2312`), plus `runId` and `toolUseId` so the existing sign-off can post its decision.
-  - For **anyone else**: `{ waiting: true }`. The sign-off parameters are the asker's governed action, and `toolUseId` is the key that binds a decision to a proposal (`run-control.ts:1077-1094`).
-- `canControl`: true only for the asker. The control route still decides.
-- **Never in the payload:** `owner_instance`, `pending_interjections`, `approval_decision`, `byUserId`, `organization_id`, `user_id`, `surface`, tool names, tool-use ids other than the asker's pending approval.
+The rule lives in one function, `runReadAccess(req, runId)`, used by all three routes:
+1. The organisation comes from `resolveOrgId(req)`, the resolver `beginRun` and the control route use (`stream.ts:3632-3637`). With none, 404.
+2. `SELECT … FROM ana_runs WHERE id = $1 AND organization_id = $2`: the organisation is **in the SQL**, as in `applyControl` (`run-control.ts:454-460`). No row, 404. The events query repeats the predicate.
+3. Allowed: `user_id` equals the caller, or `readsEveryRecord` is true (`turn-records.ts:65-69`). A row with `user_id IS NULL` is admin-only, mirroring `run-control.ts:464-472`.
+4. Anyone else gets **403**, with "You don't have access to this conversation's live progress." This is the reviewers' "You don't have access to this conversation", qualified; see §11 U-15.
 
-**A leak test** proves this, shaped like S4 test 3: sentinels in every excluded column. It is shown failing first against a handler that returns `SELECT *`.
+`readsEveryRecord` moves to `server/routes/ana-ri/record-access.ts`, and `turn-records.ts` imports it, so there is one rule.
 
-**Reaper.** Each read route runs `reapOrphanedRuns`, rate-limited per process (§2.4), before reading. A crashed run therefore reads `failed`/`orphaned`, not a `running` that will never move.
+**What the payload carries, built by allow-list:**
+- `plan` is computed from the mirror's `task` events by the shared `taskChanges`/`TaskIds` (`shared/ana/plan-diff.ts`), the same code the live client uses. It is not a second store.
+- `hold` and `runPolicy` come from the new columns.
+- `controls` come through `controlsOf`, exported from `server/services/ana/turn-summary.ts:57-71`, without who took them.
+- `approval`, for the **asker only**: the envelope rebuilt by `buildHumanConfirmationRequiredResult(pending.command, pending.params, pending.tier)`, which is what the `approval_required` frame carries (`stream.ts:2300-2312`), plus `runId` and `toolUseId`. For an admin it is null, because admins never approve (P-A).
+- `canControl`: true for the asker; for an admin, true for cancel only.
+
+**Never in the payload:** `owner_instance`, `pending_interjections`, `approval_decision`, `byUserId`, `organization_id`, `user_id`, `surface`, tool names, and any tool-use id other than the asker's pending approval.
+
+**Reaper.** Each route runs `reapOrphanedRuns`, rate-limited (§2.4), before reading.
+
+**Watched stamp.** The events route stamps `last_watched_at` when the caller is the asker and the request carries `visible=1`, at most once per 5 s per run.
 
 ---
 
@@ -306,103 +424,130 @@ GET /api/ana-ri/runs/:runId/events?after=<seq>
 
 ### 4.1 Poll, not SSE resume
 
-**Chosen: poll with `after=seq`.** Every 2 s while the page is visible. Paused while hidden. One immediate poll on `visibilitychange → visible`.
+**Chosen: a poll with `after=seq`** every 2 s while the page is visible, paused while hidden, plus one immediate poll on `visibilitychange → visible`.
 
-**Rejected: SSE resume** (`Last-Event-ID` on a new stream). A resumed stream lands on any instance, and only the owner produces events. A non-owner would have to tail the table (a poll in disguise) or subscribe to a per-run NOTIFY fan-out. That second path would need its own payload limits (NOTIFY caps a payload at 8,000 bytes), its own failure handling, and its own tests, and it would deliver the same rows. Two delivery paths for one stream break zero duplication.
+**Rejected: SSE resume.** A resumed stream lands on any instance, and only the owner produces events. A non-owner would have to tail the table, which is a poll in disguise, or fan out a per-run NOTIFY. A NOTIFY payload is capped at 8,000 bytes, and that path would need its own failure handling and tests while delivering the same rows. That is two delivery paths for one stream.
 
-**The cost of polling** is one primary-key range read and one run-row read per watcher every 2 s. A watcher that is not looking costs nothing. A long-poll that waits on the existing NOTIFY wake is a later optimisation behind the same route, and is not part of this design.
+**Cost.** One primary-key range read, one run-row read and at most one watched stamp per watching page every 2 s. A long-poll that waits on the existing NOTIFY wake is a later optimisation behind the same route.
 
 ### 4.2 How a device attaches
 
 | Situation | What happens |
 |---|---|
-| **The originating page, still connected** | Keeps its SSE stream as today. Its events have `seq`, and it does not poll. |
-| **The originating page, socket dropped** | The fetch errors, the idle timer fires, or the page is restored after a lock. The client stops marking the turn interrupted when it holds a `runId` for a detachable turn. It switches to polling from its last `seq`. |
-| **A reload, or another device opening the thread** | `loadThread` (`useAnaChat.ts:828`) also calls `GET /runs?thread_id=`. Each returned run is attached after its `userMessageId`'s message as a live turn bound to that `runId`, and polled from `after=0`. |
-| **Two sources at once** (the SSE stream and a catch-up poll, or two tabs) | Events merge by `seq`, and a duplicate is dropped. That makes a duplicate rejoin harmless by construction. |
-| **The composer** | Disabled for a thread with a live run, with "AnA is still working on the last message in this conversation." A send that races it gets `RUN_IN_PROGRESS` (§2.8) and rejoins. |
+| The originating page, connected | Keeps its SSE stream. Events carry `seq`. |
+| The originating page, socket gone (a fetch error, a phone unlock, the idle timer) | With a `runId` for a detachable turn, the client **goes straight to following** from its last `seq`. It never marks the turn interrupted or shows "AnA stopped responding". On a `didTimeout` (`useAnaChat.ts:1056-1063`) for a detachable turn, the timeout branch (`:1908-1932`) is skipped and following begins. |
+| A reload, or another device of the asker | `loadThread` also calls `GET /runs?thread_id=`. Each run is attached after its `userMessageId` message as a followed turn. |
+| Two sources at once | Events merge by `seq`, so a duplicate is dropped. A duplicate rejoin is harmless by construction. |
+| Following | The client sets `isStreaming` and `runStatus` from the poll's `status` and `hold`, so every control and phase line works as for a live turn. |
+| The composer, for the asker | Steers the followed run, through `interject`, as today. |
+| The composer, for an admin following | Disabled, with "Only the person who asked can steer AnA." |
+| A send that races a live run | Gets `RUN_IN_PROGRESS` (§2.8) and follows that run. |
 
 ### 4.3 Hand-over to the sealed record
 
-The poll reads the events first, then whether a record exists. The writer commits the record before it deletes the rows (§3.4). So a reader never sees both "no rows" and "no record" for a run that sealed.
-- **`status` terminal and `sealed` present.** The client stops polling and refetches the thread messages. The assistant message now exists, written by post-processing before the record (`post-processing.ts:578-606`). The client then opens `GET /turn-records/:recordId/summary` as S4 does (`turn-records.ts:216-227`). The Summary's rows replace the live rows. They are the same events, so nothing visibly moves.
-- **`status` terminal and no `sealed` yet.** The client keeps polling for up to the existing confirm windows (1.5 s, then 4 s; `useAnaChat.ts:179`). The footer reads "Recording…" in that time, as S4 already does.
-- **Still no record after that.** The closing row comes from the run row:
-  - `stopLineText(stoppedReason)`, with the table extended for the run-row reasons in §5.2;
-  - the mirrored rows, kept;
+**Ordering guarantee.** The reader reads the events first, then whether a record exists. The writer commits the record before it releases the rows (§3.4). So a reader never sees "no rows and no record" for a run that sealed.
+
+- **Terminal, with `sealed`.** The client stops polling, aborts any live SSE reader it still holds, and refetches the thread messages. The assistant message exists, because it is written before the record (`post-processing.ts:578-606`). The client then opens `GET /turn-records/:recordId/summary` (`turn-records.ts:216-227`). The rows are the same events.
+- **Terminal, no `sealed`, `released_at` null.** The owner is still trying. The client keeps polling for up to 30 s from the terminal status, showing "Recording…".
+- **Terminal, no `sealed`, and either `released_at` set or 30 s passed.** The closing row is built from:
+  - the run's reason (§2.10);
+  - the line "The steps up to here were saved as they ran. This turn was not recorded.";
+  - the mirrored rows;
   - the footer "Not recorded".
-- **`confirmRecordByRun`** (`anaTurnTimeline.ts:81-100`) is folded into this poll and deleted. "What became of run X" gets one path.
+- **`confirmRecordByRun` is deleted.** It lived at `anaTurnTimeline.ts:81-100` and is folded into this poll. "What became of run X" has one path.
 
 ---
 
 ## 5. The client
 
-### 5.1 States and copy
+### 5.1 Lines
 
-Every line comes from a table in `anaWorkModel.ts` or `turnSummaryRows.ts`, never from the model.
+Every line comes from a table in `anaWorkModel.ts` or `turnSummaryRows.ts`. None is model-written. There is no exclamation, no reassurance, and no estimate.
 
-| State | Asker | Colleague who can read the thread |
+| State | Asker | Admin following |
 |---|---|---|
-| Live, followed by polling | The live turn as it looks today (phase line, rows, Summary button), plus "Started 4 min ago". Pause, Stop and Steer work. | The same rows and Summary, with no controls, and "Only the person who asked can pause or stop this." |
-| Waiting on an approval | The existing sign-off opens from `approval` (`GovernedActionSignoff`, as the `approval_required` frame opens it today). The state line is the existing "waiting for you" (`anaWorkModel.ts:76-84`). | "Waiting for the person who asked to approve a step." |
-| Paused, Manual | The existing Manual hold with "Run this step" and "Do this instead". | "Waiting for the person who asked." |
-| No heartbeat for four beats (60 s) | "Last heard from AnA 2 min ago." It is computed from `lastBeatAt`; it is not a guess about why. | Same |
-| Ended, recorded | Hand-over to the Summary (§4.3). | Same |
-| Ended with no record | The closing row from the run's reason, the saved rows, and "Not recorded". | Same, without Continue |
-| A gap or the cap | §3.5 and §3.6 lines. | Same |
+| Followed, running | The live turn (rows, Summary button, plan rail), with the phase line "Working · step 7 · 4m" (step = count of announced steps; time from `startedAt` against `serverNow`). No live prose. | Same, with Stop only |
+| Unwatched elsewhere | The conversation-list marker "Working · stops by 14:31 if nobody opens it" | — |
+| Manual hold | The existing hold with "Run this step" and "Do this instead", from `hold.next` | "Waiting for the person who asked." |
+| Approval waiting | The sign-off opens from `approval` (`GovernedActionSignoff`) | "Waiting for the person who asked to approve a step." |
+| The reader's own network failing | "Can't reach the server. Retrying." Backoff 2, 4, 8 … 30 s. The last known state stays on screen. | Same |
+| Owner heartbeat stale (more than 60 s, four missed beats, by `lastBeatAt` against `serverNow`) | "AnA hasn't reported for 2 min. The server handling this turn may have stopped." with **Stop** | Same, with Stop |
+| Stop sent, not yet confirmed | "Stop not confirmed. Retrying." The turn stays as it is. | Same |
+| Stopped | Shown only once the server confirms: the poll's terminal status, or the cancel's 200 or 409 | Same |
+| Ended | §4.3 | Same |
+| A gap, or the cap | §3.5, §3.6 | Same |
+| The run routes answer 403 | "You don't have access to this conversation's live progress." | — |
 
-**Copy rules:** no exclamations, no reassurance, and no duration promises.
+**The Working marker.** Rows in `client/src/concept2cure/v2/surfaces/projectThreads.ts`, and the conversation list that reads it, show "Working" from `GET /runs?mine=live` (DT3). The `RUN_LIMIT` refusal links to that filtered list.
 
-### 5.2 Stop lines added
+### 5.2 Stop on a flaky network
 
-`STOP_LINES` is the one table (`anaWorkModel.ts:42-55`). It gains two entries, because a run without a record is described by its row's reason, which is a `RunStoppedReason`:
+`stop()` gains `abortIntent: 'stop' | 'leave'`.
+- **Today's behaviour.** Stop aborts the reader even after a failed cancel (`useAnaChat.ts:762-771`). For a detachable turn that would mean the page says Stopped while the server goes on.
+- **Under detach,** for a detachable turn with intent `'stop'`, a failed cancel **does not abort**. The client keeps following, retries the cancel with backoff, and shows "Stop not confirmed. Retrying."
+- **Stopped is shown** only on a confirming 200 or 409, or on a polled terminal status.
+- **Intent `'leave'`** (unmount, switching conversation) never cancels and never shows Stopped.
+- **Non-detachable turns** keep today's behaviour.
 
-| Reason | Line |
-|---|---|
-| `orphaned` | "Stopped: the server restarted." Followed by the first design's crash line (`ANA_AGENT_WORK_VIEW_2026-10-08.md:542`): "The steps up to here were saved as they ran; this turn has no sealed record." when there is no record. |
-| `error` | "Stopped: the turn ended with an error." |
+### 5.3 Stop lines
 
-`orphaned` also joins `TurnStoppedReason` (`run-status.ts:89`), because DT4 can now write it onto an answer.
+`STOP_LINES` (`anaWorkModel.ts:42-55`) is the one table. It gains the reasons in §2.10:
+- `unattended_limit`
+- `session_ended`
+- `server_shutdown`
+- `orphaned`
+- `error`
+- the admin-cancel variant of `cancelled`.
 
-`client_disconnected` stays, for turns that cannot detach (§2.1).
+The run-row reasons join `TurnStoppedReason` (`run-status.ts:89`) so they can be written onto an answer.
 
-### 5.3 The phone-lock case
+`isContinuable` (`anaWorkModel.ts:218-232`) adds `unattended_limit`, `session_ended`, `server_shutdown` and `orphaned`, with a test for each. A `cancelled` by anyone stays not continuable, because it was a decision.
 
-1. The phone locks mid-turn. Within seconds to minutes the OS drops the socket. The server detaches; nothing stops.
-2. On unlock, `visibilitychange → visible` triggers one poll from the last `seq`.
-   - If the SSE reader is still alive, its frames and the poll's rows merge by `seq`.
-   - If it errored, polling continues alone.
-3. The turn shows what happened while the phone was locked, and continues live. There is no "lost connection" row.
-4. If the turn finished while the phone was locked, the hand-over in §4.3 shows the answer and the Summary.
+**The closing row** adds "{n} step(s) were not authorised and did not run." when n ≥ 1 (§2.7).
 
-### 5.4 Notifications (DT5, decision D-5)
+### 5.4 The phone-lock case
 
-**Minimal.** One in-app notification to the asker through `createNotification`. No email and no push.
-- **When:**
-  - a detached run starts waiting on an approval: "AnA is waiting for your approval";
-  - a detached run ends: "AnA finished your request", or "AnA stopped: {stop line}".
-- **Fields:** category `ana_turn`, severity `info` (`warning` for an approval), and `actionUrl` = the conversation.
-- **Only when the run is detached at that moment.** A connected page already shows it.
-- **Deterministic.** The title is from the table above. The body is empty.
-- **What it is not.** The in-app inbox is not a push to a locked phone. A person who closed the app sees it next time they open the product. Push is a later decision.
+1. The phone locks. The socket drops within seconds to minutes. The server detaches; nothing stops.
+2. With nobody watching, the unattended clock starts (§2.6).
+3. On unlock, `visible` triggers one poll from the last `seq`. If the SSE reader is alive, frames and rows merge by `seq`. If it errored, or the idle timer fired, following continues. "AnA stopped responding" is never shown for a detachable turn.
+4. The page then watches again, and the unattended clock resets.
+5. A turn that finished while the phone was locked hands over (§4.3). A turn that ended at the limit says so.
+
+### 5.5 Notifications (D-5: in-app only)
+
+**When.** A detached run is **unwatched** and either:
+- it starts waiting on an approval: severity `warning`, title "AnA is waiting for your approval"; or
+- it ends: title "AnA finished your request" or "AnA stopped: {stop line}", plus "{n} step(s) were not authorised and did not run." when n ≥ 1.
+
+**How.** One `createNotification` (`server/services/notifications/notification-service.ts:61-100`) to the asker. Category `ana_turn`, and `actionUrl` = the conversation.
+
+**The body names the conversation:** the thread title when it has one, otherwise the start time and the first 60 characters of the question, for example "14:02 · Find every stability report in…". The question is the asker's own words, and the asker is the only recipient.
+
+**Where it is read.** `TaskTray.tsx` (`:104-107`, `:344-352`). Today its rows show a title and body and a mark-read button, and they do not navigate. DT4 makes a row with an `action_url` a link that marks the notification read and navigates to it.
+
+**What it is not.** It is not push. A locked phone shows nothing until the product is opened. Push for approvals is a later founder option (§10).
+
+### 5.6 Approvals decided elsewhere
+
+- **Before the signing step,** `GovernedActionSignoff` checks the run's poll state.
+- **The dialog closes** when the poll shows the approval is no longer pending.
+- **`NO_PENDING_APPROVAL` (404) and `STALE_APPROVAL` (409)** from `utility.ts:100-121` render "Already decided on another device." **only when** the poll confirms the approval was decided or the run moved on. Otherwise they render today's error.
 
 ---
 
 ## 6. Multi-instance deployment
 
-The API runs as several tasks behind a load balancer, with no sticky routing (`LAUNCH_DEFINITION_OF_DONE.md:187-192`; `run-control.ts:5-10`).
+The API runs as several tasks behind a load balancer with no sticky routing (`LAUNCH_DEFINITION_OF_DONE.md:187-192`; `run-control.ts:5-10`).
 
-| Request | Instance | What it needs |
+| Request or work | Where | Mechanism |
 |---|---|---|
-| `POST /stream` | Any; it becomes the **owner**, `owner_instance` | Nothing new |
-| Control (pause, steer, stop) | Any | A row write plus NOTIFY. Unchanged. |
-| Approval decision | Any | Unchanged (`utility.ts:74-176`; `run-control.ts:1095-1116`) |
-| `GET /runs…` | Any | DB reads only |
-| Event writes | **Owner only** | Enforced in SQL (§3.4) |
-| Heartbeat | Owner only, for its own `localRuns` | §2.3 |
-| Reaper | Any; estate-wide | Unchanged, plus a notify |
+| `POST /stream` | Any instance; it becomes the owner | `owner_instance` |
+| Control, admin cancel, approval decision, session-end stop | Any instance | A row write, then NOTIFY to the owner (poll fallback 2 s) |
+| `GET /runs…` | Any instance | Database reads, plus the watched stamp |
+| Mirror writes, heartbeat | The owner only | `owner_instance` in SQL |
+| Reaper, mirror release and expiry | Any instance | Estate-wide, through the door functions |
 
-A request that lands on a non-owner never needs the owner. Everything it reads is in the database, and everything it writes reaches the owner through the existing NOTIFY/poll path. The cross-instance test (`server/services/ana/__tests__/run-control-cross-instance.dbtest.ts`) gains the cases in DT1 and DT3.
+A request on a non-owner never needs the owner. The cross-instance test (`server/services/ana/__tests__/run-control-cross-instance.dbtest.ts`, real Postgres, `app_service`, RLS on) gains the cases in DT1 and DT3.
 
 ---
 
@@ -410,199 +555,233 @@ A request that lands on a non-owner never needs the owner. Everything it reads i
 
 | Failure | What happens | What the person sees |
 |---|---|---|
-| **Owner crash** (OOM, SIGKILL) | Heartbeats stop. The next run open or run read reaps the row after 5 min as `failed`/`orphaned`. The mirrored events remain; the trigger refuses their deletion with no record. No assistant message, no record. | Up to 5 min of "Last heard from AnA n min ago", then "Stopped: the server restarted. The steps up to here were saved as they ran; this turn has no sealed record." with Continue. |
-| **Deploy** (SIGTERM) | DT4: before the HTTP drain, shutdown writes `failed`/`orphaned` for every owned live run and aborts each with that reason. Turns unwind through the error path within the existing 10 s drain (`shutdown.ts:41-53`): the stopped answer, the `end` event and the record all say `orphaned`. A turn that does not finish in the window leaves its row already terminal and its events saved. | "Stopped: the server restarted.", recorded when the window allowed, with Continue. |
-| **Partition: the owner loses the DB** | Heartbeats fail and are logged. Another instance reaps after 5 min. The owner's model calls may continue. When the DB returns, the owner reads the terminal row: through NOTIFY from the reaper (§2.4), the 2 s poll fallback, or its next checkpoint status read. It then aborts with `orphaned`. Its `endRun` is a no-op (`run-control.ts:309-327`). Its record says `stopped`/`orphaned`, never `answered`. | As for a crash. If the DB returns in time, the record says the run was stopped because it was lost. |
-| **Partition: a reader loses the server** | Polls fail. The client shows "Last heard from AnA n min ago" from the last good `lastBeatAt`, and retries with backoff (2, 4, 8 … 30 s). | No false "stopped". |
-| **Duplicate rejoin** | Reads only. Merged by `seq`. Two Stops: the second gets 409 and is read as done. Two approvals: the second gets 409 `STALE_APPROVAL` or 404 (`utility.ts:100-121`). | Nothing extra |
-| **Two sends in one thread** | §2.8: refused with `RUN_IN_PROGRESS` before the question is saved. | "AnA is still working on the last message in this conversation." |
-| **Mirror write failure** | §3.4, §3.6. The run continues; the gap is shown. | The gap line |
-| **Record write failure** | Rows stay, and the trigger refuses their deletion. | "Not recorded" with the saved rows |
-| **Hung tool or provider, nobody watching** | The detached ceiling (§2.6) aborts at `AUTO_WALL_MS`. | "Stopped at the time limit." |
-| **Unwatched cost** | Bounded by §2.6 and §2.8, and by decision D-3. Every model call is already in the gateway audit (`server/services/ai-gateway/audit.ts`). | — |
-| **Writes to a dead socket** | Frames written after the drop are discarded. DT3 test 6 proves that a destroyed response raises no `error` event and the process stays up. Until that test is green, this design does not assert it. | — |
+| Owner crash (OOM, SIGKILL) | Heartbeats stop. After 5 min the reaper marks the run `failed`/`orphaned`. Mirror rows remain until expiry (§3.3). | "AnA hasn't reported for n min…" with Stop, then "Stopped: the server handling this turn stopped responding. The steps up to here were saved as they ran. This turn was not recorded." with Continue |
+| Deploy (SIGTERM) | Before the HTTP drain, shutdown writes `failed`/`server_shutdown` for each owned live run, in its tenant scope, and aborts each with `RunStopped('server_shutdown')`. Turns unwind within the existing 10 s drain (`shutdown.ts:41-53`). A turn that was about to finish records `stopped`/`server_shutdown` to match the row (DT3 test 14). | "Stopped: the server restarted for an update." Recorded when the window allowed. Continue. |
+| Partition: the owner loses the database | Heartbeats fail. After 5 min the reaper marks it `orphaned` and notifies. The owner learns this by NOTIFY, by the poll fallback, or at its next checkpoint, then aborts with `orphaned`. Its record says `stopped`/`orphaned`. | As for a crash |
+| Partition: the reader loses the server | "Can't reach the server. Retrying." | No false "stopped" |
+| Duplicate rejoin | Reads merge by `seq`. A second Stop gets 409, read as stopped. A second approval gets 409 or 404. After P-A it shows "Already decided on another device." once the poll confirms (§5.6). | — |
+| Two sends in one thread; a fourth live run | `RUN_IN_PROGRESS` / `RUN_LIMIT`, before the question is saved | §2.8 |
+| The session or organisation ends | `session_ended` (§2.9) | §2.10 |
+| A mirror write fails | Gap marked; the run continues | The gap line |
+| The record write fails | Rows stay; `released_at` is set | "Not recorded" with the saved rows |
+| A hung tool, nobody watching | Closing-answer grace, then abort (§2.6) | "Stopped: nobody was watching for 15 minutes." |
+| Writes to a dead socket | Discarded. DT3 test 6 proves no `error` event and no unhandled error. Until then the design does not assert it. | — |
 
 ---
 
 ## 8. Slices
 
-Order: the table and reads first, harmless while every run still stops on disconnect. Then rejoin for a second device. Then detach itself, with its client. Then restart honesty, then the notification. Each slice runs red first and files `docs/evidence/ANA-SUMMARY/<date>/DT<n>-<name>/`, holding the red output, the green output and the browser captures named below.
+Each slice runs red first, and files `docs/evidence/ANA-SUMMARY/<date>/DT<n>-<name>/` with the red output, the green output and the browser captures named below.
 
-### DT1: the event mirror and its reads (no behaviour change for the person)
+**Prerequisite P-A** (approval authority, §2.7) lands before DT2.
+
+### DT1: the event mirror, its door and its reads (nothing on screen changes)
 
 **Files:**
-- `migrations/<date>_ana_run_events.sql`: table, index, trigger and header.
-- `scripts/db/migration-set.mjs`: the entry, above `UUID_TENANT_ISOLATION_NONPUBLIC`, with its note.
-- `db/migrations/20260917_ana_runs.sql`: `timeline_seq` and `user_message_id`, as `ADD COLUMN IF NOT EXISTS` with a dated note.
-- `server/services/tenant/tenant-offboarding.ts`: `'ana_run_events'` before `'ana_runs'`.
-- New `server/services/ana/run-events.ts`: the ordered mirror queue, the cap, and the post-seal delete.
-- `server/services/ana/turn-timeline-emitter.ts`: the third sink, and the `truncated` marker at seq 2000.
+- `migrations/<date>_ana_run_events.sql`: the table, indexes, guard trigger, `ana_run_events_purger` role and the three door functions, with the header.
+- `scripts/db/migration-set.mjs`: the entry above `:3100`, with a note.
+- `db/migrations/20260917_ana_runs.sql`: the six columns (§3.1), with a dated note.
+- `server/services/tenant/tenant-offboarding.ts`: a `PURGE_DOORS` entry (`:563-578`).
+- New `server/services/ana/run-events.ts`: the queue, the scoped flush, `close()`, the cap and the release.
+- `turn-timeline-emitter.ts`: the third sink and the marker.
 - `shared/ana/turn-timeline.ts`: the marker type.
 - `server/services/ana/run-control.ts`:
-  - the process-wide heartbeat, which stamps `timeline_seq`;
-  - the reaper's `RETURNING` + notify, and its post-seal cleanup pass.
-- `server/routes/ana-ri/stream.ts`:
-  - the keepalive no longer beats the run (`:816-824` removed);
-  - `user_message_id` is written at `:1131`;
-  - the mirror is flushed and deleted after the record is filed.
-- New `server/routes/ana-ri/runs.ts` and `server/routes/ana-ri/record-access.ts`. `turn-records.ts` imports the latter.
-- `server/services/ana/turn-summary.ts`: export `controlsOf`.
+  - the process heartbeat, with `owner_instance`;
+  - the reaper's notify, release and expiry passes.
+- `stream.ts`:
+  - the keepalive no longer beats the run;
+  - `run_policy` is written at insert;
+  - post-processing awaits `mirror.close()`, seals, releases, and writes `released_at`.
+- New `server/routes/ana-ri/runs.ts` and `record-access.ts`.
+- `turn-summary.ts`: export `controlsOf`.
 
 **Tests that must fail first:**
-1. **Mirror equals record.** A turn with a stand-in model leaves mirror rows whose events equal the sealed `record.timeline` with notes resolved, until the record is filed, and none after. *Red today:* there is no table.
-2. **Trigger** (pglite):
-   - UPDATE and TRUNCATE are refused.
-   - DELETE is refused for a run with no record, allowed once a record exists, and allowed for a `pending_deletion` organisation.
-   - INSERT is refused once a record exists.
+1. **Mirror equals record.** With a stand-in model, the mirror rows equal the sealed `record.timeline` (notes resolved) until the release, and none remain after it. *Red today:* no table.
+2. **Guard** (pglite):
+   - UPDATE and TRUNCATE are refused;
+   - INSERT is refused after a record exists;
+   - a plain DELETE as `app_service` is refused in every state;
+   - each door deletes only under its own preconditions and refuses under an active legal hold.
 
-   The selftest shows each refusal by running the statement against the table before the trigger is installed (green), then after (red).
-3. **Owner only.** A batch written with another `owner_instance` inserts zero rows.
-4. **Cap.** 2,050 events produce rows 1–1,999 plus a `truncated` row at 2000. A row at seq 2001 is refused by the CHECK. The record holds all 2,050.
-5. **Gap.** A failed batch leaves a missing `seq` and `timeline_seq` above it. The read's payload shows both.
-6. **Heartbeat without a socket.** A run whose response emitted `close` still has `heartbeat_at` advanced 15 s later (fake timers). *Red today:* `stream.ts:826-831` clears the only beat.
-7. **Access** (pglite route test, the shape of S4 test 5):
+   Each is shown green before the trigger is installed and red after.
+3. **Flush before seal.** Events emitted just before the turn ends are all in the mirror before the record is inserted. A failing `close()` marks the gap and the record is still sealed. *Red without the await:* the trigger refuses the last batch.
+4. **Owner only.** A batch, or a heartbeat, from another `owner_instance` changes zero rows.
+5. **Cap.** 2,050 events produce rows 1–1,999 plus the marker. A row at 2001 is refused. The record holds all 2,050.
+6. **Gap.** A dropped batch shows in `events` and `highWater`.
+7. **Heartbeat without a socket.** `heartbeat_at` advances 15 s after the response emits `close` (fake timers). *Red today:* `stream.ts:826-831`.
+8. **Scope with RLS on** (`test:db`, `app_service`, `RLS_ENFORCE=on`). A flush armed inside tenant A's turn, then fired after a tenant B request created the timer context, writes A's rows. The heartbeat writes both tenants' runs. *Red:* the flush without its explicit scope writes zero rows and logs nothing.
+9. **Access** (pglite route test):
    - asker 200;
-   - admin 200;
-   - colleague who can read the thread 200 with `approval: { waiting: true }` and `canControl: false`;
+   - admin 200, with `approval: null` and cancel-only `canControl`;
+   - a colleague who can read the transcript 403 with the sentence;
    - another organisation 404;
-   - a `user_id IS NULL` run 403 for a member and 200 for an admin.
+   - a `user_id IS NULL` run 403 for a member.
 
-   The test is shown red against a handler that filters the organisation in JS rather than SQL, by running it with RLS off.
-8. **Leak.** Sentinels in `owner_instance`, `pending_interjections`, `approval_decision`, `byUserId`, `user_id` and `surface` appear nowhere in either payload. Shown red against `SELECT *`.
-9. **Purge.** `ci:purge-coverage` passes with the entry and fails without it (selftest).
-10. **Migration gates.** `ci:migration-set-order`, `ci:migration-drop-safety` and `ci:tables-live-schema` are green. `ci:migration-set-order` is shown red with the entry placed after the sweep.
+   Shown red against a handler that filters the organisation in JS, with RLS off.
+10. **Leak.** Sentinels in every excluded column appear in no payload. Shown red against `SELECT *`.
+11. **Gates.** `ci:purge-coverage` (and its selftest), `ci:migration-set-order` (shown red with the entry after the sweep), `ci:migration-drop-safety` and `ci:tables-live-schema` are all green.
 
-**Accepted when** (browser, desktop): a turn runs as today. Its events can be fetched from `/runs/:runId/events` while it runs, as captured JSON. The rows are gone after it is recorded. Nothing on screen changes.
+**Accepted when** (browser, desktop): a turn runs as today. `/runs/:runId/events` returns its rows while it runs, captured as JSON. They are gone after the record is filed. Nothing on screen changes.
 
-### DT2: a second device follows a live turn
+### DT2: a phone follows a desktop turn (after P-A)
 
 **Files:**
-- `client/src/concept2cure/components/ana/useAnaChat.ts`:
-  - `loadThread` reads `/runs?thread_id=`;
-  - a `following` turn state, bound to a `runId`, polls `after=seq` and merges by `seq`;
-  - the hand-over (§4.3);
-  - the composer lock;
-  - `confirmTurnRecordByRun` is replaced by the poll.
-- `client/src/concept2cure/components/ana/anaTurnTimeline.ts`: `confirmRecordByRun` is deleted, and a `pollRun` is added.
-- `client/src/concept2cure/v2/anaWorkModel.ts`: the copy in §5.1, and the `orphaned` and `error` stop lines.
-- `TurnSummary.tsx`, `turnSummaryRows.ts`: the gap and cap lines.
-- `AnaActivity.tsx`: the "Started …" and "Last heard …" lines.
+- `useAnaChat.ts`:
+  - following (the poll, the merge by `seq`, `isStreaming`/`runStatus` from the poll);
+  - the hand-over;
+  - the composer steering for the asker;
+  - `abortIntent`;
+  - the reworked `confirmTurnRecordByRun`.
+- `anaTurnTimeline.ts`: `pollRun`; `confirmRecordByRun` deleted.
+- `anaWorkModel.ts`: §5.1 and §5.3; `isContinuable`.
+- `TurnSummary.tsx`, `turnSummaryRows.ts`: the gap, cap and not-recorded lines; the "not authorised" count.
+- `AnaActivity.tsx`: the phase and staleness lines.
+- `GovernedActionSignoff`: §5.6.
 
 **Tests that must fail first:**
-1. A reloaded thread whose last question has a live run renders a live turn after that message, from polled events. *Red today:* the question stands alone until the answer exists.
-2. SSE frames and polled rows with overlapping `seq` render each event once.
-3. A terminal run with a record hands over to the Summary, and the rows are identical before and after.
-4. A colleague's view has no Stop, Pause or Steer, and shows the colleague line. The asker's view of `approval` opens the sign-off.
-5. A second Stop answered 409 renders as stopped, not as an error.
-6. No record after the confirm windows: "Not recorded", and the stop line from the run's reason.
+1. A reloaded thread whose last question has a live run renders a followed turn after that message, with the plan rail from `plan` and the phase line. *Red today:* the question stands alone.
+2. Overlapping SSE frames and polled rows render once.
+3. A sealed run hands over, and the rows are identical before and after.
+4. The plan rail and a Manual hold ("Run this step", "Do this instead") render on a follower from `plan` and `hold`, and pressing them sends controls.
+5. A failed cancel on a detachable turn shows "Stop not confirmed. Retrying." and does not abort. A later 200 shows Stopped. A 409 shows Stopped.
+6. The reader's network failing and a stale owner each show their own line. Stop is offered on a stale owner.
+7. With no record, "Recording…" is shown until `released_at` or 30 s, then "Not recorded".
+8. `NO_PENDING_APPROVAL` confirmed by the poll shows "Already decided on another device.", and the dialog closes.
+9. An admin follower has Stop only, and its composer shows "Only the person who asked can steer AnA."
 
-**Accepted when** (browser, 1280 px and 390×844):
-- Start a Balanced turn on desktop, using the S4 acceptance corpus (`ANA_AGENT_WORK_VIEW_2026-10-08.md:466`). Open the same conversation on the phone. The phone shows the same rows arriving, and Stop on the phone stops the desktop turn.
-- A colleague's browser shows the rows and no controls.
-- The desktop reload mid-turn **still stops the turn** in this slice ("Stopped: this page lost its connection."), because the server does not detach yet. That is filed as the expected result.
+**Accepted when** (browser, a phone at 390×844 following a desktop at 1280):
+- Start the S4 corpus turn (`ANA_AGENT_WORK_VIEW_2026-10-08.md:466`) on desktop, in a Manual turn, and open it on the phone. The phone shows the same rows, the plan rail, and the Manual hold.
+- Run this step from the phone proceeds on desktop. Stop from the phone stops desktop.
+- A colleague gets the 403 line.
+- Closing the desktop tab **still stops the turn in this slice** ("Stopped: this page lost its connection."). That is filed as the expected result.
 
-### DT3: detach
+### DT3: detach, its limits, session end and restart honesty (ships as one)
 
 **Files:**
-- `server/services/ana/run-status.ts`: `detachable()`, and `orphaned` in `TurnStoppedReason`.
-- `server/routes/ana-ri/stream.ts`:
-  - `disconnectRun` branches on `detachable` (§2.1);
-  - the detached ceiling timer (§2.6);
-  - the approval loop's `res.writableEnded` test is deleted (`:2324-2327`);
-  - `clientGone` and `stopForDisconnect` are removed from `streamRunHold` (`:517-523`);
-  - the error path reads `runSignal.reason` (`:3497-3527`);
-  - `beginRun`'s refusal frame for `RUN_IN_PROGRESS`.
-- `server/services/ana/run-hold.ts`: `clientGone`, `stopForDisconnect` and the `'disconnected'` outcome are removed (`:88-90, 205-207`); `leave` returns `'cancelled'` for any terminal status (`:272`).
-- `server/services/ana/turn-run-policy.ts`: `noteDetached`. `'disconnected'` handling is kept only for the non-detachable path (`:188-190, 296-297`).
-- `server/services/ana/run-control.ts`:
-  - `driveLocalRun` aborts on every terminal status, with a reason (`:181-188`);
-  - `beginRun` gets the per-thread advisory lock and the refusal (`:228-276`).
-- `useAnaChat.ts`: a socket error, the idle timeout, unmount and `abandonTurn` on a detachable turn switch to following instead of marking it interrupted (`:778-819, 1056-1063, 1903-1975`). Stop is unchanged.
-- Existing tests updated, not deleted:
-  - `server/routes/ana-ri/__tests__/stream-disconnect.test.ts:253-290` ("keeps a durable disconnect distinct…") becomes "detaches a durable run, and stops a local-only or driving one";
+- `run-status.ts`: `detachable()`; the new reasons in `RunStoppedReason`/`TurnStoppedReason`; the unattended directive.
+- `stream.ts`:
+  - **thread verification before `beginRun`**, and the write-back of `thread_id` and `user_message_id` (`:852-858`, `:1103-1131`);
+  - the detach branch (no `runSettled`; `:901-929`);
+  - the unattended clock and grace;
+  - the round-boundary session and organisation re-check;
+  - deletion of the dead `writableEnded` checks;
+  - `runSignal.reason` in the error path;
+  - the `RUN_IN_PROGRESS` and `RUN_LIMIT` frames.
+- `run-hold.ts`: `clientGone`, `stopForDisconnect` and `'disconnected'` removed (`:88-90, 205-207`); `leave` (`:272`).
+- `turn-run-policy.ts`: the unattended directive; `'disconnected'` kept only for non-detachable turns.
+- `run-control.ts`:
+  - `RunStopped`;
+  - `driveLocalRun` on `failed`;
+  - `beginRun`'s transaction and locks;
+  - `stopRunsFor`;
+  - admin cancel in `applyControl`;
+  - `stopRunInternally` accepting `server_shutdown` and `session_ended`;
+  - `ownedLiveRuns`;
+  - `hold` and `last_watched_at` writes.
+- Session hooks: `server/routes/auth.ts:1344-1378` (logout), `account-standing.ts:206` (`endEverySessionOf`), the `password_changed_at` writer, the organisation-status writer, and `tenant-offboarding.ts:127, 789`.
+- `server/startup/shutdown.ts`: `settleOwnedRunsForShutdown` before `:41`.
+- Client:
+  - `useAnaChat.ts`: detachable socket loss, idle timeout, unmount and abandon all go to following (`:778-819, 1056-1063, 1903-1975`);
+  - `projectThreads.ts` and the conversation list: the Working marker from `?mine=live`;
+  - the `RUN_LIMIT` link.
+- Updated, not deleted:
+  - `server/routes/ana-ri/__tests__/stream-disconnect.test.ts:253-290` becomes "detaches a durable run; stops a local-only, unowned or drive-requested one";
   - `stream-run-hold.test.ts` and `run-hold.test.ts` lose the `clientGone` cases.
 
 **Tests that must fail first:**
-1. **Detach.** A durable, owned, non-driving turn whose response emits `close` at round 1 runs every remaining round and files its record as `answered`. Its row ends `finished`, and no `client_disconnected` is written. *Red today:* it is cancelled with `client_disconnected`.
-2. **Still stops.** A local-only turn, a turn with `user_id` null and a Live Drive turn are each stopped with `client_disconnected` on `close`, exactly as before.
-3. **Reaped owner stops.** A detached run whose row is set to `failed`/`orphaned` by another writer aborts within one poll interval. Its record says `stopped` with reason `orphaned`. *Red today:* `driveLocalRun` ignores `failed`, and `run-hold.ts:272` carries on.
-4. **One run per thread.** A second `POST /stream` on a thread with a live run gets `RUN_IN_PROGRESS`, and no second question is saved. Two racing posts produce exactly one run (pglite, two connections). *Red today:* both run.
-5. **Ceiling.** A detached turn whose tool never resolves is aborted at `AUTO_WALL_MS` (fake timers) with `budget_exhausted`.
-6. **Dead socket.** A detached turn writes 50 frames to a destroyed response. No `error` event is emitted on the response, and the process has no unhandled error.
-7. **Holds unattended.** Manual: a detached hold ends `hold_expired` at `MAX_PAUSE_MS`. No policy: an approval is denied at `MAX_PAUSE_MS` and the turn continues. Auto: the turn ends `approval_timeout`. Each was green before and must stay green: they are regression guards, run in the detached state.
-8. **Cross-instance** (`run-control-cross-instance.dbtest.ts`):
-   - a cancel accepted on instance B aborts a detached run on instance A;
-   - a reaper on B notifies A, and A aborts.
+1. **Detach, finished, and stays finished.** A durable, owned turn without drive, whose response emits `close` at round 1, runs every round. It reaches `endRun`, its row is `finished`, and the record is `answered`. A reaper run 6 minutes later (fake clock, heartbeat alive) leaves it `finished`. *Red today:* `cancelled`/`client_disconnected`. A variant that only removes `noteDisconnected` but keeps `runSettled = true` leaves the row `running` and is reaped `orphaned`.
+2. **Still stops.** Local-only, `user_id` null, and `live_drive: true` turns each stop with `client_disconnected`.
+3. **Close during context assembly.** A socket closed before `driveStatePromise` resolves (`:967-1354`) on a request without `live_drive` detaches. One with `live_drive: true` stops.
+4. **A new conversation.** A first message in a new chat produces a run whose `thread_id` and `user_message_id` are the minted thread and question. A second device's `/runs?thread_id=` finds it. *Red today:* `thread_id` stays null.
+5. **Forged thread.** A client-sent thread id belonging to a colleague or another organisation is refused before any run row is written.
+6. **Dead socket.** 50 frames written to a destroyed response produce no `error` event and no unhandled error.
+7. **One per thread, three per person.**
+   - Two racing posts in one thread produce one run.
+   - A fourth live run for one person gets `RUN_LIMIT`.
+   - Neither refusal saves a question.
+   - Run against pglite with two connections, and against `test:db` with RLS on.
+8. **A reaped owner stops.** A row set `failed`/`orphaned` by another writer aborts the owner within one poll interval, and the record says `stopped`/`orphaned`. *Red today:* `run-control.ts:181-188` and `run-hold.ts:272`.
+9. **The abort reason** is an `Error` named `AbortError`. With a stand-in provider, a stop mid-call and a stop while queued for a permit each yield `GatewayAbortedError` and no fallback attempt. A Manual `endHeldRun` (`finished`) does not abort the closing answer.
+10. **Unattended limit** (fake timers):
+    - an unwatched run ends `unattended_limit` at 15 minutes with a closing answer;
+    - a hung tool is aborted after the grace;
+    - a watch at 10 minutes resets the clock;
+    - 40 minutes from start ends `budget_exhausted` whatever the watching;
+    - the record's warning names the armed limits.
+11. **Session end.**
+    - Logout, `endEverySessionOf`, a password change, an organisation set to `suspended`, `requestDeletion`, and `purgeTenant` each stop the person's or organisation's live runs with `session_ended`, and `purgeTenant` does so before any table.
+    - A run whose token is revoked by another path stops at the next round boundary.
+    - A standing read that throws stops it too (fail closed).
+12. **Admin cancel.** An admin cancels a colleague's run: the control event carries the admin and `byRole`, and the audit row exists. An admin pause, steer or approve is refused. Another organisation's admin gets 404.
+13. **Holds unattended** are regression guards in the detached state: Manual `hold_expired`; approval with no policy denied with the turn continuing; Auto `approval_timeout`.
+14. **Drain.** A turn finishing during the 10 s shutdown drain records `stopped`/`server_shutdown` to match the row's `failed`/`server_shutdown`, never `answered`. A turn that cannot finish leaves the row terminal and its rows kept. `stopRunInternally(…,'server_shutdown')` writes `failed`. *Red today:* it writes `cancelled` for every reason (`run-control.ts:664-671`), while the reaper writes `failed` (`:752-755`).
+15. **Cross-instance** (`run-control-cross-instance.dbtest.ts`):
+    - a cancel on B aborts a detached run on A;
+    - B's reaper notifies A, and A aborts;
+    - a `stopRunsFor` on B aborts A's run.
 
-**Accepted when** (browser, phone 390×844 and desktop):
-- **Phone lock.** Start the S4 corpus turn on the phone and lock it for 3 minutes. On unlock, the steps taken while it was locked are present, the turn carries on or has finished, and there is no "lost connection" row.
-- **Close the tab** on desktop mid-turn, then reopen the conversation. The turn is live, or finished with its Summary.
-- **Stop from another device** while the first is closed.
-- **A second message** while the turn runs is refused with the sentence and the live turn is shown.
-- **Manual + approval while closed.** With a Manual turn holding for an approval, close the page and wait past 10 minutes. Reopening shows "Stopped: an approval was not answered." *(A staging run with `MAX_PAUSE_MS` unchanged; the wait is real.)*
-- **A Live Drive turn** still stops on close, with the old line.
+**Accepted when** (browser, a phone at 390×844 and a desktop):
+- **Phone lock.** Start the S4 corpus turn on the phone and lock it for 3 minutes. On unlock, the steps taken meanwhile are there, the turn carries on or has finished, and there is no "lost connection" or "stopped responding" line.
+- **New chat.** Start a new conversation on the phone and lock it. The desktop's conversation list shows Working, and opening it follows the turn.
+- **Close the tab** on desktop, then reopen: following, or the Summary.
+- **Unwatched for 15 minutes:** "Stopped: nobody was watching for 15 minutes."
+- **Sign out** on desktop while the phone's turn runs: it stops with the session line.
+- **Approval, expected failure.** A Manual turn holding for an approval with the page closed past 10 minutes reopens to "Stopped: an approval was not answered." That is filed as the expected failure (decided).
+- **A Live Drive turn** still stops on close.
+- **Staging redeploy** mid-turn: "Stopped: the server restarted for an update." Evidence: the ECS stop, and the record or its absence.
+- **Local two instances, `kill -9` the owner:** the staleness line with Stop, then the orphaned line after 5 minutes.
 
-### DT4: a restart says so
+### DT4: the in-app notification
 
 **Files:**
-- `server/startup/shutdown.ts`: a step before the HTTP drain (`:41`), `settleOwnedRunsForShutdown(pool)`. It writes `failed`/`orphaned` for each owned live run in its own tenant scope, aborts each with that reason, then lets the existing drain window run.
-- `run-control.ts`: `ownedLiveRuns()`, and `stopRunInternally` accepts `orphaned` with status `failed`. Today it writes `cancelled` for both reasons (`:664-671`), while the reaper writes `failed` for `orphaned` (`:752-755`). One reason now means one status.
-- `TurnSummary.tsx` and `turnSummaryRows.ts`: the crash line under `orphaned` when there is no record.
+- `stream.ts`: on an approval or at the end, when unwatched, `void createNotification(…)` with the §5.5 copy.
+- `TaskTray.tsx`: a row with an `action_url` navigates and marks itself read (`:344-352`).
+- `anaWorkModel.ts`: the titles.
 
 **Tests that must fail first:**
-1. `gracefulShutdown` with one owned detached run marks it `failed`/`orphaned` before `pool.end()`, and the turn's error path files a `stopped` record with reason `orphaned` (stand-in model, fake drain). *Red today:* the row stays `running` until the reaper.
-2. `stopRunInternally(…, 'orphaned')` writes `failed`. *Red today:* `cancelled`.
-3. A run read for a row whose heartbeat is 6 minutes old returns `failed`/`orphaned` (the reaper runs from the read). *Red today:* `running`.
+1. An unwatched detached run that ends creates one notification for the asker, whose body names the conversation. A watched run creates none.
+2. An approval while unwatched creates one `warning`, with no parameters and no ids.
+3. A TaskTray row with an `action_url` navigates there and is marked read. *Red today:* rows do not navigate.
 
-**Accepted when** (staging, browser): start a turn, close the page, and redeploy. Reopen: "Stopped: the server restarted." with the steps saved before the deploy and Continue. Capture the ECS task stop and the record (or its absence) as evidence. Separately, `kill -9` the owner in a local two-instance run: after 5 minutes the other instance's read shows the crash line.
-
-### DT5: the in-app notification (only if decision D-5 is yes)
-
-**Files:**
-- `server/routes/ana-ri/stream.ts`: on `approval_required` and at turn end, if detached, `void createNotification(…)` with the copy in §5.4.
-- `anaWorkModel.ts`: the title table.
-
-**Tests that must fail first:**
-1. A detached turn that ends creates one notification for the asker. An attached turn creates none.
-2. A detached approval creates one `warning` notification. Its body carries no parameters and no ids.
-
-**Accepted when** (browser): close the page mid-turn and reopen the product later. The AnA dock lists "AnA finished your request", and opening it lands on the conversation.
+**Accepted when** (browser): close the page mid-turn and leave it unwatched. Reopening the product shows the notification in TaskTray, naming the conversation, and clicking it opens the conversation.
 
 ---
 
-## 9. Decisions for the founder or product owner
+## 9. Decisions (taken)
 
-| # | Decision | Options | Recommendation |
-|---|---|---|---|
-| D-1 | **Who may watch a live turn.** | (a) The Summary rule: anyone who may read the thread (decision 6). (b) The asker and admins only. | **(a)**. The live rows are the Summary's rows, redacted by the same construction; a colleague can already read the transcript. Controls and the pending approval stay with the asker. |
-| D-2 | **The ceiling for a turn nobody watches.** | (a) `AUTO_WALL_MS` (40 min) for every detached turn. (b) Only the round budgets. (c) A new number. | **(a)**. It reuses an existing number, and it is the only bound that stops a hung round. |
-| D-3 | **A per-person limit on live runs.** | (a) None beyond one per conversation. (b) At most 3 live runs per person across the estate, counted in `beginRun`, with "You have three turns running. Stop one, or wait for one to finish." | **(b)**. Detach makes "start, close, start elsewhere" free. Three keeps parallel work possible. It is cost governance, decided by a count, not by a model. |
-| D-4 | **Mirror rows of a crashed run** (no record). | (a) Keep until the tenant purge, like `ana_runs`. (b) Delete after N days. | **(a)** for launch. They are small, and they are the only trace of that turn. Retention is set with the rest of the working-data schedule. |
-| D-5 | **Notifications.** | (a) None. (b) In-app only, for an approval waiting and for the end of a detached turn. (c) Plus email or push. | **(b)**. Push to a locked phone is the screenshots' full experience, but it is a new channel with its own consent and delivery questions. |
-| D-6 | **Who may decide a held step.** The governed-action route checks that the run is waiting and that the decision matches its proposal (`utility.ts:74-123`), but not that the decider is the run's asker. Today only the asker's socket received the envelope. With rejoin, §3.7 gives the envelope to the asker alone, which keeps the de facto rule. | (a) Keep as is. (b) Make it explicit in the route: the asker, or an admin. | **(b)**, as a small change in DT2. A rule that holds only because a toolUseId is unguessable should be written down where it is enforced. |
-| D-7 | **Live Drive turns stay non-detachable.** | (a) Yes. (b) Detach and drop the drive. | **(a)**. The turn's work is the screen. |
+| # | Decision | Taken |
+|---|---|---|
+| D-1 | Who may watch a live turn | **(b)**: the asker, and the organisation's admins and owners, until project access control exists (§3.7). The sealed Summary keeps decision 6's rule. |
+| D-2 | The ceiling for unwatched work | 15 minutes of **unwatched** time (`AUTO_ACTIVE_MS`), capped at 40 minutes from start (`AUTO_WALL_MS`), with a closing-answer grace of 2 minutes before a hard abort (§2.6). No tenant spend bound exists, and none is invented. |
+| D-3 | A per-person live-run limit | **At most 3** live runs per (organisation, person), counted in `beginRun`'s locked transaction. It is mandatory (§2.8). |
+| D-4 | Retention of mirror rows for runs without a record | A governed, legal-hold-aware expiry door (§3.2, §3.3). **Recommended 90 days; the period is the founder's call.** `ana_runs` has no retention job, and that is noted for the retention schedule. |
+| D-5 | Notifications | **In-app only**, through TaskTray, keyed on unwatched (§5.5). |
+| D-6 | *(removed)* Who may decide a held step | Not a decision: prerequisite **P-A**, asker only, 403 for others, no admin approval, fixed separately (§2.7). |
+| D-7 | Live Drive turns | **They keep stopping on disconnect** (§2.1). |
 
 ---
 
-## 10. Risks and out of scope
+## 10. Risks, later options and out of scope
 
 **Risks**
+- **Load.** About 60 mirror inserts per turn in batches; one heartbeat statement per process every 15 s; a 2 s poll and a watched stamp (at most one every 5 s) per watching page. All are indexed.
+- **A dark period of up to 5 minutes** after a crash. The staleness line and Stop make it honest; they do not shorten it.
+- **Sign-out on one device stops the person's turns on every device.** That is conservative by design (§2.9).
+- **A long round between session re-checks.** The immediate hooks cover the named paths, and the round boundary covers the rest. A missed hook costs at most one round plus the unattended limit.
+- **Clock skew** between instances orders controls by their own `at`, as in S4. Every time is server UTC.
 
-- **Load.** Each live run adds about 60 mirror inserts in batches, one heartbeat row update every 15 s (one statement per process), and 2-second polls per watching page. All are primary-key or indexed. Poll volume rises with watchers, not with runs.
-- **A 5-minute dark period after a crash.** The reaper's threshold is unchanged. The "Last heard" line makes the wait honest; it does not shorten it.
-- **Clock skew.** Controls accepted on another instance sort by their own `at`, as in S4.
-- **The detach warning** in the record is a new kind of line an inspector reads. It is a fact (when the page closed), not a claim.
-- **Two stop paths remain**: detach, and stop for turns that cannot detach. They are one branch in `disconnectRun`, not two handlers.
-- **Writes to dead sockets.** Every write to a closed socket is ignored. DT3 test 6 proves the process tolerates it. No write site is refactored.
+**Later options**
+- Push notifications for approvals (founder option, D-5).
+- A long-poll on NOTIFY.
+- Project access control, which would let D-1 widen.
+- A tenant token budget in the gateway.
+- Retention for `ana_runs`.
 
 **Out of scope**
-
-- a background worker (P-10);
-- moving a run between instances;
-- surviving a deploy;
+- a worker (P-10);
+- moving a run between instances, or surviving a deploy;
 - SSE resume;
-- web push and email;
-- per-thread privacy;
+- email;
 - sub-agents (ADR-0015);
 - any change to round budgets or `MAX_PAUSE_MS`.
 
@@ -610,44 +789,54 @@ Order: the table and reads first, harmless while every run still stops on discon
 
 ## 11. Critique response
 
-**How the critiques were run.** The task asked for two independent reviewers spawned with the Agent tool. That tool was not available in this session (only the tools listed for this subagent were, and a tool search found no agent-spawning tool). The two passes below were therefore run in this session, sequentially, each with its brief stated and the draft re-read against the code. **They are not independent.** The caller should run two independent reviewers over this revision before DT1 starts.
+**How the reviews ran.**
+- **First draft.** In the second draft, this section recorded two passes run in the authoring session, because no agent-spawning tool was available there. They were not independent.
+- **Second draft** (`c33211ee2`). It was reviewed by two **independent** reviewers, one for governance and security and one for product and UX, run by the coordinator.
+  - Both found the design's direction sound.
+  - Both returned blocking findings: governance five HIGH, product several that change the client contract. They are below, with how each was handled.
+  - The coordinator took decisions D-1, D-2, D-3, D-5 and D-7, and the approval fix (P-A), at the same time.
 
-Verdicts: **A** accepted, **P** partly accepted, **R** rejected.
+**Key:** A = accepted; P = partly accepted. No finding was rejected.
 
-### Governance and security pass
+### Governance and security (independent)
 
-Brief: tenancy, Part 11 lineage, fail-closed, Rule 1, P-10, ADR-0015.
-
-| # | Point | Verdict | Handled |
+| # | Finding | Verdict | Handled |
 |---|---|---|---|
-| G-1 | The first draft called the trigger "insert-only" and also deleted rows after sealing, and the purge needs a plain DELETE. The two cannot both hold. | A | DELETE has a door in the trigger: a record exists, or the organisation is `pending_deletion`. UPDATE and TRUNCATE are always refused, and INSERT is refused once sealed (§3.2). DT1 test 2. |
-| G-2 | The first draft let the reaper's deletion remove a crashed run's events, the only trace of that turn. | A | The trigger refuses deletion with no record. Retention is decision D-4. |
-| G-3 | The first draft wrote `detached` into `control_events`. That table is the human-decision lineage the dossier reads. A page closing is not a decision; `stopRunInternally` draws exactly this line. | A | It is a recorder warning, not a control event (§2.1). |
-| G-4 | The heartbeat on the keepalive means a detached run would be reaped as orphaned while alive. | A | It was found in the code (`stream.ts:816-831`) and made DT1's first red test. |
-| G-5 | A reaped run keeps running and would seal "answered" against a `failed` row. | A | Any terminal row aborts with the row's reason, and the error path uses it (§2.4). DT3 test 3. |
-| G-6 | The read route must not filter the organisation only in JS. | A | The organisation is in SQL on both queries. The test runs with RLS off to prove the SQL is the boundary (DT1 test 7). |
-| G-7 | Colleagues receiving `toolUseId` would hold the key that binds a decision. | A | The envelope goes to the asker only. Colleagues get `{waiting:true}`. Explicit enforcement is decision D-6. |
-| G-8 | A unique index for one-run-per-thread would fail to build on replay where duplicates exist. | A | An advisory lock in `beginRun`, with no schema change (§2.8). |
-| G-9 | `stopRunInternally` writes `cancelled` for `orphaned`, while the reaper writes `failed`. | A | It is unified in DT4 (test 2). |
-| G-10 | The mirror might be used as a second retained record. | A | It is stated as working data; the sealed record is the record (§3.2). |
-| G-11 | Notification bodies could leak parameters. | A | Fixed titles, empty body (§5.4). DT5 test 2. |
-| G-12 | Use a dedicated purger role, as for turn records. | R | The table is not retained data. A purger role would claim a status it does not have. The `pending_deletion` predicate in the trigger gives the same guarantee for the purge path. |
-| G-13 | Detach widens unwatched model spend. | P | The ceiling (D-2), the per-person limit (D-3) and one run per thread are adopted. A tenant token budget does not exist in the gateway today and is not invented here. |
+| G-1 | HIGH. Approval authority: `run-control.ts:1064-1116` and `utility.ts:75-123` never compare `ana_runs.user_id` with the decider. | A | D-6 removed. This is prerequisite P-A, fixed separately as asker only, 403, no admin approval. Not yet in this checkout at `c33211ee2`; DT2 waits for it (§2.7). Admin approval is excluded from the payload (§3.7) and from admin control (§2.5). |
+| G-2 | HIGH. The unverified `thread_id`: a new chat's run has a null thread forever and escapes the per-thread rule. The per-person cap is mandatory. | A | Verification moves before the run lock, `thread_id` is written back with `user_message_id`, and there is one locked transaction with per-person and per-thread locks (§2.8). DT3 tests 4, 5 and 7. |
+| G-3 | HIGH. `runSettled = true` is set first (`stream.ts:902`), so a detached run never calls `endRun` and is reaped. | A | The detach branch returns before it (§2.1). DT3 test 1 asserts `finished` and still `finished` after a reaper pass, and names the variant that is red. |
+| G-4 | HIGH. `detachable()` depends on `driveState`, which resolves late. | A | It keys on the request's `live_drive` flag, which is known at parse and never wrong in the unsafe direction (§2.1). DT3 test 3 closes the socket during context assembly. |
+| G-5 | HIGH. A detached run outlives the session. Stop on logout, revocation, password change, deactivation, and suspension or deletion; re-check per round; admin cancel; the purge cancels first. | A | §2.9: immediate hooks, plus a per-round `verifyLiveToken(…, {activity:false})` and `shouldProcessTenantInBackground`, failing closed. Admin cancel with a control event and audit row (§2.5). `purgeTenant` stops runs first. DT3 tests 11 and 12. |
+| G-6 | Flush and await the mirror before sealing; mark the gap on failure and seal anyway. | A | §3.4. DT1 test 3. |
+| G-7 | The DELETE door needs a purger role or SECURITY DEFINER functions with status and legal-hold checks; drop the "same guarantee" claim. | A | The `ana_run_events_purger` role and three door functions with preconditions inside. The purge goes through `PURGE_DOORS`. The claim is removed (§3.2). DT1 test 2. |
+| G-8 | Define retention and a governed, legal-hold-aware delete for the events of orphaned runs. | A | `expire_orphaned_run_events`; 90 days recommended; the founder's call (§3.3, D-4). |
+| G-9 | The heartbeat needs `owner_instance`; the flush must run in the run's tenant scope; test with RLS on. | A | §2.3, §3.4. DT1 tests 4 and 8 (`test:db`, RLS on). |
+| G-10 | Thread readers are the whole organisation. Say so; apply project access, or choose D-1(b). | A | Stated. D-1 decided (b), asker plus admins (§3.7). |
+| G-11 | `abort(reason)` changes `signal.reason`; verify the gateway and failover; the owner's own terminal write must not abort its post-processing. | A | Verified: `concurrency.ts:24, 38, 60` rethrows `signal.reason`, and `gateway.ts:1966-1986` maps any error on an aborted signal to `GatewayAbortedError`. The reason is an `Error` named `AbortError`, never a string. Only `cancelled`/`failed` abort, never `finished` (`endHeldRun`); `endRun` releases without driving; post-processing runs after release (§2.4). DT3 test 9. |
+| G-12 | State that no tenant spend bound exists; the ceiling is 15 min `AUTO_ACTIVE_MS` with a 40 min cap and a closing grace. | A | §2.6, D-2, with the unwatched keying from U-4. |
+| G-13 | State that `ana_runs` has no retention job. | A | §1 row 15, §3.3. |
+| G-14 | Test that a turn finishing in the drain records stopped/shutdown to match the row. | A | DT3 test 14. A distinct `server_shutdown` reason follows from U-10. |
+| G-15 | Line-reference drift (3100, 3117). | A | Corrected (§3.1). |
 
-### Product and UX pass
+### Product and UX (independent)
 
-Brief: the screenshots' use case, the phone, honest states, copy, and slice value.
-
-| # | Point | Verdict | Handled |
+| # | Finding | Verdict | Handled |
 |---|---|---|---|
-| U-1 | The first draft's slice order shipped detach (server) before any client could rejoin, so closed turns would run invisibly. | A | Detach and its client switch are one slice (DT3), after the reads (DT1) and following (DT2). |
-| U-2 | After a reload there is no way to place a live run in the transcript. | A | `ana_runs.user_message_id`, and `GET /runs?thread_id=` (§3.1, §4.2). |
-| U-3 | A dead owner looks "running" for 5 minutes. | A | "Last heard from AnA n min ago" from `lastBeatAt`. The reaper runs from reads (§2.4, §5.1). |
-| U-4 | A colleague sees controls that will 403. | A | No controls, with a line saying why (§5.1). |
-| U-5 | A second Stop shows an error. | A | 409 is read as stopped (DT2 test 5). |
-| U-6 | Two copies of "is it recorded?" logic (`confirmRecordByRun` and the poll). | A | Folded into one (§4.3). |
-| U-7 | The "lost connection" line would vanish entirely, and Live Drive users would get a frozen screen. | A | Kept for non-detachable turns, Live Drive among them (§2.1, D-7). |
-| U-8 | Use SSE resume for snappier updates. | R | Two delivery paths for one stream. A long-poll on the existing NOTIFY wake is the upgrade if 2 s proves slow (§4.1). |
-| U-9 | Push notifications are the real phone experience. | P | In-app only for launch (D-5). Push is out of scope and listed. |
-| U-10 | "Started 4 min ago" and "Last heard" must not become promises ("about 2 minutes left"). | A | Only elapsed facts. No estimates (§5.1). |
-| U-11 | The truncation line must not say the steps were lost. | A | It says the full list comes with the record, which is true because the recorder is uncapped (§3.5). |
+| U-1 | A follower sees only timeline events; add `runPolicy`, `hold`, a plan snapshot and a phase line, with no prose. DT2 acceptance should cover the plan rail and Manual hold. | A | `run_policy` and `hold` columns; `plan` from task events through the shared plan-diff; "Working · step 7 · 4m" (§3.7, §5.1). DT2 test 4 and acceptance. |
+| U-3 | Stop on a flaky network: don't abort, retry, show "Stop not confirmed. Retrying."; add `abortIntent`; fix §1 row 12. | A | §5.2. Row 12 now cites the abort after a failed cancel (`useAnaChat.ts:762-771`). DT2 test 5. |
+| U-4 | Separate watched from detached (`last_watched_at`); key the ceiling and notifications on unwatched. | A | §2.2, §2.6, §5.5. |
+| U-5 | An approval while nobody watches: keep 10 min; file it as the expected failure; say "1 step was not authorised and did not run"; push is later. | A | §2.7, §5.3, §5.5. DT3 acceptance. §10. |
+| U-6 | A "Working" marker on conversation rows from `?mine=live`, in DT3; D-3 copy links to it; at most 3. | A | §3.7, §5.1, D-3. |
+| U-7 | Notifications are read in TaskTray, not the dock; rows must navigate; the body must name the conversation. | A | §0, §5.5, DT4 test 3. The first draft's "the AnA dock" claim is corrected. |
+| U-8 | The composer steers the followed run for the asker; it is disabled only for those who can't steer, with correct copy; following sets `isStreaming` and `runStatus`. | A | §4.2. DT2 test 9. |
+| U-9 | A distinct reason and line for the ceiling; the armed limit written into the record; "Stops at…" once unwatched. | A | `unattended_limit` (§2.6, §2.10); the record warning (§2.1); "stops by 14:31 if nobody opens it" (§5.1). |
+| U-10 | Cause-neutral orphaned copy; "restarted for an update" only on the shutdown path; reworded sealed-record sentence; `orphaned` continuable. | A | `orphaned` vs `server_shutdown` (§2.10); "This turn was not recorded." (§4.3); `isContinuable` (§5.3). |
+| U-11 | Two staleness lines (the reader's network vs a stale owner); offer Stop when the owner is stale. | A | §5.1, DT2 test 6. |
+| U-12 | `released_at`; poll up to about 30 s before "Not recorded". | A | §3.1, §4.3, DT2 test 7. |
+| U-13 | `NO_PENDING_APPROVAL`/`STALE_APPROVAL` show "Already decided on another device." once the poll confirms; the dialog closes on the poll; check run state before signing. | A | §5.6, DT2 test 8. |
+| U-14 | The phone-unlock idle timer: `didTimeout` goes straight to following; the hand-over aborts the reader; no "stopped responding" flash. | A | §4.2, §4.3, §5.4. |
+| U-15 | Colleague copy "You don't have access to this conversation." | P | Used, qualified to "…this conversation's live progress.", because under D-1(b) the colleague can still read the transcript (`threads.ts:188-210`), so the unqualified sentence would be false on the page that shows them the conversation. |
+| U-16 | Merge DT4 into DT3; DT2 acceptance is a phone following a desktop. | A | The restart work is in DT3. Slices renumbered DT1–DT4. DT2 acceptance rewritten. |
+| U-17 | One clock; ISO UTC. | A | §0 "One clock"; `serverNow` in the payload (§3.7). |
+
+The product review numbered its findings 1 and 3–17. No finding 2 was sent, so none is recorded.
