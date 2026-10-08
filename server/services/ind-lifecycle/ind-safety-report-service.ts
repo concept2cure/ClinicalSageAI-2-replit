@@ -12,6 +12,10 @@
  *                           (312.32(c)(1)(i)).
  *        - NOT REPORTABLE as an individual expedited IND Safety Report: expected,
  *                           non-serious, or not suspected (no reasonable possibility).
+ *        - NOT DETERMINED: expectedness was not assessed. No verdict is given —
+ *                           neither "reportable" nor "not reportable" — so an
+ *                           unassessed event can neither start a clock nor be
+ *                           closed as not reportable (P-20, 2026-10-08).
  *   2. Computes the deadline date by delegating to the canonical
  *      `calculateReportingDeadline` from the pharmacovigilance service (FDA region).
  *   3. Builds a structured IND Safety Report document model (a narrative section
@@ -67,11 +71,26 @@ import { IND_SAFETY_REPORT_SECTION } from './ind-sequence-validation';
 // Classification types
 // ---------------------------------------------------------------------------
 
-/** The three mutually-exclusive expedited reporting obligations under 312.32(c). */
+/**
+ * The three mutually-exclusive expedited reporting obligations under 312.32(c),
+ * and the absence of a verdict. NOT_DETERMINED is not an obligation: it says
+ * the determination that decides one (expectedness vs the IB / RSI) has not
+ * been made — P-20 (product decision 2026-10-08): "When expectedness is not
+ * recorded, the expedited-reporting verdict is 'not determined: expectedness
+ * not assessed', never 'not reportable'."
+ */
 export type IndSafetyReportObligation =
   | 'SEVEN_DAY' // 312.32(c)(2): unexpected fatal/life-threatening suspected adverse reaction
   | 'FIFTEEN_DAY' // 312.32(c)(1)(i): serious + unexpected + suspected
-  | 'NOT_REPORTABLE'; // expected, non-serious, or not suspected (no individual expedited report)
+  | 'NOT_REPORTABLE' // expected, non-serious, or not suspected (no individual expedited report)
+  | 'NOT_DETERMINED'; // expectedness not assessed — no verdict (P-20)
+
+/**
+ * An intake event as the safety-report engine reads it: the AdverseEvent, plus
+ * an onset date the person stated explicitly as unknown (P-20). A blank onset
+ * is refused; `onsetDateUnknown` is the only way to state that it is not known.
+ */
+export type IndSafetyEvent = AdverseEvent & { onsetDateUnknown?: boolean };
 
 /** FDA is the only region 312.32 applies to; pinned for clarity. */
 const IND_REGION: RegulatoryRegion = 'FDA';
@@ -87,7 +106,8 @@ export interface IndSafetyClassification {
   determinations: {
     serious: boolean;
     suspected: boolean;
-    unexpected: boolean;
+    /** Null when expectedness was not recorded — never inferred either way (P-20). */
+    unexpected: boolean | null;
     /**
      * Whether an expectedness determination was recorded at all. `unexpected`
      * is false both when the reviewer marked the event expected and when no
@@ -184,7 +204,7 @@ const isValidDate = (d: unknown): d is Date => d instanceof Date && !Number.isNa
  * classified without assuming anything. A non-serious AE carries no
  * seriousness criterion, so none is required of it.
  */
-export function unstatedSafetyReportFields(event: Partial<AdverseEvent>): string[] {
+export function unstatedSafetyReportFields(event: Partial<IndSafetyEvent>): string[] {
   const missing: string[] = [];
   const oneOf = (v: unknown, values: readonly string[], name: string) => {
     if (typeof v !== 'string' || v.trim() === '') missing.push(name);
@@ -194,12 +214,16 @@ export function unstatedSafetyReportFields(event: Partial<AdverseEvent>): string
   if (event.eventType !== 'AE') oneOf(event.seriousnessCriteria, SERIOUSNESS_VALUES, 'seriousness criterion (ICH E2A)');
   oneOf(event.causality, CAUSALITY_VALUES, 'causality (WHO-UMC)');
   oneOf(event.outcome, OUTCOME_VALUES, 'outcome');
-  if (!isValidDate(event.onsetDate)) missing.push('onset date');
+  // P-20: a date, or explicitly unknown; a blank is refused, and both at once
+  // is refused rather than resolved on the person's behalf.
+  const onsetUnknown = event.onsetDateUnknown === true;
+  if (onsetUnknown && isValidDate(event.onsetDate)) missing.push('onset date (stated both as a date and as unknown — state one)');
+  else if (!onsetUnknown && !isValidDate(event.onsetDate)) missing.push('onset date (a date, or stated as unknown)');
   if (!isValidDate(event.reportDate)) missing.push('sponsor awareness date (clock start)');
   return missing;
 }
 
-function assertStated(event: AdverseEvent): void {
+function assertStated(event: IndSafetyEvent): void {
   const missing = unstatedSafetyReportFields(event);
   if (missing.length > 0) throw new IndSafetyReportIncompleteError(missing);
 }
@@ -225,14 +249,14 @@ function assertStated(event: AdverseEvent): void {
  * or date was not stated — see unstatedSafetyReportFields.
  */
 export function classifyIndSafetyReport(
-  event: AdverseEvent,
+  event: IndSafetyEvent,
   now: Date = new Date(),
 ): IndSafetyClassification {
   assertStated(event);
   const serious = isSerious(event);
   const suspected = isSuspected(event.causality);
-  const unexpected = isUnexpected(event.expectedness);
   const expectednessRecorded = typeof event.expectedness === 'string' && event.expectedness.trim().length > 0;
+  const unexpected = expectednessRecorded ? isUnexpected(event.expectedness) : null;
   const fatalOrLT = isFatalOrLifeThreatening(event.seriousnessCriteria);
 
   const determinations = {
@@ -243,17 +267,31 @@ export function classifyIndSafetyReport(
     fatalOrLifeThreatening: fatalOrLT,
   };
 
+  // Gate 0 (P-20, 2026-10-08): with expectedness not recorded there is no
+  // verdict. It used to read NOT_REPORTABLE ("not an individual expedited
+  // report"), which closes a case nobody assessed against the IB / RSI — and a
+  // reviewer reading "not reportable" has no reason to look again before the
+  // 15-day clock that may already be running.
+  if (!expectednessRecorded) {
+    return {
+      obligation: 'NOT_DETERMINED',
+      reportingWindowDays: null,
+      deadline: null,
+      determinations,
+      regulatoryBasis: '21 CFR 312.32(a)',
+      rationale:
+        'Not determined: expectedness not assessed. No determination against the IB / Reference Safety Information has been recorded, ' +
+        'so whether this is an expedited IND safety report cannot be decided. Record expectedness to obtain a verdict.',
+    };
+  }
+
   // Gate 1: an individual expedited IND Safety Report requires a SUSPECTED and
   // UNEXPECTED adverse reaction. Anything else is not an individual expedited
   // report.
   if (!suspected || !unexpected) {
-    // An event nobody has assessed against the IB/RSI is not "expected"; it is
-    // unassessed. The rationale used to assert expectedness in that case.
     const reason = !suspected
       ? 'no reasonable possibility the drug caused the event (not a suspected adverse reaction)'
-      : expectednessRecorded
-        ? 'event is expected (listed in the IB / consistent with the RSI)'
-        : 'expectedness has not been recorded — no determination against the IB / RSI has been made; a reviewer must mark the event unexpected before it can be an expedited report';
+      : 'event is expected (listed in the IB / consistent with the RSI)';
     return {
       obligation: 'NOT_REPORTABLE',
       reportingWindowDays: null,
@@ -353,7 +391,7 @@ function seriousnessLine(event: AdverseEvent): string {
 
 /* Expectedness is optional on intake; when nobody recorded it the report says
    so rather than asserting "expected" on the reviewer's behalf. */
-function expectednessLine(event: AdverseEvent, classification: IndSafetyClassification): string {
+function expectednessLine(event: IndSafetyEvent, classification: IndSafetyClassification): string {
   if (!classification.determinations.expectednessRecorded) {
     return 'Expectedness: not recorded — no determination against the Reference Safety Information has been made.';
   }
@@ -383,7 +421,7 @@ export interface IndSafetyReportDocument {
  * where available; authors complete the remainder.
  */
 export function buildIndSafetyReportDocument(
-  event: AdverseEvent,
+  event: IndSafetyEvent,
   classification: IndSafetyClassification,
   options: { icsr?: ICSR | null; aggregateContext?: AggregateContext } = {},
 ): IndSafetyReportDocument {
@@ -410,7 +448,7 @@ export function buildIndSafetyReportDocument(
         event.eventDescription,
         event.reactionPt ? `MedDRA PT: ${event.reactionPt}${event.reactionPtCode ? ` (${event.reactionPtCode})` : ''}.` : '',
         event.reactionSoc ? `SOC: ${event.reactionSoc}.` : '',
-        `Onset: ${toIsoDate(event.onsetDate)}. Sponsor awareness (clock-start): ${toIsoDate(event.reportDate)}.`,
+        `Onset: ${onsetText(event)}. Sponsor awareness (clock-start): ${toIsoDate(event.reportDate)}.`,
         event.narrative ?? '',
       ]
         .filter(Boolean)
@@ -554,7 +592,8 @@ export function buildAmendmentIntent(
   classification: IndSafetyClassification,
   options: { hasIcsr?: boolean } = {},
 ): IndSafetyReportAmendmentIntent | null {
-  if (classification.obligation === 'NOT_REPORTABLE') {
+  // No individual report: not reportable, or no verdict yet (P-20).
+  if (classification.obligation === 'NOT_REPORTABLE' || classification.obligation === 'NOT_DETERMINED') {
     return null;
   }
 
@@ -606,7 +645,7 @@ export interface IndSafetyReportResult {
  * in one call. Pure / deterministic.
  */
 export function assembleIndSafetyReport(
-  event: AdverseEvent,
+  event: IndSafetyEvent,
   options: { icsr?: ICSR | null; aggregateContext?: AggregateContext; now?: Date } = {},
 ): IndSafetyReportResult {
   const classification = classifyIndSafetyReport(event, options.now);
@@ -632,9 +671,16 @@ function labelForObligation(o: IndSafetyReportObligation): string {
       return '15-calendar-day';
     case 'NOT_REPORTABLE':
       return 'not individually reportable';
+    case 'NOT_DETERMINED':
+      return 'not determined: expectedness not assessed';
   }
 }
 
 function toIsoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
+}
+
+/** The onset as the person stated it: a date, or explicitly unknown (P-20). */
+function onsetText(event: IndSafetyEvent): string {
+  return event.onsetDateUnknown === true ? 'unknown (stated as unknown)' : toIsoDate(event.onsetDate);
 }

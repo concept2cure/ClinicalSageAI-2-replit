@@ -376,16 +376,6 @@ describe('resolver verdicts become findings', () => {
   /* QA 2026-10-08 (j6, findings 1 and 11). An unapproved Vault version read
      "source verified" in the Builder and was absent from the Dispatch blockers;
      the refusal that named it ran only in the assembly after the e-signature. */
-  it('a resolved leaf whose document is not approved is DOCUMENT_NOT_APPROVED, naming the leaf and its section', () => {
-    const r = computeDispatchReadiness([vaultLeaf(resolution({ notTransmittable: 'not reviewed' }))]);
-    const f = r.findings.find((x) => x.code === 'DOCUMENT_NOT_APPROVED');
-    expect(f?.severity).toBe('error');
-    expect(f?.sectionCode).toBe('m2.5');
-    expect(f?.message).toContain('not reviewed');
-    expect(f?.message).toContain(VAULT_UUID);
-    expect(r.errors).toBe(1);
-  });
-
   it('an approved document, a delete, and a missing document raise no DOCUMENT_NOT_APPROVED', () => {
     const approved = computeDispatchReadiness([vaultLeaf(resolution({ notTransmittable: null }))]);
     expect(approved.findings.some((x) => x.code === 'DOCUMENT_NOT_APPROVED')).toBe(false);
@@ -415,3 +405,69 @@ describe('resolver verdicts become findings', () => {
   });
 });
 
+describe('required sections, decided per sequence', () => {
+  /* QA 2026-10-08 (j7, finding 4). Every missing section was a warning, so a
+     one-leaf original IND with no Form 1571, no IB and no general
+     investigational plan read "structural gate satisfied". A section the
+     regulation requires in this sequence is now decided as an error. */
+  it('a section the regulation requires in this sequence is an ERROR when no leaf carries it, citing the record', () => {
+    const basis = 'The regional Module 1 record (US) requires it in an original IND application.';
+    const r = computeDispatchReadiness([goodLeaf({ sectionCode: '1.2' })], {
+      requiredByRegulation: { codes: ['1.1', '1.2', '1.14.4.1', '1.20'], basis },
+    });
+    const missing = r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION');
+    expect(missing.map((f) => f.sectionCode)).toEqual(['1.1', '1.14.4.1', '1.20']);
+    expect(missing.every((f) => f.severity === 'error')).toBe(true);
+    expect(missing[0].message).toContain(basis);
+    expect(r.errors).toBe(3);
+    expect(r.warnings).toBe(0);
+  });
+
+  it('a regulation-required section is satisfied by a sub-section, and is not reported again from the profile list', () => {
+    const r = computeDispatchReadiness([goodLeaf({ sectionCode: 'm1.1.1' }), goodLeaf({ sectionCode: '1.14.4.1', documentId: 43 })], {
+      requiredByRegulation: { codes: ['1.1', '1.14', '1.14.4.1', '1.20'], basis: 'record' },
+      requiredSections: ['1.1', '1.20', '1.3'],
+    });
+    const missing = r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION');
+    // 1.20 is decided by regulation (error, once); 1.3 only listed (warning).
+    expect(missing.map((f) => `${f.severity} ${f.sectionCode}`)).toEqual(['error 1.20', 'warning 1.3']);
+    expect(r.errors).toBe(1);
+  });
+});
+
+describe('P-22: approval gates the release, not the technical validation', () => {
+  /** A resolved vault leaf whose approval verdict is `reason` (null: approved). */
+  const notApprovedLeaf = (reason: string | null, over: Partial<LeafDocumentResolution> = {}): ReadinessLeaf =>
+    goodLeaf({
+      documentTable: 'vault_documents', documentId: null, documentUuid: VAULT_UUID,
+      document: {
+        status: 'resolved', keyKind: 'uuid', documentTable: 'vault_documents', documentId: null, documentUuid: VAULT_UUID,
+        pinnedSha256: 'a'.repeat(64), storedSha256: 'a'.repeat(64), pin: 'match', reason: null, notTransmittable: reason, ...over,
+      },
+    });
+
+  /* P-22 (product decision 2026-10-08): approval gates the release, not the
+     technical validation. At validation the finding is a WARNING ("not yet
+     approved") marked for the release steps, which refuse it — never an error,
+     so it cannot fail Validated, and never silent, so freeze, dispatch and
+     transmit still name it. */
+  it('a resolved leaf whose document is not approved is a DOCUMENT_NOT_APPROVED warning that blocks the release, naming the leaf and its section', () => {
+    const r = computeDispatchReadiness([notApprovedLeaf('not reviewed')]);
+    const f = r.findings.find((x) => x.code === 'DOCUMENT_NOT_APPROVED');
+    expect(f?.severity).toBe('warning');
+    expect(f?.blocksRelease).toBe(true);
+    expect(f?.sectionCode).toBe('m2.5');
+    expect(f?.message).toContain('not yet approved (not reviewed)');
+    expect(f?.message).toMatch(/freeze, dispatch and transmit refuse/);
+    expect(f?.message).toContain(VAULT_UUID);
+    expect(r.errors).toBe(0);
+    expect(r.releaseBlockers).toBe(1);
+  });
+
+  it('only a not-yet-approved document is a release blocker; ordinary warnings are not', () => {
+    const r = computeDispatchReadiness([notApprovedLeaf(null, { pin: 'unpinned', pinnedSha256: null })], { requiredSections: ['1.1'] });
+    expect(r.warnings).toBe(2); // DOCUMENT_CONTENT_NOT_PINNED + MISSING_REQUIRED_SECTION (profile list)
+    expect(r.releaseBlockers).toBe(0);
+    expect(r.findings.some((x) => x.blocksRelease)).toBe(false);
+  });
+});

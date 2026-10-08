@@ -198,7 +198,11 @@ describe('assessSequenceDispatchReadiness — vault-backed leaves resolve', () =
      absent from the Dispatch blockers; the refusal that named them ran only in
      the assembly after the freeze e-signature, with the file name in the
      section slot. */
-  it('a Vault version with no approved lifecycle record is DOCUMENT_NOT_APPROVED beside its section, and blocks the freeze gate', async () => {
+  /* P-22 (product decision 2026-10-08): approval gates the release, not the
+     technical validation. The finding is a warning at validation, and every
+     release verdict — freeze, dispatch, and dispatch once signed — refuses it
+     by its own blocker. */
+  it('a Vault version with no approved lifecycle record is a DOCUMENT_NOT_APPROVED warning beside its section, and blocks every release verdict', async () => {
     const sequenceId = await seedSequence();
     const approved = await seedVaultDoc();
     const unreviewed = await seedVaultDoc({ approved: false });
@@ -209,10 +213,17 @@ describe('assessSequenceDispatchReadiness — vault-backed leaves resolve', () =
     const notApproved = a.readiness.findings.filter((f) => f.code === 'DOCUMENT_NOT_APPROVED');
     expect(notApproved).toHaveLength(1);
     expect(notApproved[0].sectionCode).toBe('3.2.S.4.1');
-    expect(notApproved[0].severity).toBe('error');
-    expect(notApproved[0].message).toContain('not reviewed');
-    expect(a.validationErrors).toBe(1);
-    expect(a.freezeGate.cleared).toBe(false);
-    expect(a.freezeGate.blockers.join(' ')).toMatch(/1 open error-severity validation finding/);
+    expect(notApproved[0].severity).toBe('warning');
+    expect(notApproved[0].message).toContain('not yet approved (not reviewed)');
+    expect(a.validationErrors).toBe(0);
+    expect(a.readiness.releaseBlockers).toBe(1);
+    for (const gate of [a.freezeGate, a.gate, a.dispatchGateOnSigning]) {
+      expect(gate.cleared).toBe(false);
+      expect(gate.blockers.join(' ')).toMatch(/1 leaf points at a document not yet approved/);
+      expect(gate.blockers.join(' ')).not.toMatch(/error-severity validation finding/);
+    }
+    const structural = a.gates.find((g) => g.key === 'structural');
+    expect(structural?.cleared).toBe(false);
+    expect(structural?.blockers.join(' ')).toMatch(/not yet approved/);
   });
 });

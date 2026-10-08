@@ -90,6 +90,10 @@ interface DispatchReadinessAssessment {
   externalValidation: ExternalValidation;
   readiness: ReadinessSummary;
   leafCount: number;
+  /** For a stored Validated stage: whether it still holds (assess-dispatch-readiness
+   *  validatedStageOf), and why not, in the server's words; shown beside the
+   *  status (QA 2026-10-08, j7 finding 20). Null otherwise. */
+  validatedStage?: { holds: boolean; reason?: string } | null;
 }
 
 /* ── Which sequence this surface gates: the OPEN PROGRAM's ─────────────────
@@ -555,7 +559,7 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
               by it. When the row carries no number, only the id is stated. */}
           {programLabel ? <>{programLabel} · </> : null}
           {sequenceNumber ? <>Sequence {sequenceNumber} (id {a.sequenceId})</> : <>Sequence id {a.sequenceId}</>} · region{' '}
-          {String(a.region || 'fda').toUpperCase()} · {a.leafCount} leaves · status {a.sequenceStatus}
+          {String(a.region || 'fda').toUpperCase()} · {a.leafCount} leaves · status {a.sequenceStatus}{a.validatedStage?.holds === false ? <span role="status" data-validated-stage="stale"> — {a.validatedStage.reason}</span> : null}
           {discovery.state === 'sequence' && discovery.match === 'legacy-name' ? ' · submission matched by name: it has no project recorded' : null}
         </div>
       </div>

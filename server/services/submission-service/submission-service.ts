@@ -495,11 +495,17 @@ export async function transitionSequence(
  * lockSequenceForLeafWrite.) Warnings do not block: they are the region's
  * informative findings, as they are for dispatch. Freeze and dispatch keep
  * their own gates; this one decides only what Validated may claim.
+ *
+ * P-22 (product decision 2026-10-08): approval gates the release, not the
+ * technical validation. A leaf whose document is not yet approved is a warning
+ * here (DOCUMENT_NOT_APPROVED, `blocksRelease`), so a publisher validates
+ * while final approvals are collected; its count is recorded with the move,
+ * and freeze, dispatch and transmit refuse the sequence until it is zero.
  */
 async function validateForValidatedStatus(
   seq: EctdSequence,
   ctx: { organizationId: number },
-): Promise<{ errors: number; warnings: number; leafCount: number }> {
+): Promise<{ errors: number; warnings: number; notYetApproved: number; leafCount: number }> {
   const before = await sequenceLeafManifestDigest(asQueryable(pool), seq.id, ctx.organizationId);
   const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
   const a = await assessSequenceDispatchReadiness({ sequenceId: seq.id, organizationId: ctx.organizationId });
@@ -522,7 +528,7 @@ async function validateForValidatedStatus(
       `Sequence ${seq.sequenceNumber}'s leaves changed while it was being validated, so it was not marked Validated. Validate it again.`,
     );
   }
-  return { errors: 0, warnings: a.readiness.warnings, leafCount: a.leafCount };
+  return { errors: 0, warnings: a.readiness.warnings, notYetApproved: a.readiness.releaseBlockers, leafCount: a.leafCount };
 }
 
 // ── Governed freeze / dispatch (the SUBMIT step of assemble→submit→transmit) ──

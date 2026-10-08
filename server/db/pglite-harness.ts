@@ -477,6 +477,12 @@ CREATE TABLE IF NOT EXISTS projects (
   organization_id       INTEGER NOT NULL,
   name                  TEXT NOT NULL DEFAULT '',
   regulatory_program_id UUID,
+  -- Read with the anchor (program-project-anchor readProgramAnchorRow). Without
+  -- it the anchor read failed here as an undefined column, which the resolver
+  -- treats as "no anchor", so a program WITH its project record could never be
+  -- exercised on the governed path (QA 2026-10-08, j7 finding 7). Nullable:
+  -- the harness has no client_workspaces table to point at.
+  client_workspace_id   INTEGER,
   created_at            TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

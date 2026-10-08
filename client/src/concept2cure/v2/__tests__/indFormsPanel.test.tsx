@@ -75,7 +75,9 @@ describe('IndFormsPanel — real FDA forms engine', () => {
     await waitFor(() => {
       const call = apiRequest.mock.calls.find((c) => c[1] === '/api/ind-forms/1571/build');
       expect(call).toBeTruthy();
-      expect(call![2]).toMatchObject({ sponsorName: 'ACME Bio', studyPhase: 'Phase 1' });
+      expect(call![2]).toMatchObject({ sponsorName: 'ACME Bio' });
+      // P-21: the phase starts unstated — nothing goes up until it is chosen.
+      expect(call![2]).not.toHaveProperty('studyPhase');
       expect(call![2]).not.toHaveProperty('drugName');
       expect(call![2]).not.toHaveProperty('indication');
     });
@@ -198,9 +200,13 @@ describe('IndFormsPanel — real FDA forms engine', () => {
       expect(call![2]).not.toHaveProperty('projectId');
     });
     // The note reports the degradation honestly: audit-logged, NOT placed —
-    // never "saved to the dossier".
-    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/audit-logged .*not placed in the dossier registry/)));
-    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/saved to the dossier/));
+    // never "saved to the dossier". QA 2026-10-08 (j7, finding 7): it arrived
+    // under the success tick and blamed a "legacy project row"; nothing was
+    // saved to the dossier, so it is an error, and it names what is missing
+    // (the program's project record, P-19) and who can supply it.
+    const unplaced = /audit-logged .*not placed in the dossier registry: this program has no project record, so nothing is in its dossier\. An administrator can give the program its project record\./;
+    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(unplaced), 'error'));
+    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/saved to the dossier|legacy project row/));
   });
 
   it('does NOT save (or guess a project) when no project is open', async () => {
@@ -366,6 +372,11 @@ const LISTING = {
       platformWrites: ['investigator_name'], sponsorCompletes: [],
     },
   ],
+  /* The registry's own definitions, as GET / returns them: the IND type and
+     phase options come from here, never from a list held in the panel. */
+  formDefinitions: [{ formId: 'FDA_1571', fields: [
+    { id: 'ind_type', options: ['Commercial IND', 'Research IND', 'Emergency Use IND', 'Treatment IND'] },
+    { id: 'phase_of_study', options: ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4'] }] }],
   program: {
     id: PROGRAM_UUID, code: 'BX-512', name: 'Vorelinib · KIT-mutant GIST (IND)', programType: 'IND',
     sponsorName: 'Concept2Cure Therapeutics', productName: 'Vorelinib · BX-512',
@@ -449,13 +460,52 @@ describe('IndFormsPanel — the program record fills the forms', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /Build & check/ })[0]);
     await waitFor(() => {
       const call = apiRequest.mock.calls.find((c) => String(c[1]).endsWith('/build'));
-      expect(call![2]).toMatchObject({ projectIdent: PROGRAM_UUID, studyPhase: 'Phase 1' });
+      expect(call![2]).toMatchObject({ projectIdent: PROGRAM_UUID });
+      expect(call![2]).not.toHaveProperty('studyPhase');
       // The sponsor/drug/IND number are the server's to read; a copy held here
       // could go stale against the record and would be filed as though current.
       expect(call![2]).not.toHaveProperty('sponsorName');
       expect(call![2]).not.toHaveProperty('drugName');
       expect(call![2]).not.toHaveProperty('indNumber');
     });
+  });
+
+  /* QA 2026-10-08 (j7, finding 3b) and P-21: the phase started on "Phase 1"
+     and was written into the 1571 as a satisfied required value. */
+  it('the phase and the IND type start on "Not stated — choose", offer the registry\'s options, and send nothing until chosen', async () => {
+    mockProgramListing();
+    render(<IndFormsPanel note={vi.fn()} />);
+    await screen.findByText(/FDA 1571/);
+    const phase = screen.getByLabelText('Phase') as HTMLSelectElement;
+    const indType = screen.getByLabelText('IND type') as HTMLSelectElement;
+    for (const sel of [phase, indType]) {
+      expect(sel.value).toBe('');
+      expect(sel.options[sel.selectedIndex].text).toBe('Not stated — choose');
+    }
+    expect(Array.from(phase.options).map((o) => o.text)).toEqual(['Not stated — choose', 'Phase 1', 'Phase 2', 'Phase 3', 'Phase 4']);
+    expect(Array.from(indType.options).map((o) => o.text)).toContain('Research IND');
+    fireEvent.click(screen.getAllByRole('button', { name: /Build & check/ })[0]);
+    await waitFor(() => expect(apiRequest.mock.calls.some((c) => String(c[1]).endsWith('/build'))).toBe(true));
+    const body = apiRequest.mock.calls.find((c) => String(c[1]).endsWith('/build'))![2];
+    expect(body).not.toHaveProperty('studyPhase');
+    expect(body).not.toHaveProperty('indType');
+  });
+
+  /* QA 2026-10-08 (j7, finding 3c): with a program open the panel offered only
+     Phase and Serial number, so sponsor_address and ind_type — required on the
+     1571, held by no program column — could never be supplied. */
+  it('with a program open, the sponsor address and IND type have inputs and go up where the build reads them', async () => {
+    mockProgramListing();
+    render(<IndFormsPanel note={vi.fn()} />);
+    await screen.findByText(/FDA 1571/);
+    fireEvent.change(screen.getByLabelText('Sponsor address'), { target: { value: '1 Main St, Boston MA 02110, US' } });
+    fireEvent.change(screen.getByLabelText('IND type'), { target: { value: 'Commercial IND' } });
+    fireEvent.change(screen.getByLabelText('Phase'), { target: { value: 'Phase 2' } });
+    fireEvent.click(screen.getAllByRole('button', { name: /Build & check/ })[0]);
+    await waitFor(() => expect(apiRequest.mock.calls.some((c) => String(c[1]).endsWith('/build'))).toBe(true));
+    const body = apiRequest.mock.calls.find((c) => String(c[1]).endsWith('/build'))![2];
+    expect(body).toMatchObject({ projectIdent: PROGRAM_UUID, sponsor: { address: '1 Main St, Boston MA 02110, US' }, indType: 'Commercial IND', studyPhase: 'Phase 2' });
+    expect(body).not.toHaveProperty('sponsorAddress');
   });
 
   it('with no program open it still works standalone and claims no record', async () => {

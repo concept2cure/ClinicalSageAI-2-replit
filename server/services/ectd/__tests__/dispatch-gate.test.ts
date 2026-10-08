@@ -6,7 +6,7 @@
  * unacknowledged Shadow Review critical.
  */
 import { describe, it, expect } from 'vitest';
-import { evaluateDispatchGate, mergeDispatchGates } from '../dispatch-gate';
+import { evaluateDispatchGate, evaluateReleaseApprovalGate, mergeDispatchGates } from '../dispatch-gate';
 
 describe('evaluateDispatchGate', () => {
   it('clears when there are zero validation errors and zero shadow criticals', () => {
@@ -113,5 +113,32 @@ describe('mergeDispatchGates', () => {
 
   it('handles a single gate', () => {
     expect(mergeDispatchGates({ cleared: true, blockers: [] })).toEqual({ cleared: true, blockers: [] });
+  });
+});
+
+/* P-22 (product decision 2026-10-08): approval gates the release, not the
+   technical validation. The release steps refuse a not-yet-approved document by
+   their own blocker; it is never folded into the error count. */
+describe('evaluateReleaseApprovalGate', () => {
+  it('clears when every leaf\'s document is approved', () => {
+    expect(evaluateReleaseApprovalGate(0)).toEqual({ cleared: true, blockers: [] });
+  });
+
+  it('blocks freeze, dispatch and transmit while any document is not yet approved, and says it is not an error', () => {
+    const one = evaluateReleaseApprovalGate(1);
+    expect(one.cleared).toBe(false);
+    expect(one.blockers).toEqual([
+      '1 leaf points at a document not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.',
+    ]);
+    expect(evaluateReleaseApprovalGate(3).blockers[0]).toMatch(/^3 leaves point at documents not yet approved\./);
+    expect(one.blockers.join(' ')).not.toMatch(/error-severity/);
+  });
+
+  it('blocks on a count it could not determine — unknown is not zero', () => {
+    for (const bad of [Number.NaN, undefined as unknown as number, Number.POSITIVE_INFINITY]) {
+      const g = evaluateReleaseApprovalGate(bad);
+      expect(g.cleared).toBe(false);
+      expect(g.blockers[0]).toMatch(/could not be determined/);
+    }
   });
 });

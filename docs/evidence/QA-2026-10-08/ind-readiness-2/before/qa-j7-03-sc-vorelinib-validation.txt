@@ -1,0 +1,116 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+SC
+Concept2Cure.RI
+›
+Submission center
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+4
+SUBMISSION
+Submission center
+
+Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+
+HLV-333 — Investigational New Drug Application (QA-J1) · IND · FDA (US)
+Investigational New Drug Application · IND · FDA (US)
+QA-J1 Ardemvir · relapsing multiple sclerosis (IND) · IND · FDA (US)
+Investigational New Drug Application · IND · FDA (US)
+QA member-created project (should be refused) · IND · FDA (US)
+Nexavir · moderate-to-severe Crohn's disease (IND) · IND · FDA (US)
+C2C-001 IND (FDA) · IND · FDA (US)
+Vorelinib · KIT-mutant GIST (IND) · IND · FDA (US)
+BX-256 · systemic lupus erythematosus (IND) · IND · FDA (US)
+BX-301 (anti-BCMA mAb) · IND · FDA (US)
+BX-204 (NDA 212345 · 505(b)(1)) · NDA · FDA (US)
+MDX-100 510(k) (FDA) · 510(k) · FDA (US)
+WHERE VORELINIB · KIT-MUTANT GIST (IND) STANDS
+Vorelinib · KIT-mutant GIST (IND) (Vorelinib · BX-512) — a FDA (US) IND at the original stage.
+2 eCTD sequences tracked. Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.
+I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.
+Open the sequences
+Or move through the workspaces below — plan, build, validate, dispatch.
+Submissions
+Planner
+Builder
+Sequences
+Validation
+Shadow review
+Cross-region
+Dispatch
+Working sequence
+0000 · original · Validated
+0001 · amendment · Draft
+VALIDATED
+Validation · sequence 0000
+dispatch readiness · validation
+Sequence 0000 · 6 leaves · 0 errors · 10 warnings · 2 info · computed server-side from the canonical leaves, each shown as the validation-corpus rule it is an instance of.
+WARNING
+DOCUMENT_CONTENT_NOT_PINNED
+1.5
+A placed leaf carries a pin of its source content · ICH · medium · Enforced here — this assessment checks it every time it runs.
+Leaf "Table of Contents" (1.5) points at coauthor_documents 37, but no content hash was pinned when it was placed, so whether the document still holds what was placed cannot be verified. Re-place the leaf to pin its content.
+WARNING
+MISSING_REQUIRED_SECTION
+1.1
+Region-required Module 1 sections are present · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.1 has no leaf in this sequence.
+WARNING
+MISSING_REQUIRED_SECTION
+1.2
+Region-required Module 1 sections are present · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.2 has no leaf in this sequence.
+WARNING
+MISSING_REQUIRED_SECTION
+1.3
+Region-required Module 1 sections are present · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.3 has no leaf in this sequence.
+WARNING
+MISSING_REQUIRED_SECTION
+1.12.14
+Region-required Module 1 sections are present · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.12.14 has no leaf in this sequence.
+WARNING
+MISSING_REQUIRED_SECTION
+1.14
+Region-required Module 1 sections are present · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.14 has no leaf in this sequence.
+WARNING
+MISSING_REQUIRED_SECTION
+1.14.4
+Region-required Module 1 sections are present · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.14.4 has no leaf in this sequence.
+WARNING
+MISSING_REQUIRED_SECTION
+1.14.4.1
+Region-required Module 1 sections are present · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.14.4.1 has no leaf in this sequence.
+WARNING
+MISSING_REQUIRED_SECTION
+1.14.4.2
+Region-required Module 1 sections are present · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.14.4.2 has no leaf in this sequence.
+WARNING
+MISSING_REQUIRED_SECTION
+1.20
+Region-required Module 1 sections are present · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.20 has no leaf in this sequence.
+INFO
+DUPLICATE_NEW_SECTION
+3.2.S.4.1
+Section does not carry multiple unintended "new" leaves · ICH · low · Enforced here — this assessment checks it every time it runs.
+Section 3.2.S.4.1 has 2 leaves with operation "new" — confirm the lifecycle is intended.
+INFO
+DUPLICATE_NEW_SECTION
+2.5.1
+Section does not carry multiple unintended "new" leaves · ICH · low · Enforced here — this assessment checks it every time it runs.
+Section 2.5.1 has 2 leaves with operation "new" — confirm the lifecycle is intended.
+Explain the findings (AI)

@@ -698,10 +698,16 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       }[];
       expect(rows.length).toBe(3); // the signed freeze (DP-35), the author's e-sign, the approval
 
+      // Since a056eb9ea (QA 2026-10-08, j4) an APPROVER e-signature writes the
+      // approval's own snapshot first and is bound to it, so the approval names
+      // the snapshot it created. Every earlier signature names the first freeze.
+      const approvalSnapshot = froz.rows[froz.rows.length - 1] as { version: string; content_hash: string };
+      expect(froz.rows.length, 'the approval wrote its own snapshot').toBe(2);
       for (const r of rows) {
         // The link: each signature names the snapshot in force when it was made.
-        expect(r.covered_content_hash).toBe(firstFreeze.content_hash);
-        expect(r.covered_freeze_version).toBe(firstFreeze.version);
+        const inForce = r.meaning === 'APPROVER' ? approvalSnapshot : firstFreeze;
+        expect(r.covered_content_hash).toBe(inForce.content_hash);
+        expect(r.covered_freeze_version).toBe(inForce.version);
         // The binding is cryptographic, and independently recomputable.
         expect(r.signature_digest).toBe(recompute(r));
       }

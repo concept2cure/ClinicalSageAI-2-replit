@@ -325,6 +325,9 @@ function countByObligation(
     SEVEN_DAY: 0,
     FIFTEEN_DAY: 0,
     NOT_REPORTABLE: 0,
+    // P-20: a verdict-less case is never filed as a report, so none is in a
+    // period's register; counted for the type's completeness only.
+    NOT_DETERMINED: 0,
   };
   for (const r of reports) {
     counts[r.obligation] += 1;

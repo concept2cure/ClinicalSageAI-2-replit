@@ -1,0 +1,107 @@
+{
+  "5": {
+    "status": 200,
+    "sequenceStatus": "draft",
+    "gate": {
+      "cleared": false,
+      "blockers": [
+        "1 open error-severity validation finding(s) must be resolved before dispatch.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
+        "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:5)."
+      ]
+    },
+    "freezeGate": {
+      "cleared": false,
+      "blockers": [
+        "1 open error-severity validation finding(s) must be resolved before dispatch.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+      ]
+    },
+    "errors": 1,
+    "warnings": 8,
+    "findings": [
+      "error UNRESOLVED_DOCUMENT 1.2 :: Leaf \"Cover Letter\" (1.2) points at coauthor_documents 5, which has no authored content, so it cannot be assembled into the package. Write the document first; i",
+      "warning MISSING_REQUIRED_SECTION 1.1 :: Required section 1.1 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.3 :: Required section 1.3 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.12.14 :: Required section 1.12.14 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.14 :: Required section 1.14 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.14.4 :: Required section 1.14.4 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.14.4.1 :: Required section 1.14.4.1 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.14.4.2 :: Required section 1.14.4.2 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.20 :: Required section 1.20 has no leaf in this sequence."
+    ]
+  },
+  "6": {
+    "status": 200,
+    "sequenceStatus": "validated",
+    "gate": {
+      "cleared": false,
+      "blockers": [
+        "4 open error-severity validation finding(s) must be resolved before dispatch.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
+        "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:6)."
+      ]
+    },
+    "freezeGate": {
+      "cleared": false,
+      "blockers": [
+        "4 open error-severity validation finding(s) must be resolved before dispatch.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+      ]
+    },
+    "errors": 4,
+    "warnings": 9,
+    "findings": [
+      "error DOCUMENT_NOT_APPROVED 3.2.S.4.1 :: Leaf \"Vorelinib-DS-Specification-J3\" (3.2.S.4.1) points at vault_documents 805b9144-9227-45c2-8c0e-34d6b05210c7, which is not reviewed. Only approved documents ",
+      "error DOCUMENT_NOT_APPROVED 3.2.S.4.1 :: Leaf \"Vorelinib-DS-Specification-J3-r2\" (3.2.S.4.1) points at vault_documents 45224282-30b0-4f3f-b30c-0d4c2cb859f6, which is not reviewed. Only approved documen",
+      "error DOCUMENT_NOT_APPROVED 3.2.P.8 :: Leaf \"Vorelinib DS Stability Protocol STB-0042\" (3.2.P.8) points at vault_documents 3551f13c-f929-4979-a832-7cc014536570, which is not reviewed. Only approved d",
+      "error UNRESOLVED_DOCUMENT 1.5 :: Leaf \"Table of Contents\" (1.5) points at coauthor_documents 37, which has no authored content, so it cannot be assembled into the package. Write the document fi",
+      "warning MISSING_REQUIRED_SECTION 1.1 :: Required section 1.1 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.2 :: Required section 1.2 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.3 :: Required section 1.3 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.12.14 :: Required section 1.12.14 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.14 :: Required section 1.14 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.14.4 :: Required section 1.14.4 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.14.4.1 :: Required section 1.14.4.1 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.14.4.2 :: Required section 1.14.4.2 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.20 :: Required section 1.20 has no leaf in this sequence.",
+      "info DUPLICATE_NEW_SECTION 3.2.S.4.1 :: Section 3.2.S.4.1 has 2 leaves with operation \"new\" — confirm the lifecycle is intended.",
+      "info DUPLICATE_NEW_SECTION 2.5.1 :: Section 2.5.1 has 2 leaves with operation \"new\" — confirm the lifecycle is intended."
+    ]
+  },
+  "7": {
+    "status": 200,
+    "sequenceStatus": "draft",
+    "gate": {
+      "cleared": false,
+      "blockers": [
+        "2 open error-severity validation finding(s) must be resolved before dispatch.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
+        "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:7)."
+      ]
+    },
+    "freezeGate": {
+      "cleared": false,
+      "blockers": [
+        "2 open error-severity validation finding(s) must be resolved before dispatch.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+      ]
+    },
+    "errors": 2,
+    "warnings": 9,
+    "findings": [
+      "error UNRESOLVED_DOCUMENT 1.1 :: Leaf \"Form FDA 356h (Application to Market a New Drug)\" (1.1) points at coauthor_documents 4, which has no authored content, so it cannot be assembled into the ",
+      "warning LIFECYCLE_BINDING_NOT_ASSESSED 1.1 :: Leaf \"Form FDA 356h (Application to Market a New Drug)\" declares \"replace\". Which filed leaf it acts on is established when the sequence is assembled, not here;",
+      "error DOCUMENT_NOT_APPROVED 3.2.P.8 :: Leaf \"Vorelinib-Stability-Protocol-STB-0042\" (3.2.P.8) points at vault_documents b9b008cf-0c7b-4230-a05b-e3b3354c8728, which is superseded by a later version. O",
+      "warning MISSING_REQUIRED_SECTION 1.2 :: Required section 1.2 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.3 :: Required section 1.3 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.12.14 :: Required section 1.12.14 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.14 :: Required section 1.14 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.14.4 :: Required section 1.14.4 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.14.4.1 :: Required section 1.14.4.1 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.14.4.2 :: Required section 1.14.4.2 has no leaf in this sequence.",
+      "warning MISSING_REQUIRED_SECTION 1.20 :: Required section 1.20 has no leaf in this sequence.",
+      "info DUPLICATE_NEW_SECTION m1.1 :: Section m1.1 has 2 leaves with operation \"new\" — confirm the lifecycle is intended."
+    ]
+  }
+}

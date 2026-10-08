@@ -19,6 +19,7 @@ import {
   assembleIndSafetyReport,
   isSuspected,
   isUnexpected,
+  unstatedSafetyReportFields,
 } from '../ind-safety-report-service';
 import type {
   AdverseEvent,
@@ -140,26 +141,52 @@ describe('classifyIndSafetyReport — 21 CFR 312.32', () => {
     expect(c.regulatoryBasis).toContain('312.33');
   });
 
-  it('NOT reportable: expectedness unknown/absent never starts the clock, and says it was not assessed', () => {
-    const c = classifyIndSafetyReport(
-      makeEvent({ seriousnessCriteria: 'life_threatening', causality: 'probable', expectedness: null }),
-    );
-    expect(c.obligation).toBe('NOT_REPORTABLE');
-    expect(c.determinations.unexpected).toBe(false);
-    // Nobody assessed this event against the IB/RSI. The rationale used to
-    // assert "event is expected (listed in the IB)" here — a determination no
-    // reviewer had made.
-    expect(c.determinations.expectednessRecorded).toBe(false);
-    expect(c.rationale).toMatch(/not been recorded/);
-    expect(c.rationale).not.toMatch(/event is expected/);
-  });
-
   it('NOT reportable: a recorded "expected" determination is reported as such', () => {
     const c = classifyIndSafetyReport(
       makeEvent({ seriousnessCriteria: 'death', causality: 'probable', expectedness: 'expected (listed in IB)' }),
     );
     expect(c.determinations.expectednessRecorded).toBe(true);
     expect(c.rationale).toMatch(/event is expected/);
+  });
+});
+
+describe('P-20: with expectedness not recorded there is no verdict', () => {
+  /* P-20 (product decision 2026-10-08): a safety report never infers what
+     nobody stated. With expectedness not recorded the expedited verdict is
+     "not determined: expectedness not assessed" — never "not reportable" — and
+     there is no verdict at all, so it cannot become an unsent 15-day report. */
+  it('expectedness not recorded: the verdict is NOT_DETERMINED — never NOT_REPORTABLE — with no clock and no inferred expectedness', () => {
+    const c = classifyIndSafetyReport(
+      makeEvent({ seriousnessCriteria: 'life_threatening', causality: 'probable', expectedness: null }),
+    );
+    expect(c.obligation).toBe('NOT_DETERMINED');
+    expect(c.reportingWindowDays).toBeNull();
+    expect(c.deadline).toBeNull();
+    // Nobody assessed this event against the IB/RSI: neither "expected" nor
+    // "unexpected" is asserted on the reviewer's behalf.
+    expect(c.determinations.unexpected).toBeNull();
+    expect(c.determinations.expectednessRecorded).toBe(false);
+    expect(c.rationale).toMatch(/^Not determined: expectedness not assessed/);
+    expect(c.rationale).not.toMatch(/Not an individual expedited|not reportable|event is expected/i);
+  });
+
+  it('expectedness not recorded is NOT_DETERMINED whatever else was stated — never NOT_REPORTABLE (P-20)', () => {
+    for (const over of [
+      { causality: 'unrelated' as Causality },
+      { eventType: 'AE' as EventType },
+      { seriousnessCriteria: 'hospitalization' as const, causality: 'possible' as Causality },
+    ]) {
+      const c = classifyIndSafetyReport(makeEvent({ ...over, expectedness: '  ' }));
+      expect(c.obligation, JSON.stringify(over)).toBe('NOT_DETERMINED');
+    }
+  });
+
+  it('a not-determined verdict produces no report to file and says so in the document', () => {
+    const r = assembleIndSafetyReport(makeEvent({ expectedness: null }));
+    expect(r.amendmentIntent).toBeNull();
+    const ident = r.document.sections.find((s) => s.key === 'identification')!.body;
+    expect(ident).toContain('IND Safety Report (not determined: expectedness not assessed).');
+    expect(ident).not.toMatch(/not individually reportable/);
   });
 });
 
@@ -281,6 +308,30 @@ describe('nothing regulated is assumed — the engine refuses, naming the fields
     const err = refusal(() => assembleIndSafetyReport(makeEvent({ causality: 'maybe' as Causality })));
     expect(err?.code).toBe('VALIDATION');
     expect(err!.message).toContain('causality');
+  });
+
+  /* P-20: the onset date is stated as a date or explicitly as unknown; a
+     blank is refused, an explicit "unknown" is accepted and printed as such. */
+  it('an onset date stated explicitly as unknown is accepted and printed as unknown', () => {
+    const ev = { ...blank(['onsetDate']), onsetDateUnknown: true } as AdverseEvent & { onsetDateUnknown: true };
+    expect(unstatedSafetyReportFields(ev)).toEqual([]);
+    const r = assembleIndSafetyReport(ev);
+    const desc = r.document.sections.find((s) => s.key === 'description_of_event')!.body;
+    expect(desc).toContain('Onset: unknown (stated as unknown).');
+    expect(desc).not.toMatch(/Onset: \d{4}-/);
+  });
+
+  it('a blank onset date is refused and the refusal says it may be stated as unknown', () => {
+    const err = refusal(() => assembleIndSafetyReport(blank(['onsetDate'])));
+    expect(err?.code).toBe('VALIDATION');
+    expect(err!.message).toContain('onset date (a date, or stated as unknown)');
+  });
+
+  it('an onset stated both as a date and as unknown is refused, not resolved for the person', () => {
+    const ev = { ...makeEvent(), onsetDateUnknown: true } as AdverseEvent & { onsetDateUnknown: true };
+    const err = refusal(() => assembleIndSafetyReport(ev));
+    expect(err?.code).toBe('VALIDATION');
+    expect(err!.message).toContain('onset date (stated both as a date and as unknown — state one)');
   });
 
   it('an unparseable date is refused (400), not thrown from toISOString (500)', () => {

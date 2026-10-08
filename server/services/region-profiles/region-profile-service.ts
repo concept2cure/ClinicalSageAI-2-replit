@@ -22,6 +22,13 @@ import {
   type FormTemplate,
 } from '../regional-ctd-templates';
 import { REGIONAL_RULES } from '../ectd/ectd-regional-rules';
+import {
+  REGIONAL_MODULE1,
+  requiredModule1,
+  type ApplicationKind,
+  type ModeledJurisdiction,
+} from '../../../shared/regulatory/regional-module1';
+import { canonicalRegionOf } from '../../../shared/regulatory/region-identity';
 
 /**
  * The regions this module carries a PROFILE for — five of the platform's
@@ -140,6 +147,39 @@ export function requiredModule1CodesForRegion(
   };
   walk(profile.module1Sections);
   return out;
+}
+
+/**
+ * The Module 1 headings the REGULATION requires in an application of this kind
+ * in this region — the regional Module 1 record's own answer
+ * (`requiredModule1`: always required for the kind; a heading excluded for the
+ * kind takes its subtree with it) — or null when the record does not model the
+ * pair (a region outside US/EU/JP, an application kind its tree does not
+ * cover, or no application type at all). Null is "not established", never
+ * "nothing required": the caller keeps the profile list as information.
+ *
+ * For the modelled pairs this is the same set `requiredModule1CodesForRegion`
+ * walks out of the profile (the profile is a projection of the record); what
+ * it adds is the determination that the record makes the claim for this kind.
+ * QA 2026-10-08 (j7): the dispatch gate reported a one-leaf original IND
+ * "structural gate satisfied" with Form 1571, the Investigator's Brochure and
+ * the general investigational plan missing, because no caller could tell a
+ * requirement the record makes from a list it merely carries.
+ */
+export function regulationRequiredModule1(
+  region: string,
+  applicationType?: string | null,
+): { codes: string[]; jurisdiction: ModeledJurisdiction; kind: ApplicationKind } | null {
+  const canonical = canonicalRegionOf(region);
+  if (canonical !== 'US' && canonical !== 'EU' && canonical !== 'JP') return null;
+  const kind = applicationType ? (String(applicationType).toLowerCase() as ApplicationKind) : null;
+  if (!kind || !REGIONAL_MODULE1[canonical].kinds.includes(kind)) return null;
+  // The leaf-most claims: a required heading whose required sub-heading is in
+  // the set is satisfied only through it, so it is not a second finding
+  // (1.14 and 1.14.4 for an IND are the IB and the investigational labeling).
+  const required = requiredModule1(canonical, kind).required;
+  const codes = required.filter((code) => !required.some((other) => other.startsWith(`${code}.`)));
+  return { codes, jurisdiction: canonical, kind };
 }
 
 /** All submission region profiles (fda, eu, jp, cn, kr), in canonical order. */

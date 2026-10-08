@@ -244,7 +244,7 @@ export function SeqPicker({
       >
         {rows.map((s) => (
           <option key={s.id} value={s.id}>
-            {s.sequenceNumber} · {s.type} · {SC_SEQ_STATUS[s.status]?.l ?? s.status}
+            {s.sequenceNumber} · {s.type} · {stageLabel(s)}
           </option>
         ))}
       </select>
@@ -780,6 +780,32 @@ interface ReadinessAssessment {
   };
   readiness: { errors: number; warnings: number; infos: number; findings: ReadinessFinding[] };
   leafCount: number;
+  /** For a sequence recorded as Validated: whether that still holds, by the
+   *  validation this assessment ran (assess-dispatch-readiness validatedStageOf).
+   *  Null for any other stage; absent on an older server. */
+  validatedStage?: { holds: boolean; verdictRecorded: boolean; errors?: number; reason?: string } | null;
+}
+
+/**
+ * A stored Validated stage the current validation no longer supports, in the
+ * server's words (QA 2026-10-08, j7 finding 20: "0000 original — VALIDATED"
+ * beside a dispatch-blocked gate). Renders nothing when it holds.
+ */
+function ValidatedStageNote({ a }: { a: ReadinessAssessment }) {
+  const v = a.validatedStage;
+  if (!v || v.holds || !v.reason) return null;
+  return (
+    <div className="sc-verdict tone-warn sc-mb" role="status" data-validated-stage="stale">
+      {v.reason}
+    </div>
+  );
+}
+
+/** "Validated" for the stage label, and what it lacks when no verdict was
+ *  recorded with it — a stage stored before 0e50993c5 recorded one. */
+export function stageLabel(s: { status: string; validationStatus?: string | null }): string {
+  const label = SC_SEQ_STATUS[s.status]?.l ?? s.status;
+  return s.status === 'validated' && s.validationStatus !== 'passed' ? `${label} (no validation recorded)` : label;
 }
 
 const VAL_SEV: Record<string, ToneMap> = {
@@ -862,6 +888,7 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
           />
         ) : (
           <>
+            <ValidatedStageNote a={a} />
             <div className="scaf-note sc-mb">
               Sequence {seq.sequenceNumber} · {a.leafCount} {a.leafCount === 1 ? 'leaf' : 'leaves'} ·{' '}
               {a.readiness.errors} {a.readiness.errors === 1 ? 'error' : 'errors'} ·{' '}
@@ -1688,6 +1715,7 @@ export function DispatchWorkspace({
           />
         ) : (
           <>
+            <ValidatedStageNote a={a} />
             {/* Three states, not two. `awaitingOwnSignature` is a gate whose
                 only blocker is the release signature the dispatch e-signature
                 itself records (dispatchGateOnSigning clears, `gate` does not).
@@ -1728,7 +1756,7 @@ export function DispatchWorkspace({
               {a.unacknowledgedShadowCriticals === 1 ? 'critical' : 'criticals'} ·{' '}
               {a.shadowReviewRunCount} shadow {a.shadowReviewRunCount === 1 ? 'review' : 'reviews'}{' '}
               run · {a.leafCount} {a.leafCount === 1 ? 'leaf' : 'leaves'} · status{' '}
-              {SC_SEQ_STATUS[a.sequenceStatus]?.l ?? a.sequenceStatus}
+              {stageLabel({ status: a.sequenceStatus, validationStatus: seq.validationStatus })}
             </div>
             {/* `shadowReviewMissing` is a HARD blocker merged into the gate, so
                 this note only ever rendered directly beneath "Dispatch blocked"

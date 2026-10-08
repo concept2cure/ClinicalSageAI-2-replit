@@ -21,8 +21,20 @@
  * SERVER, on every request. They are shown here read-only, exactly as the forms
  * will carry them, because a regulated filing's sponsor name must not depend on
  * who typed it into which panel. Only what the record has no column for — the
- * study phase, the submission's serial number — is entered here, and an unfilled
- * field arrives at the server as absent so `missingRequired` stays truthful.
+ * sponsor's address, the IND type, the study phase, the submission's serial
+ * number — is entered here, and an unfilled field arrives at the server as
+ * absent so `missingRequired` stays truthful. Those four travel with each
+ * request: the build reads them from the request body merged over the record
+ * (ind-forms.routes metaForRequest → statedFields), which is the only store
+ * the build has for them (QA 2026-10-08, j7 finding 3c: with a program open
+ * there was no input for sponsor_address or ind_type, so Build & check could
+ * never go green).
+ *
+ * The IND type and the phase are regulated choices: they start on "Not stated
+ * — choose" and send nothing until chosen (P-21, 2026-10-08; the phase used to
+ * start on "Phase 1" and was written into the 1571 as a satisfied required
+ * value). Their options are the registry's own (formDefinitions FDA_1571
+ * ind_type / phase_of_study), never a list held here.
  *
  * With no program open the panel still works standalone: every field is entered
  * here and nothing is claimed to come from a record.
@@ -84,7 +96,17 @@ const FORM_LABELS: Record<string, string> = {
   'FDA_1574': 'FDA 1574 — Assurance of IRB review',
 };
 
-const PHASES = ['Phase 1', 'Phase 2', 'Phase 3'];
+/** The prompt a regulated select shows until the person states a value (P-21). */
+const NOT_STATED = 'Not stated — choose';
+
+/** A registry form definition, as GET /api/ind-forms returns it (only what the panel reads). */
+interface FormDefinition { formId?: string; fields?: Array<{ id?: string; options?: unknown }> }
+
+/** The registry's options for one field of one form, or [] when the server sent none. */
+function registryOptions(defs: FormDefinition[], formId: string, fieldId: string): string[] {
+  const field = defs.find((d) => d?.formId === formId)?.fields?.find((f) => f?.id === fieldId);
+  return Array.isArray(field?.options) ? field!.options.map(String) : [];
+}
 
 /** The open program's identifier — a regulatory_programs UUID, a program code,
  *  or a legacy numeric project id (a `proj_` prefix on a numeric id is
@@ -140,7 +162,8 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
   const [program, setProgram] = useState<ProgramFacts | null>(null);
   const [placements, setPlacements] = useState<Record<string, Placement[]>>({});
   const [state, setState] = useState<'loading' | 'ready' | 'forbidden' | 'error'>('loading');
-  const [meta, setMeta] = useState({ sponsorName: '', drugName: '', indNumber: '', studyPhase: 'Phase 1', indication: '', serialNumber: '' });
+  const [meta, setMeta] = useState({ sponsorName: '', sponsorAddress: '', drugName: '', indNumber: '', indType: '', studyPhase: '', indication: '', serialNumber: '' });
+  const [choices, setChoices] = useState<{ indType: string[]; studyPhase: string[] }>({ indType: [], studyPhase: [] });
   const [checks, setChecks] = useState<Record<string, BuildResult>>({});
   const [busy, setBusy] = useState<string | null>(null);
   // One hidden file picker per form, opened by that row's button. The picker
@@ -169,6 +192,8 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
       if (res.status === 401 || res.status === 403) { setState('forbidden'); return; }
       if (!res.ok || !Array.isArray(json?.forms)) { setState('error'); return; }
       setForms(json.forms.map(String));
+      const defs = (Array.isArray(json.formDefinitions) ? json.formDefinitions : []) as FormDefinition[];
+      setChoices({ indType: registryOptions(defs, 'FDA_1571', 'ind_type'), studyPhase: registryOptions(defs, 'FDA_1571', 'phase_of_study') });
       setPlans(Object.fromEntries(((json.renderPlans ?? []) as RenderPlan[]).map((p) => [p.formId, p])));
       setProgram((json.program ?? null) as ProgramFacts | null);
       const byForm: Record<string, Placement[]> = {};
@@ -186,7 +211,11 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
     // absent so missingRequired is truthful; the record-backed fields are NOT
     // echoed back from here — the server reads them itself, so there is one
     // source for them rather than a copy this panel could hold stale.
-    const entered = Object.fromEntries(Object.entries(meta).filter(([, v]) => v !== ''));
+    const { sponsorAddress, ...flat } = meta;
+    const entered: Record<string, unknown> = Object.fromEntries(Object.entries(flat).filter(([, v]) => v.trim() !== ''));
+    // The 1571 builder reads the sponsor's address from `sponsor.address`
+    // (SponsorInfo), the shape the master-data path fills.
+    if (sponsorAddress.trim() !== '') entered.sponsor = { address: sponsorAddress.trim() };
     return programIdent ? { ...entered, projectIdent: programIdent } : entered;
   }, [meta, programIdent]);
 
@@ -282,10 +311,11 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
 
   // Persist the form as a GOVERNED artifact the platform records (not just a
   // downloaded file). Needs the open program's identity — without it we do NOT
-  // guess; we tell the user to open a project. A legacy numeric id takes the
-  // governed-artifact path; a program UUID/code takes the server's
-  // audited-unplaced path (the artifact registry has no program mapping yet)
-  // and the note says exactly which of the two happened.
+  // guess; we tell the user to open a project. A program UUID/code is placed
+  // against the program's project record (resolveProgramProjectAnchor; every
+  // program has one, P-19); a program without one gets the server's
+  // audited-unplaced answer, reported as the error it is. The note says
+  // exactly which of the two happened.
   const save = useCallback(async (formId: string) => {
     const ident = readProjectIdent();
     if (ident == null) {
@@ -323,10 +353,17 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
         return;
       }
       if (res.ok && json?.audited === true && json?.governed === false) {
-        // Honest degradation, in the server's terms: the form was built and
-        // audit-logged with its content hash, but NOT placed in the dossier
-        // registry — this program has no legacy project row for it yet.
-        note(`FDA ${shortFormId(formId)} built and audit-logged (content hash recorded)${readiness} — not placed in the dossier registry: this program has no legacy project row for the registry yet.`);
+        // The server built the form and audit-logged it with its content hash,
+        // but did NOT place it in the dossier registry: the program has no
+        // project record. Every program a client can open has one (P-19,
+        // 2026-10-08), so this is a gap to report, not a result: an error, and
+        // it names who can close it. (QA j7, finding 7: it arrived under the
+        // success tick and blamed a "legacy project row".)
+        note(
+          `FDA ${shortFormId(formId)} built and audit-logged (content hash recorded)${readiness}, but not placed in the dossier registry: ` +
+            'this program has no project record, so nothing is in its dossier. An administrator can give the program its project record.',
+          'error',
+        );
         return;
       }
       // This read only `error.message`, so a server that put its sentence in
@@ -427,7 +464,9 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
             <label style={{ fontSize: 12 }}>Indication<input className="c2c-input" style={{ height: 30 }} value={meta.indication} onChange={(e) => setMeta({ ...meta, indication: e.target.value })} /></label>
           </>
         )}
-        <label style={{ fontSize: 12 }}>Phase<select className="c2c-input" style={{ height: 30 }} value={meta.studyPhase} onChange={(e) => setMeta({ ...meta, studyPhase: e.target.value })}>{PHASES.map((p) => <option key={p}>{p}</option>)}</select></label>
+        <label style={{ fontSize: 12 }}>Sponsor address<input className="c2c-input" style={{ height: 30 }} value={meta.sponsorAddress} onChange={(e) => setMeta({ ...meta, sponsorAddress: e.target.value })} placeholder={program ? 'not on the program record' : undefined} /></label>
+        <label style={{ fontSize: 12 }}>IND type<select className="c2c-input" style={{ height: 30 }} value={meta.indType} onChange={(e) => setMeta({ ...meta, indType: e.target.value })}><option value="">{NOT_STATED}</option>{choices.indType.map((t) => <option key={t} value={t}>{t}</option>)}</select></label>
+        <label style={{ fontSize: 12 }}>Phase<select className="c2c-input" style={{ height: 30 }} value={meta.studyPhase} onChange={(e) => setMeta({ ...meta, studyPhase: e.target.value })}><option value="">{NOT_STATED}</option>{choices.studyPhase.map((p) => <option key={p} value={p}>{p}</option>)}</select></label>
         <label style={{ fontSize: 12 }}>Serial number<input className="c2c-input" style={{ height: 30 }} value={meta.serialNumber} onChange={(e) => setMeta({ ...meta, serialNumber: e.target.value })} placeholder="e.g. 0000" /></label>
       </div>
 

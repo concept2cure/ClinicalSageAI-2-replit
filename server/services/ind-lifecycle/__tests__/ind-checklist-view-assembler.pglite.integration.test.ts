@@ -579,3 +579,33 @@ describe('IND checklist lifecycle refusals and retained form history', () => {
     expect(ind.readiness.blockers.some((b: any) => b.kind === 'lifecycle')).toBe(false);
   });
 });
+
+/* QA 2026-10-08 (j7, finding 9). The Vorelinib checklist marked m1.1 "FDA
+   Forms" approved, and the only approved document at 1.1 was a placed Form FDA
+   356h — an NDA / ANDA / BLA form. For an IND the forms heading is satisfied
+   by the forms an IND requires (1571, 1572, 3674), and by nothing else. */
+describe('IND checklist: the forms heading counts only the forms an IND requires', () => {
+  it('an approved Form 356h placed at 1.1 does not satisfy m1.1, and is not listed as the forms section', async () => {
+    const sub = await seedIND(ORG, { withLeaves: false });
+    const seq = await sequence(sub, '0000');
+    await place(seq, '1.1', 'approved'); // the 356h, authored and approved, placed at the forms heading
+
+    const [ind] = (await assembleOrgIndChecklists(ORG)) as any[];
+
+    expect(ind.readiness.blockers).toContainEqual(expect.objectContaining({ kind: 'required_section', code: 'm1.1' }));
+    expect(ind.sections.some((s: any) => s.code === 'm1.1')).toBe(false);
+    expect(ind.forms.every((f: any) => f.done === false)).toBe(true);
+  });
+
+  it('m1.1 is complete when the IND\'s own forms are, whatever else sits at the heading', async () => {
+    const sub = await seedIND(ORG, { withLeaves: false });
+    const seq = await sequence(sub, '0000');
+    for (const code of ['m1.1.1', 'm1.1.2', 'm1.1.3']) await place(seq, code, 'approved');
+    await place(seq, '1.1', 'draft'); // a draft at the heading itself does not hold the forms back either
+
+    const [ind] = (await assembleOrgIndChecklists(ORG)) as any[];
+
+    expect(ind.forms.every((f: any) => f.done === true)).toBe(true);
+    expect(ind.readiness.blockers.some((b: any) => b.code === 'm1.1')).toBe(false);
+  });
+});

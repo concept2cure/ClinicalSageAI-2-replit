@@ -1,0 +1,63 @@
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the open program’s IND, not rows[0], when a match exists
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > does not expose another IND for drafting or filing when the open program has none
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > with no program open and several INDs, says which one is shown and how to scope
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the IND anchored to the open program, not a same-named IND of another project
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a same-named IND anchored to another project is not the open program’s
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > does not guess between two unlinked, identically named INDs
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > an IND whose submission names no program is never matched to the open program by name
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a BLA program is told its own type, and is not shown a same-named legacy IND
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a single IND with no program open needs no note — nothing to disambiguate
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — briefing-book / LOA / right-of-reference cards > briefing-book POSTs the real route with the checklist identity and renders the server model + gaps
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — briefing-book / LOA / right-of-reference cards > LOA carries the checklist sponsor as the authorized party and renders the model + gap verdict
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — briefing-book / LOA / right-of-reference cards > right-of-reference carries the checklist sponsor and renders the m1.4.2 model
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — briefing-book / LOA / right-of-reference cards > a failed assemble renders the server’s words — never success
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — regulated choices on the File cards start unstated (P-21) > the meeting type and the referenced file types start on "Not stated — choose" and send nothing until chosen
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: assemble renders the classification, then File into sequence creates the ectd_sequences row
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: no regulated select is pre-selected, and an untouched one is never sent
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: a refusal thrown by the request layer reads as one sentence, ending once
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: the 4-digit sequence number is required, never guessed
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: a NOT_REPORTABLE classification removes the filing affordance with the server’s reason
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > a failed filing reports the server’s words — never a fabricated sequence
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > annual-report: assemble renders the 312.33 model + gaps, then files as an annual sequence
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > amendment: the plan renders the server leaves + warnings, then files as an amendment sequence
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > amendment: category and change kind start unstated, are never sent untouched, and the planner's refusal is shown
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: an onset stated as unknown goes up as "unknown", never as a blank
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: a NOT_DETERMINED verdict reads "not determined: expectedness not assessed" and offers nothing to file
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > with no submissionId on the checklist, filing is honestly unavailable — nothing is guessed
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > lists the supported forms from the engine
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > builds with only the entered metadata and renders the server missingRequired verdict
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > downloads the streamed FDA PDF and reports the honest render kind + coverage
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > surfaces the regulatory-author role gate honestly
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > saves a governed artifact to the open project’s dossier
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does not call a data-complete artifact "ready" when boxes are left on the form
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > says "ready" only when the data is complete AND the form leaves nothing
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > an absent sponsorMustComplete is "not reported", never "nothing left"
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a program UUID project takes the audited-unplaced path and the note says exactly that
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does NOT save (or guess a project) when no project is open
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > names the official template and the boxes still left blank on it
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > counts a required box the project has no value for, which `unmapped` never names
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > says the server did not report, rather than implying a clean form
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > an EMPTY X-Form-Required-Blank is "assessed, none" and claims nothing
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does not claim the PDF arrived when the browser blocked the download
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > asks the engine for the open program and shows the recorded facts, not input boxes
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > states what each form will produce BEFORE anything is rendered, and who reviewed the asset
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > a reconstruction is never described as the official form
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > names the program on every build so the server fills from the record, and never echoes the record back
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > the phase and the IND type start on "Not stated — choose", offer the registry's options, and send nothing until chosen
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > with a program open, the sponsor address and IND type have inputs and go up where the build reads them
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > with no program open it still works standalone and claims no record
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > files the completed form into the ORIGINAL 0000 the person chose, although a newer 0001 exists
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > sends nothing until a sequence is chosen, and sends the one chosen
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > is reachable and operable from the keyboard, and names the form it files
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > reports a refusal in the server’s own words and claims nothing was filed
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > shows a form already filed in each sequence, with the digest of the bytes the sponsor signed
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the form is named once > reads "FDA 1571", not "FDA FDA_1571" — the engine ids are canonical and were pasted after another "FDA"
+ ✓ client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx > Submission Center: the stored Validated stage and the current validation agree > a Validated stage stored with no verdict says so in the Sequences list and the working-sequence picker
+ ✓ client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx > Submission Center: the stored Validated stage and the current validation agree > the Validation and Dispatch tabs carry the server's reason when the stage no longer holds
+ ✓ client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx > Submission Center: the stored Validated stage and the current validation agree > a stage the validation supports reads plainly, with no note
+ ✓ client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx > Dispatch readiness surface: the same answer > names a stored Validated stage the validation no longer supports
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetPreselect.test.tsx > the filing picker chooses a sequence only when there is no choice to make > with two open sequences (0000 and a draft 0001) nothing is chosen until the person chooses
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetPreselect.test.tsx > the filing picker chooses a sequence only when there is no choice to make > with exactly one open sequence it is chosen, and a locked one never is
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetPreselect.test.tsx > the filing picker chooses a sequence only when there is no choice to make > with every sequence locked nothing is chosen
+ Test Files  5 passed (5)
+      Tests  61 passed (61)

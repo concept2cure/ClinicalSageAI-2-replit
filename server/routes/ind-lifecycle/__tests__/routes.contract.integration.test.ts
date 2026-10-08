@@ -331,6 +331,42 @@ describe('document routes', () => {
     expect(noDates.body.error.message).toContain('sponsor awareness date');
   });
 
+  /* P-20 (product decision 2026-10-08). The onset date is a date or an
+     explicit "unknown"; with expectedness not recorded there is no verdict, so
+     nothing can be filed or drafted as a report. */
+  it('POST /safety-report accepts an onset stated as "unknown" and prints it; a blank onset is refused', async () => {
+    const unknownOnset = await request(app)
+      .post('/api/ind-lifecycle/safety-report')
+      .send({ event: { ...reportableEvent(), onsetDate: 'unknown' } });
+    expect(unknownOnset.status, JSON.stringify(unknownOnset.body)).toBe(200);
+    const desc = unknownOnset.body.document.sections.find((s: { key: string }) => s.key === 'description_of_event').body;
+    expect(desc).toContain('Onset: unknown (stated as unknown).');
+    const blankOnset = await request(app)
+      .post('/api/ind-lifecycle/safety-report')
+      .send({ event: { ...reportableEvent(), onsetDate: '' } });
+    expect(blankOnset.status).toBe(400);
+    expect(blankOnset.body.error.message).toContain('onset date (a date, or stated as unknown)');
+  });
+
+  it('with expectedness not recorded the verdict is NOT_DETERMINED, and file / draft refuse with that name (422), never NOT_REPORTABLE', async () => {
+    const event = { ...reportableEvent(), expectedness: undefined };
+    const classified = await request(app).post('/api/ind-lifecycle/safety-report/classify').send({ event });
+    expect(classified.status).toBe(200);
+    expect(classified.body.obligation).toBe('NOT_DETERMINED');
+    expect(classified.body.deadline).toBeNull();
+    const filed = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0042', event });
+    expect(filed.status).toBe(422);
+    expect(filed.body.error.code).toBe('NOT_DETERMINED');
+    expect(filed.body.error.message).toMatch(/not determined: expectedness not assessed/);
+    const drafted = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports`)
+      .send({ event });
+    expect(drafted.status).toBe(422);
+    expect(drafted.body.error.code).toBe('NOT_DETERMINED');
+  });
+
   it('POST /annual-report/line-listing → 200 with rows + tabulation', async () => {
     const res = await request(app)
       .post('/api/ind-lifecycle/annual-report/line-listing')

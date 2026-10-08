@@ -1620,6 +1620,13 @@ export function SubmissionCenter({
                         </span>
                       </span>
                       <Chip map={SC_SEQ_STATUS} k={s.status} />
+                      {s.status === 'validated' && s.validationStatus !== 'passed' ? (
+                        /* A stage stored before 0e50993c5 recorded the verdict
+                           with it (QA 2026-10-08, j7 finding 20). */
+                        <span className="sp-q-s" data-validated-stage="unrecorded">
+                          no validation recorded
+                        </span>
+                      ) : null}
                       <span className="sc-trans">
                         {(SC_TRANSITIONS[s.status] ?? []).map((to) => {
                           const governed = to === 'frozen' || to === 'dispatched';

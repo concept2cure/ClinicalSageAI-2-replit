@@ -617,9 +617,72 @@ describe('the open program supplies the form facts', () => {
     expect(res.body.missingRequired).toContain('indication');
   });
 
+  /* QA 2026-10-08 (j7, findings 3b and 3c). The program record has no column
+     for the sponsor's address or the IND type; the build reads both — and the
+     phase — from the request, merged over the record. That is where the forms
+     panel's inputs now go. Nothing is defaulted: an unstated phase stays a
+     missing required field. */
+  it('the sponsor address, IND type and phase the panel states land where the 1571 build reads them; unstated, they stay missing', async () => {
+    await seedProgram({ code: 'BX-903', name: 'BX-903 (IND)', productName: 'Product 903', applicationNumber: '000903', indication: 'Z' });
+    const stated = await request(app).post('/api/ind-forms/FDA_1571/build').send({
+      projectIdent: 'BX-903', sponsor: { address: '1 Main St, Boston MA 02110, US' }, indType: 'Commercial IND', studyPhase: 'Phase 2',
+    });
+    expect(stated.status).toBe(200);
+    expect(stated.body.fields).toMatchObject({
+      sponsor_name: 'Concept2Cure Therapeutics',
+      sponsor_address: '1 Main St, Boston MA 02110, US',
+      ind_type: 'Commercial IND',
+      phase_of_study: 'Phase 2',
+    });
+    for (const id of ['sponsor_address', 'ind_type', 'phase_of_study']) expect(stated.body.missingRequired).not.toContain(id);
+
+    const unstated = await request(app).post('/api/ind-forms/FDA_1571/build').send({ projectIdent: 'BX-903' });
+    expect(unstated.body.missingRequired).toEqual(expect.arrayContaining(['sponsor_address', 'ind_type', 'phase_of_study']));
+  });
+
+  it('GET / carries the registry\'s IND type and phase options the panel offers', async () => {
+    const res = await request(app).get('/api/ind-forms/');
+    const f1571 = (res.body.formDefinitions as Array<{ formId: string; fields: Array<{ id: string; options?: string[] }> }>).find((d) => d.formId === 'FDA_1571')!;
+    expect(f1571.fields.find((f) => f.id === 'ind_type')?.options).toContain('Commercial IND');
+    expect(f1571.fields.find((f) => f.id === 'phase_of_study')?.options).toEqual(['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4']);
+  });
+
   it('a build that NAMES an unresolvable program is refused, not answered from typed fields', async () => {
     const res = await request(app).post('/api/ind-forms/FDA_1571/build').send({ projectIdent: 'GHOST-1', sponsorName: 'Typed' });
     expect(res.status).toBe(404);
+  });
+});
+
+/* QA 2026-10-08 (j7, finding 7): "Save to dossier" for the open program
+   answered governed:false — "this program has no legacy project row for the
+   registry yet" — and nothing was saved. P-19 gives every program its project
+   record (intake creates it; 20261008 backfills the rest), and the route
+   already places a program's form against that record. These pin both ends:
+   a program with its record gets a governed artifact in its dossier; one
+   without is told plainly that nothing was saved there. */
+describe('Save to dossier for an open program', () => {
+  it('a program with its project record gets a governed artifact registered against that record', async () => {
+    const programId = await seedProgram({ code: 'BX-904', name: 'BX-904 (IND)', productName: 'Product 904', indication: 'W' });
+    const p = await harness.pglite.query<{ id: number }>(
+      `INSERT INTO projects (id, organization_id, name, regulatory_program_id) VALUES (904, 1, 'BX-904', $1) RETURNING id`,
+      [programId],
+    );
+    const res = await request(app).post('/api/ind-forms/FDA_1571/artifact').send({ projectIdent: 'BX-904', studyPhase: 'Phase 1' });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.artifactId).toMatch(/^artifact_indform_1571_/);
+    expect(res.body.projectId).toBe(Number(p.rows[0].id));
+    const row = await harness.pglite.query<{ project_id: number; organization_id: number }>(
+      `SELECT project_id, organization_id FROM concept2cure_artifacts WHERE artifact_id = $1`,
+      [res.body.artifactId],
+    );
+    expect(row.rows[0]).toEqual({ project_id: Number(p.rows[0].id), organization_id: 1 });
+  });
+
+  it('a program with no project record is told that nothing was saved to its dossier', async () => {
+    await seedProgram({ code: 'BX-905', name: 'BX-905 (IND)', productName: 'Product 905' });
+    const res = await request(app).post('/api/ind-forms/FDA_1571/artifact').send({ projectIdent: 'BX-905' });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ governed: false, artifactId: null, audited: true });
   });
 });
 

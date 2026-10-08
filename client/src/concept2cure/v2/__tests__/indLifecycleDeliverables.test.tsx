@@ -94,6 +94,7 @@ describe('IndLifecycle — briefing-book / LOA / right-of-reference cards', () =
     });
     const card = await renderAndFindCard('Pre-IND Briefing Book');
 
+    fireEvent.change(within(card).getByLabelText('Meeting type'), { target: { value: 'pre_ind' } });
     fireEvent.change(within(card).getByLabelText('Indication'), { target: { value: 'Relapsed myeloma' } });
     fireEvent.change(within(card).getByLabelText(/Questions for FDA/), { target: { value: 'Nonclinical | Is the tox package adequate?' } });
     fireEvent.click(within(card).getByText('Assemble now'));
@@ -127,6 +128,7 @@ describe('IndLifecycle — briefing-book / LOA / right-of-reference cards', () =
     });
     const card = await renderAndFindCard('Letter of Authorization');
 
+    fireEvent.change(within(card).getByLabelText('Referenced file type'), { target: { value: 'DMF' } });
     fireEvent.change(within(card).getByLabelText('Referenced file number'), { target: { value: 'DMF 12345' } });
     fireEvent.change(within(card).getByLabelText(/File holder/), { target: { value: 'Substance Co' } });
     fireEvent.click(within(card).getByText('Assemble now'));
@@ -182,6 +184,35 @@ describe('IndLifecycle — briefing-book / LOA / right-of-reference cards', () =
     expect(
       await screen.findByText(/Could not assemble — referencedFileType, referencedFileNumber, holderName and authorizedPartyName are required\./),
     ).toBeTruthy();
+  });
+});
+
+describe('IndLifecycle — regulated choices on the File cards start unstated (P-21)', () => {
+  /* P-21 (product decision 2026-10-08): regulated choices start unstated. The
+     meeting type and the referenced file type showed (and sent) their first
+     options — "Pre-IND" and "DMF" — for selects nobody touched. */
+  it('the meeting type and the referenced file types start on "Not stated — choose" and send nothing until chosen', async () => {
+    mockApi({
+      '/api/ind-lifecycle/briefing-book': { ok: false, status: 400, body: { error: { code: 'VALIDATION', message: 'productName, indication, meetingType and questions[] are required.' } } },
+      '/api/ind-lifecycle/loa': { ok: false, status: 400, body: { error: { code: 'VALIDATION', message: 'referencedFileType, referencedFileNumber, holderName and authorizedPartyName are required.' } } },
+      '/api/ind-lifecycle/right-of-reference': { ok: false, status: 400, body: { error: { code: 'VALIDATION', message: 'sponsorName, referencedFileType and referencedFileNumber are required.' } } },
+    });
+    render(<IndLifecycle {...props()} />);
+    await screen.findByText('Pre-IND Briefing Book');
+    const cards = [
+      ['Pre-IND Briefing Book', 'Meeting type', '/api/ind-lifecycle/briefing-book', 'meetingType'],
+      ['Letter of Authorization', 'Referenced file type', '/api/ind-lifecycle/loa', 'referencedFileType'],
+      ['Statement of Right of Reference', 'Referenced file type', '/api/ind-lifecycle/right-of-reference', 'referencedFileType'],
+    ] as const;
+    for (const [title, label, url, key] of cards) {
+      const card = screen.getByText(title).closest('.indl-dcard')! as HTMLElement;
+      const sel = within(card).getByLabelText(label) as HTMLSelectElement;
+      expect(sel.value, title).toBe('');
+      expect(sel.options[sel.selectedIndex].text, title).toBe('Not stated — choose');
+      fireEvent.click(within(card).getByText('Assemble now'));
+      await within(card).findByText(/Could not assemble — /);
+      expect(postBody(url), title).not.toHaveProperty(key);
+    }
   });
 });
 
@@ -433,6 +464,8 @@ describe('IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence
 
     fireEvent.change(within(card).getByLabelText(/Changed document id/), { target: { value: 'doc-7' } });
     fireEvent.change(within(card).getByLabelText('Changed document title'), { target: { value: 'Protocol v2' } });
+    fireEvent.change(within(card).getByLabelText('Content category'), { target: { value: 'protocol' } });
+    fireEvent.change(within(card).getByLabelText('Change kind'), { target: { value: 'added' } });
     fireEvent.click(within(card).getByText('Assemble now'));
 
     expect(await screen.findByText(/m5\.3\.5\.1 · new — Protocol v2 \(312\.30\)/)).toBeTruthy();
@@ -450,6 +483,77 @@ describe('IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence
       submissionId: 31,
       sequenceNumber: '0004',
     });
+  });
+
+  /* P-21: the amendment's content category and change kind went up as
+     "protocol" / "added" for selects nobody touched. They start unstated, an
+     untouched one is never sent, and the planner's named refusal is shown. */
+  it('amendment: category and change kind start unstated, are never sent untouched, and the planner\'s refusal is shown', async () => {
+    mockApi({
+      '/api/ind-lifecycle/amendment-plan': {
+        ok: false,
+        status: 400,
+        body: { error: { code: 'IND_AMENDMENT_UNSTATED', message: 'IND_AMENDMENT_UNSTATED: state these before the amendment is planned — "Protocol v2": content category, change kind. Nothing is assumed for a choice left blank.' } },
+      },
+    });
+    const card = await renderAndFindCard('Protocol / Information Amendment', 'Lifecycle');
+    for (const label of ['Content category', 'Change kind']) {
+      const sel = within(card).getByLabelText(label) as HTMLSelectElement;
+      expect(sel.value, label).toBe('');
+      expect(sel.options[sel.selectedIndex].text, label).toBe('Not stated — choose');
+    }
+    fireEvent.change(within(card).getByLabelText('Changed document title'), { target: { value: 'Protocol v2' } });
+    fireEvent.click(within(card).getByText('Assemble now'));
+
+    expect(await within(card).findByText(/content category, change kind/)).toBeTruthy();
+    const sent = (postBody('/api/ind-lifecycle/amendment-plan') as { changedDocuments: Array<Record<string, unknown>> }).changedDocuments[0];
+    expect(sent).toEqual({ documentId: '', title: 'Protocol v2' });
+  });
+
+  /* P-20 (product decision 2026-10-08): the onset date is a date or stated
+     explicitly as unknown; with expectedness not recorded the verdict is "not
+     determined", and nothing can be filed. */
+  it('safety-report: an onset stated as unknown goes up as "unknown", never as a blank', async () => {
+    mockApi({ '/api/ind-lifecycle/safety-report': { ok: true, status: 200, body: SAFETY_OK } });
+    const card = await renderAndFindCard('IND Safety Report', 'Lifecycle');
+    fireEvent.click(within(card).getByLabelText('Onset date unknown'));
+    fireEvent.change(within(card).getByLabelText(/Sponsor awareness date/), { target: { value: '2026-09-25' } });
+    fireEvent.click(within(card).getByText('Assemble now'));
+    await screen.findByText(/REAL SERVER SAFETY BODY/);
+    expect((postBody('/api/ind-lifecycle/safety-report') as { event: Record<string, unknown> }).event).toEqual({
+      onsetDate: 'unknown',
+      reportDate: '2026-09-25',
+    });
+  });
+
+  it('safety-report: a NOT_DETERMINED verdict reads "not determined: expectedness not assessed" and offers nothing to file', async () => {
+    mockApi({
+      '/api/ind-lifecycle/safety-report': {
+        ok: true,
+        status: 200,
+        body: {
+          ...SAFETY_OK,
+          classification: {
+            ...SAFETY_OK.classification,
+            obligation: 'NOT_DETERMINED',
+            reportingWindowDays: null,
+            deadline: null,
+            rationale: 'Not determined: expectedness not assessed. Record expectedness to obtain a verdict.',
+          },
+          amendmentIntent: null,
+        },
+      },
+    });
+    const card = await renderAndFindCard('IND Safety Report', 'Lifecycle');
+    const exp = within(card).getByLabelText(/Expectedness/) as HTMLSelectElement;
+    expect(exp.options[exp.selectedIndex].text).toBe('Not assessed — the expedited verdict is not determined');
+    fireEvent.click(within(card).getByText('Assemble now'));
+
+    await screen.findByText(/REAL SERVER SAFETY BODY/);
+    expect(card.textContent).toContain('Expedited verdict: not determined: expectedness not assessed');
+    expect(card.textContent).not.toMatch(/NOT_DETERMINED|not reportable/i);
+    expect(within(card).queryByText('File into sequence')).toBeNull();
+    expect(card.textContent).toContain('No expedited-reporting verdict: expectedness has not been assessed against the IB / Reference Safety Information. Record it to obtain one — there is nothing to file until then.');
   });
 
   it('with no submissionId on the checklist, filing is honestly unavailable — nothing is guessed', async () => {

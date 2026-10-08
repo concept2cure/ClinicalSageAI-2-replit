@@ -42,6 +42,7 @@ vi.mock('../../ectd/release-signature-status', async (importOriginal) => ({
   signingNowResolvesRelease: (await importOriginal<typeof import('../../ectd/release-signature-status')>()).signingNowResolvesRelease,
 }));
 
+import { assessSequenceDispatchReadiness } from '../../ectd/assess-dispatch-readiness';
 import {
   transitionSequence,
   upsertLeaf,
@@ -98,6 +99,20 @@ async function row(sequenceId: number): Promise<{ status: string; validation_sta
   return r;
 }
 
+/**
+ * The Module 1 sections the regional record requires of an original IND
+ * (1.14 and 1.14.4 are satisfied by their sub-sections). Since QA 2026-10-08
+ * (j7) a missing one is a validation error, so a sequence that is meant to
+ * validate cleanly carries them, each an approved document with content.
+ */
+const IND_MODULE1 = ['1.1', '1.2', '1.3', '1.12.14', '1.14.4.1', '1.14.4.2', '1.20'];
+async function completeModule1(sequenceId: number): Promise<void> {
+  for (const code of IND_MODULE1) {
+    const body = `Module 1 ${code} body.`;
+    await rawLeaf(sequenceId, await doc(body), sha(body), code);
+  }
+}
+
 const place = (sequenceId: number, documentId: number, sectionCode = '2.5') =>
   upsertLeaf(
     { sequenceId, sectionCode, title: 'Clinical Overview', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId, reason: 'Approved overview for this sequence' },
@@ -131,6 +146,7 @@ beforeEach(() => logAction.mockClear());
 describe('Validated is reached only through a validation with no errors (finding 2)', () => {
   it('refuses Validated while the validation finds an error, names it, and changes nothing', async () => {
     const seq = await sequence('assembling');
+    await completeModule1(seq);
     await rawLeaf(seq, await doc(''), null); // an empty document: it cannot be assembled
 
     const err = await transitionSequence(seq, 'validated', CTX).catch((e) => e);
@@ -145,6 +161,7 @@ describe('Validated is reached only through a validation with no errors (finding
 
   it('marks a sequence Validated when its validation finds no error, and records the verdict', async () => {
     const seq = await sequence('assembling');
+    await completeModule1(seq);
     await rawLeaf(seq, await doc('Approved clinical overview body.'), sha('Approved clinical overview body.'));
 
     const moved = await transitionSequence(seq, 'validated', CTX);
@@ -156,18 +173,78 @@ describe('Validated is reached only through a validation with no errors (finding
     );
   });
 
-  it('an unapproved document blocks Validated by name (FD5, as freeze does)', async () => {
+  /* QA 2026-10-08 (j7, finding 4): a one-leaf original IND read "structural
+     gate satisfied" because every missing section was a warning. */
+  it('an original IND missing a section the regulation requires is not Validated, and the refusal names it', async () => {
     const seq = await sequence('assembling');
-    await rawLeaf(seq, await doc('Draft overview body.', 'draft'), sha('Draft overview body.'));
+    await rawLeaf(seq, await doc('Approved clinical overview body.'), sha('Approved clinical overview body.'));
+
     const err = await transitionSequence(seq, 'validated', CTX).catch((e) => e);
+
     expect(err.code).toBe('VALIDATION_FAILED');
-    expect(err.message).toContain('draft');
+    expect(err.message).toMatch(/found 7 errors/); // 1.1, 1.2, 1.3, 1.12.14, 1.14.4.1, 1.14.4.2, 1.20
+    expect(err.message).toContain('1.1: Required section 1.1 has no leaf in this sequence.');
+    expect(err.message).toContain('original IND application');
+    expect(await row(seq)).toEqual({ status: 'assembling', validation_status: null });
+  });
+});
+
+/* P-22 (product decision 2026-10-08): approval gates the release, not the
+   technical validation. Until then an unapproved document failed Validated
+   (FD5 applied as an error); now Validated reports it as a warning and every
+   release step refuses it, naming it, before any signature is taken. */
+describe('a document not yet approved: a warning at Validated, a refusal at freeze, dispatch and transmit (P-22)', () => {
+  async function validatedWithDraft(): Promise<number> {
+    const seq = await sequence('assembling');
+    await completeModule1(seq);
+    await rawLeaf(seq, await doc('Draft overview body.', 'draft'), sha('Draft overview body.'));
+    return seq;
+  }
+
+  it('Validated records the sequence and counts the document as not yet approved', async () => {
+    const seq = await validatedWithDraft();
+
+    const moved = await transitionSequence(seq, 'validated', CTX);
+
+    expect(moved.status).toBe('validated');
+    expect(await row(seq)).toEqual({ status: 'validated', validation_status: 'passed' });
+    expect(logAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'SEQUENCE_TRANSITIONED',
+        details: expect.objectContaining({ to: 'validated', validation: expect.objectContaining({ errors: 0, notYetApproved: 1 }) }),
+      }),
+    );
+  });
+
+  it('the freeze and dispatch prechecks refuse it by name, before any signature', async () => {
+    const seq = await validatedWithDraft();
+    await transitionSequence(seq, 'validated', CTX);
+
+    const freeze = await precheckGovernedStep(seq, 'freeze', CTX);
+    expect(freeze.cleared).toBe(false);
+    expect(freeze.refusal).toMatch(/Dispatch gate blocks frozen: 1 leaf points at a document not yet approved/);
+
+    await q(`UPDATE ectd_sequences SET status = 'frozen' WHERE id = $1`, [seq]);
+    const dispatch = await precheckGovernedStep(seq, 'dispatch', CTX);
+    expect(dispatch.cleared).toBe(false);
+    expect(dispatch.refusal).toMatch(/Dispatch gate blocks dispatched: 1 leaf points at a document not yet approved/);
+  });
+
+  it('transmit refuses a dispatched sequence that still carries it', async () => {
+    const seq = await validatedWithDraft();
+    await q(`UPDATE ectd_sequences SET status = 'dispatched' WHERE id = $1`, [seq]);
+
+    const transmit = await precheckGovernedStep(seq, 'transmit', CTX, { environment: 'staging' });
+
+    expect(transmit.cleared).toBe(false);
+    expect(transmit.refusal).toMatch(/^Dispatch gate blocks transmit: .*1 leaf points at a document not yet approved/);
   });
 });
 
 describe('a leaf change returns a Validated sequence to Assembling (finding 3)', () => {
   it('placing a leaf into a Validated sequence reverts it, clears the verdict, and says so', async () => {
     const seq = await sequence('assembling');
+    await completeModule1(seq);
     await rawLeaf(seq, await doc('Body one.'), sha('Body one.'));
     await transitionSequence(seq, 'validated', CTX);
     const second = await doc('Body two.');
@@ -183,6 +260,7 @@ describe('a leaf change returns a Validated sequence to Assembling (finding 3)',
 
   it('placing the same document again changes nothing, so the sequence stays Validated', async () => {
     const seq = await sequence('assembling');
+    await completeModule1(seq);
     const d = await doc('Body three.');
     await place(seq, d);
     await transitionSequence(seq, 'validated', CTX);
@@ -196,6 +274,7 @@ describe('a leaf change returns a Validated sequence to Assembling (finding 3)',
 
   it('removing a leaf from a Validated sequence reverts it, and the removal records its reason (finding 5)', async () => {
     const seq = await sequence('assembling');
+    await completeModule1(seq);
     const keep = await place(seq, await doc('Body four.'));
     const extra = await place(seq, await doc('Body five.'), '2.7.2');
     await transitionSequence(seq, 'validated', CTX);
@@ -215,6 +294,7 @@ describe('a leaf change returns a Validated sequence to Assembling (finding 3)',
 describe('a governed step is asked before it is signed (finding 1)', () => {
   it('the freeze precheck answers the gate refusal without any signature', async () => {
     const seq = await sequence('assembling');
+    await completeModule1(seq);
     await rawLeaf(seq, await doc('Body six.'), sha('Body six.'));
     await transitionSequence(seq, 'validated', CTX);
 
@@ -237,5 +317,30 @@ describe('a governed step is asked before it is signed (finding 1)', () => {
     expect(verdict.cleared).toBe(false);
     expect(verdict.refusal).toBe('Sequence must be dispatched before transmit (current: validated).');
     expect(verdict.transmit?.route).toMatchObject({ ok: true, gateway: 'esg' });
+  });
+});
+
+/* QA 2026-10-08 (j7, finding 20): Vorelinib sequence 0000 read "VALIDATED"
+   (stored before 0e50993c5, no verdict) beside a gate its validation errors
+   block. The assessment says whether the stored stage still holds. */
+describe('a stored Validated stage is checked against the current validation (finding 20)', () => {
+  it('a sequence stored as Validated with no verdict, whose validation finds errors, does not hold — and says why', async () => {
+    const seq = await sequence('validated'); // as stored before verdicts were recorded
+    await rawLeaf(seq, await doc('Approved clinical overview body.'), sha('Approved clinical overview body.'));
+
+    const a = await assessSequenceDispatchReadiness({ sequenceId: seq, organizationId: CTX.organizationId });
+
+    expect(a.validatedStage).toMatchObject({ holds: false, verdictRecorded: false, errors: 7 });
+    expect(a.validatedStage && !a.validatedStage.holds && a.validatedStage.reason).toMatch(/recorded as Validated, but its validation now finds 7 errors/);
+  });
+
+  it('a sequence Validated through the validation holds', async () => {
+    const seq = await sequence('assembling');
+    await completeModule1(seq);
+    await transitionSequence(seq, 'validated', CTX);
+
+    const a = await assessSequenceDispatchReadiness({ sequenceId: seq, organizationId: CTX.organizationId });
+
+    expect(a.validatedStage).toEqual({ holds: true, verdictRecorded: true });
   });
 });

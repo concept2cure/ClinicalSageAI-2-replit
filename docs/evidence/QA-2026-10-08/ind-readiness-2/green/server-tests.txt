@@ -1,0 +1,319 @@
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > auth + RBAC > 401/403 unauthenticated or wrong role
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > GET / → 200 lists the supported form ids
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > POST /FDA_1571/build → 200 returns a field map + missingRequired
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > POST /nope/build → 400 for an unsupported form
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 200 ready for a complete, consistent IND form set
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 200 not ready when sponsor name diverges
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 400 without forms[]
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_3674/pdf → 200 application/pdf with X-Form-* headers
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_356H/pdf → X-Form-Required-Blank names the required boxes still empty
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_3674/pdf → the header is present and EMPTY when none is blank
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /nope/pdf → 400 for an unsupported form
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /1572/pdf-all → 200 returns base64 PDFs per investigator
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /3455/pdf-all → 200 returns one disclosure PDF per disclosing investigator
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /3455/pdf-all → 200 with an empty documents array when none disclose
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > 401 when unauthenticated
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1571/pdf-from-records → 200 PDF from stored sponsor
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1572/pdf-from-records → 200 with investigator records
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1571/pdf-from-records → 404 for an unknown sponsor
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > does not load another org's sponsor (tenant scoping → 404)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 401 when unauthenticated
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 400 without a projectId (a governed artifact must associate with a project)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 404 for a project in another org (never create an artifact under another tenant)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 201 persists a governed form artifact (structured field map) the platform now knows exists
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists ONE governed artifact per investigator for 1572
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists one artifact per DISCLOSING investigator for 3455 (non-disclosing excluded)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 with an empty artifacts array for 3455 when no investigator discloses (certify none on 3454)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 400 for a form that is not per-investigator (use /:formId/artifact instead)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 404 for a project in another org (never create per-investigator artifacts under another tenant)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET /?projectIdent → the program record, what each form will produce, and nothing placed yet
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET / without a program still lists the forms and their plans
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET /?projectIdent → 404 for a program that is not this organization's
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > POST /FDA_1571/build fills sponsor, drug, indication and IND number from the record — none of them typed
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > a stated value wins over the record, and a blank one does not erase it
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > the sponsor address, IND type and phase the panel states land where the 1571 build reads them; unstated, they stay missing
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET / carries the registry's IND type and phase options the panel offers
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > a build that NAMES an unresolvable program is refused, not answered from typed fields
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > Save to dossier for an open program > a program with its project record gets a governed artifact registered against that record
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > Save to dossier for an open program > a program with no project record is told that nothing was saved to its dossier
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > places the signed form as a Module 1 leaf pointing at the retained bytes
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > re-attaching a corrected signature replaces the leaf instead of filing the form twice
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > files the financial certification at its own catalogued section, not with the forms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > refuses a file that is not a PDF by its bytes, whatever it claims to be
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > refuses the BLANK official template — attaching it would file an unsigned form as a signed one
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > will not invent a sequence to file into
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > will not file into a program that has no submission record at all
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > never files into another organization's program
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > requires the open program, and refuses an unsupported form
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > requires the regulatory-author role
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > refuses an upload that names no sequence, and files nothing
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > files into the ORIGINAL 0000 when the person names it, although a newer 0001 exists
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > a form placed in two sequences is listed in both, and replacing is per sequence
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > refuses a sequence of another submission, and a frozen one, before any bytes are stored
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > one verdict from one engine > a 1572 with no investigator recorded is a missing-investigator verdict, the same one the PDF reports
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > one verdict from one engine > with investigators recorded, the build is still one per investigator
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the listing is scoped to the program > an IND program is offered only the forms the registry says apply to an IND
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the listing is scoped to the program > an NDA program is offered 356h and not the IND application
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the listing is scoped to the program > a form that does not apply to the program is refused at filing, not placed
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > auth + RBAC gating > 401 when unauthenticated (no user)
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > auth + RBAC gating > 403 when the user lacks the regulatory-author role
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > auth + RBAC gating > admin role is allowed through
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /readiness → 200 with a verdict
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /readiness → 400 on a bad filingType
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /clock → 400 without receiptDate
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /clock → 200 with receiptDate
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/lifecycle-validate → 200 allows original first; blocks amendment-first
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/lifecycle-validate → 400 without required fields
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/history-audit → 200 valid history vs flagged amendment-first
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/history-audit → 400 without sequenceTypes
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /portfolio → 200 listing the seeded IND submission
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /portfolio/drift/csv → 200 text/csv attachment
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /submission/:id/overview → 400 on a non-numeric id
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /submission/:id/overview → 404 for a missing submission
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cover-letter/pdf → 200 application/pdf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cover-letter/pdf → 400 without required fields
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr → 200 E2B(R3) elements + completeness
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr?format=xml → 200 application/xml
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr → 400 without an event
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message → 200 transmittable message + readiness
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message?format=xml → 200 application/xml
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message → 400 without gateway/senderId/messageNumber
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report, /classify, /pdf and the draft route → 400 naming each unstated field, never 500
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report accepts an onset stated as "unknown" and prints it; a blank onset is refused
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > with expectedness not recorded the verdict is NOT_DETERMINED, and file / draft refuse with that name (422), never NOT_REPORTABLE
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing → 200 with rows + tabulation
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing?format=csv → 200 text/csv attachment
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing → 400 without events/period
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa → 200 with the LOA model + m1.4.1 leaf intent
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa → 400 without the required identifiers
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa/pdf → 200 application/pdf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /right-of-reference → 200 with the m1.4.2 model
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /authorized-persons/pdf → 200 application/pdf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cross-reference-register → 200 not ready when an LOA is missing
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cross-reference-register → 400 without references[]
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /envelope → 200 application/xml
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > API discovery > GET /openapi.json → 200 with a generated OpenAPI 3.1 spec
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file → 201 creates an amendment sequence
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file → 400 without a 4-digit sequenceNumber
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file with an ICSR → 201 also files a checksummed m5.3.5 leaf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > GET /sequence/:id/manifest → 200 with the filed leaf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /sequence/:id/dispatch-gate → 200 with a verdict
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /sequence/:id/dispatch-gate/snapshot → 201 then GET /snapshots → 200
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/cockpit → 200 with per-sequence gates
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/dashboard → 200
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/drift → 200 with a digest
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > Module 1 transmittal — the m1.1 Form 1571 leaf > POST /safety-report/file places the Module 1 transmittal pair, and says the 1571 has no document without a sponsor
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > Module 1 transmittal — the m1.1 Form 1571 leaf > POST /safety-report/file attaches the REAL filled Form 1571 to m1.1 when a sponsor is named
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > Module 1 transmittal — the m1.1 Form 1571 leaf > refuses to attach a Form 1571 that is missing required fields, naming them
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST /submission/:id/cross-references → 201
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST /submission/:id/cross-references → 400 on a bad file type
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > GET /submission/:id/cross-references → 200 includes the record
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > register is NOT ready while the LOA is not on file, then ready after PATCH
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/cross-references/:id/file-loa → 201 files the m1.4.1 leaf and authorizes it
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/file-loa → 400 without a 4-digit sequenceNumber
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/file-loa → 404 for an unknown cross-reference
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > does not leak another org's cross-references
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > PATCH unknown id → 404
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > DELETE /cross-references/:id → 204 then absent
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > POST /submission/:id/safety-reports → 201 drafts a tracked report
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > POST /safety-reports → 422 for a non-reportable event
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports → 200 lists the draft
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports/:reportId → 200 roundtrips the draft; cross-org + unknown → 404
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports/overdue → 200 includes the unfiled past-deadline draft
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > the cockpit counts the overdue safety report from the register, whatever the body says
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > refuses to file a draft that is not the draft being filed
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > filing with draftId marks it filed and drops it from overdue
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > does not leak another org's safety reports
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > POST /submission/:id/annual-reports → 201 drafts a tracked report with a due date
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > refuses a report with no reporting period dates as 400 VALIDATION, not 500 and not 404
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > POST /annual-reports → 400 without indNumber/productName
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > GET /annual-reports → 200 lists the draft
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > GET /annual-reports/:reportId → 200 roundtrips the draft; cross-org + unknown → 404
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > overdue with a far-future asOf includes it; filing then drops it
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > POST /submission/:id/amendments → 201 drafts a tracked amendment
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > POST /amendments → 400 without indNumber/changedDocuments
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > GET /amendments → 200 lists the draft
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > GET /amendments/:amendmentId → 200 roundtrips the draft; cross-org + unknown → 404
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > filing with draftId marks the amendment filed + links its sequence
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > with NO gateway configured, transmit → 503 (NOT transmitted) and the row stays prepared
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a simulated receipt handed back by the transport is never recorded as transmitted (503)
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a transport failure → 502 (NOT transmitted) and the row stays prepared
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > prepare → transmit (real gateway receipt) → acknowledge lifecycle (ready case)
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > rejects transmit when the ICSR is not transmit-ready (422 with the gaps); transport never called
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > an AR acknowledgment marks a TRANSMITTED report rejected with errors
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses to transmit a report that is no longer prepared (409): no second send of the same message
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a study report with no study registration number is prepared but not transmit-ready
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement for a report that was never transmitted (409), and the row is unchanged
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement with no readable ACK code (422), never recording "acknowledged"
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement that names a different message number (422)
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > 400 without gateway; 404 transmitting an unknown id
+ ✓ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > Validated is reached only through a validation with no errors (finding 2) > refuses Validated while the validation finds an error, names it, and changes nothing
+ ✓ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > Validated is reached only through a validation with no errors (finding 2) > marks a sequence Validated when its validation finds no error, and records the verdict
+ ✓ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > Validated is reached only through a validation with no errors (finding 2) > an original IND missing a section the regulation requires is not Validated, and the refusal names it
+ ✓ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a document not yet approved: a warning at Validated, a refusal at freeze, dispatch and transmit (P-22) > Validated records the sequence and counts the document as not yet approved
+ ✓ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a document not yet approved: a warning at Validated, a refusal at freeze, dispatch and transmit (P-22) > the freeze and dispatch prechecks refuse it by name, before any signature
+ ✓ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a document not yet approved: a warning at Validated, a refusal at freeze, dispatch and transmit (P-22) > transmit refuses a dispatched sequence that still carries it
+ ✓ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a leaf change returns a Validated sequence to Assembling (finding 3) > placing a leaf into a Validated sequence reverts it, clears the verdict, and says so
+ ✓ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a leaf change returns a Validated sequence to Assembling (finding 3) > placing the same document again changes nothing, so the sequence stays Validated
+ ✓ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a leaf change returns a Validated sequence to Assembling (finding 3) > removing a leaf from a Validated sequence reverts it, and the removal records its reason (finding 5)
+ ✓ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a governed step is asked before it is signed (finding 1) > the freeze precheck answers the gate refusal without any signature
+ ✓ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a governed step is asked before it is signed (finding 1) > a step the state map does not allow is refused by the precheck, not thrown
+ ✓ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a governed step is asked before it is signed (finding 1) > the transmit precheck refuses a sequence that is not dispatched, before anything is signed
+ ✓ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a stored Validated stage is checked against the current validation (finding 20) > a sequence stored as Validated with no verdict, whose validation finds errors, does not hold — and says why
+ ✓ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a stored Validated stage is checked against the current validation (finding 20) > a sequence Validated through the validation holds
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > maps a full real IND into the IndLifecycle contract (placed-leaf path)
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > renders an honest empty section list (no org-wide fallback) when a submission has no placed leaves
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > does not leak one submission's org docs into a sibling submission with no leaves
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > returns [] for an org with no IND submission, and never crosses tenants
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > excludes soft-deleted submissions
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > ignores non-IND submissions
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > resolves the org's RECORDED target_submission_date by identity match
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > matches on the program name/code when product names differ
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > returns null when the matching program records no target date
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > returns null when no program matches the submission identity
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > never resolves across tenants, program type, or soft-deleted programs
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a placed form_3674 leaf backed by a retained file marks FDA 3674 complete; the others keep their authored state
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a leaf whose file belongs to another organisation does not complete the form
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a form leaf with no document behind it (awaiting the sponsor's file) does not complete the form
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a missing authoring store degrades sections, not the IND > still reports the IND, with honest empty sections, when coauthor_documents is absent
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > completes a form and enriches a blueprint section whatever the stored spelling
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > maps finalized to frozen, never signed or complete; another approval cannot hide current unsigned content
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > two spellings of one section are one section, with the least complete current document
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > a section the blueprint does not model keeps the document’s own name, never an invented title
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist authoritative readiness and program identity > does not call three forms and a single approved section a complete IND
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist authoritative readiness and program identity > uses the recorded program ID and its date despite duplicate names and a rename
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist authoritative readiness and program identity > does not guess a date between two same-named unlinked programs
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist authoritative readiness and program identity > does not borrow a name-matched date when a recorded link cannot be resolved
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > does not hide a later draft behind an earlier approval in the same section
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > removes a named withdrawn leaf without removing another document in that section
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > a withdrawn authored FDA form is no longer complete, including when sequence IDs are out of order
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > a unique section-only withdrawal removes the old content; a later new placement remains current
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > does not mistake a named withdrawal of an unknown document for a section withdrawal
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist lifecycle refusals and retained form history > a withdrawn sponsor-completed form does not remain complete merely because its retained file still exists
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist lifecycle refusals and retained form history > an ambiguous section withdrawal blocks readiness and preserves the documents instead of guessing
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist lifecycle refusals and retained form history > a replacement without a matching document identity blocks readiness
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist lifecycle refusals and retained form history > an append to the same document identity remains current once, while deleted sequences do not withdraw it
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist: the forms heading counts only the forms an IND requires > an approved Form 356h placed at 1.1 does not satisfy m1.1, and is not listed as the forms section
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist: the forms heading counts only the forms an IND requires > m1.1 is complete when the IND's own forms are, whatever else sits at the heading
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > resolves a uuid-keyed vault leaf and an integer-keyed leaf; reports a changed pin and a missing document under their own codes
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > once every leaf resolves, the structural blocker leaves BOTH composed gates and what remains is real
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > a Vault version with no approved lifecycle record is a DOCUMENT_NOT_APPROVED warning beside its section, and blocks every release verdict
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > reports zero errors for a clean, resolvable sequence
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags an empty sequence as an error
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > treats a sequence of only deletes as empty (error)
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags a non-delete leaf with no document as UNRESOLVED_DOCUMENT
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > does NOT flag a delete leaf with no document
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags an invalid lifecycle operation
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > reports missing required sections as non-blocking warnings (not errors)
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > matches required sections across module-prefix/format differences
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > a true sub-section satisfies a required parent section
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > a numerically-adjacent section does NOT satisfy a required section
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > emits an info for duplicate "new" leaves in one section without erroring
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > warnings and infos never inflate the authoritative error count
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags replace/append/delete in an ORIGINAL sequence as errors
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > allows new leaves in an original sequence (no lifecycle error)
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > does NOT apply the original-sequence rule to amendments
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > says a follow-up's declared acts were not bound here, rather than reading clean (2026-09-22 W5/D7)
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > accepts a valid 4-digit sequence number
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags a malformed sequence number as an error
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > flags a leaf whose document_table no resolver can materialize
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > does NOT flag the tables the assembler can resolve
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > has no external table today, and the vault leaf it used to flag now reads clear
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > flags an invented document_table on a DELETE leaf — the completeness exemption is not a pointer exemption
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > still exempts a delete leaf that carries NO pointer — that is the legitimate shape
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > does not double-report a delete leaf that points at a table the assembler CAN resolve
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > a uuid-keyed vault leaf (documentId null) is a complete pointer — no UNRESOLVED_DOCUMENT
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > an integer-keyed leaf still resolves
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > a vault leaf carrying only an integer names nothing — UNRESOLVED_DOCUMENT
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > an integer-keyed table carrying only a uuid names nothing — UNRESOLVED_DOCUMENT
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > hasCompleteDocumentPointer: uuid for the vault, integer elsewhere, either for an unknown table
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a resolved leaf whose pin matches carries no error
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > an unpinned leaf says its content was not verified, rather than reading like a match (2026-09-22 W5/D7)
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a pinned hash that differs from the stored document is DOCUMENT_CONTENT_MISMATCH — its own code, never silently passed
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a delete whose source changed since it was pinned is not DOCUMENT_CONTENT_MISMATCH; the leaf that ships it still is
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a document the resolver could not find stays UNRESOLVED_DOCUMENT, naming the pointer
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a missing document on a DELETE leaf is not a completeness error (a delete ships no file)
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > an approved document, a delete, and a missing document raise no DOCUMENT_NOT_APPROVED
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a document with no content is UNRESOLVED_DOCUMENT, not a pin warning that re-placing cannot clear
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > required sections, decided per sequence > a section the regulation requires in this sequence is an ERROR when no leaf carries it, citing the record
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > required sections, decided per sequence > a regulation-required section is satisfied by a sub-section, and is not reported again from the profile list
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > P-22: approval gates the release, not the technical validation > a resolved leaf whose document is not approved is a DOCUMENT_NOT_APPROVED warning that blocks the release, naming the leaf and its section
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > P-22: approval gates the release, not the technical validation > only a not-yet-approved document is a release blocker; ordinary warnings are not
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > 7-day: unexpected LIFE-THREATENING suspected adverse reaction
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > 7-day: unexpected FATAL suspected adverse reaction
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > 15-day: serious + unexpected + suspected but NOT fatal/life-threatening (hospitalization)
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > 15-day: medically important serious unexpected suspected reaction
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > NOT reportable: EXPECTED reaction (listed in the IB), even if serious/fatal
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > NOT reportable: NOT suspected (no reasonable possibility — causality unrelated)
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > NOT reportable: unlikely causality is not a suspected adverse reaction
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > NOT reportable: NON-serious AE (eventType AE), even if unexpected + suspected
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > NOT reportable: a recorded "expected" determination is reported as such
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20: with expectedness not recorded there is no verdict > expectedness not recorded: the verdict is NOT_DETERMINED — never NOT_REPORTABLE — with no clock and no inferred expectedness
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20: with expectedness not recorded there is no verdict > expectedness not recorded is NOT_DETERMINED whatever else was stated — never NOT_REPORTABLE (P-20)
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20: with expectedness not recorded there is no verdict > a not-determined verdict produces no report to file and says so in the document
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > suspectedness / expectedness derivation > definite/probable/possible are suspected; unlikely/unrelated are not
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > suspectedness / expectedness derivation > expectedness wording: "unexpected"/"not listed" => unexpected; else expected
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > document model + amendment intent > builds a narrative section tree covering the required sections
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > document model + amendment intent > amendment intent: type "amendment", m1.12.4 leaf, lifecycleOp new
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > document model + amendment intent > amendment intent adds an m5.3.5 leaf when an ICSR backs the case
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > document model + amendment intent > amendment intent is null for NOT_REPORTABLE events
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > document model + amendment intent > assembleIndSafetyReport wires classification + document + intent together
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > refuses to classify or assemble when the determinations and dates were not stated, naming each one
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > a single unstated field is named on its own, and nothing is defaulted in its place
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > a value outside the enum is refused, not passed through
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > an onset date stated explicitly as unknown is accepted and printed as unknown
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > a blank onset date is refused and the refusal says it may be stated as unknown
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > an onset stated both as a date and as unknown is refused, not resolved for the person
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > an unparseable date is refused (400), not thrown from toISOString (500)
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > a non-serious AE needs no seriousness criterion, and the report does not invent one
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > an absent patient id or country is an explicit gap, never the word "undefined"
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > an unrecorded expectedness is reported as not recorded, never as "expected"
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > treats unset / misspelled NODE_ENV as production (strict)
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > only relaxes for a recognized non-production value
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > evaluateShadowPresenceGate — never-reviewed is not clean > blocks when zero Shadow Review runs have completed
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > evaluateShadowPresenceGate — never-reviewed is not clean > clears once at least one completed run exists
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > names every composed gate by its corpus rule and carries its own blockers
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > the gates, taken together, are exactly the composed verdict — nothing shown that does not block, nothing blocking unshown
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > attaches each finding's rule, and says so when a code has none
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > P11-28b: an otherwise-clear sequence awaiting only its own signature is open to dispatch-on-signing, not to dispatch now
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a structural error blocks all three — signing never clears a content defect
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a missing Shadow Review blocks dispatch-on-signing
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an external-validator failure blocks dispatch-on-signing
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an orchestrator run awaiting its signer blocks dispatch-on-signing — the sequence signature would never be read
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an invalid signature blocks all three, including freeze — tamper evidence is never signed over
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an undetermined lookup blocks dispatch-now and dispatch-on-signing
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a signature already on record: all three clear, and nothing is "resolved by signing"
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a type that requires no signature: all three clear on an otherwise-clear sequence
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > says why the external gate cleared without a report
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > carries the sentence on the external gate view only when it cleared
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > a gate that blocks keeps its blockers and no not-assessed note
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original FDA IND is held to the record's IND requirements, as errors
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original NDA is held to the marketing requirements, not the IND's
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is not held to the application's requirements (no "1.20 missing" on an amendment)
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a region or kind the record does not model keeps the profile list as warnings, never errors
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > is null for any stage but Validated
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > holds when the validation finds no error, and says whether a verdict was recorded
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > does not hold when the validation now finds errors, and says what to do
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > an undetermined count does not hold — unknown is not zero
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > clears when there are zero validation errors and zero shadow criticals
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > blocks when there is an open error-severity validation finding
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > blocks when there is an unacknowledged Shadow Review critical
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > reports both blockers when both counts are positive
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > BLOCKS on a count it could not determine — unknown is not zero
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > still clears on genuine zeros — the gate has not been welded shut
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > is pure — the same input yields the same result
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > mergeDispatchGates > clears only when every composed gate clears
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > mergeDispatchGates > blocks (and unions blockers, order-preserved) when any gate blocks
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > mergeDispatchGates > a clean structural gate is blocked by a failing external gate (P0-4 fail-closed)
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > mergeDispatchGates > handles a single gate
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > clears when every leaf's document is approved
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > blocks freeze, dispatch and transmit while any document is not yet approved, and says it is not an error
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > blocks on a count it could not determine — unknown is not zero
+ ✓ server/services/ind-lifecycle/__tests__/ind-amendment-placement.test.ts > planIndAmendment — Module 1 placement > files the Investigator's Brochure at m1.14.4.1, not under investigational drug labeling
+ ✓ server/services/ind-lifecycle/__tests__/ind-amendment-placement.test.ts > planIndAmendment — Module 1 placement > files a protocol-amendment summary as cover-letter content, not as pre-IND correspondence
+ ✓ server/services/ind-lifecycle/__tests__/ind-amendment-placement.test.ts > planIndAmendment — Module 1 placement > files a new investigator's Form 1572 under forms, not under a request to charge
+ ✓ server/services/ind-lifecycle/__tests__/ind-amendment-placement.test.ts > planIndAmendment — a category or change kind nobody stated is refused > names an unstated category and change kind, and plans nothing
+ ✓ server/services/ind-lifecycle/__tests__/ind-amendment-placement.test.ts > planIndAmendment — a category or change kind nobody stated is refused > refuses a change kind outside the vocabulary rather than planning a leaf with no lifecycle operation
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-unapproved.test.ts > executeGovernedTransmit — a document not approved at transmit is refused (P-22, release side) > refuses a package whose content, approval included, drifted since assembly, and sends nothing
+ Test Files  11 passed (11)
+      Tests  317 passed (317)
