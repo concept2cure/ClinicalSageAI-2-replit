@@ -74,6 +74,18 @@ describe('resolveCmcArtifactProject', () => {
     if (r.state === 'unanchored') expect(r.detail).toMatch(/anchor/i);
   });
 
+  it('an unanchored detail does not say its artifacts stay unplaced: Module 3 placement into a submission still works without the anchor', async () => {
+    // place-module3-into-submission.test.ts pins that a program with no anchor is
+    // not refused and places (placed: true). The copy must say that, and say what
+    // the anchor does gate: the artifact registry's listing in the Vault.
+    resolveProgramProjectAnchor.mockResolvedValue(null);
+    const r = await resolveCmcArtifactProject(ORG, PROGRAM_UUID);
+    if (r.state !== 'unanchored') throw new Error('expected an unanchored state');
+    expect(r.detail).not.toMatch(/stay unplaced/);
+    expect(r.detail).toMatch(/placement into a submission still work/);
+    expect(r.detail).toMatch(/not listed until the program is anchored/);
+  });
+
   it('refuses ids that address neither spine', async () => {
     for (const bad of ['proj-cmc-1', '', '  ', '12.5', '-3', '0']) {
       const r = await resolveCmcArtifactProject(ORG, bad);

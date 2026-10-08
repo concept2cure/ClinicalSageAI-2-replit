@@ -1,0 +1,54 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (create) 4ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (update) 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > names the allowed tables in the refusal so the caller can correct it 2ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts coauthor_documents — a table the resolver branches on 2ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts unified_documents — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts ctd_onboarding_documents — a table the resolver branches on 3ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts rendered_leaf_files — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts c2c_document_sections — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts vault_documents — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf addressed by an integer — a uuid-keyed store has no integer to name 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf with no uuid at all — it would name no document 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a uuid on an integer-keyed table — that store has no uuids 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault document belonging to another organization, and pins nothing 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > pins the vault document content hash onto the leaf it writes 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > still accepts a leaf with no document pointer at all 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — the reason for a placement is on its audit row > records the reason given on a new placement 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — the reason for a placement is on its audit row > writes no reason key when the caller gave none, rather than inventing one 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins the SHA-256 of the document content it filed 5ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > the pin is re-derivable by an inspector from the document row 59ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > REGRESSION: a document edited after filing no longer matches its pin 2ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins NULL, not sha256 of empty, when the document has no content 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins nothing when the leaf carries no document pointer 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > re-pins on update, so a re-pointed leaf cannot keep an old attestation 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > still refuses a document that belongs to another organization 4ms
+stderr | server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > without strict, the same failure is still reported as unaddressable (degraded readers are unchanged)
+{
+  "timestamp": "2026-10-08T01:32:29.668Z",
+  "level": "warn",
+  "message": "[cmc-artifact-spine] Numeric project-id ownership check failed; treating id as unaddressable",
+  "context": {
+    "orgId": 7,
+    "projectId": 42,
+    "err": "connection reset"
+  }
+}
+
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > resolves a numeric projects.id only when it belongs to the caller org 3ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > refuses a numeric projects.id that belongs to another org (cross-tenant IDOR) 1ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > resolves a program uuid through the canonical anchor reader 2ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > reports an unanchored program as a state, not an error or an empty answer 1ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > an unanchored detail does not say its artifacts stay unplaced: Module 3 placement into a submission still works without the anchor 0ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > refuses ids that address neither spine 1ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > a numeric lookup that could not complete throws in strict mode — "could not tell" is not "not yours" 2ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > without strict, the same failure is still reported as unaddressable (degraded readers are unchanged) 2ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > strict reaches the anchor reader for a program uuid 2ms
+
+ Test Files  3 passed (3)
+      Tests  33 passed (33)
+   Start at  01:32:21
+   Duration  7.89s (transform 2.99s, setup 186ms, import 6.48s, tests 122ms, environment 0ms)
+

@@ -40,17 +40,25 @@ function refused(code: string, message: string) {
   } as Response;
 }
 
+const PID = '11111111-1111-4111-8111-111111111111';
+/* Anchored to the project the dialog places into: an unanchored submission is
+   not offered for a project's document (QA j3 finding (b)), so the fixtures
+   name their program. */
 const SUBMISSIONS = [
-  { id: 4, title: 'BX-301 NDA', applicationType: 'nda', primaryRegion: 'us', status: 'open' },
-  { id: 5, title: 'BX-301 IRB package', applicationType: 'irb', primaryRegion: 'us', status: 'open' },
-  { id: 6, title: 'OR-801 510(k)', applicationType: '510k', primaryRegion: 'us', status: 'open' },
+  { id: 4, title: 'BX-301 NDA', applicationType: 'nda', primaryRegion: 'us', status: 'open', programId: PID },
+  { id: 5, title: 'BX-301 IRB package', applicationType: 'irb', primaryRegion: 'us', status: 'open', programId: PID },
+  { id: 6, title: 'OR-801 510(k)', applicationType: '510k', primaryRegion: 'us', status: 'open', programId: PID },
 ];
+/* The list as the server returns it: scoped to ?programId when given. */
+function submissionList(rows: Array<{ programId?: string | null }>, url: string) {
+  const program = new URL(url, 'http://localhost').searchParams.get('programId');
+  return program ? rows.filter((row) => row.programId === program) : rows;
+}
 const SEQUENCES = [
   { id: 9, sequenceNumber: '0000', type: 'original', status: 'draft', region: 'us' },
   { id: 10, sequenceNumber: '0001', type: 'amendment', status: 'frozen', region: 'us' },
 ];
 
-const PID = '11111111-1111-4111-8111-111111111111';
 const VERSIONS_URL = `/api/c2c/project-vault/${PID}/documents/${DOC_UUID}/versions`;
 
 /** This version as GET …/versions returns it: its stage, and the server's own VR-14 verdict. */
@@ -84,7 +92,7 @@ function mockApi(onPut: (body: unknown) => Response | Promise<Response> = (body)
   apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
     if (method !== 'GET') writes.push({ method, url, body });
     else reads.push(url);
-    if (method === 'GET' && url === '/api/submissions') return ok(SUBMISSIONS);
+    if (method === 'GET' && (url === '/api/submissions' || url.startsWith('/api/submissions?'))) return ok(submissionList(SUBMISSIONS, url));
     if (method === 'GET' && /^\/api\/submissions\/\d+\/sequences$/.test(url)) return ok(SEQUENCES);
     if (method === 'GET' && url === VERSIONS_URL) return onVersions();
     if (method === 'PUT' && /\/sequences\/\d+\/leaves$/.test(url)) return onPut(body);

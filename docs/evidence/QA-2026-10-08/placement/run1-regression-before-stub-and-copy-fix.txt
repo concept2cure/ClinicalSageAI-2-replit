@@ -1,0 +1,25 @@
+exit=1
+ Test Files  3 failed | 20 passed | 1 skipped (24)
+      Tests  12 failed | 274 passed | 2 skipped (288)
+ FAIL  server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > an unanchored detail does not say its artifacts stay unplaced: Module 3 placement into a submission still works without the anchor
+ FAIL  server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts c2c_document_sections — a table the resolver branches on
+ FAIL  server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts coauthor_documents — a table the resolver branches on
+ FAIL  server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts ctd_onboarding_documents — a table the resolver branches on
+ FAIL  server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts rendered_leaf_files — a table the resolver branches on
+ FAIL  server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts unified_documents — a table the resolver branches on
+ FAIL  server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts vault_documents — a table the resolver branches on
+ FAIL  server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > pins the vault document content hash onto the leaf it writes
+ FAIL  server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > REGRESSION: a document edited after filing no longer matches its pin
+ FAIL  server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins NULL, not sha256 of empty, when the document has no content
+ FAIL  server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins the SHA-256 of the document content it filed
+ FAIL  server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > the pin is re-derivable by an inspector from the document row
+ × server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > an unanchored detail does not say its artifacts stay unplaced: Module 3 placement into a submission still works without the anchor 4ms
+ × server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts c2c_document_sections — a table the resolver branches on 1ms
+ × server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts coauthor_documents — a table the resolver branches on 9ms
+ × server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts ctd_onboarding_documents — a table the resolver branches on 2ms
+ × server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts rendered_leaf_files — a table the resolver branches on 1ms
+ × server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts unified_documents — a table the resolver branches on 1ms
+ × server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts vault_documents — a table the resolver branches on 1ms
+ × server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > pins the vault document content hash onto the leaf it writes 1ms
+
+[exited with code 0]

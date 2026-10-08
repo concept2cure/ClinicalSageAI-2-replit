@@ -1,0 +1,22 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx > filing target request isolation > keeps the latest submission sequences when an earlier read finishes last 75ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx > filing target request isolation > does not restore sequences after the submission is cleared 6ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx > filing target request isolation > does not restore either read after reset 8ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx > filing target request isolation > ignores an earlier submission-list error after a successful reload 59ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx > filing target request isolation > invalidates a selected target and reloads when the explicit project changes 108ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx > filing target request isolation > reloads an active picker on a published shell-project change 106ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx > filing target request isolation > keeps an explicit document project when the shell project changes 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > uses the document project even when a different shell project is open 105ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > offers only the open project's submissions, and says how many it does not offer, unanchored ones included 25ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > asks the server for the open project's submissions, so the list is scoped where it is read 26ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > does not offer an unanchored submission even when the server returns one, because the picker checks the same rule 22ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > when every submission is another project's, the empty state says so — not 'none in this organization' 28ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > with no project open, every submission is offered, as before 19ms
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  01:25:45
+   Duration  5.61s (transform 1.43s, setup 443ms, import 1.79s, tests 653ms, environment 1.94s)
+
