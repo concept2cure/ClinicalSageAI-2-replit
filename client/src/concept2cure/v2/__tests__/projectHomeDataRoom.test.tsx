@@ -68,10 +68,11 @@ function renderOnEvidence(ui: React.ReactElement) {
 }
 
 /** Route every ProjectHome read; only /sources carries a payload we assert on. */
-function mockApi(sourcesResponse: () => Response) {
+function mockApi(sourcesResponse: (url: string) => Response) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, url: string) => {
-    if (url === `/api/c2c/projects/${PID}/sources`) return sourcesResponse();
+    // The Data Room read carries its search and page as query parameters (S2).
+    if (url.startsWith(`/api/c2c/projects/${PID}/sources`)) return sourcesResponse(url);
     if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'BX-301', code: 'BX301' });
     return ok({});
   });
@@ -156,21 +157,28 @@ describe('ProjectHome — data room', () => {
     expect(screen.queryByText(/No sources in this project yet/)).toBeNull();
   });
 
-  it('filters the list without refetching', async () => {
-    mockApi(() =>
-      ok({
-        projectId: PID,
-        sources: [source({ id: 1, title: 'protocol.pdf' }), source({ id: 2, title: 'csr.pdf' })],
-        unscoped: [],
-      }),
+  /* Since 2026-10-08 (Data Room catalog S2) the server searches title and the
+     text read from each file, over the whole room; the list is its answer. A
+     client-side title filter over the loaded page could not find the 201st
+     file, or a word inside a document. */
+  it('searches the whole room on the server, by title and text, and lists its answer', async () => {
+    mockApi((url) =>
+      url.includes('q=spirometry')
+        ? ok({ projectId: PID, unscoped: [], total: 1, currentTotal: 1, window: { shown: 1, truncated: false },
+            sources: [source({ id: 2, title: 'csr.pdf', snippet: 'decline in <b>spirometry</b> at week 52' })] })
+        : ok({ projectId: PID, unscoped: [], total: 2, currentTotal: 2,
+            sources: [source({ id: 1, title: 'protocol.pdf' }), source({ id: 2, title: 'csr.pdf' })] }),
     );
     renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('protocol.pdf');
 
-    fireEvent.change(screen.getByLabelText('Search sources'), { target: { value: 'csr' } });
+    fireEvent.change(screen.getByLabelText('Search sources by title or text'), { target: { value: 'spirometry' } });
 
     await waitFor(() => expect(screen.queryByText('protocol.pdf')).toBeNull());
     expect(screen.getByText('csr.pdf')).toBeTruthy();
+    expect(document.body.textContent).toContain('decline in spirometry at week 52');
+    expect(document.body.textContent).toMatch(/1 source match .spirometry. in their title or text/);
+    expect(apiRequest.mock.calls.some(([, url]) => String(url).includes('/sources?q=spirometry'))).toBe(true);
   });
 
   it('offers a way to add sources', async () => {
@@ -336,13 +344,20 @@ describe('ProjectHome — data room counts', () => {
     expect(document.body.textContent).not.toMatch(/(^|\D)2 sources/);
   });
 
-  it('a full window reads as a floor', async () => {
-    mockApi(() => ok({ projectId: PID, unscoped: [], window: { shown: 2, truncated: true }, sources: [
-      source({ id: 1, title: 'a.pdf' }), source({ id: 2, title: 'b.pdf' }),
-    ] }));
+  /* The server counts the whole room (currentTotal) and pages; nothing is a floor. */
+  it('a full page shows the exact total and pages to the older sources', async () => {
+    mockApi((url) => url.includes('offset=200')
+      ? ok({ projectId: PID, unscoped: [], total: 201, currentTotal: 201, window: { shown: 1, truncated: false },
+          sources: [source({ id: 3, title: 'oldest.pdf' })] })
+      : ok({ projectId: PID, unscoped: [], total: 201, currentTotal: 201, window: { shown: 2, truncated: true },
+          sources: [source({ id: 1, title: 'a.pdf' }), source({ id: 2, title: 'b.pdf' })] }));
     renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('a.pdf');
-    expect(document.body.textContent).toMatch(/2\+ sources/);
-    expect(document.body.textContent).toMatch(/newest 2 shown/);
+    expect(document.body.textContent).toMatch(/201 sources/);
+    expect(document.body.textContent).not.toMatch(/\+ sources/);
+    expect(document.body.textContent).toMatch(/showing 1.2\)/);
+    fireEvent.click(screen.getByText('Older sources'));
+    await screen.findByText('oldest.pdf');
+    expect(screen.getByText('Newer sources')).toBeTruthy();
   });
 });

@@ -482,6 +482,7 @@ async function saveSpreadsheetDerivation(
     });
     commitAttempted = true;
     await client.query('COMMIT');
+    if (captured) await (await import('../clinical-regulatory-evidence/data-room-processing.js')).processCapturedSource(orgId, captured.id, { bytes: params.buffer, fileName: params.fileName, mimeType: params.mimeType, programId, processedBy: 'spreadsheet_edit' });
     return { fileId, storagePath, sourceId,
       captureStatus: captured ? 'captured' : 'conversation_only',
       derivationAudit: { resourceType: 'file_upload', resourceId: fileId } };

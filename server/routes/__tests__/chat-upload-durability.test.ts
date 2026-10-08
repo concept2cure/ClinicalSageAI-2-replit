@@ -182,7 +182,9 @@ describe('original-byte storage is required before canonical upload consequences
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, dataRoom: { recorded: true }, extractionMethod: 'utf8' });
-    expect(m.events).toEqual(['scan', 'ownership-read', 'mkdir', 'write-file', 'database-write', 'extract']);
+    // The last write records the text the capture was read to (Data Room catalog
+    // S2, recordSourceProcessing): still after the original bytes are stored.
+    expect(m.events).toEqual(['scan', 'ownership-read', 'mkdir', 'write-file', 'database-write', 'extract', 'database-write']);
     expect(m.writeFile).toHaveBeenCalledWith(path.resolve(process.cwd(), `uploads/org-5/${res.body.fileId}`), ORIGINAL);
     expect(m.poolQuery).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO file_uploads'), [
       res.body.fileId, 9, 5, 'protocol.txt', 'text/plain', ORIGINAL.length,
