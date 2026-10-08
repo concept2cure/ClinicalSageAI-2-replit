@@ -40,6 +40,10 @@ vi.mock('node:https', () => {
 import { FdaEsgGateway, resolveFdaEsgTransport, loadFdaRestCredentials } from '../fda-esg';
 import { CredentialError, UnverifiedTransportError } from '../types';
 import type { GatewayTransmitRequest } from '../types';
+import { logger } from '../../../utils/logger';
+
+/** What the server log is told; the operator's sentence must not carry it. */
+const logWarn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
 
 const ENV_KEYS = [
   'FDA_ESG_TRANSPORT', 'FDA_ESG_STAGING_TRANSPORT',
@@ -56,6 +60,7 @@ beforeEach(() => {
   for (const k of ENV_KEYS) { saved[k] = process.env[k]; delete process.env[k]; }
   poolQueries.length = 0;
   httpsRequests.length = 0;
+  logWarn.mockClear();
 });
 afterEach(() => {
   for (const [k, v] of Object.entries(saved)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
@@ -129,7 +134,10 @@ describe('FdaEsgGateway with FDA_ESG_TRANSPORT=rest', () => {
   it('credentials present → typed UnverifiedTransportError, transmitted:false, no row, no socket, no identifier', async () => {
     configureRest();
     const gw = new FdaEsgGateway();
-    expect(await gw.isConfigured(11, 'production')).toBe(true);
+    // 2026-10-08 (W5/D7, sweep HS-4): this asserted `true` — credentials that
+    // resolve read as "configured", and the surface showed a gateway that
+    // refuses every transmit as ready to send. Configured means able to transmit.
+    expect(await gw.isConfigured(11, 'production')).toBe(false);
 
     const err = await gw.transmit(request()).catch((e) => e);
     expect(err).toBeInstanceOf(UnverifiedTransportError);
@@ -138,11 +146,35 @@ describe('FdaEsgGateway with FDA_ESG_TRANSPORT=rest', () => {
     expect(err.transport).toBe('rest');
     expect(err.errorClass).toBe('transport');
     expect(err.message).toMatch(/has not been verified/);
-    expect(err.message).toContain('https://esg-nextgen.fda.example/api');
-    expect(err.message).toContain('FDA_ESG_TRANSPORT=as2');
+    // 2026-10-08 (W5/D7, sweep HS-4 review): these asserted the endpoint and
+    // 'FDA_ESG_TRANSPORT=as2' IN the sentence — which the transmit route now
+    // hands the operator as its 412. A URL there can make the client hide the
+    // whole sentence as internal text. The operator is told what to do in
+    // words; the endpoint, the submitter ID and the variable go to the log.
+    expect(err.message).not.toMatch(/https?:\/\//);
+    expect(err.message).not.toMatch(/FDA_ESG_/);
+    expect(err.message).not.toContain('ESG-SUBMITTER-1');
+    expect(err.message).toMatch(/An administrator can switch FDA ESG to the verified AS2 transport\./);
+    expect(logWarn).toHaveBeenCalledWith(
+      expect.stringContaining('unverified'),
+      expect.objectContaining({
+        environment: 'production', endpoint: 'https://esg-nextgen.fda.example/api',
+        submitterId: 'ESG-SUBMITTER-1', transportVariable: 'FDA_ESG_TRANSPORT',
+      }),
+    );
 
     expect(poolQueries.filter((q) => q.sql.includes('submission_transmittals'))).toHaveLength(0);
     expect(httpsRequests).toHaveLength(0);
+  });
+
+  it('the gateway list reports the transport this environment resolves, and REST as not able to transmit', async () => {
+    configureRest();
+    const { gatewayConfigurationStatus } = await import('../index');
+    const production = (await gatewayConfigurationStatus(11, 'production')).find((g) => g.region === 'fda' && g.gateway === 'esg');
+    expect(production).toEqual({ region: 'fda', gateway: 'esg', transport: 'rest', configured: false });
+    // Staging is not REST here: it keeps the AS2 default, unconfigured (no AS2 variables).
+    const staging = (await gatewayConfigurationStatus(11, 'staging')).find((g) => g.region === 'fda' && g.gateway === 'esg');
+    expect(staging).toEqual({ region: 'fda', gateway: 'esg', transport: 'as2', configured: false });
   });
 
   it('the staging environment reads the FDA_ESG_STAGING_* REST variables', async () => {

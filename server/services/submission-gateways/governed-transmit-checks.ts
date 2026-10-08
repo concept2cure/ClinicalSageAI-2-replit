@@ -172,29 +172,94 @@ export async function assertNoActiveTransmittal(input: GovernedTransmitInput, bu
       packageId: input.packageId ?? null,
       bundleSha256: bundle.sha256,
       filing: !input.clientBundle && bundle.sequence ? { sequence: bundle.sequence, environment: input.environment } : null,
+      environment: input.environment,
     });
   } catch (err) {
     throw new GovernedTransmitInternalError('transmit-active-lock-check', err);
   }
   if (!active) return;
-  if (active.sequence) {
-    throw new GovernedTransmitRefusal(
-      'ACTIVE_TRANSMITTAL',
-      `Sequence ${active.sequence} of this package already has an active ${input.environment} transmittal ` +
-        `(id=${active.id}, status=${active.status}), sent as a different bundle, and the agency may already hold it. ` +
-        `Confirm receipt at the agency, and roll that transmittal back via POST /api/mdx/gateways/transmittals/${active.id}/rollback ` +
-        `before sending sequence ${active.sequence} again.`,
-      409,
-      { transmittalId: active.id, status: active.status, sequence: active.sequence, environment: input.environment },
-    );
-  }
   throw new GovernedTransmitRefusal(
     'ACTIVE_TRANSMITTAL',
-    `An active transmittal already exists for this package (id=${active.id}, status=${active.status}). ` +
-      `Roll it back via POST /api/mdx/gateways/transmittals/${active.id}/rollback before re-transmitting.`,
+    activeTransmittalMessage(active, input.environment),
     409,
-    { transmittalId: active.id, status: active.status },
+    {
+      transmittalId: active.id,
+      status: active.status,
+      ...(active.sequence ? { sequence: active.sequence, environment: input.environment } : {}),
+      ...(active.holderEnvironment ? { holderEnvironment: active.holderEnvironment } : {}),
+    },
   );
+}
+
+type ActiveHolder = NonNullable<Awaited<ReturnType<typeof findActiveTransmittal>>>;
+
+/** The agency environment a send went to, as an operator reads it. */
+const ENVIRONMENT_WORDS: Record<string, string> = {
+  staging: "the agency's test environment",
+  production: "the agency's production environment",
+};
+
+/** An active transmittal's status in an operator's words, never the stored token. */
+const ACTIVE_STATUS_WORDS: Record<string, string> = {
+  pending: 'it is still being sent',
+  in_transit: 'its receipt is not yet confirmed',
+};
+
+/**
+ * Why a transmit is held by an active transmittal, and what to do — said so the
+ * operator can read it as sent: no route path (a client hides text that looks
+ * internal and substitutes its own), no status or environment token. Whatever
+ * the variant, the agency may already hold the bundle, so receipt is confirmed
+ * with the agency before anything is sent again. Once the agency's gateway
+ * acknowledged receipt ('received'), a rollback is not offered as the way to
+ * re-send: it retracts nothing at the agency, and the re-send it would free is a
+ * duplicate filing. A pending send cannot be rolled back, so none is offered.
+ * 2026-10-08 (W5/D7, sweep HS-6): the sentence named the rollback route, so the
+ * surface replaced it with "Roll it back first" and the caveat was lost.
+ *
+ * The bytes lock has no environment in its key, so the holder may be a send to
+ * the OTHER environment; that refusal says where it went instead (sweep HS-6
+ * review: a received test send was reported to a first production send as "with
+ * the agency", and rolling it back — the only way to free the lock — was not
+ * offered).
+ */
+function activeTransmittalMessage(active: ActiveHolder, environment: GovernedTransmitInput['environment']): string {
+  const ref = `transmittal #${active.id}`;
+  const elsewhere = active.holderEnvironment ? ENVIRONMENT_WORDS[active.holderEnvironment] : undefined;
+  if (elsewhere) return otherEnvironmentMessage(ref, active, elsewhere);
+  const it = active.sequence ? `sequence ${active.sequence}` : 'it';
+  const sentAs = active.sequence ? `, sent to ${ENVIRONMENT_WORDS[environment] ?? environment} as a different bundle` : '';
+  if (active.status === 'received') {
+    const held = active.sequence ? `sequence ${active.sequence} of this package` : 'this bundle';
+    return (
+      `The agency's gateway acknowledged receipt of ${ref}${sentAs}, so ${held} is with the agency. ` +
+      `A rollback does not retract it. Send ${it} again only if the agency confirms it did not receive or load it.`
+    );
+  }
+  const where = active.sequence ? `Sequence ${active.sequence} of this package is already in ${ref}${sentAs}` : `This bundle is already in ${ref}`;
+  const state = ACTIVE_STATUS_WORDS[active.status] ?? `its status is ${active.status.replace(/_/g, ' ')}`;
+  const remedy = active.status === 'pending'
+    ? 'That send has not finished; its row in the transmittal log shows the outcome once it does.'
+    : `If the agency confirms it did not receive it, roll ${ref} back from its row in the transmittal log, then send.`;
+  return `${where}, and ${state}. The agency may already hold it. Confirm receipt with the agency before sending ${it} again. ${remedy}`;
+}
+
+/** A send to the other environment's status, in an operator's words. */
+const OTHER_ENVIRONMENT_STATE: Record<string, string> = {
+  pending: '; that send has not finished',
+  received: ', whose gateway acknowledged receipt',
+};
+
+/** The bundle is held by a send to the other environment: where it went, and how to free it. */
+function otherEnvironmentMessage(ref: string, active: ActiveHolder, elsewhere: string): string {
+  const state = OTHER_ENVIRONMENT_STATE[active.status] ?? '; its receipt is not yet confirmed';
+  const scope = active.holderEnvironment === 'production'
+    ? 'A production send does not deliver it to the test environment, and a rollback does not retract the production send from the agency.'
+    : 'A send to the test environment does not file it in production.';
+  const remedy = active.status === 'pending'
+    ? `Once that send finishes, roll ${ref} back from its row in the transmittal log, then send.`
+    : `Roll ${ref} back from its row in the transmittal log, then send.`;
+  return `This bundle is held by ${ref}, sent to ${elsewhere}${state}. ${scope} ${remedy}`;
 }
 
 /**

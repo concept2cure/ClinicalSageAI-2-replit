@@ -818,7 +818,11 @@ describe('GatewayTransmittals — refusals as the real apiRequest delivers them 
     await screen.findByText('FDA ESG');
     fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
     fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(/transmittal #3 is already active \(transmitting\)\. Roll it back first\./)).toBeTruthy();
+    // 2026-10-08 (sweep lens HS-6): "Roll it back first." alone dropped the
+    // caveat that the agency may already hold the holder's bundle, and offered a
+    // rollback as the way to a re-send. The caveat comes first now.
+    const toast = await screen.findByText(/transmittal #3 is already active \(transmitting\), and the agency may already hold it\. Confirm receipt with the agency before sending again/);
+    expect(toast.textContent).not.toMatch(/Roll it back first\./);
     expect(screen.queryByText(/HTTP 0/)).toBeNull();
   });
 
@@ -861,7 +865,12 @@ describe('GatewayTransmittals — refusals as the real apiRequest delivers them 
     await screen.findByText('FDA ESG');
     fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
     fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(/Transmit failed/)).toBeTruthy();
+    // 2026-10-08 (sweep lens HS-5): a request that lost its response may have
+    // completed, so it is not called a failure, nor "nothing was sent" — it did
+    // not complete, and the log says what happened. Never a success either.
+    const toast = await screen.findByText(/Transmit did not complete — no response came back\. Check the transmittal log before any resend\./);
+    expect(toast.closest('[role="alert"]')).not.toBeNull();
+    expect(screen.queryByText(/Transmitted via/)).toBeNull();
   });
 });
 

@@ -167,6 +167,24 @@ export function refusedBeforeWire(err: unknown): boolean {
 export { preTransmitFindings } from './pre-transmit-findings';
 export type { PreTransmitFindings } from './pre-transmit-findings';
 
+/**
+ * The transmit guard's own refusal: the package failed a pre-transmit check
+ * (gateway size limit, region identity, or PDF/A, DTD or regional backbone
+ * where required). Each blocker is an itemised error finding, and `code` names
+ * this source, so a surface can count and list them and tell this refusal
+ * apart from the structural-validation one. Still a ValidationError, name
+ * included, so every existing mapping of that class holds.
+ * 2026-10-08 (W5/D7, sweep HS-3): the blockers went out as bare strings, which
+ * the surface dropped, so the refusal read as "0 findings" beside a message
+ * that named them.
+ */
+export class PreTransmitBlockedError extends ValidationError {
+  readonly code = 'PRE_TRANSMIT_BLOCKED' as const;
+  constructor(message: string, blockers: string[]) {
+    super(message, blockers.map((blocker) => ({ severity: 'error' as const, ruleId: 'PRE-TRANSMIT', message: blocker })));
+  }
+}
+
 /** A production transmit whose packager grade lists PDF leaves shipped as plain PDF. */
 function carriesPlainPdf(req: GatewayTransmitRequest): boolean {
   const notConverted = req?.bundle?.submissionGrade?.notConverted;
@@ -230,7 +248,7 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
           pdfa: carriesPlainPdf(req) ? await resolvePdfARequirement(pool, req.organizationId) : undefined,
         });
         if (!pre.cleared) {
-          throw new ValidationError(
+          throw new PreTransmitBlockedError(
             `Refusing to transmit to ${impl.region.toUpperCase()} ${impl.gateway}: package failed pre-transmit checks. ${pre.blockers.join(' ')}`,
             pre.blockers,
           );
@@ -292,16 +310,22 @@ export function listGateways(): Array<{ region: Region; gateway: GatewayName; tr
   }));
 }
 
-/** Report which gateways are configured for an organization. */
+/**
+ * Report which gateways are configured for an organization — configured meaning
+ * able to transmit — and the transport each resolves in this environment.
+ * FDA ESG's transport is chosen per deployment (FDA_ESG_TRANSPORT), so the
+ * registry's default is not what it would use. 2026-10-08 (W5/D7, sweep HS-4).
+ */
 export async function gatewayConfigurationStatus(
   organizationId: number,
   environment: 'staging' | 'production',
-): Promise<Array<{ region: Region; gateway: GatewayName; configured: boolean }>> {
-  const out: Array<{ region: Region; gateway: GatewayName; configured: boolean }> = [];
+): Promise<Array<{ region: Region; gateway: GatewayName; transport: string; configured: boolean }>> {
+  const out: Array<{ region: Region; gateway: GatewayName; transport: string; configured: boolean }> = [];
   for (const gw of Object.values(REGISTRY)) {
     out.push({
       region: gw.region,
       gateway: gw.gateway,
+      transport: gw instanceof FdaEsgGateway ? gw.transportFor(environment) : gw.transport,
       configured: await gw.isConfigured(organizationId, environment),
     });
   }

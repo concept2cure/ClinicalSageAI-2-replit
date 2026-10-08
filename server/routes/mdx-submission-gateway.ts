@@ -28,12 +28,14 @@ import { pool } from '../db';
 import {
   getGateway, listGateways, gatewayConfigurationStatus,
   CredentialError, GatewayError, TransportError, ValidationError,
+  PreTransmitBlockedError, UnverifiedTransportError,
   acknowledgementFilename,
   type Region, type GatewayName,
 } from '../services/submission-gateways';
 import {
   rollbackTransmittal,
   RollbackNotPermittedError,
+  ACTIVE_TRANSMITTAL_STATUSES,
 } from '../services/submission-gateways/fda-esg';
 import {
   executeGovernedTransmit,
@@ -95,6 +97,20 @@ function verifiedFactors(reauth: z.infer<typeof reauthEnvelope>): { authenticati
   };
 }
 
+/**
+ * The governed transmit's failed pre-transmit checks — the canonical reduction's
+ * "name: detail" strings (preTransmitFindings) — as the {name, detail} pairs the
+ * surface lists. Split at the first ": "; a check name is a fixed kebab-case
+ * identifier. null stays null: the guard reported nothing.
+ */
+function failedCheckPairs(failed: string[] | null): Array<{ name: string; detail: string }> | null {
+  if (failed === null) return null;
+  return failed.map((entry) => {
+    const at = entry.indexOf(': ');
+    return at < 0 ? { name: entry, detail: '' } : { name: entry.slice(0, at), detail: entry.slice(at + 2) };
+  });
+}
+
 /* ─── GET /api/mdx/gateways ──────────────────────────────────────── */
 
 router.get('/gateways', async (req: Request, res: Response) => {
@@ -104,11 +120,17 @@ router.get('/gateways', async (req: Request, res: Response) => {
   try {
     const config = await gatewayConfigurationStatus(orgId, environment);
     const all = listGateways();
-    return ok(res, all.map((g) => ({
-      ...g,
-      configured: config.find((c) => c.region === g.region && c.gateway === g.gateway)?.configured ?? false,
-      environment,
-    })));
+    return ok(res, all.map((g) => {
+      const status = config.find((c) => c.region === g.region && c.gateway === g.gateway);
+      return {
+        ...g,
+        // The transport this environment resolves (FDA ESG's is per deployment),
+        // and configured = able to transmit. 2026-10-08 (W5/D7, sweep HS-4).
+        transport: status?.transport ?? g.transport,
+        configured: status?.configured ?? false,
+        environment,
+      };
+    }));
   } catch (err) {
     return serverError(res, log, 'list-gateways', err);
   }
@@ -139,28 +161,67 @@ router.get('/gateways/transmittals', async (req: Request, res: Response) => {
   if (pid)    { args.push(pid);    filters.push(`t.program_id = $${args.length}`); }
   if (region) { args.push(region); filters.push(`t.region = $${args.length}`); }
   if (status) { args.push(status); filters.push(`t.status = $${args.length}`); }
-  args.push(limit);
+  const where = filters.join(' AND ');
 
   try {
     // submitted_by resolved to a person: a governed row shows who, not a bare id.
-    const { rows } = await pool.query(
-      `SELECT t.id, t.organization_id, t.program_id, t.package_id, t.region, t.gateway, t.format,
-              t.submission_type, t.transport, t.transmission_id, t.status, t.http_status,
-              t.error_class, t.error_message, t.bundle_size_bytes, t.submitted_by, t.submitted_at,
-              t.ack_received_at, t.completed_at, t.metadata,
-              u.name AS submitted_by_name
-         FROM submission_transmittals t
-         LEFT JOIN LATERAL public.actor_name(t.submitted_by) u ON TRUE
-        WHERE ${filters.join(' AND ')}
-        ORDER BY t.submitted_at DESC
-        LIMIT $${args.length}`,
-      args,
-    );
-    return ok(res, rows, { count: rows.length });
+    const [{ rows }, totals] = await Promise.all([
+      pool.query(
+        `SELECT t.id, t.organization_id, t.program_id, t.package_id, t.region, t.gateway, t.format,
+                t.submission_type, t.transport, t.transmission_id, t.status, t.http_status,
+                t.error_class, t.error_message, t.bundle_size_bytes, t.submitted_by, t.submitted_at,
+                t.ack_received_at, t.completed_at, t.metadata,
+                u.name AS submitted_by_name
+           FROM submission_transmittals t
+           LEFT JOIN LATERAL public.actor_name(t.submitted_by) u ON TRUE
+          WHERE ${where}
+          ORDER BY t.submitted_at DESC
+          LIMIT $${args.length + 1}`,
+        [...args, limit],
+      ),
+      transmittalTotals(where, args),
+    ]);
+    return ok(res, rows, {
+      count: rows.length,
+      ...totals,
+      hasMore: totals.total > rows.length,
+    });
   } catch (err) {
     return serverError(res, log, 'list-trans', err);
   }
 });
+
+/**
+ * The log's totals over EVERY row the filters match, not the page returned:
+ * how many there are, by status, and how many the agency may still acknowledge
+ * and has not — an active status (pending, in transit, received: the
+ * duplicate-send lock's set) with no acknowledgement. A rejected, rolled-back or
+ * completed row awaits nothing; submitted_at is NOT NULL DEFAULT now(), so it
+ * cannot tell them apart. 2026-10-08 (W5/D7, sweep HS-8): meta was the page's
+ * row count alone, so the surface showed the newest 100 as the whole log and
+ * AnA was told what awaited acknowledgement from that page.
+ */
+async function transmittalTotals(where: string, args: unknown[]): Promise<{
+  total: number; byStatus: Record<string, number>; awaitingAcknowledgement: number;
+}> {
+  const { rows } = await pool.query<{ status: string; n: string | number; awaiting: string | number }>(
+    `SELECT t.status, count(*) AS n,
+            count(*) FILTER (WHERE t.ack_received_at IS NULL AND t.status IN ${ACTIVE_TRANSMITTAL_STATUSES}) AS awaiting
+       FROM submission_transmittals t
+      WHERE ${where}
+      GROUP BY t.status`,
+    args,
+  );
+  const byStatus: Record<string, number> = {};
+  let total = 0;
+  let awaitingAcknowledgement = 0;
+  for (const r of rows) {
+    byStatus[r.status] = Number(r.n);
+    total += Number(r.n);
+    awaitingAcknowledgement += Number(r.awaiting);
+  }
+  return { total, byStatus, awaitingAcknowledgement };
+}
 
 /* ─── GET /api/mdx/gateways/transmittals/:id ─────────────────────── */
 
@@ -293,36 +354,57 @@ router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (r
       // The bundle the history holds under this sequence when another one was
       // recorded during the send ('sequence-conflict'); null otherwise.
       filedSequenceConflict: outcome.filedSequenceConflict,
+      // The checks the transmit guard ran that FAILED without blocking, and its
+      // warnings — on the sign record and AnA's result, and now here, so the
+      // surface can say them. null = the guard reported nothing, never "all
+      // passed". 2026-10-08 (W5/D7, sweep HS-2).
+      preTransmitFailedChecks: failedCheckPairs(outcome.preTransmitFailedChecks),
+      preTransmitWarnings: outcome.preTransmitWarnings,
       // filedSequenceWarning / contentWarning / ledgerWriteFailed + ledgerWarning,
       // each only when it applies (shared with AnA's k510 transmit).
       ...transmitOutcomeNotices(outcome),
     });
   } catch (err: unknown) {
-    // Honest pre-transmit refusals: nothing left the platform, so there is no
-    // transmittal, no acknowledgement and no agency identifier to report.
-    if (err instanceof GovernedTransmitRefusal) {
-      // The code rides in `details` so a surface can tell two 409s apart
-      // (ACTIVE_TRANSMITTAL from SEQUENCE_ALREADY_FILED) without parsing words.
-      return clientError(res, err.httpStatus, err.message, { code: err.code, ...err.details });
-    }
-    if (err instanceof GovernedTransmitInternalError) {
-      return serverError(res, log, err.stage, err.cause);
-    }
-    if (err instanceof CredentialError) {
-      return clientError(res, 412, err.message);
-    }
-    if (err instanceof ValidationError) {
-      return clientError(res, 422, err.message, { findings: err.findings });
-    }
-    if (err instanceof TransportError) {
-      return clientError(res, 502, err.message);
-    }
-    if (err instanceof GatewayError) {
-      return clientError(res, 502, err.message, { httpStatus: err.httpStatus, code: err.gatewayCode });
-    }
-    return serverError(res, log, 'transmit', err);
+    return transmitFailure(res, err);
   }
 });
+
+/** A transmit that did not complete, as the response that says why. */
+function transmitFailure(res: Response, err: unknown): Response {
+  // Honest pre-transmit refusals: nothing left the platform, so there is no
+  // transmittal, no acknowledgement and no agency identifier to report.
+  if (err instanceof GovernedTransmitRefusal) {
+    // The code rides in `details` so a surface can tell two 409s apart
+    // (ACTIVE_TRANSMITTAL from SEQUENCE_ALREADY_FILED) without parsing words.
+    return clientError(res, err.httpStatus, err.message, { code: err.code, ...err.details });
+  }
+  if (err instanceof GovernedTransmitInternalError) {
+    return serverError(res, log, err.stage, err.cause);
+  }
+  // The selected transport refuses before anything is sent (FDA ESG in REST
+  // mode, whose contract is unverified). Its own sentence says nothing was
+  // transmitted; as a 500 that sentence was lost. AnA maps it the same way.
+  // 2026-10-08 (W5/D7, sweep HS-4).
+  if (err instanceof UnverifiedTransportError) {
+    return clientError(res, 412, err.message, { code: 'TRANSPORT_NOT_VERIFIED', transmitted: false });
+  }
+  if (err instanceof CredentialError) {
+    return clientError(res, 412, err.message);
+  }
+  if (err instanceof ValidationError) {
+    // The guard's own refusal names itself, so a surface does not read it as
+    // the structural gate's. 2026-10-08 (W5/D7, sweep HS-3).
+    const source = err instanceof PreTransmitBlockedError ? { code: err.code } : {};
+    return clientError(res, 422, err.message, { ...source, findings: err.findings });
+  }
+  if (err instanceof TransportError) {
+    return clientError(res, 502, err.message);
+  }
+  if (err instanceof GatewayError) {
+    return clientError(res, 502, err.message, { httpStatus: err.httpStatus, code: err.gatewayCode });
+  }
+  return serverError(res, log, 'transmit', err);
+}
 
 /* ─── GET /api/mdx/gateways/transmittals/:id/status ──────────────── */
 

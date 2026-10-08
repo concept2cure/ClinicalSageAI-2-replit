@@ -29,7 +29,12 @@ vi.mock('../fda-esg', () => ({
   },
 }));
 
-import { getGateway, preTransmitFindings } from '../index';
+// The guard reads the organisation's gateway-account choice (gateway-accounts.ts,
+// 2026-10-01); no row is the platform account. Unstubbed, that read reached the
+// tenant-scoped pool and both cases above failed closed before the gateway.
+vi.mock('../../../db', () => ({ pool: { query: async () => ({ rows: [], rowCount: 0 }) } }));
+
+import { getGateway, preTransmitFindings, ValidationError } from '../index';
 import type { SubmissionBundle } from '../types';
 
 async function bundle(): Promise<SubmissionBundle> {
@@ -76,5 +81,24 @@ describe('transmit guard — the result carries what was checked', () => {
     expect(f.warnings).toEqual(r.preTransmit!.warnings);
     // A result the guard attached nothing to is "reported nothing", never "all passed".
     expect(preTransmitFindings({})).toEqual({ failedChecks: null, warnings: null });
+  });
+
+  // 2026-10-08 (W5/D7, sweep HS-3): the guard's refusal carried its blockers as
+  // bare strings, which a surface reading findings objects dropped — so the
+  // refusal read as one with "0 findings" beside a message naming them. Each
+  // blocker is now an itemised error finding, and the refusal names its source.
+  it('a refusal itemises each blocker as an error finding and names itself as the pre-transmit guard', async () => {
+    const assembledForEma = { ...(await bundle()), builtRegion: 'ema' as const };
+    const err = await getGateway('fda', 'esg').transmit({
+      organizationId: 7, userId: 11, programId: null, packageId: 1, bundle: assembledForEma, environment: 'staging',
+      authorization: { kind: 'governed-signature', signatureActionId: 'sig-1', actorUserId: 11 },
+    }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ValidationError);
+    expect((err as Error).name).toBe('ValidationError');
+    expect((err as { code?: string }).code).toBe('PRE_TRANSMIT_BLOCKED');
+    expect((err as ValidationError).findings).toEqual([
+      { severity: 'error', ruleId: 'PRE-TRANSMIT', message: expect.stringMatching(/assembled for EMA .*cannot be transmitted to FDA/) },
+    ]);
+    expect((err as Error).message).toMatch(/failed pre-transmit checks/);
   });
 });

@@ -100,6 +100,8 @@ vi.mock('../server/services/submission-gateways', () => {
     name = 'ValidationError';
     constructor(msg: string, public findings: unknown[]) { super(msg); }
   }
+  class MockPreTransmitBlockedError extends MockValidationError { readonly code = 'PRE_TRANSMIT_BLOCKED' as const; }
+  class MockUnverifiedTransportError extends Error { name = 'UnverifiedTransportError'; }
   const fakeGateway = {
     region: 'fda', gateway: 'esg', transport: 'as2',
     isConfigured: isConfigFn,
@@ -115,6 +117,8 @@ vi.mock('../server/services/submission-gateways', () => {
     GatewayError:    MockGatewayError,
     TransportError:  MockTransportError,
     ValidationError: MockValidationError,
+    PreTransmitBlockedError: MockPreTransmitBlockedError,
+    UnverifiedTransportError: MockUnverifiedTransportError,
   };
 });
 
@@ -170,7 +174,10 @@ function activeTransmittalRows(sql: string, params: unknown[]) {
   const bySequence = /metadata->>'sequence'/.test(sql);
   const hit = transmittals.find((t) => t.orgId === orgId && t.packageId === packageId && ACTIVE_STATUSES.includes(t.status) &&
     (bySequence ? t.metadata.sequence === key && t.metadata.environment === environment : t.sha256 === key));
-  return hit ? { rows: [{ id: hit.id, status: hit.status }], rowCount: 1 } : { rows: [], rowCount: 0 };
+  // The bytes lookup also reads the environment the row was sent to
+  // (metadata->>'environment'): the bytes key carries none.
+  const row = bySequence ? { id: hit?.id, status: hit?.status } : { id: hit?.id, status: hit?.status, environment: hit?.metadata.environment ?? null };
+  return hit ? { rows: [row], rowCount: 1 } : { rows: [], rowCount: 0 };
 }
 
 /** The package's content as the transmit gate re-reads it. A good descriptor
@@ -227,7 +234,7 @@ function installDb() {
         ? Promise.resolve({ rows: [{ metadata: { bundle: row.bundle, regulatory: row.regulatory, filedSequences: row.filedSequences } }], rowCount: 1 })
         : Promise.resolve({ rows: [], rowCount: 0 });
     }
-    if (typeof sql === 'string' && /SELECT\s+id,\s+status\s+FROM submission_transmittals/.test(sql)) {
+    if (typeof sql === 'string' && /SELECT\s+id,\s+status(?:,\s+metadata->>'environment' AS environment)?\s+FROM submission_transmittals/.test(sql)) {
       return Promise.resolve(activeTransmittalRows(sql, params));
     }
     if (typeof sql === 'string' && sql.includes('FROM c2c_package_sections')) {
@@ -776,6 +783,11 @@ describe('POST transmit — one active send per sequence, per environment (sweep
     id: 4300, orgId: CALLER_ORG, packageId: 5, sha256: 'f'.repeat(64), status, metadata: { sequence: '0000', environment },
   });
 
+  /* 2026-10-08 (W5/D7, sweep HS-6): the refusal named the rollback route
+     (POST /api/…/rollback), which a client hides as internal text and replaces
+     with its own "Roll it back first" — dropping the caveat that the agency may
+     already hold the bundle. These pinned that route path; the sentence now
+     names no route, and the caveat is the advice. */
   it.each(['pending', 'in_transit', 'received'])('refuses a re-assembled bundle of a sequence whose send is still %s in the same environment, before the gateway', async (status) => {
     packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceZero() }];
     transmittals = [firstSend(status, 'production')];
@@ -783,11 +795,44 @@ describe('POST transmit — one active send per sequence, per environment (sweep
       .post('/api/mdx/gateways/fda/esg/transmit')
       .send({ packageId: 5, environment: 'production', ...REAUTH });
     expect(res.status).toBe(409);
-    expect(res.body.error).toMatch(/Sequence 0000 of this package/);
-    expect(res.body.error).toMatch(/id=4300/);
-    expect(res.body.error).toMatch(/confirm receipt at the agency/i);
-    expect(res.body.error).toMatch(/transmittals\/4300\/rollback before sending sequence 0000 again/);
-    expect(res.body.details).toMatchObject({ transmittalId: 4300, status, sequence: '0000', environment: 'production' });
+    expect(res.body.error).toMatch(/sequence 0000 of this package/i);
+    expect(res.body.error).toMatch(/transmittal #4300/);
+    expect(res.body.error).not.toMatch(/\/api\//);
+    expect(res.body.error).not.toMatch(/in_transit|status=|id=/);
+    expect(res.body.details).toMatchObject({ code: 'ACTIVE_TRANSMITTAL', transmittalId: 4300, status, sequence: '0000', environment: 'production' });
+    expect(transmitFn).not.toHaveBeenCalled();
+    if (status === 'received') {
+      expect(res.body.error).toMatch(/acknowledged receipt of transmittal #4300/);
+      expect(res.body.error).toMatch(/only if the agency confirms it did not receive or load it/);
+      expect(res.body.error).not.toMatch(/roll .*back/i);
+    } else {
+      expect(res.body.error).toMatch(/The agency may already hold it\. Confirm receipt with the agency before sending sequence 0000 again/);
+    }
+    // A pending send cannot be rolled back (rollbackTransmittal refuses it), so
+    // the sentence does not offer that; it says the send has not finished.
+    if (status === 'in_transit') expect(res.body.error).toMatch(/roll transmittal #4300 back from its row in the transmittal log/);
+    if (status === 'pending') {
+      expect(res.body.error).not.toMatch(/roll .*back/i);
+      expect(res.body.error).toMatch(/That send has not finished/);
+    }
+  });
+
+  it.each(['in_transit', 'received'])('the same bundle while its send is %s: the same caveat, and no route path', async (status) => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor() }];
+    transmittals = [{ id: 4310, orgId: CALLER_ORG, packageId: 5, sha256: legitSha, status, metadata: {} }];
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
+    expect(res.status).toBe(409);
+    expect(res.body.details).toEqual({ code: 'ACTIVE_TRANSMITTAL', transmittalId: 4310, status });
+    expect(res.body.error).not.toMatch(/\/api\//);
+    if (status === 'received') {
+      expect(res.body.error).toMatch(/acknowledged receipt of transmittal #4310, so this bundle is with the agency/);
+      expect(res.body.error).not.toMatch(/roll .*back/i);
+    } else {
+      expect(res.body.error).toMatch(/This bundle is already in transmittal #4310/);
+      expect(res.body.error).toMatch(/The agency may already hold it\. Confirm receipt with the agency before sending it again/);
+    }
     expect(transmitFn).not.toHaveBeenCalled();
   });
 
@@ -810,6 +855,53 @@ describe('POST transmit — one active send per sequence, per environment (sweep
       .send({ packageId: 5, environment: 'staging', metadata: { note: 'kept' }, ...REAUTH });
     expect(res.status).toBe(201);
     expect(transmitFn.mock.calls[0][0].metadata).toEqual({ note: 'kept', sequence: '0000', applicationId: 'IND123456', environment: 'staging' });
+  });
+});
+
+/*
+ * 2026-10-08 (W5/D7, sweep HS-6 review). The bytes lock (and its unique index)
+ * has no environment in its key, so a bundle sent to the agency's TEST
+ * environment holds the first PRODUCTION send of the same bytes. The refusal
+ * said the bundle "is with the agency" and that a rollback "does not retract
+ * it" — untrue for production, which never received it, and rolling the test
+ * send back is the only way to free the lock. It names the environment now.
+ */
+describe('POST transmit — the same bytes held by a send to the other environment (sweep HS-6 review)', () => {
+  const sameBytes = (id: number, status: string, environment: string): TransmittalRow =>
+    ({ id, orgId: CALLER_ORG, packageId: 5, sha256: legitSha, status, metadata: { sequence: '0000', environment } });
+  const sendSequenceZero = (environment: string, holder: TransmittalRow) => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({ sequence: '0000', submissionType: 'original' }) }];
+    transmittals = [holder];
+    return request(makeApp()).post('/api/mdx/gateways/fda/esg/transmit').send({ packageId: 5, environment, ...REAUTH });
+  };
+
+  it.each(['in_transit', 'received'])('held by a %s send to the TEST environment: a production send is told that, and how to free it', async (status) => {
+    const res = await sendSequenceZero('production', sameBytes(900, status, 'staging'));
+    expect(res.status).toBe(409);
+    expect(res.body.error).not.toMatch(/is with the agency|does not retract|agency may already hold/i);
+    expect(res.body.error).toMatch(/This bundle is held by transmittal #900, sent to the agency's test environment/);
+    expect(res.body.error).toMatch(/A send to the test environment does not file it in production\./);
+    expect(res.body.error).toMatch(/Roll transmittal #900 back from its row in the transmittal log, then send\./);
+    expect(res.body.error).not.toMatch(/\/api\/|staging|in_transit/);
+    expect(res.body.details).toEqual({ code: 'ACTIVE_TRANSMITTAL', transmittalId: 900, status, holderEnvironment: 'staging' });
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
+  it('held by a received PRODUCTION send, sent to the test environment: a rollback is not said to retract it', async () => {
+    const res = await sendSequenceZero('staging', sameBytes(901, 'received', 'production'));
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/sent to the agency's production environment, whose gateway acknowledged receipt\./);
+    expect(res.body.error).not.toMatch(/is with the agency/);
+    expect(res.body.error).toMatch(/A production send does not deliver it to the test environment, and a rollback does not retract the production send from the agency\./);
+    expect(res.body.details).toEqual({ code: 'ACTIVE_TRANSMITTAL', transmittalId: 901, status: 'received', holderEnvironment: 'production' });
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
+  it('held in the SAME environment: the received wording stays', async () => {
+    const res = await sendSequenceZero('production', sameBytes(902, 'received', 'production'));
+    expect(res.status).toBe(409);
+    expect(res.body.details).toEqual({ code: 'ACTIVE_TRANSMITTAL', transmittalId: 902, status: 'received' });
+    expect(res.body.error).toMatch(/acknowledged receipt of transmittal #902, so this bundle is with the agency/);
   });
 });
 

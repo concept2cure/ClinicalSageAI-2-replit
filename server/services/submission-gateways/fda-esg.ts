@@ -99,6 +99,9 @@ import {
   requiredAgencyMetadata,
   ValidationError
 } from './types';
+import { createScopedLogger } from '../../utils/logger';
+
+const log = createScopedLogger('fda-esg');
 
 /* ─── Credential resolution ──────────────────────────────────────── */
 
@@ -292,12 +295,19 @@ function transmitViaNextGenRest(
 ): void {
   if (resolveFdaEsgTransport(environment) !== 'rest') return;
   const creds = loadFdaRestCredentials(environment);
+  // The operator reads the refusal (the transmit route's 412, AnA's
+  // TRANSPORT_NOT_VERIFIED), so it carries no endpoint, submitter ID or
+  // variable name; those are for whoever administers the deployment, in the
+  // log. 2026-10-08 (W5/D7, sweep HS-4 review): a URL with '/api/' in it made
+  // the client hide the whole sentence, and with it "nothing was transmitted".
+  log.warn('FDA ESG REST transport selected; refused because its contract is unverified', {
+    environment, endpoint: creds.baseUrl, submitterId: creds.submitterId,
+    transportVariable: envVarName(environment, 'TRANSPORT'),
+  });
   throw new UnverifiedTransportError(
     'fda', 'esg', 'rest',
-    `Endpoint ${creds.baseUrl} (submitter ${creds.submitterId}) is configured, but the ESG NextGen ` +
-    'upload/auth/response contract has not been verified against FDA documentation or exercised in ' +
-    "FDA's pre-production environment. Use FDA_ESG_TRANSPORT=as2 for the verified AS2 path, or complete " +
-    'the NextGen UAT and replace transmitViaNextGenRest.',
+    "This deployment selects the ESG NextGen transport, which has not been tested in FDA's " +
+    'pre-production environment. An administrator can switch FDA ESG to the verified AS2 transport.',
   );
 }
 
@@ -628,15 +638,30 @@ export class FdaEsgGateway implements SubmissionGateway {
      prefer SFTP; AS2 when configured). */
   readonly transport = 'as2' as const;
 
+  /**
+   * The transport this deployment selects for `environment` (FDA_ESG_TRANSPORT),
+   * as gatewayConfigurationStatus reports it. A setting that cannot be read
+   * reports the default; isConfigured answers false for it.
+   */
+  transportFor(environment: 'staging' | 'production'): FdaEsgConfiguredTransport {
+    try {
+      return resolveFdaEsgTransport(environment);
+    } catch {
+      return this.transport;
+    }
+  }
+
   async isConfigured(organizationId: number, environment: 'staging' | 'production'): Promise<boolean> {
     try {
       if (resolveFdaEsgTransport(environment) === 'rest') {
-        // Configured means credentials resolve. It does NOT mean the REST
-        // transport can transmit — see transmitViaNextGenRest — and
-        // gatewayConfigurationStatus() reports the transport so a surface can
-        // say which one.
-        loadFdaRestCredentials(environment);
-        return true;
+        // Configured means able to transmit, and the REST transport refuses
+        // every transmit until its contract is verified (transmitViaNextGenRest),
+        // whatever credentials resolve. gatewayConfigurationStatus() reports the
+        // transport beside this, so a surface can say which one is selected.
+        // 2026-10-08 (W5/D7, sweep HS-4): this answered true once the REST
+        // credentials resolved, so the gateway was listed as configured while
+        // every transmit through it was refused.
+        return false;
       }
       await credentialsFor(
         organizationId,
@@ -1062,8 +1087,12 @@ export async function rollbackTransmittal(params: {
 
 /* ─── Active-transmittal lookup (FIX 7) ──────────────────────────── */
 
-/** The statuses the duplicate-send lock holds — sub_trans_active_lock_idx's WHERE. */
-const ACTIVE_TRANSMITTAL_STATUSES = "('pending', 'in_transit', 'received')";
+/**
+ * The statuses the duplicate-send lock holds — sub_trans_active_lock_idx's WHERE —
+ * as a SQL list. They are also the transmittals the agency may still acknowledge,
+ * which the transmittal log counts as awaiting acknowledgement.
+ */
+export const ACTIVE_TRANSMITTAL_STATUSES = "('pending', 'in_transit', 'received')";
 
 /**
  * Returns the active (pending|in_transit|received) transmittal row for an
@@ -1088,13 +1117,22 @@ const ACTIVE_TRANSMITTAL_STATUSES = "('pending', 'in_transit', 'received')";
  * the reverse. Such a row is returned with the `sequence` it holds; a row
  * found by its bytes is returned without one. No index backs the sequence
  * match — it is this check only.
+ *
+ * The bytes match has no environment in its key (nor has the unique index), so
+ * a send to the agency's test environment holds the same bytes in production,
+ * and the reverse. Given the `environment` being checked, a row found by its
+ * bytes that names another environment is returned with `holderEnvironment`,
+ * so the refusal can say where that send went rather than that the agency
+ * holds it. A row that names none is returned without it. 2026-10-08 (W5/D7,
+ * sweep HS-6 review).
  */
 export async function findActiveTransmittal(params: {
   organizationId: number;
   packageId: number | null;
   bundleSha256: string;
   filing?: { sequence: string; environment: string } | null;
-}): Promise<{ id: number; status: string; sequence?: string } | null> {
+  environment?: string;
+}): Promise<{ id: number; status: string; sequence?: string; holderEnvironment?: string } | null> {
   const { organizationId, packageId, bundleSha256, filing } = params;
   // If packageId is null we cannot enforce a meaningful lock (the partial
   // index is keyed on package_id). Return null and let the gateway proceed —
@@ -1102,8 +1140,8 @@ export async function findActiveTransmittal(params: {
   // is protecting.
   if (packageId == null) return null;
 
-  const { rows } = await pool.query<{ id: number; status: string }>(
-    `SELECT id, status FROM submission_transmittals
+  const { rows } = await pool.query<{ id: number; status: string; environment: string | null }>(
+    `SELECT id, status, metadata->>'environment' AS environment FROM submission_transmittals
       WHERE organization_id = $1
         AND package_id      = $2
         AND bundle_sha256   = $3
@@ -1112,7 +1150,8 @@ export async function findActiveTransmittal(params: {
       LIMIT 1`,
     [organizationId, packageId, bundleSha256],
   );
-  if (rows[0] || !filing) return rows[0] ?? null;
+  if (rows[0]) return heldByBytes(rows[0], params.environment);
+  if (!filing) return null;
 
   const bySequence = await pool.query<{ id: number; status: string }>(
     `SELECT id, status FROM submission_transmittals
@@ -1126,4 +1165,16 @@ export async function findActiveTransmittal(params: {
     [organizationId, packageId, filing.sequence, filing.environment],
   );
   return bySequence.rows[0] ? { ...bySequence.rows[0], sequence: filing.sequence } : null;
+}
+
+/** A row the bytes matched, naming the environment it was sent to when that is
+ *  known and is not the one being checked. */
+function heldByBytes(
+  row: { id: number; status: string; environment: string | null },
+  environment: string | undefined,
+): { id: number; status: string; holderEnvironment?: string } {
+  const { id, status } = row;
+  return environment && row.environment && row.environment !== environment
+    ? { id, status, holderEnvironment: row.environment }
+    : { id, status };
 }

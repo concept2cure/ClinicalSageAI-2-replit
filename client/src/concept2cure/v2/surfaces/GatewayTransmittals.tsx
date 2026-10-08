@@ -7,7 +7,7 @@
  * (server/routes/mdx-submission-gateway.ts, mounted /api/mdx, org-scoped from
  * the JWT; envelope {data, meta}):
  *   • GET  /gateways?environment=            — the region gateways + whether
- *                                              credentials are configured
+ *                                              each can transmit (configured)
  *   • GET  /gateways/transmittals            — the org's transmittal log
  *   • POST /gateways/:region/:gateway/transmit — governed transmit (reason ≥8
  *          + §11 re-auth password/TOTP, verified server-side; 409 = an active
@@ -23,9 +23,14 @@
 
  * HONESTY: gateways and the transmittal log render live data or honest
  * empty/error states. Transmit/rollback are real awaited writes gated by the
- * server's re-auth; a 401 (re-auth failed), 412 (credentials not configured),
- * 422 (structural gate), and the 409 active-transmittal lock are each surfaced
- * with the server's own reason.
+ * server's re-auth; a 401 (re-auth failed), 412 (credentials not configured,
+ * or a transport not verified), 422 (the pre-transmit checks or the structural
+ * gate, each titled as itself), and the 409 active-transmittal lock are each
+ * surfaced with the server's own reason. A 5xx or a lost response is said to
+ * have not completed — never "failed" or "nothing was sent" — and every answer
+ * but a 401 reloads the transmittal log, which says what happened. A completed
+ * transmit names what did not hold after the send (ledger, content, filed
+ * history) and what the pre-transmit checks reported (sweep lens HS-1…HS-8).
  *
  * The ACK download states WHO WROTE THE BYTES. Only an FDA AS2 MDN is an agency
  * artefact; for every other gateway the platform composes a record from its own
@@ -89,19 +94,178 @@ export function accountLine(t: Pick<Transmittal, 'metadata'>): string | null {
 
 interface RefusalFinding { ruleId?: string; severity?: string; message?: string }
 const SEVERITY_RANK: Record<string, number> = { error: 0, warning: 1, info: 2 };
+/** One entry of a findings list. A refusal may itemize its reasons as plain
+ *  sentences (the pre-transmit guard did): each is a finding, never dropped —
+ *  dropping them is how a refusal listing two blockers read "0 findings". */
+function asFinding(f: unknown): RefusalFinding | null {
+  if (typeof f === 'string') return f.trim() ? { severity: 'error', message: f } : null;
+  return f && typeof f === 'object' ? (f as RefusalFinding) : null;
+}
 /** Findings list, errors first; tolerant of a partial shape. */
 function sortFindings(list: unknown): RefusalFinding[] {
   if (!Array.isArray(list)) return [];
   return list
-    .filter((f: unknown): f is RefusalFinding => !!f && typeof f === 'object')
-    .slice()
+    .map(asFinding)
+    .filter((f): f is RefusalFinding => f !== null)
     .sort((a: RefusalFinding, b: RefusalFinding) => (SEVERITY_RANK[a.severity ?? ''] ?? 3) - (SEVERITY_RANK[b.severity ?? ''] ?? 3));
 }
-/** Findings from a transmit 422 body (details.findings). */
-function refusalFindings(raw: any): RefusalFinding[] {
-  return sortFindings(raw?.details?.findings);
-}
 const IDENTIFIERS_RULE = 'REGULATORY-IDENTIFIER-MISSING';
+
+/**
+ * Where the findings card's content came from. Each source has its own title
+ * and its own remedy: the pre-transmit checks (gateway size limit, region
+ * identity, PDF/A, DTDs) are not the structural gate, and assembling again
+ * cures none of them but a region mismatch; a clean assembly's warnings are
+ * not a refusal at all.
+ */
+type CardSource = 'transmit' | 'pre-transmit' | 'assemble' | 'assemble-warnings';
+const CARD_COPY: Record<CardSource, { label: string; title: string; withFindings: string; noList: string }> = {
+  transmit: {
+    label: 'Structural gate refusal',
+    title: 'Structural gate refused the transmit',
+    withFindings: 'These findings were recorded on the stored bundle when it was assembled. Resolve them, assemble the package again, then transmit.',
+    noList: 'The refusal did not include an itemized findings list. Assemble the package again, then transmit.',
+  },
+  'pre-transmit': {
+    label: 'Pre-transmit refusal',
+    title: 'Pre-transmit checks refused the transmit',
+    withFindings: 'Each finding says what this bundle needs before it can be sent; the remedy differs from one finding to the next.',
+    noList: 'The refusal did not include an itemized findings list; its reasons are in the message above.',
+  },
+  assemble: {
+    label: 'Packager refusal',
+    title: 'Bundle not transmittable',
+    withFindings: 'Resolve the findings, then assemble the package again.',
+    noList: 'The refusal did not include an itemized findings list. Assemble the package again, then transmit.',
+  },
+  'assemble-warnings': {
+    label: 'Assembly warnings',
+    title: 'Bundle assembled · warnings to review',
+    withFindings: 'Warnings do not stop a transmit. Review them before transmitting; where one names a withdrawal, add it to the assembly and assemble again.',
+    noList: 'Preflight did not return an itemized findings list; use Reload findings to try again.',
+  },
+};
+interface FindingsCard {
+  source: CardSource;
+  message: string;
+  findings: RefusalFinding[];
+  findingsState: AssessmentState;
+  fetchFailure?: string;
+  notSaved?: string;
+}
+
+/** What a preflight read returned, with the honest states loadFindings derives. */
+interface LoadedFindings { ok: boolean; findings: RefusalFinding[]; findingsState: AssessmentState; fetchFailure?: string; notSaved?: string; errorCount: number }
+/** A clean assembly's warnings, as the card lists them (sweep lens HS-7). */
+function warningsCard(loaded: LoadedFindings, warnings: number, pkg: string): FindingsCard {
+  const plural = warnings === 1 ? '' : 's';
+  return {
+    source: 'assemble-warnings',
+    message: `Bundle assembled for ${pkg} with ${warnings} warning${plural} and no error-severity findings.`,
+    findings: loaded.findings,
+    findingsState: loaded.findingsState,
+    // An empty list beside a counted warning is a disagreement, said as one.
+    fetchFailure: loaded.fetchFailure ?? (loaded.findingsState === 'assessed-clear'
+      ? `Preflight lists no findings on the stored bundle, yet assembly counted ${warnings} warning${plural}; the two disagree — reload the findings before transmitting.`
+      : undefined),
+    notSaved: loaded.notSaved,
+  };
+}
+/** The error-severity findings a preflight that ran reported; none when it did not run. */
+const preflightErrors = (loaded: LoadedFindings): number => (loaded.ok ? loaded.errorCount : 0);
+/** What preflight reports when it finds error-severity findings on the stored bundle. */
+function preflightErrorsMessage(errorCount: number, pkg: string): string {
+  return `Preflight reports ${errorCount} error-severity finding${errorCount === 1 ? '' : 's'} on the stored bundle for package ${pkg}; `
+    + 'transmit will refuse it until they are resolved.';
+}
+/**
+ * The card after an assembly that counted warnings and no errors. Preflight
+ * also runs the configured external validator and the bundle-content checks,
+ * which can report error-severity findings the assembly did not count; the card
+ * is then the refusal those findings are — never "warnings only" above an
+ * error row (sweep lens HS-7).
+ */
+function assembledCard(loaded: LoadedFindings, warnings: number, pkg: string): FindingsCard {
+  const errors = preflightErrors(loaded);
+  if (errors === 0) return warningsCard(loaded, warnings, pkg);
+  return {
+    source: 'assemble',
+    message: preflightErrorsMessage(errors, pkg),
+    findings: loaded.findings,
+    findingsState: loaded.findingsState,
+    fetchFailure: loaded.fetchFailure,
+    notSaved: loaded.notSaved,
+  };
+}
+/** What the assembly route reports for the bundle it built, as the toast needs it. */
+interface AssembledBundle { leafCount?: unknown; sha256?: unknown; sequence?: string; lifecycle?: { summary?: Record<string, number> } }
+/**
+ * The toast after an assembly that counted no error-severity findings. No such
+ * finding is not "ready": the transmit gate still checks region identity, the
+ * gateway size limit and the operator's conformance opt-ins, and preflight may
+ * report findings the assembly did not count. Say what was proven, not more.
+ */
+function assembledToast(pkg: string, b: AssembledBundle, warnings: number, errorsInPreflight: number, ledger: string): string {
+  const head = `Bundle assembled for ${pkg} · ${b.leafCount ?? '?'} leaves · ${warnings} warning${warnings === 1 ? '' : 's'} · sha256 ${String(b.sha256 ?? '').slice(0, 12)}.`;
+  if (errorsInPreflight > 0) {
+    const n = errorsInPreflight;
+    return `${head} The assembly counted no error-severity findings, but preflight reports ${n} error-severity finding${n === 1 ? '' : 's'} `
+      + `on the stored bundle that the assembly did not count; transmit will refuse it until ${n === 1 ? 'it is' : 'they are'} resolved.`
+      + `${lifecycleNote(b)}${ledger} The findings are listed below.`;
+  }
+  return `${head} No error-severity findings; the transmit gate still checks region, size and conformance opt-ins.`
+    + `${lifecycleNote(b)}${ledger}${warnings > 0 ? ' The warnings are listed below.' : ''}`;
+}
+/** What a follow-up sequence does to what is already on file — a leaf count
+ *  smaller than the package would otherwise leave the operator to infer it. */
+function lifecycleNote(b: { sequence?: string; lifecycle?: { summary?: Record<string, number> } }): string {
+  const life = b.lifecycle?.summary;
+  if (!life || (b.sequence ?? '0000') === '0000') return '';
+  // A withdrawal is the one irreversible thing a sequence does to what is
+  // already at the agency, so it is never folded into the other counts.
+  return ` Sequence ${b.sequence}: ${life.new} new, ${life.replace} replaced, ${life.unchanged} left unchanged on file`
+    + (life.delete > 0 ? `, ${life.delete} withdrawn from the application.` : '.');
+}
+
+/** A transmit 422, as the findings card shows it: the pre-transmit guard's
+ *  refusal (details.code PRE_TRANSMIT_BLOCKED, or its PRE-TRANSMIT findings)
+ *  or the structural gate's. */
+function transmitRefusalCard(raw: any, gatewayName: string): FindingsCard {
+  const listed = raw?.details?.findings;
+  const findings = sortFindings(listed);
+  const preTransmit = raw?.details?.code === 'PRE_TRANSMIT_BLOCKED' || findings.some((f) => f.ruleId === 'PRE-TRANSMIT');
+  const said = String(raw?.error ?? 'validation failed');
+  return {
+    source: preTransmit ? 'pre-transmit' : 'transmit',
+    // The guard's sentence restates every blocker the table itemizes; the table
+    // carries them when it has them, and the sentence when it does not.
+    message: preTransmit && findings.length > 0 ? `The pre-transmit checks refused this bundle for ${gatewayName}; nothing was sent.` : said,
+    findings,
+    // The gate ran — a 422 from it is that evidence — so an empty list is a
+    // refusal that carried no findings, not a clean bundle.
+    findingsState: assessmentState({ scopeExists: true, findingCount: findings.length, assessmentRan: Array.isArray(listed) }),
+  };
+}
+/** The toast beside a transmit 422's card. */
+function transmitRefusalToast(card: FindingsCard, raw: any): string {
+  const said = String(raw?.error ?? 'validation failed').replace(/[.\s]+$/, '');
+  if (card.source === 'transmit') return `Not transmitted — the structural gate rejected the bundle: ${said}.`;
+  const n = card.findings.length;
+  return n > 0
+    ? `Not transmitted — the pre-transmit checks refused the bundle, so nothing was sent. ${n === 1 ? 'The reason is' : `The ${n} reasons are`} listed below.`
+    : `Not transmitted — the pre-transmit checks refused the bundle: ${said}.`;
+}
+/** QA 2026-10-08 (j6): a gateway that cannot transmit for this organization is
+ *  the next refusal waiting, so a 422 says so — from the gateway table on this
+ *  screen. `configured` means able to transmit, not that credentials exist: a
+ *  gateway set to an unverified transport answers false with its credentials
+ *  in place, so the note does not say which of the two it is. */
+function cannotTransmitNote(gateways: GatewayInfo[], region: string, gateway: string): string {
+  const rows = gateways.filter((g) => g.gateway === gateway && String(g.region ?? '').toLowerCase() === region.toLowerCase());
+  return rows.length > 0 && rows.every((g) => g.configured === false)
+    ? ` ${gatewayLabel(gateway)} is also not set up to transmit for this organization yet, so nothing could be sent through it.`
+    : '';
+}
 
 /** A row of GET /api/submission-ops/packages, as the picker needs it. */
 interface PackageOption { id: number; packageId?: string; title?: string; status?: string; packageFamily?: string }
@@ -232,6 +396,45 @@ async function readData<T = any>(method: 'GET' | 'POST' | 'PUT', path: string, b
     return { ok: false, status: 0, data: null, raw: null };
   }
 }
+
+/**
+ * The transmittal list's totals, from its envelope's meta. The route returns
+ * the most recent page only, so the header count and AnA's facts read these —
+ * a count taken from the page reported 100 for an org with 250 and hid every
+ * older unacknowledged transmittal. Each field is null when not reported.
+ */
+interface LogMeta { total: number | null; hasMore: boolean | null; byStatus: Record<string, number> | null; awaitingAcknowledgement: number | null }
+const finiteOrNull = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+function readLogMeta(raw: unknown): LogMeta | null {
+  const m = (raw as { meta?: unknown } | null)?.meta;
+  if (!m || typeof m !== 'object') return null;
+  const meta = m as Record<string, unknown>;
+  const byStatus = meta.byStatus && typeof meta.byStatus === 'object' && !Array.isArray(meta.byStatus)
+    ? (meta.byStatus as Record<string, number>)
+    : null;
+  return {
+    total: finiteOrNull(meta.total),
+    hasMore: typeof meta.hasMore === 'boolean' ? meta.hasMore : null,
+    byStatus,
+    awaitingAcknowledgement: finiteOrNull(meta.awaitingAcknowledgement),
+  };
+}
+/** The log header's count: "N of TOTAL" when the page is not the whole log. */
+function logCountLabel(listed: number, meta: LogMeta | null): string {
+  return meta?.hasMore && meta.total != null ? `${listed} of ${meta.total}` : String(listed);
+}
+/** Said above the log when it is a page of a longer one. */
+function logTruncationNote(listed: number, meta: LogMeta | null): string | null {
+  if (!meta?.hasMore) return null;
+  return meta.total != null
+    ? `Showing the ${listed} most recently submitted of ${meta.total} transmittals. Older transmittals are not listed here.`
+    : `Showing the ${listed} most recently submitted transmittals. Older transmittals are not listed here.`;
+}
+/** The log's part of AnA's summary: the server's total, or that it was not reported. */
+function logSummary(listed: number, meta: LogMeta | null): string {
+  if (meta?.total == null) return `${listed} transmittal(s) listed; the log’s total was not reported.`;
+  return `${meta.total} transmittal(s) logged${meta.hasMore ? ` (the ${listed} most recent listed here)` : ''}.`;
+}
 const TRANSMIT_FORM = (def: string | undefined, packages: PackageOption[] | null): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch · §11 re-authentication',
   title: 'Transmit to agency gateway',
@@ -347,21 +550,157 @@ function rejectionRecordedMessage(id: number, r: RejectionRecorded, signer: stri
 }
 
 /**
- * The toast for a transmit 409. Two refusals answer 409 and are told apart by
- * the code in `details`: a sequence already on file as another bundle is not
- * the active-transmittal lock, and its remedy is not a rollback — a rollback
- * does not un-file (sweep F19) — so that one is said in the server's own words.
- * The error envelope is { error, details }: the lock holder's id and status
- * travel in details (they were read from a `data` key that an error response
- * never carries, so the toast always said "#?" / "in flight").
+ * The toast for a transmit 409. Several refusals answer 409 and are told apart
+ * by the code in `details`. Only the active-transmittal lock is said as one —
+ * its code, or (a body without a code) a holder's transmittal id. Any other
+ * code is the server's own sentence: a sequence already on file as another
+ * bundle (whose remedy is not a rollback, which does not un-file — sweep F19),
+ * or a package with no recorded creator, which was never sent and must not be
+ * told that the agency may hold it. Every 409 on this route is refused before
+ * transport. The lock holder's id and status travel in details (they were read
+ * from a `data` key that an error response never carries).
  */
 function transmitConflictMessage(raw: any): string {
-  const held = raw?.details ?? raw?.data ?? raw;
-  if (held?.code === 'SEQUENCE_ALREADY_FILED') {
-    return 'Not transmitted — ' + (serverMessage(raw)
-      ?? `${held.sequence ? `sequence ${held.sequence}` : 'this sequence'} is already on file as a different bundle.`);
+  const held = raw?.details ?? raw?.data ?? raw ?? {};
+  const isLock = held.code === 'ACTIVE_TRANSMITTAL' || (held.code == null && held.transmittalId != null);
+  if (!isLock) return 'Not transmitted — ' + (serverMessage(raw) ?? conflictFallback(held));
+  // The lock holder may already be at the agency. The server's sentence says
+  // so; it is shown whenever it reads as copy (one that names a route does not).
+  const said = held.code === 'ACTIVE_TRANSMITTAL' ? serverMessage(raw) : null;
+  return 'Not transmitted — ' + (said ?? activeTransmittalSentence(held.transmittalId, held.status));
+}
+/** A 409 other than the lock whose server sentence did not read as copy. */
+function conflictFallback(held: { code?: unknown; sequence?: unknown }): string {
+  if (held.code !== 'SEQUENCE_ALREADY_FILED') return 'the package’s current state does not allow this transmit; nothing was sent.';
+  return `${held.sequence ? `sequence ${String(held.sequence)}` : 'this sequence'} is already on file as a different bundle.`;
+}
+/**
+ * The active-transmittal lock in this surface's own words. "Roll it back
+ * first", alone, presented a rollback — an audit-trail act that retracts
+ * nothing — as the way to a re-send the agency may already hold, and for a
+ * received bundle it led to a second delivery of the same sequence.
+ */
+function activeTransmittalSentence(id: unknown, status: unknown): string {
+  const which = `transmittal #${id ?? '?'}`;
+  if (status === 'received') {
+    return `the agency acknowledged receipt of ${which}, so this package is already with the agency. A rollback does not retract it. `
+      + 'Send it again only if the agency confirms it did not receive or load it.';
   }
-  return `Not transmitted — transmittal #${held?.transmittalId ?? '?'} is already active (${held?.status ?? 'in flight'}). Roll it back first.`;
+  return `${which} is already active (${status ? String(status).replace(/_/g, ' ') : 'in flight'}), and the agency may already hold it. `
+    + 'Confirm receipt with the agency before sending again; only if it did not arrive, roll the transmittal back from its row first.';
+}
+
+/** A transmit refused before or at the gateway (any non-2xx but a 422), in words. */
+function transmitRefusedMessage(status: number, raw: any, gateway: string): string {
+  if (status === 401) return 'Not transmitted — re-authentication failed (§11). Nothing left the platform.';
+  // The active-transmittal lock, or a sequence already on file as another bundle.
+  if (status === 409) return transmitConflictMessage(raw);
+  if (status === 412) {
+    // The transport this deployment is set to has not been verified against the
+    // agency's interface: refused before anything left. Its server sentence
+    // carries the endpoint and the setting's name, so it is said in words here.
+    return raw?.details?.code === 'TRANSPORT_NOT_VERIFIED'
+      ? `Not transmitted — nothing was sent. ${gatewayLabel(gateway)} is set to a connection whose agency interface has not been verified, so every transmit through it is refused.`
+      : 'Not transmitted — gateway credentials are not configured for this environment.';
+  }
+  return transmitIncompleteMessage(status, raw);
+}
+/**
+ * Any other refusal. A 5xx or a lost response does not say the transmit
+ * failed, nor that nothing was sent: a gateway answers 502 for a bundle it
+ * delivered but could not confirm (recorded in transit — the agency may hold
+ * it), and a request that lost its response may have completed. The log, which
+ * this surface reloads, is what says which.
+ */
+function transmitIncompleteMessage(status: number, raw: unknown): string {
+  const said = serverMessage(raw)?.trim().replace(/[.\s]+$/, '');
+  if (status === 0 || status >= 500) {
+    const why = said ?? (status === 0 ? 'no response came back' : 'the server gave no reason');
+    return `Transmit did not complete${status ? ` (HTTP ${status})` : ''} — ${why}. Check the transmittal log before any resend.`;
+  }
+  return `Not transmitted (HTTP ${status}) — ${said ?? 'the server gave no reason'}.`;
+}
+
+/* What the confirmation of a completed transmit adds after "Transmitted via …".
+   Each notice is the server's own sentence, with fixed words when it sent none.
+   2026-09-28/2026-10-08: the bytes are with the agency either way, so none of
+   these fails the transmit — and none may be folded into a clean success. */
+const LEDGER_LOST = 'The governed-action ledger entry for this transmission could not be written; record it manually.';
+const CONTENT_CHANGED = 'The package content changed while the transmission was in progress; re-assemble before any further transmission.';
+const FILED_NOT_RECORDED = 'The transmission completed, but this sequence could not be added to the package filed history. Record it before assembling the next sequence.';
+const PRE_TRANSMIT_NOT_REPORTED = 'The pre-transmit checks sent no report with this transmission, so none of them is confirmed as passed.';
+/** The pre-transmit checks by name, so an identifier is never the copy. */
+const CHECK_NAMES: Record<string, string> = {
+  'dtd-self-contained': 'DTDs carried in the bundle',
+  'pdfa-submission-grade': 'PDF/A submission grade',
+  'gateway-size-limit': 'gateway size limit',
+  'regional-backbone-region': 'regional backbone for this region',
+  'bundle-format-region': 'bundle format for this region',
+  'external-evalidator': 'external validator',
+  'regional-backbone-conformant': 'regional backbone conformance',
+};
+/** One failed check — `{name, detail}`, or "name: detail" as the transmit record keeps it. */
+function failedCheckLine(c: unknown): string | null {
+  let name = '';
+  let detail = '';
+  if (typeof c === 'string') {
+    const m = /^([a-z0-9-]+):\s*([\s\S]*)$/.exec(c.trim());
+    [name, detail] = m ? [m[1], m[2]] : ['', c];
+  } else if (c && typeof c === 'object') {
+    name = String((c as { name?: unknown }).name ?? '');
+    detail = String((c as { detail?: unknown }).detail ?? '');
+  }
+  const label = CHECK_NAMES[name] ?? name.replace(/[-_]+/g, ' ');
+  const said = detail.trim().replace(/[.\s]+$/, '');
+  return [label, said].filter(Boolean).join(' — ') || null;
+}
+const asSentence = (s: string) => (/[.!?]$/.test(s.trim()) ? s.trim() : `${s.trim()}.`);
+/**
+ * What the pre-transmit checks reported with the send: checks that failed
+ * without blocking (not enforced in this environment) and their warnings —
+ * e.g. a Module 1 backbone a regional validator will not accept. `null` means
+ * the checks sent no report, which is said, never read as "all passed".
+ */
+function preTransmitNotices(d: Record<string, unknown>): { notices: string[]; reported: boolean } {
+  const failed = Array.isArray(d.preTransmitFailedChecks)
+    ? d.preTransmitFailedChecks.map(failedCheckLine).filter((l): l is string => !!l)
+    : null;
+  const warned = Array.isArray(d.preTransmitWarnings)
+    ? d.preTransmitWarnings.filter((w): w is string => typeof w === 'string' && !!w.trim()).map(asSentence)
+    : null;
+  if (failed === null && warned === null) return { notices: [PRE_TRANSMIT_NOT_REPORTED], reported: false };
+  const notices = failed && failed.length > 0
+    ? [`Pre-transmit checks that did not pass (not enforced for this send): ${failed.join('; ')}.`]
+    : [];
+  return { notices: [...notices, ...(warned ?? [])], reported: true };
+}
+/** The notices after the send that did not hold, in the server's words. */
+function afterSendNotices(d: Record<string, any>): string[] {
+  return [
+    d.ledgerWriteFailed ? String(d.ledgerWarning ?? LEDGER_LOST) : '',
+    d.contentAfterTransmit === 'drift' ? String(d.contentWarning ?? CONTENT_CHANGED) : '',
+    // 'not-applicable' (a test send, a non-eCTD send) files nothing and says nothing.
+    d.filedSequenceRecorded === false ? String(d.filedSequenceWarning ?? FILED_NOT_RECORDED) : '',
+  ].filter(Boolean);
+}
+/** The gateway's tracking reference: the result is flattened onto data as transmissionId. */
+function gatewayRef(d: Record<string, any>): unknown {
+  return d.transmissionId ?? d.result?.transmissionId ?? d.result?.transactionId ?? d.transactionId;
+}
+/**
+ * The confirmation of a completed transmit, and whether it is an alert. The
+ * §11.50 meaning is named only when the ledger transaction carrying the
+ * signature committed; when it was lost there is no signature to name.
+ */
+function transmittedMessage(region: string, gateway: string, d: Record<string, any>, signed: { signer: string | null; meaning: string }): { text: string; alert: boolean } {
+  const ref = gatewayRef(d);
+  const after = afterSendNotices(d);
+  const checks = preTransmitNotices(d);
+  const awaiting = d.status === 'in_transit' ? ' The agency has not acknowledged receipt yet.' : '';
+  const signature = d.ledgerWriteFailed ? '' : ` Signed by ${signed.signer ?? 'you'} — meaning: ${signed.meaning}.`;
+  const text = `Transmitted via ${region.toUpperCase()} / ${gatewayLabel(gateway)}${ref ? ` · gateway ref ${String(ref)}` : ''}.`
+    + awaiting + signature + [...after, ...checks.notices].map((n) => ` ${n}`).join('');
+  return { text, alert: after.length > 0 || (checks.reported && checks.notices.length > 0) };
 }
 
 export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
@@ -375,6 +714,9 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
      loaded (the forms then fall back to the numeric id and say so). */
   const [packages, setPackages] = useState<PackageOption[] | null>(null);
   const [rows, setRows] = useState<Transmittal[]>([]);
+  /* The log's totals over every row the list matches; the route returns one
+     page (the most recent 100 by default). null = not reported. */
+  const [logMeta, setLogMeta] = useState<LogMeta | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [dialog, setDialog] = useState<'transmit' | 'identifiers' | 'assemble' | { rollback: number } | { rejection: number } | null>(null);
   /* The package id of the operator's last action, so the next form is prefilled
@@ -390,7 +732,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
   /* `findingsState` is the four-state judgment of the findings read — set where the
      findings were obtained, from positive evidence that the gate or the preflight
      ran, never derived from the list being empty. */
-  const [refusal, setRefusal] = useState<{ source: 'transmit' | 'assemble'; message: string; findings: RefusalFinding[]; findingsState: AssessmentState; fetchFailure?: string; notSaved?: string } | null>(null);
+  const [refusal, setRefusal] = useState<FindingsCard | null>(null);
   const [toast, fireToast] = useToast();
   /* The signer named in the transmit confirmation — the authenticated user,
      resolved the way SubmissionCenter resolves it. */
@@ -418,6 +760,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     if (!t.ok || !g.ok) { setState('error'); return; }
     setGateways(Array.isArray(g.data) ? g.data : []);
     setRows(Array.isArray(t.data) ? t.data : []);
+    setLogMeta(readLogMeta(t.raw));
     setState('ready');
   }, []);
   useEffect(() => { void load(); }, [load]);
@@ -435,67 +778,28 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     setLastPackageId(v.packageId ?? '');
     setRefusal(null);
     const { ok, status, raw } = await readData('POST', `/api/mdx/gateways/${region}/${gateway}/transmit`, body);
-    // Every refusal closes the drawer: the rejected password must not sit in
-    // the field for a resubmit, and the toast carries the reason.
-    if (status === 401) { setDialog(null); fireToast('Not transmitted — re-authentication failed (§11). Nothing left the platform.', 'error'); return; }
-    if (status === 409) {
-      // The active-transmittal lock, or a sequence already on file as another bundle.
-      setDialog(null);
-      fireToast(transmitConflictMessage(raw), 'error');
-      return;
-    }
-    if (status === 412) { setDialog(null); fireToast('Not transmitted — gateway credentials are not configured for this environment.', 'error'); return; }
-    if (status === 422) {
-      const message = String((raw as any)?.error ?? 'validation failed');
-      // Close the drawer so the findings card is not mounted beneath its overlay.
-      setDialog(null);
-      const findings = refusalFindings(raw);
-      // The structural gate ran — a 422 from it is that evidence — so an empty list
-      // is a refusal that carried no findings, not a clean bundle.
-      setRefusal({ source: 'transmit', message, findings, findingsState: assessmentState({ scopeExists: true, findingCount: findings.length, assessmentRan: Array.isArray((raw as any)?.details?.findings) }) });
-      /* QA 2026-10-08 (j6): the server sentence already ends in a period, so the
-         toast ended "..", and a gateway this organization has no credentials for
-         went unmentioned although it is the next refusal waiting. Both from the
-         data on this screen: the refusal, and the gateway table's credential state. */
-      const rows = gateways.filter((g) => g.gateway === gateway && String(g.region ?? '').toLowerCase() === region.toLowerCase());
-      const noCredentials = rows.length > 0 && rows.every((g) => g.configured === false)
-        ? ` ${gatewayLabel(gateway)} credentials are also not configured for this organization, so nothing could be sent through it yet.`
-        : '';
-      fireToast('Not transmitted — the structural gate rejected the bundle: ' + message.replace(/[.\s]+$/, '') + '.' + noCredentials, 'error');
-      return;
-    }
-    if (!ok) { setDialog(null); fireToast(`Transmit failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing was sent') + '.', 'error'); return; }
+    // Every outcome closes the drawer: a rejected password must not sit in the
+    // field for a resubmit, and the findings card must not mount beneath it.
     setDialog(null);
-    // The gateway result is flattened onto data and its tracking field is
-    // transmissionId (it was read as a nested transactionId, which no gateway
-    // sends, so the confirmation never showed the reference).
-    const dataOut = (raw as any)?.data ?? {};
-    const txId = dataOut.transmissionId ?? dataOut.result?.transmissionId ?? dataOut.result?.transactionId ?? dataOut.transactionId;
-    // The transmission is real even when its governed-action ledger entry could
-    // not be written; the server says so and an irreversible send must not read
-    // as an unqualified success.
-    const ledgerLost = dataOut.ledgerWriteFailed
-      ? ' ' + String(dataOut.ledgerWarning ?? 'The governed-action ledger entry for this transmission could not be written; record it manually.')
-      : '';
-    // The server re-assesses the package content after the send; a change that
-    // landed while the bytes were leaving is announced, never folded into a
-    // clean confirmation.
-    const contentChanged = dataOut.contentAfterTransmit === 'drift'
-      ? ' ' + String(dataOut.contentWarning ?? 'The package content changed while the transmission was in progress; re-assemble before any further transmission.')
-      : '';
-    // 2026-09-28 (Q-0928-3): the §11.50 meaning the signer declared was
-    // persisted on the electronic signature and never shown back. Said here —
-    // but only when the ledger transaction that carries the signature
-    // committed; when it was lost there is no signature to name.
-    const meaning = String(body.meaning);
-    const signed = dataOut.ledgerWriteFailed
-      ? ''
-      : ' Signed by ' + (signerName ?? 'you') + ' — meaning: ' + meaning + '.';
-    fireToast(
-      'Transmitted via ' + region.toUpperCase() + ' / ' + gatewayLabel(gateway) + (txId ? ' · gateway ref ' + txId : '') + '.' + signed + ledgerLost + contentChanged,
-      ledgerLost || contentChanged ? 'error' : undefined,
-    );
-    void load();
+    /* The log is read again after every answer but a 401, which is refused
+       before any row exists. A 502 can carry a bundle the gateway delivered but
+       could not confirm — recorded in transit, holding the lock — and a 409, 412
+       or lost response can name or have written a row too; the log is what an
+       operator checks before any resend, so it must show that row. */
+    if (status !== 401) void load();
+    if (ok) {
+      // 2026-09-28 (Q-0928-3): the §11.50 meaning declared is shown back.
+      const done = transmittedMessage(region, gateway, (raw as any)?.data ?? {}, { signer: signerName, meaning: String(body.meaning) });
+      fireToast(done.text, done.alert ? 'error' : undefined);
+      return;
+    }
+    if (status === 422) {
+      const card = transmitRefusalCard(raw, gatewayLabel(gateway));
+      setRefusal(card);
+      fireToast(transmitRefusalToast(card, raw) + cannotTransmitNote(gateways, region, gateway), 'error');
+      return;
+    }
+    fireToast(transmitRefusedMessage(status, raw, gateway), 'error');
   }, [load, fireToast, signerName, gateways]);
 
   const checkStatus = useCallback(async (id: number) => {
@@ -657,16 +961,6 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     const ledger = (raw as any)?.ledgerWriteFailed
       ? ' ' + String((raw as any)?.ledgerWarning ?? 'The governed-action ledger entry could not be written; record this assembly manually.')
       : '';
-    // A follow-up sequence carries what CHANGED, so say what it does to what is
-    // already on file rather than leaving the operator to infer it from a leaf
-    // count that is smaller than the package.
-    const life = b.lifecycle?.summary;
-    const lifecycleNote = life && (b.sequence ?? '0000') !== '0000'
-      ? ` Sequence ${b.sequence}: ${life.new} new, ${life.replace} replaced, ${life.unchanged} left unchanged on file` +
-        // A withdrawal is the one irreversible thing a sequence does to what is
-        // already at the agency, so it is never folded into the other counts.
-        (life.delete > 0 ? `, ${life.delete} withdrawn from the application.` : '.')
-      : '';
     setDialog(null);
     if (errors > 0) {
       // The bundle exists, but transmit will refuse it. The findings live on the
@@ -683,10 +977,17 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       fireToast(`Bundle assembled with ${errors} error-severity finding${errors === 1 ? '' : 's'} — transmit will refuse it. See the findings below.${ledger}`, 'error');
       return;
     }
-    // No error-severity findings is not "ready": the transmit gate still checks
-    // region identity, the gateway size limit and the operator's conformance
-    // opt-ins before bytes leave. Say what was proven, not more.
-    fireToast(`Bundle assembled for ${d.packageId ?? v.packageId} · ${b.leafCount ?? '?'} leaves · ${warnings} warning${warnings === 1 ? '' : 's'} · sha256 ${String(b.sha256 ?? '').slice(0, 12)}. No error-severity findings; the transmit gate still checks region, size and conformance opt-ins.${lifecycleNote}${ledger}`, ledger ? 'error' : undefined);
+    /* A clean assembly's warnings (a missing cover letter, a placeholder whose
+       only remedy is the withdraw entry its message names, an empty section)
+       were a count in a toast that clears itself, with no control on the
+       surface that could show them. They live on the stored bundle; preflight
+       serves them, and the card lists them — titled as warnings, not as a
+       refusal, unless preflight reports an error-severity finding. */
+    const pkg = String(d.packageId ?? v.packageId);
+    const loaded = warnings > 0 ? await loadFindings(id) : null;
+    if (loaded) setRefusal(assembledCard(loaded, warnings, pkg));
+    const errorsInPreflight = loaded ? preflightErrors(loaded) : 0;
+    fireToast(assembledToast(pkg, b, warnings, errorsInPreflight, ledger), ledger || errorsInPreflight > 0 ? 'error' : undefined);
   }, [fireToast, loadFindings]);
 
   /** Re-run preflight for the last package and show what it reports now. */
@@ -706,18 +1007,21 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     } else if (!hasAnswer(loaded.findingsState) || loaded.findingsState === 'not-assessed') {
       message = `Preflight ran for package ${id} but returned no itemized findings list, so no finding exists to report and nothing on this bundle is cleared.`;
     } else if (loaded.errorCount > 0) {
-      message = `Preflight reports ${loaded.errorCount} error-severity finding${loaded.errorCount === 1 ? '' : 's'} on the stored bundle for package ${id}; transmit will refuse it until they are resolved.`;
+      message = preflightErrorsMessage(loaded.errorCount, id);
     } else {
       message = `Preflight reports no error-severity findings on the stored bundle for package ${id}; the transmit gate still checks region, size and conformance opt-ins.`;
     }
-    setRefusal({
-      source: 'assemble',
+    // A warnings card stays one while the reload finds no error-severity
+    // finding: "not transmittable" over "no error-severity findings" contradicts itself.
+    const stillWarnings = loaded.ok && loaded.errorCount === 0;
+    setRefusal((prev) => ({
+      source: prev?.source === 'assemble-warnings' && stillWarnings ? 'assemble-warnings' : 'assemble',
       message,
       findings: loaded.findings,
       findingsState: loaded.findingsState,
       fetchFailure: loaded.fetchFailure,
       notSaved: loaded.notSaved,
-    });
+    }));
   }, [lastPackageId, loadFindings]);
 
   const rollback = useCallback(async (v: Record<string, string>) => {
@@ -760,8 +1064,8 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
 
   /* WHAT ANA SEES HERE. This is the last screen before bytes leave for an
      agency, so the payload is deliberately about CAPABILITY and OUTCOME, not
-     volume. Which gateways hold credentials decides what can be sent at all —
-     an unconfigured gateway is the single most common reason a transmit cannot
+     volume. Which gateways can transmit decides what can be sent at all —
+     a gateway that cannot is the single most common reason a transmit cannot
      happen, and it is a fact about the deployment that no amount of retrying
      changes.
 
@@ -780,20 +1084,24 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         ? 'Agency gateways and transmittals, still loading.'
         : state === 'error'
           ? 'Agency gateways could not be reached — the dispatch layer is unavailable, which is not the same as having no gateways.'
-          : `Agency transmittals: ${configuredGateways.length} of ${gateways.length} gateway(s) hold credentials; ` +
-            `${rows.length} transmittal(s) logged.`,
+          : `Agency transmittals: ${configuredGateways.length} of ${gateways.length} gateway(s) can transmit; ` +
+            logSummary(rows.length, logMeta),
       facts: {
         dispatchState: state,
         gatewaysTotal: gateways.length,
         gatewaysConfigured: configuredGateways.length,
-        gatewaysAwaitingCredentials: gateways.filter((g) => !g.configured).map((g) => g.gateway ?? g.name ?? g.region).filter(Boolean),
-        transmittalCount: rows.length,
-        byStatus: rows.reduce<Record<string, number>>(
-          (acc, r) => ({ ...acc, [r.status ?? 'unknown']: (acc[r.status ?? 'unknown'] ?? 0) + 1 }),
-          {},
-        ),
-        failureClasses: [...new Set(rows.map((r) => r.error_class).filter(Boolean))],
-        awaitingAcknowledgement: rows.filter((r) => r.submitted_at && !r.ack_received_at).length,
+        // Not "awaiting credentials": a gateway on an unverified transport has
+        // its credentials and still cannot transmit (configured = able to transmit).
+        gatewaysUnableToTransmit: gateways.filter((g) => !g.configured).map((g) => g.gateway ?? g.name ?? g.region).filter(Boolean),
+        /* Whole-log figures come from the server's totals over every matching
+           row; the rows here are one page. Unreported is null — never a count
+           of the page presented as the log's. */
+        transmittalCount: logMeta?.total ?? null,
+        transmittalsListed: rows.length,
+        logTruncated: logMeta?.hasMore ?? null,
+        byStatus: logMeta?.byStatus ?? null,
+        awaitingAcknowledgement: logMeta?.awaitingAcknowledgement ?? null,
+        failureClassesAmongListed: [...new Set(rows.map((r) => r.error_class).filter(Boolean))],
         // A rollback is an audit-trail act, not a recall.
         rollbackRetractsAtAgency: false,
       },
@@ -803,7 +1111,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         'Explain what a rollback does and does not undo at the agency',
       ],
     }),
-    [state, gateways, configuredGateways.length, rows],
+    [state, gateways, configuredGateways.length, rows, logMeta],
   );
   usePublishSurfaceContext('gateway-transmittals', anaContext);
 
@@ -813,7 +1121,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         <div className="pj-card-h">
           <span className="t">Agency gateways</span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {ask && <button className="reg-cta" onClick={() => ask('Explain our agency gateway posture: which gateways hold credentials and can transmit, what the unconfigured ones are missing, and which transmittals are still awaiting acknowledgement. Do not treat an unreachable dispatch layer as having no gateways.')}>{I.sparkles} Explain gateway posture</button>}
+            {ask && <button className="reg-cta" onClick={() => ask('Explain our agency gateway posture: which gateways can transmit, what the others are missing, and which transmittals are still awaiting acknowledgement. Do not treat an unreachable dispatch layer as having no gateways.')}>{I.sparkles} Explain gateway posture</button>}
             <button className="btn" style={{ height: 32 }} onClick={() => setDialog('identifiers')}>{I.penLine} Record identifiers</button>
             <button className="btn" style={{ height: 32 }} onClick={() => setDialog('assemble')}>{I.layers} Assemble bundle</button>
             <button className="btn primary" style={{ height: 32 }} onClick={() => setDialog('transmit')}>{I.upload} Transmit</button>
@@ -829,14 +1137,16 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
                   <td style={{ fontWeight: 600 }}>{g.name != null ? String(g.name) : gatewayLabel(g.gateway)}</td>
                   <td className="mono">{String(g.region ?? '—').toUpperCase()}</td>
                   <td>{String(g.environment ?? '—')}</td>
-                  <td style={{ textAlign: 'right' }}><span className={'rd-chip tone-' + (g.configured ? 'ok' : 'warn')}>{g.configured ? 'configured' : 'not configured'}</span></td>
+                  {/* configured = able to transmit; a gateway on an unverified transport answers false with its credentials in place. */}
+                  <td style={{ textAlign: 'right' }}><span className={'rd-chip tone-' + (g.configured ? 'ok' : 'warn')}>{g.configured ? 'configured' : 'cannot transmit'}</span></td>
                 </tr>))}</tbody></table>}
         </div>
       </div>
 
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Transmittal log</span><span className="s">{rows.length}</span></div>
+        <div className="pj-card-h"><span className="t">Transmittal log</span><span className="s">{logCountLabel(rows.length, logMeta)}</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
+          {logTruncationNote(rows.length, logMeta) && <div style={{ padding: '10px 16px', fontSize: 12 }}>{logTruncationNote(rows.length, logMeta)}</div>}
           {rows.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.clock} title="No transmittals yet" hint="Every transmit is recorded here with its gateway reference, status, acknowledgment, and rollback history." /></div>
             : <table className="reg-tbl"><thead><tr><th>#</th><th>Route</th><th>Gateway ref</th><th>Status</th><th>Submitted</th><th>Transmitted by</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
               <tbody>{rows.map((t) => (
@@ -886,9 +1196,9 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       )}
 
       {refusal && (
-        <div className="pj-card" role="region" aria-label={refusal.source === 'transmit' ? 'Structural gate refusal' : 'Packager refusal'}>
+        <div className="pj-card" role="region" aria-label={CARD_COPY[refusal.source].label}>
           <div className="pj-card-h">
-            <span className="t">{refusal.source === 'transmit' ? 'Structural gate refused the transmit' : 'Bundle not transmittable'}</span>
+            <span className="t">{CARD_COPY[refusal.source].title}</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {refusal.findings.some((f) => f.ruleId === IDENTIFIERS_RULE) && (
                 <button className="nda-open" onClick={() => setDialog('identifiers')}>{I.penLine} Record identifiers</button>
@@ -909,10 +1219,8 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
             <div style={{ padding: '10px 16px', fontSize: 12 }}>
               {refusal.message}{' '}
               {refusal.findingsState !== 'assessed-with-findings'
-                ? (refusal.fetchFailure ?? 'The refusal did not include an itemized findings list. Assemble the package again, then transmit.')
-                : refusal.source === 'transmit'
-                  ? 'These findings were recorded on the stored bundle when it was assembled. Resolve them, assemble the package again, then transmit.'
-                  : 'Resolve the findings, then assemble the package again.'}
+                ? (refusal.fetchFailure ?? CARD_COPY[refusal.source].noList)
+                : CARD_COPY[refusal.source].withFindings}
               {refusal.notSaved && <div style={{ marginTop: 6 }} role="status">{refusal.notSaved}</div>}
             </div>
             {/* Severity is stated as text in its own column — the chip's tone

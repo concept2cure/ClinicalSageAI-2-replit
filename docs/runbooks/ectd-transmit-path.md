@@ -253,6 +253,32 @@ pre-transmit gate:
 Malformed evidence blocks on a stored descriptor are dropped, not forwarded: the gate
 then warns "cannot prove" rather than reading an empty object as compliance.
 
+What `POST /api/mdx/gateways/:region/:gateway/transmit` answers (2026-10-08, W5/D7,
+sweep HS-2/3/4/6/8). A gate refusal is a 422 with `details.code: 'PRE_TRANSMIT_BLOCKED'`
+and one `details.findings` entry `{severity: 'error', ruleId: 'PRE-TRANSMIT', message}`
+per blocker; the blocker's own text names the remedy (the agency's large-submission
+channel, re-assembly for the target region, a PDF/A or DTD setting). FDA ESG with
+`FDA_ESG_TRANSPORT=rest` answers 412 `details: {code: 'TRANSPORT_NOT_VERIFIED',
+transmitted: false}` before anything is sent, and `GET /api/mdx/gateways` lists it with
+transport `rest` and `configured: false` (configured means able to transmit). That
+refusal's sentence names no endpoint, submitter ID or variable; the server log
+(`[fda-esg]`) records them. An active
+transmittal holding the package or its sequence is a 409 `ACTIVE_TRANSMITTAL` whose
+sentence names no route: the agency may already hold the bundle, so confirm receipt with
+the agency before sending again, and once the agency's gateway acknowledged receipt
+(`received`) a rollback is not offered as the way to re-send. A `pending` send cannot be
+rolled back, so none is offered. The bytes lock has no environment in its key, so a send
+to the agency's test environment holds the same bytes in production (and the reverse):
+that refusal says where the holding send went, carries `details.holderEnvironment`, and
+offers rolling that send back as the way to free the lock. A 201 carries
+`preTransmitFailedChecks` (`{name, detail}` pairs) and `preTransmitWarnings`, `null` when
+the guard reported nothing. `GET /api/mdx/gateways/transmittals` returns a page (default
+100, at most 500) with `meta: {count, total, hasMore, byStatus, awaitingAcknowledgement}`,
+the last four counted over every row the filters match, not over the page.
+`awaitingAcknowledgement` counts rows the agency may still acknowledge and has not: an
+active status (`pending`, `in_transit`, `received`, the duplicate-send lock's set) with no
+acknowledgement. A rejected, rolled-back or completed row is not counted.
+
 ## What the platform does not claim
 
 - **Module 1 conformance is proven for FDA only.** The FDA backbone groups leaves under
