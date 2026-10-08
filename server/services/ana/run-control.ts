@@ -268,7 +268,6 @@ export class RunRefusedError extends Error {
 /** The person's lock and the conversation's lock: one key shape for every writer that takes them. */
 const personLockKey = (org: number, user: number) => `ana_runs:user:${org}:${user}`;
 const threadLockKey = (org: number, thread: string) => `ana_runs:thread:${org}:${thread}`;
-const LIVE_STATUS_SQL = `('running','paused','awaiting_approval')`;
 
 /**
  * The conversation the client named, if the caller may use it — the rule of
@@ -331,7 +330,7 @@ function boundedRunHeartbeat(pool: RunControlQuery, runId: string, local: LocalR
             await pool.query(
               `UPDATE ana_runs
                   SET heartbeat_at = now(), current_round = $2, timeline_seq = GREATEST(timeline_seq, $4)
-                WHERE id = $1 AND owner_instance = $3 AND status IN ${LIVE_STATUS_SQL}`,
+                WHERE id = $1 AND owner_instance = $3 AND status IN ('running','paused','awaiting_approval')`,
               [runId, roundToWrite, INSTANCE_ID, local.timelineSeq],
             );
           } catch (err: any) {
@@ -390,7 +389,7 @@ export async function beginRun(input: BeginRunInput): Promise<{ runId: string; h
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [personLockKey(org, input.userId)]);
       const { rows } = await client.query(
         `SELECT count(*)::int AS n FROM ana_runs
-          WHERE organization_id = $1 AND user_id = $2 AND status IN ${LIVE_STATUS_SQL}
+          WHERE organization_id = $1 AND user_id = $2 AND status IN ('running','paused','awaiting_approval')
             AND heartbeat_at >= now() - make_interval(secs => $3)`,
         [org, input.userId, staleSecs],
       );
@@ -402,7 +401,7 @@ export async function beginRun(input: BeginRunInput): Promise<{ runId: string; h
       const reaped = await client.query(
         `UPDATE ana_runs
             SET status = 'failed', stopped_reason = 'orphaned', finished_at = now(), updated_at = now()
-          WHERE organization_id = $1 AND thread_id = $2 AND status IN ${LIVE_STATUS_SQL}
+          WHERE organization_id = $1 AND thread_id = $2 AND status IN ('running','paused','awaiting_approval')
             AND heartbeat_at < now() - make_interval(secs => $3)
           RETURNING id`,
         [org, threadId, staleSecs],
@@ -410,7 +409,7 @@ export async function beginRun(input: BeginRunInput): Promise<{ runId: string; h
       reapedOnThread = reaped.rows.map((r: { id: string }) => r.id);
       const { rows: holding } = await client.query(
         `SELECT id FROM ana_runs
-          WHERE organization_id = $1 AND thread_id = $2 AND status IN ${LIVE_STATUS_SQL}
+          WHERE organization_id = $1 AND thread_id = $2 AND status IN ('running','paused','awaiting_approval')
           ORDER BY created_at DESC LIMIT 1`,
         [org, threadId],
       );
@@ -499,7 +498,7 @@ export async function stampRunThread(
             OR (r.thread_id IS NULL AND NOT EXISTS (
                   SELECT 1 FROM ana_runs o
                    WHERE o.organization_id = $2 AND o.thread_id = $3 AND o.id <> $1
-                     AND o.status IN ${LIVE_STATUS_SQL}))
+                     AND o.status IN ('running','paused','awaiting_approval')))
           )`,
       [input.runId, input.organizationId, input.threadId, input.userMessageId],
     );
@@ -1140,7 +1139,7 @@ export async function beatOwnedRuns(): Promise<number> {
            FROM unnest($1::text[], $2::int[]) AS v(id, seq)
           WHERE r.id = v.id
             AND r.owner_instance = $3
-            AND r.status IN ${LIVE_STATUS_SQL}`,
+            AND r.status IN ('running','paused','awaiting_approval')`,
         [ids, seqs, INSTANCE_ID],
       ),
     );
@@ -1594,7 +1593,8 @@ export async function recordApprovalDecision(
   const byPerson = decision.byUserId !== null;
   if (!byPerson && decision.decided !== 'denied') return false;
   const params: unknown[] = [runId, JSON.stringify(decision), decision.toolUseId, organizationId];
-  if (byPerson) params.push(decision.byUserId);
+  // $5 is the decider, or NULL for the approval window closing (deny only, above).
+  params.push(byPerson ? decision.byUserId : null);
   const { rowCount } = await pool.query(
     `UPDATE ana_runs
      SET status = 'running',
@@ -1603,7 +1603,7 @@ export async function recordApprovalDecision(
          updated_at = now()
      WHERE id = $1
        AND organization_id = $4
-       ${byPerson ? 'AND user_id = $5' : ''}
+       AND ($5::integer IS NULL OR user_id = $5)
        AND status = 'awaiting_approval'
        AND pending_approval ->> 'toolUseId' = $3`,
     params,

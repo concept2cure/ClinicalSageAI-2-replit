@@ -62,7 +62,6 @@ export const THREAD_RUNS_LIMIT = 5;
 /** The refusal a colleague reads (§3.7, U-15): they may still read the transcript, so not "this conversation". */
 export const LIVE_PROGRESS_FORBIDDEN = "You don't have access to this conversation's live progress.";
 
-const LIVE = `('running','paused','awaiting_approval')`;
 
 /** The one method these routes use. A pg Pool satisfies it. */
 export interface RunsQuery {
@@ -70,8 +69,6 @@ export interface RunsQuery {
 }
 
 /** The run columns any read may use. Named, never `*`. */
-const RUN_COLUMNS = `id, user_id, thread_id, user_message_id, status, stopped_reason, current_round,
-  run_policy, hold, control_events, created_at, heartbeat_at, released_at, timeline_seq`;
 
 interface RunRowRead {
   id: string;
@@ -110,7 +107,8 @@ const isAsker = (rowUserId: unknown, userId: number | null) =>
 export async function runReadAccess(req: Request, runId: string, pool: RunsQuery): Promise<RunAccess> {
   const organizationId = resolveOrgId(req);
   if (organizationId === null) return { ok: false, status: 404 };
-  const { rows } = await pool.query(`SELECT ${RUN_COLUMNS} FROM ana_runs WHERE id = $1 AND organization_id = $2`, [
+  const { rows } = await pool.query(`SELECT id, user_id, thread_id, user_message_id, status, stopped_reason, current_round,
+  run_policy, hold, control_events, created_at, heartbeat_at, released_at, timeline_seq FROM ana_runs WHERE id = $1 AND organization_id = $2`, [
     runId,
     organizationId,
   ]);
@@ -181,8 +179,8 @@ async function readMirror(pool: RunsQuery, runId: string, organizationId: number
   const { rows: events } = await pool.query(
     `SELECT seq, event FROM ana_run_events
       WHERE run_id = $1 AND organization_id = $2 AND seq > $3
-      ORDER BY seq LIMIT ${RUN_EVENTS_PAGE}`,
-    [runId, organizationId, after],
+      ORDER BY seq LIMIT $4`,
+    [runId, organizationId, after, RUN_EVENTS_PAGE],
   );
   const { rows: tasks } = await pool.query(
     `SELECT event FROM ana_run_events
@@ -293,7 +291,7 @@ async function listRuns(req: Request, res: Response, pool: RunsQuery): Promise<v
               r.created_at, r.heartbeat_at, r.released_at, t.title AS thread_title
          FROM ana_runs r
          LEFT JOIN chat_threads t ON t.id = r.thread_id AND t.organization_id = r.organization_id
-        WHERE r.organization_id = $1 AND r.user_id = $2 AND r.status IN ${LIVE}
+        WHERE r.organization_id = $1 AND r.user_id = $2 AND r.status IN ('running','paused','awaiting_approval')
         ORDER BY r.created_at DESC
         LIMIT 20`,
       [organizationId, userId],
@@ -305,27 +303,23 @@ async function listRuns(req: Request, res: Response, pool: RunsQuery): Promise<v
   // The asker's own runs; every run of the conversation for an admin. A
   // member who is neither sees none, which is not a refusal: the conversation
   // may simply have no run of theirs.
-  const params: unknown[] = [organizationId, threadId];
-  let who = '';
-  if (!admin) {
-    if (userId === null) {
-      res.status(200).json({ runs: [], serverNow: new Date().toISOString() });
-      return;
-    }
-    params.push(userId);
-    who = 'AND r.user_id = $3';
+  if (!admin && userId === null) {
+    res.status(200).json({ runs: [], serverNow: new Date().toISOString() });
+    return;
   }
+  // $3 is the person for a member, NULL for an admin (every run).
+  const params: unknown[] = [organizationId, threadId, admin ? null : userId, THREAD_RUNS_LIMIT];
   const { rows } = await pool.query(
     `SELECT r.id, r.thread_id, r.user_message_id, r.status, r.stopped_reason, r.run_policy,
             r.created_at, r.heartbeat_at, r.released_at
        FROM ana_runs r
-      WHERE r.organization_id = $1 AND r.thread_id = $2 ${who}
-        AND (r.status IN ${LIVE}
+      WHERE r.organization_id = $1 AND r.thread_id = $2 AND ($3::integer IS NULL OR r.user_id = $3)
+        AND (r.status IN ('running','paused','awaiting_approval')
              OR (r.released_at IS NOT NULL AND NOT EXISTS (
                    SELECT 1 FROM ana_turn_records t
                     WHERE t.organization_id = r.organization_id AND t.run_id = r.id)))
       ORDER BY r.created_at DESC
-      LIMIT ${THREAD_RUNS_LIMIT}`,
+      LIMIT $4`,
     params,
   );
   res.status(200).json({ runs: rows.map(listedRun), serverNow: new Date().toISOString() });
