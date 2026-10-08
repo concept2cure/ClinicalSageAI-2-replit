@@ -58,9 +58,11 @@ describe('AnA rail at phone width', () => {
     expect(outside).toMatch(/\.c2c-v2\s*\.ana-scrim\s*\{[^}]*display:\s*none/);
   });
 
-  it('the shell renders the scrim and Escape closes the drawer', () => {
-    expect(v2app).toMatch(/className="ana-scrim"[^>]*onClick=\{\(\) => set\('anaOpen', false\)\}/);
-    expect(v2app).toMatch(/set\('anaOpen', false\)/);
-    expect(v2app).toMatch(/matchMedia\('\(max-width: 900px\)'\)/);
+  /* docs/design/ONE_ANA_ONE_CANVAS.md, slice 9: there is no right rail, so
+     the shell mounts no AnA drawer and no scrim at any width. AnA is talked to
+     in the conversation, which is a page like any other at phone width. */
+  it('the shell mounts no AnA rail and no scrim at any width', () => {
+    expect(v2app).not.toMatch(/<AnaRail\b/);
+    expect(v2app).not.toMatch(/className="ana-scrim"/);
   });
 });

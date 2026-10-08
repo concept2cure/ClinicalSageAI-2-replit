@@ -1,0 +1,138 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringDocsByConversation.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringDocsByConversation.test.ts
+{
+  "timestamp": "2026-10-08T02:19:06.766Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocsByConversation.test.ts
+✅ Template tables initialized
+
+ × server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > filters on the conversation recorded in the document's provenance, as a parameter 36ms
+   → expected '\n      SELECT\n        d.id,\n      …' to match /to_jsonb\(d\)->'provenance'->>'conver…/
+ × server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > narrows to what AnA drafted when asked, with no parameter to inject 11ms
+   → expected '\n      SELECT\n        d.id,\n      …' to contain 'to_jsonb(d)->\'provenance\'->>\'sourc…'
+ × server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > returns each document's conversation and source, so a list can say where it came from 6ms
+   → expected '\n      SELECT\n        d.id,\n      …' to contain 'AS conversation_id'
+ ✓ server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > adds no provenance predicate when none is asked for 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > filters on the conversation recorded in the document's provenance, as a parameter
+AssertionError: expected '\n      SELECT\n        d.id,\n      …' to match /to_jsonb\(d\)->'provenance'->>'conver…/
+
+- Expected:
+/to_jsonb\(d\)->'provenance'->>'conversationId' = \$2/
+
++ Received:
+"
+      SELECT
+        d.id,
+        d.title,
+        d.module,
+        d.product_code,
+        d.locale,
+        d.status,
+        d.created_at,
+        d.updated_at,
+        d.created_by,
+        COUNT(s.id) as section_count,
+        COALESCE(SUM(LENGTH(s.content)), 0) as total_content_length
+      FROM authoring_documents d
+      LEFT JOIN authoring_sections s ON s.doc_id = d.id
+      WHERE d.tenant_id = $1
+     GROUP BY d.id ORDER BY d.updated_at DESC"
+
+ ❯ server/routes/__tests__/authoringDocsByConversation.test.ts:67:17
+     65|     expect(res.status).toBe(200);
+     66|     const { sql, params } = listCall();
+     67|     expect(sql).toMatch(/to_jsonb\(d\)->'provenance'->>'conversationId…
+       |                 ^
+     68|     expect(params).toEqual([7, 'ana-ri_1791422302138_3qisj9qga']);
+     69|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > narrows to what AnA drafted when asked, with no parameter to inject
+AssertionError: expected '\n      SELECT\n        d.id,\n      …' to contain 'to_jsonb(d)->\'provenance\'->>\'sourc…'
+
+- Expected
++ Received
+
+- to_jsonb(d)->'provenance'->>'source' = 'ana'
++
++       SELECT
++         d.id,
++         d.title,
++         d.module,
++         d.product_code,
++         d.locale,
++         d.status,
++         d.created_at,
++         d.updated_at,
++         d.created_by,
++         COUNT(s.id) as section_count,
++         COALESCE(SUM(LENGTH(s.content)), 0) as total_content_length
++       FROM authoring_documents d
++       LEFT JOIN authoring_sections s ON s.doc_id = d.id
++       WHERE d.tenant_id = $1
++      AND d.client_program_id = $2 GROUP BY d.id ORDER BY d.updated_at DESC
+
+ ❯ server/routes/__tests__/authoringDocsByConversation.test.ts:74:17
+     72|     await request(makeApp()).get('/api/authoring/docs?source=ana&progr…
+     73|     const { sql, params } = listCall();
+     74|     expect(sql).toContain("to_jsonb(d)->'provenance'->>'source' = 'ana…
+       |                 ^
+     75|     expect(params).toEqual([7, '5ac45b38-a1d8-4a41-9488-fac39a57b852']…
+     76|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > returns each document's conversation and source, so a list can say where it came from
+AssertionError: expected '\n      SELECT\n        d.id,\n      …' to contain 'AS conversation_id'
+
+- Expected
++ Received
+
+- AS conversation_id
++
++       SELECT
++         d.id,
++         d.title,
++         d.module,
++         d.product_code,
++         d.locale,
++         d.status,
++         d.created_at,
++         d.updated_at,
++         d.created_by,
++         COUNT(s.id) as section_count,
++         COALESCE(SUM(LENGTH(s.content)), 0) as total_content_length
++       FROM authoring_documents d
++       LEFT JOIN authoring_sections s ON s.doc_id = d.id
++       WHERE d.tenant_id = $1
++      GROUP BY d.id ORDER BY d.updated_at DESC
+
+ ❯ server/routes/__tests__/authoringDocsByConversation.test.ts:81:17
+     79|     await request(makeApp()).get('/api/authoring/docs').set('Authoriza…
+     80|     const { sql } = listCall();
+     81|     expect(sql).toContain("AS conversation_id");
+       |                 ^
+     82|     expect(sql).toContain("AS provenance_source");
+     83|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  02:19:04
+   Duration  5.35s (transform 2.97s, setup 78ms, import 4.94s, tests 61ms, environment 0ms)
+

@@ -28,7 +28,8 @@
   --rail: 264px;
   --rail-collapsed: 56px;
   --ana: 380px;
-  --ana-seam: 32px;
+  /* No right rail, so no seam for it (ONE_ANA_ONE_CANVAS.md, slice 9). */
+  --ana-seam: 0px;
 
   /* Fixed near-black for shadow tinting. Declared here because the shell USES it
      (admin-access.css) while the only other declaration in the app graph is
@@ -2969,6 +2970,13 @@
 .c2c-v2 .ct-comp-send:disabled{background:var(--bg-200);color:var(--text-500);cursor:default;}.c2c-v2 .ct-comp-send svg{width:16px;height:16px;}
 /* During a run the composer steers it (ONE_ANA_ONE_CANVAS.md, slice 4): the button says so in words. */
 .c2c-v2 .ct-comp-steer{width:auto;padding:0 12px;font-size:13px;font-weight:500;white-space:nowrap;}
+/* The conversation's engine picker; it lived in the right rail's menu (ONE_ANA_ONE_CANVAS.md, slices 6/9). */
+.c2c-v2 .ct-engine{position:relative;display:inline-flex;}
+.c2c-v2 .ct-engine-pill{border:1px solid var(--border);background:transparent;color:var(--text-200);border-radius:var(--radius-md);padding:2px 10px;font-size:12px;cursor:pointer;}
+.c2c-v2 .ct-engine-pill[aria-expanded="true"]{background:var(--bg-100);}
+.c2c-v2 .ct-engine-menu{position:absolute;bottom:calc(100% + 6px);right:0;z-index:20;min-width:260px;padding:6px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);}
+/* The first-run welcome, on Home now that the rail is gone. */
+.c2c-v2 .landing-welcome{margin:16px auto 0;max-width:760px;}
 /* Attachment chips under the conversation composer. Status is carried by
    colour AND by the text after the middot, never by colour alone — a reviewer
    using a monochrome display must still be able to tell a file that was read

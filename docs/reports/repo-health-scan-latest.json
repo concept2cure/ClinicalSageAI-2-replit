@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T02:03:33.075Z",
+  "generatedAt": "2026-10-08T02:21:15.526Z",
   "git": {
-    "sha": "f5efe8a5a72d11b70bb82be143c9505172af1a60",
+    "sha": "488f1195643aa3b91af9ee1e2255680e45780923",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2067,7 +2067,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 340315
+        "bytes": 341399
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2265,7 +2265,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7608
+        "lines": 7628
       },
       {
         "file": "server/statistics-service.ts",
@@ -2545,7 +2545,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1870
+        "lines": 1871
       },
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
@@ -2640,16 +2640,16 @@
         "lines": 1700
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 1698
+      },
+      {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
         "lines": 1678
       },
       {
         "file": "server/routes/taskManagement.routes.ts",
         "lines": 1672
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "lines": 1664
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",

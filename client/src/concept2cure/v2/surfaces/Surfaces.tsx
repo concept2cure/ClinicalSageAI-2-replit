@@ -28,6 +28,8 @@ import '../styles/surfaces-v2.css';
 import { useChatUpload, composeTurn, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import { CapabilityBrowser } from './CapabilityBrowser';
+import type { OnboardingWelcome } from '../onboardingWelcome';
+import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
 
 /* ════════════ Home — AnA-first landing (centered composer) ════════════ */
 
@@ -116,11 +118,19 @@ export function Home({
   segment,
   mode: boundMode,
   setMode: setBoundMode,
+  welcome,
+  onDismissWelcome,
 }: {
   onNav: (id: string) => void;
   onAsk: (text: string) => void;
   segment: string;
+  /** First-run AnA welcome. It lived in the right rail, which is gone
+   *  (docs/design/ONE_ANA_ONE_CANVAS.md, slices 6 and 9); Home is where a new
+   *  client starts. Null once dismissed or once a conversation exists. */
+  welcome?: OnboardingWelcome | null;
+  onDismissWelcome?: () => void;
 } & HomeModeBinding) {
+  const { verdictFor } = useNavEntitlements();
   const { user } = useAuth();
   const [draft, setDraft] = React.useState('');
   const [modeOpen, setModeOpen] = React.useState(false);
@@ -400,8 +410,42 @@ export function Home({
             </div>
           </div>
         </div>
+        {welcome && (
+          <div className="ana-welcome landing-welcome" data-testid="home-welcome">
+            <div className="ana-welcome-sub">{welcome.subline}</div>
+            <div className="ana-welcome-starters">
+              {welcome.starters.map((s) => (
+                <button
+                  key={s.label}
+                  type="button"
+                  className="ana-welcome-starter"
+                  onClick={() => {
+                    if (s.navTo) {
+                      onNav(s.navTo);
+                      return;
+                    }
+                    /* The same front door as this composer: a new conversation,
+                       seeded with the starter, sent there. */
+                    (window as any).C2C_CONVO = { id: 'new', seed: s.prompt };
+                    onNav('conversation-thread');
+                  }}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            {onDismissWelcome && (
+              <button type="button" className="ana-welcome-dismiss" onClick={onDismissWelcome}>
+                Dismiss
+              </button>
+            )}
+          </div>
+        )}
         <div className="landing-actions">
-          {quickActions.map((a) => (
+          {/* Not offered when the release does not carry the destination: a
+              shortcut that opens "not in this release" is not a shortcut
+              (decision record 2026-10-08; the same rule as Project home). */}
+          {quickActions.filter((a) => !isLaunchScopeLocked(verdictFor(a.surface))).map((a) => (
             <button key={a.id} type="button" className="landing-action" onClick={() => onNav(a.surface)}>
               <span className="ico">{I[a.icon] ?? I.grid}</span>
               <span>{a.label}</span>

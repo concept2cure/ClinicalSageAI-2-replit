@@ -110,6 +110,13 @@ export interface SurfaceViewProps {
    * instead of being torn down with the screen that started it.
    */
   shellChat?: UseAnaChatReturn;
+  /**
+   * The engine the shell's chat runs on (`prefs.anaMode`) and its setter. The
+   * right rail carried the conversation's engine picker; with the rail gone
+   * (docs/design/ONE_ANA_ONE_CANVAS.md, slices 6 and 9) the conversation's
+   * composer carries it.
+   */
+  engine?: { mode: string; setMode: (mode: string) => void };
 }
 
 /**

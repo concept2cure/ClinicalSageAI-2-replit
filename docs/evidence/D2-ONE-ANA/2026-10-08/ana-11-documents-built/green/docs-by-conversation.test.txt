@@ -1,0 +1,46 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringDocsStatusFilter.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringDocsStatusFilter.test.ts
+{
+  "timestamp": "2026-10-08T02:18:58.404Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocsStatusFilter.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > compares status case-insensitively, so lower-case filters reach upper-case rows 31ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > the same holds for in_review and approved, which also matched nothing 11ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > status=all applies NO status predicate, so no state can orphan a document 4ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > an absent status also lists everything rather than silently defaulting to draft 5ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > other filters are unaffected 4ms
+stderr | server/routes/__tests__/authoringDocsByConversation.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringDocsByConversation.test.ts
+{
+  "timestamp": "2026-10-08T02:19:02.461Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocsByConversation.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > filters on the conversation recorded in the document's provenance, as a parameter 27ms
+ ✓ server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > narrows to what AnA drafted when asked, with no parameter to inject 8ms
+ ✓ server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > returns each document's conversation and source, so a list can say where it came from 4ms
+ ✓ server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > adds no provenance predicate when none is asked for 4ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  02:18:56
+   Duration  7.40s (transform 2.82s, setup 105ms, import 6.68s, tests 106ms, environment 0ms)
+
