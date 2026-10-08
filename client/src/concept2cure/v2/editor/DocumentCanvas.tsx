@@ -74,7 +74,8 @@ import { describeProvenance, moduleWasAssumed, type DocumentProvenance } from '.
 import { OpenedDocumentPending, StatusPill, ToDocumentsButton } from './CanvasDocumentList';
 
 /** GET /docs/:id → `document` (the columns this card reads; `created_by` is the author, never offered as its reviewer). */
-interface DocRow extends Pick<AuthDoc, 'created_by'> {
+/* c2c_document_id: the filing this is the editing copy of, or null (F4). */
+interface DocRow extends Pick<AuthDoc, 'created_by' | 'c2c_document_id'> {
   id: string;
   title: string;
   module: string | null;
@@ -83,9 +84,6 @@ interface DocRow extends Pick<AuthDoc, 'created_by'> {
   updated_at: string | null;
   section_count: number | string | null;
   provenance?: unknown;
-  /* The filing this document is the editing copy of, or null (F4: the
-     outline offers a start only in the filing's copy). */
-  c2c_document_id?: string | null;
 }
 
 interface SectionRow {
