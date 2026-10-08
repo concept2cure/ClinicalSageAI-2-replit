@@ -254,7 +254,7 @@ describe('DocumentCanvas — keyboard', () => {
 describe('DocumentCanvas — the dialogs it opens are real dialogs', () => {
   for (const [label, opener, title] of [
     ['File to vault', 'dc-file-to-vault', 'File to vault'],
-    ['Assign review', 'dc-assign-review', 'Assign review'],
+    ['Send for review', 'dc-assign-review', 'Send for review'],
   ] as const) {
     it(`${label}: labelled, modal, focus trapped while open, focus restored on close`, async () => {
       render(<Host />);
@@ -456,7 +456,7 @@ describe('DocumentCanvas — acts the server will refuse', () => {
     });
   }
 
-  it('disables File to vault and Assign review with the reason as described text', async () => {
+  it('disables File to vault and Send for review with the reason as described text', async () => {
     withAccess({
       fileToVault: { allowed: false, reason: 'Filing to the vault needs an Owner or Author grant on this document. Your grants on it: Reviewer.' },
       assignReview: { allowed: false, reason: 'Assigning a review needs an editing role in this organization. Your role: viewer.' },

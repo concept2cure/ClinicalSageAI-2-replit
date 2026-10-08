@@ -68,7 +68,7 @@ import {
 } from './DocumentWorkbench';
 import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
 import { FileToVaultDialog } from './FileToVaultDialog';
-import { AssignReviewDialog } from './AssignReviewDialog';
+import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramRead, programHeadline, programLineFor } from './programSummary';
 import { describeProvenance, moduleWasAssumed, type DocumentProvenance } from './provenance';
 import { OpenedDocumentPending, StatusPill, ToDocumentsButton } from './CanvasDocumentList';
@@ -603,7 +603,7 @@ export function DocumentCanvas({
             aria-describedby={actRefusal(access.assignReview) ? assignRefusalId : undefined}
             data-testid="dc-assign-review"
           >
-            {I.user} Assign review
+            {I.send} Send for review
           </button>
           {actRefusal(access.assignReview) && (
             <span id={assignRefusalId} style={{ fontSize: 11.5, color: 'var(--text-400)' }}>
@@ -687,13 +687,13 @@ export function DocumentCanvas({
         />
       )}
       {assignReviewOpen && doc && (
-        <AssignReviewDialog
+        <SendForReviewDialog
           docId={doc.id}
           docTitle={doc.title}
           programId={programId}
           sectionCode={first?.code ?? null}
           onClose={() => setAssignReviewOpen(false)}
-          onCreated={() => undefined}
+          onOpenBoard={() => { setAssignReviewOpen(false); onNav('review'); }}
           fireToast={fireToast}
         />
       )}

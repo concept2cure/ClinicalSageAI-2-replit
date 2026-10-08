@@ -257,3 +257,15 @@ was changed. A narrow `tsc` over the changed files reports nothing in them.
   role: …".
 - **The lifecycle strip** (slice 18) will place Send for review as the one primary
   button on a draft. It is not built here.
+
+## Addendum — the canvas card sends for review too (outside-file request A, landed by the coordinator)
+
+The canvas card beside the conversation (`editor/DocumentCanvas.tsx`, wave 2B's file) still opened the
+task-only `AssignReviewDialog`. Once 2B landed (`e76ae571c`), the verified patch from request A was
+applied as written: the card offers "Send for review" and opens `SendForReviewDialog`, so the
+document on the right reaches the Review board the same way the workbench's does.
+
+- Red: `red/canvas-send-for-review.txt` — `documentCanvas.test.tsx` and `documentCanvasPolish.test.tsx`
+  against the committed `DocumentCanvas.tsx`: 2 failed ("expected 'Assign review' to be 'Send for review'").
+- Green: `green/canvas-send-for-review.txt` — 25/25; with `conversationThreadCanvas`, `documentCanvasLive`,
+  `canvasDocumentsList` and `sendForReview`: 6 files, 90/90. `DocumentCanvas.tsx` warnings unchanged (2).
