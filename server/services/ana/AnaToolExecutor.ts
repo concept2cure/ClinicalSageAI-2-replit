@@ -6099,7 +6099,7 @@ registerToolHandler('resolve_submission_plan', async (input: Record<string, unkn
       plan,
       coverageSummary: coverage.summary,
       instruction:
-        'Report the per-region filing, dossier standard, Module 1 path, validation profile, and gateway, plus the coverage/gaps verbatim. The build and submit stacks for FDA/EMA/PMDA already exist; this is the routing plan over them.',
+        'Report the per-region filing, dossier standard, Module 1 path, validation profile, and gateway, plus the coverage/gaps and each region\'s notes verbatim. buildSupported and submitSupported are the platform\'s own statement of what it can carry for that market: only FDA\'s Module 1 is built to the agency\'s headings, EMA\'s and PMDA\'s are filed flat, and PMDA\'s adapter refuses every transmit. Do not describe a region as buildable or submittable where the plan says it is not.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Submission plan resolution failed: ${err?.message || 'unknown error'}` });

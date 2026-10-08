@@ -25,6 +25,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 // Importing RegistryBridge also runs its side effects, which populate the
 // window.GLOBAL_REGISTRY / REG_SEGMENTS that RegistryPicker reads.
 import { RegistryPicker } from './AnaVerbs';
+import { MarketSupportLine } from '../MarketSupportLine';
 import { getSubmissionTypeContext } from './RegistryBridge';
 import {
   DEVICE_CLASSES, DEVICE_FLAGS, REVIEW_PANELS,
@@ -526,6 +527,11 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
           {step === 1 && selTpl && (
             <div className="npw-form">
               <h2 className="npw-h2">Configure your {selTpl.label} project</h2>
+              {/* What the platform can carry for the market this filing type
+                  opens, in the server's words (FILING_SPINE.md F19). */}
+              <p className="npw-seg-s" data-testid="npw-market-support">
+                <MarketSupportLine applicationType={programTypeFor(selTpl, uiSeg)} market={selTpl.agency || 'FDA'} />
+              </p>
 
               <div className="npw-fields">
                 <label className="npw-field">

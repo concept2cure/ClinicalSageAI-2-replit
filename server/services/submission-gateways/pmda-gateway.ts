@@ -44,12 +44,10 @@ import {
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
 } from './types';
+import { PMDA_PROTOCOL_UNVERIFIED } from './transport-refusals';
 
-/** Why nothing is sent to, or read from, PMDA. One sentence, used by every refusal here. */
-const PMDA_PROTOCOL_UNVERIFIED =
-  "PMDA's electronic submission channel is 申請電子データシステム (https://esg.pmda.go.jp/); this platform holds no " +
-  'regulator-sourced specification of its protocol, so it neither sends to PMDA nor polls it. Submit through the ' +
-  'gateway system directly.';
+/* Why nothing is sent to, or read from, PMDA: one sentence, used by every
+   refusal here and by the market line (transport-refusals.ts). */
 
 export class PmdaGateway implements SubmissionGateway {
   readonly region    = 'pmda' as const;

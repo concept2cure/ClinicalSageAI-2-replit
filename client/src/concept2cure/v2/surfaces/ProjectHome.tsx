@@ -6,6 +6,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { useSurfaceAvailable } from '../surfaceAvailable';
+import { MarketSupportLine } from '../MarketSupportLine';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue } from '../dossierReadiness';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
@@ -422,6 +423,8 @@ function SubmissionRowView({ s }: { s: SubRow }) {
       <div className="pj-file-m">
         {[s.primaryRegion ? regionLabel(s.primaryRegion) : null, s.lifecycleStage ? `${s.lifecycleStage} stage` : null].filter(Boolean).join(' · ')}
       </div>
+      {/* What the platform can carry for this market, in the server's words (F19). */}
+      <div className="pj-file-m"><MarketSupportLine applicationType={s.applicationType} market={s.primaryRegion} /></div>
     </div>
   );
 }
