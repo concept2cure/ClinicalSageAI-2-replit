@@ -188,7 +188,7 @@ describe('a followed turn, as a host draws it', () => {
     // The hand-over reads the stored answer; this read keeps the first history.
     const history = [{ id: 501, role: 'user', content: 'Find every stability report' }, { id: 777, role: 'assistant', content: 'There are three.' }];
     const f = globalThis.fetch as ReturnType<typeof vi.fn>;
-    const inner = f.getMockImplementation()!;
+    const inner = f.getMockImplementation() as (url: string, init?: Parameters<typeof fetch>[1]) => Promise<Response>;
     f.mockImplementation(async (url: string, init?: Parameters<typeof fetch>[1]) =>
       /\/api\/chat\/threads\/th1\/messages/.test(String(url)) ? json(200, { messages: history }) : inner(url, init),
     );
