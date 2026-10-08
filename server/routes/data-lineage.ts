@@ -288,7 +288,7 @@ router.get('/perspectives', (_req: Request, res: Response) => {
         },
       ],
       totalPerspectives: 7,
-      compliance: ['21 CFR Part 11 §11.10(e)', 'ICH E6(R3) §5.5.3', 'EU MDR Annex II §4.1'],
+      compliance: ['21 CFR Part 11 §11.10(e)', 'ICH E6(R3) Annex 1 §4.3', 'EU MDR Annex II §4.1'],
     },
   });
 });

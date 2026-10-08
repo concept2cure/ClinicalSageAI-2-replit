@@ -3,7 +3,7 @@
  *
  * Simulates the combined scrutiny of an FDA statistical reviewer and medical
  * officer evaluating a Clinical Study Report against ICH E3, ICH E9,
- * ICH E6(R2), ICH E9(R1), and 21 CFR 314.50.
+ * ICH E6(R3), ICH E9(R1), and 21 CFR 314.50.
  *
  * Covers: ICH E3 structure compliance, synopsis-body-appendices consistency,
  * statistical analysis integrity (SAP deviations), efficacy-safety balance,
@@ -434,7 +434,7 @@ const rules: AuditRule[] = [
           'The safety population must include every subject who received at least one dose ' +
           'of study treatment. Its size should be reconciled with enrollment and ' +
           'randomization figures.',
-          'ICH E3, Section 12.1; ICH E6(R2), Section 4.11',
+          'ICH E3, Section 12.1; ICH E6(R3) Annex 1 §2.7',
           'State the number of subjects in the safety population and reconcile with the ' +
           'total enrolled population. Note any subjects excluded from the safety population ' +
           'with reasons.',
@@ -499,7 +499,7 @@ const rules: AuditRule[] = [
           'Every SAE and death must have an individual narrative per ICH E3 Section 12.3.3, ' +
           'including subject demographics, event timeline, diagnostic workup, interventions, ' +
           'outcome, and causality assessment.',
-          'ICH E3, Sections 12.3.1 & 12.3.3; ICH E6(R2), Section 4.11; 21 CFR 312.32(c)',
+          'ICH E3, Sections 12.3.1 & 12.3.3; ICH E6(R3) Annex 1 §2.7; 21 CFR 312.32(c)',
           'Provide individual SAE/death narratives. For each, include: subject ID, demographics, ' +
           'medical history, treatment details, event timeline, interventions, outcome, ' +
           'investigator causality, and sponsor adjudication.',
@@ -533,7 +533,7 @@ const rules: AuditRule[] = [
           'All amendments must be listed chronologically with date, affected sections, and ' +
           'scientific or operational justification. Post-unblinding amendments are viewed ' +
           'with heightened scrutiny.',
-          'ICH E3, Section 9.8; ICH E6(R2), Section 4.5.2',
+          'ICH E3, Section 9.8; ICH E6(R3) Annex 1 §2.5',
           'List each amendment chronologically, noting: (1) date, (2) description of change, ' +
           '(3) rationale, (4) whether implemented before or after unblinding, and ' +
           '(5) impact on primary analysis.',
@@ -554,7 +554,7 @@ const rules: AuditRule[] = [
     title: 'Protocol deviations not catalogued',
     question:
       'ICH E3 Section 10.2 describes the important protocol deviations in the CSR, and ' +
-      'ICH E6(R2) 4.5.3 has the investigator document and explain every deviation. ' +
+      'ICH E6(R3) Annex 1 §2.5 has the investigator document and explain every deviation. ' +
       'Are deviations listed, and were subjects with important deviations handled as the ' +
       'per-protocol population definition requires?',
     check(answers) {
@@ -567,7 +567,7 @@ const rules: AuditRule[] = [
           'on the data. Which deviations are important is defined per trial from its design, ' +
           'critical procedures and planned analyses (ICH E3 Q&A (R1)) — the regulatory ' +
           'distinction is important / not important, not major / minor.',
-          'ICH E3, Section 10.2; ICH E6(R2), Section 4.5.3; 21 CFR 312.62',
+          'ICH E3, Section 10.2; ICH E6(R3) Annex 1 §2.5; 21 CFR 312.62',
           'Catalogue all deviations (I/E criteria violations, prohibited concomitant ' +
           'medications, visit window breaches, dosing errors). Classify each as important or ' +
           'not against the trial\'s predefined criteria and assess the impact on the ' +
@@ -588,7 +588,7 @@ const rules: AuditRule[] = [
     dimension: 'regulatory_alignment',
     title: 'GCP compliance statement absent',
     question:
-      'ICH E6(R2) and 21 CFR 312.120 require an explicit statement confirming the ' +
+      'ICH E6(R3) and 21 CFR 312.120 require an explicit statement confirming the ' +
       'study was conducted in accordance with GCP, applicable regulations, and the ' +
       'ethical principles of the Declaration of Helsinki. Is this statement present?',
     check(answers) {
@@ -600,7 +600,7 @@ const rules: AuditRule[] = [
           'The CSR must include an explicit statement attesting GCP compliance, IRB/IEC ' +
           'approval at each investigational site, and confirmation that informed consent ' +
           'was obtained per 21 CFR 50.',
-          'ICH E6(R2), Section 1.34; 21 CFR 312.120; ICH E3, Section 9.6; 21 CFR 50',
+          'ICH E6(R3) principles; 21 CFR 312.120; ICH E3, Section 9.6; 21 CFR 50',
           'Add a statement attesting GCP compliance. Reference the specific ICH E6 version ' +
           'followed, confirm IRB/IEC approval at each site, and confirm written informed ' +
           'consent was obtained from all subjects.',
@@ -1030,7 +1030,7 @@ export function createCsrAuditor(): WarGameAuditor {
     description:
       'Simulates the combined scrutiny of an FDA statistical reviewer and medical ' +
       'officer evaluating a Clinical Study Report per ICH E3, ICH E9, ICH E9(R1), ' +
-      'ICH E6(R2), and 21 CFR 314.50. Checks ICH E3 structural completeness, ' +
+      'ICH E6(R3), and 21 CFR 314.50. Checks ICH E3 structural completeness, ' +
       'synopsis-body-appendices consistency, SAP adherence, efficacy-safety balance, ' +
       'missing data impact, protocol amendment justification, GCP compliance, DMC ' +
       'independence, subgroup analysis pre-specification, and multiplicity adjustment.',

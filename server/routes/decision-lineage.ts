@@ -13,7 +13,7 @@
  *   GET  /api/decision-lineage/compliance-report            — Compliance summary
  *
  * @module server/routes/decision-lineage
- * @compliance FDA 21 CFR Part 11, EU Annex 11, ICH E6(R2), PMDA ERES
+ * @compliance FDA 21 CFR Part 11, EU Annex 11, ICH E6(R3) Annex 1 §4.3, PMDA ERES
  */
 
 import { Router, Request, Response } from 'express';
@@ -231,7 +231,7 @@ router.get('/verify-chain', async (req: Request, res: Response) => {
     const frameworks = [
       'FDA 21 CFR Part 11 §11.10(e)',
       'EU Annex 11 §9',
-      'ICH E6(R2) §5.5.3',
+      'ICH E6(R3) Annex 1 §4.3',
       'PMDA ERES Guidelines',
     ];
     if (!result.ran) {
@@ -293,7 +293,8 @@ router.get('/compliance-report', async (req: Request, res: Response) => {
     }
     // WO-16B finding 13. Every verdict below that depends on the chain takes
     // one of THREE values. The two frameworks this report never evaluates
-    // (ICH E6(R2), GAMP 5) were hardcoded COMPLIANT; a verdict nothing computed
+    // (ICH E6(R3) GCP —
+    // and GAMP 5) were hardcoded COMPLIANT; a verdict nothing computed
     // is invented, so they say NOT_ASSESSED. The attestation asserts a
     // "cryptographically-verified audit trail" and is emitted only when one was.
     const chainStatus: 'VERIFIED' | 'INTEGRITY_FAILURE' | 'UNVERIFIABLE' = !chainResult.ran
@@ -371,8 +372,14 @@ router.get('/compliance-report', async (req: Request, res: Response) => {
           status: chainDependent(),
         },
         {
-          framework: 'ICH E6(R2) GCP',
-          sections: ['§5.5.3 Data integrity', '§5.5.4 Essential documents'],
+          /* Legacy join key: must equal the label DecisionLineageService and the
+             client catalogue use. It still says E6(R2), superseded by E6(R3) on
+             2025-01-06; rename all three together. The sections cited are R3's. */
+          framework: 'ICH E6(R3) GCP',
+          sections: [
+            'ICH E6(R3) Annex 1 §4.3 Computerised systems (data integrity)',
+            'ICH E6(R3) Appendix C Essential records',
+          ],
           status: 'NOT_ASSESSED',
           note: 'No check in this report evaluates this framework.',
         },

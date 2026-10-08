@@ -1,11 +1,11 @@
 /**
- * Assemble the v2 InvestigatorBrochure surface's render contract (the ICH E6(R2)
- * §7 IB section tree with a per-section readiness verdict) from the REAL,
+ * Assemble the v2 InvestigatorBrochure surface's render contract (the ICH E6(R3)
+ * Appendix A IB section tree with a per-section readiness verdict) from the REAL,
  * org-scoped upstream evidence stores — NOT the seed-only `c2c_investigator_brochure`
  * blob (retired 2026-08; see docs/architecture/C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md).
  *
  * The IB is not authored instance data with its own table; it is *assembled* from
- * the upstream artefacts the CTD composers already produce (ICH E6(R2) §7; ICH M4).
+ * the upstream artefacts the CTD composers already produce (ICH E6(R3) Appendix A; ICH M4).
  * So this assembler derives each of the four IB input domains from the store where
  * the org's real evidence actually lives, then runs the EXISTING deterministic
  * `ib-builder` gap engine (`flattenSections` + `detectSectionGaps` + `sectionStatus`)
@@ -31,7 +31,7 @@
  * HONEST-EMPTY SPLIT: a domain with no real backing rows (e.g. an org that has not
  * yet compiled any Module 3 product content) is honestly ABSENT — the sections that
  * need it render `missing` with the input they still need, never a fabricated verdict.
- * An org with no upstream evidence at all yields the same honest ICH E6(R2) §7
+ * An org with no upstream evidence at all yields the same honest ICH E6(R3) Appendix A
  * skeleton the route falls closed to, with `provisioned=false`.
  *
  * Data flow mirrors server/services/nonclinical/m26-m4-view.ts + the nonclinical

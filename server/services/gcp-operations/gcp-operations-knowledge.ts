@@ -13,8 +13,8 @@
  * identical output.
  *
  * Regulatory grounding (citations are returned verbatim in the engine output):
- *   - ICH E6(R3) Good Clinical Practice (Step 4, 2023; FDA adoption 2025),
- *     including the Annex on data governance and computerised systems.
+ *   - ICH E6(R3) Good Clinical Practice (Step 4, 2025-01-06; FDA adoption 2025),
+ *     including Annex 1 §4 (data governance) and §4.3 (computerised systems).
  *   - ICH E8(R1) General Considerations for Clinical Studies (2021) —
  *     quality-by-design, critical-to-quality (CtQ) factors.
  *   - FDA Guidance: Oversight of Clinical Investigations — A Risk-Based
@@ -82,10 +82,12 @@ export interface E6Principle {
 }
 
 /**
- * The ICH E6(R3) "Principles of ICH GCP." R3 reorganises the historic 13
- * principles of E6(R2) into a set of overarching, media-neutral principles
- * built on quality-by-design and proportionate effort. The statements below
- * are paraphrased operational summaries, each carrying its own citation.
+ * The ICH E6(R3) "Principles of ICH GCP." R3 rewrote the 13 principles of
+ * E6(R2) (superseded by E6(R3), 2025-01-06) as 11 overarching, media-neutral
+ * principles built on quality-by-design and proportionate effort. The
+ * statements below are paraphrased operational summaries; the local ids
+ * (P1–P9) are this engine's own and are not R3 principle numbers — each
+ * summary's citation names the R3 principle whose content it carries.
  */
 const E6R3_PRINCIPLES: E6Principle[] = [
   {
@@ -114,42 +116,42 @@ const E6R3_PRINCIPLES: E6Principle[] = [
     title: 'Scientific soundness & quality by design',
     statement:
       'Trials are scientifically sound and described in a clear, detailed protocol; quality is built into the design and conduct by identifying factors critical to quality (CtQ) and managing risks to those factors proportionately.',
-    citation: 'ICH E6(R3) Principle 4; ICH E8(R1)',
+    citation: 'ICH E6(R3) Principle 4; Principle 6 (quality by design); ICH E8(R1)',
   },
   {
     id: 'P5',
     title: 'Proportionate, fit-for-purpose processes',
     statement:
       'Trial processes and the effort applied to them are proportionate to the risks to participants and to the reliability of trial results; activities that do not add value are avoided.',
-    citation: 'ICH E6(R3) Principle 5',
+    citation: 'ICH E6(R3) Principle 7 (proportionality)',
   },
   {
     id: 'P6',
     title: 'Roles, responsibilities & oversight',
     statement:
       'Roles and responsibilities are clear; the sponsor maintains oversight of delegated activities and service providers; investigators retain responsibility for the trial at their site.',
-    citation: 'ICH E6(R3) Principle 6; 21 CFR 312.50; 312.60',
+    citation: 'ICH E6(R3) Principle 10; Annex 1 §3.9 (sponsor oversight); 21 CFR 312.50; 312.60',
   },
   {
     id: 'P7',
     title: 'Qualified personnel',
     statement:
       'Persons conducting the trial are qualified by education, training and experience to perform their respective tasks.',
-    citation: 'ICH E6(R3) Principle 7; 21 CFR 312.53(c)',
+    citation: 'ICH E6(R3) Principle 5; 21 CFR 312.53(c)',
   },
   {
     id: 'P8',
     title: 'Investigational product quality & handling',
     statement:
       'Investigational products are manufactured under GMP and handled and stored in accordance with the protocol and product specifications, with accountability maintained.',
-    citation: 'ICH E6(R3) Principle 8; ICH E6(R3) §3.16 (IP management)',
+    citation: 'ICH E6(R3) Principle 11; ICH E6(R3) Annex 1 §3.15 (sponsor) and §2.10 (investigator), IP management',
   },
   {
     id: 'P9',
     title: 'Reliable results & data governance',
     statement:
       'Trial processes and data governance support the generation of reliable results; data are attributable, legible, contemporaneous, original, accurate and complete (ALCOA+) throughout the data life cycle, regardless of medium.',
-    citation: 'ICH E6(R3) Principle 9; ICH E6(R3) Annex (computerised systems)',
+    citation: 'ICH E6(R3) Principle 9; ICH E6(R3) Annex 1 §4.3 (computerised systems)',
   },
 ];
 
@@ -243,7 +245,7 @@ const CTQ_LIBRARY: CriticalToQualityFactor[] = [
     rationale:
       'Enrolling ineligible participants exposes them to undue risk and undermines the interpretability of safety and efficacy data.',
     riskLevel: 'high',
-    citation: 'ICH E8(R1) Annex; ICH E6(R3) §2.3 (investigator)',
+    citation: 'ICH E8(R1) Annex; ICH E6(R3) Annex 1 §2.3 (investigator responsibilities)',
   },
   {
     id: 'CTQ-SAFETY-REPORTING',
@@ -252,7 +254,7 @@ const CTQ_LIBRARY: CriticalToQualityFactor[] = [
     rationale:
       'Timely, complete safety reporting is essential to participant protection and to the sponsor safety-oversight obligation.',
     riskLevel: 'critical',
-    citation: '21 CFR 312.32; 312.64(b); ICH E6(R3) §2.x (safety)',
+    citation: '21 CFR 312.32; 312.64(b); ICH E6(R3) Annex 1 §2.7 (participant medical care and safety reporting)',
   },
   {
     id: 'CTQ-PRIMARY-ENDPOINT',
@@ -270,7 +272,7 @@ const CTQ_LIBRARY: CriticalToQualityFactor[] = [
     rationale:
       'Incorrect dosing, compromised product, or accountability gaps affect both safety and the validity of exposure data.',
     riskLevel: 'high',
-    citation: 'ICH E6(R3) Principle 8; 21 CFR 312.62(a)',
+    citation: 'ICH E6(R3) Principle 11; Annex 1 §2.10 (IP management); 21 CFR 312.62(a)',
   },
   {
     id: 'CTQ-RANDOMIZATION',
@@ -279,7 +281,7 @@ const CTQ_LIBRARY: CriticalToQualityFactor[] = [
     rationale:
       'Breaks in randomization or blinding introduce bias that cannot be corrected analytically.',
     riskLevel: 'high',
-    citation: 'ICH E6(R3) §1 (design); ICH E9 (statistical principles)',
+    citation: 'ICH E6(R3) Annex 1 §2.11 (randomisation procedures and unblinding); ICH E9 (statistical principles)',
   },
   {
     id: 'CTQ-DATA-GOVERNANCE',
@@ -288,7 +290,7 @@ const CTQ_LIBRARY: CriticalToQualityFactor[] = [
     rationale:
       'Reliable results depend on attributable, contemporaneous, original and accurate records and on validated, access-controlled systems with audit trails.',
     riskLevel: 'high',
-    citation: 'ICH E6(R3) Annex (data governance & computerised systems); 21 CFR Part 11',
+    citation: 'ICH E6(R3) Annex 1 §4 (data governance) and §4.3 (computerised systems); 21 CFR Part 11',
   },
 ];
 
@@ -339,7 +341,7 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
       label: 'Multi-regional trial',
       weight: 10,
       active: params.isMultiRegional === true,
-      citation: 'ICH E17 (MRCT); ICH E6(R3) (oversight of distributed conduct)',
+      citation: 'ICH E17 (MRCT); ICH E6(R3) Annex 1 §3.9 (sponsor oversight of distributed conduct)',
     },
     {
       label: 'Large number of sites (>30)',
@@ -363,7 +365,7 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
       label: 'No validated EDC / paper-based data',
       weight: 8,
       active: params.electronicDataCapture === false,
-      citation: 'ICH E6(R3) Annex (data governance); FDA RBM Guidance (2013)',
+      citation: 'ICH E6(R3) Annex 1 §4 (data governance); FDA RBM Guidance (2013)',
     },
     {
       label: 'Prior inspection findings at sponsor/sites',
@@ -424,7 +426,7 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
       : 'Reduced, sample-based SDV concentrated on critical-to-quality data only; central monitoring substitutes for routine 100% SDV.';
 
   const sdrStrategy =
-    'Source data review (SDR) — review of the broader medical record for protocol compliance, safety and quality signals — prioritized over exhaustive SDV per FDA RBM guidance and ICH E6(R3) proportionate-effort principle.';
+    'Source data review (SDR) — review of the broader medical record for protocol compliance, safety and quality signals — prioritized over exhaustive SDV per FDA RBM guidance and ICH E6(R3) Principle 7 (proportionality).';
 
   const samplingApproach =
     overallRiskLevel === 'low'
@@ -449,7 +451,7 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
     rationale: [
       `Overall risk assessed as ${overallRiskLevel} (score ${riskScore}/100).`,
       'Centralized monitoring is the analytic backbone across all risk levels (FDA RBM Guidance 2013 §IV).',
-      'On-site effort scales with risk to participants and to result reliability (ICH E6(R3) Principle 5).',
+      'On-site effort scales with risk to participants and to result reliability (ICH E6(R3) Principle 7).',
       ...activeRationale,
     ],
   };
@@ -463,7 +465,7 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
       factor: 'Maintenance of blinding and controlled, documented unblinding',
       rationale: 'Trial is blinded; uncontrolled unblinding biases assessments and endpoint ascertainment.',
       riskLevel: 'high',
-      citation: 'ICH E6(R3) §1; ICH E9',
+      citation: 'ICH E6(R3) Annex 1 §4.1 (safeguard blinding) and §2.11 (unblinding); ICH E9',
     });
   }
   if (params.vulnerablePopulation === true) {
@@ -572,7 +574,7 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
     'Review of data entry timeliness, query metrics and protocol-deviation trends.',
     'Safety-data review in conjunction with the safety/medical-monitoring function.',
     'Reconciliation of essential-document/TMF completeness signals against site activity.',
-    'Risk re-assessment at defined intervals and at protocol amendments (ICH E6(R3) iterative risk review).',
+    'Risk re-assessment at defined intervals and at protocol amendments (ICH E6(R3) Annex 1 §3.10.1, risk management).',
   ];
 
   // ── Plan components (FDA RBM 2013 expected content of a monitoring plan) ──
@@ -595,7 +597,7 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
   }
   if (params.electronicDataCapture === false) {
     warnings.push(
-      'Paper-based or non-validated data capture limits centralized monitoring effectiveness and increases reliance on on-site SDV; consider EDC adoption (ICH E6(R3) Annex).',
+      'Paper-based or non-validated data capture limits centralized monitoring effectiveness and increases reliance on on-site SDV; consider EDC adoption (ICH E6(R3) Annex 1 §4.3).',
     );
   }
   if (overallRiskLevel === 'critical') {
@@ -603,11 +605,11 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
   }
 
   const regulatoryCitations = uniq([
-    'ICH E6(R3) Good Clinical Practice (2023; FDA adoption 2025) — Principles 4, 5, 9',
+    'ICH E6(R3) Good Clinical Practice (Step 4, 2025-01-06; FDA adoption 2025) — Principles 4, 6, 7, 9; Annex 1 §3.10 (quality management), §3.11.4 (monitoring)',
     'ICH E8(R1) General Considerations for Clinical Studies (2021) — critical-to-quality factors',
     'FDA Guidance: Oversight of Clinical Investigations — A Risk-Based Approach to Monitoring (2013)',
     'FDA Guidance: A Risk-Based Approach to Monitoring of Clinical Investigations — Q&A (2023)',
-    'ICH E6(R3) Annex — data governance and computerised systems',
+    'ICH E6(R3) Annex 1 §4 — data governance and computerised systems (§4.3)',
     'TransCelerate BioPharma Risk-Based Monitoring methodology',
     '21 CFR 312.50; 312.56 (sponsor monitoring obligations)',
     ...contributors.filter((c) => c.active).map((c) => c.citation),
@@ -717,7 +719,7 @@ const COMMON_483_FINDINGS: Record<InspectionTarget, Common483Finding[]> = {
     {
       area: 'Delegation & oversight',
       finding: 'Inadequate supervision of the clinical investigation / delegation to unqualified or untrained staff.',
-      citation: '21 CFR 312.60; ICH E6(R3) §2.x (investigator oversight)',
+      citation: '21 CFR 312.60; ICH E6(R3) Annex 1 §2.3 (investigator responsibilities)',
       preventiveAction: 'Maintain a current delegation-of-authority log mapped to training and qualification records.',
     },
   ],
@@ -731,7 +733,7 @@ const COMMON_483_FINDINGS: Record<InspectionTarget, Common483Finding[]> = {
     {
       area: 'Vendor oversight',
       finding: 'Inadequate oversight of delegated parties (CRO/vendors) without documented sponsor retention of responsibility.',
-      citation: '21 CFR 312.52; ICH E6(R3) Principle 6 (oversight of service providers)',
+      citation: '21 CFR 312.52; ICH E6(R3) Principle 10; Annex 1 §3.9 (sponsor oversight of service providers)',
       preventiveAction: 'Written transfer-of-obligation agreements; documented governance and KPI oversight of vendors.',
     },
     {
@@ -749,7 +751,7 @@ const COMMON_483_FINDINGS: Record<InspectionTarget, Common483Finding[]> = {
     {
       area: 'TMF / records',
       finding: 'Incomplete or non-contemporaneous Trial Master File; essential documents missing.',
-      citation: 'ICH E6(R3) §3.x (essential records); 21 CFR 312.57',
+      citation: 'ICH E6(R3) Appendix C (essential records); 21 CFR 312.57',
       preventiveAction: 'TMF completeness/QC plan with periodic reconciliation against the reference model.',
     },
   ],
@@ -757,7 +759,7 @@ const COMMON_483_FINDINGS: Record<InspectionTarget, Common483Finding[]> = {
     {
       area: 'Delegated obligations',
       finding: 'Performing transferred obligations without adequate procedures or documented sponsor oversight interface.',
-      citation: '21 CFR 312.52; ICH E6(R3) Principle 6',
+      citation: '21 CFR 312.52; ICH E6(R3) Annex 1 §3.3 (allocation of activities)',
       preventiveAction: 'Map each transferred obligation to an SOP and to evidence of execution.',
     },
     {
@@ -769,7 +771,7 @@ const COMMON_483_FINDINGS: Record<InspectionTarget, Common483Finding[]> = {
     {
       area: 'Data management',
       finding: 'Query management and database controls not adequately documented or validated.',
-      citation: 'ICH E6(R3) Annex (computerised systems); 21 CFR Part 11',
+      citation: 'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11',
       preventiveAction: 'Validation evidence, audit-trail review, and documented data-handling procedures.',
     },
   ],
@@ -831,7 +833,7 @@ export function assessInspectionReadiness(
   pushArea(
     'Essential documents / TMF completeness',
     Math.min(docPct, flag(params.tmfContemporaneous)),
-    'ICH E6(R3) §3.x (essential records); 21 CFR 312.57',
+    'ICH E6(R3) Appendix C (essential records); 21 CFR 312.57',
     params.tmfContemporaneous === false
       ? 'TMF not maintained contemporaneously; reconcile and document timeliness.'
       : `Essential-document completeness at ${docPct}% — close outstanding items before inspection.`,
@@ -847,14 +849,14 @@ export function assessInspectionReadiness(
   pushArea(
     'Delegation of authority',
     flag(params.delegationLogCurrent),
-    '21 CFR 312.60; ICH E6(R3) (oversight)',
+    '21 CFR 312.60; ICH E6(R3) Annex 1 §2.3 (investigator responsibilities)',
     'Bring the delegation-of-authority log current and reconcile with training/qualification records.',
     params.delegationLogCurrent !== true,
   );
   pushArea(
     'Training & qualification records',
     flag(params.trainingRecordsComplete),
-    '21 CFR 312.53(c); ICH E6(R3) Principle 7',
+    '21 CFR 312.53(c); ICH E6(R3) Principle 5',
     'Complete training/CV/qualification records for all delegated personnel.',
     params.trainingRecordsComplete !== true,
   );
@@ -875,7 +877,7 @@ export function assessInspectionReadiness(
   pushArea(
     'Protocol deviation management',
     flag(params.protocolDeviationsLogged),
-    'ICH E6(R3) §2.x; 21 CFR 312.60',
+    'ICH E6(R3) Annex 1 §2.5 (compliance with protocol); 21 CFR 312.60',
     'Ensure deviations are logged with root-cause and CAPA, and reported per IRB/sponsor policy.',
     params.protocolDeviationsLogged !== true,
   );
@@ -889,14 +891,14 @@ export function assessInspectionReadiness(
   pushArea(
     'Data traceability',
     flag(params.dataTraceabilityVerified),
-    'ICH E6(R3) Principle 9; Annex (data life cycle)',
+    'ICH E6(R3) Principle 9; Annex 1 §4.2 (data life cycle elements)',
     'Verify end-to-end traceability from source to eCRF to database/listings (ALCOA+).',
     params.dataTraceabilityVerified !== true,
   );
   pushArea(
     'Computerised-systems validation',
     flag(params.computerizedSystemsValidated),
-    'ICH E6(R3) Annex (computerised systems); 21 CFR Part 11',
+    'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11',
     'Confirm validation, access controls and audit-trail review for systems holding trial data.',
     params.computerizedSystemsValidated !== true,
   );
@@ -948,14 +950,14 @@ export function assessInspectionReadiness(
     warnings.push('Essential-document completeness below 90% is a frequent inspection trigger; prioritize TMF reconciliation.');
   }
   if (params.computerizedSystemsValidated === false) {
-    warnings.push('Unvalidated computerised systems are a high-visibility finding under the ICH E6(R3) Annex and 21 CFR Part 11.');
+    warnings.push('Unvalidated computerised systems are a high-visibility finding under ICH E6(R3) Annex 1 §4.3 and 21 CFR Part 11.');
   }
 
   const regulatoryCitations = uniq([
     'FDA BIMO Compliance Program Guidance Manual 7348.810 (Sponsors/CROs/Monitors)',
     'FDA BIMO Compliance Program Guidance Manual 7348.811 (Clinical Investigators)',
     'FDA BIMO Compliance Program Guidance Manual 7348.809 (IRBs)',
-    'ICH E6(R3) Good Clinical Practice (2023) — Principles 6, 7, 9; Annex',
+    'ICH E6(R3) Good Clinical Practice (Step 4, 2025-01-06) — Principles 5, 9, 10; Annex 1 §4',
     '21 CFR Part 312 (IND); 21 CFR Part 50; 21 CFR Part 56; 21 CFR Part 11',
     'FDA Guidance: Oversight of Clinical Investigations — Risk-Based Monitoring (2013)',
   ]);
@@ -1095,7 +1097,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
     principleById('P6'),
     conformOf(params.sponsorOversightDocumented),
     'Sponsor oversight of delegated activities is documented.',
-    'Sponsor oversight not documented — a frequent and serious deficiency under E6(R3) Principle 6.',
+    'Sponsor oversight not documented — a frequent and serious deficiency under E6(R3) Principle 10 and Annex 1 §3.9 (sponsor oversight).',
   );
   pushPrinciple(
     principleById('P7'),
@@ -1123,10 +1125,10 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       severity: params.sponsorOversightDocumented === false ? 'major' : 'moderate',
       description: 'Sponsor oversight of trial conduct and delegated activities is not documented.',
       remediation: 'Document an oversight framework: governance meetings, KPIs/KRIs, escalation paths and review of delegated-party performance.',
-      citation: 'ICH E6(R3) Principle 6; 21 CFR 312.50',
+      citation: 'ICH E6(R3) Annex 1 §3.9 (sponsor oversight); 21 CFR 312.50',
     });
   } else {
-    strengths.push('Sponsor oversight of delegated activities is documented (E6(R3) Principle 6).');
+    strengths.push('Sponsor oversight of delegated activities is documented (E6(R3) Annex 1 §3.9).');
   }
 
   if (params.vendorOversightDocumented === false) {
@@ -1135,7 +1137,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       severity: 'major',
       description: 'Oversight of service providers / CROs is not documented despite delegation of obligations.',
       remediation: 'Maintain written transfer-of-obligation agreements (21 CFR 312.52) and documented governance of each delegated obligation.',
-      citation: 'ICH E6(R3) Principle 6; 21 CFR 312.52',
+      citation: 'ICH E6(R3) Annex 1 §3.3 (allocation of activities) and §3.9 (sponsor oversight); 21 CFR 312.52',
     });
   }
 
@@ -1145,7 +1147,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       severity: params.delegationDocumented === false ? 'major' : 'moderate',
       description: 'Delegation of authority is not adequately documented and reconciled with qualification/training.',
       remediation: 'Maintain a current delegation-of-authority log mapping each task to a qualified, trained individual.',
-      citation: 'ICH E6(R3) (investigator oversight); 21 CFR 312.60',
+      citation: 'ICH E6(R3) Annex 1 §2.3 (investigator responsibilities); 21 CFR 312.60',
     });
   } else {
     strengths.push('Delegation of authority is documented and reconciled with qualifications.');
@@ -1157,7 +1159,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       severity: params.dataGovernanceAlcoaPlus === false ? 'major' : 'moderate',
       description: 'Data governance across the data life cycle (ALCOA+) is not evidenced.',
       remediation: 'Define data-flow and governance: source identification, certified copies, retention, and controls ensuring attributable/contemporaneous/original/accurate records.',
-      citation: 'ICH E6(R3) Principle 9; Annex',
+      citation: 'ICH E6(R3) Principle 9; Annex 1 §4 (data governance)',
     });
   } else {
     strengths.push('ALCOA+ data governance is evidenced across the data life cycle.');
@@ -1168,8 +1170,8 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       domain: 'computerized_systems',
       severity: params.computerizedSystemsValidated === false ? 'major' : 'moderate',
       description: 'Computerised systems holding trial data are not evidenced as validated and access-controlled.',
-      remediation: 'Provide validation evidence, role-based access control, and enabled audit trails per the E6(R3) Annex and 21 CFR Part 11.',
-      citation: 'ICH E6(R3) Annex (computerised systems); 21 CFR Part 11',
+      remediation: 'Provide validation evidence, role-based access control, and enabled audit trails per E6(R3) Annex 1 §4.3 and 21 CFR Part 11.',
+      citation: 'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11',
     });
   } else {
     strengths.push('Computerised systems are validated with access controls and audit trails.');
@@ -1181,7 +1183,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       severity: 'moderate',
       description: 'Audit-trail review is not performed, weakening detection of unauthorized or implausible data changes.',
       remediation: 'Institute risk-based audit-trail review focused on critical data and on metadata indicative of data-integrity concerns.',
-      citation: 'ICH E6(R3) Annex; 21 CFR Part 11',
+      citation: 'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11',
     });
   }
 
@@ -1211,10 +1213,10 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       severity: params.riskBasedQualityManagement === false ? 'moderate' : 'minor',
       description: 'Risk-based quality management (CtQ identification, risk control, QTLs) is not evidenced.',
       remediation: 'Implement the E8(R1)/E6(R3) quality-by-design cycle: identify CtQ factors, assess and control risks, set QTLs, and review iteratively.',
-      citation: 'ICH E6(R3) Principles 4–5; ICH E8(R1)',
+      citation: 'ICH E6(R3) Principles 6–7; Annex 1 §3.10 (quality management); ICH E8(R1)',
     });
   } else {
-    strengths.push('Risk-based, quality-by-design management is implemented (E6(R3) Principles 4–5).');
+    strengths.push('Risk-based, quality-by-design management is implemented (E6(R3) Principles 6–7; Annex 1 §3.10).');
   }
 
   if (params.recordRetentionCompliant === false) {
@@ -1222,8 +1224,8 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       domain: 'data_governance',
       severity: 'moderate',
       description: 'Record retention does not meet regulatory minimums.',
-      remediation: 'Retain essential documents per 21 CFR 312.62(c) / ICH E6(R3) (at least 2 years after marketing application approval or program discontinuation).',
-      citation: '21 CFR 312.62(c); ICH E6(R3) §3.x (retention)',
+      remediation: 'Retain essential records per 21 CFR 312.62(c) (at least 2 years after marketing application approval or program discontinuation) and ICH E6(R3) Annex 1 §2.12 and Appendix C.',
+      citation: '21 CFR 312.62(c); ICH E6(R3) Annex 1 §2.12 (investigator records) and §3.16 (sponsor data and records), retention',
     });
   }
 
@@ -1248,7 +1250,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
   notes.push('"Unverified" principles reflect inputs not provided; absence of evidence is itself an inspection risk under E6(R3).');
 
   const regulatoryCitations = uniq([
-    'ICH E6(R3) Good Clinical Practice (2023; FDA adoption 2025) — Principles 1–9 and Annex',
+    'ICH E6(R3) Good Clinical Practice (Step 4, 2025-01-06; FDA adoption 2025) — Principles and Annex 1',
     'ICH E8(R1) General Considerations for Clinical Studies (2021)',
     '21 CFR Part 312 (sponsor & investigator responsibilities)',
     '21 CFR Part 11 (electronic records / electronic signatures)',
@@ -1597,7 +1599,7 @@ export function classifyProtocolDeviation(
     dataIntegrityImpact = 'minor';
   }
 
-  // ── Importance (ICH E6(R3): an "important" deviation is one that may
+  // ── Importance (ICH E6(R3) Annex 1 §2.5: an "important" deviation is one that may
   // significantly affect participant rights/safety/well-being or the
   // reliability of trial results). ──
   const isImportant =
@@ -1654,7 +1656,7 @@ export function classifyProtocolDeviation(
     participantSafetyImpact !== 'none' ||
     dataIntegrityImpact !== 'none';
   if (reportToSponsor) {
-    rationale.push('Reportable to the sponsor: investigator must keep the sponsor informed of deviations affecting safety or data reliability (21 CFR 312.60; ICH E6(R3) investigator obligations).');
+    rationale.push('Reportable to the sponsor: investigator must keep the sponsor informed of deviations affecting safety or data reliability (21 CFR 312.60; ICH E6(R3) Annex 1 §2.5, compliance with protocol).');
   }
 
   // To FDA: routine deviations are not individually reported by the sponsor,
@@ -1705,7 +1707,7 @@ export function classifyProtocolDeviation(
   preventiveActions.push('Track CAPA to closure and verify effectiveness; review trend in central monitoring.');
 
   const regulatoryCitations = uniq([
-    'ICH E6(R3) Good Clinical Practice (2023) — important vs. non-important deviations; investigator obligations',
+    'ICH E6(R3) Good Clinical Practice (Step 4, 2025-01-06) — Annex 1 §2.5 (compliance with protocol): important vs. non-important deviations; investigator obligations',
     '21 CFR 312.60; 312.66 (investigator compliance and prompt reporting)',
     '21 CFR 56.108(a)(3)–(4) (IRB reporting of changes/deviations and unanticipated problems)',
     '21 CFR 312.32 (IND safety reporting) — where a deviation implicates an SAE/SUSAR',
@@ -1784,39 +1786,39 @@ export interface EssentialDocumentsResult {
 }
 
 /**
- * Essential-document library aligned to ICH E6 essential-records concepts and
+ * Essential-document library aligned to ICH E6(R3) Appendix C essential-records concepts and
  * the DIA TMF Reference Model zone structure.
  */
 const ESSENTIAL_DOCUMENTS: EssentialDocument[] = [
   // ── Before the trial begins ──
-  { id: 'ED-IB', name: 'Investigator’s Brochure (current version)', stage: 'before', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents the available nonclinical/clinical information relevant to the IP.', citation: 'ICH E6(R3) §3.x (essential records); 21 CFR 312.55' },
-  { id: 'ED-PROTOCOL', name: 'Signed protocol and amendments', stage: 'before', tmfZone: 'Trial Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents agreement to the protocol and any changes.', citation: 'ICH E6(R3); 21 CFR 312.23(a)(6)' },
+  { id: 'ED-IB', name: 'Investigator’s Brochure (current version)', stage: 'before', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents the available nonclinical/clinical information relevant to the IP.', citation: 'ICH E6(R3) Appendix C (essential records); 21 CFR 312.55' },
+  { id: 'ED-PROTOCOL', name: 'Signed protocol and amendments', stage: 'before', tmfZone: 'Trial Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents agreement to the protocol and any changes.', citation: 'ICH E6(R3) Appendix B (protocol); 21 CFR 312.23(a)(6)' },
   { id: 'ED-CONSENT', name: 'IRB-approved informed consent form(s) and any subject information', stage: 'before', tmfZone: 'Ethics', heldBy: ['sponsor', 'investigator'], purpose: 'Documents the consent materials approved for use.', citation: '21 CFR 50.25; 56.111' },
   { id: 'ED-IRB-APPROVAL', name: 'IRB/IEC approval and composition/statement', stage: 'before', tmfZone: 'Ethics', heldBy: ['sponsor', 'investigator'], purpose: 'Documents independent ethics review and approval before enrollment.', citation: '21 CFR 56.108; 56.115' },
   { id: 'ED-1572', name: 'Statement of Investigator (Form FDA-1572) and signed agreement', stage: 'before', tmfZone: 'Central & Site Management', heldBy: ['sponsor'], purpose: 'Documents the investigator’s commitments and qualifications.', citation: '21 CFR 312.53(c)' },
-  { id: 'ED-CV', name: 'Curriculum vitae / qualification of investigator(s) and sub-investigators', stage: 'before', tmfZone: 'Central & Site Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents qualifications and eligibility to conduct the trial.', citation: 'ICH E6(R3) Principle 7; 21 CFR 312.53(c)' },
+  { id: 'ED-CV', name: 'Curriculum vitae / qualification of investigator(s) and sub-investigators', stage: 'before', tmfZone: 'Central & Site Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents qualifications and eligibility to conduct the trial.', citation: 'ICH E6(R3) Principle 5; 21 CFR 312.53(c)' },
   { id: 'ED-FINANCIAL', name: 'Financial disclosure information (Form FDA-3454/3455)', stage: 'before', tmfZone: 'Central & Site Management', heldBy: ['sponsor'], purpose: 'Documents financial interests for disclosure to FDA.', citation: '21 CFR Part 54' },
-  { id: 'ED-LAB-CERT', name: 'Normal ranges and laboratory certification/accreditation', stage: 'before', tmfZone: 'Central & Site Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents competence of facilities to perform required tests.', citation: 'ICH E6(R3) §3.x; CLIA where applicable' },
-  { id: 'ED-IP-RELEASE', name: 'IP labeling, instructions, shipping and handling records', stage: 'before', tmfZone: 'IP & Trial Information', heldBy: ['sponsor'], purpose: 'Documents proper labeling and conditions for IP.', citation: 'ICH E6(R3) Principle 8; 21 CFR 312.57' },
-  { id: 'ED-RANDOM', name: 'Randomization/blinding procedures and code (sponsor-held)', stage: 'before', tmfZone: 'Trial Management', heldBy: ['sponsor'], purpose: 'Documents the randomization method and emergency unblinding procedure.', citation: 'ICH E6(R3); ICH E9' },
+  { id: 'ED-LAB-CERT', name: 'Normal ranges and laboratory certification/accreditation', stage: 'before', tmfZone: 'Central & Site Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents competence of facilities to perform required tests.', citation: 'ICH E6(R3) Appendix C; CLIA where applicable' },
+  { id: 'ED-IP-RELEASE', name: 'IP labeling, instructions, shipping and handling records', stage: 'before', tmfZone: 'IP & Trial Information', heldBy: ['sponsor'], purpose: 'Documents proper labeling and conditions for IP.', citation: 'ICH E6(R3) Principle 11; Annex 1 §3.15 (investigational product); 21 CFR 312.57' },
+  { id: 'ED-RANDOM', name: 'Randomization/blinding procedures and code (sponsor-held)', stage: 'before', tmfZone: 'Trial Management', heldBy: ['sponsor'], purpose: 'Documents the randomization method and emergency unblinding procedure.', citation: 'ICH E6(R3) Annex 1 §2.11 (randomisation procedures and unblinding); ICH E9' },
 
   // ── During the trial ──
-  { id: 'ED-IB-UPDATE', name: 'Updates to Investigator’s Brochure and other current documents', stage: 'during', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents revisions made available during conduct.', citation: 'ICH E6(R3) §3.x' },
+  { id: 'ED-IB-UPDATE', name: 'Updates to Investigator’s Brochure and other current documents', stage: 'during', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents revisions made available during conduct.', citation: 'ICH E6(R3) Appendix C' },
   { id: 'ED-IRB-CONTINUING', name: 'IRB continuing-review approvals and correspondence', stage: 'during', tmfZone: 'Ethics', heldBy: ['sponsor', 'investigator'], purpose: 'Documents ongoing ethics oversight.', citation: '21 CFR 56.108(a); 56.109(f)' },
   { id: 'ED-CONSENT-SIGNED', name: 'Signed informed-consent forms (source/site)', stage: 'during', tmfZone: 'Ethics / Site (ISF)', heldBy: ['investigator'], purpose: 'Documents that consent was obtained before procedures.', citation: '21 CFR 50.27' },
   { id: 'ED-SOURCE', name: 'Source documents and case-report forms / eCRFs', stage: 'during', tmfZone: 'Site (ISF)', heldBy: ['investigator'], purpose: 'Documents trial data (ALCOA+).', citation: '21 CFR 312.62(b); ICH E6(R3) Principle 9' },
   { id: 'ED-SAE', name: 'Safety reports, SAE source and reporting documentation', stage: 'during', tmfZone: 'Safety', heldBy: ['sponsor', 'investigator'], purpose: 'Documents AE/SAE ascertainment and reporting.', citation: '21 CFR 312.32; 312.64(b)' },
   { id: 'ED-MONITORING', name: 'Monitoring visit reports and follow-up letters', stage: 'during', tmfZone: 'Trial Management', heldBy: ['sponsor'], purpose: 'Documents sponsor monitoring and issue follow-up.', citation: '21 CFR 312.56; FDA RBM Guidance (2013)' },
-  { id: 'ED-DELEGATION', name: 'Delegation-of-authority / signature and training logs', stage: 'during', tmfZone: 'Site (ISF)', heldBy: ['investigator'], purpose: 'Documents who performed and was qualified for each delegated task.', citation: 'ICH E6(R3) (oversight); 21 CFR 312.60' },
+  { id: 'ED-DELEGATION', name: 'Delegation-of-authority / signature and training logs', stage: 'during', tmfZone: 'Site (ISF)', heldBy: ['investigator'], purpose: 'Documents who performed and was qualified for each delegated task.', citation: 'ICH E6(R3) Annex 1 §2.3 (investigator responsibilities); 21 CFR 312.60' },
   { id: 'ED-IP-ACCOUNT', name: 'IP accountability (receipt, dispensing, return, destruction)', stage: 'during', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents IP control throughout the trial.', citation: '21 CFR 312.62(a); 812.140' },
-  { id: 'ED-DEVIATION', name: 'Protocol-deviation log and CAPA records', stage: 'during', tmfZone: 'Trial Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents deviations, importance and corrective actions.', citation: 'ICH E6(R3); 21 CFR 312.60' },
+  { id: 'ED-DEVIATION', name: 'Protocol-deviation log and CAPA records', stage: 'during', tmfZone: 'Trial Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents deviations, importance and corrective actions.', citation: 'ICH E6(R3) Annex 1 §2.5 (compliance with protocol); 21 CFR 312.60' },
 
   // ── After completion ──
-  { id: 'ED-IP-RECON', name: 'Final IP accountability and destruction records', stage: 'after', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents final reconciliation of IP.', citation: 'ICH E6(R3) §3.x' },
-  { id: 'ED-CLOSEOUT', name: 'Audit certificate / monitoring close-out report', stage: 'after', tmfZone: 'Trial Management', heldBy: ['sponsor'], purpose: 'Documents close-out of the site and trial.', citation: 'ICH E6(R3) §3.x' },
+  { id: 'ED-IP-RECON', name: 'Final IP accountability and destruction records', stage: 'after', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents final reconciliation of IP.', citation: 'ICH E6(R3) Appendix C' },
+  { id: 'ED-CLOSEOUT', name: 'Audit certificate / monitoring close-out report', stage: 'after', tmfZone: 'Trial Management', heldBy: ['sponsor'], purpose: 'Documents close-out of the site and trial.', citation: 'ICH E6(R3) Appendix C' },
   { id: 'ED-FINAL-IRB', name: 'Final IRB notification of study completion', stage: 'after', tmfZone: 'Ethics', heldBy: ['investigator'], purpose: 'Documents notification of completion to the IRB.', citation: '21 CFR 56.108(a)' },
-  { id: 'ED-DB-LOCK', name: 'Database lock documentation and final datasets', stage: 'after', tmfZone: 'Statistics / Data', heldBy: ['sponsor'], purpose: 'Documents the controlled finalization of trial data.', citation: 'ICH E6(R3) Annex (data governance)' },
-  { id: 'ED-CSR', name: 'Clinical Study Report (CSR)', stage: 'after', tmfZone: 'Statistics / Data', heldBy: ['sponsor'], purpose: 'Documents trial results and conclusions.', citation: 'ICH E3; ICH E6(R3) §3.x' },
+  { id: 'ED-DB-LOCK', name: 'Database lock documentation and final datasets', stage: 'after', tmfZone: 'Statistics / Data', heldBy: ['sponsor'], purpose: 'Documents the controlled finalization of trial data.', citation: 'ICH E6(R3) Annex 1 §4 (data governance)' },
+  { id: 'ED-CSR', name: 'Clinical Study Report (CSR)', stage: 'after', tmfZone: 'Statistics / Data', heldBy: ['sponsor'], purpose: 'Documents trial results and conclusions.', citation: 'ICH E3; ICH E6(R3) Appendix C' },
 ];
 
 /** DIA TMF Reference Model zone concepts (abridged). */
@@ -1831,7 +1833,7 @@ const TMF_ZONES: TmfZone[] = [
 ];
 
 /**
- * Plan the Trial Master File / essential-document set per ICH E6 and the DIA
+ * Plan the Trial Master File / essential-document set per ICH E6(R3) Appendix C and the DIA
  * TMF Reference Model. Pure and deterministic.
  */
 export function planEssentialDocuments(
@@ -1880,19 +1882,19 @@ export function planEssentialDocuments(
   };
 
   const completenessAndQcPlan: QcCheckItem[] = [
-    { check: 'Define the expected document set (TMF index) by zone/section before first-patient-in; track expected vs. present.', citation: 'ICH E6(R3) §3.x; DIA TMF Reference Model' },
-    { check: 'Confirm essential documents exist before the trial begins (consent, IRB approval, 1572, IB, protocol).', citation: 'ICH E6(R3); 21 CFR 312.53; 56.108' },
+    { check: 'Define the expected document set (TMF index) by zone/section before first-patient-in; track expected vs. present.', citation: 'ICH E6(R3) Appendix C; DIA TMF Reference Model' },
+    { check: 'Confirm essential documents exist before the trial begins (consent, IRB approval, 1572, IB, protocol).', citation: 'ICH E6(R3) Appendix C (essential records); 21 CFR 312.53; 56.108' },
     { check: 'Verify documents are filed contemporaneously (timeliness metric per document type).', citation: 'ICH E6(R3) Principle 9 (contemporaneous)' },
-    { check: 'QC each filed document for completeness, legibility, correct version, and required signatures/dates.', citation: 'ICH E6(R3) §3.x' },
-    { check: 'Reconcile the Investigator Site File against the sponsor TMF for completeness and consistency.', citation: 'ICH E6(R3) (sponsor/investigator records)' },
-    { check: 'For an electronic TMF, validate the system, control access, and ensure audit trails and certified copies.', citation: 'ICH E6(R3) Annex; 21 CFR Part 11' },
-    { check: 'Perform periodic TMF completeness reviews and a pre-inspection/pre-close-out reconciliation.', citation: 'ICH E6(R3) §3.x; FDA BIMO CPGM 7348.810' },
+    { check: 'QC each filed document for completeness, legibility, correct version, and required signatures/dates.', citation: 'ICH E6(R3) Appendix C' },
+    { check: 'Reconcile the Investigator Site File against the sponsor TMF for completeness and consistency.', citation: 'ICH E6(R3) Annex 1 §2.12 (investigator records) / §3.16 (sponsor data and records)' },
+    { check: 'For an electronic TMF, validate the system, control access, and ensure audit trails and certified copies.', citation: 'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11' },
+    { check: 'Perform periodic TMF completeness reviews and a pre-inspection/pre-close-out reconciliation.', citation: 'ICH E6(R3) Appendix C; FDA BIMO CPGM 7348.810' },
   ];
 
   if (params.electronicTmf === true) {
     completenessAndQcPlan.push({
       check: 'Document the eTMF validation status, user access matrix, and audit-trail review cadence.',
-      citation: 'ICH E6(R3) Annex (computerised systems); 21 CFR Part 11',
+      citation: 'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11',
     });
   }
   if (params.multiSite === true) {
@@ -1906,8 +1908,8 @@ export function planEssentialDocuments(
   ];
 
   const regulatoryCitations = uniq([
-    'ICH E6(R3) Good Clinical Practice (2023) — essential records (before/during/after), §3.x',
-    'ICH E6(R3) Annex — data governance and computerised systems (eTMF)',
+    'ICH E6(R3) Good Clinical Practice (Step 4, 2025-01-06) — Appendix C, essential records (before/during/after)',
+    'ICH E6(R3) Annex 1 §4 — data governance and computerised systems (§4.3, eTMF)',
     '21 CFR 312.57; 312.62 (record retention and case histories)',
     '21 CFR 312.53(c) (1572, CVs); 21 CFR Part 54 (financial disclosure)',
     '21 CFR Part 56 (IRB records); 21 CFR Part 11 (electronic records)',

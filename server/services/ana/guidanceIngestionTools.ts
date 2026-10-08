@@ -77,7 +77,7 @@ export const CHECK_GUIDANCE_FRESHNESS: AnaTool = {
           properties: {
             title: {
               type: 'string',
-              description: 'Title or identifier of the cited guidance (e.g. "ICH E6(R2)", "EU AI Act", "LDT final rule").',
+              description: 'Title or identifier of the cited guidance (e.g. "ICH E6(R3)", "EU AI Act", "LDT final rule").',
             },
             citedDate: {
               type: 'string',

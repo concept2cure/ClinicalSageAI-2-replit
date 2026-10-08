@@ -3,7 +3,7 @@
  *
  * Pure, DB-free, LLM-free: the section templates that seed a new protocol document
  * (by kind), the completeness/readiness scoring used to gate finalize, and the
- * version-string bump. Section sets are grounded in ICH M11 / ICH E6(R2) (clinical
+ * version-string bump. Section sets are grounded in ICH M11 / ICH E6(R3) Appendix B (clinical
  * protocol contents), PHS Policy / AWA 9 CFR 2.31 (IACUC 3Rs), and 45 CFR 46.111
  * (IRB approval criteria) so the authored document maps to what reviewers expect.
  *
@@ -15,7 +15,7 @@ export type SectionStatus = 'not_started' | 'draft' | 'complete';
 
 export interface SectionTemplate { sectionKey: string; title: string; required: boolean; basis: string }
 
-const ICH_M11 = 'ICH M11 / ICH E6(R2) — clinical protocol contents';
+const ICH_M11 = 'ICH M11 / ICH E6(R3) Appendix B — clinical protocol contents';
 const IACUC_BASIS = 'PHS Policy IV.C.1 / AWA 9 CFR 2.31(e) — IACUC protocol contents (3Rs)';
 const IRB_BASIS = '45 CFR 46.111 — IRB approval criteria';
 const IBC_BASIS = 'NIH Guidelines for Research Involving Recombinant or Synthetic Nucleic Acids';

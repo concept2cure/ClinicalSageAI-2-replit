@@ -65,7 +65,7 @@ const rules: AuditRule[] = [
           this.question,
           'No study title was provided in the protocol submission.',
           'A descriptive study title is required per 21 CFR 312.23(a)(6)(iii)(a) and is fundamental for IND submission identification.',
-          '21 CFR 312.23(a)(6)(iii)(a); ICH E6(R2) Section 6.1',
+          '21 CFR 312.23(a)(6)(iii)(a); ICH E6(R3) Appendix B',
           'Provide a concise, descriptive study title that includes the indication, intervention, and study phase.',
           ['study_title'],
         );
@@ -290,8 +290,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No safety monitoring procedures are described.',
-          'A safety monitoring plan is required per 21 CFR 312.32 and ICH E6(R2) Section 4.11 to ensure timely detection and reporting of adverse events.',
-          '21 CFR 312.32; ICH E6(R2) Section 4.11; ICH E2A',
+          'A safety monitoring plan is required per 21 CFR 312.32 and ICH E6(R3) Annex 1 §2.7 and §3.13 to ensure timely detection and reporting of adverse events.',
+          '21 CFR 312.32; ICH E6(R3) Annex 1 §2.7; ICH E6(R3) Annex 1 §3.13; ICH E2A',
           'Develop a comprehensive safety monitoring plan including AE/SAE definitions, grading criteria (e.g., CTCAE v5.0), reporting timelines, and procedures for safety signal detection.',
           ['safety_monitoring'],
         );
@@ -463,8 +463,8 @@ const rules: AuditRule[] = [
           this.title,
           `The proposed sample size of ${n} patients appears ambitious given the indication. Has the sponsor conducted a feasibility analysis to confirm this enrollment target is achievable within the planned study timeline?`,
           `Target enrollment of ${n} is very large and may present recruitment challenges.`,
-          'ICH E6(R2) Section 6.7 requires the sponsor to ensure feasibility. Large enrollment targets increase risk of protocol amendments, timeline delays, and data quality issues.',
-          'ICH E6(R2) Section 6.7; FDA Guidance: Enhancing the Diversity of Clinical Trial Populations (2020)',
+          'ICH E6(R3) Principle 8 requires an operationally feasible protocol (Appendix B). Large enrollment targets increase risk of protocol amendments, timeline delays, and data quality issues.',
+          'ICH E6(R3) Principle 8; ICH E6(R3) Appendix B; FDA Guidance: Enhancing the Diversity of Clinical Trial Populations (2020)',
           'Provide a recruitment feasibility analysis including number of planned sites, competitive enrollment landscape, and contingency plans if enrollment is slower than expected.',
           ['sample_size', 'target_population_description'],
         );
@@ -512,8 +512,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No visit schedule or schedule of assessments is provided.',
-          'A study visit schedule is expected per ICH E6(R2) Section 6.4.1 to ensure consistent data collection across investigational sites.',
-          'ICH E6(R2) Section 6.4.1; ICH E8(R1) Section 4',
+          'A study visit schedule is expected per ICH E6(R3) Appendix B to ensure consistent data collection across investigational sites.',
+          'ICH E6(R3) Appendix B; ICH E8(R1) Section 4',
           'Develop a visit schedule (schedule of assessments) including visit windows, required assessments at each visit, and allowable deviations from planned visit dates.',
           ['visit_schedule'],
         );
@@ -537,8 +537,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Inclusion criteria are not documented in the protocol.',
-          'Inclusion criteria are mandatory per 21 CFR 312.23(a)(6)(iii)(c) and ICH E6(R2) Section 6.5.1.',
-          '21 CFR 312.23(a)(6)(iii)(c); ICH E6(R2) Section 6.5.1',
+          'Inclusion criteria are mandatory per 21 CFR 312.23(a)(6)(iii)(c) and ICH E6(R3) Appendix B.',
+          '21 CFR 312.23(a)(6)(iii)(c); ICH E6(R3) Appendix B',
           'Define clear, measurable inclusion criteria covering diagnosis confirmation, age range, disease severity, and any required baseline assessments.',
           ['inclusion_criteria', 'target_population_description'],
         );
@@ -560,8 +560,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Exclusion criteria are not provided.',
-          'Exclusion criteria are required per 21 CFR 312.23(a)(6)(iii)(c) and ICH E6(R2) Section 6.5.2 to protect subject safety and ensure scientific validity.',
-          '21 CFR 312.23(a)(6)(iii)(c); ICH E6(R2) Section 6.5.2',
+          'Exclusion criteria are required per 21 CFR 312.23(a)(6)(iii)(c) and ICH E6(R3) Appendix B to protect subject safety and ensure scientific validity.',
+          '21 CFR 312.23(a)(6)(iii)(c); ICH E6(R3) Appendix B',
           'Specify exclusion criteria including contraindicated comorbidities, concomitant medications, pregnancy/lactation status, and any safety-related exclusions.',
           ['exclusion_criteria'],
         );
@@ -586,7 +586,7 @@ const rules: AuditRule[] = [
           this.question,
           'No stopping rules or early termination criteria are defined.',
           'Pre-specified stopping criteria are expected per ICH E9 Section 4.5 and are a fundamental component of patient protection in clinical trials.',
-          'ICH E9 Section 4.5; ICH E6(R2) Section 4.11.1; FDA Guidance: Data Monitoring Committees (2006)',
+          'ICH E9 Section 4.5; ICH E6(R3) Annex 1 §2.7; FDA Guidance: Data Monitoring Committees (2006)',
           'Define explicit stopping rules for futility, safety (e.g., maximum tolerated toxicity rate), and optionally efficacy, with associated statistical boundaries (e.g., O\'Brien-Fleming, Lan-DeMets alpha-spending).',
           ['stopping_rules', 'interim_analysis_planned', 'dmc_planned'],
         );

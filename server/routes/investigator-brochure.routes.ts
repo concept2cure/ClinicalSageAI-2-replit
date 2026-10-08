@@ -1,5 +1,5 @@
 /**
- * Investigator's Brochure (IB) — ICH E6(R2) §7 section-structure read.
+ * Investigator's Brochure (IB) — ICH E6(R3) Appendix A section-structure read.
  *
  * GET /api/investigator-brochure → the org's IB section tree, each row shaped to
  * exactly the keys the v2 InvestigatorBrochure surface renders ({ number, title,
@@ -19,7 +19,7 @@
  * The seed-only `c2c_investigator_brochure` blob is RETIRED — this route no longer
  * reads it, and no fallback fabricates IB content. A domain the org has no real
  * evidence for is honestly ABSENT (its sections render `missing`); an org with no
- * upstream evidence at all yields the honest ICH E6(R2) §7 skeleton with
+ * upstream evidence at all yields the honest ICH E6(R3) Appendix A skeleton with
  * `provisioned=false`.
  *
  * Org scoped; 403 without org context. Fails CLOSED to the deterministic skeleton on
@@ -57,7 +57,7 @@ function getOrgId(req: Request): number | null {
 const depthOf = (number: string): number => (number.includes('.') ? 1 : 0);
 
 /**
- * The honest ICH E6(R2) §7 skeleton: the real section registry with a deterministic
+ * The honest ICH E6(R3) Appendix A skeleton: the real section registry with a deterministic
  * per-section verdict computed against an all-absent input set. Boilerplate sections
  * render; every data-bearing section is `missing` with the inputs it needs. Uses only
  * the builder's exported (AI-free, DB-free) gap engine — so the route can always fail

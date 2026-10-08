@@ -66,7 +66,7 @@ const SEVERITY_OPTIONS = [
 const FORMS: Record<RegisterKind, C2CFormConfig> = {
   risk: {
     eyebrow: 'Protocol · risk register', title: 'Add protocol risk',
-    sub: 'ICH E6(R2) §5.0 — risk-based quality management. Recorded as a governed action.',
+    sub: 'ICH E6(R3) Annex 1 §3.10 — risk-based quality management. Recorded as a governed action.',
     governed: true, submitLabel: 'Record risk',
     fields: [
       { key: 'description', label: 'Risk description', type: 'textarea', required: true, placeholder: 'e.g. Site staff turnover threatens visit-window compliance' },
@@ -109,7 +109,7 @@ const FORMS: Record<RegisterKind, C2CFormConfig> = {
   },
   deviation: {
     eyebrow: 'Protocol · deviations', title: 'Report deviation',
-    sub: 'Every deviation is documented and explained (ICH E6(R2) 4.5.3). Severity and safety impact are your assessment — leave them "Not assessed" if you have not made one. Recorded as a governed action.',
+    sub: 'Every deviation is documented and explained (ICH E6(R3) Annex 1 §2.5). Severity and safety impact are your assessment — leave them "Not assessed" if you have not made one. Recorded as a governed action.',
     governed: true, submitLabel: 'Report deviation',
     fields: [
       { key: 'description', label: 'What happened', type: 'textarea', required: true, placeholder: 'Describe the deviation from the protocol' },

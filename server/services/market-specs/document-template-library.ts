@@ -398,7 +398,7 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     id: 'investigators_brochure',
     title: "Investigator's Brochure (IB)",
     families: ['ectd', 'ctis'],
-    regulatoryBasis: 'ICH E6(R2) Good Clinical Practice §7',
+    regulatoryBasis: 'ICH E6(R3) Good Clinical Practice Appendix A',
     sections: [
       { number: '1', heading: 'Summary', purpose: 'Concise summary of the significant physical, chemical, pharmaceutical, pharmacological, toxicological, and clinical information.', required: true },
       { number: '2', heading: 'Introduction', purpose: 'Chemical/generic name, properties, rationale, and anticipated indications.', required: true },

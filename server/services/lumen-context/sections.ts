@@ -473,7 +473,7 @@ Organize study reports per ICH M4S. Include GLP statements.
 Reference ICH S-series guidelines for study design requirements.`,
     '5': `## Module 5 — Clinical Study Reports
 You are working on Module 5 (Clinical Study Reports) section ${sectionCode}.
-Format per ICH E3. Include ICH E6(R2) GCP compliance.
+Format per ICH E3. Include ICH E6(R3) GCP compliance.
 Reference ICH E-series guidelines for study design and reporting.`,
   };
 

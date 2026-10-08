@@ -128,7 +128,7 @@ For each recommendation, include specific citations to relevant regulatory guide
           '21 CFR Part 312 - Investigational New Drug Application',
           '21 CFR Part 50 - Protection of Human Subjects',
           '21 CFR Part 56 - Institutional Review Boards',
-          'FDA Guidance for Industry: E6(R2) Good Clinical Practice',
+          'FDA Guidance for Industry: E6(R3) Good Clinical Practice (GCP)',
           'FDA Guidance for Industry: Adaptive Designs for Clinical Trials of Drugs and Biologics (2019)',
           'FDORA 2022: Diversity Requirements for Clinical Trials',
         ],
@@ -140,7 +140,7 @@ For each recommendation, include specific citations to relevant regulatory guide
       EMA: {
         guidelines: [
           'ICH E9: Statistical Principles for Clinical Trials',
-          'ICH E6(R2): Good Clinical Practice',
+          'ICH E6(R3): Good Clinical Practice',
           'EMA Guideline on the evaluation of anticancer medicinal products in man (EMA/CHMP/205/95 Rev.6)',
           'EMA Guideline on Data Monitoring Committees (EMEA/CHMP/EWP/5872/03)',
         ],
@@ -247,7 +247,7 @@ For each recommendation, include specific citations to relevant regulatory guide
         ],
         citations: [
           'ICH E9: Statistical Principles for Clinical Trials',
-          'FDA Guidance for Industry: E6(R2) Good Clinical Practice',
+          'FDA Guidance for Industry: E6(R3) Good Clinical Practice (GCP)',
         ],
       },
       {
@@ -299,7 +299,8 @@ For each recommendation, include specific citations to relevant regulatory guide
     //              'Aligns with FDA guidance for Phase 2 trials in this
     //               indication'
     //              'Consistent with ICH E6(R2) requirements for Good Clinical
-    //               Practice'
+    //               Practice'   [historical quote: E6(R2), superseded by
+    //               E6(R3) on 2025-01-06]
     //              'Meets basic requirements for EMA Scientific Advice
     //               submissions'
     //
@@ -334,14 +335,14 @@ For each recommendation, include specific citations to relevant regulatory guide
       standing_guidance: [
         'Concomitant medication management (FDA 21 CFR 312.23(a)(6))',
         'Interim analysis points (ICH E9, Section 4.5)',
-        'Data management plan (ICH E6(R2), Section 5.5)',
+        'Data management plan (ICH E6(R3) Annex 1 §3.16, Data and Records; Annex 1 §4, Data Governance)',
         'Randomization implementation details (EMA Guideline on multiplicity issues)',
         'Ethnic factors for a PMDA submission (PMDA: Points to Consider for Ethnic Factors)',
       ],
       citations: [
         'U.S. Food and Drug Administration. (2023). IND Application Procedures: Clinical Hold. 21 CFR 312.42',
         'European Medicines Agency. (2022). Guideline on the clinical evaluation of anticancer medicinal products. EMA/CHMP/205/95 Rev.6',
-        'ICH. (2016). Integrated Addendum to ICH E6(R1): Guideline for Good Clinical Practice E6(R2)',
+        'ICH. (2016). Integrated Addendum to ICH E6(R1): Guideline for Good Clinical Practice E6(R2) (superseded by ICH E6(R3), Step 4 2025-01-06)',
         'Health Canada. (2022). Clinical Trial Applications for pharmaceuticals: Sections 5.14 (Statistical Methods)',
       ],
     };

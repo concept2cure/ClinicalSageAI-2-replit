@@ -147,13 +147,13 @@ export class RegulatoryIntelligenceService {
       // FDA/US Requirements
       {
         agency: 'FDA',
-        guideline: 'ICH E6(R2)',
+        guideline: 'ICH E6(R3)',
         requirement:
           'Ensure adequate informed consent procedures are in place and properly documented.',
         applicable_phases: ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4'],
         compliance_level: 'mandatory',
-        document_reference: 'ICH E6(R2) Section 4.8',
-        last_updated: '2023-01-15',
+        document_reference: 'ICH E6(R3) Annex 1 §2.8',
+        last_updated: '2025-01-06',
       },
       {
         agency: 'FDA',
@@ -306,7 +306,7 @@ export class RegulatoryIntelligenceService {
     this.regulatoryGuidance = [
       // FDA Guidance (US)
       {
-        title: 'Guidance for Industry: E6(R2) Good Clinical Practice',
+        title: 'Guidance for Industry: E6(R2) Good Clinical Practice (historical; superseded by E6(R3), 2025-01-06)',
         agency: 'FDA',
         year: 2023,
         url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/e6r2-good-clinical-practice-integrated-addendum-ich-e6r1',

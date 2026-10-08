@@ -202,7 +202,7 @@ const RULES: Record<StatisticalDocumentType, Record<ApplicationType, Rule>> = {
 
   // ── Protocol statistical section ───────────────────────────────────────────
   protocol_statistical_section: {
-    ind: withGrade(ECTD_PROTOCOL, 'required', 'Every protocol submitted to the IND carries its statistical section (ICH E6(R3) §6.9).'),
+    ind: withGrade(ECTD_PROTOCOL, 'required', 'Every protocol submitted to the IND carries its statistical section (ICH E6(R3) Appendix B, clinical trial protocol).'),
     cta: CTIS('part-i.protocol', 'CTIS Part I — protocol §9 statistical considerations', 'required', 'EU CTR Part I protocol requirement.'),
     nda: ECTD_PROTOCOL, bla: ECTD_PROTOCOL, maa: ECTD_PROTOCOL,
     anda: ESTAR_like('5.3.1.2', 'M5', '5.3.1.2 Comparative BA/BE study report — protocol', 'required', 'The BE protocol\'s statistical section (ANOVA on log-transformed PK, 80–125% bounds).'),
