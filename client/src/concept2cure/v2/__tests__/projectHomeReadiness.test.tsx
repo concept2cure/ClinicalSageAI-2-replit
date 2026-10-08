@@ -7,6 +7,12 @@
  * while its card in the Projects list showed the governed share, and AnA was
  * told "0% complete". The detail read now carries `readiness` from the same
  * aggregate the list uses, and null when it could not be read.
+ *
+ * QA 2026-10-08 (j1): with readiness null the page showed no readiness at all,
+ * while the program's card said "Readiness not measured", and three other
+ * screens printed three other figures. Project home now always states the one
+ * figure the server computes, under the same name the card uses — the value,
+ * or "not measured" — and tells AnA the same.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -67,25 +73,35 @@ describe('project home — Dossier readiness', () => {
     mockProgram(program({ readiness: 62, progress_percent: 0 }));
     const seen: { ctx: SurfaceContext | null } = { ctx: null };
     render(<><ProjectHome {...props()} /><Probe onCtx={(c) => { seen.ctx = c; }} /></>);
-    expect(await screen.findByText('62% complete')).toBeTruthy();
-    expect(screen.queryByText('0% complete')).toBeNull();
-    await waitFor(() => expect(seen.ctx?.summary).toContain('62% complete'));
+    const card = await readinessCard();
+    expect(card.textContent).toContain('62%');
+    expect(card.textContent).not.toContain('0%');
+    await waitFor(() => expect(seen.ctx?.summary).toContain('dossier readiness 62%'));
     expect((seen.ctx?.facts as { program?: { progressPercent?: unknown } }).program?.progressPercent).toBe(62);
   });
 
   it('a program with no approved sections reads 0%, the same as its card', async () => {
     mockProgram(program({ readiness: 0 }));
     render(<ProjectHome {...props()} />);
-    expect(await screen.findByText('0% complete')).toBeTruthy();
+    expect((await readinessCard()).textContent).toContain('0%');
   });
 
-  it('readiness that could not be read shows no figure, and AnA is told none', async () => {
+  it('readiness that could not be measured is stated as "not measured", never left out or drawn as 0', async () => {
     mockProgram(program({ readiness: null, progress_percent: 0 }));
     const seen: { ctx: SurfaceContext | null } = { ctx: null };
     render(<><ProjectHome {...props()} /><Probe onCtx={(c) => { seen.ctx = c; }} /></>);
     await waitFor(() => expect(seen.ctx?.summary).toContain('BX-512'));
-    expect(screen.queryByText('Dossier readiness', { selector: 'h3' })).toBeNull();
-    expect(screen.queryByText(/% complete/)).toBeNull();
-    expect(seen.ctx?.summary).not.toMatch(/% complete/);
+    // The card is there, under the name the Projects card uses, and says what it is.
+    const card = await readinessCard();
+    expect(card.textContent).toMatch(/not measured/i);
+    expect(card.textContent).not.toMatch(/\d+%/);
+    expect(seen.ctx?.summary).toContain('dossier readiness not measured');
+    expect(seen.ctx?.summary).not.toMatch(/\d+% complete|readiness \d+%/);
   });
 });
+
+/** The aside card headed "Dossier readiness" — the one readiness the page states. */
+async function readinessCard(): Promise<HTMLElement> {
+  const h = await screen.findByText('Dossier readiness', { selector: 'h3' });
+  return h.closest('.pj-card') as HTMLElement;
+}

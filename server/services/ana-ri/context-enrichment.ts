@@ -14,6 +14,7 @@
  */
 
 import { pool } from '../../db.js';
+import { looksLikeProgramUuid, parseIntegerProjectId } from '../../lib/project-id.js';
 import { computeReadinessScore, type ReadinessContext } from '../intelligence/readiness-scoring-engine.js';
 import { type RecommendationContext } from '../intelligence/recommendation-engine.js';
 import { generateNextActions } from '../intelligence/next-best-action-engine.js';
@@ -1012,7 +1013,24 @@ async function enrichWithBiostatContext(projectId: string | number, submissionTy
 async function enrichWithProjectSummary(projectId: string | number, orgId?: number): Promise<string> {
   if (!orgId) return '';
   try {
-    const intel = await getProjectIntelligence(Number(projectId), orgId);
+    /* The profile is keyed by the integer projects row. This was
+       getProjectIntelligence(Number(projectId)): the composer names the open
+       project by its regulatory_programs UUID, so every project turn queried
+       project_intelligence_profiles with NaN and reported project context
+       unavailable (QA 2026-10-08, j5). The one resolution of a project ref:
+       an integer is itself, a program is its anchored row, and a program with
+       none has no profile — an empty block, not a failed read. Only a program
+       needs the database, so the resolver is loaded for that case alone. */
+    const integerProject =
+      parseIntegerProjectId(projectId) ??
+      (looksLikeProgramUuid(projectId)
+        ? await (await import('../c2c/project-ref.js')).integerProjectForRef(
+            async () => (await import('../../db.js')).db,
+            { ref: projectId, orgId, context: 'ana-project-profile' },
+          )
+        : null);
+    if (integerProject == null) return '';
+    const intel = await getProjectIntelligence(integerProject, orgId);
     if (!intel) return '';
 
     const parts: string[] = ['## Project Intelligence Profile'];

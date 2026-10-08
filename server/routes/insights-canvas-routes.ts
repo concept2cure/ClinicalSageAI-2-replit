@@ -44,8 +44,11 @@
 
 import { Router, Request, Response } from 'express';
 
+import { db } from '../db';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
+import { looksLikeProgramUuid } from '../lib/project-id';
+import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import { REPORT_TYPE_SEED, type ReportTypeDefinition } from '../services/report-os/taxonomy';
 import { GLOBAL_REPORT_TYPE_SEED } from '../services/report-os/taxonomy-global';
 import { PREDICTION_REPORT_TYPES } from '../services/report-os/prediction/report-types';
@@ -150,12 +153,27 @@ interface CanvasPortfolio {
   programs: CanvasPortfolioProgram[] | null;
 }
 
+/**
+ * The program the shell has open (`?programId=`), and what became of it:
+ *   lead              its anchored project leads the canvas;
+ *   unanchored        it has no projects row, so no readiness or report runs
+ *                     over it — and the canvas has no lead;
+ *   not-in-portfolio  its row is not among the programs the portfolio computed
+ *                     (archived, a sub-project, or past the rollup cap).
+ * Null when no program was named: the organisation's flagship leads.
+ */
+interface CanvasOpenProgram {
+  programId: string;
+  state: 'lead' | 'unanchored' | 'not-in-portfolio';
+}
+
 interface CanvasOverview {
   organizationId: number;
   tier: Tier;
   segments: ReportSegment[];
   reportTypes: CanvasReportType[];
   leadProgram: CanvasLeadProgram | null;
+  openProgram: CanvasOpenProgram | null;
   portfolio: CanvasPortfolio;
 }
 
@@ -230,6 +248,50 @@ function toPortfolioProgram(insight: ProgramMemberInsight): CanvasPortfolioProgr
   };
 }
 
+/**
+ * `?programId=` → the open program's regulatory_programs UUID (lower-cased),
+ * null when none is named, or false when the value is not a program UUID. QA
+ * 2026-10-08 (j1): the canvas always led with the flagship, so HLV-333's
+ * Reporting screen spoke about C2C-001. Anything that is not a program UUID is
+ * refused rather than read as a project id: the client never parses one, and an
+ * integer here would be another id space.
+ */
+function openProgramParam(raw: unknown): string | null | false {
+  const v = typeof raw === 'string' ? raw.trim() : '';
+  if (!v) return null;
+  return looksLikeProgramUuid(v) ? v.toLowerCase() : false;
+}
+
+/**
+ * The canvas lead. With a program open: that program's anchored projects row,
+ * resolved on the server (strict — a lookup that could not complete throws to
+ * the route's 500, never "no record"), led only when the portfolio computed it;
+ * otherwise no lead and `openProgram` says why. Never the flagship in its place.
+ * With none open: the flagship, as before.
+ */
+async function pickLead(
+  organizationId: number,
+  programId: string | null,
+  summary: { attentionRanked: ProgramMemberInsight[] } | null,
+): Promise<{ leadProgram: CanvasLeadProgram | null; openProgram: CanvasOpenProgram | null }> {
+  const members = summary?.attentionRanked ?? [];
+  if (!programId) {
+    const flagship = pickFlagship(members);
+    return { leadProgram: flagship ? toLeadProgram(flagship) : null, openProgram: null };
+  }
+  const anchored = await resolveProgramProjectAnchor(db, {
+    programId,
+    orgId: organizationId,
+    context: 'insights-canvas-overview',
+    strict: true,
+  });
+  const member = anchored == null ? null : members.find((m) => m.projectId === anchored) ?? null;
+  return {
+    leadProgram: member ? toLeadProgram(member) : null,
+    openProgram: { programId, state: anchored == null ? 'unanchored' : member ? 'lead' : 'not-in-portfolio' },
+  };
+}
+
 export default function createInsightsCanvasRoutes(): Router {
   const router = Router();
 
@@ -240,6 +302,9 @@ export default function createInsightsCanvasRoutes(): Router {
    * the entitlement-annotated governed report catalog, the flagship program's
    * real governed readiness, and the (enterprise-gated) cross-program board
    * rollup. Optional `?persona=` intersects the catalog on allowedPersonas.
+   * Optional `?programId=` (a regulatory_programs UUID) names the program the
+   * shell has open: it leads instead of the flagship, or `openProgram` says why
+   * it cannot.
    */
   router.get('/overview', async (req: Request, res: Response) => {
     try {
@@ -249,6 +314,10 @@ export default function createInsightsCanvasRoutes(): Router {
       }
 
       const persona = typeof req.query.persona === 'string' ? req.query.persona : null;
+      const programId = openProgramParam(req.query.programId);
+      if (programId === false) {
+        return res.status(400).json({ success: false, error: { code: 'INVALID_PROGRAM_ID', message: 'programId must be a program id.' } });
+      }
 
       // Independent reads. The entitlement gate and segment derivation fail
       // closed internally (never throw). The portfolio compute can throw, and
@@ -310,10 +379,10 @@ export default function createInsightsCanvasRoutes(): Router {
         };
       });
 
-      // Lead / flagship program — a single program's OWN governed readiness, a
-      // base capability shown on every tier (not the enterprise rollup).
-      const flagship = summary ? pickFlagship(summary.attentionRanked) : null;
-      const leadProgram = flagship ? toLeadProgram(flagship) : null;
+      // Lead program — a single program's OWN governed readiness, a base
+      // capability shown on every tier (not the enterprise rollup): the open
+      // program when one is named, the flagship otherwise (pickLead).
+      const { leadProgram, openProgram } = await pickLead(organizationId, programId, summary);
 
       // Cross-program board rollup — the ENTERPRISE portfolio_rollup capability.
       // Populated only when entitled; otherwise an honest lock (null), mirroring
@@ -345,6 +414,7 @@ export default function createInsightsCanvasRoutes(): Router {
         segments,
         reportTypes,
         leadProgram,
+        openProgram,
         portfolio,
       };
 

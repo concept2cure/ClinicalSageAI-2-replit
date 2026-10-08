@@ -1,0 +1,21 @@
+{
+ "HLV-333": {
+  "url": "/concept2cure/conversation-thread/ana-ri_1791436657846_yjy2kksz3?program=d979e567-4622-46f1-8cb7-8bf434227f25",
+  "streamRequests": [
+   "200 /api/ana-ri/stream"
+  ],
+  "overlayFailures": [],
+  "nanQueries": [],
+  "anyNaN": 0
+ },
+ "BX-256 · systemic lupus": {
+  "url": "/concept2cure/conversation-thread/ana-ri_1791436689086_7dy9ttojf?program=099991d1-dac8-43c5-b88a-8baab26194ee",
+  "streamRequests": [
+   "200 /api/ana-ri/stream",
+   "200 /api/ana-ri/stream"
+  ],
+  "overlayFailures": [],
+  "nanQueries": [],
+  "anyNaN": 0
+ }
+}

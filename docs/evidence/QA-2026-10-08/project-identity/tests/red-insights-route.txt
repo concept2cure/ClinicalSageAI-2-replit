@@ -1,0 +1,18 @@
+ × server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > leads with the open program’s anchored project, not the flagship 27ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, ObjectContaining{…} ]
+ × server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > a program with no project record has no lead — and is not given the flagship 6ms
+   → expected { scope: 'project', …(13) } to be null
+ × server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > an anchored project outside the computed portfolio is named as such, with no lead 4ms
+   → expected { scope: 'project', …(13) } to be null
+ × server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > a programId that is not a program UUID is refused, not guessed 5ms
+   → 11: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > with no program open the flagship still leads, as before 4ms
+   → expected undefined to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > leads with the open program’s anchored project, not the flagship
+ FAIL  server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > a program with no project record has no lead — and is not given the flagship
+ FAIL  server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > an anchored project outside the computed portfolio is named as such, with no lead
+ FAIL  server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > a programId that is not a program UUID is refused, not guessed
+ FAIL  server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > with no program open the flagship still leads, as before
+ Test Files  1 failed (1)
+      Tests  5 failed (5)

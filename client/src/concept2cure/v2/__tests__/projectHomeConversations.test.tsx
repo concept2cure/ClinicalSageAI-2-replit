@@ -51,9 +51,10 @@ describe('ProjectHome — conversations', () => {
     const p = props();
     render(<ProjectHome {...p} />);
     const row = await screen.findByText(/Draft the Module 2\.5 clinical overview/);
-    // The read is scoped to the program UUID, limit-bounded.
+    // The read is scoped to the program UUID, limit-bounded: a screenful of 8,
+    // and one more to know whether there are older ones.
     const call = apiRequest.mock.calls.find((c) => String(c[1]).startsWith('/api/chat/threads?'));
-    expect(call![1]).toBe(`/api/chat/threads?program_id=${PID}&limit=8`);
+    expect(call![1]).toBe(`/api/chat/threads?program_id=${PID}&limit=9`);
     expect(screen.getByText('Untitled conversation')).toBeTruthy();
 
     fireEvent.click(row.closest('button')!);
@@ -82,5 +83,70 @@ describe('ProjectHome — conversations', () => {
     const convo = container.querySelector('.pj-convo')!;
     const grid = container.querySelector('.pj-grid')!;
     expect(convo.compareDocumentPosition(grid) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
+
+/* QA 2026-10-08 (j5): the program had 25 conversations and the page listed the
+   newest 8, with no way to the other 17. */
+describe('ProjectHome — older conversations are reachable', () => {
+  const many = (from: number, n: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      id: `ana-ri_${from + i}`,
+      title: `Conversation ${from + i}`,
+      created_at: '2026-10-01T10:00:00Z',
+      updated_at: '2026-10-01T10:00:00Z',
+      program_id: PID,
+    }));
+  const rows = () => Array.from(document.querySelectorAll('[data-testid="pj-threads"] .pj-file-n')).map((e) => e.textContent);
+
+  function pages(pageOf: (offset: number) => Response) {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === `/api/c2c/projects/${PID}`) return ok({ title: 'BX-301', readiness: 42 });
+      if (url.startsWith('/api/chat/threads?program_id=')) {
+        const offset = Number(new URLSearchParams(url.split('?')[1]).get('offset') ?? 0);
+        return pageOf(offset);
+      }
+      return ok({});
+    });
+  }
+
+  it('shows a screenful, then the older ones a screenful at a time, until there are none', async () => {
+    // 20 conversations: 1..20, newest first. Each read asks for one past the screenful.
+    pages((offset) => ok({ threads: many(offset + 1, Math.min(9, 20 - offset)) }));
+    render(<ProjectHome {...props()} />);
+    await screen.findByText('Conversation 1');
+    expect(rows()).toHaveLength(8);
+    expect(rows()).not.toContain('Conversation 9');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show older conversations' }));
+    await screen.findByText('Conversation 16');
+    expect(apiRequest.mock.calls.map((c) => c[1])).toContain(`/api/chat/threads?program_id=${PID}&limit=9&offset=8`);
+    expect(rows()).toHaveLength(16);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show older conversations' }));
+    await screen.findByText('Conversation 20');
+    expect(rows()).toHaveLength(20);
+    // The last read came back short: there is nothing older to offer.
+    expect(screen.queryByRole('button', { name: 'Show older conversations' })).toBeNull();
+    // An older one opens like any other.
+    fireEvent.click(screen.getByText('Conversation 19').closest('button')!);
+    expect((window as any).C2C_CONVO).toEqual({ id: 'ana-ri_19' });
+  });
+
+  it('a screenful exactly offers nothing more', async () => {
+    pages(() => ok({ threads: many(1, 8) }));
+    render(<ProjectHome {...props()} />);
+    await screen.findByText('Conversation 8');
+    expect(screen.queryByRole('button', { name: 'Show older conversations' })).toBeNull();
+  });
+
+  it('an older read that fails says so, keeps what is shown, and can be tried again', async () => {
+    pages((offset) => (offset === 0 ? ok({ threads: many(1, 9) }) : fail(503)));
+    render(<ProjectHome {...props()} />);
+    await screen.findByText('Conversation 1');
+    fireEvent.click(screen.getByRole('button', { name: 'Show older conversations' }));
+    expect(await screen.findByText(/Couldn.t load older conversations/)).toBeTruthy();
+    expect(rows()).toHaveLength(8);
+    expect(screen.getByRole('button', { name: 'Show older conversations' })).toBeTruthy();
   });
 });

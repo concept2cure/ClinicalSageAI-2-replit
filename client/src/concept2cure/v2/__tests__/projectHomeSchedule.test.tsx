@@ -11,13 +11,14 @@
  *     regulatory basis, owner role) — no invented progress, no invented dates;
  *   - a project with no generated schedule says so, and offers only REAL
  *     affordances (the AnA composer prompt + the real POST generate endpoint);
- *   - a UUID-keyed program — whose id-space the numeric schedule store cannot
- *     resolve — gets the honest id-space empty and NO doomed fetch;
+ *   - a UUID-keyed program is read by its own UUID (the server resolves the
+ *     program's anchored project row); a program with no such row says so,
+ *     with no generate action, rather than reading as a failure;
  *   - a failed read says so instead of rendering as "no schedule".
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -204,29 +205,43 @@ describe('ProjectHome — schedule of events (numeric-keyed project)', () => {
   });
 });
 
+/* QA 2026-10-08 (j1): the Plan panel said "Schedule isn't wired to this
+   workspace yet" for every program — including HLV-333, which the wizard had
+   anchored to a projects row. The panel now asks by the program's own UUID and
+   the server resolves the anchor; the client never parses the UUID. */
 describe('ProjectHome — schedule of events (UUID program)', () => {
+  const UUID_SCHED_URL = `/api/concept2cure/projects/${UUID_PID}/schedule-of-events`;
   beforeEach(() => {
     (window as any).C2C_PROJECT = { id: UUID_PID, title: 'BX-301' };
   });
 
-  it('renders the honest id-space empty and sends NO schedule request', async () => {
+  it('reads the schedule by the program UUID and renders its milestones', async () => {
     apiRequest.mockReset();
-    apiRequest.mockImplementation(async () => ok({}));
+    apiRequest.mockImplementation(async (_m: string, url: string) =>
+      url === UUID_SCHED_URL ? ok(view()) : ok({}),
+    );
     render(<ProjectHome {...props()} />);
     openPlanStage();
 
-    expect(
-      await screen.findByText(/Schedule isn't wired to this workspace yet/),
-    ).toBeTruthy();
-    // No phantom actions in an id-space where neither endpoint nor tool can
-    // resolve this project, and no doomed request that could truncate the UUID
-    // into another project's numeric id.
+    expect(await screen.findByText('Pre-IND meeting')).toBeTruthy();
+    expect(screen.queryByText(/isn't wired/)).toBeNull();
+  });
+
+  it('a program with no project record says so, offers no generate, and is not an error', async () => {
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async (_m: string, url: string) =>
+      url === UUID_SCHED_URL
+        ? ({ ok: false, status: 404, json: async () => ({ code: 'PROGRAM_UNANCHORED' }) } as Response)
+        : ok({}),
+    );
+    render(<ProjectHome {...props()} />);
+    openPlanStage();
+
+    expect(await screen.findByText(/This program has no schedule record/)).toBeTruthy();
+    expect(screen.queryByText(/Couldn't load the schedule/)).toBeNull();
     expect(screen.queryByText('Generate schedule')).toBeNull();
-    await waitFor(() => {
-      const scheduleReqs = apiRequest.mock.calls.filter((c) =>
-        String(c[1]).includes('schedule-of-events'),
-      );
-      expect(scheduleReqs).toHaveLength(0);
-    });
+    // Only the program's own UUID ever went out — never a digit-truncated id.
+    const scheduleReqs = apiRequest.mock.calls.filter((c) => String(c[1]).includes('schedule-of-events'));
+    expect(scheduleReqs.every((c) => String(c[1]) === UUID_SCHED_URL)).toBe(true);
   });
 });

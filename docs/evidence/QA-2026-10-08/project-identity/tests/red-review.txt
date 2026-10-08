@@ -1,0 +1,19 @@
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > reads the org-scoped GET /api/review/board endpoint 79ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > switches scope — awaiting my review / requested by me / all open — by re-reading the board 788ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > renders the real queue, workflow and thread — never a "Sample data" pill 115ms
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > reads only the open program by default 31ms
+   → expected '/api/review/board?scope=all' to be '/api/review/board?scope=all&programId…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > widens to every program only when asked 5015ms
+   → Unable to find role="button" and name `/BX-256/`
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — honest empty > shows the empty state, not a fabricated queue, when the org has nothing in review 11ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — honest error > shows the error state, not a fabricated queue, when the load fails 10ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review view-model module — no fixtures > exports render-contract types + config only, and no fabricated data constants 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > reads only the open program by default
+ FAIL  client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > widens to every program only when asked
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > the review-thread inbox follows the same program filter 5113ms
+   → expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 skipped (9)

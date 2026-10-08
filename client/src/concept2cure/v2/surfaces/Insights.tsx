@@ -10,6 +10,7 @@ import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_share
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
+import { shellProgramId, shellProgramName } from '../shellProject';
 import '../styles/project-home-v2.css';
 import '../styles/insights-v2.css';
 import { C2CToast, useToast } from '../toast';
@@ -196,6 +197,9 @@ interface CanvasOverview {
   tier: string;
   segments: string[];
   leadProgram: CanvasLeadProgram | null;
+  /** The open program named by `?programId=`, and whether it leads (server
+   *  insights-canvas-routes.ts, CanvasOpenProgram). Null/absent: none named. */
+  openProgram?: { programId: string; state: 'lead' | 'unanchored' | 'not-in-portfolio' } | null;
   portfolio: CanvasPortfolio;
 }
 
@@ -1089,7 +1093,13 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   // honest empty (no flagship program yet) → honest error.
   // Each retry is a new read (reporting review 2026-10-01, DESIGN-3).
   const [overviewAttempt, setOverviewAttempt] = useState(0);
-  const overview = useLiveData<CanvasOverview>('/api/insights-canvas/overview', ['/api/insights-canvas/overview', overviewAttempt]);
+  /* The program the shell has open leads the canvas (QA 2026-10-08, j1: with
+     HLV-333 open it spoke about the flagship, C2C-001). Named by its UUID; the
+     server resolves the anchored project the readiness runs are keyed on. */
+  const openProgramId = shellProgramId();
+  const overviewUrl =
+    '/api/insights-canvas/overview' + (openProgramId ? `?programId=${encodeURIComponent(openProgramId)}` : '');
+  const overview = useLiveData<CanvasOverview>(overviewUrl, [overviewUrl, overviewAttempt]);
   const data = overview.data;
   const program = data?.leadProgram ? leadToProgramCtx(data.leadProgram) : null;
   const suggest = program ? roSuggestForClient(program, seg) : null;
@@ -1237,6 +1247,28 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
           <div style={{ marginTop: 12 }}>
             <button type="button" className="btn ghost" onClick={() => onNav && onNav('compliance-reports')}>Audit & compliance reports</button>
           </div>
+        </div>
+      </div>
+    );
+  }
+  /* The open program could not lead: say so FOR that program. Falling through
+     to the organisation's flagship is the defect this replaces. */
+  const openState = data?.openProgram?.state;
+  if (data && !program && (openState === 'unanchored' || openState === 'not-in-portfolio')) {
+    const name = shellProgramName() ?? 'This program';
+    return (
+      <div className="rc">
+        <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+          <EmptyState
+            icon={I.barChart || I.fileText}
+            title={`${name} has no readiness or reports here yet`}
+            hint={
+              openState === 'unanchored'
+                ? "Readiness and governed reports are computed over a program's project record, and this program has none. Nothing from another program is shown in its place."
+                : "This program's project record is not among the programs whose readiness is computed for your organization (it may be archived or part of another program). Nothing from another program is shown in its place."
+            }
+            action={{ label: 'Audit & compliance reports', onAct: () => onNav && onNav('compliance-reports') }}
+          />
         </div>
       </div>
     );

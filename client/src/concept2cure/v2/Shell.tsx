@@ -64,7 +64,7 @@ import {
   getSegment,
   type AnaContext,
 } from './registryModel';
-import { isClinicalRegulatoryGraphEnabled } from './clinicalRegulatoryGraphFlag';
+import { flagAllowsSurface } from './clinicalRegulatoryGraphFlag';
 import {
   isLaunchScopeLocked,
   isLocked,
@@ -224,7 +224,7 @@ export function Rail({
    * a capability the deployment does not have is worse than no entry.
    */
   const railVisible = (s: { id: string; target?: string }) => {
-    if (s.id === 'crl-library' && !isClinicalRegulatoryGraphEnabled()) return false;
+    if (!flagAllowsSurface(s.id)) return false;
     /* Launch scope is a release boundary, not a licence: a greyed rail entry
        for an app nobody can enable is a dead affordance. The entry is not
        rendered; the Apps catalog still lists the app with the reason. */

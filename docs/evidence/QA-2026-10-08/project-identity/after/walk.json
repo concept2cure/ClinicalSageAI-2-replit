@@ -1,0 +1,85 @@
+{
+ "HLV": {
+  "urlAfterOpen": "/concept2cure/project-home?program=d979e567-4622-46f1-8cb7-8bf434227f25",
+  "Plan": [
+   "No schedule generated"
+  ],
+  "Review": [
+   "No tasks or approvals on this program"
+  ]
+ },
+ "BX256": {
+  "urlAfterOpen": "/concept2cure/project-home?program=099991d1-dac8-43c5-b88a-8baab26194ee",
+  "Plan": [
+   "This program has no schedule record"
+  ],
+  "Review": [
+   "This program has no task record"
+  ]
+ },
+ "workRequests": [
+  "200 /api/concept2cure/projects/d979e567-4622-46f1-8cb7-8bf434227f25/unified-work",
+  "200 /api/concept2cure/projects/d979e567-4622-46f1-8cb7-8bf434227f25/unified-work",
+  "200 /api/concept2cure/projects/d979e567-4622-46f1-8cb7-8bf434227f25/schedule-of-events",
+  "200 /api/concept2cure/projects/d979e567-4622-46f1-8cb7-8bf434227f25/schedule-of-events",
+  "200 /api/concept2cure/projects/d979e567-4622-46f1-8cb7-8bf434227f25/unified-work",
+  "200 /api/concept2cure/projects/d979e567-4622-46f1-8cb7-8bf434227f25/unified-work",
+  "404 /api/concept2cure/projects/099991d1-dac8-43c5-b88a-8baab26194ee/unified-work",
+  "404 /api/concept2cure/projects/099991d1-dac8-43c5-b88a-8baab26194ee/unified-work",
+  "404 /api/concept2cure/projects/099991d1-dac8-43c5-b88a-8baab26194ee/unified-work",
+  "404 /api/concept2cure/projects/099991d1-dac8-43c5-b88a-8baab26194ee/unified-work",
+  "404 /api/concept2cure/projects/099991d1-dac8-43c5-b88a-8baab26194ee/schedule-of-events",
+  "404 /api/concept2cure/projects/099991d1-dac8-43c5-b88a-8baab26194ee/schedule-of-events",
+  "404 /api/concept2cure/projects/099991d1-dac8-43c5-b88a-8baab26194ee/unified-work",
+  "404 /api/concept2cure/projects/099991d1-dac8-43c5-b88a-8baab26194ee/unified-work"
+ ],
+ "newTab": {
+  "url": "/concept2cure/project-home?program=d979e567-4622-46f1-8cb7-8bf434227f25",
+  "shell": "{\"id\":\"d979e567-4622-46f1-8cb7-8bf434227f25\",\"productType\":\"biologic\"}",
+  "seen": [
+   "HLV-333 — Investigational New Drug Application (QA-J1) HLV-333 — In",
+   "HLV-333 — Investigational New Drug Application (QA-J1) ind "
+  ]
+ },
+ "copiedUrl": "/concept2cure/project-home?program=d979e567-4622-46f1-8cb7-8bf434227f25",
+ "vaultHeader": "IND · 21 CFR 312  1 authored document · 0 uploaded files",
+ "vaultFolderLabel": "0 of 72 settled — approved, final or reviewed",
+ "vaultLanes": [
+  "Captured 0",
+  "Required sections: 0 of 36 have a confirmed document Sho",
+  "0 uploaded files in this programme"
+ ],
+ "review": {
+  "boardRequests": [
+   "200 /api/review/board?scope=all&programId=099991d1-dac8-43c5-b88a-8baab26194ee",
+   "200 /api/review/board?scope=all&programId=099991d1-dac8-43c5-b88a-8baab26194ee"
+  ],
+  "mentionsBX204": false,
+  "mentionsBX256": true,
+  "seen": [
+   "Only BX-256 · systemic lupus erythematosus (IND) No"
+  ]
+ },
+ "insights": {
+  "overviewRequests": [
+   "200 /api/insights-canvas/overview?programId=d979e567-4622-46f1-8cb7-8bf434227f25",
+   "200 /api/insights-canvas/overview?programId=d979e567-4622-46f1-8cb7-8bf434227f25",
+   "200 /api/insights-canvas/overview?programId=d979e567-4622-46f1-8cb7-8bf434227f25",
+   "200 /api/insights-canvas/overview?programId=d979e567-4622-46f1-8cb7-8bf434227f25",
+   "200 /api/insights-canvas/overview?programId=d979e567-4622-46f1-8cb7-8bf434227f25",
+   "200 /api/insights-canvas/overview?programId=d979e567-4622-46f1-8cb7-8bf434227f25",
+   "200 /api/insights-canvas/overview?programId=d979e567-4622-46f1-8cb7-8bf434227f25",
+   "200 /api/insights-canvas/overview?programId=d979e567-4622-46f1-8cb7-8bf434227f25"
+  ],
+  "mentionsC2C001": false,
+  "seen": [
+   "H's submission readiness is not yet computed"
+  ]
+ },
+ "insightsBX256": {
+  "mentionsC2C001": false,
+  "seen": [
+   "nd ⌘K Task 2 BX-256 has no readiness or reports here yet"
+  ]
+ }
+}

@@ -13,6 +13,7 @@
 import type { Request } from 'express';
 import type { GatewayMessage } from '../ai-gateway/types.js';
 import { pool } from '../../db.js';
+import { looksLikeProgramUuid, parseIntegerProjectId } from '../../lib/project-id.js';
 import { orchestrate, type OrchestratorInput, type IntentLens, type UserRole } from './index.js';
 import { prefetchProjectIntelligence, preloadRIMContext } from './orchestrator.js';
 import type { SubmissionType } from './deficiency-taxonomy.js';
@@ -128,6 +129,15 @@ type ProjectPrefetchResults = [
   PromiseSettledResult<Awaited<ReturnType<typeof preloadRIMContext>>>
 ];
 
+/* A turn names its project as an integer or a program UUID. Number(uuid) is NaN, which the relational overlay and
+   session briefing bound into SQL on every project turn (QA 2026-10-08, j5). One resolution instead
+   (services/c2c/project-ref.ts): an integer is itself, a program its anchored row, anything else none. */
+async function anchoredProjectForProgram(ref: unknown, orgId: number | null | undefined): Promise<number | null> {
+  if (!orgId || !Number.isFinite(orgId)) return null;
+  const { integerProjectForRef } = await import('../c2c/project-ref.js');
+  return integerProjectForRef(async () => (await import('../../db.js')).db, { ref, orgId, context: 'ana-route-prefetch' });
+}
+
 export async function prefetchRouteIntelligenceContext(params: {
   projectId?: string | number | null;
   organizationId?: number | null;
@@ -141,7 +151,6 @@ export async function prefetchRouteIntelligenceContext(params: {
 }): Promise<PrefetchedRouteIntelligenceContext> {
   const { projectId, organizationId, authoringContext, userId, targetAgency, sessionStart } =
     params;
-  const projectIdNumber = projectId != null ? Number(projectId) : null;
   const unavailable = new Set<string>();
   const bounded = async <T>(source: string, load: () => Promise<T>, ms = OPTIONAL_PREFETCH_TIMEOUT_MS): Promise<T> => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -159,6 +168,9 @@ export async function prefetchRouteIntelligenceContext(params: {
       clearTimeout(timer);
     }
   };
+  // Bounded like every optional read: a stalled anchor lookup is missing context, not a wait.
+  const projectIdNumber: number | null = parseIntegerProjectId(projectId) ?? (looksLikeProgramUuid(projectId)
+    ? await bounded('project record', () => anchoredProjectForProgram(projectId, organizationId)).catch(() => null) : null);
 
   let feedbackContext: OrchestratorInput['_feedbackContext'] = null;
   let projectProfile: OrchestratorInput['_projectIntelligenceProfile'] = null;

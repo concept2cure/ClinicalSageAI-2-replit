@@ -1,0 +1,20 @@
+ ✓ server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > narrows threads and tasks to the program’s anchored project 65ms
+ ✓ server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > a program with no project record has an empty inbox here, and nothing is read for it 16ms
+ ✓ server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > a lookup that could not complete is a 500, never an empty inbox 8ms
+ ✓ server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > a programId that is not a program UUID is refused 14ms
+ ✓ server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > with no programId the whole inbox is read, as before 23ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > review routes live in one router > the reviews router answers every review path, and the main router none of them 2863ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > notification, work-item and escalation routes live in one router > the notifications router answers every one of them, and the main router none 1ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the Communication Center routes live in one router > the communication-center router answers them, and the main router does not 557ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > project task routes live in one router > the tasks router answers every one of them, and the main router none 25ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > conversation mutations live in one router > the conversations router answers every one of them, and the main router none 16ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the export family lives in one router > the exports router answers every export path, and the main router none 1089ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the artifact domain lives in one router > the artifacts router answers every artifact path, and the main router none 1415ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > AI editing lives in one router > the ai-editing router answers every /ai path, and the main router none 200ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > HAQ session persistence lives in one router > the haq-sessions router answers every HAQ path, and the main router none 48ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the program twin and project-context reads live in one router > the program-twin router answers every one of them, and the main router none 40ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the context-integrity and intelligence endpoints live in one router > the context-intelligence router answers every one of them, and the main router none 356ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the project knowledge, activity and linked-project routes live in one router > the project-knowledge router answers every one of them, and the main router none 55ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the governance and platform-operations routes live in one router > the governance-ops router answers every one of them, and the main router none 17ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the connected-app and knowledge-document routes live in one router > the knowledge-sources router answers every one of them, and the main router none 142ms
+ Test Files  2 passed (2)

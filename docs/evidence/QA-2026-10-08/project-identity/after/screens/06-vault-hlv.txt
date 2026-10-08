@@ -1,0 +1,584 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+LJ
+Concept2Cure.RI
+›
+Vault (DMS)
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+DOCUMENTS
+PROJECT VAULT
+Vault (DMS)
+IND · 21 CFR 312
+1 authored document · 0 uploaded files
+Open project
+Inspection readiness
+Clinical study report
+Protocol
+Clinical evaluation report
+Investigator's brochure
+Development safety update report
+Periodic safety update report
+Statistical analysis plan
+Statistical analysis report
+Module 2 · summaries
+Module 3 · quality
+Module 4 · nonclinical
+Module 5 · clinical
+Standard operating procedure
+Report
+Agency correspondence
+Other
+Upload
+Ask AnA to import
+ AnA can search your connected repositories (Veeva Vault, SharePoint, OneDrive) in place. Importing from them into the Vault comes in a later release; upload files here meanwhile.
+Search connected sources
+Data room
+Captured 0
+›
+Classified 0
+›
+Filed to vault 0
+Nothing captured for this project yet. Files attached in AnA chat or dropped on Project home pass through the data room; files uploaded on this page go straight to the filing cabinet and are listed under Uploaded files.
+Vault coverage
+Required sections: 0 of 36 have a confirmed document
+Show sections
+Required list from the IND rule pack for fda, version ich-m4-v2.2.
+Uploaded files
+0 uploaded files in this programme
+Open filing cabinet
+No files uploaded to this programme yet. A file uploaded here, or filed through the API, is listed here and in the filing cabinet.
+Stored files
+Re-reads every stored version and checks it against the SHA-256 recorded when it was received. Each result is recorded.
+Check stored files
+DOCUMENT STRUCTURE
+IND Helvanta-QA3 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5
+0/72
+M1 Module 1 · Administrative (US regional — FDA eCTD Module 1 Specification v2.3)
+0/13
+1.1 Forms
+0/3
+1.3 Administrative information
+0/2
+1.4 References
+0/2
+1.12 Other correspondence
+0/2
+1.14 Labeling
+0/2
+M2 Module 2 · Summaries
+0/12
+2.3 Quality overall summary
+0/2
+2.6 Nonclinical written and tabulated summaries
+0/6
+M3 Module 3 · Quality (CMC)
+0/20
+3.2.S Drug substance
+0/7
+3.2.P Drug product
+0/8
+3.2.A Appendices
+0/3
+M4 Module 4 · Nonclinical study reports
+0/19
+4.2.1 Pharmacology
+0/4
+4.2.2 Pharmacokinetics
+0/7
+4.2.3 Toxicology
+0/7
+M5 Module 5 · Clinical study reports
+0/8
+5.3 Clinical study reports
+0/6
+5.3.5 Reports of efficacy and safety studies
+0/3
+Source files · filing cabinet
+0/0
+Unfiled · needs review
+0/0
+Module 1 · Administrative
+0/0
+Module 2 · Summaries
+0/0
+Module 3 · Quality
+0/0
+Module 4 · Nonclinical
+0/0
+Module 5 · Clinical
+0/0
+eCTD sequences
+0/0
+Agency correspondence
+0/0
+Shared · Templates
+0/0
+HLV-333 — Investigational New Drug Application (QA-J1)
+›
+IND - Helvanta-QA3 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5
+Search this vault
+Include earlier versions
+All projects
+NAME
+TYPE
+OWNER
+MODIFIED
+STATUS
+1.1.1
+Form FDA 1571 — Investigational New Drug Application
+Required
+—
+4h ago
+NOT STARTED
+1.1.2
+Form FDA 1572 — Statement of Investigator
+Required
+—
+4h ago
+NOT STARTED
+1.1.3
+Form FDA 3674 — Certification of Compliance (ClinicalTrials.gov)
+Required
+—
+4h ago
+NOT STARTED
+1.2
+Cover letter
+Required
+—
+4h ago
+NOT STARTED
+1.3.1
+Contact, sponsor and U.S. agent information
+Optional
+—
+4h ago
+NOT STARTED
+1.3.4
+Financial certification and disclosure (Forms FDA 3454 / 3455)
+Optional
+—
+4h ago
+NOT STARTED
+1.4.1
+Letters of authorization (DMF / cross-reference)
+Optional
+—
+4h ago
+NOT STARTED
+1.4.2
+Statements of right of reference
+Optional
+—
+4h ago
+NOT STARTED
+1.12.1
+Pre-IND correspondence
+Optional
+—
+4h ago
+NOT STARTED
+1.12.14
+Environmental analysis or claim of categorical exclusion (21 CFR 25.31)
+Required
+—
+4h ago
+NOT STARTED
+1.14.4.1
+Investigator's brochure
+Required
+—
+4h ago
+NOT STARTED
+1.14.4.2
+Investigational drug labeling (21 CFR 312.6)
+Required
+—
+4h ago
+NOT STARTED
+1.20
+Introductory statement and general investigational plan (21 CFR 312.23(a)(3))
+Required
+—
+4h ago
+NOT STARTED
+2.2
+Introduction
+Required
+—
+4h ago
+NOT STARTED
+2.3.S
+Drug substance summary
+Required
+—
+4h ago
+NOT STARTED
+2.3.P
+Drug product summary
+Required
+—
+4h ago
+NOT STARTED
+2.4
+Nonclinical overview
+Required
+—
+4h ago
+NOT STARTED
+2.5
+Clinical overview
+Required
+—
+4h ago
+NOT STARTED
+2.6.2
+Pharmacology written summary
+Required
+—
+4h ago
+NOT STARTED
+2.6.3
+Pharmacology tabulated summary
+Optional
+—
+4h ago
+NOT STARTED
+2.6.4
+Pharmacokinetics written summary
+Required
+—
+4h ago
+NOT STARTED
+2.6.5
+Pharmacokinetics tabulated summary
+Optional
+—
+4h ago
+NOT STARTED
+2.6.6
+Toxicology written summary
+Required
+—
+4h ago
+NOT STARTED
+2.6.7
+Toxicology tabulated summary
+Optional
+—
+4h ago
+NOT STARTED
+2.7
+Clinical summary (abbreviated for an initial IND)
+Optional
+—
+4h ago
+NOT STARTED
+3.2.S.1
+General information
+Required
+—
+4h ago
+NOT STARTED
+3.2.S.2
+Manufacture
+Required
+—
+4h ago
+NOT STARTED
+3.2.S.3
+Characterisation
+Required
+—
+4h ago
+NOT STARTED
+3.2.S.4
+Control of drug substance
+Required
+—
+4h ago
+NOT STARTED
+3.2.S.5
+Reference standards or materials
+Optional
+—
+4h ago
+NOT STARTED
+3.2.S.6
+Container closure system
+Required
+—
+4h ago
+NOT STARTED
+3.2.S.7
+Stability
+Required
+—
+4h ago
+NOT STARTED
+3.2.P.1
+Description and composition
+Required
+—
+4h ago
+NOT STARTED
+3.2.P.2
+Pharmaceutical development
+Optional
+—
+4h ago
+NOT STARTED
+3.2.P.3
+Manufacture
+Required
+—
+4h ago
+NOT STARTED
+3.2.P.4
+Control of excipients
+Required
+—
+4h ago
+NOT STARTED
+3.2.P.5
+Control of drug product
+Required
+—
+4h ago
+NOT STARTED
+3.2.P.6
+Reference standards or materials
+Optional
+—
+4h ago
+NOT STARTED
+3.2.P.7
+Container closure system
+Required
+—
+4h ago
+NOT STARTED
+3.2.P.8
+Stability
+Required
+—
+4h ago
+NOT STARTED
+3.2.A.1
+Facilities and equipment
+Optional
+—
+4h ago
+NOT STARTED
+3.2.A.2
+Adventitious agents safety evaluation
+Optional
+—
+4h ago
+NOT STARTED
+3.2.A.3
+Excipients (novel)
+Optional
+—
+4h ago
+NOT STARTED
+3.2.R
+Regional information
+Optional
+—
+4h ago
+NOT STARTED
+3.3
+Literature references
+Optional
+—
+4h ago
+NOT STARTED
+4.2.1.1
+Primary pharmacodynamics
+Required
+—
+4h ago
+NOT STARTED
+4.2.1.2
+Secondary pharmacodynamics
+Optional
+—
+4h ago
+NOT STARTED
+4.2.1.3
+Safety pharmacology
+Required
+—
+4h ago
+NOT STARTED
+4.2.1.4
+Pharmacodynamic drug interactions
+Optional
+—
+4h ago
+NOT STARTED
+4.2.2.1
+Analytical methods and validation reports
+Optional
+—
+4h ago
+NOT STARTED
+4.2.2.2
+Absorption
+Optional
+—
+4h ago
+NOT STARTED
+4.2.2.3
+Distribution
+Optional
+—
+4h ago
+NOT STARTED
+4.2.2.4
+Metabolism
+Optional
+—
+4h ago
+NOT STARTED
+4.2.2.5
+Excretion
+Optional
+—
+4h ago
+NOT STARTED
+4.2.2.6
+Pharmacokinetic drug interactions (nonclinical)
+Optional
+—
+4h ago
+NOT STARTED
+4.2.2.7
+Other pharmacokinetic studies
+Optional
+—
+4h ago
+NOT STARTED
+4.2.3.1
+Single-dose toxicity
+Required
+—
+4h ago
+NOT STARTED
+4.2.3.2
+Repeat-dose toxicity
+Required
+—
+4h ago
+NOT STARTED
+4.2.3.3
+Genotoxicity
+Required
+—
+4h ago
+NOT STARTED
+4.2.3.4
+Carcinogenicity
+Optional
+—
+4h ago
+NOT STARTED
+4.2.3.5
+Reproductive and developmental toxicity
+Optional
+—
+4h ago
+NOT STARTED
+4.2.3.6
+Local tolerance
+Optional
+—
+4h ago
+NOT STARTED
+4.2.3.7
+Other toxicity studies
+Optional
+—
+4h ago
+NOT STARTED
+4.3
+Literature references
+Optional
+—
+4h ago
+NOT STARTED
+5.2
+Tabular listing of all clinical studies
+Optional
+—
+4h ago
+NOT STARTED
+5.3.1
+Reports of biopharmaceutic studies
+Optional
+—
+4h ago
+NOT STARTED
+5.3.3
+Reports of human pharmacokinetic studies
+Optional
+—
+4h ago
+NOT STARTED
+5.3.5.1
+Study reports of controlled clinical studies — includes the clinical protocol(s) and IRB information for an initial IND (21 CFR 312.23(a)(6))
+Required
+—
+4h ago
+NOT STARTED
+5.3.5.2
+Study reports of uncontrolled clinical studies
+Optional
+—
+4h ago
+NOT STARTED
+5.3.5.4
+Other study reports — previous human experience (21 CFR 312.23(a)(9))
+Optional
+—
+4h ago
+NOT STARTED
+5.3.7
+Case report forms and individual patient listings
+Optional
+—
+4h ago
+NOT STARTED
+5.4
+Literature references
+Optional
+—
+4h ago
+NOT STARTED
+NOT STARTED
+v1
+1.1.1 - Form FDA 1571 — Investigational New Drug Application
+Required - — - updated 4h ago
+Helvanta-QA3 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 1.1.1 · Form FDA 1571 — Investigational New Drug Application · mandatory section
+Mandatory section — no content yet
+CORPUS INDEXING
+Indexing status isn't reported for this document yet.
+VERSION
+v1
+4h ago - current version
+LINKED EVIDENCE
+No linked evidence recorded for this document yet.
+Open in editor
+Ask AnA
+No file to download

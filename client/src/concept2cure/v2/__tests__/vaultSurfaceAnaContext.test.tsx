@@ -88,8 +88,10 @@ describe('Vault — "N documents" counts documents, not tree entries', () => {
     );
     await screen.findAllByText('Clinical overview');
     const header = container.querySelector('.vd-sub-x')?.textContent ?? '';
-    expect(header).toMatch(/\b1 document\b/);
-    expect(header).not.toMatch(/3 documents/);
+    // Named by its parts since QA 2026-10-08 (vaultHeaderHonesty.test.tsx):
+    // the one document is an authored one, and there are no uploads.
+    expect(header).toMatch(/\b1 authored document\b/);
+    expect(header).not.toMatch(/\b3 (authored )?documents/);
     await waitFor(() => expect(latest?.facts?.totalDocuments).toBe(1));
     expect(latest.summary).toMatch(/Document vault: 1 document/);
     expect(latest.facts.documentCounts).toEqual({ authored: 1, cmcArtifacts: 0, uploads: 0 });

@@ -265,6 +265,33 @@ function stageTone(stage: string | null | undefined): string {
   return stage === 'in_review' ? 'ai' : 'idle';
 }
 
+const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`;
+
+/**
+ * The header's document count, named by its parts.
+ *
+ * QA 2026-10-08 (j1): a program the wizard had just created read "1 document"
+ * above lanes saying "0 uploaded files" and "Captured 0". The one was the IND
+ * build the wizard scaffolds — an authored document, every section not started
+ * — and a bare "1 document" reads as a file someone put here. The read names
+ * its parts (`documentCounts`), so the header states them: authored documents,
+ * Module 3 artifacts when there are any, and uploads when that branch was read.
+ * A branch that could not be read (null) is left out rather than shown as 0;
+ * the read's `unavailable` list says why. Without the parts (the pending-store
+ * answer), the total stands as it was.
+ */
+export function vaultCountLabel(v: Pick<VaultDisplayShape, 'documentCount' | 'documentCounts'>): string {
+  const parts = v.documentCounts;
+  if (!parts) return plural(v.documentCount, 'document', 'documents');
+  return [
+    plural(parts.authored, 'authored document', 'authored documents'),
+    parts.cmcArtifacts ? plural(parts.cmcArtifacts, 'Module 3 artifact', 'Module 3 artifacts') : null,
+    parts.uploads == null ? null : plural(parts.uploads, 'uploaded file', 'uploaded files'),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
 /**
  * Whether a document counts as settled in its folder's count. An upload is
  * settled when its version is approved (VR-13; FD4's strict default): a
@@ -305,7 +332,16 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
               <span className="vd-flabel">
                 {folder.code ? <b>{folder.code}</b> : null} {folder.label}
               </span>
-              <span className="vd-fcount">
+              {/* Named, because a bare fraction beside the coverage panel's
+                  "Required sections: 0 of 36 have a confirmed document" read as
+                  a second, contradicting total (QA 2026-10-08, j1). This counts
+                  the folder's own items that are settled; coverage counts
+                  required CTD headings with a confirmed filing. */}
+              <span
+                className="vd-fcount"
+                title={`${ready} of ${docs.length} settled — approved, final or reviewed`}
+                aria-label={`${ready} of ${docs.length} settled — approved, final or reviewed`}
+              >
                 {ready}/{docs.length}
               </span>
             </button>
@@ -1285,7 +1321,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               {vault && vault.spine ? <>{vault.spine} {I.dot} </> : null}
               {vault ? (
                 <>
-                  {vault.documentCount} document{vault.documentCount === 1 ? '' : 's'}
+                  {vaultCountLabel(vault)}
                 </>
               ) : null}
               {vault && (vault.unfiledCount ?? 0) > 0 ? (

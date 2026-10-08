@@ -6,12 +6,15 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
+import { flagAllowsSurface } from '../clinicalRegulatoryGraphFlag';
+import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue } from '../dossierReadiness';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
 import { DocumentDisposition } from './DocumentDisposition';
+import { useProjectThreads } from './projectThreads';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
 import '../styles/project-home-v2.css';
@@ -50,12 +53,13 @@ declare global {
    Real backend rows — the org-scoped, UUID-keyed project read-models this
    surface anchors to (server/routes/c2c/projects.ts). Every field is projected
    from a verified column; nullable columns are `| null` and rendered null-safe.
-   Slices with no reachable UUID-keyed backend (tasks, readiness, the CTD
-   pyramid, memory/instructions/intelligence, conversations, the vault tree,
-   agency meetings, eTMF, grants, submissions) are rendered as an honest
-   EmptyState rather than a fabricated fixture. The schedule-of-events panel
-   (plan stage) is live for numeric-keyed projects and renders the same honest
-   id-space empty for UUID programs — see SchedulePanel.
+   Slices with no reachable UUID-keyed backend (readiness, the CTD pyramid,
+   memory/instructions/intelligence, the vault tree, agency meetings, eTMF,
+   grants, submissions) are rendered as an honest EmptyState rather than a
+   fabricated fixture. The schedule of events (plan stage) and the program's
+   tasks and approvals (review stage, and Tasks in author) are read by the
+   program UUID from routes the server resolves to the program's anchored
+   projects row — see SchedulePanel and ProjectWorkPanel.
    ════════════════════════════════════════════════════════════════════════ */
 
 /** GET /api/c2c/projects/:id — regulatory_programs metadata (bare object). */
@@ -207,10 +211,12 @@ function StageTracker({ stage, setStage }: { stage: string; setStage: (s: string
 
 /** Whether a surface can be opened in this release. Unknown (verdicts not yet
     read, or unreadable) counts as available, the rule the rail uses: a lock is a
-    claim about the customer's release and is never invented. */
+    claim about the customer's release and is never invented. A surface whose
+    feature flag keeps its API unmounted is not available either — the rail's
+    rule too (flagAllowsSurface); the CRL library tile opened a 404 here. */
 function useSurfaceAvailable(): (id: string) => boolean {
   const { verdictFor } = useNavEntitlements();
-  return (id: string) => !isLaunchScopeLocked(verdictFor(id));
+  return (id: string) => flagAllowsSurface(id) && !isLaunchScopeLocked(verdictFor(id));
 }
 
 function StagePanel({ stage, onNav, available }: { stage: string; onNav: (id: string) => void; available: (id: string) => boolean }) {
@@ -669,12 +675,16 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
    project_schedule_of_events, milestones reusing project_workflow_stages).
 
    IDENTITY: that store is keyed by the NUMERIC projects.id, while this
-   surface's window.C2C_PROJECT.id is normally a regulatory_programs UUID (see
-   the header comment). The panel therefore fetches ONLY when the open ident is
-   numeric-keyed ('12' / 'proj_12' — the SubmissionTwin idiom), and renders the
-   honest id-space empty for UUID programs instead of sending a doomed request
-   or borrowing another project's schedule. Milestone STATUS is displayed as
-   stored; nothing here invents progress, dates, or health. */
+   surface's window.C2C_PROJECT.id is a regulatory_programs UUID (see the header
+   comment). The panel asks by the UUID and the SERVER resolves the program's
+   anchored projects row (routes/project-schedule-of-events.ts,
+   requireOwnedProject) — the client never parses the UUID into a number. A
+   program with no anchored row is answered 404 and rendered as that fact, with
+   no generate action: there is no record for one to write to. Until
+   2026-10-08 the panel fetched only for a numeric ident, so every program —
+   including one the wizard had anchored — read "isn't wired" (QA j1).
+   Milestone STATUS is displayed as stored; nothing here invents progress,
+   dates, or health. */
 
 /** GET …/schedule-of-events → milestones[] (ScheduleMilestoneView subset). */
 interface ScheduleMilestoneRow {
@@ -703,9 +713,13 @@ interface ScheduleViewRow {
   health?: { overallStatus?: string; summary?: string } | null;
 }
 
-/** The numeric-keyed ident space the schedule store resolves ('12' / 'proj_12'). */
-const SCHED_IDENT_RE = /^(?:proj_)?\d+$/;
 const SCHED_SHOWN = 8;
+
+/** A program the server could not anchor to a projects row answers its
+ *  schedule and work reads 404 (PROGRAM_UNANCHORED). The program itself was
+ *  already read by /api/c2c/projects/:id, so here 404 means "no record", not
+ *  "no program". */
+const isUnanchored = (s: DataState<unknown>): boolean => !s.loading && s.status === 404;
 
 /** Real ISO date → display with year (schedules span years); null stays null. */
 function fmtDue(v: string | null): string | null {
@@ -752,7 +766,9 @@ const PRIORITY_TONE: Record<string, string> = {
 };
 
 function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) => void }) {
-  const ident = pid && SCHED_IDENT_RE.test(pid) ? pid : null;
+  /* The open program's own id, sent as is: the route resolves a program UUID to
+     its anchored row, and still takes a legacy '12' / 'proj_12'. */
+  const ident = pid ? encodeURIComponent(pid) : null;
   const [reloadKey, setReloadKey] = useState(0);
   const [genBusy, setGenBusy] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
@@ -805,14 +821,15 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
         </span>
       </div>
 
-      {!ident ? (
-        /* UUID program — the schedule store is keyed by the numeric project
-           record, which this workspace doesn't resolve (same identity gap as
-           tasks & readiness). Stated honestly; no phantom generate action. */
+      {!ident ? null : isUnanchored(state) ? (
+        /* The program has no project record for a schedule to live on (the
+           server said so: PROGRAM_UNANCHORED). A fact about this program, not a
+           failure and not "no schedule generated" — and no generate action,
+           because there is no record for one to write to. */
         <EmptyState
           icon={I.calendar}
-          title="Schedule isn't wired to this workspace yet"
-          hint="AnA's schedule of events is keyed to the numeric project record, which this workspace doesn't resolve yet — so no milestones can be shown or generated from here."
+          title="This program has no schedule record"
+          hint="A schedule of events is kept on the program's project record, and this program has none, so no milestones can be shown or generated for it here."
         />
       ) : (
         <Anchored
@@ -879,8 +896,9 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
 
       {/* Empty-state affordances — both real: the composer prompt reaches the
           generate_schedule_of_events AnA tool, and the button calls the real
-          POST generate endpoint. Rendered only in the numeric id-space where
-          they can actually act on THIS project. */}
+          POST generate endpoint. Rendered only once the read has answered for
+          THIS program's record — never for an unanchored program (404) or a
+          failed read. */}
       {ident && !state.loading && !state.error && state.data && !state.data.plan
         && (state.data.milestones ?? []).length === 0 && (
         <div className="cm-pushbar" style={{ marginTop: 10 }}>
@@ -897,6 +915,122 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
           Couldn&rsquo;t generate the schedule: {genError}
         </div>
       )}
+    </section>
+  );
+}
+
+/* ════ Tasks & approvals — the 'review' step's screen ═══════════════════════
+   The program's outstanding work from every store that tracks it, read from
+   the REAL unified work view (GET /api/concept2cure/projects/:id/unified-work,
+   server/services/unified-work/unified-work-view.ts): schedule tasks, review
+   threads and approval blockers, agency correspondence, tracked filings and
+   the task board. Same identity contract as the schedule above: asked by the
+   program's UUID, resolved to its anchored projects row on the server, 404 for
+   a program with none. Each row names the store it lives in; changing it
+   happens where it lives (the task board, the review screen). */
+
+/** GET …/unified-work → items[] (UnifiedWorkItem subset). */
+interface WorkItemRow {
+  id: string;
+  source: 'schedule' | 'review' | 'correspondence' | 'filing' | 'board' | string;
+  title: string;
+  status: 'open' | 'in_progress' | 'blocked' | 'done' | string;
+  priority: string | null;
+  dueAt: string | null;
+  ownerName: string | null;
+  blocking: boolean;
+}
+interface WorkViewRow {
+  items: WorkItemRow[];
+  /** `partial`: a store could not be read, so every count is a floor. */
+  summary?: { total?: number; blocking?: number; done?: number; partial?: boolean } | null;
+}
+
+const WORK_SOURCE_LABEL: Record<string, string> = {
+  schedule: 'Schedule',
+  review: 'Review thread',
+  correspondence: 'Agency correspondence',
+  filing: 'Tracked filing',
+  board: 'Task board',
+};
+const WORK_STATUS_TONE: Record<string, string> = { done: 'tone-ok', blocked: 'tone-warn' };
+const WORK_SHOWN = 10;
+
+function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: string; onNav: (id: string) => void }) {
+  const ident = pid ? encodeURIComponent(pid) : null;
+  const state = useLiveData<WorkViewRow>(
+    ident ? `/api/concept2cure/projects/${ident}/unified-work` : null,
+    [ident],
+    hasKeys<WorkViewRow>('items'),
+  );
+  return (
+    <section className="pj-sec" aria-label={title}>
+      <div className="pj-sec-h">
+        <h2>{title}</h2>
+        <span className="sec-sub">tasks, review threads and approvals on this program</span>
+      </div>
+      {!ident ? null : isUnanchored(state) ? (
+        <EmptyState
+          icon={I.checkCircle}
+          title="This program has no task record"
+          hint="Tasks, review threads and approvals are kept on the program's project record, and this program has none, so there is nothing to list for it here."
+        />
+      ) : (
+        <Anchored
+          state={state}
+          loadingText="Loading this program's tasks and approvals…"
+          errorTitle="Couldn't load this program's tasks and approvals"
+          errorHint="The work view didn't respond. Sign in and retry, or check the service is reachable."
+          emptyTitle="No tasks or approvals on this program"
+          emptyHint="Tasks, review threads, approval blockers and agency correspondence recorded on this program appear here."
+          isEmpty={(d) => (d.items ?? []).length === 0}
+          render={(d) => {
+            const items = d.items ?? [];
+            const open = items.filter((w) => w.status !== 'done');
+            const shown = open.slice(0, WORK_SHOWN);
+            const done = items.length - open.length;
+            return (
+              <>
+                <div className="pj-files" data-testid="pj-work">
+                  {shown.map((w) => {
+                    const due = fmtDue(w.dueAt);
+                    return (
+                      <div key={w.id} className="pj-file" style={{ cursor: 'default' }}>
+                        <div className="pj-file-top">
+                          <span className="pj-file-badge">{WORK_SOURCE_LABEL[w.source] ?? w.source}</span>
+                          <span className={`rd-chip ${WORK_STATUS_TONE[w.status] ?? 'tone-idle'}`}>
+                            {String(w.status || 'open').replace(/_/g, ' ')}
+                          </span>
+                          {w.blocking && <span className="sp-tone-warn" style={{ fontSize: 11 }}>blocking</span>}
+                        </div>
+                        <div className="pj-file-n">{w.title}</div>
+                        <div className="pj-file-m">
+                          {[w.ownerName, w.priority ? `priority ${w.priority}` : null, due ? `due ${due}` : 'no due date']
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="sec-sub" style={{ fontSize: 11.5, marginTop: 8 }}>
+                  {open.length > WORK_SHOWN ? `+${open.length - WORK_SHOWN} more open · ` : ''}
+                  {done > 0 ? `${done} done · ` : ''}
+                  {items.length} item{items.length === 1 ? '' : 's'} total
+                </div>
+                {d.summary?.partial && (
+                  <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>
+                    One of the stores this list reads could not be read, so it may be incomplete and every count is a minimum.
+                  </div>
+                )}
+              </>
+            );
+          }}
+        />
+      )}
+      <div style={{ marginTop: 8 }}>
+        <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('task-board')}>Open task board {I.right}</button>
+      </div>
     </section>
   );
 }
@@ -956,9 +1090,6 @@ function ConversationComposer({ productName, onNav }: { productName: string; onN
 
 /* ════ Author workspace — real anchored slices + honest empties ════ */
 
-/** One persisted AnA thread of this program (GET /api/chat/threads?program_id=). */
-interface ThreadRow { id: string; title: string | null; created_at: string | null; updated_at: string | null; program_id?: string | null }
-
 function AuthorWorkspace({
   seg, pid, completion, onNav, onAsk, teamState, activityState, wsState, draftsState,
 }: {
@@ -974,18 +1105,17 @@ function AuthorWorkspace({
   wsState: DataState<{ workstreams: WorkstreamRow[] }>;
   draftsState: DataState<{ drafts: DraftRow[] }>;
 }) {
-  /* Launch-scope verdicts, for the workspace tool grid below. */
-  const { verdictFor } = useNavEntitlements();
+  /* Launch-scope verdicts and flag gates, for the workspace tool grid below —
+     the one availability rule the stage panels and the data room read. */
+  const available = useSurfaceAvailable();
   /* The program's own AnA threads — REAL. Threads carry the program they were
      started in (chat_threads.program_id, bound when the stream mints the
      thread, only to a program of its organization), so this lists exactly the conversations held on this
      project, newest first, and opens one back into the thread surface. Until
      that key existed this section was an honest empty with nothing behind it:
-     there was no way to resume a project chat from the project. */
-  const threadsState = useLiveData<{ threads: ThreadRow[] }>(
-    pid ? `/api/chat/threads?program_id=${encodeURIComponent(pid)}&limit=8` : null,
-    [pid],
-  );
+     there was no way to resume a project chat from the project. A screenful
+     at a time, with every older one reachable (projectThreads.ts). */
+  const threads = useProjectThreads(pid);
   const resumeThread = (id: string) => {
     window.C2C_CONVO = { id };
     onNav('conversation-thread');
@@ -1005,7 +1135,7 @@ function AuthorWorkspace({
                over nothing. */
             .map((grp: { label: string; items: string[] }) => ({
               label: grp.label,
-              items: grp.items.filter((id: string) => !isLaunchScopeLocked(verdictFor(id))),
+              items: grp.items.filter((id: string) => available(id)),
             }))
             .filter((grp) => grp.items.length > 0)
             .map((grp: { label: string; items: string[] }) => (
@@ -1031,22 +1161,32 @@ function AuthorWorkspace({
         <section className="pj-sec">
           <div className="pj-sec-h"><h2>Conversations</h2><span className="sec-sub">resume a thread held on this project</span></div>
           <Anchored
-            state={threadsState}
+            state={threads.state}
             loadingText="Loading conversations…"
             errorTitle="Couldn't load conversations"
             errorHint="The conversation store didn't respond. Sign in and retry, or check that the service is reachable."
             emptyTitle="No project conversations yet"
             emptyHint="Start one in the composer above — threads started here are kept on this project and listed for resuming."
             isEmpty={(d) => (d.threads ?? []).length === 0}
-            render={(d) => (
-              <div className="pj-files" data-testid="pj-threads">
-                {(d.threads ?? []).map((t) => (
-                  <button key={t.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => resumeThread(t.id)} title="Resume this conversation">
-                    <div className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</div>
-                    <div className="pj-file-m">{[fmtWhen(t.updated_at || t.created_at), 'Resume'].filter(Boolean).join(' · ')}</div>
+            render={() => (
+              <>
+                <div className="pj-files" data-testid="pj-threads">
+                  {threads.shown.map((t) => (
+                    <button key={t.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => resumeThread(t.id)} title="Resume this conversation">
+                      <div className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</div>
+                      <div className="pj-file-m">{[fmtWhen(t.updated_at || t.created_at), 'Resume'].filter(Boolean).join(' · ')}</div>
+                    </button>
+                  ))}
+                </div>
+                {threads.olderError && (
+                  <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>{threads.olderError}</div>
+                )}
+                {threads.hasOlder && (
+                  <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px', marginTop: 8 }} disabled={threads.loadingOlder} onClick={threads.showOlder}>
+                    {threads.loadingOlder ? 'Loading older conversations…' : 'Show older conversations'}
                   </button>
-                ))}
-              </div>
+                )}
+              </>
             )}
           />
         </section>
@@ -1088,19 +1228,10 @@ function AuthorWorkspace({
             Sits directly above the documentation sections it feeds. */}
         <DataRoom pid={pid} onNav={onNav} onAsk={onAsk} />
 
-        {/* Tasks & readiness — project_tasks / readiness engine are keyed by the
-            NUMERIC projects.id, not reachable from this UUID-scoped surface. */}
-        <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Tasks &amp; readiness</h2></div>
-          <EmptyState
-            icon={I.checkCircle}
-            title="Tasks &amp; submission readiness aren't wired to this workspace yet"
-            hint={<>Project tasks and the readiness engine are keyed to the numeric project record, which this workspace doesn't resolve yet. Open the task board to see and manage this org's tasks.</>}
-          />
-          <div style={{ marginTop: 8 }}>
-            <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('task-board')}>Open task board {I.right}</button>
-          </div>
-        </section>
+        {/* Tasks — the program's outstanding work, the same panel the Review
+            stage shows (one read, one component). It said "aren't wired" for
+            every program until the work view took the program's UUID. */}
+        <ProjectWorkPanel pid={pid} title="Tasks" onNav={onNav} />
 
         {/* Records in this project — REAL: GET /:id/records, every store read
             by its project key (PF-17). A store it cannot read says so. */}
@@ -1161,15 +1292,28 @@ function AuthorWorkspace({
       <aside className="pj-side">
         {/* Dossier readiness — a status figure, so it lives with the other
             status cards in the aside rather than between the conversation and
-            the work (the constitution's no-KPI-hero rule for project landing). */}
-        {completion != null && (
-          <section className="pj-card">
-            <div className="pj-card-h"><h3>Dossier readiness</h3><span className="sec-sub">{completion}% complete</span></div>
-            <div className="pj-map">
+            the work (the constitution's no-KPI-hero rule for project landing).
+            Always present, under the name the Projects card uses: the one
+            readiness the server computes for a program, or "not measured". It
+            used to be left out when unmeasured, so the page said nothing while
+            the card said "not measured" (QA 2026-10-08, j1). No ring is drawn
+            for no figure — an empty ring reads as 0%. */}
+        <section className="pj-card">
+          <div className="pj-card-h">
+            <h3>{DOSSIER_READINESS_LABEL}</h3>
+            <span className="sec-sub">{dossierReadinessValue(completion)}</span>
+          </div>
+          {completion != null ? (
+            <div className="pj-map" title={DOSSIER_READINESS_MEANS}>
               <div className="pj-map-ring"><Ring value={completion} size={104} stroke={9} /><div className="pj-map-ring-l">Dossier<br />readiness</div></div>
             </div>
-          </section>
-        )}
+          ) : (
+            <p className="pj-card-note" style={{ margin: 0, fontSize: 12, color: 'var(--text-300)' }}>
+              {DOSSIER_READINESS_MEANS} There are no governed sections to measure on this program yet, or the
+              figure could not be read.
+            </p>
+          )}
+        </section>
         {/* Memory / instructions / intelligence — served only by the numeric
             project-home read-model (project_intelligence_profiles), not reachable
             from this UUID-scoped surface. Honest empty, never a fabricated body. */}
@@ -1363,7 +1507,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
         `Project home for ${title ? `"${title}"` : 'an untitled project'}${submissionType ? ` (${submissionType})` : ''}: ` +
         [status && `status ${status}`, phase && `phase ${phase}`, priority && `priority ${priority}`,
          region && `primary agency ${region}`, indication && `indication ${indication}`,
-         completion != null && `${completion}% complete`].filter(Boolean).join(', ') +
+         `${DOSSIER_READINESS_LABEL.toLowerCase()} ${dossierReadinessValue(completion)}`].filter(Boolean).join(', ') +
         `. The "${stage}" stage is open.`,
       facts: {
         projectId: pid,
@@ -1576,20 +1720,9 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             </section>
           )}
 
-          {/* Review — tasks are keyed by the numeric project record, not reachable here. */}
-          {stage === 'review' && (
-            <section className="pj-sec">
-              <div className="pj-sec-h"><h2>Review &amp; approvals</h2></div>
-              <EmptyState
-                icon={I.checkCircle}
-                title="Review tasks aren't wired to this workspace yet"
-                hint="Project tasks and approvals are managed on the task board. This workspace doesn't resolve the numeric project record the task store is keyed on."
-              />
-              <div style={{ marginTop: 8 }}>
-                <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('task-board')}>Open task board {I.right}</button>
-              </div>
-            </section>
-          )}
+          {/* Review — the program's tasks and approvals, from the unified work
+              view, asked by the program UUID (see ProjectWorkPanel). */}
+          {stage === 'review' && <ProjectWorkPanel pid={pid} title="Review & approvals" onNav={onNav} />}
 
           {/* Plan — the live schedule-of-events panel, the canonical tool
               catalog, and honest empties for the panels whose backends are
