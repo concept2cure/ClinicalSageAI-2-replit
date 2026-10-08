@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T17:52:08.893Z",
+  "generatedAt": "2026-10-08T19:32:29.516Z",
   "git": {
-    "sha": "a10c4b7247688a027b44ea9e6fd17484d2b3e77d",
+    "sha": "457e993d505dfbf0fc034cb0f54495c981525eda",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2056,7 +2056,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 862219
+        "bytes": 862248
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2068,7 +2068,7 @@
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "bytes": 361712
+        "bytes": 361796
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2112,7 +2112,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "bytes": 156593
+        "bytes": 157674
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2152,7 +2152,7 @@
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
-        "bytes": 134188
+        "bytes": 134270
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2188,7 +2188,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "bytes": 116608
+        "bytes": 116834
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2219,6 +2219,10 @@
         "bytes": 112621
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "bytes": 111474
+      },
+      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 109447
       },
@@ -2228,15 +2232,11 @@
       },
       {
         "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 109170
+        "bytes": 109184
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "bytes": 108892
-      },
-      {
-        "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 108555
       },
       {
         "file": "server/routes/auth.ts",
@@ -2244,7 +2244,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
-        "bytes": 108007
+        "bytes": 108037
       },
       {
         "file": "server/routes/c2c/projects.ts",
@@ -2252,7 +2252,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 104528
+        "bytes": 105331
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
@@ -2263,12 +2263,12 @@
         "bytes": 101287
       },
       {
-        "file": "server/routes/knowledge-base.ts",
-        "bytes": 101005
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "bytes": 101142
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 100548
+        "file": "server/routes/knowledge-base.ts",
+        "bytes": 101005
       }
     ],
     "largeFilesByLines": [
@@ -2350,7 +2350,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "lines": 3249
+        "lines": 3272
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2425,6 +2425,10 @@
         "lines": 2379
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 2357
+      },
+      {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "lines": 2348
       },
@@ -2435,10 +2439,6 @@
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2320
-      },
-      {
-        "file": "server/routes/c2c/project-vault.ts",
-        "lines": 2310
       },
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
@@ -2465,16 +2465,16 @@
         "lines": 2175
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 2162
+      },
+      {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2150
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2116
+        "lines": 2128
       },
       {
         "file": "server/services/precedent-engine.ts",
@@ -2546,18 +2546,18 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "lines": 1958
+        "lines": 1969
       },
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
         "lines": 1940
       },
       {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 1927
+        "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
+        "lines": 1929
       },
       {
-        "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
+        "file": "server/routes/ectd-compile.ts",
         "lines": 1927
       },
       {
@@ -2621,12 +2621,12 @@
         "lines": 1833
       },
       {
-        "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
-        "lines": 1828
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 1831
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 1827
+        "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
+        "lines": 1828
       },
       {
         "file": "server/services/compliance/globalComplianceEngine.ts",
