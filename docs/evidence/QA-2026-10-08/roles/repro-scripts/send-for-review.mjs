@@ -16,8 +16,9 @@ const traffic = [];
 page.on('response', async (r) => {
   const u = r.url();
   if (u.includes('/api/') && (r.status() >= 400 || u.includes('/api/regulatory/documents') || u.includes('/api/v1/auth/session'))) {
-    let b = ''; try { b = (await r.text()).slice(0, 240); } catch {}
-    traffic.push({ method: r.request().method(), path: new URL(u).pathname, status: r.status(), body: b });
+    let body;
+    try { body = (await r.text()).slice(0, 240); } catch (err) { body = `unreadable: ${err.message}`; }
+    traffic.push({ method: r.request().method(), path: new URL(u).pathname, status: r.status(), body });
   }
 });
 const controls = () => page.$$eval('button', (els) => els
@@ -32,7 +33,7 @@ await page.waitForTimeout(3000);
 const go = async (path) => {
   if (process.env.SPA === '1') {
     // In-app navigation: no document load, so the sign-in roles stay in memory.
-    await page.evaluate((p) => { window.history.pushState({}, '', p); window.dispatchEvent(new PopStateEvent('popstate', { state: {} })); }, path);
+    await page.evaluate((p) => { window.history.pushState({}, '', p); window.dispatchEvent(new window.PopStateEvent('popstate', { state: {} })); }, path);
   } else {
     await page.goto(BASE + path, { waitUntil: 'domcontentloaded' });
   }
@@ -56,12 +57,12 @@ const hasVersions = await versionsHeading.count();
 if (hasVersions) await versionsHeading.scrollIntoViewIfNeeded().catch(() => {});
 await page.waitForTimeout(3000);
 const bodyText = await page.innerText('body');
-console.log(`[${TAG || EMAIL}] versions heading present:`, hasVersions > 0);
-if (hasVersions) console.log(`[${TAG || EMAIL}] versions context:`, await page.evaluate(() => { const h = [...document.querySelectorAll('*')].find((e) => e.childNodes.length && [...e.childNodes].some((n) => n.nodeType === 3 && /^Versions/.test(n.textContent.trim())) && e.innerText && e.innerText.length < 4000); return h ? h.innerText.replace(/\s+/g, ' ').slice(0, 600) : null; }));
+console.info(`[${TAG || EMAIL}] versions heading present:`, hasVersions > 0);
+if (hasVersions) console.info(`[${TAG || EMAIL}] versions context:`, await page.evaluate(() => { const h = [...document.querySelectorAll('*')].find((e) => e.childNodes.length && [...e.childNodes].some((n) => n.nodeType === 3 && /^Versions/.test(n.textContent.trim())) && e.innerText && e.innerText.length < 4000); return h ? h.innerText.replace(/\s+/g, ' ').slice(0, 600) : null; }));
 const roleMessage = (bodyText.match(/Your role does not send[^.]*\./) || [null])[0];
 const before = await controls();
-console.log(`[${TAG || EMAIL}] role message:`, roleMessage);
-console.log(`[${TAG || EMAIL}] send-for-review controls:`, JSON.stringify(before));
+console.info(`[${TAG || EMAIL}] role message:`, roleMessage);
+console.info(`[${TAG || EMAIL}] send-for-review controls:`, JSON.stringify(before));
 await page.screenshot({ path: `${OUT}/${TAG || 'send'}-detail.png` });
 
 let confirmAlerts = null;
@@ -75,10 +76,10 @@ if (CONFIRM === '1' && before.length && !before[0].disabled) {
   }
   await page.waitForTimeout(4000);
   confirmAlerts = await page.$$eval('[role=alert], [role=status]', (els) => els.map((e) => (e.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 300)).filter(Boolean));
-  console.log(`[${TAG || EMAIL}] alerts after confirm:`, JSON.stringify(confirmAlerts));
+  console.info(`[${TAG || EMAIL}] alerts after confirm:`, JSON.stringify(confirmAlerts));
 }
 const lifecycle = traffic.filter((t) => t.path.startsWith('/api/regulatory/documents'));
-console.log(`[${TAG || EMAIL}] api errors:`, JSON.stringify(traffic.filter((t) => t.status >= 400).map((t) => ({ m: t.method, p: t.path, s: t.status, b: t.body.slice(0, 120) })), null, 1));
-console.log(`[${TAG || EMAIL}] lifecycle requests:`, JSON.stringify(lifecycle, null, 1));
+console.info(`[${TAG || EMAIL}] api errors:`, JSON.stringify(traffic.filter((t) => t.status >= 400).map((t) => ({ m: t.method, p: t.path, s: t.status, b: t.body.slice(0, 120) })), null, 1));
+console.info(`[${TAG || EMAIL}] lifecycle requests:`, JSON.stringify(lifecycle, null, 1));
 fs.writeFileSync(`${OUT}/${TAG || 'send'}.json`, JSON.stringify({ email: EMAIL, roleMessage, controlsBefore: before, confirmAlerts, traffic: traffic.slice(-30) }, null, 2));
 await browser.close();

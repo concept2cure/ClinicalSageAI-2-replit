@@ -90,7 +90,7 @@ if (PHASE === 'vault' || PHASE === 'both') {
       firstRefusal: docResp.find((r) => r.status === 429)?.message ?? null,
       rateLimitHeaders: docResp[0] ? { limit: docResp[0].xRateLimitLimit, lastRemaining: docResp[docResp.length - 1].xRateLimitRemaining } : null,
     });
-    console.log(`open#${i + 1} ${title.slice(0, 50)} -> docGETs=${docGets.length} ${JSON.stringify(per)}`);
+    console.info(`open#${i + 1} ${title.slice(0, 50)} -> docGETs=${docGets.length} ${JSON.stringify(per)}`);
   }
 }
 
@@ -117,7 +117,7 @@ if (PHASE === 'dataroom' || PHASE === 'both') {
     responses: slice.map((r, i) => ({ n: i + 1, status: r.status, message: r.message ?? null, limit: r.xRateLimitLimit, remaining: r.xRateLimitRemaining })),
     byStatus,
   };
-  console.log(`dataroom drop of ${files.length}: ${JSON.stringify(byStatus)}`);
+  console.info(`dataroom drop of ${files.length}: ${JSON.stringify(byStatus)}`);
   const chip = page.locator('section.pj-sec', { has: page.getByRole('heading', { name: 'Data room', exact: true }) });
   summary.dataRoomDrop.sectionText = (await chip.innerText().catch(() => '')).slice(0, 1500);
 }
@@ -125,6 +125,5 @@ if (PHASE === 'dataroom' || PHASE === 'both') {
 summary.finishedAt = new Date().toISOString();
 summary.events = events;
 fs.writeFileSync(path.join(OUT, `${PHASE}-run.json`), JSON.stringify(summary, null, 2));
-const consoleErrors = [];
 await browser.close();
-console.log('wrote', path.join(OUT, `${PHASE}-run.json`), 'events', events.length);
+console.info('wrote', path.join(OUT, `${PHASE}-run.json`), 'events', events.length);

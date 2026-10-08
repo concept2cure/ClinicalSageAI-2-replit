@@ -29,4 +29,4 @@ for (const [email, label] of users) {
   out.push({ user: email, request: { method: 'GET', path: '/api/v1/auth/session', headers: { Authorization: 'Bearer <JWT-REDACTED>' } }, status: sr.status, response: JSON.parse(redact(JSON.stringify(sbody))) });
 }
 
-console.log(JSON.stringify(out, null, 2));
+console.info(JSON.stringify(out, null, 2));

@@ -22,8 +22,8 @@ const loginCalls = [];
 page.on('response', async (r) => {
   const u = r.url();
   if (u.includes('/api/v1/auth/session') || u.includes('/api/v1/auth/login')) {
-    let body = null;
-    try { body = await r.json(); } catch {}
+    let body;
+    try { body = await r.json(); } catch (err) { body = { unreadable: err.message }; }
     const rec = { url: u.replace(BASE, ''), status: r.status(), roles: body?.user?.roles ?? null, permissions: body?.user?.permissions ?? null };
     (u.includes('/session') ? sessionCalls : loginCalls).push(rec);
   }
@@ -39,7 +39,7 @@ const storedUser = async () =>
       try {
         const v = JSON.parse(raw);
         if (v && typeof v === 'object' && (v.roles || v.user?.roles)) hits[k] = { roles: v.roles ?? v.user?.roles, permissions: v.permissions ?? v.user?.permissions ?? null };
-      } catch {}
+      } catch (err) { void err; }
     }
     return hits;
   });
@@ -49,19 +49,19 @@ await page.fill('#login-email', EMAIL);
 await page.fill('#login-password', PW);
 await page.click('button:has-text("Sign in")');
 await page.waitForTimeout(4000);
-console.log('after sign-in URL:', page.url());
+console.info('after sign-in URL:', page.url());
 const afterLogin = await storedUser();
-console.log('stored user after sign-in:', JSON.stringify(afterLogin));
+console.info('stored user after sign-in:', JSON.stringify(afterLogin));
 await page.screenshot({ path: `${OUT}/02-after-signin.png` });
 
 await page.reload({ waitUntil: 'domcontentloaded' });
 await page.waitForTimeout(4000);
-console.log('after reload URL:', page.url());
+console.info('after reload URL:', page.url());
 const afterReload = await storedUser();
-console.log('stored user after reload:', JSON.stringify(afterReload));
+console.info('stored user after reload:', JSON.stringify(afterReload));
 await page.screenshot({ path: `${OUT}/03-after-reload.png` });
 
-console.log('login calls:', JSON.stringify(loginCalls));
-console.log('session calls:', JSON.stringify(sessionCalls));
+console.info('login calls:', JSON.stringify(loginCalls));
+console.info('session calls:', JSON.stringify(sessionCalls));
 fs.writeFileSync(`${OUT}/flow.json`, JSON.stringify({ email: EMAIL, afterLogin, afterReload, loginCalls, sessionCalls }, null, 2));
 await browser.close();

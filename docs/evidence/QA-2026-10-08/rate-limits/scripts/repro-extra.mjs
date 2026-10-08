@@ -68,8 +68,8 @@ summary.annotate = {
   requests: events.slice(mark).map(({ method, path: p, status, ms }) => ({ ms, method, path: p, status })),
   panelText: (await panel.innerText().catch(() => 'ERR')).slice(0, 900),
 };
-console.log('annotate sequence:', JSON.stringify(summary.annotate.requests.map((r) => `${r.method} ${r.status} ${r.path.split('/').slice(-1)[0]}`)));
-console.log('annotate panel:', summary.annotate.panelText.replace(/\n+/g, ' | ').slice(0, 400));
+console.info('annotate sequence:', JSON.stringify(summary.annotate.requests.map((r) => `${r.method} ${r.status} ${r.path.split('/').slice(-1)[0]}`)));
+console.info('annotate panel:', summary.annotate.panelText.replace(/\n+/g, ' | ').slice(0, 400));
 
 // (2) Send-for-review route, budget spent (just after the annotate phase)
 phase = 'send';
@@ -86,13 +86,13 @@ const probe = async () => page.evaluate(async () => {
   return { status: r.status, remaining: r.headers.get('x-ratelimit-remaining'), limit: r.headers.get('x-ratelimit-limit'), body: text.slice(0, 160) };
 });
 summary.sendWhileBudgetSpent = await probe();
-console.log('send (budget spent):', JSON.stringify(summary.sendWhileBudgetSpent));
+console.info('send (budget spent):', JSON.stringify(summary.sendWhileBudgetSpent));
 await sleep(WAIT_RESET);
 summary.sendAfterWindowReset = await probe();
-console.log('send (window reset):', JSON.stringify(summary.sendAfterWindowReset));
+console.info('send (window reset):', JSON.stringify(summary.sendAfterWindowReset));
 
 summary.finishedAt = new Date().toISOString();
 summary.events = events;
 fs.writeFileSync(path.join(OUT, 'extra-run.json'), JSON.stringify(summary, null, 2));
 await browser.close();
-console.log('wrote', path.join(OUT, 'extra-run.json'));
+console.info('wrote', path.join(OUT, 'extra-run.json'));

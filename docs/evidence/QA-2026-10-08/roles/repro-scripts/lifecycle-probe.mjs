@@ -31,4 +31,4 @@ for (const [email, label] of who) {
   };
   out.push({ email, label, emptyBody: await post({}), titledBody: await post({ title: 'QA-PROBE-NOWRITE', documentType: 'ind' }) });
 }
-console.log(JSON.stringify(out, null, 2));
+console.info(JSON.stringify(out, null, 2));
