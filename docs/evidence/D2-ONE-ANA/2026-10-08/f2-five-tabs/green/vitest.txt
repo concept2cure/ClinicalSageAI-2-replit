@@ -1,0 +1,17 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > the tabs are exactly Evidence, Author, Review, Submit and Respond, in that order 134ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > no tab renders "Not in this release" 289ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > AnA's set-stage {stage:'plan'} opens Submit 150ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > AnA's set-stage {stage:'lifecycle'} opens Submit 87ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > Submit names what Plan and Lifecycle promised as coming later, with nothing to click 95ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > the Schedule panel is gone: no schedule read and no Schedule heading on any tab 702ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > a message typed in the start box survives switching tabs 115ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > the project's Conversations are listed above the tabs, on every tab 144ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  07:51:33
+   Duration  4.96s (transform 1.12s, setup 294ms, import 1.33s, tests 1.72s, environment 1.25s)
+
