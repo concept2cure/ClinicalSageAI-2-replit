@@ -5,6 +5,7 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { I } from '../icons';
 import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
 import { VaultEditDetails } from './VaultEditDetails';
+import { VaultCatalogRecord } from './VaultCatalogRecord';
 import { VaultVersions } from './VaultVersions';
 import { APPROVED_STAGES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
@@ -1949,6 +1950,17 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                         projectId={projectId}
                         documentId={sel.docId}
                         details={sel.details}
+                        onSaved={() => setVaultEpoch((n) => n + 1)}
+                      />
+                    ) : null}
+
+                    {projectId && sel.docId ? (
+                      /* AnA's description of this version and a person's decision on it
+                         (S4). Keyed by the document alone, for the reason above. */
+                      <VaultCatalogRecord
+                        key={`catalog-${sel.docId}`}
+                        projectId={projectId}
+                        documentId={sel.docId}
                         onSaved={() => setVaultEpoch((n) => n + 1)}
                       />
                     ) : null}

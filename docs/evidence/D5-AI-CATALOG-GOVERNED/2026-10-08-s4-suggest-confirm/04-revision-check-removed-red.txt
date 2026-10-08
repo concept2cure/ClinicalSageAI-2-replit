@@ -1,0 +1,92 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > is stored as suggested, with the agent, model, thread and turn
+ ↓ tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > has a chained audit row naming the agent, model and turn
+ ↓ tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > the Vault read shows it as a suggestion by AnA and its model
+ ↓ tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > session recall labels it as her unconfirmed suggestion
+ ↓ tests/db/document-catalog-governed.dbtest.ts > the kind is the Vault vocabulary > refuses a kind outside it and writes nothing
+{"level":30,"time":"2026-10-08T18:18:35.716Z","pid":24883,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T18:18:35.718Z","pid":24883,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T18:18:35.718Z","pid":24883,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/document-catalog-governed.dbtest.ts > a person confirms
+[database] Database connection successful { timestamp: '2026-10-08T18:18:38.158Z', poolSize: 1 }
+
+stdout | tests/db/document-catalog-governed.dbtest.ts > a person confirms
+[database] Database connection successful
+
+stderr | tests/db/document-catalog-governed.dbtest.ts > a person confirms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/document-catalog-governed.dbtest.ts > a person confirms
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/document-catalog-governed.dbtest.ts > a person confirms
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 1411ms org=258 user=- caller=embedding-provider req=cef43247-c0ca-42bd-a7b7-71ac32a6a972
+
+stderr | tests/db/document-catalog-governed.dbtest.ts > a person confirms
+{
+  "timestamp": "2026-10-08T18:18:46.273Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "049f7915-4bb0-4dd6-9b32-4695d7f22975",
+    "err": "Connection error."
+  }
+}
+
+ ↓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > a viewer cannot, and the record is untouched
+stdout | tests/db/document-catalog-governed.dbtest.ts > a person confirms > a confirmation of a record that changed after it was shown is refused
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 1344ms org=258 user=- caller=embedding-provider req=4128b6a7-bc88-4377-a89c-819fc9873de7
+
+stderr | tests/db/document-catalog-governed.dbtest.ts > a person confirms > a confirmation of a record that changed after it was shown is refused
+{
+  "timestamp": "2026-10-08T18:18:48.207Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "049f7915-4bb0-4dd6-9b32-4695d7f22975",
+    "err": "Connection error."
+  }
+}
+
+ × tests/db/document-catalog-governed.dbtest.ts > a person confirms > a confirmation of a record that changed after it was shown is refused 2024ms
+   → expected 200 to be 409 // Object.is equality
+ ↓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > a decision that names no revision is refused
+ ↓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > a member confirms it as written, audited with the proposer
+ ↓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > only once
+ ↓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > AnA cannot replace a record a person confirmed
+ ↓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > recall says a person confirmed it
+ ↓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > without a reason, nothing changes
+ ↓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > a kind outside the vocabulary is refused
+ ↓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > with a reason, the correction is recorded and audited with it
+ ↓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > the database refuses a 'corrected' record without a reason
+ ↓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > new bytes clear the description and its decision
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > a person confirms > a confirmation of a record that changed after it was shown is refused
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ tests/db/document-catalog-governed.dbtest.ts:249:24
+    247|     expect((await anaCatalogs(documentId, 'report')).ok).toBe(true); /…
+    248|     const res = await post('member', documentId, 'confirm', { revision…
+    249|     expect(res.status).toBe(409);
+       |                        ^
+    250|     expect(res.body.error).toBe('CHANGED_SINCE_SHOWN');
+    251|     expect((await catalogRow(documentId)).catalog_state).toBe('suggest…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 skipped (17)
+   Start at  18:18:31
+   Duration  16.93s (transform 9.13s, setup 99ms, import 316ms, tests 15.88s, environment 0ms)
+

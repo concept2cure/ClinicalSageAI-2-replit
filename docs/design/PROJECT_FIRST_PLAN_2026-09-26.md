@@ -861,4 +861,11 @@ The founder chose the plan's recommended option in each case:
   - `652e0947`: the Module 3 routes and `POST /api/cmc-changes` write only under a project of the caller's organization.
   - `369cc698`: one membership check for CMC, `project-membership.ts` `projectBelongsToTenant`, which no longer admits a deleted program.
   - `0f69a1d3` (MISSED-2): an interview session is bound only to a project of its organization, checked at start and on every commit.
-  - `c432e27a`: a tracked eSTAR filing names a project of its organization.
+  - `c432e27a`: a tracked eSTAR filing names a project of its organization.- **Data Room catalog** (founder request of 2026-10-08; plan in `docs/design/DATA_ROOM_CATALOG_AND_CLINICAL_DATA_2026-10-08.md`; founder decisions: inside launch scope, "suggest, person confirms", the study as a repo design doc). Moves D2 and D5.
+  - S0: the study, the design doc above.
+  - S1, `1d5de6ca`: AnA searches the Vault's passages with no AI key and no flag. Chunks are written with no embedder, and the lexical arm ranks them (`docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-08-s1-keyless-passage-search/`).
+  - S2, `e3087d7e` + `bcc296f8`: every Data Room capture is processed, its text stored and searchable, the list paged, and the lane counts exact (`.../2026-10-08-s2-processed-searchable/`).
+  - S3, `13efb8fc`: each capture is described by rule and from the project's record, with study, registry id, protocol number, dates and data cut; the study key is same-organization; a dataset is profiled by structure only (`.../2026-10-08-s3-catalog-facts/`).
+  - S4: AnA's catalog record is a suggestion that names its model and turn, is audited, uses the Vault's kind vocabulary, and is confirmed or corrected by a person in the Vault's Catalog record panel. The catalog row is created on (`docs/evidence/D5-AI-CATALOG-GOVERNED/2026-10-08-s4-suggest-confirm/`).
+  - Next: S5, a number in a document is bound to where it came from (`computed` and `derived` lineage, unverified figures flagged).
+  - Open for the founder: `.xpt`, Dataset-JSON and `m5/datasets` packaging (design doc §6), and `.zip` intake.

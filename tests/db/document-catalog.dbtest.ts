@@ -393,7 +393,7 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
 
     const refused = await callTool('catalog_project_document', {
       document_id: txtDocId,
-      document_kind: 'Stability study report',
+      document_kind: 'report',
       purpose: 'Supports the retest period.',
       summary: 'Twelve-month stability data for batch 23-104.',
     });
@@ -414,7 +414,7 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
 
     const done = await callTool('catalog_project_document', {
       document_id: txtDocId,
-      document_kind: 'Stability study report',
+      document_kind: 'report',
       purpose: 'Supports the 24-month retest period for batch 23-104.',
       summary:
         'Twelve-month 25C/60RH stability data for batch 23-104; assay 99.2% of label claim; no OOS; supports a 24-month retest period.',
@@ -432,7 +432,7 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
     );
     expect(rows[0]).toMatchObject({
       catalog_status: 'cataloged',
-      document_kind: 'Stability study report',
+      document_kind: 'report',
       batch: '23-104',
     });
   });
@@ -447,7 +447,7 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
     const read = await callTool('read_project_document', { document_id: txtDocId });
     expect(read.ok).toBe(true);
     expect(read.comprehension, 'a cataloged document must return what was learned').toBeTruthy();
-    expect(read.comprehension.documentKind).toBe('Stability study report');
+    expect(read.comprehension.documentKind).toBe('report');
     expect(read.comprehension.keyData).toMatchObject({ batch: '23-104', retestMonths: 24 });
     expect(read.comprehension.catalogedAt).toBeTruthy();
   });
@@ -520,7 +520,7 @@ describe('key_data is verified against the text it claims to transcribe', () => 
   const catalogWith = (keyData: Record<string, unknown>) =>
     callTool('catalog_project_document', {
       document_id: coaDocId,
-      document_kind: 'Certificate of Analysis',
+      document_kind: 'cert',
       purpose: 'Release evidence for the clinical batch.',
       summary: 'CoA for one Catalogin 10mg batch: assay, batch size, particle size; released.',
       key_data: keyData,

@@ -159,3 +159,18 @@ describe('bootstrapDocumentCatalogToggles — a row it could not create is said,
   });
 });
 
+
+describe('bootstrapDocumentCatalogToggles — the catalog row is created on (S4, 2026-10-08)', () => {
+  /* Founder decision: the catalog is on by default, now that AnA's writes are
+     suggestions a person confirms. The per-upload embedding stays off. Only a
+     missing row takes the default; initializeFeatureToggle leaves an existing
+     row's state alone, so an operator's off stays off. */
+  it('creates ana.document_catalog ON and ana.vault_chunking OFF', async () => {
+    initializeFeatureToggle.mockReset().mockResolvedValue(undefined);
+    readFeatureState.mockResolvedValue({ enabled: true, readable: true });
+    await bootstrapDocumentCatalogToggles();
+    const byKey = new Map(initializeFeatureToggle.mock.calls.map((c) => [c[0], c[2]]));
+    expect(byKey.get(DOCUMENT_CATALOG_FEATURE_KEY)).toBe(true);
+    expect(byKey.get(VAULT_CHUNKING_FEATURE_KEY)).toBe(false);
+  });
+});

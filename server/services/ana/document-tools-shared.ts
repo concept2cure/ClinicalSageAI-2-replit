@@ -12,6 +12,8 @@
  */
 
 import type { ToolContext } from './AnaToolExecutor.js';
+import type { CommandContext } from '../ana-ri/command-executor.js';
+import { agentAuditDetails, type PolicyCheck } from '../ana-ri/mdx-tool-policy.js';
 
 /**
  * Every tool whose handler refuses without the catalog — the ones that call
@@ -145,3 +147,50 @@ export type RegisterFn = (
   handler: (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>,
 ) => void;
 
+/**
+ * Who made this write, for its audit row — the D5 fix: AnA's placement
+ * (place_project_document) and her catalog record (catalog_project_document).
+ *
+ * In the repo's one agent-audit shape: agentAuditDetails (ana-ri/
+ * mdx-tool-policy), the details every agent.ana.* row carries and
+ * explain_audit_row reads to say "AnA (agent)" rather than "human user". The
+ * helper takes a command context and a governed-tool gate; it reads only the
+ * thread, chat-message ids and serving model from the one and the reason and
+ * artifact flag from the other, so a tool call supplies what it has — its
+ * thread, its model call, and its rationale as the reason — and the rest of
+ * this tool's provenance is added beside it.
+ */
+/** As the gateway reported it, with the bare model name as the fallback. */
+function servingModelOf(ctx: ToolContext | undefined): CommandContext['servingModel'] {
+  const served = ctx?.servingModel;
+  return {
+    provider: served?.provider ?? null,
+    model: served?.model ?? ctx?.model ?? null,
+    requestId: served?.requestId ?? null,
+  };
+}
+
+export function anaToolProvenance(
+  ctx: ToolContext | undefined,
+  orgId: number,
+  rationale: string,
+  tool: string,
+): Record<string, unknown> {
+  const commandCtx = {
+    organizationId: orgId,
+    userId: ctx?.userId,
+    threadId: ctx?.threadId ?? undefined,
+    servingModel: servingModelOf(ctx),
+  } as CommandContext;
+  const gate = { ok: true, reason: rationale } as PolicyCheck;
+  return {
+    ...agentAuditDetails(commandCtx, gate),
+    // That soft signal is computed by the governed-tool gate, which this tool
+    // does not run. The helper would record `false`, which explain_audit_row
+    // renders as "the reason did NOT cite a concrete artifact" — a finding no
+    // one made. Null is "not assessed".
+    reasonReferencedArtifact: null,
+    tool,
+    turnId: ctx?.turnId ?? null,
+  };
+}

@@ -91,6 +91,7 @@ beforeAll(async () => {
       'migrations/20260921_audit_logs_chain_seq.sql',
       'migrations/20260921_authoring_document_provenance.sql',
       'migrations/20260905_document_catalog.sql',
+      'migrations/20261008e_document_catalog_attribution.sql',
       'migrations/20261006_document_data_dispositions.sql',
     ],
   });
@@ -204,7 +205,7 @@ describe('project catalog — source-version truth', () => {
       const listing = await listProjectDocuments(ORG, { programId: PROGRAM });
       expect(listing).toMatchObject({ total: 1, notYetStudied: 1 });
       expect(listing.documents[0].catalogStatus).toBe('uncataloged');
-      const completed = await completeCatalog({ documentId: SOURCE_ID, organizationId: ORG, documentKind: 'CSR', purpose: 'Review', summary: 'New summary' });
+      const completed = await completeCatalog({ documentId: SOURCE_ID, organizationId: ORG, documentKind: 'csr', purpose: 'Review', summary: 'New summary' });
       expect(completed).toMatchObject({ ok: false, refusal: expect.stringContaining('another source version') });
       const unchanged = await loadDocumentForOrg(SOURCE_ID, ORG);
       expect(unchanged?.catalog?.contentHash).toBe('d'.repeat(64));
@@ -219,8 +220,8 @@ describe('project catalog — source-version truth', () => {
     await recordReadReceipt({ documentId: SOURCE_ID, contentHash: 'a'.repeat(64), span: { start: 0, end: SOURCE_TEXT.length }, readBy: Number(AUTHOR.id) });
     h.beforeEmbedding = async () => { await jdb.pool.query('UPDATE vault.document_catalog SET content_hash=$1 WHERE document_id=$2', ['d'.repeat(64), SOURCE_ID]); };
     try {
-      const outcome = await completeCatalog({ documentId: SOURCE_ID, organizationId: ORG, documentKind: 'CSR', purpose: 'Review', summary: 'Must not report saved' });
-      expect(outcome).toMatchObject({ ok: false, refusal: expect.stringContaining('changed before the write') });
+      const outcome = await completeCatalog({ documentId: SOURCE_ID, organizationId: ORG, documentKind: 'csr', purpose: 'Review', summary: 'Must not report saved' });
+      expect(outcome).toMatchObject({ ok: false, refusal: expect.stringContaining('has a newer version than the one you read') });
       expect((await loadDocumentForOrg(SOURCE_ID, ORG))?.catalog?.summary).toBeNull();
     } finally {
       h.beforeEmbedding = null;
