@@ -74,7 +74,8 @@ import { describeProvenance, moduleWasAssumed, type DocumentProvenance } from '.
 import { OpenedDocumentPending, StatusPill, ToDocumentsButton } from './CanvasDocumentList';
 
 /** GET /docs/:id → `document` (the columns this card reads; `created_by` is the author, never offered as its reviewer). */
-interface DocRow extends Pick<AuthDoc, 'created_by'> {
+/* c2c_document_id: the filing this is the editing copy of, or null (F4). */
+interface DocRow extends Pick<AuthDoc, 'created_by' | 'c2c_document_id'> {
   id: string;
   title: string;
   module: string | null;
@@ -407,7 +408,7 @@ export function DocumentCanvas({
   };
 
   const docsForWorkbench: AuthDoc[] = doc
-    ? [{ id: doc.id, title: doc.title, module: doc.module, product_code: doc.product_code, status: doc.status, updated_at: doc.updated_at, section_count: doc.section_count }]
+    ? [{ id: doc.id, title: doc.title, module: doc.module, product_code: doc.product_code, status: doc.status, updated_at: doc.updated_at, section_count: doc.section_count, c2c_document_id: doc.c2c_document_id }]
     : [];
 
   const reloadDoc = useCallback(async () => {

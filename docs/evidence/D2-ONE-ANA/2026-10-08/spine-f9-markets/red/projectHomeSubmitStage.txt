@@ -1,0 +1,51 @@
+# Trimmed to the result and assertion lines; the rendered-DOM dumps of the full run are omitted.
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > lists the project’s submission from the project-scoped read 130ms
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > an empty project says so, which is not the same as a failure 5059ms
+   → Unable to find an element with the text: No market for this project yet. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > a failed read is a failure with a retry, and the retry reads again 5049ms
+   → Unable to find an element with the text: Couldn't load this project's markets. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > keeps "Open Submission Center", which opens on this project 277ms
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > shows the server’s verdict, its blockers and its counts, from the readiness endpoint 52ms
+   → expected 'INDActiveONC-221 IND · VorelinibFDA (…' to contain 'Dispatch blocked · 2 blockers'
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a cleared verdict is the server’s, and says so in words 46ms
+   → expected 'INDActiveONC-221 IND · VorelinibFDA (…' to contain 'Cleared to dispatch'
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a response with no gate is unanswered, never cleared 44ms
+   → expected 'INDActiveONC-221 IND · VorelinibFDA (…' to contain 'No verdict from the server'
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > no submission and no sequence are said in plain words 5049ms
+   → Unable to find an element by: [data-testid="pj-markets"]
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > an IND project whose only submission is an MAA shows the MAA as its market, with its own state 56ms
+   → expected 'MAAActiveONC-221 EU MAA · VorelinibEU…' to contain 'MAA · EU (EMA)'
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > a CER project (no application type is CER) lists its submissions as its markets 46ms
+   → expected 'CTAActiveVorelinib CER · VorelinibEU …' to contain 'CTA · EU (EMA)'
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > a submission with no project recorded is not gated by name: no verdict, and the panels agree 5051ms
+   → expected '' to contain 'No market for this project yet'
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > states each gate the server cleared without assessing, in the server’s words 37ms
+   → expected 'INDActiveONC-221 IND · VorelinibFDA (…' to contain 'Cleared to dispatch · 1 gate not asse…'
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > with no gate breakdown, says the external validator did not run 31ms
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > a cleared verdict whose validator ran says nothing it did not assess 41ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > an empty project says so, which is not the same as a failure
+TestingLibraryElementError: Unable to find an element with the text: No market for this project yet. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > a failed read is a failure with a retry, and the retry reads again
+TestingLibraryElementError: Unable to find an element with the text: Couldn't load this project's markets. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > shows the server’s verdict, its blockers and its counts, from the readiness endpoint
+AssertionError: expected 'INDActiveONC-221 IND · VorelinibFDA (…' to contain 'Dispatch blocked · 2 blockers'
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a cleared verdict is the server’s, and says so in words
+AssertionError: expected 'INDActiveONC-221 IND · VorelinibFDA (…' to contain 'Cleared to dispatch'
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a response with no gate is unanswered, never cleared
+AssertionError: expected 'INDActiveONC-221 IND · VorelinibFDA (…' to contain 'No verdict from the server'
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > no submission and no sequence are said in plain words
+TestingLibraryElementError: Unable to find an element by: [data-testid="pj-markets"]
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > an IND project whose only submission is an MAA shows the MAA as its market, with its own state
+AssertionError: expected 'MAAActiveONC-221 EU MAA · VorelinibEU…' to contain 'MAA · EU (EMA)'
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > a CER project (no application type is CER) lists its submissions as its markets
+AssertionError: expected 'CTAActiveVorelinib CER · VorelinibEU …' to contain 'CTA · EU (EMA)'
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > a submission with no project recorded is not gated by name: no verdict, and the panels agree
+AssertionError: expected '' to contain 'No market for this project yet'
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > states each gate the server cleared without assessing, in the server’s words
+AssertionError: expected 'INDActiveONC-221 IND · VorelinibFDA (…' to contain 'Cleared to dispatch · 1 gate not asse…'
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > with no gate breakdown, says the external validator did not run
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > a cleared verdict whose validator ran says nothing it did not assess
+ Test Files  1 failed (1)
+      Tests  12 failed | 2 passed (14)

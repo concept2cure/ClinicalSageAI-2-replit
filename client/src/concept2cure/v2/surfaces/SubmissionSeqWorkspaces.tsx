@@ -38,6 +38,7 @@ import { PlacementReasonField, placementReasonOk } from './filingTarget';
 import { downloadBlob } from '../download';
 import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
 import { useSurfaceAvailable } from '../surfaceAvailable';
+import { SequenceAssembleTestPackage } from './SequenceAssembleTestPackage';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
@@ -121,6 +122,9 @@ export interface MutateResult<T> {
   code?: string;
   /** The response headers of a confirmed answer (a 204 carries its news there). */
   headers?: Headers;
+  /** A refusal's parsed body, for a caller that must show more of it than the
+   *  message (the assemble route's refusal carries its audit outcome). */
+  body?: unknown;
 }
 
 /**
@@ -148,7 +152,7 @@ export async function mutateVerbatim<T>(
     if (!res.ok) {
       const p = (await res.json().catch(() => null)) as unknown;
       const code = mutationCode(p);
-      return { data: null, error: messageFromBody(p, res.status), status: res.status, code, unconfirmed: mutationUnconfirmed(res.status, code) };
+      return { data: null, error: messageFromBody(p, res.status), status: res.status, code, unconfirmed: mutationUnconfirmed(res.status, code), body: p };
     }
     return confirmedResult<T>(res);
   } catch (e) {
@@ -171,7 +175,7 @@ export async function mutateVerbatim<T>(
     return {
       data: null,
       error: typeof detail === 'string' && detail && !base.includes(detail) ? `${base} — ${redactInternals(detail, 'Check the current record before retrying.')}` : base,
-      unconfirmed, status, code,
+      unconfirmed, status, code, body: payload,
     };
   }
 }
@@ -1972,6 +1976,7 @@ export function DispatchWorkspace({
                 </button>
               )}
             </div>
+            <SequenceAssembleTestPackage seq={seq} />
             <PackageAndTransmit
               sub={sub}
               seq={seq}

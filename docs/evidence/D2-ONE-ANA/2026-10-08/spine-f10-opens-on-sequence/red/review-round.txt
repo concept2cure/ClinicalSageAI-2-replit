@@ -1,0 +1,27 @@
+# Review-round red run: SequenceAssembleTestPackage.tsx and submissionNavTarget.ts put back to the implementer's first version (before the review fixes); everything else as in this change. 2026-10-08T18:26:07Z
+# npx vitest run client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > after placing into sequence 7, the Submission Center opens on sequence 7 in the Builder 566ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > a sequence not in the submission is not guessed at: the sequence list, with a line saying so 62ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > on the first submission too: an unknown sequence is said, never replaced by sequence 0000 58ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > a failed sequence read is said as a failed read, not as "not found" 39ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > a submission not in the list is not guessed at: the submission list, with a line saying so 46ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > the line about the link is cleared once the person moves to another tab 5085ms
+   → expected 'SubmissionSubmission centerPlan, asse…' not to match /The sequence this link named was not …/
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > the line about the link is cleared once the person picks another submission 5052ms
+   → expected 'SubmissionSubmission centerPlan, asse…' not to match /The submission this link named is not…/
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > with nothing carried, the Submission Center opens on its portfolio as before 41ms
+ ✓ client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: assemble a test package > POSTs the sequence assemble route and shows the server blockers verbatim 215ms
+ ✓ client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: assemble a test package > the button is disabled while the request runs 99ms
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: assemble a test package > an empty blocker list is not shown as ready to send 48ms
+   → expected 'Dispatch · sequence 0001dispatch read…' to contain 'The server found nothing in the place…'
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: a test package that failed or was refused > a 503 is reported as unknown, never as not assembled 5050ms
+   → expected 'Dispatch · sequence 0001dispatch read…' to match /Whether the test package was assemble…/
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: a test package that failed or was refused > a dropped connection is reported as unknown, never as not assembled 5040ms
+   → expected 'Dispatch · sequence 0001dispatch read…' to contain 'Whether the test package was assemble…'
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: a test package that failed or was refused > a refused assembly whose audit entry was not persisted says so 34ms
+   → expected 'Dispatch · sequence 0001dispatch read…' to contain 'The audit entry for this refusal coul…'
+ ✓ client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: a test package that failed or was refused > a role refusal says nothing about a refusal audit entry 42ms
+ ✓ client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: a test package that failed or was refused > a 422 shows the server words and claims no package 29ms
+ ✓ client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: a test package that failed or was refused > an assembly whose audit entry was not persisted says so 42ms
+ Test Files  2 failed (2)
+      Tests  6 failed | 11 passed (17)

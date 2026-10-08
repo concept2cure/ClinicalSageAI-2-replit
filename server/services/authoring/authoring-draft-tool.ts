@@ -100,6 +100,24 @@ function summaryContent(input: CreateDocumentFromDraftInput): string {
 }
 
 /**
+ * The drafted figures no cited source states (S5a), said to AnA in the result
+ * she relays: each is named with its section, so she does not present it to
+ * the user as the source's. Empty when every figure was found, or when the
+ * draft cited no source (then nothing was checked, and the result's
+ * projectSourceReferences is empty).
+ */
+export function unverifiedFigureNote(refs: import('./authoring-from-draft').DocumentProvenance['projectSourceReferences']): string {
+  const missing = (refs ?? []).flatMap(r =>
+    (r.figures?.figures ?? []).filter(f => f.status === 'unverified').map(f => `${f.text} (${r.sectionCode})`));
+  const total = (refs ?? []).reduce((n, r) => n + (r.figures?.unverified ?? 0), 0);
+  if (total === 0) return '';
+  const shown = missing.slice(0, 10).join('; ');
+  return ` ${total} figure(s) in the draft are not stated in the sources it cites: ${shown}` +
+    `${total > 10 ? `; and ${total - 10} more` : ''}. Tell the user they are unverified, and do not present them as ` +
+    'the sources\u2019 figures. The editor lists them.';
+}
+
+/**
  * The tool body. Returns the JSON string the model receives; `{ error }` for
  * every refusal, so telemetry classifies it as degraded rather than a crash.
  */
@@ -151,7 +169,8 @@ export async function draftAuthoringDocumentTool(
       content: summaryContent(parsed.value),
       message:
         `Saved '${parsed.value.title}' as an authoring draft (${outcome.sections.length} section(s)) in the open project. ` +
-        'It is a draft in the editor; nothing is filed in the vault until someone files it.',
+        'It is a draft in the editor; nothing is filed in the vault until someone files it.' +
+        unverifiedFigureNote(outcome.provenance.projectSourceReferences),
     };
     return JSON.stringify(result);
   } catch (err) {

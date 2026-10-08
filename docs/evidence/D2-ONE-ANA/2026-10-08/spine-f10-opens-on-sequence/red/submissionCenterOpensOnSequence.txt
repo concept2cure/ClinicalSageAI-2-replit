@@ -1,0 +1,19 @@
+# Red run: SubmissionCenter.tsx, SubmissionSeqWorkspaces.tsx and AuthoringPlaceIntoFiling.tsx reverted to HEAD (git show HEAD:<path>), restored after; tests, baseline and the new files as in this change. 2026-10-08T18:27:35Z
+# npx vitest run client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx tests/ui/filing-path-reachability.test.ts  (lines for client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx; totals are for the whole run)
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > after placing into sequence 7, the Submission Center opens on sequence 7 in the Builder 5500ms
+   → expected 'false' to be 'true' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > a sequence not in the submission is not guessed at: the sequence list, with a line saying so 5015ms
+   → expected 'SubmissionSubmission centerPlan, asse…' to match /The sequence this link named was not …/
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > on the first submission too: an unknown sequence is said, never replaced by sequence 0000 5020ms
+   → expected 'SubmissionSubmission centerPlan, asse…' to match /The sequence this link named was not …/
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > a failed sequence read is said as a failed read, not as "not found" 5019ms
+   → expected 'SubmissionSubmission centerPlan, asse…' to match /The sequences of ZX-9 First-in-Human …/
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > a submission not in the list is not guessed at: the submission list, with a line saying so 5016ms
+   → expected 'SubmissionSubmission centerPlan, asse…' to match /The submission this link named is not…/
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > the line about the link is cleared once the person moves to another tab 5016ms
+   → expected 'SubmissionSubmission centerPlan, asse…' to match /The sequence this link named was not …/
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > the line about the link is cleared once the person picks another submission 5017ms
+   → expected 'SubmissionSubmission centerPlan, asse…' to match /The submission this link named is not…/
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > with nothing carried, the Submission Center opens on its portfolio as before 42ms
+ Test Files  3 failed (3)
+      Tests  17 failed | 21 passed (38)

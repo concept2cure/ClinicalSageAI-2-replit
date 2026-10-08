@@ -53,7 +53,6 @@
 import React from 'react';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
-import { liveGetOrNull } from '../dataConnect';
 import {
   useFilingTarget,
   FilingTargetFields,
@@ -62,14 +61,15 @@ import {
   PLACEMENT_REASON_REQUIRED,
   judgeSectionCode,
   isLocked,
-  validReceiptId,
   matchingLeafReceipt,
   placementAuditWarning,
   type FilingLeafReceipt as PlacedLeaf,
 } from './filingTarget';
-import { mutateVerbatim, type MutateResult } from './SubmissionSeqWorkspaces';
+import { mutateVerbatim } from './SubmissionSeqWorkspaces';
+import { takeFilingCopy, leafFailure, type Verdict } from './placeIntoFilingCopy';
 import { SC_LIFECYCLE_OPS } from '../fixtures/submission';
 import type { FireToast } from '../toast';
+import { stashNavParamsForTarget } from '../navParams';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
@@ -80,13 +80,6 @@ import { snapshotStatusFor } from '@shared/regulatory/filing-copy-status';
 /* SubmissionRow, SequenceRow and isLocked now live in ./filingTarget — the
    Vault files into a sequence too, and one definition cannot drift from the
    other. */
-
-/** GET /api/authoring/docs/:docId/sections rows (subset). */
-interface SavedSection {
-  code: string | null;
-  title: string | null;
-  content: string | null;
-}
 
 /**
  * The one honest statement of why placement is a derivation. Pinned by test.
@@ -107,22 +100,6 @@ export const IDENTITY_STATEMENT =
   'The submission of record cannot point at a working draft, so placing does not move this ' +
   'document — it files a point-in-time copy of the SAVED sections and places that copy as ' +
   'the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.';
-
-/**
- * Assemble the saved sections into one snapshot body — the SAME format the
- * authoring → canonical bridge uses server-side
- * (server/services/ana/authoring-canonical-bridge.ts, loadDocumentSnapshot),
- * so the filed content reads identically wherever the document is projected.
- */
-export function assembleSnapshot(sections: SavedSection[]): string {
-  return sections
-    .map((s) => {
-      const heading = [s.code, s.title].filter(Boolean).join(' — ');
-      return heading ? `## ${heading}\n\n${s.content ?? ''}` : String(s.content ?? '');
-    })
-    .join('\n\n')
-    .trim();
-}
 
 /**
  * The document's own CTD code: the deepest code every one of its sections sits
@@ -214,13 +191,15 @@ export interface AuthoringPlaceIntoFilingProps {
   fireToast: FireToast;
 }
 
-type Verdict = { tone: 'ok' | 'err'; text: string } | null;
 
 interface Placement {
   leafId: number;
   sectionCode: string;
   sequenceLabel: string;
   snapshotId: number;
+  seqId: number;
+  /** The submission the sequence belongs to, for "Open in Submission Center". */
+  submissionId: number | null;
 }
 
 function AuthoringPlaceIntoFilingForDocument({
@@ -300,7 +279,7 @@ function AuthoringPlaceIntoFilingForDocument({
      code the note announces ("Files as 3.2.S.4.2"), not at the keystrokes:
      upsertLeaf stores a section code as sent, and the Vault filing dialog,
      sharing this judgement, sends the canonical form too. */
-  const filing = canPlace && seq && sectionJudged.canonical ? { seq, sectionCode: sectionJudged.canonical } : null;
+  const filing = canPlace && seq && sectionJudged.canonical ? { seq, sectionCode: sectionJudged.canonical, subId: target.subId } : null;
 
   const place = async () => {
     if (!filing || pending.current) return;
@@ -338,7 +317,10 @@ function AuthoringPlaceIntoFilingForDocument({
         return;
       }
       const sequenceLabel = `${filing.seq.sequenceNumber} · ${filing.seq.type}`;
-      setPlacement({ leafId: put.data.id, sectionCode: put.data.sectionCode, sequenceLabel, snapshotId });
+      setPlacement({
+        leafId: put.data.id, sectionCode: put.data.sectionCode, sequenceLabel, snapshotId,
+        seqId: filing.seq.id, submissionId: filing.subId,
+      });
       /* The server answers a repeat placement of the same document at the same
          section with the leaf that already holds it, and writes nothing
          (QA 2026-10-08: 2.5.1 was placed twice as two live leaves). Said as
@@ -510,6 +492,12 @@ function AuthoringPlaceIntoFilingForDocument({
                     style={{ height: 30 }}
                     onClick={() => {
                       setOpen(false);
+                      /* F10: the Submission Center opens on the sequence this
+                         document went into (or was being placed into), in the
+                         Builder, where its leaves are. */
+                      const subId = placement ? placement.submissionId : target.subId;
+                      const seqId = placement ? placement.seqId : seq?.id;
+                      stashNavParamsForTarget('submission-center', { submissionId: String(subId ?? ''), sequenceId: String(seqId ?? ''), ws: 'builder' });
                       onNav('submission-center');
                     }}
                   >
@@ -557,13 +545,6 @@ export function AuthoringPlaceIntoFiling(props: AuthoringPlaceIntoFilingProps) {
   return <AuthoringPlaceIntoFilingForDocument key={JSON.stringify([props.docId, project])} {...props} />;
 }
 
-interface SnapshotRow { id?: number; status?: string | null; metadata?: { source?: string; docId?: string } | null }
-
-type CopyResult =
-  /** `written`: the server's word on whether this placement wrote the copy; undefined when it gave none. */
-  | { ok: true; snapshotId: number; written: boolean | undefined; copyStatus: string | null }
-  | { ok: false; unconfirmed: boolean; verdict: NonNullable<Verdict> };
-
 /**
  * What a repeat placement did, in words. "Nothing was written" only when the
  * server said it wrote nothing: a re-take may promote the copy's status (the
@@ -589,73 +570,4 @@ export function alreadyPlacedText(a: {
     );
   }
   return `${held} The leaf was not changed.`;
-}
-
-/** The snapshot step's refusal of a copy that a leaf already files: the server's sentence is complete. */
-const FILING_COPY_PINNED = 'FILING_COPY_PINNED';
-
-/** Read saved content and request the existing governed snapshot. A context
- * switch after the read stops the next write; an already-sent write may commit. */
-async function takeFilingCopy(docId: string, docTitle: string, sectionCode: string, changeReason: string, current: () => boolean): Promise<CopyResult | null> {
-  const read = await liveGetOrNull<{ sections?: SavedSection[] }>(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
-  if (!current()) return null;
-  if (read.error || !read.data) return {
-    ok: false, unconfirmed: false,
-    verdict: { tone: 'err', text: `Couldn’t read the document’s saved sections — ${read.error ?? 'no response'}. Nothing was filed.` },
-  };
-  if (!Array.isArray(read.data.sections)) return {
-    ok: false, unconfirmed: false,
-    verdict: { tone: 'err', text: 'The saved sections could not be read. This is a failed read, not an empty document. Nothing was filed.' },
-  };
-  const saved = read.data.sections;
-  if (!saved.some(s => (s.content ?? '').trim() !== '')) return {
-    ok: false, unconfirmed: false,
-    verdict: { tone: 'err', text: 'This document has no saved section content yet — there is nothing to file. Nothing was created.' },
-  };
-  const snap: SnapshotReply = await mutateVerbatim('POST', '/api/coauthor/documents', {
-    title: docTitle, moduleNumber: sectionCode, content: assembleSnapshot(saved), sourceAuthoringDocId: docId, changeReason,
-  });
-  if (!current()) return null;
-  return copyReceipt(snap, docId) ?? snapshotFailure(snap);
-}
-
-type SnapshotReply = MutateResult<{ success?: boolean; written?: unknown; document?: SnapshotRow }>;
-
-/** The copy the server confirmed for this document, or its refusal of a copy a leaf files; null otherwise. */
-function copyReceipt(snap: SnapshotReply, docId: string): CopyResult | null {
-  const doc = snap.data?.document;
-  const id = doc?.id;
-  if (doc && validReceiptId(id) && matchingSnapshotSource(doc, docId) && snap.data?.success !== false) {
-    const written = typeof snap.data?.written === 'boolean' ? snap.data.written : undefined;
-    return { ok: true, snapshotId: id, written, copyStatus: typeof doc.status === 'string' ? doc.status : null };
-  }
-  if (snap.code === FILING_COPY_PINNED && snap.error) {
-    return { ok: false, unconfirmed: false, verdict: { tone: 'err', text: snap.error } };
-  }
-  return null;
-}
-
-function snapshotFailure(snap: MutateResult<unknown>): CopyResult {
-  const unconfirmed = !!snap.unconfirmed || snap.data != null;
-  return {
-    ok: false, unconfirmed,
-    verdict: { tone: 'err', text: unconfirmed
-      ? 'The filing snapshot could not be confirmed. A copy may have been created; check filing status before retrying. No leaf placement was requested.'
-      : `The filing snapshot could not be created — ${snap.error ?? 'the server refused it'}. Nothing was placed.` },
-  };
-}
-function leafFailure(put: MutateResult<unknown>, snapshotId: number, sequence: string, sectionCode: string) {
-  const unconfirmed = !!put.unconfirmed || put.data != null;
-  return {
-    unconfirmed,
-    verdict: { tone: 'err' as const, text: unconfirmed
-      ? `We cannot confirm whether the leaf was placed in sequence ${sequence} at ${sectionCode}. ` +
-        `The filing copy was created (${documentSourceLabel('coauthor_documents', snapshotId)}). Check filing status before retrying.`
-      : `The leaf was refused — ${put.error ?? 'the server refused it'}. ` +
-        `The filing copy was created (${documentSourceLabel('coauthor_documents', snapshotId)}), but nothing was placed in the sequence.` },
-  };
-}
-
-function matchingSnapshotSource(row: SnapshotRow | undefined, docId: string): boolean {
-  return row?.metadata?.source === 'authoring-document' && row.metadata.docId === docId;
 }

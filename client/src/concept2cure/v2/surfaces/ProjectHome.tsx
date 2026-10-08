@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { I } from '../icons';
-import { EmptyState, ErrorState, useLiveData, useLiveRows, hasKeys, type DataState, type ListState } from '../dataConnect';
+import { EmptyState, ErrorState, useLiveData, hasKeys, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { useSurfaceAvailable } from '../surfaceAvailable';
-import { MarketSupportLine } from '../MarketSupportLine';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue } from '../dossierReadiness';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
@@ -18,23 +17,14 @@ import { useProjectThreads } from './projectThreads';
 import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
 import { StatusPill, rowsOf, updatedWords, useDocumentList, type BuiltDocument, type ListRead } from '../editor/CanvasDocumentList';
 import { clearEditorTarget, setEditorTarget } from '../editorTarget';
+import type { ReviewItem } from '../fixtures/review-data';
+import { reviewStanding, type ReviewStandingGroup } from './reviewStanding';
+import { openReviewDocument } from './Review';
 import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
-import { SC_APPTYPES, SC_REGIONS } from '../fixtures/submission';
-import type { SubRow } from './SubmissionCenter';
-import {
-  noSubmissionWords,
-  programSubmissionsPath,
-  SUB_STATUS_LABEL,
-  SUB_STATUS_TONE,
-  useProgramSequence,
-  useSequenceDispatchReadiness,
-  type DispatchGate,
-  type DispatchReadinessAssessment,
-  type Discovery,
-  type SequenceDispatchReadiness,
-} from './programSequence';
+import { useProgramMarkets } from './programSequence';
+import { ProjectMarkets, ProjectStatusLine } from './ProjectMarkets';
 import '../styles/project-home-v2.css';
 
 /* ── Window globals — cross-surface project selection handoff ──
@@ -254,260 +244,11 @@ function ProjectEvidence({ pid, name, onNav, available }: {
   );
 }
 
-/* ════ Submit: the project's dispatch readiness and its submissions ════════
-   ONE_ANA_ONE_CANVAS.md slice 24. The Submit stage said "Submissions open in
-   the Submission Center" and showed nothing, so a regulatory lead on the
-   project had to leave it to learn whether its sequence could be sent. It now
-   shows the dispatch gate's verdict, read through the same discovery and the
-   same endpoint as the readiness screen (programSequence.ts), above the
-   project's submissions from the server's project-scoped list. Nothing here
-   computes a figure: the verdict and every count are the server's.
-
-   The two panels sit side by side, so they must never contradict each other.
-   The gate reads only the submission of the project's own type that records
-   the project; the list holds the submissions recorded to the project. So the
-   readiness panel never says "no submission" over the project's submissions
-   of other types (it names them). No submission is matched to the project by
-   name (P-20 follow-up), so the verdict is always for one the list holds. Both
-   read one discovery (ProjectSubmitStage). */
-
-/** The plain words for each state in which there is no verdict to show. */
-function notReadyCopy(d: Discovery): { title: string; hint: string } {
-  if (d.state === 'no-submission') return noSubmissionWords(d, 'this project');
-  if (d.state === 'no-sequence') {
-    return {
-      title: 'No sequence to gate yet',
-      hint: `Its submission "${d.submissionTitle}" has no eCTD sequence yet.`,
-    };
-  }
-  if (d.state === 'sequence') {
-    return { title: 'No verdict for this sequence', hint: 'The readiness read returned nothing. The gate is unanswered, which is not the same as cleared.' };
-  }
-  return { title: 'No project open', hint: 'No sequence is being gated.' };
-}
-
-/** The verdict pill: the server's answer, or the absence of one, in words. */
-function verdictLook(answered: boolean, gate: DispatchGate): { cls: string; icon: React.ReactNode; text: string } {
-  if (!answered) return { cls: 'warn', icon: I.alertTriangle, text: 'No verdict from the server' };
-  return gate.cleared
-    ? { cls: 'ok', icon: I.shieldCheck, text: 'Cleared to dispatch' }
-    : { cls: 'blocked', icon: I.lock, text: 'Dispatch blocked' };
-}
-
-/** Which sequence was gated, as the server and the discovery name it. */
-function gatedSequenceLine(a: DispatchReadinessAssessment, d: Discovery): string {
-  const number = d.state === 'sequence' && d.sequenceNumber ? `Sequence ${d.sequenceNumber}` : `Sequence id ${a.sequenceId}`;
-  return [
-    number,
-    a.region ? String(a.region).toUpperCase() : null,
-    typeof a.leafCount === 'number' ? `${a.leafCount} ${a.leafCount === 1 ? 'leaf' : 'leaves'}` : null,
-    a.sequenceStatus ? `status ${a.sequenceStatus}` : null,
-  ].filter(Boolean).join(' · ');
-}
-
-/** What a cleared verdict did not check, in the server's words.
- *  The server clears a gate whose check did not run and is not required here
- *  (GateView.notAssessed: no agency-grade validator configured, the common
- *  installation). The readiness screen shows that gate as "Not assessed" and
- *  its lead says "external validator not run"; a bare "Cleared to dispatch"
- *  here would be the overclaim that screen was fixed to stop making. */
-function NotAssessedLines({ a }: { a: DispatchReadinessAssessment }) {
-  const unassessed = (Array.isArray(a.gates) ? a.gates : []).filter((g) => g.cleared && Boolean(g.notAssessed));
-  if (unassessed.length > 0) {
-    return (
-      <>
-        {unassessed.map((g) => (
-          <p key={g.key} className="pj-desc" data-testid="pj-readiness-not-assessed" data-gate={g.key}>
-            <span aria-hidden="true">{I.alertTriangle}</span>{' '}
-            <b>{g.rule?.title ?? `The ${g.key} gate`}</b>: not assessed. {g.notAssessed}
-          </p>
-        ))}
-      </>
-    );
-  }
-  // A response with no gate breakdown still says whether the validator ran.
-  if (a.externalValidation && a.externalValidation.ran === false) {
-    return (
-      <p className="pj-desc" data-testid="pj-readiness-not-assessed" data-gate="external">
-        <span aria-hidden="true">{I.alertTriangle}</span> External validator not run: the package has not been checked against it.
-      </p>
-    );
-  }
-  return null;
-}
-
-function ReadinessVerdict({ a, gate, answered, discovery }: {
-  a: DispatchReadinessAssessment; gate: DispatchGate; answered: boolean; discovery: Discovery;
-}) {
-  const look = verdictLook(answered, gate);
-  const rd = a.readiness;
-  return (
-    <div data-testid="pj-readiness-verdict">
-      <div className={`dr2-verdict ${look.cls}`}>
-        <span className="dr2-verdict-ic" aria-hidden="true">{look.icon}</span>
-        <span className="dr2-verdict-t">{look.text}</span>
-      </div>
-      {answered && gate.cleared && <NotAssessedLines a={a} />}
-      <div className="pj-file-m">{gatedSequenceLine(a, discovery)}</div>
-      {!answered && <p className="pj-desc">The gate is unanswered, which is not the same as cleared.</p>}
-      {answered && !gate.cleared && gate.blockers.length > 0 && (
-        <div className="dr2-blockers">
-          <div className="dr2-blockers-hd">{I.lock} What must close before dispatch</div>
-          {gate.blockers.map((b, i) => (
-            <div key={i} className="dr2-blocker">
-              <span className="dr2-blocker-n">{i + 1}</span>
-              <span className="dr2-blocker-t">{b}</span>
-            </div>
-          ))}
-        </div>
-      )}
-      {rd && (
-        <div className="dr2-readiness-hd">
-          <span className="pj-file-m">Structural validation</span>
-          <span className="dr2-readiness-s">
-            <span className="dr2-count err">{rd.errors} error{rd.errors === 1 ? '' : 's'}</span>
-            <span className="dr2-count warn">{rd.warnings} warning{rd.warnings === 1 ? '' : 's'}</span>
-            <span className="dr2-count idle">{rd.infos} info</span>
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ReadinessBody({ discovery, r, onRetry }: { discovery: Discovery; r: SequenceDispatchReadiness; onRetry: () => void }) {
-  if (r.gateState === 'evaluating') {
-    return <div role="status" aria-busy="true" className="scaf-note" style={{ padding: '16px 10px' }}>Checking this project&apos;s dispatch readiness…</div>;
-  }
-  if (r.gateState === 'error') {
-    return (
-      <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't read the dispatch readiness"
-        hint="The gate is unanswered, which is not the same as cleared." retry={onRetry} />
-    );
-  }
-  if (r.gateState !== 'evaluated' || !r.assessment) {
-    const copy = notReadyCopy(discovery);
-    return <EmptyState icon={I.rocket} title={copy.title} hint={copy.hint} />;
-  }
-  return <ReadinessVerdict a={r.assessment} gate={r.gate} answered={r.answered} discovery={discovery} />;
-}
-
-/** The open project's dispatch gate. Same discovery and endpoint as the
- *  readiness screen, which "Open readiness" opens when this release has it. */
-function ProjectReadiness({ discovery, r, onRetry, onNav, available }: {
-  discovery: Discovery; r: SequenceDispatchReadiness; onRetry: () => void;
-  onNav: (id: string) => void; available: (id: string) => boolean;
-}) {
-  return (
-    <section className="pj-sec" aria-labelledby="pj-readiness-h" data-testid="pj-readiness">
-      <div className="pj-sec-h">
-        <h2 id="pj-readiness-h">Dispatch readiness</h2>
-        {available('dispatch-readiness') && (
-          <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('dispatch-readiness')}>
-            Open readiness {I.right}
-          </button>
-        )}
-      </div>
-      <ReadinessBody discovery={discovery} r={r} onRetry={onRetry} />
-    </section>
-  );
-}
-
-const appTypeLabel = (v: string) => SC_APPTYPES.find((a) => a.v === v)?.l ?? v;
-const regionLabel = (v: string) => SC_REGIONS.find((r) => r.v === v)?.l ?? v;
-/* The status chip's tone, in the file-row vocabulary (pj-file-status data-s). */
-const SUB_ROW_TONE: Record<string, string> = { ai: 'acc', ok: 'ok', idle: 'idle' };
-
-/** One submission: its type, name, status (in words, not colour alone), region and stage. */
-function SubmissionRowView({ s }: { s: SubRow }) {
-  return (
-    <div className="pj-file" role="listitem" data-testid="pj-submission">
-      <div className="pj-file-top">
-        <span className="pj-file-badge">{appTypeLabel(s.applicationType)}</span>
-        <span className="pj-file-status" data-s={SUB_ROW_TONE[SUB_STATUS_TONE[s.status] ?? 'idle'] ?? 'idle'}>
-          {SUB_STATUS_LABEL[s.status] ?? s.status}
-        </span>
-      </div>
-      <div className="pj-file-n">{s.title}{s.productName ? ` · ${s.productName}` : ''}</div>
-      <div className="pj-file-m">
-        {[s.primaryRegion ? regionLabel(s.primaryRegion) : null, s.lifecycleStage ? `${s.lifecycleStage} stage` : null].filter(Boolean).join(' · ')}
-      </div>
-      {/* What the platform can carry for this market, in the server's words (F19). */}
-      <div className="pj-file-m"><MarketSupportLine applicationType={s.applicationType} market={s.primaryRegion} /></div>
-    </div>
-  );
-}
-
-/** The project's submissions: GET /api/submissions?programId=…, loading, a
- *  failure with a retry, an honest empty and the rows, each its own state. */
-function ProjectSubmissions({ subs, onRetry, onNav, available, ectdFiling }: {
-  subs: ListState<SubRow>; onRetry: () => void;
-  onNav: (id: string) => void; available: (id: string) => boolean;
-  /** The project is read and is not a device or diagnostic filing. */
-  ectdFiling: boolean;
-}) {
-  return (
-    <section className="pj-sec" aria-labelledby="pj-subs-h">
-      <div className="pj-sec-h">
-        <h2 id="pj-subs-h">Submissions</h2>
-        <span className="pj-sec-acts">
-          {/* eCTD compile reads the open project's submission. The project
-              page's Workspace grid was its door until FILING_SPINE.md F3;
-              F14 moves it onto the sequence's Dispatch tab. It builds an
-              FDA/EMA eCTD backbone only, which is not how a 510(k), De Novo
-              or PMA is filed, and the grid offered it to biopharma projects
-              only (registryModel.ts SEGMENT_MODULES). So a device or
-              diagnostic project, or one not yet read, is not offered it;
-              no eSTAR path is in the launch scope to offer instead. */}
-          {ectdFiling && available('ectd-compile') && (
-            <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('ectd-compile')}>
-              Compile and download {I.right}
-            </button>
-          )}
-          {/* The Submission Center reads the open project, so it opens on this one. */}
-          {available('submission-center') && (
-            <button type="button" className="btn primary" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('submission-center')}>
-              {I.right} Open Submission Center
-            </button>
-          )}
-        </span>
-      </div>
-      {subs.loading ? (
-        <div role="status" aria-busy="true" className="scaf-note" style={{ padding: '16px 10px' }}>Loading this project&apos;s submissions…</div>
-      ) : subs.error ? (
-        <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load this project's submissions"
-          hint="The submission store didn't respond, so nothing here says whether the project has any." retry={onRetry} />
-      ) : subs.rows.length === 0 ? (
-        <EmptyState icon={I.rocket} title="No submissions for this project yet"
-          hint="A submission created in the Submission Center while this project is open belongs to it." />
-      ) : (
-        <div className="pj-files" role="list" data-testid="pj-submissions">
-          {subs.rows.map((s) => <SubmissionRowView key={s.id} s={s} />)}
-        </div>
-      )}
-    </section>
-  );
-}
-
-/** The Submit stage: one discovery and one scoped list read, shared by the
- *  two panels so that what one says the other cannot deny. */
-function ProjectSubmitStage({ pid, onNav, available, ectdFiling }: {
-  pid: string; onNav: (id: string) => void; available: (id: string) => boolean;
-  ectdFiling: boolean;
-}) {
-  const [reload, setReload] = useState(0);
-  const discovery = useProgramSequence(reload);
-  const readiness = useSequenceDispatchReadiness(discovery);
-  const [bump, setBump] = useState(0);
-  const path = programSubmissionsPath(pid);
-  const subs = useLiveRows<SubRow>(path, [path, bump]);
-  return (
-    <>
-      <ProjectReadiness discovery={discovery} r={readiness} onRetry={() => setReload((k) => k + 1)} onNav={onNav} available={available} />
-      <ProjectSubmissions subs={subs} onRetry={() => setBump((b) => b + 1)} onNav={onNav} available={available} ectdFiling={ectdFiling} />
-    </>
-  );
-}
+/* ════ Submit: one row per market (FILING_SPINE.md F9) ════════════════════
+   The project's markets, each with its own server verdict, are read once by
+   useProgramMarkets (programSequence.ts) and shown by ProjectMarkets in the
+   Submit tab and by ProjectStatusLine under the project header. Slice 24's
+   one-verdict-per-project panels were generalised into ProjectMarkets.tsx. */
 
 /** What this stage does not do in this release: one line of words and no
  *  button (FILING_SPINE.md §2). It replaced a "Not in this release" panel that
@@ -1190,6 +931,7 @@ const WORK_STATUS_TONE: Record<string, string> = { done: 'tone-ok', blocked: 'to
 const WORK_SHOWN = 10;
 
 function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: string; onNav: (id: string) => void }) {
+  const available = useSurfaceAvailable();
   const ident = pid ? encodeURIComponent(pid) : null;
   const state = useLiveData<WorkViewRow>(
     ident ? `/api/concept2cure/projects/${ident}/unified-work` : null,
@@ -1261,9 +1003,167 @@ function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: st
           }}
         />
       )}
-      <div style={{ marginTop: 8 }}>
-        <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('task-board')}>Open task board {I.right}</button>
+      {/* The board these rows live on, by its own id. This sent people to
+          the `task-board` alias, which the project no longer names
+          (FILING_SPINE.md §5, F7); `tasks` is the surface the alias resolved
+          to, so the door opens the same board. Shown only when that board is
+          in this release. */}
+      {available('tasks') && (
+        <div style={{ marginTop: 8 }}>
+          <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('tasks')}>Open task board {I.right}</button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ════ Review: this filing's reviews ═══════════════════════════════════════
+   FILING_SPINE.md F7, §6 row 3. The Review tab listed the program's tasks and
+   sent people to the `task-board` alias; nothing on it named a document. It
+   now reads the review board for this program
+   (GET /api/review/board?scope=all&programId=<uuid>,
+   server/routes/review-board-routes.ts — the route filters by program), the
+   same read model the Review surface shows, and groups the documents by what
+   they need from the person. A row opens THAT document through the Review
+   surface's own `openReviewDocument` (editor target by id and program).
+   Verdicts and signatures stay where they are recorded: the review board and
+   the editor. A failed read is an error with a retry, never an empty list. */
+
+/** The queue cap asked of the board. The route takes at most 100. */
+const PROJECT_REVIEWS_LIMIT = 100;
+
+function projectReviewsUrl(pid: string): string {
+  return `/api/review/board?scope=all&programId=${encodeURIComponent(pid)}&limit=${PROJECT_REVIEWS_LIMIT}`;
+}
+
+/** GET /api/review/board → data (the part this tab reads). */
+interface ProjectReviewBoard { queue: ReviewItem[] }
+
+type ReviewGroupId = 'mine' | ReviewStandingGroup;
+const REVIEW_GROUPS: Array<{ id: ReviewGroupId; title: string }> = [
+  { id: 'mine', title: 'Waiting on you' },
+  { id: 'in-review', title: 'In review' },
+  { id: 'changes', title: 'Changes requested' },
+  { id: 'declined', title: 'Declined' },
+  { id: 'sign-off', title: 'Reviewers approved, awaiting sign-off' },
+  { id: 'approved', title: 'Approved' },
+];
+
+/** What the document needs from the person first; otherwise where it stands. */
+function reviewGroupOf(r: ReviewItem): ReviewGroupId {
+  if (r.awaitingMyReview || r.atMySignOff) return 'mine';
+  return reviewStanding(r).group;
+}
+
+/** Still out for review: waiting on the person, in review, or reviewers
+ *  approved and sign-off pending. The header line counts these (F9), by the
+ *  same grouping the Review tab shows, so the two cannot disagree. */
+const OUT_FOR_REVIEW: ReadonlySet<ReviewGroupId> = new Set<ReviewGroupId>(['mine', 'in-review', 'sign-off']);
+const isOutForReview = (r: ReviewItem): boolean => OUT_FOR_REVIEW.has(reviewGroupOf(r));
+
+function reviewOwnership(r: ReviewItem): string | null {
+  if (r.awaitingMyReview) return 'Awaiting your review';
+  if (r.atMySignOff) return 'At your sign-off';
+  if (r.requestedByMe) return 'Requested by you';
+  return null;
+}
+
+function ProjectReviewRow({ item, onOpen }: { item: ReviewItem; onOpen: (item: ReviewItem) => void }) {
+  const who = [item.reviewer, item.role].filter(Boolean).join(' · ');
+  const ownership = reviewOwnership(item);
+  const standing = reviewStanding(item);
+  return (
+    <li className="cdl-row" data-doc-id={item.id} data-testid="pj-review-row">
+      <div className="cdl-row-main">
+        <span className="cdl-row-t">{item.doc}</span>
+        <span className="cdl-row-meta">
+          <span className="cdl-pill" data-status={standing.tone}>{standing.words}</span>
+          {ownership && <span>{ownership}</span>}
+          {who && <span>{who}</span>}
+          {item.comments > 0 && <span>{item.comments === 1 ? '1 open comment' : `${item.comments} open comments`}</span>}
+        </span>
       </div>
+      <div className="cdl-row-actions">
+        <button type="button" className="btn primary" onClick={() => onOpen(item)} aria-label={`Open document: ${item.doc}`}>
+          {I.penLine} Open document
+        </button>
+      </div>
+    </li>
+  );
+}
+
+function ProjectReviewsBody({ state, onRetry, onOpen }: {
+  state: DataState<ProjectReviewBoard>; onRetry: () => void; onOpen: (item: ReviewItem) => void;
+}) {
+  if (state.loading) return <div role="status" aria-busy="true" className="cdl-note">Reading this project’s reviews…</div>;
+  if (state.error || !state.data) {
+    return (
+      <ErrorState
+        title="Couldn’t read this project’s reviews"
+        message={`${state.error ?? 'The review board could not be read.'} This is a failed read, not an empty list.`}
+        retry={onRetry}
+        testId="pj-reviews-error"
+      />
+    );
+  }
+  const queue = state.data.queue ?? [];
+  if (queue.length === 0) {
+    return (
+      <p className="cdl-empty" data-testid="pj-reviews-empty">
+        Nothing in this project is out for review. Send a document for review from the editor, and it is listed here.
+      </p>
+    );
+  }
+  return (
+    <>
+      {REVIEW_GROUPS.map((g) => {
+        const rows = queue.filter((r) => reviewGroupOf(r) === g.id);
+        if (rows.length === 0) return null;
+        return (
+          <div key={g.id} className="pj-rv-group">
+            <h3 className="pj-rv-h">{g.title} <span className="pj-rv-n">{rows.length}</span></h3>
+            <ul className="cdl-list" aria-label={g.title}>
+              {rows.map((r) => <ProjectReviewRow key={r.id} item={r} onOpen={onOpen} />)}
+            </ul>
+          </div>
+        );
+      })}
+      {queue.length >= PROJECT_REVIEWS_LIMIT && (
+        <p className="cdl-note">This list stops at {PROJECT_REVIEWS_LIMIT} documents, so there may be more.</p>
+      )}
+    </>
+  );
+}
+
+/** The board is read once, by ProjectHome (useProjectReviews), and shared
+ *  with the header line, which counts the documents in review (F9). */
+function useProjectReviews(pid: string | null): { state: DataState<ProjectReviewBoard>; retry: () => void } {
+  const [epoch, setEpoch] = useState(0);
+  const url = pid ? projectReviewsUrl(pid) : null;
+  const state = useLiveData<ProjectReviewBoard>(url, [url, epoch], hasKeys<ProjectReviewBoard>('queue'));
+  return { state, retry: () => setEpoch((e) => e + 1) };
+}
+
+function ProjectReviews({ state, onRetry, onNav, available }: {
+  state: DataState<ProjectReviewBoard>; onRetry: () => void; onNav: (id: string) => void; available: (id: string) => boolean;
+}) {
+  const openDocument = (item: ReviewItem) => openReviewDocument(item, onNav);
+  return (
+    <section className="pj-sec" aria-labelledby="pj-reviews-h">
+      <div className="pj-sec-h">
+        <h2 id="pj-reviews-h">Reviews</h2>
+        <span className="sec-sub">documents in this project sent for review</span>
+        {/* The full board, which starts on the open program (Review.tsx,
+            onlyProgram). Not offered when it is not in this release. */}
+        {available('review') && (
+          <span className="pj-sec-acts">
+            <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('review')}>
+              Open the review board {I.right}
+            </button>
+          </span>
+        )}
+      </div>
+      <ProjectReviewsBody state={state} onRetry={onRetry} onOpen={openDocument} />
     </section>
   );
 }
@@ -1778,6 +1678,10 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   /* The project's documents (FILING_SPINE.md F3), read once for the Author
      list, its module rows and what AnA is told. */
   const { read: docsRead, reload: reloadDocs } = useDocumentList(projectDocumentsUrl(pid));
+  /* The project's markets and its review board, each read once and shared by
+     the header line and the Submit and Review tabs (FILING_SPINE.md F9). */
+  const markets = useProgramMarkets(pid);
+  const reviews = useProjectReviews(pid);
 
   const [stage, setStage] = useState('author');
 
@@ -2036,6 +1940,12 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
             this is where the control belongs. */}
       </div>
 
+      {/* Where the filing stands (FILING_SPINE.md F9): each market's verdict
+          and the documents in review, from the reads the tabs show. */}
+      {pid && !progState.error && (
+        <ProjectStatusLine markets={markets} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
+      )}
+
       {/* Before the tabs (FILING_SPINE.md §2): the start box and the
           conversations held on this project. They are outside the stage
           switch, so a half-typed message survives a change of tab; they sat
@@ -2089,19 +1999,25 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
             </div>
           )}
 
-          {/* Submit — the project's dispatch readiness, then its submissions
-              (slice 24), then what Plan and Lifecycle promised, named as
-              coming later (F2). */}
+          {/* Submit — one row per market, each with its own server verdict
+              (F9), then what Plan and Lifecycle promised, named as coming
+              later (F2). */}
           {stage === 'submit' && pid && (
             <div className="pj-stagebody">
-              <ProjectSubmitStage pid={pid} onNav={onNav} available={available} ectdFiling={ectdFiling} />
+              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} />
               <ComingLater stage="submit" device={deviceFiling} />
             </div>
           )}
 
-          {/* Review — the program's tasks and approvals, from the unified work
+          {/* Review — this filing's reviews, each opening its document (F7),
+              then the program's tasks and approvals from the unified work
               view, asked by the program UUID (see ProjectWorkPanel). */}
-          {stage === 'review' && <ProjectWorkPanel pid={pid} title="Review & approvals" onNav={onNav} />}
+          {stage === 'review' && (
+            <div className="pj-stagebody">
+              {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
+              <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} />
+            </div>
+          )}
 
           {stage === 'respond' && <StagePanel stage="respond" onNav={onNav} available={available} />}
 
