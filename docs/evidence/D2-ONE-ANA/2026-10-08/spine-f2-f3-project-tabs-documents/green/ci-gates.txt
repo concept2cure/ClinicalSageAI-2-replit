@@ -1,0 +1,25 @@
+# CI gates on the final state. 2026-10-08T07:56:59Z
+## npm run -s ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+## npm run -s ci:launch-scope
+[ci:launch-scope] 7 apps · 30 surfaces · 13 modules · 25 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+## npm run -s ci:surface-discoverability
+
+[ci:surface-discoverability] OK — 123 renderable surface(s): 94 in the Apps catalog, 29 declared contextual.
+
+## npm run -s ci:canvas-path
+✅ ci:canvas-path — thread → canvas → workbench, surface → workbench, tool registered, vault read, file-to-vault route: all wired; the founder-path walk runs project → agency within its baseline
+## node scripts/design/generate-surface-text-ramp.mjs
+[surface-text-ramp] wrote client/src/concept2cure/v2/styles/surface-text-ramp.css (857 lines)
+[surface-text-ramp] wrote client/src/concept2cure/mdx/surface-text-ramp.css (258 lines)
+[surface-text-ramp] wrote client/src/concept2cure/pdev/surface-text-ramp.css (119 lines)
+## npm run -s ci:surface-text-ramp
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+## npm run -s ci:check-css-selector-shadowing
+  · client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .pj-convo-t
+
+[css-shadowing] OK — 42 stylesheets, 19 known shadowed selector(s), 0 new.
+## npm run -s ci:check-shell-css-collisions
+[ci:shell-css-collisions] 22 class name(s) defined in more than one shell tree (baseline 22) — pdev+v2:22
+[ci:shell-css-collisions] OK — no new cross-shell collisions.

@@ -22,6 +22,8 @@ import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/
 import express from 'express';
 import { PREREQ, AUTHOR, PROGRAM, ORG, mint, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
 import { runWithTenantScope } from '../../db/tenantStore';
+import { verifyJwtWithRotation } from '../../utils/jwtVerify';
+import { authoringObjectAuthorization } from '../../middleware/authoringObjectAuthorization';
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
 vi.mock('../../db', () => ({
@@ -52,14 +54,40 @@ function makeAccessApp(router: express.Router, role: string): express.Express {
   a.use('/api/authoring', router);
   return a;
 }
+/**
+ * The same app with the object gate in front of the router, as production
+ * mounts it (register-inline-routes.ts: app.use('/api',
+ * authoringObjectAuthorization) ahead of /api/authoring). The global /api gate
+ * attaches the verified principal before the object gate runs; this models it
+ * with the same verification the router uses.
+ */
+function makeGatedApp(router: express.Router, role: string): express.Express {
+  const a = express();
+  a.use(express.json());
+  a.use((req, _res, next) => {
+    const claims = verifyJwtWithRotation(String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '')) as Record<string, unknown>;
+    (req as unknown as { user: unknown }).user = {
+      id: claims.userId, userId: claims.userId, email: claims.email, organizationId: claims.organizationId, roles: [],
+    };
+    (req as express.Request & { userRole?: string }).userRole = role;
+    runWithTenantScope({ tenantId: String(ORG), role, source: 'request', caller: 'authoring-doc-access-test' }, next);
+  });
+  a.use('/api', authoringObjectAuthorization);
+  a.use('/api/authoring', router);
+  return a;
+}
 /** A second member of the same organization, with an org role of 'viewer'. */
 const REVIEWER = { id: '6', organizationId: ORG, email: 'reviewer@canvas.example', name: 'Rae Reviewer' };
+/** A third member, with an editing org role ('member') and no grant on the document. */
+const COLLEAGUE = { id: '7', organizationId: ORG, email: 'colleague@canvas.example', name: 'Cal Colleague' };
 
 let jdb: JourneyDb;
 let app: express.Express;
 let viewerScopedApp: express.Express;
+let gatedApp: express.Express;
 let author: (r: request.Test) => request.Test;
 let reviewer: (r: request.Test) => request.Test;
+let colleague: (r: request.Test) => request.Test;
 let docId: string;
 
 beforeAll(async () => {
@@ -74,6 +102,8 @@ beforeAll(async () => {
       'db/migrations/20260725_authoring_signature_freeze_binding.sql',
       'db/migrations/20260730_authoring_runtime_ddl.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
+      // authoring_reviews, which Send for review writes (the gated case below).
+      'db/migrations/20260730_authoring_subsystem_schema.sql',
       'db/migrations/20260727_authoring_object_permissions.sql',
       'db/migrations/20260803_document_span_lineage.sql',
       'migrations/20260907_span_lineage_accepted_machine_draft.sql',
@@ -90,11 +120,15 @@ beforeAll(async () => {
   h.pool = jdb.pool;
   await jdb.pool.query(`INSERT INTO users (id, name, email) VALUES (${REVIEWER.id}, '${REVIEWER.name}', '${REVIEWER.email}')`);
   await jdb.pool.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${REVIEWER.id}, 'viewer')`);
+  await jdb.pool.query(`INSERT INTO users (id, name, email) VALUES (${COLLEAGUE.id}, '${COLLEAGUE.name}', '${COLLEAGUE.email}')`);
+  await jdb.pool.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${COLLEAGUE.id}, 'member')`);
   author = asToken(await mint(AUTHOR));
   reviewer = asToken(await mint(REVIEWER));
+  colleague = asToken(await mint(COLLEAGUE));
   const { default: router } = await import('../authoring.router');
   app = makeAccessApp(router, 'member');
   viewerScopedApp = makeAccessApp(router, 'viewer');
+  gatedApp = makeGatedApp(router, 'member');
 
   const created = await author(request(app).post('/api/authoring/docs/from-draft')).send({
     programId: PROGRAM,
@@ -150,6 +184,9 @@ describe('GET /docs/:docId — the caller’s access', () => {
     expect(access.fileToVault.reason).toMatch(/Owner, Author or Approver grant/);
     expect(access.assignReview.allowed).toBe(false);
     expect(access.assignReview.reason).toMatch(/Your role: viewer/);
+    // The control it describes is "Send for review" (wave 2C): the sentence
+    // beside it names that act, not the task-only "Assigning a review".
+    expect(access.assignReview.reason).toBe('Sending for review needs an editing role in this organization. Your role: viewer.');
   });
 
   /* QA 2026-10-08 (j4): the review signature is a 'review' act (the middleware
@@ -199,9 +236,69 @@ describe('GET /docs/:docId — the caller’s access', () => {
          a signature (DP-35) and meets the same step. */
       expect(access.esign.allowed).toBe(false);
       expect(access.freeze.allowed).toBe(false);
-      expect(access.assignReview).toEqual({ allowed: true, reason: null });
+      /* Send for review's role step allows a member, but its grant step (the
+         request's 'edit' decision, wave 2D) could not be read: unknown. */
+      expect(access.assignReview).toBeNull();
     } finally {
       await jdb.pool.query('ALTER TABLE doc_permissions_unavailable RENAME TO doc_permissions');
     }
+  });
+});
+
+/**
+ * Send for review (POST /documents/:id/request-review) is classified 'edit' by
+ * the object gate since wave 2D: an Owner or Author grant, on a document that
+ * is not sealed. The control's report followed only the organization role, so
+ * a member without the grant, or the owner of a FROZEN document, was offered
+ * the control and refused after choosing reviewers and writing a reason. Each
+ * case below reads the report, then sends the request through the gate: the
+ * two must agree.
+ */
+describe('Send for review: the report is the decision the request meets', () => {
+  const send = (as: (r: request.Test) => request.Test) =>
+    as(request(gatedApp).post(`/api/authoring/documents/${docId}/request-review`)).send({
+      reviewers: [{ id: REVIEWER.id, name: REVIEWER.name }],
+      reason: 'Ready for medical review.',
+    });
+
+  it('a member with an editing role but no grant on the document is told it needs an Owner or Author grant', async () => {
+    const res = await colleague(request(app).get(`/api/authoring/docs/${docId}`));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.access.assignReview).toEqual({
+      allowed: false,
+      reason: 'Sending for review needs an Owner or Author grant on this document. Your grants on it: none.',
+    });
+
+    const sent = await send(colleague);
+    expect(sent.status, JSON.stringify(sent.body)).toBe(403);
+    expect(sent.body.error.code).toBe('AUTHORING_OBJECT_FORBIDDEN');
+  });
+
+  it('on a FROZEN document even its owner is told why not', async () => {
+    const before = ((await jdb.pool.query(`SELECT status FROM authoring_documents WHERE id = $1`, [docId])).rows[0] as { status: string }).status;
+    await jdb.pool.query(`UPDATE authoring_documents SET status = 'FROZEN' WHERE id = $1`, [docId]);
+    try {
+      const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      expect(res.body.access.assignReview).toEqual({
+        allowed: false,
+        reason: "Sending for review is refused while the document's status is FROZEN.",
+      });
+
+      const sent = await send(author);
+      expect(sent.status, JSON.stringify(sent.body)).toBe(409);
+      expect(sent.body.error.code).toBe('AUTHORING_DOCUMENT_IMMUTABLE');
+    } finally {
+      await jdb.pool.query(`UPDATE authoring_documents SET status = $2 WHERE id = $1`, [docId, before]);
+    }
+  });
+
+  it('the creator, who holds Owner and Author, is offered it, and the request goes through', async () => {
+    const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
+    expect(res.body.access.assignReview).toEqual({ allowed: true, reason: null });
+
+    const sent = await send(author);
+    expect(sent.status, JSON.stringify(sent.body)).toBe(200);
+    expect(sent.body.reviews).toEqual([expect.objectContaining({ reviewer_id: REVIEWER.id, review_status: 'pending' })]);
   });
 });

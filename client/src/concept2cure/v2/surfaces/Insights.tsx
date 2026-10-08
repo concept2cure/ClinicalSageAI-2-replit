@@ -308,7 +308,7 @@ function roPresetsForSeg(seg: string, types: ReportType[]): Preset[] {
    file — and "narrates and explains" describes a language model doing work that
    a `switch` is doing. The half that was true, and the half that matters, is
    that no metric on this surface originates here. */
-const RO_GUARDRAIL = 'This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.';
+const RO_GUARDRAIL = 'Find a report matches your words to a governed report type and runs it; it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.';
 
 /* ── Resolve type from free text ──
    Whole words, not substrings, and none of the words every request carries.
@@ -476,18 +476,18 @@ interface RenderedReport {
 
 
 /* ── Intent router ── */
-interface ThreadMsg {
-  role: 'user' | 'ana';
+/* What "Find a report" shows for the last search: one result, replaced by the
+   next. It was a thread of `{ role: 'user' | 'ana' }` messages drawn as chat
+   bubbles beside AnA's mark (FILING_SPINE F6). */
+interface FoundResult {
   text: string;
   chips?: [string, string][];
   locked?: { feature: string; requiredTier: string; typeLabel: string };
-  question?: boolean;
-  tool?: string;
-  /** A destination the reply sends the person to (a surface id and its button label). */
+  /** A destination the result sends the person to (a surface id and its button label). */
   nav?: { surface: string; label: string };
 }
 
-interface AnaReply {
+interface RouteReply {
   tool: string;
   text: string;
   chips?: [string, string][];
@@ -496,7 +496,7 @@ interface AnaReply {
   nav?: { surface: string; label: string };
   report: RenderedReport | null;
   dashboard: DashboardData | null;
-  /* When set, send() generates this report from the REAL governed backend
+  /* When set, findReport() generates this report from the REAL governed backend
      (POST /api/report-os/runs → GET /runs/:id/rendered) instead of the caller
      embedding a client-built report. `report` above stays null in that case. */
   reportType?: ReportType | null;
@@ -527,13 +527,13 @@ interface DashboardData {
  * "I will not show an estimated result" credited a judgement to AnA that a
  * `switch` had made. The routing is unchanged; the first person is gone.
  */
-function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCtx; portfolio: CanvasPortfolio; types: ReportType[]; report?: RenderedReport | null }): AnaReply {
+function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCtx; portfolio: CanvasPortfolio; types: ReportType[]; report?: RenderedReport | null }): RouteReply {
   const c = ctx;
   const route = roRouteIntent(utterance);
   const name = route.matched ? route.name! : (route.candidates && route.candidates[0]) || 'generate_report';
   const p = ctx.program;
   function cap(s: string) { return (RO_TIERS.find(t => t.id === s) || { label: s }).label; }
-  const lockMsg = (feature: string, typeLabel: string): AnaReply => ({ tool: name, text: `"${typeLabel}" needs the ${cap(RO_FEATURE_TIER[feature])} plan — it is a ${RO_FEATURE_LABEL[feature]} capability. No estimated result is shown on a plan that has not unlocked the governed model. What it includes, and how to unlock it:`, locked: { feature, requiredTier: RO_FEATURE_TIER[feature], typeLabel }, report: null, dashboard: null });
+  const lockMsg = (feature: string, typeLabel: string): RouteReply => ({ tool: name, text: `"${typeLabel}" needs the ${cap(RO_FEATURE_TIER[feature])} plan — it is a ${RO_FEATURE_LABEL[feature]} capability. No estimated result is shown on a plan that has not unlocked the governed model. What it includes, and how to unlock it:`, locked: { feature, requiredTier: RO_FEATURE_TIER[feature], typeLabel }, report: null, dashboard: null });
   const entitledFor = (t: ReportType) => roDecide(t.typeId, t.family, tier);
 
   if (name === 'portfolio_readiness') {
@@ -1204,8 +1204,18 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   const realTier = data?.tier ?? 'standard';
   const tier = tierOverride ?? realTier;
   const previewing = tierOverride != null && tierOverride !== realTier;
-  const [thread, setThread] = useState<ThreadMsg[]>([]);
-  const [draft, setDraft] = useState('');
+  /* "Find a report": the words in the field stay there after a search, as in
+     any search; the result is the router's answer to the last one. */
+  const [query, setQuery] = useState('');
+  const [found, setFoundState] = useState<FoundResult | null>(null);
+  /* Which result is on screen. A run states its outcome in the result only if
+     no later search, preset or tile has replaced the result meanwhile. */
+  const foundSeq = useRef(0);
+  const setFound = (next: FoundResult | null) => { foundSeq.current += 1; setFoundState(next); };
+  /* Why the last run produced no report (a refusal, a missing role, a failed
+     read), stated where the result is, never as an empty canvas. */
+  const [runNote, setRunNote] = useState<string | null>(null);
+  const fieldId = React.useId();
   const [report, setReport] = useState<RenderedReport | null>(null);
   // The governed run id behind the displayed report (report-os run), or null for
   // a re-shown report with no run. Drives the real finalize/seal on export.
@@ -1225,8 +1235,9 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setThread([]); setReport(null); setReportRunId(null); setSeal(null); setDashboard(null); }, [seg]);
-  useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [thread, busy]);
+  useEffect(() => { setFound(null); setRunNote(null); setReport(null); setReportRunId(null); setSeal(null); setDashboard(null); }, [seg]);
+  /* The result sits just above the field; keep it in view as it changes. */
+  useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [found, runNote, busy]);
 
   const pushCanvasTop = () => { const el = canvasRef.current; if (el) el.scrollTop = 0; };
 
@@ -1238,7 +1249,14 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      is fabricated, and an unentitled/unknown type is stated, never estimated. */
   const runReport = async (type: ReportType): Promise<void> => {
     if (!program) return;
-    const say = (text: string) => setThread(t => [...t, { role: 'ana', text, tool: 'generate_report' }]);
+    /* The result said "Running the …" when the run began. Once the run ends it
+       says what happened, so it never reports as current a run that finished or
+       never started. A run that produced no report drops the result's sentence
+       and the alert says why: one statement, not "Running" beside "wasn't run". */
+    const mine = foundSeq.current;
+    const settle = (next: FoundResult | null) => { if (foundSeq.current === mine) setFound(next); };
+    const say = (text: string) => { settle(null); setRunNote(text); };
+    setRunNote(null);
     if (!canWrite) {
       say(`"${type.label}" wasn't run. Running a report creates a governed record, which needs an editor role in this organization.`);
       return;
@@ -1253,22 +1271,25 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
       setReport(adopted);
       setReportRunId(started.runId);
       setSeal(null);
+      settle({ text: `The ${type.label} for ${program.code} ran against the governed record and is shown in the report canvas. Every value is computed from the governed record; none is originated here.` });
       pushCanvasTop();
     } finally {
       setBusy(false);
     }
   };
 
-  const send = async (raw?: string) => {
-    const text = (raw == null ? draft : raw).trim();
+  /* A suggestion (an opener prompt, a result's choice) fills the field with the
+     words it searches for, so the field always shows what the result answers. */
+  const findReport = async (raw?: string) => {
+    const text = (raw == null ? query : raw).trim();
     if (!text || busy || !program || !data) return;
-    setThread(t => [...t, { role: 'user', text }]);
-    setDraft('');
+    if (raw != null) setQuery(raw);
+    setRunNote(null);
     // roRouteReply resolves intent, chips and the entitlement lock — all
     // deterministic. When it resolves a report type, generation goes to the REAL
     // backend via runReport, not to a client-built preview.
     const reply = roRouteReply(text, tier, { program, portfolio: data.portfolio, types: catalog, report });
-    setThread(t => [...t, { role: 'ana', text: reply.text, chips: reply.chips, locked: reply.locked, question: reply.question, tool: reply.tool, nav: reply.nav }]);
+    setFound({ text: reply.text, chips: reply.chips, locked: reply.locked, nav: reply.nav });
     if (reply.reportType) {
       await runReport(reply.reportType);
     } else if (reply.report) {
@@ -1284,16 +1305,17 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      server bulk-run endpoint exists). Each tile runs its real report on click. */
   const buildPreset = (preset: Preset) => {
     if (!preset) return;
-    setThread(t => [...t, { role: 'user', text: `Build the ${preset.label}` }, { role: 'ana', text: `Building the ${preset.label}. ${preset.why} Each tile runs a governed report against the live record — pick any one to run it. Anything the plan has not unlocked shows as locked, never as an estimate.`, tool: 'preset' }]);
+    setRunNote(null);
+    setFound({ text: `${preset.label}: ${preset.why} Each tile runs a governed report against the live record; pick one to run it. Anything the plan has not unlocked shows as locked, never as an estimate.` });
     setDashboard({ kind: 'pack', label: preset.label, why: preset.why, types: preset.types });
     setReport(null);
     setReportRunId(null);
     pushCanvasTop();
   };
 
-  /* Run a report from a pack tile (announces it in the thread, then generates). */
+  /* Run a report from a pack tile (states it as the result, then generates). */
   const runFromTile = (type: ReportType) => {
-    setThread(th => [...th, { role: 'user', text: `Run the ${type.label}` }, { role: 'ana', text: `Running the ${type.label} for ${program?.code ?? 'this program'} against the governed record.`, tool: 'generate_report' }]);
+    setFound({ text: `Running the ${type.label} for ${program?.code ?? 'this program'} against the governed record.` });
     void runReport(type);
   };
 
@@ -1435,10 +1457,18 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
            The `rc-ana*` class names stay: they are internal selectors carried by
            insights-v2.css, renaming them would be churn across a stylesheet for
            no user-visible gain, and the cross-shell CSS collision guard counts
-           them. -- */}
+           them.
+
+           It also kept the SHAPE of a conversation: the person's words echoed
+           in a bubble, the answer in a bubble beside AnA's mark (the blue
+           asterisk), three dots while it "typed". There is one AnA, and she is
+           the conversation; a bubble beside her mark credits her with what a
+           router chose. So the pane is now what it is (FILING_SPINE F6): a
+           field labelled "Find a report", a Find button, and one result that
+           the next search replaces. `roRouteReply` is still its router. -- */}
       <div className="rc-ana">
         <div className="rc-ana-head">
-          <div className="rc-ana-id"><span className="rc-ana-mark">*</span><div><div className="nm">Report builder</div><div className="sub">{[p.code, p.filing, SEG_LABEL[seg] || seg].filter(Boolean).join(' — ')}</div></div></div>
+          <div className="rc-ana-id"><div><div className="nm">Report builder</div><div className="sub">{[p.code, p.filing, SEG_LABEL[seg] || seg].filter(Boolean).join(' — ')}</div></div></div>
           {/* The organisation-wide audit and compliance reports live on their own
               surface; this is the quiet way there from the program canvas. */}
           <button type="button" className="pj-card-h-go" onClick={() => onNav && onNav('compliance-reports')}>Audit & compliance reports</button>
@@ -1453,49 +1483,50 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
           {/* Opener. The program facts below are live; the preset is a static
               per-segment default, and says so. */}
           <div className="rc-opener">
-            <div className="rc-op-head"><span className="rc-ana-mark sm">*</span><span>Where to start</span></div>
+            <div className="ro-rep-eyebrow">Where to start</div>
             <div className="rc-op-headline">{suggest.headline}</div>
             <div className="rc-op-body">{suggest.body}</div>
             {suggest.preset && (
               <>
-                <button className="rc-preset-btn" onClick={() => suggest.preset && buildPreset(suggest.preset)}>{I.sparkles} Build the {suggest.preset.label} {I.right}</button>
+                <button className="rc-preset-btn" onClick={() => suggest.preset && buildPreset(suggest.preset)}>{I.barChart} Build the {suggest.preset.label} {I.right}</button>
                 <div className="rc-op-why">{suggest.preset.why}</div>
               </>
             )}
             <div className="rc-chips">
-              {suggest.prompts.map((q, i) => (<button key={i} className="rc-chip" onClick={() => send(q)}>{q}</button>))}
+              {suggest.prompts.map((q, i) => (<button key={i} className="rc-chip" onClick={() => findReport(q)}>{q}</button>))}
             </div>
           </div>
 
-          {/* Conversation thread */}
-          {thread.map((m, i) => m.role === 'user'
-            ? <div key={i} className="rc-msg rc-user"><div className="rc-bub">{m.text}</div></div>
-            : <div key={i} className="rc-msg rc-ana-msg">
-              <span className="rc-ana-mark sm">*</span>
-              <div className="rc-ana-body">
-                <div className="rc-bub rc-ana-bub">{m.text}</div>
-                {m.locked && (
-                  <div className="rc-lock">
-                    <div className="rc-lock-h">{I.lock} {(RO_TIERS.find(t => t.id === m.locked!.requiredTier) || { label: '' }).label} plan unlocks {m.locked.typeLabel}</div>
-                    <div className="rc-lock-s">{RO_FEATURE_LABEL[m.locked.feature]} is a paid capability. No estimated result is shown on a plan that has not unlocked the governed model.</div>
-                    <div className="rc-lock-acts">
-                      <button className="rc-lock-up" onClick={() => onNav && onNav('licensing')}>See plans {I.right}</button>
-                      <button className="rc-chip" onClick={() => setTierOverride(m.locked!.requiredTier)}>Preview on {(RO_TIERS.find(t => t.id === m.locked!.requiredTier) || { label: '' }).label}</button>
-                    </div>
-                  </div>
-                )}
-                {m.chips && m.chips.length ? <div className="rc-chips">{m.chips.map((c, ci) => (<button key={ci} className="rc-chip" onClick={() => send(c[1])}>{c[0]}</button>))}</div> : null}
-                {m.nav ? <div className="rc-chips"><button type="button" className="rc-chip" onClick={() => { if (m.nav && onNav) onNav(m.nav.surface); }}>{m.nav.label}</button></div> : null}
+          {/* The result of the last search: the router's words, the choices it
+              offers and the plan lock, in one section the next search replaces.
+              Not a thread: the searched words stay in the field below. The
+              section and its live region stay mounted, empty until the first
+              search, so the first result is announced too (a live region
+              inserted already holding its text is often not read). It is named
+              "Result", a region, only while it holds one. */}
+          <section aria-label={found ? 'Result' : undefined} data-testid="rc-find-result" data-empty={found ? undefined : 'true'}>
+            {found && <div className="ro-rep-eyebrow">Result</div>}
+            <p className="rc-op-body" role="status" style={found ? undefined : { margin: 0 }}>{found?.text ?? ''}</p>
+            {found?.locked && (
+              <div className="rc-lock">
+                <div className="rc-lock-h">{I.lock} {tierLabel(found.locked.requiredTier)} plan unlocks {found.locked.typeLabel}</div>
+                <div className="rc-lock-s">{RO_FEATURE_LABEL[found.locked.feature]} is a paid capability. No estimated result is shown on a plan that has not unlocked the governed model.</div>
+                <div className="rc-lock-acts">
+                  <button className="rc-lock-up" onClick={() => onNav && onNav('licensing')}>See plans {I.right}</button>
+                  <button className="rc-chip" onClick={() => setTierOverride(found.locked!.requiredTier)}>Preview on {tierLabel(found.locked.requiredTier)}</button>
+                </div>
               </div>
-            </div>
-          )}
-          {/* Three empty coloured dots and nothing else — the whole report is
-              being composed and a screen reader was told nothing at all. The
-              dots are decoration; the sentence beside them is the status. */}
-          {busy && <div className="rc-msg rc-ana-msg" role="status"><span className="rc-ana-mark sm" aria-hidden="true">*</span><div className="rc-ana-body"><div className="rc-typing" aria-hidden="true"><span /><span /><span /></div><span className="sr-only">Preparing your report…</span></div></div>}
+            )}
+            {found?.chips && found.chips.length ? <div className="rc-chips">{found.chips.map((c, ci) => (<button key={ci} className="rc-chip" onClick={() => findReport(c[1])}>{c[0]}</button>))}</div> : null}
+            {found?.nav ? <div className="rc-chips"><button type="button" className="rc-chip" onClick={() => { if (found.nav && onNav) onNav(found.nav.surface); }}>{found.nav.label}</button></div> : null}
+          </section>
+          {/* A run in flight is a sentence in a status region. It was three
+              pulsing dots beside AnA's mark, which is how a chat says "typing". */}
+          {busy && <div className="ro-dash-note" role="status">{I.clock} Running the report…</div>}
+          {runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}
         </div>
 
-        {/* Composer + tier */}
+        {/* Find a report, and the plan it is read against */}
         <div className="rc-composer">
           <div className="rc-tier" role="group" aria-label="Subscription tier">
             <span className="rc-tier-lbl">Plan</span>
@@ -1509,11 +1540,14 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
               <button type="button" className="rc-chip" onClick={() => setTierOverride(null)}>Back to {tierLabel(realTier)}</button>
             </div>
           )}
+          <label className="gov-label" htmlFor={fieldId} style={{ display: 'block', marginBottom: 5 }}>Find a report</label>
           <div className="rc-input">
-            <textarea rows={1} aria-label="Describe the report or dashboard you need" value={draft} placeholder={`Describe the report or dashboard you need for ${p.code}...`}
-              onChange={e => setDraft(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
-            <button className="rc-send" disabled={!draft.trim() || busy} onClick={() => send()} aria-label="Send">{I.arrowUp || I.right}</button>
+            {/* One line: Enter finds, as the button does. The words stay after a
+                search, so the field always says what the result answers. */}
+            <textarea id={fieldId} rows={1} value={query} placeholder={`A report type, market or question for ${p.code}`}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void findReport(); } }} />
+            <button type="button" className="btn primary" disabled={!query.trim() || busy} onClick={() => void findReport()}>Find</button>
           </div>
           <div className="rc-guardrail">{I.shieldCheck} {RO_GUARDRAIL}</div>
         </div>
@@ -1530,14 +1564,13 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
           : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} canRun={canWrite} scope={p.scope} catalog={catalog} />
           : (
             <div className="rc-empty">
-              <div className="rc-empty-mark">*</div>
               {/* "AnA builds the report" and "a pack AnA suggests … based on
                   your whole portfolio" were the same two claims as the opener:
                   a persona for a template matcher, and a portfolio-derived
                   recommendation for `roPresetsForSeg(seg)`, which reads neither
                   the portfolio nor the program. */}
               <h2 className="rc-empty-h">Governed reports, built to order.</h2>
-              <p className="rc-empty-s">Describe what you need on the left, or start from one of the standard packs for {p.code}. Every value is computed from the governed record; nothing is estimated.</p>
+              <p className="rc-empty-s">Find a report on the left, or start from one of the standard packs for {p.code}. Every value is computed from the governed record; nothing is estimated.</p>
               <div className="rc-empty-presets">
                 {roPresetsForSeg(seg, catalog).map(pr => (
                   <button key={pr.id} className="rc-empty-preset" onClick={() => buildPreset(pr)}>

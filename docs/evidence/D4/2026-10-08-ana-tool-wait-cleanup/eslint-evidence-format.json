@@ -1,0 +1,12 @@
+{
+  "format": "All diagnostics, rule identifiers and counts remain. Only duplicate source echoes are omitted from root lint JSON; omittedSourceSha256 retains their hashes.",
+  "final_errors": 0,
+  "baseline_and_final_production_warnings": {
+    "agentic-loop.ts": 0,
+    "AnaToolExecutor.ts": 100,
+    "stream.ts": 23
+  },
+  "new_test_errors": 0,
+  "new_test_warnings": 0,
+  "lint_rules_suppressions_baselines_or_gates_changed": false
+}

@@ -109,7 +109,7 @@ async function runReport() {
     return el;
   });
   fireEvent.change(composer, { target: { value: 'Run the executive readiness digest report' } });
-  fireEvent.click(screen.getByLabelText('Send'));
+  fireEvent.click(screen.getByRole('button', { name: 'Find' }));
   await screen.findByText(/Export PDF/);
 }
 

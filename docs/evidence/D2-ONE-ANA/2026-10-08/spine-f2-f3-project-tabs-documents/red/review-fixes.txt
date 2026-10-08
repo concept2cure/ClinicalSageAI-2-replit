@@ -1,0 +1,1289 @@
+# Red: the review-finding fixes reverted (ProjectHome.tsx, project-home-data.tsx and project-home-v2.css as the implementer left them, before the review fixes); the tests are the final ones. 2026-10-08T07:56:15Z
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > lists the project's documents from the program-scoped read, with status in words 179ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a row opens THAT document, by id, in this program 483ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a failed read is an error with a retry, never an empty list, and the retry reads again 254ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > an empty project says so in words 74ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > "Recent drafts" and the Workspace grid are gone, and nothing reads the drafts 106ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a module row opens the project's newest document in that module, not the editor's list 841ms
+   → Unable to find an accessible element with the role "button" and name `/^3 sections \(3 sections\): 0% complete\. Open Drug substance \(3\.2\.S\)$/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "All projects":
+  <button
+    class="pj-back"
+  />
+
+  Name "Start the conversation":
+  <button
+    aria-label="Start the conversation"
+    class="pj-comp-send"
+    disabled=""
+  />
+
+  Name "Evidence":
+  <button
+    class="pj-lc-stage"
+    title="Project files and the data room the documents are written from"
+  />
+
+  Name "Author":
+  <button
+    aria-selected="true"
+    class="pj-lc-stage"
+    data-status="active"
+    title="Draft eCTD sections with AnA, track changes"
+  />
+
+  Name "Review":
+  <button
+    class="pj-lc-stage"
+    title="Review, approve & e-sign"
+  />
+
+  Name "Submit":
+  <button
+    class="pj-lc-stage"
+    title="Assemble eCTD, validate & transmit"
+  />
+
+  Name "Respond":
+  <button
+    class="pj-lc-stage"
+    title="Health-authority questions & responses"
+  />
+
+  Name "Protocols (organisation-wide)":
+  <button
+    class="btn ghost"
+    style="font-size: 12px; padding: 4px 12px;"
+    type="button"
+  />
+
+  Name "Open in Authoring":
+  <button
+    class="btn ghost"
+    style="font-size: 12px; padding: 4px 12px;"
+    type="button"
+  />
+
+  Name "Open Clinical overview (2.5)":
+  <button
+    aria-label="Open Clinical overview (2.5)"
+    class="btn primary"
+    type="button"
+  />
+
+  Name "Open Drug substance (3.2.S)":
+  <button
+    aria-label="Open Drug substance (3.2.S)"
+    class="btn primary"
+    type="button"
+  />
+
+  Name "Open Nonclinical overview (2.4)":
+  <button
+    aria-label="Open Nonclinical overview (2.4)"
+    class="btn primary"
+    type="button"
+  />
+
+  Name "M2 · 1 section, 0% — open Clinical overview (2.5)":
+  <button
+    aria-label="M2 · 1 section, 0% — open Clinical overview (2.5)"
+    class="pj-lmod"
+    data-risk="true"
+    title="Open Clinical overview (2.5)"
+    type="button"
+  />
+
+  Name "3 · 3 sections, 0% — open Drug substance (3.2.S)":
+  <button
+    aria-label="3 · 3 sections, 0% — open Drug substance (3.2.S)"
+    class="pj-lmod"
+    data-risk="true"
+    title="Open Drug substance (3.2.S)"
+    type="button"
+  />
+
+  Name "Open My work":
+  <button
+    class="btn ghost"
+    style="font-size: 12px; padding: 4px 12px;"
+    type="button"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "BX-410":
+  <h1
+    class="pj-title"
+  />
+
+  Name "Start a conversation in Torvanib":
+  <h2
+    id="pj-start-h"
+  />
+
+  Name "Conversations":
+  <h2
+    id="pj-threads-h"
+  />
+
+  Name "Documents":
+  <h2
+    id="pj-docs-h"
+  />
+
+  Name "Module completion":
+  <h2 />
+
+  Name "My work":
+  <h2
+    id="pj-mywork-h"
+  />
+
+  Name "Records in this project":
+  <h2 />
+
+  Name "Submissions not available":
+  <h3 />
+
+  Name "Data Room sources not available":
+  <h3 />
+
+  Name "Authoring documents not available":
+  <h3 />
+
+  Name "Vault documents not available":
+  <h3 />
+
+  Name "Study designs not available":
+  <h3 />
+
+  Name "Filing documents not available":
+  <h3 />
+
+  Name "Team & activity":
+  <h2 />
+
+  Name "Memory":
+  <h3 />
+
+  Name "Instructions":
+  <h3 />
+
+  --------------------------------------------------
+  region:
+
+  Name "Program identity":
+  <section
+    aria-label="Program identity"
+    class="pj-facts"
+  />
+
+  Name "Start a conversation in Torvanib":
+  <section
+    aria-labelledby="pj-start-h"
+    class="pj-convo"
+  />
+
+  Name "Conversations":
+  <section
+    aria-labelledby="pj-threads-h"
+    class="pj-sec"
+  />
+
+  Name "Documents":
+  <section
+    aria-labelledby="pj-docs-h"
+    class="pj-sec"
+  />
+
+  Name "My work":
+  <section
+    aria-labelledby="pj-mywork-h"
+    class="pj-sec"
+  />
+
+  Name "Records in this project":
+  <section
+    aria-label="Records in this project"
+    class="pj-sec"
+  />
+
+  --------------------------------------------------
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Start a conversation in Torvanib":
+  <textarea
+    aria-labelledby="pj-start-h"
+    placeholder="Ask AnA to draft, reconcile or review…"
+    rows="2"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    role="status"
+  />
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    role="status"
+  />
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    role="status"
+  />
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    role="status"
+  />
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    role="status"
+  />
+
+  --------------------------------------------------
+  tablist:
+
+  Name "Project lifecycle":
+  <div
+    aria-label="Project lifecycle"
+    class="pj-lc"
+    role="tablist"
+  />
+
+  --------------------------------------------------
+  list:
+
+  Name "This project’s documents":
+  <ul
+    aria-label="This project’s documents"
+    class="cdl-list"
+    data-testid="pj-documents"
+  />
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  <li
+    class="cdl-row"
+    data-doc-id="doc-25"
+    data-testid="pj-doc-row"
+  />
+
+  Name "":
+  <li
+    class="cdl-row"
+    data-doc-id="doc-32s"
+    data-testid="pj-doc-row"
+  />
+
+  Name "":
+  <li
+    class="cdl-row"
+    data-doc-id="doc-24"
+    data-testid="pj-doc-row"
+  />
+
+  --------------------------------------------------
+  time:
+
+  Name "":
+  <time
+    datetime="2026-10-07T10:00:00Z"
+  />
+
+  Name "":
+  <time
+    datetime="2026-10-05T10:00:00Z"
+  />
+
+  Name "":
+  <time
+    datetime="2026-10-01T10:00:00Z"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="pj-desc"
+  />
+
+  --------------------------------------------------
+  complementary:
+
+  Name "":
+  <aside
+    class="pj-side"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-crumb"
+      >
+        <span
+          class="pj-crumb-i"
+          data-cur="true"
+        >
+          <span
+            class="pj-crumb-k"
+          >
+            Project
+          </span>
+          BX-410
+        </span>
+      </div>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            BX-410
+          </h1>
+          <div
+            class="pj-tags"
+          >
+            <span
+              class="rd-chip tone-idle"
+            >
+              IND
+            </span>
+            <span
+              class="rd-chip tone-ok"
+            >
+              active
+            </span>
+          </div>
+          <section
+            aria-label="Program identity"
+            class="pj-facts"
+          >
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Sponsor
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Product
+              </dt>
+              <dd>
+                Torvanib
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Indication
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                IND number
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not assigned
+                </span>
+              </dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <div
+        class="pj-start"
+      >
+        <section
+          aria-labelledby="pj-start-h"
+          class="pj-convo"
+        >
+          <div
+            class="pj-start-h"
+          >
+            <h2
+              id="pj-start-h"
+            >
+              Start a conversation in 
+              Torvanib
+            </h2>
+            <span
+              class="sec-sub"
+            >
+              AnA works with this project's sources, documents and submissions.
+            </span>
+          </div>
+          <div
+            class="pj-composer"
+          >
+            <textarea
+              aria-labelledby="pj-start-h"
+              placeholder="Ask AnA to draft, reconcile or review…"
+              rows="2"
+            />
+            <div
+              class="pj-composer-row"
+            >
+              <span
+                class="sp"
+              />
+              <button
+                aria-label="Start the conversation"
+                class="pj-comp-send"
+                disabled=""
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-arrow-up"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m5 12 7-7 7 7"
+                  />
+                  <path
+                    d="M12 19V5"
+                  />
+                </svg>
+              </button>
+           ...
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > offers the editor and the organisation's protocols as doors 171ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > Evidence has the data room and Author does not 164ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > "Write from these sources" hands the readable sources to AnA and never opens the editor 177ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > the Evidence blurb says what the tab holds 74ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Submit — the grid's filing doors > "Compile and download" opens eCTD compile, and "Open readiness" opens the readiness screen 162ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a module row names the sections as the figure and the document it opens in words, and how many the module holds 36ms
+   → expected 'M2 · 1 section, 0% — open Clinical ov…' to be 'M2 sections (1 section): 0% complete.…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > "Write from these sources" hands over the 10 newest readable sources, and says "newest" 181ms
+   → expected 'Ask AnA to draft from the 12 readable…' to be 'Ask AnA to draft from the 10 newest r…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a data room cut by the server window says "newest", even under the limit 159ms
+   → expected 'Use the 2 readable sources in this pr…' to be 'Use the 2 newest readable sources in …' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a device project is not offered the eCTD compiler, and its coming-later line names no IND work 154ms
+   → an eCTD compile door on a 510(k): expected <button type="button" …(2)>…(1)</button> to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a drug project still names IND annual-report tracking as coming later 106ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > the block is found 1ms
+ × client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > defines no class another v2 stylesheet already defines 42ms
+   → expected [ '.pj-stage (also journey-v2.css)' ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a module row opens the project's newest document in that module, not the editor's list
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^3 sections \(3 sections\): 0% complete\. Open Drug substance \(3\.2\.S\)$/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "All projects":
+  <button
+    class="pj-back"
+  />
+
+  Name "Start the conversation":
+  <button
+    aria-label="Start the conversation"
+    class="pj-comp-send"
+    disabled=""
+  />
+
+  Name "Evidence":
+  <button
+    class="pj-lc-stage"
+    title="Project files and the data room the documents are written from"
+  />
+
+  Name "Author":
+  <button
+    aria-selected="true"
+    class="pj-lc-stage"
+    data-status="active"
+    title="Draft eCTD sections with AnA, track changes"
+  />
+
+  Name "Review":
+  <button
+    class="pj-lc-stage"
+    title="Review, approve & e-sign"
+  />
+
+  Name "Submit":
+  <button
+    class="pj-lc-stage"
+    title="Assemble eCTD, validate & transmit"
+  />
+
+  Name "Respond":
+  <button
+    class="pj-lc-stage"
+    title="Health-authority questions & responses"
+  />
+
+  Name "Protocols (organisation-wide)":
+  <button
+    class="btn ghost"
+    style="font-size: 12px; padding: 4px 12px;"
+    type="button"
+  />
+
+  Name "Open in Authoring":
+  <button
+    class="btn ghost"
+    style="font-size: 12px; padding: 4px 12px;"
+    type="button"
+  />
+
+  Name "Open Clinical overview (2.5)":
+  <button
+    aria-label="Open Clinical overview (2.5)"
+    class="btn primary"
+    type="button"
+  />
+
+  Name "Open Drug substance (3.2.S)":
+  <button
+    aria-label="Open Drug substance (3.2.S)"
+    class="btn primary"
+    type="button"
+  />
+
+  Name "Open Nonclinical overview (2.4)":
+  <button
+    aria-label="Open Nonclinical overview (2.4)"
+    class="btn primary"
+    type="button"
+  />
+
+  Name "M2 · 1 section, 0% — open Clinical overview (2.5)":
+  <button
+    aria-label="M2 · 1 section, 0% — open Clinical overview (2.5)"
+    class="pj-lmod"
+    data-risk="true"
+    title="Open Clinical overview (2.5)"
+    type="button"
+  />
+
+  Name "3 · 3 sections, 0% — open Drug substance (3.2.S)":
+  <button
+    aria-label="3 · 3 sections, 0% — open Drug substance (3.2.S)"
+    class="pj-lmod"
+    data-risk="true"
+    title="Open Drug substance (3.2.S)"
+    type="button"
+  />
+
+  Name "Open My work":
+  <button
+    class="btn ghost"
+    style="font-size: 12px; padding: 4px 12px;"
+    type="button"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "BX-410":
+  <h1
+    class="pj-title"
+  />
+
+  Name "Start a conversation in Torvanib":
+  <h2
+    id="pj-start-h"
+  />
+
+  Name "Conversations":
+  <h2
+    id="pj-threads-h"
+  />
+
+  Name "Documents":
+  <h2
+    id="pj-docs-h"
+  />
+
+  Name "Module completion":
+  <h2 />
+
+  Name "My work":
+  <h2
+    id="pj-mywork-h"
+  />
+
+  Name "Records in this project":
+  <h2 />
+
+  Name "Submissions not available":
+  <h3 />
+
+  Name "Data Room sources not available":
+  <h3 />
+
+  Name "Authoring documents not available":
+  <h3 />
+
+  Name "Vault documents not available":
+  <h3 />
+
+  Name "Study designs not available":
+  <h3 />
+
+  Name "Filing documents not available":
+  <h3 />
+
+  Name "Team & activity":
+  <h2 />
+
+  Name "Memory":
+  <h3 />
+
+  Name "Instructions":
+  <h3 />
+
+  --------------------------------------------------
+  region:
+
+  Name "Program identity":
+  <section
+    aria-label="Program identity"
+    class="pj-facts"
+  />
+
+  Name "Start a conversation in Torvanib":
+  <section
+    aria-labelledby="pj-start-h"
+    class="pj-convo"
+  />
+
+  Name "Conversations":
+  <section
+    aria-labelledby="pj-threads-h"
+    class="pj-sec"
+  />
+
+  Name "Documents":
+  <section
+    aria-labelledby="pj-docs-h"
+    class="pj-sec"
+  />
+
+  Name "My work":
+  <section
+    aria-labelledby="pj-mywork-h"
+    class="pj-sec"
+  />
+
+  Name "Records in this project":
+  <section
+    aria-label="Records in this project"
+    class="pj-sec"
+  />
+
+  --------------------------------------------------
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Start a conversation in Torvanib":
+  <textarea
+    aria-labelledby="pj-start-h"
+    placeholder="Ask AnA to draft, reconcile or review…"
+    rows="2"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    role="status"
+  />
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    role="status"
+  />
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    role="status"
+  />
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    role="status"
+  />
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    role="status"
+  />
+
+  --------------------------------------------------
+  tablist:
+
+  Name "Project lifecycle":
+  <div
+    aria-label="Project lifecycle"
+    class="pj-lc"
+    role="tablist"
+  />
+
+  --------------------------------------------------
+  list:
+
+  Name "This project’s documents":
+  <ul
+    aria-label="This project’s documents"
+    class="cdl-list"
+    data-testid="pj-documents"
+  />
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  <li
+    class="cdl-row"
+    data-doc-id="doc-25"
+    data-testid="pj-doc-row"
+  />
+
+  Name "":
+  <li
+    class="cdl-row"
+    data-doc-id="doc-32s"
+    data-testid="pj-doc-row"
+  />
+
+  Name "":
+  <li
+    class="cdl-row"
+    data-doc-id="doc-24"
+    data-testid="pj-doc-row"
+  />
+
+  --------------------------------------------------
+  time:
+
+  Name "":
+  <time
+    datetime="2026-10-07T10:00:00Z"
+  />
+
+  Name "":
+  <time
+    datetime="2026-10-05T10:00:00Z"
+  />
+
+  Name "":
+  <time
+    datetime="2026-10-01T10:00:00Z"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="pj-desc"
+  />
+
+  --------------------------------------------------
+  complementary:
+
+  Name "":
+  <aside
+    class="pj-side"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-crumb"
+      >
+        <span
+          class="pj-crumb-i"
+          data-cur="true"
+        >
+          <span
+            class="pj-crumb-k"
+          >
+            Project
+          </span>
+          BX-410
+        </span>
+      </div>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            BX-410
+          </h1>
+          <div
+            class="pj-tags"
+          >
+            <span
+              class="rd-chip tone-idle"
+            >
+              IND
+            </span>
+            <span
+              class="rd-chip tone-ok"
+            >
+              active
+            </span>
+          </div>
+          <section
+            aria-label="Program identity"
+            class="pj-facts"
+          >
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Sponsor
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Product
+              </dt>
+              <dd>
+                Torvanib
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Indication
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                IND number
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not assigned
+                </span>
+              </dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <div
+        class="pj-start"
+      >
+        <section
+          aria-labelledby="pj-start-h"
+          class="pj-convo"
+        >
+          <div
+            class="pj-start-h"
+          >
+            <h2
+              id="pj-start-h"
+            >
+              Start a conversation in 
+              Torvanib
+            </h2>
+            <span
+              class="sec-sub"
+            >
+              AnA works with this project's sources, documents and submissions.
+            </span>
+          </div>
+          <div
+            class="pj-composer"
+          >
+            <textarea
+              aria-labelledby="pj-start-h"
+              placeholder="Ask AnA to draft, reconcile or review…"
+              rows="2"
+            />
+            <div
+              class="pj-composer-row"
+            >
+              <span
+                class="sp"
+              />
+              <button
+                aria-label="Start the conversation"
+                class="pj-comp-send"
+                disabled=""
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-arrow-up"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m5 12 7-7 7 7"
+                  />
+                  <path
+                    d="M12 19V5"
+                  />
+                </svg>
+              </button>
+           ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:161:28
+    159|
+    160|     // "3" is the Module 3 sections' rollup: it opens the Module 3 doc…
+    161|     fireEvent.click(screen.getByRole('button', { name: /^3 sections \(…
+       |                            ^
+    162|     expect(target()).toMatchObject({ docId: 'doc-32s' });
+    163|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a module row names the sections as the figure and the document it opens in words, and how many the module holds
+AssertionError: expected 'M2 · 1 section, 0% — open Clinical ov…' to be 'M2 sections (1 section): 0% complete.…' // Object.is equality
+
+Expected: "M2 sections (1 section): 0% complete. Open Clinical overview (2.5), the newest of 2 Module 2 documents"
+Received: "M2 · 1 section, 0% — open Clinical overview (2.5)"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:235:8
+    233|     // The percent is the module's section rollup, not the document's …
+    234|     expect(moduleRow('M2 · 1 section')!.getAttribute('aria-label'))
+    235|       .toBe('M2 sections (1 section): 0% complete. Open Clinical overv…
+       |        ^
+    236|     // The document is visible in words, not only in a hover title.
+    237|     const named = Array.from(document.querySelectorAll('[data-testid="…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > "Write from these sources" hands over the 10 newest readable sources, and says "newest"
+AssertionError: expected 'Ask AnA to draft from the 12 readable…' to be 'Ask AnA to draft from the 10 newest r…' // Object.is equality
+
+Expected: "Ask AnA to draft from the 10 newest readable sources in this data room"
+Received: "Ask AnA to draft from the 12 readable sources in this data room"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:252:39
+    250|     await screen.findByText('source-100.pdf');
+    251|     const btn = screen.getByRole('button', { name: /Write from these s…
+    252|     expect(btn.getAttribute('title')).toBe('Ask AnA to draft from the …
+       |                                       ^
+    253|     fireEvent.click(btn);
+    254|     // The route lists newest first: the first ten.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a data room cut by the server window says "newest", even under the limit
+AssertionError: expected 'Use the 2 readable sources in this pr…' to be 'Use the 2 newest readable sources in …' // Object.is equality
+
+Expected: "Use the 2 newest readable sources in this project's data room as the context for drafting."
+Received: "Use the 2 readable sources in this project's data room as the context for drafting."
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:273:46
+    271|     await screen.findByText('a.pdf');
+    272|     fireEvent.click(screen.getByRole('button', { name: /Write from the…
+    273|     expect(String(p.onAsk.mock.calls[0][0])).toBe("Use the 2 newest re…
+       |                                              ^
+    274|   });
+    275|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a device project is not offered the eCTD compiler, and its coming-later line names no IND work
+AssertionError: an eCTD compile door on a 510(k): expected <button type="button" …(2)>…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="btn ghost"
+  style="font-size: 12px; padding: 4px 12px;"
+  type="button"
+>
+  Compile and download 
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-chevron-right"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="m9 18 6-6-6-6"
+    />
+  </svg>
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:281:112
+    279|     await open('Submit');
+    280|     await screen.findByRole('button', { name: /Open Submission Center/…
+    281|     expect(screen.queryByRole('button', { name: /Compile and download/…
+       |                                                                                                                ^
+    282|     const later = screen.getByTestId('pj-coming-later').textContent ??…
+    283|     expect(later).not.toMatch(/IND/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > defines no class another v2 stylesheet already defines
+AssertionError: expected [ '.pj-stage (also journey-v2.css)' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   ".pj-stage (also journey-v2.css)",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx:55:21
+     53|       for (const c of mine) if (theirs.has(c)) clashes.push(`.${c} (al…
+     54|     }
+     55|     expect(clashes).toEqual([]);
+       |                     ^
+     56|     expect(mine, 'the Evidence and Submit wrapper').toContain('pj-stag…
+     57|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 12 passed (18)
+   Start at  07:56:16
+   Duration  5.71s (transform 962ms, setup 244ms, import 1.11s, tests 3.38s, environment 582ms)
+

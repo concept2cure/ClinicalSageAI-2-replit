@@ -105,7 +105,7 @@ async function runThenExport() {
     return el;
   });
   fireEvent.change(composer, { target: { value: 'Run the executive readiness digest report' } });
-  fireEvent.click(screen.getByLabelText('Send'));
+  fireEvent.click(screen.getByRole('button', { name: 'Find' }));
   const btn = await waitFor(() => screen.getByText(/Export PDF/));
   apiRequest.mockClear();
   downloadBlob.mockClear();

@@ -15771,11 +15771,14 @@ async function runOneTool(
     // Stop can arrive while this call is waiting for a concurrency lane.
     // An immediate race rejects too late to prevent invoking the handler.
     if (signal?.aborted) throw new ToolRunCancelled();
-    const result = await Promise.race([
-      handler(call.input, { ...(toolContext ?? {}), signal } as ToolContext),
-      abortRace(signal),
-    ]);
-    return { call, result };
+    const toolWork = handler(call.input, { ...(toolContext ?? {}), signal } as ToolContext);
+    const cancellationWait = abortRace(signal);
+    try {
+      const result = await Promise.race([toolWork, cancellationWait]);
+      return { call, result };
+    } finally {
+      cancellationWait.dispose();
+    }
   } catch (error: any) {
     if (error instanceof ToolRunCancelled) {
       return { call, result: JSON.stringify(CANCELLED_TOOL_RESULT(call.name)) };

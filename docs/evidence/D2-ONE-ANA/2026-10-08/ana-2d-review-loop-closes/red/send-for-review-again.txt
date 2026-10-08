@@ -1,0 +1,70 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > POSTs request-review for the open document with the reviewer’s user id and the reason, and shows the server’s answer 759ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > sends every chosen reviewer in one request, and gives each a task 378ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > requires a reviewer and a reason at the server’s floor before anything is sent 294ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > shows a refusal in the server’s words, creates no task, and lets the person send again 259ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > an outcome nobody can confirm is unknown: no task, no second send, and the board is offered to check 341ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a success that names another document is not a receipt for this one 218ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task that failed after the request is reported as not created; the request still stands 332ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task whose creation could not be confirmed offers the task list, not a retry 261ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the Tasks rail > the Tasks rail offers Send for review, not a task-only assignment 283ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a task whose answer was lost is unknown, not absent > says the outcome is unknown in the receipt and the toast, never "no task" and never "not created" 70ms
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a member whose review is pending cannot be chosen; one whose verdict is recorded can be asked again, and is told the verdict stays in the record 51ms
+   → expected true to be false // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a row that comes back with a verdict gets no task, and is never reported as requested 38ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > when no row was reopened, nothing is reported as requested and no task is made 30ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > existing requests that could not be read: no one can be chosen, and reading them again recovers 59ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > a roster that could not be read offers to read it again, and does 51ms
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the task says where the verdict goes > each reviewer’s task says the verdict is recorded on the Review board, not by completing the task 29ms
+   → expected 'Reason for the review request: Ready …' to contain 'Record your verdict on the Review boa…'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a member whose review is pending cannot be chosen; one whose verdict is recorded can be asked again, and is told the verdict stays in the record
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:358:30
+    356|     // A recorded verdict: offered again, since a new request reopens …
+    357|     const decided = (await within(dlg).findByTestId('sfr-reviewer-42')…
+    358|     expect(decided.disabled).toBe(false);
+       |                              ^
+    359|     const decidedNote = within(dlg).getByTestId('sfr-prior-42');
+    360|     expect(decidedNote.textContent).toMatch(/^Changes requested on .+\…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the task says where the verdict goes > each reviewer’s task says the verdict is recorded on the Review board, not by completing the task
+AssertionError: expected 'Reason for the review request: Ready …' to contain 'Record your verdict on the Review boa…'
+
+- Expected
++ Received
+
+- Record your verdict on the Review board; recording it completes this task. Completing the task does not record a verdict.
++ Reason for the review request: Ready for medical review before the pre-IND package.
++
++ Record your verdict on the Review board; completing this task does not record one.
+
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:460:8
+    458|     await waitFor(() => expect(calls('POST', '/api/tasks/tasks')).toHa…
+    459|     expect(String((calls('POST', '/api/tasks/tasks')[0][2] as { descri…
+    460|       .toContain('Record your verdict on the Review board; recording i…
+       |        ^
+    461|   });
+    462| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 passed (16)
+   Start at  06:32:47
+   Duration  7.80s (transform 2.60s, setup 240ms, import 3.25s, tests 3.46s, environment 661ms)
+

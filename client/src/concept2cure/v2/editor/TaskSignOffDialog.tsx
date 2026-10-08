@@ -10,9 +10,10 @@
  * Task board, to sign there (docs/design/ONE_ANA_ONE_CANVAS.md §4.7, slice
  * 19): "a reviewer signs on the document, not on a task board". The ceremony
  * itself was the Task board's private `ESignTaskModal` (surfaces/TaskBoard.tsx).
- * This is that ceremony as a component either place can mount. TaskBoard.tsx
- * still holds its own copy until that file imports this one; the change is
- * recorded in docs/evidence/D2-ONE-ANA/2026-10-08/ana-2c-send-for-review/.
+ * This is that ceremony as a component either place can mount. The Task board
+ * mounts it too (surfaces/TaskBoard.tsx, since wave 2D,
+ * docs/evidence/D2-ONE-ANA/2026-10-08/ana-2d-review-loop-closes/), so there is
+ * one task sign-off.
  *
  * ── What it sends ────────────────────────────────────────────────────────────
  * The same transition again, PATCH /api/tasks/tasks/:taskId, now carrying the

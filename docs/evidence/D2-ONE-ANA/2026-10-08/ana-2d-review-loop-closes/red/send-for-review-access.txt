@@ -1,0 +1,21 @@
+# red: authoringDocAccess (with the gated Send for review cases) against the router as wave 2D's first pass left it: access.assignReview reported the organization role only
+# command: npx vitest run --config vitest.config.ts server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign 26ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not 18ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a FROZEN document can still be filed to the vault — the sealed record is what filing is for 18ms
+ × server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial 28ms
+   → expected { allowed: true, reason: null } to be null
+ × server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no grant on the document is told it needs an Owner or Author grant 20ms
+   → expected { allowed: true, reason: null } to deeply equal { allowed: false, …(1) }
+ × server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > on a FROZEN document even its owner is told why not 17ms
+   → expected { allowed: true, reason: null } to deeply equal { allowed: false, …(1) }
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through 36ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+AssertionError: expected { allowed: true, reason: null } to be null
+ FAIL  server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no grant on the document is told it needs an Owner or Author grant
+AssertionError: expected { allowed: true, reason: null } to deeply equal { allowed: false, …(1) }
+ FAIL  server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > on a FROZEN document even its owner is told why not
+AssertionError: expected { allowed: true, reason: null } to deeply equal { allowed: false, …(1) }
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 passed (7)

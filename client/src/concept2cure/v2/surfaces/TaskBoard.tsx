@@ -5,8 +5,8 @@ import { useLiveRows, useLiveData, hasKeys, EmptyState } from '../dataConnect';
 import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
 import { canGovernedWrite } from '@shared/constants/permissions';
-import { EsignModal, esignSignerOf, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
-import type { EsigMeaning } from '../../hooks/useEsignature';
+import { esignSignerOf } from '../../_shared/components/EsignModal';
+import { TaskSignOffDialog } from '../editor/TaskSignOffDialog';
 import { describeSignatureMethod } from '@shared/part11/signature-method';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -1130,10 +1130,15 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
           onArchived={() => { setSel(null); setReloadKey((k) => k + 1); }}
         />
       )}
+      {/* An approval-gated completion (the server answered 428 ESIGN_REQUIRED) is
+          signed in the product's one task sign-off, editor/TaskSignOffDialog.tsx,
+          the dialog the document's Tasks rail mounts too: meaning, reason,
+          password and the authenticator code when one is enrolled, re-verified by
+          the server, and a confirmation that shows the signature the server
+          recorded. This board held its own copy until 2026-10-08 (wave 2D). */}
       {signReq && (
-        <ESignTaskModal
-          req={signReq}
-          taskTitle={signReq.t.title}
+        <TaskSignOffDialog
+          req={{ taskId: signReq.t.taskId, title: signReq.t.title, status: signReq.status, progress: signReq.progress }}
           signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
           onClose={() => setSignReq(null)}
           onSigned={() => { setSignReq(null); setReloadKey((k) => k + 1); }}
@@ -1424,92 +1429,6 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
         </div>
       </div>
     </div>
-  );
-}
-
-/* ── E-signature ceremony — approval-gated task completion (21 CFR 11 §11.50).
-   Opened when the server answers 428 ESIGN_REQUIRED on a completion. It is the
-   product's one signing dialog, the shared EsignModal: meaning, reason, the
-   account password, and the authenticator code when one is enrolled. The
-   server re-verifies them in server/services/tasking/task-signoff.ts through
-   server/services/part11/reverify-signer.ts, the ceremony every other
-   signature uses, and only then writes the transition with the manifestation
-   (printed name, time, meaning, method) into the task's approval history and
-   the governed audit ledger. The credentials are never logged, audited, or
-   echoed back. Until 2026-09-23 this was a bespoke dialog asking for a
-   separate signing PIN (VSR-001 §13.3 item 3). ── */
-
-/** The task sign-off vocabulary (TASK_SIGNATURE_MEANINGS), as the shared dialog names it. */
-const TASK_MEANING: Partial<Record<EsigMeaning, string>> = {
-  approval: 'APPROVED',
-  review: 'REVIEWED',
-  responsibility: 'RESPONSIBILITY',
-  authorship: 'AUTHORSHIP',
-};
-const TASK_MEANINGS: ReadonlyArray<EsigMeaning> = ['approval', 'review', 'responsibility', 'authorship'];
-
-interface ESignTaskModalProps {
-  req: { t: TaskItem; status: string; progress: number };
-  taskTitle: string;
-  /** Who the dialog shows as signing (the board's signed-in user). */
-  signer?: EsignSigner;
-  onClose: () => void;
-  onSigned: () => void;
-}
-
-function ESignTaskModal({ req, taskTitle, signer, onClose, onSigned }: ESignTaskModalProps) {
-  // Set once the server has confirmed the signature — or could not say whether
-  // it landed (OUTCOME_UNKNOWN) — so closing the dialog reloads the board to
-  // the state that holds rather than reading as a cancel.
-  const reloadOnClose = useRef(false);
-
-  // Re-run the same transition, now carrying the signature. The server
-  // verifies it and, only if it holds, writes the transition + the §11.50
-  // manifestation atomically. A refusal (ESIGN_*) is thrown by apiRequest with
-  // the server's sentence, which the dialog shows; nothing is written.
-  const onSign = async (input: { meaning: EsigMeaning; reason: string; password: string; totp?: string }): Promise<EsigSignedManifest> => {
-    const res = await apiRequest('PATCH', '/api/tasks/tasks/' + encodeURIComponent(req.t.taskId), {
-      status: req.status,
-      progress: req.progress,
-      reason: input.reason,
-      signature: {
-        password: input.password,
-        ...(input.totp ? { mfaToken: input.totp } : {}),
-        meaning: TASK_MEANING[input.meaning] ?? input.meaning,
-      },
-    }).catch((e: unknown) => {
-      // The dialog shows the server's sentence; the board must not keep
-      // showing a state the lost COMMIT may have changed.
-      if (e instanceof ApiRequestError && e.code === 'OUTCOME_UNKNOWN') reloadOnClose.current = true;
-      throw e;
-    });
-    // apiRequest RETURNS a 401 rather than throwing it. Usually that is the
-    // session — but the sign-off answers 401 ESIGN_IDENTITY_REQUIRED itself when
-    // the session names no verified signer (task-signoff.ts), a different fact
-    // with its own sentence. Branch on the code, never on the text.
-    if (!res.ok) {
-      const body = (await res.json().catch(() => null)) as { code?: unknown } | null;
-      const own = typeof body?.code === 'string' && body.code.startsWith('ESIGN_') ? serverMessage(body) : null;
-      throw new Error(own
-        ? `${own} The task was not completed.`
-        : 'Your session is not signed in any more. Sign in again; the task was not completed.');
-    }
-    reloadOnClose.current = true;
-    return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString() };
-  };
-
-  return (
-    <EsignModal
-      open
-      action="Complete approval-gated task"
-      target={taskTitle}
-      targetMeta="Completing it applies your electronic signature, recorded with the task and in the audit ledger."
-      defaultMeaning="approval"
-      meanings={TASK_MEANINGS}
-      signer={signer}
-      onClose={() => (reloadOnClose.current ? onSigned() : onClose())}
-      onSign={onSign}
-    />
   );
 }
 

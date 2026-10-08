@@ -1,0 +1,15 @@
+# green: the same test with the whole rail-earlier-request.patch substituted at load time (panel, new reviewTaskState.ts, test, TaskSignOffDialog comment); nothing in the tree was written.
+# command: npx vitest run --config <scratch>/vitest.proposed.config.ts client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > does not offer Complete while the assignee’s review is pending, says why, and offers the Review board 337ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > offers Complete once the verdict is recorded, and names it 17ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > a completed review task whose review is still pending says no verdict is recorded 19ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after a refused read, a review task is not offered for completion, and a task that is not a review task is 17ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after an answer with no rows, a review task is not offered for completion, and a task that is not a review task is 15ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after rows of another document, a review task is not offered for completion, and a task that is not a review task is 15ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > Refresh reads the review requests again with the tasks 72ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > the first task, closed by the change request, belongs to the earlier request; it is not called closed without a verdict 17ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > after the approval, the first task does not take the new verdict as its own 21ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > a task with no recorded creation time is judged against the current request, as before 19ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > an approval-gated review task says the verdict does not complete it: a signature does 11ms
+ Test Files  1 passed (1)
+      Tests  11 passed (11)

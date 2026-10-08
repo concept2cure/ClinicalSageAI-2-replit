@@ -94,7 +94,7 @@ describe("a report's tables and sources", () => {
       return el;
     });
     fireEvent.change(composer, { target: { value: 'Run the executive readiness digest report' } });
-    fireEvent.click(screen.getByLabelText('Send'));
+    fireEvent.click(screen.getByRole('button', { name: 'Find' }));
     const table = await screen.findByRole('table');
     expect(within(table).getAllByRole('columnheader').map((th) => th.textContent)).toEqual(['Provider', 'Status', 'Note']);
     expect(within(table).getAllByRole('cell').map((td) => td.textContent)).toEqual(['lifecycle', 'ready', '--']);

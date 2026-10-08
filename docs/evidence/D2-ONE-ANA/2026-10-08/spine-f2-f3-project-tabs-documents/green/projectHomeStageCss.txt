@@ -1,0 +1,12 @@
+# Final state. 2026-10-08T07:58:58Z
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > the block is found 3ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > defines no class another v2 stylesheet already defines 41ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  07:58:59
+   Duration  696ms (transform 142ms, setup 145ms, import 33ms, tests 49ms, environment 0ms)
+

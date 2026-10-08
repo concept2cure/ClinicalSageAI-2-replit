@@ -1,0 +1,892 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond stage offers no locked tool, and says when it has none 168ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > never offers the source tracer, which this release does not carry 78ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > a CTD module chip opens the program's documents, not the locked dossier map 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > marks no stage done on a real project; only the open stage is marked 216ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > opening a later stage does not complete the ones before it 146ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > with no project selected, shows no lifecycle and no placeholder project name 17ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > with a project selected, names it in the crumb and the heading 116ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > DataRoom refresh applies keep_data eligibility to both local and handed-off pins 2976ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > DataRoom refresh applies remove_data eligibility to both local and handed-off pins 2338ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > superseded data remains visible as history and cannot be pinned 130ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > selected Vault upload exposes the preview decision control 122ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > retained Vault data has no download promise for unavailable original bytes 161ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > retained search-only Vault selection preserves its unavailable original and lifecycle state 294ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers only the shared chat candidates from its project-source picker 414ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > lists the project's real sources 191ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > says a document is readable only when its extraction succeeded 198ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > reports how many sources are actually usable 130ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > renders an honest empty state for a project with no sources 117ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > distinguishes a failed read from an empty data room 138ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > filters the list without refetching 181ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers a way to add sources 102ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > cannot pin a source whose text was never read 181ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > hands the pinned set to AnA 158ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > offers no pin action until something is pinned 102ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > reports the sections and documents a source is cited in 124ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > says plainly when nothing was written from a source 185ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > flags the sections written against content the source no longer has 192ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows nothing rather than a zero when the server sends no usage field 213ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > names the affected sections when a source has changed under them 196ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows no change banner when nothing is stale 157ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > counts a re-uploaded file once 111ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > a full window reads as a floor 141ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > lists the project’s submission from the project-scoped read 264ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > an empty project says so, which is not the same as a failure 111ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > a failed read is a failure with a retry, and the retry reads again 342ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > keeps "Open Submission Center", which opens on this project 155ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > shows the server’s verdict, its blockers and its counts, from the readiness endpoint 148ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a cleared verdict is the server’s, and says so in words 97ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a response with no gate is unanswered, never cleared 115ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > no submission and no sequence are said in plain words 166ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > an IND project whose only submission is an MAA is not told it has no submission 69ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > a CER project (no application type is CER) names its submissions instead of denying them 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > a verdict for a submission matched by name is named by the list, not denied 69ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > states each gate the server cleared without assessing, in the server’s words 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > with no gate breakdown, says the external validator did not run 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > a cleared verdict whose validator ran says nothing it did not assess 59ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > lists the caller’s conversation files and adds one to the project through the adopt route 201ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > a refused adopt says what the server said, and changes nothing 45ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > a failed read says so — it is not an empty list 8ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > with nothing to offer, renders nothing 6ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > is mounted in ProjectHome’s Data Room for the open project 1188ms
+ ✓ tests/ui/pj-title-authority.test.ts > .pj-title — the 2026-07-28 serif decision > is declared by at least one rule 673ms
+ ✓ tests/ui/pj-title-authority.test.ts > .pj-title — the 2026-07-28 serif decision > has exactly one rule declaring font-family, and it is serif 533ms
+ ✓ tests/ui/pj-title-authority.test.ts > .pj-title — the 2026-07-28 serif decision > no sheet other than the owner declares a BARE .pj-title rule 449ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DeepResearch — AnA switches tabs, and only tabs > registers under "deep-research"; open-tab drives the real tab state both ways 110ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DeepResearch — AnA switches tabs, and only tabs > refuses to switch tabs under an open credential drawer 47ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > EctdCoauthor — AnA opens documents without ever discarding typing > open-document resolves title/module honestly and drives the same click a person makes 318ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > EctdCoauthor — AnA opens documents without ever discarding typing > REFUSES a switch while the open document holds unsaved edits 159ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DocumentAuthoring — authoring.find opens the real find bar > a directive addressed to "authoring" lands on this surface and opens Ctrl-F pre-seeded 400ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > ArtifactsCenter — Open carries the artifact to the editor > a docx Open stashes authoring.open-document with the artifact name, navigates, and the editor registration receives it 19ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > registers under "quality"; filters switch to their tab and narrow the real panes 113ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > open-change resolves honestly, switches tab, and clears a filter that would hide the row 52ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > open-change is HELD through the register load and applies when it lands 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders sponsor, product, indication and the IND number from GET /api/c2c/projects/:id 451ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > takes product from the row, not from the navigation handoff 234ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > labels the number by program type 161ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not assigned" when the agency has not numbered the program — never a placeholder 153ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not recorded" for sponsor, product or indication the row lacks 141ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > names what it does and speaks in no voice but the page's 368ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > a question typed here starts a new conversation in the project, carrying the words 808ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > Enter with an empty box goes nowhere 144ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no module outside v2 renders a rail 76ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no route mounts a second application 1ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface navigates out of the shell to reach a kit 2ms
+ ✓ tests/ui/one-shell.test.ts > one shell > the v2 shell root is the only one that lays out a rail column 281ms
+ ✓ tests/ui/one-shell.test.ts > one shell > every device surface the kit can render is one the shell can route to 3ms
+ ✓ tests/ui/one-shell.test.ts > one shell > only the shell and its named-thread surfaces start a conversation 423ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface takes the AnA rail column and still calls the shell onAsk 338ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface bypasses the ownsConversation union with a cast 3ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx > Project home — My work > says in one line that the work is not filtered to this project, and no longer claims readiness is unwired 439ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx > Project home — My work > "Open My work" opens the task board on the person's own tasks, as the nav does 771ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > the tabs are exactly Evidence, Author, Review, Submit and Respond, in that order 143ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > no tab renders "Not in this release" 190ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > AnA's set-stage {stage:'plan'} opens Submit 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > AnA's set-stage {stage:'lifecycle'} opens Submit 47ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > Submit names what Plan and Lifecycle promised as coming later, with nothing to click 59ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > the Schedule panel is gone: no schedule read and no Schedule heading on any tab 433ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > a message typed in the start box survives switching tabs 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > the project's Conversations are listed above the tabs, on every tab 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > lists the program's threads from the program-scoped read and resumes one on click 410ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > shows an honest empty when the program has no threads, and a failure as a failure 373ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > the composer leads the main column and the readiness ring sits in the aside 111ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > EctdCoauthor — open-tab views, never runs > opens the validation tab WITHOUT starting the run the human button would, and says so 335ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > EctdCoauthor — open-tab views, never runs > REFUSES to leave the document tab over unsaved edits (the editor unmounts) 124ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > CmcModule — open-tab drives the real pane swap > registers under "cmc"; open-tab mounts the named pane 91ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > SubmissionCenter — select/workspace/sequence via the "submissions" alias > drives the real portfolio: select a submission, open its sequences, select one — with honest misses 45ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > ProjectHome — set-stage drives the lifecycle rail > with a project open, the stage rail really moves 164ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > ProjectHome — set-stage drives the lifecycle rail > with no project open, the refusal is honest 6ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > a BLOCKED program does not wear a green pill
+An update to ProjectConversations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConversationFilesAdopt inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataRoom inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataRoom inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRecords inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an AT_RISK program does not wear a green pill
+An update to ProjectConversations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConversationFilesAdopt inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataRoom inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataRoom inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRecords inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > a BLOCKED program does not wear a green pill 220ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an UNKNOWN status is neutral — never assumed healthy
+An update to ProjectConversations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConversationFilesAdopt inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataRoom inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataRoom inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRecords inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an AT_RISK program does not wear a green pill 129ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an ACTIVE program still reads green — the good state stays reachable
+An update to ProjectConversations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConversationFilesAdopt inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataRoom inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataRoom inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRecords inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an UNKNOWN status is neutral — never assumed healthy 104ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an ACTIVE program still reads green — the good state stays reachable 133ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the priority chip reflects its value, not a fixed warn > a LOW priority is not rendered as a warning 220ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the priority chip reflects its value, not a fixed warn > a CRITICAL priority still warns — the alert stays reachable 177ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > the entry graph resolves — the walker is not silently finding nothing 2ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > only the four authorised stylesheets declare tokens in the app graph 1ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > no orphaned token file has been wired back into the graph 0ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > canonical tokens are inlined exactly once 0ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > no two authorities disagree about the same token 79ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > declares each token at most once per file — no self-shadowing 76ms
+ ✓ tests/ui/token-authority.test.ts > the deleted stylesheets stay deleted > zen.css is gone — 799 lines with zero consumers 0ms
+ ✓ tests/ui/token-authority.test.ts > the deleted stylesheets stay deleted > no source file references a --zen-* token or a .zen-* class 677ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > shows class, regulatory path, product code, regulation, panel, predicate and flags from the row 567ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > states absence for a device field the row lacks — never a placeholder 221ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > publishes the product type onto the open shell project so the shell can follow it 181ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — drug program is unchanged > renders the drug facts and no device block 132ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > baseline file > names only hops from the original six, each once, each with its slice and a reason 3ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > baseline file > every hop in the test has a fixture pair 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > review-tab-to-document: red on the 2026-10-08 dead end 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > review-tab-to-document: green on the shape its slice builds 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > outline-node-to-started-section: red on the 2026-10-08 dead end 0ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > outline-node-to-started-section: green on the shape its slice builds 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > placed-document-to-sequence: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > placed-document-to-sequence: green on the shape its slice builds 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > dispatched-sequence-to-transmit: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > dispatched-sequence-to-transmit: green on the shape its slice builds 0ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > respond-to-response-sequence: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > respond-to-response-sequence: green on the shape its slice builds 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > author-document-row-to-document: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > author-document-row-to-document: green on the shape its slice builds 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > review-tab-to-document: Project page, Review tab → the document under review, open in the editor 129ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > outline-node-to-started-section: Editor outline, a required section not started in this document → that section, created and open 18ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > placed-document-to-sequence: Place into filing, "Open in Submission Center" (and the market row, once F9 builds it) → the Submission Center, on that sequence 0ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > dispatched-sequence-to-transmit: Submission Center, a dispatched sequence → POST /api/submissions/sequences/:seqId/transmit 318ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > respond-to-response-sequence: Project page, Respond tab → the Submission Center, starting a response sequence 81ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > author-document-row-to-document: Project page, Author tab, a document row → that document, open in the editor 110ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > lists the project's vault from the project-scoped read, on the page 280ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > a file can be opened here; nothing asks for a section or offers to close a rail 410ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > a failed read is a failure with a retry, not an empty vault 123ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > ProjectFilesPanel beside the editor is unchanged > keeps its rail header and asks for a section before citing 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > draws the governed readiness, and ignores a stale progress_percent 383ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with no approved sections reads 0%, the same as its card 166ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > readiness that could not be read shows no figure, and AnA is told none 144ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > registers on mount, and vault.search drives the SAME search state the surface renders 141ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > vault.search on an empty vault is refused, not reported as a search nobody can see 26ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > with no program open, both vault operations say so rather than "no documents" or "no such folder" 12ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > vault.open-folder refuses an unknown folder honestly 29ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > the navigate→mount stash performs when the Vault mounts (AnA acts before the screen exists) 56ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > a data-dependent action stashed pre-mount is HELD through the load and applies when the read lands 66ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — AnA opens a real program > projects.open-program resolves the portfolio, publishes the shell project, and enters project home 19ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — AnA opens a real program > opens a program named by its id, as the server resolves it 21ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — AnA opens a real program > an unknown or ambiguous program is an honest refusal, never a guess 23ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — AnA opens a real program > a chip-shaped payload validates through the registry before it can drive anything 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — the program the server found > opens the program the server found, even one past this page 27ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — the program the server found > an open offered as a chip (Live Drive off) opens the program the server found 218ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — the program the server found > the server's program wins over a name the page reads differently 13ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > labels another store's card with its store and offers no move; the board's own card keeps its controls 291ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > counts work blocked in another store in the Blocked column 71ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > opening it says where it lives and opens that screen on its project, with no board edit control 144ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > opens a filing in the Submission Center 110ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > names a store it could not read, and says nothing when every store was read 72ms
+stderr | client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > Review — AnA operates the real board > open-queue jumps to the next document still awaiting a decision
+An update to Review inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > Review — AnA operates the real board > registers under "review", and select-document drives the SAME selection the row click drives 324ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > Review — AnA operates the real board > open-queue jumps to the next document still awaiting a decision 35ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > Review — AnA operates the real board > an unknown document is an honest refusal, never a guess 30ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > TaskBoard — the aliased surface obeys nav-target-addressed directives > registers under "tasks"; a tasking.* directive (nav-target id) operates it through the alias 36ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > TaskBoard — the aliased surface obeys nav-target-addressed directives > tasking.filter resolves programmes against the real options with honest misses 38ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > TaskBoard — the aliased surface obeys nav-target-addressed directives > tasking.open-task opens the detail, and a second open is refused while it holds the canvas 39ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > GlobalRiBrowser — held through the catalog load, applied when it lands > registers under "global-ri"; an intelligence.* directive held during loading applies on ready 38ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > GlobalRiBrowser — held through the catalog load, applied when it lands > close-capability refuses honestly when none is open; open-capability resolves by label 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx > the ceremony channel (unit) > counts registrations, unregisters idempotently, and resets 2ms
+stderr | client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx > CmcModule — a driven tab switch refuses over a mounted governed form > open the batch form → open-tab refused; cancel it → the same directive applies
+An update to CmCorrNotice inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RegisterCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RegisterCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RegisterCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RegisterCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RegisterCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CmSpecs inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx > AccessRequests — the queue registers only for its OWN surface > the org-scoped mount claims the bus
+An update to AccessRequestQueue inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx > CmcModule — a driven tab switch refuses over a mounted governed form > open the batch form → open-tab refused; cancel it → the same directive applies 492ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx > AccessRequests — the queue registers only for its OWN surface > the org-scoped mount claims the bus 14ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx > AccessRequests — the queue registers only for its OWN surface > the SAME queue mounted inside master-licensing claims NOTHING 13ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx > ResearchAdmin — a successful switch does not imply data arrived > opening an unconnected section reports that it is not connected 16ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx > advertisedScreenActions — the new actions are discoverable at runtime > every wave-6 surface advertises its actions, so AnA needs no list_screen_actions round-trip 3ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx > ProjectHome — records in this project > lists the open project’s records, read from that project 365ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx > ProjectHome — records in this project > with no project open, there is no records panel and no records read 5ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > no surface mints its own audit identifier > audit ids come from the server or not at all 349ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > AnaDrafter does not claim a regulatory transmission > reads the letter through the correspondence hook, and has no network call of its own 2ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > AnaDrafter does not claim a regulatory transmission > no control reports the response was sent to an agency 2ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > AnaDrafter does not claim a regulatory transmission > never sets a draft to a transmitted state 2ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > AnaDrafter does not claim a regulatory transmission > states that the draft is not persisted 1ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > DocJourney does not claim to autosave > the page is not editable — it has no save path 1ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > DocJourney does not claim to autosave > the toolbar does not display an autosave confirmation 1ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > DocJourney does not claim to autosave > says what it actually is 0ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > ProtocolDev does not present unpersisted actions as filed > its governed acts reach the server — the no-op dialog and its disclosure are gone together 14ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > ProtocolDev does not present unpersisted actions as filed > the write path fails closed: reason floor, no success without the server 1ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > ProtocolDev does not present unpersisted actions as filed > builds no signature ceremony of its own — its two signed acts use the shared EsignModal, verified by the server 13ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > ProtocolDev does not present unpersisted actions as filed > does not claim the document body autosaves 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave3.test.tsx > Risk — AnA operates the real risk file > registers under "risk"; select-hazard opens the named hazard; set-matrix-view switches bands 128ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave3.test.tsx > Risk — AnA operates the real risk file > a hazard name that is not in the file is refused WITH the hazards listed, so AnA can retry with a real one 45ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave3.test.tsx > Risk — AnA operates the real risk file > focus-cell opens the hazard sitting at a band pair, and an empty cell is an honest miss 43ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave3.test.tsx > TemplateLibrary — AnA operates the real library > registers under "template-library"; select-template + open-tab drive the real selection 99ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave3.test.tsx > ArtifactsCenter — AnA focuses artifacts by name > registers under "artifacts-center"; focus drives the SAME highlight the follow-the-work hand-off drives 25ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > does not offer project settings anywhere on the screen 220ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > leaves only the honest way out of the project workspace 137ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > renders the paperclip as a real button, not a span 64ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > opens a file picker when clicked 23ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > hands a chosen file to the upload transport 22ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > accepts more than one file, because regulatory sources come in sets 16ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > renders the paperclip as a real button, not a span 29ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > opens a file picker when clicked 25ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > hands a chosen file to the upload transport 22ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > accepts more than one file, because regulatory sources come in sets 20ms
+ ✓ tests/ui/ana-rail-phone-drawer.test.ts > no AnA rail at any width > the shell mounts no AnA rail and no scrim at any width 2ms
+ ✓ tests/ui/ana-rail-phone-drawer.test.ts > no AnA rail at any width > Shell.tsx defines no AnaRail, and no file under client/src imports one 97ms
+ ✓ tests/ui/ana-rail-phone-drawer.test.ts > no AnA rail at any width > the shell grid is nav | page: no column, seam, scrim or open state for a rail 2ms
+ ✓ tests/ui/ana-rail-phone-drawer.test.ts > the conversation at phone width (760px and narrower) > its column and its side dock stack, and the dock spans the screen 1ms
+ ✓ tests/ui/ana-rail-phone-drawer.test.ts > the conversation at phone width (760px and narrower) > the thread scrolls above a composer that never shrinks out of view 1ms
+ ✓ tests/ui/ana-rail-phone-drawer.test.ts > the conversation at phone width (760px and narrower) > the thread’s side gutters are narrowed, and nothing in it is wider than the screen 1ms
+stderr | client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > TopBar segment label > reads the preference when no program is open
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > TopBar segment label > reads the IVD segment with a 510(k) IVD program open, whatever the preference says
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > TopBar segment label > reads the device segment for a device program
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > TopBar segment label > follows the workstream before the product type is known, then the product type once it is published
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > segmentForShellProject (pure) > maps product type first, workstream second, nothing otherwise 4ms
+ ✓ client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > TopBar segment label > reads the preference when no program is open 60ms
+ ✓ client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > TopBar segment label > reads the IVD segment with a 510(k) IVD program open, whatever the preference says 14ms
+ ✓ client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > TopBar segment label > reads the device segment for a device program 12ms
+ ✓ client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > TopBar segment label > follows the workstream before the product type is known, then the product type once it is published 13ms
+ ✓ tests/ui-readiness/ui-surface-registry.test.ts > ui-surface-registry — structural validity > has a non-trivial number of surfaces 1ms
+ ✓ tests/ui-readiness/ui-surface-registry.test.ts > ui-surface-registry — structural validity > every surface id is unique 1ms
+ ✓ tests/ui-readiness/ui-surface-registry.test.ts > ui-surface-registry — structural validity > every surface has a non-empty label and layoutMode 6ms
+ ✓ tests/ui-readiness/ui-surface-registry.test.ts > ui-surface-registry — structural validity > every navTier and readiness value is from the allowed set 13ms
+ ✓ tests/ui-readiness/ui-surface-registry.test.ts > ui-surface-registry — structural validity > every surface binds to at least one REST prefix shaped /api/... 5ms
+ ✓ tests/ui-readiness/ui-surface-registry.test.ts > ui-surface-registry — structural validity > every surface declares at least one compliance rail 4ms
+ ✓ tests/ui-readiness/ui-surface-registry.test.ts > ui-surface-registry — references resolve on disk > every referenced ui_kit directory exists 1ms
+ ✓ tests/ui-readiness/ui-surface-registry.test.ts > ui-surface-registry — references resolve on disk > every @shared typed contract referenced by a surface exists 1ms
+ ✓ tests/ui-readiness/ui-surface-registry.test.ts > ui-surface-registry — references resolve on disk > every @shared contract referenced by a cross-cutting concern exists 1ms
+ ✓ tests/ui-readiness/ui-surface-registry.test.ts > ui-surface-registry — selectors > getSurface resolves a known id and rejects an unknown one 0ms
+ ✓ tests/ui-readiness/ui-surface-registry.test.ts > ui-surface-registry — selectors > surfacesByNavTier partitions the registry exactly 0ms
+ ✓ tests/ui-readiness/ui-surface-registry.test.ts > ui-surface-registry — selectors > readinessSummary counts sum to the full registry 0ms
+ ✓ tests/ui-readiness/ui-surface-registry.test.ts > ui-surface-registry — selectors > contractReadySurfaces returns only surfaces with a contract or catalog 0ms
+ ✓ tests/ui-readiness/ui-surface-registry.test.ts > ui-surface-registry — selectors > the two precedent surfaces are reported contract-ready 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > registry totality > every action operates a screen the navigation registry knows 4ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > registry totality > every action id is namespaced to its surface and unique 5ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > registry totality > every enum param has non-empty values and required params have descriptions 4ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > no registered action names governed work 9ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > REFUSES a governed id — the check shown failing on what it exists to catch 1ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > ungoverned view verbs pass the pattern (no false positives on the registry style) 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > deep-research actions carry no credit-spend pre-arm params 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > unknown action → typed refusal listing the valid ids 1ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > missing required param → refusal naming the param 1ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > out-of-enum param → refusal naming the legal values 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > a sound request → the registry directive, params stringified and filtered 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > discovery filters by surface 1ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > CALLABLE_APPS > every app is a navigation target AnA can resolve 4ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > CALLABLE_APPS > includes the module workstreams and the tool-like globals, not the shell destinations 2ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > CALLABLE_APPS > labels are unique, so a mention is never ambiguous 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > searchCallableApps > ranks a prefix match first and caps the list 1ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > searchCallableApps > an empty query lists the vocabulary 1ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > finds a mention by its full label, including spaces 1ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > prefers the longer label when one label prefixes another 1ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > ignores unknown labels and e-mail addresses 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > is case-insensitive and reports each app once 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > stripAppMentions removes recognised mention tokens and leaves unknown @text alone 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > answers to the navigation id and the short aliases the server has always honoured 1ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > a longer handle wins over a shorter one it starts with 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > every alias and id is unique across the vocabulary 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a step naming an unknown screen fails 2ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a step naming an unknown action fails 1ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a step with illegal pinned params fails 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a silent step and a double-move step fail 1ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > an empty script fails 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > every registered script validates clean 2ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > ships one training walkthrough and one sales demonstration 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > script ids are unique and findable 1ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > the picker listing carries honest metadata and no steps payload 1ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > every script fits the demo drive budgets (a plan the budget cuts off is a defect here, not at runtime) 9ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > the three scripts exist 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > every navigate stop lands on a launch surface (never "Not in this release") 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > every act operates a registered action whose screen is a launch surface 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > the orientation walks all seven launch apps and ends at the audit trail 1ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > submission day runs Vault → Authoring → Submission Center → Readiness → Part 11 1ms
+ ✓ tests/ui/surface-registry-coverage.test.ts > SURFACE_VIEWS ↔ ui-surface-registry coverage > parses a plausible number of ids out of surfaceViews.ts 3ms
+ ✓ tests/ui/surface-registry-coverage.test.ts > SURFACE_VIEWS ↔ ui-surface-registry coverage > every SURFACE_VIEWS id is registered or explicitly allowlisted 1ms
+ ✓ tests/ui/surface-registry-coverage.test.ts > SURFACE_VIEWS ↔ ui-surface-registry coverage > every allowlisted id is genuinely alias-only, not just unregistered 1ms
+ ✓ tests/ui/surface-registry-coverage.test.ts > SURFACE_VIEWS ↔ ui-surface-registry coverage > no registry id is shadowed by a deep-link alias 5ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > navigation registry — shape > has unique target ids 2ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > navigation registry — shape > every target is well-formed (id, label, description, scope, group) 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > navigation registry — shape > enum params declare a non-empty enum list 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > resolves a global target to a directive 1ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > rejects an unknown target and lists valid ones 1ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > accepts a valid enum param and rejects an invalid one 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > omits optional params when not supplied 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > findNavigationTarget round-trips 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > parseNavigationSignals > extracts and resolves a valid ana-navigate block 1ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > parseNavigationSignals > records an error for an unknown target without emitting a directive 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > parseNavigationSignals > records an error for malformed JSON 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > parseNavigationSignals > returns empty for text with no blocks 0ms
+ ✓ tests/ui/tailwind-source-scope.test.ts > tailwind source scope > automatic source detection is off 2ms
+ ✓ tests/ui/tailwind-source-scope.test.ts > tailwind source scope > every declared source is inside client/ 2ms
+ ✓ tests/ui/tailwind-source-scope.test.ts > tailwind source scope > the theme is loaded, so the palette is the one the config declares 1ms
+ ✓ tests/ui/shell-kit-lazy.test.ts > kit shells stay lazy > DeviceSurfaces.tsx loads MdxSurfaceHost dynamically — sixteen device-* surfaces, reached from surfaceViews at V2App module scope 2ms
+ ✓ tests/ui/shell-kit-lazy.test.ts > kit shells stay lazy > PdevSurfaces.tsx loads PdevRoute dynamically — eight pdev-* surfaces, reached from surfaceViews at V2App module scope 1ms
+ ✓ tests/ui/shell-kit-lazy.test.ts > kit shells stay lazy > a Suspense boundary exists wherever a kit is mounted lazily 1ms
+
+ Test Files  40 passed (40)
+      Tests  291 passed (291)
+   Start at  07:49:26
+   Duration  69.15s (transform 4.72s, setup 2.30s, import 12.83s, tests 33.48s, environment 13.84s)
+

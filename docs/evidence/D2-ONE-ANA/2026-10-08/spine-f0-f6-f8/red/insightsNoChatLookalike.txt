@@ -1,0 +1,6338 @@
+# F6 red: Insights.tsx reverted to HEAD b0b1694aa for this run (git show HEAD:<path> > <path>), then restored and checked with cmp.
+# $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > is a labelled field with a Find button, not a composer that sends 439ms
+   → Unable to find an accessible element with the role "textbox" and name "Find a report"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Audit & compliance reports":
+  <button
+    class="pj-card-h-go"
+    type="button"
+  />
+
+  Name "Build the BLA assembly pack":
+  <button
+    class="rc-preset-btn"
+  />
+
+  Name "Build the BLA assembly pack":
+  <button
+    class="rc-chip"
+  />
+
+  Name "How ready is BX204 to file?":
+  <button
+    class="rc-chip"
+  />
+
+  Name "Run the audit assurance pack":
+  <button
+    class="rc-chip"
+  />
+
+  Name "Compare readiness across all my programs":
+  <button
+    class="rc-chip"
+  />
+
+  Name "Standard":
+  <button
+    aria-pressed="true"
+    class="rc-tier-b on"
+  />
+
+  Name "Professional":
+  <button
+    aria-pressed="false"
+    class="rc-tier-b"
+  />
+
+  Name "Enterprise":
+  <button
+    aria-pressed="false"
+    class="rc-tier-b"
+  />
+
+  Name "Send":
+  <button
+    aria-label="Send"
+    class="rc-send"
+    disabled=""
+  />
+
+  Name "BLA assembly pack Tracks readiness and closes the evidence and financial-disclosure gaps before filing. 3 governed reports":
+  <button
+    class="rc-empty-preset"
+  />
+
+  Name "Nonclinical & CMC readiness Confirm Module 4 / SEND datasets and the audit trail are submission-grade. 2 governed reports":
+  <button
+    class="rc-empty-preset"
+  />
+
+  --------------------------------------------------
+  group:
+
+  Name "Subscription tier":
+  <div
+    aria-label="Subscription tier"
+    class="rc-tier"
+    role="group"
+  />
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Describe the report or dashboard you need":
+  <textarea
+    aria-label="Describe the report or dashboard you need"
+    placeholder="Describe the report or dashboard you need for BX204..."
+    rows="1"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "Governed reports, built to order.":
+  <h2
+    class="rc-empty-h"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="rc-empty-s"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="rc"
+    >
+      <div
+        class="rc-ana"
+        style=""
+      >
+        <div
+          class="rc-ana-head"
+        >
+          <div
+            class="rc-ana-id"
+          >
+            <span
+              class="rc-ana-mark"
+            >
+              *
+            </span>
+            <div>
+              <div
+                class="nm"
+              >
+                Report builder
+              </div>
+              <div
+                class="sub"
+              >
+                BX204 — NDA — Biotech
+              </div>
+            </div>
+          </div>
+          <button
+            class="pj-card-h-go"
+            type="button"
+          >
+            Audit & compliance reports
+          </button>
+        </div>
+        <div
+          class="rc-ana-scroll"
+        >
+          <div
+            class="rc-opener"
+          >
+            <div
+              class="rc-op-head"
+            >
+              <span
+                class="rc-ana-mark sm"
+              >
+                *
+              </span>
+              <span>
+                Where to start
+              </span>
+            </div>
+            <div
+              class="rc-op-headline"
+            >
+              Build any governed report or dashboard — describe what you need.
+            </div>
+            <div
+              class="rc-op-body"
+            >
+              BX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.
+            </div>
+            <button
+              class="rc-preset-btn"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Build the 
+              BLA assembly pack
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-right"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m9 18 6-6-6-6"
+                />
+              </svg>
+            </button>
+            <div
+              class="rc-op-why"
+            >
+              Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+            </div>
+            <div
+              class="rc-chips"
+            >
+              <button
+                class="rc-chip"
+              >
+                Build the BLA assembly pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                How ready is BX204 to file?
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Run the audit assurance pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Compare readiness across all my programs
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          class="rc-composer"
+        >
+          <div
+            aria-label="Subscription tier"
+            class="rc-tier"
+            role="group"
+          >
+            <span
+              class="rc-tier-lbl"
+            >
+              Plan
+            </span>
+            <button
+              aria-pressed="true"
+              class="rc-tier-b on"
+            >
+              Standard
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Professional
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Enterprise
+            </button>
+          </div>
+          <div
+            class="rc-input"
+          >
+            <textarea
+              aria-label="Describe the report or dashboard you need"
+              placeholder="Describe the report or dashboard you need for BX204..."
+              rows="1"
+            />
+            <button
+              aria-label="Send"
+              class="rc-send"
+              disabled=""
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-arrow-up"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m5 12 7-7 7 7"
+                />
+                <path
+                  d="M12 19V5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="rc-guardrail"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.
+          </div>
+        </div>
+      </div>
+      <div
+        class="rc-canvas"
+      >
+        <div
+          class="rc-empty"
+        >
+          <div
+            class="rc-empty-mark"
+          >
+            *
+          </div>
+          <h2
+            class="rc-empty-h"
+          >
+            Governed reports, built to order.
+          </h2>
+          <p
+            class="rc-empty-s"
+          >
+            Describe what you need on the left, or start from one of the standard packs for 
+            BX204
+            . Every value is computed from the governed record; nothing is estimated.
+          </p>
+          <div
+            class="rc-empty-presets"
+          >
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                BLA assembly pack
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                3
+                 governed reports
+              </div>
+            </button>
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                Nonclinical & CMC readiness
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Confirm Module 4 / SEND datasets and the audit trail are submission-grade.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                2
+                 governed reports
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > carries no AnA mark anywhere on the screen 36ms
+   → expected <span class="rc-ana-mark"></span>
+…(2) to have a length of +0 but got 3
+ × client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > answers with one result, never a conversation, and keeps the words in the field 39ms
+   → expected …(4) to have a length of +0 but got 4
+ × client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > still runs the governed report the router matched, with a plain status while it runs 5036ms
+   → Unable to find an element with the text: /Running the report/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="rc"
+    >
+      <div
+        class="rc-ana"
+        style=""
+      >
+        <div
+          class="rc-ana-head"
+        >
+          <div
+            class="rc-ana-id"
+          >
+            <span
+              class="rc-ana-mark"
+            >
+              *
+            </span>
+            <div>
+              <div
+                class="nm"
+              >
+                Report builder
+              </div>
+              <div
+                class="sub"
+              >
+                BX204 — NDA — Biotech
+              </div>
+            </div>
+          </div>
+          <button
+            class="pj-card-h-go"
+            type="button"
+          >
+            Audit & compliance reports
+          </button>
+        </div>
+        <div
+          class="rc-ana-scroll"
+        >
+          <div
+            class="rc-opener"
+          >
+            <div
+              class="rc-op-head"
+            >
+              <span
+                class="rc-ana-mark sm"
+              >
+                *
+              </span>
+              <span>
+                Where to start
+              </span>
+            </div>
+            <div
+              class="rc-op-headline"
+            >
+              Build any governed report or dashboard — describe what you need.
+            </div>
+            <div
+              class="rc-op-body"
+            >
+              BX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.
+            </div>
+            <button
+              class="rc-preset-btn"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Build the 
+              BLA assembly pack
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-right"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m9 18 6-6-6-6"
+                />
+              </svg>
+            </button>
+            <div
+              class="rc-op-why"
+            >
+              Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+            </div>
+            <div
+              class="rc-chips"
+            >
+              <button
+                class="rc-chip"
+              >
+                Build the BLA assembly pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                How ready is BX204 to file?
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Run the audit assurance pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Compare readiness across all my programs
+              </button>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-user"
+          >
+            <div
+              class="rc-bub"
+            >
+              Run the executive readiness digest report
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+          >
+            <span
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                class="rc-bub rc-ana-bub"
+              >
+                Running the Executive Readiness Digest for BX204 against the governed record. Every value is computed from the governed record; none is originated here.
+              </div>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+            role="status"
+          >
+            <span
+              aria-hidden="true"
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                aria-hidden="true"
+                class="rc-typing"
+              >
+                <span />
+                <span />
+                <span />
+              </div>
+              <span
+                class="sr-only"
+              >
+                Preparing your report…
+              </span>
+            </div>
+          </div>
+        </div>
+        <div
+          class="rc-composer"
+        >
+          <div
+            aria-label="Subscription tier"
+            class="rc-tier"
+            role="group"
+          >
+            <span
+              class="rc-tier-lbl"
+            >
+              Plan
+            </span>
+            <button
+              aria-pressed="true"
+              class="rc-tier-b on"
+            >
+              Standard
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Professional
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Enterprise
+            </button>
+          </div>
+          <div
+            class="rc-input"
+          >
+            <textarea
+              aria-label="Describe the report or dashboard you need"
+              placeholder="Describe the report or dashboard you need for BX204..."
+              rows="1"
+            />
+            <button
+              aria-label="Send"
+              class="rc-send"
+              disabled=""
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-arrow-up"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m5 12 7-7 7 7"
+                />
+                <path
+                  d="M12 19V5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="rc-guardrail"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.
+          </div>
+        </div>
+      </div>
+      <div
+        class="rc-canvas"
+      >
+        <div
+          class="rc-empty"
+        >
+          <div
+            class="rc-empty-mark"
+          >
+            *
+          </div>
+          <h2
+            class="rc-empty-h"
+          >
+            Governed reports, built to order.
+          </h2>
+          <p
+            class="rc-empty-s"
+          >
+            Describe what you need on the left, or start from one of the standard packs for 
+            BX204
+            . Every value is computed from the governed record; nothing is estimated.
+          </p>
+          <div
+            class="rc-empty-presets"
+          >
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                BLA assembly pack
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                3
+                 governed reports
+              </div>
+            </button>
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                Nonclinical & CMC readiness
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Confirm Module 4 / SEND datasets and the audit trail are submission-grade.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                2
+                 governed reports
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="rc"
+    >
+      <div
+        class="rc-ana"
+        style=""
+      >
+        <div
+          class="rc-ana-head"
+        >
+          <div
+            class="rc-ana-id"
+          >
+            <span
+              class="rc-ana-mark"
+            >
+              *
+            </span>
+            <div>
+              <div
+                class="nm"
+              >
+                Report builder
+              </div>
+              <div
+                class="sub"
+              >
+                BX204 — NDA — Biotech
+              </div>
+            </div>
+          </div>
+          <button
+            class="pj-card-h-go"
+            type="button"
+          >
+            Audit & compliance reports
+          </button>
+        </div>
+        <div
+          class="rc-ana-scroll"
+        >
+          <div
+            class="rc-opener"
+          >
+            <div
+              class="rc-op-head"
+            >
+              <span
+                class="rc-ana-mark sm"
+              >
+                *
+              </span>
+              <span>
+                Where to start
+              </span>
+            </div>
+            <div
+              class="rc-op-headline"
+            >
+              Build any governed report or dashboard — describe what you need.
+            </div>
+            <div
+              class="rc-op-body"
+            >
+              BX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.
+            </div>
+            <button
+              class="rc-preset-btn"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Build the 
+              BLA assembly pack
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-right"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m9 18 6-6-6-6"
+                />
+              </svg>
+            </button>
+            <div
+              class="rc-op-why"
+            >
+              Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+            </div>
+            <div
+              class="rc-chips"
+            >
+              <button
+                class="rc-chip"
+              >
+                Build the BLA assembly pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                How ready is BX204 to file?
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Run the audit assurance pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Compare readiness across all my programs
+              </button>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-user"
+          >
+            <div
+              class="rc-bub"
+            >
+              Run the executive readiness digest report
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+          >
+            <span
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                class="rc-bub rc-ana-bub"
+              >
+                Running the Executive Readiness Digest for BX204 against the governed record. Every value is computed from the governed record; none is originated here.
+              </div>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+            role="status"
+          >
+            <span
+              aria-hidden="true"
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                aria-hidden="true"
+                class="rc-typing"
+              >
+                <span />
+                <span />
+                <span />
+              </div>
+              <span
+                class="sr-only"
+              >
+                Preparing your report…
+              </span>
+            </div>
+          </div>
+        </div>
+        <div
+          class="rc-composer"
+        >
+          <div
+            aria-label="Subscription tier"
+            class="rc-tier"
+            role="group"
+          >
+            <span
+              class="rc-tier-lbl"
+            >
+              Plan
+            </span>
+            <button
+              aria-pressed="true"
+              class="rc-tier-b on"
+            >
+              Standard
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Professional
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Enterprise
+            </button>
+          </div>
+          <div
+            class="rc-input"
+          >
+            <textarea
+              aria-label="Describe the report or dashboard you need"
+              placeholder="Describe the report or dashboard you need for BX204..."
+              rows="1"
+            />
+            <button
+              aria-label="Send"
+              class="rc-send"
+              disabled=""
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-arrow-up"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m5 12 7-7 7 7"
+                />
+                <path
+                  d="M12 19V5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="rc-guardrail"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.
+          </div>
+        </div>
+      </div>
+      <div
+        class="rc-canvas"
+      >
+        <div
+          class="rc-empty"
+        >
+          <div
+            class="rc-empty-mark"
+          >
+            *
+          </div>
+          <h2
+            class="rc-empty-h"
+          >
+            Governed reports, built to order.
+          </h2>
+          <p
+            class="rc-empty-s"
+          >
+            Describe what you need on the left, or start from one of the standard packs for 
+            BX204
+            . Every value is computed from the governed record; nothing is estimated.
+          </p>
+          <div
+            class="rc-empty-presets"
+          >
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                BLA assembly pack
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                3
+                 governed reports
+              </div>
+            </button>
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                Nonclinical & CMC readiness
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Confirm Module 4 / SEND datasets and the audit trail are submission-grade.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                2
+                 governed reports
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > a run that cannot start never leaves "Running the …" beside the alert that says so 5035ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="rc"
+    >
+      <div
+        class="rc-ana"
+        style=""
+      >
+        <div
+          class="rc-ana-head"
+        >
+          <div
+            class="rc-ana-id"
+          >
+            <span
+              class="rc-ana-mark"
+            >
+              *
+            </span>
+            <div>
+              <div
+                class="nm"
+              >
+                Report builder
+              </div>
+              <div
+                class="sub"
+              >
+                BX204 — NDA — Biotech
+              </div>
+            </div>
+          </div>
+          <button
+            class="pj-card-h-go"
+            type="button"
+          >
+            Audit & compliance reports
+          </button>
+        </div>
+        <div
+          class="rc-ana-scroll"
+        >
+          <div
+            class="ro-dash-note"
+            data-testid="rc-view-only"
+            role="note"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-lock"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="11"
+                rx="2"
+                ry="2"
+                width="18"
+                x="3"
+                y="11"
+              />
+              <path
+                d="M7 11V7a5 5 0 0 1 10 0v4"
+              />
+            </svg>
+             View only. Running a governed report needs an editor role in this organization.
+          </div>
+          <div
+            class="rc-opener"
+          >
+            <div
+              class="rc-op-head"
+            >
+              <span
+                class="rc-ana-mark sm"
+              >
+                *
+              </span>
+              <span>
+                Where to start
+              </span>
+            </div>
+            <div
+              class="rc-op-headline"
+            >
+              Build any governed report or dashboard — describe what you need.
+            </div>
+            <div
+              class="rc-op-body"
+            >
+              BX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.
+            </div>
+            <button
+              class="rc-preset-btn"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Build the 
+              BLA assembly pack
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-right"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m9 18 6-6-6-6"
+                />
+              </svg>
+            </button>
+            <div
+              class="rc-op-why"
+            >
+              Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+            </div>
+            <div
+              class="rc-chips"
+            >
+              <button
+                class="rc-chip"
+              >
+                Build the BLA assembly pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                How ready is BX204 to file?
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Run the audit assurance pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Compare readiness across all my programs
+              </button>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-user"
+          >
+            <div
+              class="rc-bub"
+            >
+              Run the executive readiness digest report
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+          >
+            <span
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                class="rc-bub rc-ana-bub"
+              >
+                Running the Executive Readiness Digest for BX204 against the governed record. Every value is computed from the governed record; none is originated here.
+              </div>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+          >
+            <span
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                class="rc-bub rc-ana-bub"
+              >
+                "Executive Readiness Digest" wasn't run. Running a report creates a governed record, which needs an editor role in this organization.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="rc-composer"
+        >
+          <div
+            aria-label="Subscription tier"
+            class="rc-tier"
+            role="group"
+          >
+            <span
+              class="rc-tier-lbl"
+            >
+              Plan
+            </span>
+            <button
+              aria-pressed="true"
+              class="rc-tier-b on"
+            >
+              Standard
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Professional
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Enterprise
+            </button>
+          </div>
+          <div
+            class="rc-input"
+          >
+            <textarea
+              aria-label="Describe the report or dashboard you need"
+              placeholder="Describe the report or dashboard you need for BX204..."
+              rows="1"
+            />
+            <button
+              aria-label="Send"
+              class="rc-send"
+              disabled=""
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-arrow-up"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m5 12 7-7 7 7"
+                />
+                <path
+                  d="M12 19V5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="rc-guardrail"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.
+          </div>
+        </div>
+      </div>
+      <div
+        class="rc-canvas"
+      >
+        <div
+          class="rc-empty"
+        >
+          <div
+            class="rc-empty-mark"
+          >
+            *
+          </div>
+          <h2
+            class="rc-empty-h"
+          >
+            Governed reports, built to order.
+          </h2>
+          <p
+            class="rc-empty-s"
+          >
+            Describe what you need on the left, or start from one of the standard packs for 
+            BX204
+            . Every value is computed from the governed record; nothing is estimated.
+          </p>
+          <div
+            class="rc-empty-presets"
+          >
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                BLA assembly pack
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                3
+                 governed reports
+              </div>
+            </button>
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                Nonclinical & CMC readiness
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Confirm Module 4 / SEND datasets and the audit trail are submission-grade.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                2
+                 governed reports
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="rc"
+    >
+      <div
+        class="rc-ana"
+        style=""
+      >
+        <div
+          class="rc-ana-head"
+        >
+          <div
+            class="rc-ana-id"
+          >
+            <span
+              class="rc-ana-mark"
+            >
+              *
+            </span>
+            <div>
+              <div
+                class="nm"
+              >
+                Report builder
+              </div>
+              <div
+                class="sub"
+              >
+                BX204 — NDA — Biotech
+              </div>
+            </div>
+          </div>
+          <button
+            class="pj-card-h-go"
+            type="button"
+          >
+            Audit & compliance reports
+          </button>
+        </div>
+        <div
+          class="rc-ana-scroll"
+        >
+          <div
+            class="ro-dash-note"
+            data-testid="rc-view-only"
+            role="note"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-lock"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="11"
+                rx="2"
+                ry="2"
+                width="18"
+                x="3"
+                y="11"
+              />
+              <path
+                d="M7 11V7a5 5 0 0 1 10 0v4"
+              />
+            </svg>
+             View only. Running a governed report needs an editor role in this organization.
+          </div>
+          <div
+            class="rc-opener"
+          >
+            <div
+              class="rc-op-head"
+            >
+              <span
+                class="rc-ana-mark sm"
+              >
+                *
+              </span>
+              <span>
+                Where to start
+              </span>
+            </div>
+            <div
+              class="rc-op-headline"
+            >
+              Build any governed report or dashboard — describe what you need.
+            </div>
+            <div
+              class="rc-op-body"
+            >
+              BX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.
+            </div>
+            <button
+              class="rc-preset-btn"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Build the 
+              BLA assembly pack
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-right"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m9 18 6-6-6-6"
+                />
+              </svg>
+            </button>
+            <div
+              class="rc-op-why"
+            >
+              Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+            </div>
+            <div
+              class="rc-chips"
+            >
+              <button
+                class="rc-chip"
+              >
+                Build the BLA assembly pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                How ready is BX204 to file?
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Run the audit assurance pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Compare readiness across all my programs
+              </button>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-user"
+          >
+            <div
+              class="rc-bub"
+            >
+              Run the executive readiness digest report
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+          >
+            <span
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                class="rc-bub rc-ana-bub"
+              >
+                Running the Executive Readiness Digest for BX204 against the governed record. Every value is computed from the governed record; none is originated here.
+              </div>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+          >
+            <span
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                class="rc-bub rc-ana-bub"
+              >
+                "Executive Readiness Digest" wasn't run. Running a report creates a governed record, which needs an editor role in this organization.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="rc-composer"
+        >
+          <div
+            aria-label="Subscription tier"
+            class="rc-tier"
+            role="group"
+          >
+            <span
+              class="rc-tier-lbl"
+            >
+              Plan
+            </span>
+            <button
+              aria-pressed="true"
+              class="rc-tier-b on"
+            >
+              Standard
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Professional
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Enterprise
+            </button>
+          </div>
+          <div
+            class="rc-input"
+          >
+            <textarea
+              aria-label="Describe the report or dashboard you need"
+              placeholder="Describe the report or dashboard you need for BX204..."
+              rows="1"
+            />
+            <button
+              aria-label="Send"
+              class="rc-send"
+              disabled=""
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-arrow-up"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m5 12 7-7 7 7"
+                />
+                <path
+                  d="M12 19V5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="rc-guardrail"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.
+          </div>
+        </div>
+      </div>
+      <div
+        class="rc-canvas"
+      >
+        <div
+          class="rc-empty"
+        >
+          <div
+            class="rc-empty-mark"
+          >
+            *
+          </div>
+          <h2
+            class="rc-empty-h"
+          >
+            Governed reports, built to order.
+          </h2>
+          <p
+            class="rc-empty-s"
+          >
+            Describe what you need on the left, or start from one of the standard packs for 
+            BX204
+            . Every value is computed from the governed record; nothing is estimated.
+          </p>
+          <div
+            class="rc-empty-presets"
+          >
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                BLA assembly pack
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                3
+                 governed reports
+              </div>
+            </button>
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                Nonclinical & CMC readiness
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Confirm Module 4 / SEND datasets and the audit trail are submission-grade.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                2
+                 governed reports
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > a run that completes says so, in place of "Running the …" 30ms
+   → Unable to find an element by: [data-testid="rc-find-result"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="rc"
+    >
+      <div
+        class="rc-ana"
+        style=""
+      >
+        <div
+          class="rc-ana-head"
+        >
+          <div
+            class="rc-ana-id"
+          >
+            <span
+              class="rc-ana-mark"
+            >
+              *
+            </span>
+            <div>
+              <div
+                class="nm"
+              >
+                Report builder
+              </div>
+              <div
+                class="sub"
+              >
+                BX204 — NDA — Biotech
+              </div>
+            </div>
+          </div>
+          <button
+            class="pj-card-h-go"
+            type="button"
+          >
+            Audit & compliance reports
+          </button>
+        </div>
+        <div
+          class="rc-ana-scroll"
+        >
+          <div
+            class="rc-opener"
+          >
+            <div
+              class="rc-op-head"
+            >
+              <span
+                class="rc-ana-mark sm"
+              >
+                *
+              </span>
+              <span>
+                Where to start
+              </span>
+            </div>
+            <div
+              class="rc-op-headline"
+            >
+              Build any governed report or dashboard — describe what you need.
+            </div>
+            <div
+              class="rc-op-body"
+            >
+              BX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.
+            </div>
+            <button
+              class="rc-preset-btn"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Build the 
+              BLA assembly pack
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-right"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m9 18 6-6-6-6"
+                />
+              </svg>
+            </button>
+            <div
+              class="rc-op-why"
+            >
+              Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+            </div>
+            <div
+              class="rc-chips"
+            >
+              <button
+                class="rc-chip"
+              >
+                Build the BLA assembly pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                How ready is BX204 to file?
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Run the audit assurance pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Compare readiness across all my programs
+              </button>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-user"
+          >
+            <div
+              class="rc-bub"
+            >
+              Run the executive readiness digest report
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+          >
+            <span
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                class="rc-bub rc-ana-bub"
+              >
+                Running the Executive Readiness Digest for BX204 against the governed record. Every value is computed from the governed record; none is originated here.
+              </div>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+            role="status"
+          >
+            <span
+              aria-hidden="true"
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                aria-hidden="true"
+                class="rc-typing"
+              >
+                <span />
+                <span />
+                <span />
+              </div>
+              <span
+                class="sr-only"
+              >
+                Preparing your report…
+              </span>
+            </div>
+          </div>
+        </div>
+        <div
+          class="rc-composer"
+        >
+          <div
+            aria-label="Subscription tier"
+            class="rc-tier"
+            role="group"
+          >
+            <span
+              class="rc-tier-lbl"
+            >
+              Plan
+            </span>
+            <button
+              aria-pressed="true"
+              class="rc-tier-b on"
+            >
+              Standard
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Professional
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Enterprise
+            </button>
+          </div>
+          <div
+            class="rc-input"
+          >
+            <textarea
+              aria-label="Describe the report or dashboard you need"
+              placeholder="Describe the report or dashboard you need for BX204..."
+              rows="1"
+            />
+            <button
+              aria-label="Send"
+              class="rc-send"
+              disabled=""
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-arrow-up"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m5 12 7-7 7 7"
+                />
+                <path
+                  d="M12 19V5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="rc-guardrail"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.
+          </div>
+        </div>
+      </div>
+      <div
+        class="rc-canvas"
+      >
+        <div
+          class="rc-empty"
+        >
+          <div
+            class="rc-empty-mark"
+          >
+            *
+          </div>
+          <h2
+            class="rc-empty-h"
+          >
+            Governed reports, built to order.
+          </h2>
+          <p
+            class="rc-empty-s"
+          >
+            Describe what you need on the left, or start from one of the standard packs for 
+            BX204
+            . Every value is computed from the governed record; nothing is estimated.
+          </p>
+          <div
+            class="rc-empty-presets"
+          >
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                BLA assembly pack
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                3
+                 governed reports
+              </div>
+            </button>
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                Nonclinical & CMC readiness
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Confirm Module 4 / SEND datasets and the audit trail are submission-grade.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                2
+                 governed reports
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > keeps the result's live region mounted from the start, so the first result is announced 20ms
+   → Unable to find an element by: [data-testid="rc-find-result"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="rc"
+    >
+      <div
+        class="rc-ana"
+        style=""
+      >
+        <div
+          class="rc-ana-head"
+        >
+          <div
+            class="rc-ana-id"
+          >
+            <span
+              class="rc-ana-mark"
+            >
+              *
+            </span>
+            <div>
+              <div
+                class="nm"
+              >
+                Report builder
+              </div>
+              <div
+                class="sub"
+              >
+                BX204 — NDA — Biotech
+              </div>
+            </div>
+          </div>
+          <button
+            class="pj-card-h-go"
+            type="button"
+          >
+            Audit & compliance reports
+          </button>
+        </div>
+        <div
+          class="rc-ana-scroll"
+        >
+          <div
+            class="rc-opener"
+          >
+            <div
+              class="rc-op-head"
+            >
+              <span
+                class="rc-ana-mark sm"
+              >
+                *
+              </span>
+              <span>
+                Where to start
+              </span>
+            </div>
+            <div
+              class="rc-op-headline"
+            >
+              Build any governed report or dashboard — describe what you need.
+            </div>
+            <div
+              class="rc-op-body"
+            >
+              BX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.
+            </div>
+            <button
+              class="rc-preset-btn"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Build the 
+              BLA assembly pack
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-right"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m9 18 6-6-6-6"
+                />
+              </svg>
+            </button>
+            <div
+              class="rc-op-why"
+            >
+              Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+            </div>
+            <div
+              class="rc-chips"
+            >
+              <button
+                class="rc-chip"
+              >
+                Build the BLA assembly pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                How ready is BX204 to file?
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Run the audit assurance pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Compare readiness across all my programs
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          class="rc-composer"
+        >
+          <div
+            aria-label="Subscription tier"
+            class="rc-tier"
+            role="group"
+          >
+            <span
+              class="rc-tier-lbl"
+            >
+              Plan
+            </span>
+            <button
+              aria-pressed="true"
+              class="rc-tier-b on"
+            >
+              Standard
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Professional
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Enterprise
+            </button>
+          </div>
+          <div
+            class="rc-input"
+          >
+            <textarea
+              aria-label="Describe the report or dashboard you need"
+              placeholder="Describe the report or dashboard you need for BX204..."
+              rows="1"
+            />
+            <button
+              aria-label="Send"
+              class="rc-send"
+              disabled=""
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-arrow-up"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m5 12 7-7 7 7"
+                />
+                <path
+                  d="M12 19V5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="rc-guardrail"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.
+          </div>
+        </div>
+      </div>
+      <div
+        class="rc-canvas"
+      >
+        <div
+          class="rc-empty"
+        >
+          <div
+            class="rc-empty-mark"
+          >
+            *
+          </div>
+          <h2
+            class="rc-empty-h"
+          >
+            Governed reports, built to order.
+          </h2>
+          <p
+            class="rc-empty-s"
+          >
+            Describe what you need on the left, or start from one of the standard packs for 
+            BX204
+            . Every value is computed from the governed record; nothing is estimated.
+          </p>
+          <div
+            class="rc-empty-presets"
+          >
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                BLA assembly pack
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                3
+                 governed reports
+              </div>
+            </button>
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                Nonclinical & CMC readiness
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Confirm Module 4 / SEND datasets and the audit trail are submission-grade.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                2
+                 governed reports
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > is a labelled field with a Find button, not a composer that sends
+TestingLibraryElementError: Unable to find an accessible element with the role "textbox" and name "Find a report"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Audit & compliance reports":
+  <button
+    class="pj-card-h-go"
+    type="button"
+  />
+
+  Name "Build the BLA assembly pack":
+  <button
+    class="rc-preset-btn"
+  />
+
+  Name "Build the BLA assembly pack":
+  <button
+    class="rc-chip"
+  />
+
+  Name "How ready is BX204 to file?":
+  <button
+    class="rc-chip"
+  />
+
+  Name "Run the audit assurance pack":
+  <button
+    class="rc-chip"
+  />
+
+  Name "Compare readiness across all my programs":
+  <button
+    class="rc-chip"
+  />
+
+  Name "Standard":
+  <button
+    aria-pressed="true"
+    class="rc-tier-b on"
+  />
+
+  Name "Professional":
+  <button
+    aria-pressed="false"
+    class="rc-tier-b"
+  />
+
+  Name "Enterprise":
+  <button
+    aria-pressed="false"
+    class="rc-tier-b"
+  />
+
+  Name "Send":
+  <button
+    aria-label="Send"
+    class="rc-send"
+    disabled=""
+  />
+
+  Name "BLA assembly pack Tracks readiness and closes the evidence and financial-disclosure gaps before filing. 3 governed reports":
+  <button
+    class="rc-empty-preset"
+  />
+
+  Name "Nonclinical & CMC readiness Confirm Module 4 / SEND datasets and the audit trail are submission-grade. 2 governed reports":
+  <button
+    class="rc-empty-preset"
+  />
+
+  --------------------------------------------------
+  group:
+
+  Name "Subscription tier":
+  <div
+    aria-label="Subscription tier"
+    class="rc-tier"
+    role="group"
+  />
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Describe the report or dashboard you need":
+  <textarea
+    aria-label="Describe the report or dashboard you need"
+    placeholder="Describe the report or dashboard you need for BX204..."
+    rows="1"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "Governed reports, built to order.":
+  <h2
+    class="rc-empty-h"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="rc-empty-s"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="rc"
+    >
+      <div
+        class="rc-ana"
+        style=""
+      >
+        <div
+          class="rc-ana-head"
+        >
+          <div
+            class="rc-ana-id"
+          >
+            <span
+              class="rc-ana-mark"
+            >
+              *
+            </span>
+            <div>
+              <div
+                class="nm"
+              >
+                Report builder
+              </div>
+              <div
+                class="sub"
+              >
+                BX204 — NDA — Biotech
+              </div>
+            </div>
+          </div>
+          <button
+            class="pj-card-h-go"
+            type="button"
+          >
+            Audit & compliance reports
+          </button>
+        </div>
+        <div
+          class="rc-ana-scroll"
+        >
+          <div
+            class="rc-opener"
+          >
+            <div
+              class="rc-op-head"
+            >
+              <span
+                class="rc-ana-mark sm"
+              >
+                *
+              </span>
+              <span>
+                Where to start
+              </span>
+            </div>
+            <div
+              class="rc-op-headline"
+            >
+              Build any governed report or dashboard — describe what you need.
+            </div>
+            <div
+              class="rc-op-body"
+            >
+              BX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.
+            </div>
+            <button
+              class="rc-preset-btn"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Build the 
+              BLA assembly pack
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-right"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m9 18 6-6-6-6"
+                />
+              </svg>
+            </button>
+            <div
+              class="rc-op-why"
+            >
+              Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+            </div>
+            <div
+              class="rc-chips"
+            >
+              <button
+                class="rc-chip"
+              >
+                Build the BLA assembly pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                How ready is BX204 to file?
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Run the audit assurance pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Compare readiness across all my programs
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          class="rc-composer"
+        >
+          <div
+            aria-label="Subscription tier"
+            class="rc-tier"
+            role="group"
+          >
+            <span
+              class="rc-tier-lbl"
+            >
+              Plan
+            </span>
+            <button
+              aria-pressed="true"
+              class="rc-tier-b on"
+            >
+              Standard
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Professional
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Enterprise
+            </button>
+          </div>
+          <div
+            class="rc-input"
+          >
+            <textarea
+              aria-label="Describe the report or dashboard you need"
+              placeholder="Describe the report or dashboard you need for BX204..."
+              rows="1"
+            />
+            <button
+              aria-label="Send"
+              class="rc-send"
+              disabled=""
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-arrow-up"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m5 12 7-7 7 7"
+                />
+                <path
+                  d="M12 19V5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="rc-guardrail"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.
+          </div>
+        </div>
+      </div>
+      <div
+        class="rc-canvas"
+      >
+        <div
+          class="rc-empty"
+        >
+          <div
+            class="rc-empty-mark"
+          >
+            *
+          </div>
+          <h2
+            class="rc-empty-h"
+          >
+            Governed reports, built to order.
+          </h2>
+          <p
+            class="rc-empty-s"
+          >
+            Describe what you need on the left, or start from one of the standard packs for 
+            BX204
+            . Every value is computed from the governed record; nothing is estimated.
+          </p>
+          <div
+            class="rc-empty-presets"
+          >
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                BLA assembly pack
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                3
+                 governed reports
+              </div>
+            </button>
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                Nonclinical & CMC readiness
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Confirm Module 4 / SEND datasets and the audit trail are submission-grade.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                2
+                 governed reports
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx:115:19
+    113|   it('is a labelled field with a Find button, not a composer that send…
+    114|     const field = await renderCanvas();
+    115|     expect(screen.getByRole('textbox', { name: 'Find a report' })).toB…
+       |                   ^
+    116|     expect(screen.queryByLabelText('Send')).toBeNull();
+    117|     expect(screen.queryByRole('button', { name: /^send$/i })).toBeNull…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > carries no AnA mark anywhere on the screen
+AssertionError: expected <span class="rc-ana-mark"></span>
+…(2) to have a length of +0 but got 3
+
+- Expected
++ Received
+
+- 0
++ 3
+
+ ❯ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx:129:50
+    127|   it('carries no AnA mark anywhere on the screen', async () => {
+    128|     await renderCanvas();
+    129|     expect(document.querySelectorAll(ANA_MARKS)).toHaveLength(0);
+       |                                                  ^
+    130|     expect(bareAsterisks()).toEqual([]);
+    131|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > answers with one result, never a conversation, and keeps the words in the field
+AssertionError: expected …(4) to have a length of +0 but got 4
+
+- Expected
++ Received
+
+- 0
++ 4
+
+ ❯ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx:138:52
+    136|     find(field, 'something about the weather');
+    137|     await screen.findByText(/any of these can be run/);
+    138|     expect(document.querySelectorAll(CHAT_SHAPES)).toHaveLength(0);
+       |                                                    ^
+    139|     // A search keeps what was searched for; a chat composer clears it…
+    140|     expect((field as HTMLTextAreaElement).value).toBe('something about…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > still runs the governed report the router matched, with a plain status while it runs
+TestingLibraryElementError: Unable to find an element with the text: /Running the report/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="rc"
+    >
+      <div
+        class="rc-ana"
+        style=""
+      >
+        <div
+          class="rc-ana-head"
+        >
+          <div
+            class="rc-ana-id"
+          >
+            <span
+              class="rc-ana-mark"
+            >
+              *
+            </span>
+            <div>
+              <div
+                class="nm"
+              >
+                Report builder
+              </div>
+              <div
+                class="sub"
+              >
+                BX204 — NDA — Biotech
+              </div>
+            </div>
+          </div>
+          <button
+            class="pj-card-h-go"
+            type="button"
+          >
+            Audit & compliance reports
+          </button>
+        </div>
+        <div
+          class="rc-ana-scroll"
+        >
+          <div
+            class="rc-opener"
+          >
+            <div
+              class="rc-op-head"
+            >
+              <span
+                class="rc-ana-mark sm"
+              >
+                *
+              </span>
+              <span>
+                Where to start
+              </span>
+            </div>
+            <div
+              class="rc-op-headline"
+            >
+              Build any governed report or dashboard — describe what you need.
+            </div>
+            <div
+              class="rc-op-body"
+            >
+              BX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.
+            </div>
+            <button
+              class="rc-preset-btn"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Build the 
+              BLA assembly pack
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-right"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m9 18 6-6-6-6"
+                />
+              </svg>
+            </button>
+            <div
+              class="rc-op-why"
+            >
+              Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+            </div>
+            <div
+              class="rc-chips"
+            >
+              <button
+                class="rc-chip"
+              >
+                Build the BLA assembly pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                How ready is BX204 to file?
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Run the audit assurance pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Compare readiness across all my programs
+              </button>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-user"
+          >
+            <div
+              class="rc-bub"
+            >
+              Run the executive readiness digest report
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+          >
+            <span
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                class="rc-bub rc-ana-bub"
+              >
+                Running the Executive Readiness Digest for BX204 against the governed record. Every value is computed from the governed record; none is originated here.
+              </div>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+            role="status"
+          >
+            <span
+              aria-hidden="true"
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                aria-hidden="true"
+                class="rc-typing"
+              >
+                <span />
+                <span />
+                <span />
+              </div>
+              <span
+                class="sr-only"
+              >
+                Preparing your report…
+              </span>
+            </div>
+          </div>
+        </div>
+        <div
+          class="rc-composer"
+        >
+          <div
+            aria-label="Subscription tier"
+            class="rc-tier"
+            role="group"
+          >
+            <span
+              class="rc-tier-lbl"
+            >
+              Plan
+            </span>
+            <button
+              aria-pressed="true"
+              class="rc-tier-b on"
+            >
+              Standard
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Professional
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Enterprise
+            </button>
+          </div>
+          <div
+            class="rc-input"
+          >
+            <textarea
+              aria-label="Describe the report or dashboard you need"
+              placeholder="Describe the report or dashboard you need for BX204..."
+              rows="1"
+            />
+            <button
+              aria-label="Send"
+              class="rc-send"
+              disabled=""
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-arrow-up"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m5 12 7-7 7 7"
+                />
+                <path
+                  d="M12 19V5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="rc-guardrail"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.
+          </div>
+        </div>
+      </div>
+      <div
+        class="rc-canvas"
+      >
+        <div
+          class="rc-empty"
+        >
+          <div
+            class="rc-empty-mark"
+          >
+            *
+          </div>
+          <h2
+            class="rc-empty-h"
+          >
+            Governed reports, built to order.
+          </h2>
+          <p
+            class="rc-empty-s"
+          >
+            Describe what you need on the left, or start from one of the standard packs for 
+            BX204
+            . Every value is computed from the governed record; nothing is estimated.
+          </p>
+          <div
+            class="rc-empty-presets"
+          >
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                BLA assembly pack
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                3
+                 governed reports
+              </div>
+            </button>
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                Nonclinical & CMC readiness
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Confirm Module 4 / SEND datasets and the audit trail are submission-grade.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                2
+                 governed reports
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="rc"
+    >
+      <div
+        class="rc-ana"
+        style=""
+      >
+        <div
+          class="rc-ana-head"
+        >
+          <div
+            class="rc-ana-id"
+          >
+            <span
+              class="rc-ana-mark"
+            >
+              *
+            </span>
+            <div>
+              <div
+                class="nm"
+              >
+                Report builder
+              </div>
+              <div
+                class="sub"
+              >
+                BX204 — NDA — Biotech
+              </div>
+            </div>
+          </div>
+          <button
+            class="pj-card-h-go"
+            type="button"
+          >
+            Audit & compliance reports
+          </button>
+        </div>
+        <div
+          class="rc-ana-scroll"
+        >
+          <div
+            class="rc-opener"
+          >
+            <div
+              class="rc-op-head"
+            >
+              <span
+                class="rc-ana-mark sm"
+              >
+                *
+              </span>
+              <span>
+                Where to start
+              </span>
+            </div>
+            <div
+              class="rc-op-headline"
+            >
+              Build any governed report or dashboard — describe what you need.
+            </div>
+            <div
+              class="rc-op-body"
+            >
+              BX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.
+            </div>
+            <button
+              class="rc-preset-btn"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Build the 
+              BLA assembly pack
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-right"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m9 18 6-6-6-6"
+                />
+              </svg>
+            </button>
+            <div
+              class="rc-op-why"
+            >
+              Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+            </div>
+            <div
+              class="rc-chips"
+            >
+              <button
+                class="rc-chip"
+              >
+                Build the BLA assembly pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                How ready is BX204 to file?
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Run the audit assurance pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Compare readiness across all my programs
+              </button>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-user"
+          >
+            <div
+              class="rc-bub"
+            >
+              Run the executive readiness digest report
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+          >
+            <span
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                class="rc-bub rc-ana-bub"
+              >
+                Running the Executive Readiness Digest for BX204 against the governed record. Every value is computed from the governed record; none is originated here.
+              </div>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+            role="status"
+          >
+            <span
+              aria-hidden="true"
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                aria-hidden="true"
+                class="rc-typing"
+              >
+                <span />
+                <span />
+                <span />
+              </div>
+              <span
+                class="sr-only"
+              >
+                Preparing your report…
+              </span>
+            </div>
+          </div>
+        </div>
+        <div
+          class="rc-composer"
+        >
+          <div
+            aria-label="Subscription tier"
+            class="rc-tier"
+            role="group"
+          >
+            <span
+              class="rc-tier-lbl"
+            >
+              Plan
+            </span>
+            <button
+              aria-pressed="true"
+              class="rc-tier-b on"
+            >
+              Standard
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Professional
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Enterprise
+            </button>
+          </div>
+          <div
+            class="rc-input"
+          >
+            <textarea
+              aria-label="Describe the report or dashboard you need"
+              placeholder="Describe the report or dashboard you need for BX204..."
+              rows="1"
+            />
+            <button
+              aria-label="Send"
+              class="rc-send"
+              disabled=""
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-arrow-up"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m5 12 7-7 7 7"
+                />
+                <path
+                  d="M12 19V5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="rc-guardrail"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.
+          </div>
+        </div>
+      </div>
+      <div
+        class="rc-canvas"
+      >
+        <div
+          class="rc-empty"
+        >
+          <div
+            class="rc-empty-mark"
+          >
+            *
+          </div>
+          <h2
+            class="rc-empty-h"
+          >
+            Governed reports, built to order.
+          </h2>
+          <p
+            class="rc-empty-s"
+          >
+            Describe what you need on the left, or start from one of the standard packs for 
+            BX204
+            . Every value is computed from the governed record; nothing is estimated.
+          </p>
+          <div
+            class="rc-empty-presets"
+          >
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                BLA assembly pack
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                3
+                 governed reports
+              </div>
+            </button>
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                Nonclinical & CMC readiness
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Confirm Module 4 / SEND datasets and the audit trail are submission-grade.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                2
+                 governed reports
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx:164:31
+    162|
+    163|     // While it runs: a sentence in a status region, not typing dots b…
+    164|     const busy = await screen.findByText(/Running the report/);
+       |                               ^
+    165|     expect(busy.closest('[role="status"]')).not.toBeNull();
+    166|     expect(document.querySelectorAll(CHAT_SHAPES)).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > a run that cannot start never leaves "Running the …" beside the alert that says so
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="rc"
+    >
+      <div
+        class="rc-ana"
+        style=""
+      >
+        <div
+          class="rc-ana-head"
+        >
+          <div
+            class="rc-ana-id"
+          >
+            <span
+              class="rc-ana-mark"
+            >
+              *
+            </span>
+            <div>
+              <div
+                class="nm"
+              >
+                Report builder
+              </div>
+              <div
+                class="sub"
+              >
+                BX204 — NDA — Biotech
+              </div>
+            </div>
+          </div>
+          <button
+            class="pj-card-h-go"
+            type="button"
+          >
+            Audit & compliance reports
+          </button>
+        </div>
+        <div
+          class="rc-ana-scroll"
+        >
+          <div
+            class="ro-dash-note"
+            data-testid="rc-view-only"
+            role="note"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-lock"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="11"
+                rx="2"
+                ry="2"
+                width="18"
+                x="3"
+                y="11"
+              />
+              <path
+                d="M7 11V7a5 5 0 0 1 10 0v4"
+              />
+            </svg>
+             View only. Running a governed report needs an editor role in this organization.
+          </div>
+          <div
+            class="rc-opener"
+          >
+            <div
+              class="rc-op-head"
+            >
+              <span
+                class="rc-ana-mark sm"
+              >
+                *
+              </span>
+              <span>
+                Where to start
+              </span>
+            </div>
+            <div
+              class="rc-op-headline"
+            >
+              Build any governed report or dashboard — describe what you need.
+            </div>
+            <div
+              class="rc-op-body"
+            >
+              BX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.
+            </div>
+            <button
+              class="rc-preset-btn"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Build the 
+              BLA assembly pack
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-right"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m9 18 6-6-6-6"
+                />
+              </svg>
+            </button>
+            <div
+              class="rc-op-why"
+            >
+              Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+            </div>
+            <div
+              class="rc-chips"
+            >
+              <button
+                class="rc-chip"
+              >
+                Build the BLA assembly pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                How ready is BX204 to file?
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Run the audit assurance pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Compare readiness across all my programs
+              </button>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-user"
+          >
+            <div
+              class="rc-bub"
+            >
+              Run the executive readiness digest report
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+          >
+            <span
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                class="rc-bub rc-ana-bub"
+              >
+                Running the Executive Readiness Digest for BX204 against the governed record. Every value is computed from the governed record; none is originated here.
+              </div>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+          >
+            <span
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                class="rc-bub rc-ana-bub"
+              >
+                "Executive Readiness Digest" wasn't run. Running a report creates a governed record, which needs an editor role in this organization.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="rc-composer"
+        >
+          <div
+            aria-label="Subscription tier"
+            class="rc-tier"
+            role="group"
+          >
+            <span
+              class="rc-tier-lbl"
+            >
+              Plan
+            </span>
+            <button
+              aria-pressed="true"
+              class="rc-tier-b on"
+            >
+              Standard
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Professional
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Enterprise
+            </button>
+          </div>
+          <div
+            class="rc-input"
+          >
+            <textarea
+              aria-label="Describe the report or dashboard you need"
+              placeholder="Describe the report or dashboard you need for BX204..."
+              rows="1"
+            />
+            <button
+              aria-label="Send"
+              class="rc-send"
+              disabled=""
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-arrow-up"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m5 12 7-7 7 7"
+                />
+                <path
+                  d="M12 19V5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="rc-guardrail"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.
+          </div>
+        </div>
+      </div>
+      <div
+        class="rc-canvas"
+      >
+        <div
+          class="rc-empty"
+        >
+          <div
+            class="rc-empty-mark"
+          >
+            *
+          </div>
+          <h2
+            class="rc-empty-h"
+          >
+            Governed reports, built to order.
+          </h2>
+          <p
+            class="rc-empty-s"
+          >
+            Describe what you need on the left, or start from one of the standard packs for 
+            BX204
+            . Every value is computed from the governed record; nothing is estimated.
+          </p>
+          <div
+            class="rc-empty-presets"
+          >
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                BLA assembly pack
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                3
+                 governed reports
+              </div>
+            </button>
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                Nonclinical & CMC readiness
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Confirm Module 4 / SEND datasets and the audit trail are submission-grade.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                2
+                 governed reports
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="rc"
+    >
+      <div
+        class="rc-ana"
+        style=""
+      >
+        <div
+          class="rc-ana-head"
+        >
+          <div
+            class="rc-ana-id"
+          >
+            <span
+              class="rc-ana-mark"
+            >
+              *
+            </span>
+            <div>
+              <div
+                class="nm"
+              >
+                Report builder
+              </div>
+              <div
+                class="sub"
+              >
+                BX204 — NDA — Biotech
+              </div>
+            </div>
+          </div>
+          <button
+            class="pj-card-h-go"
+            type="button"
+          >
+            Audit & compliance reports
+          </button>
+        </div>
+        <div
+          class="rc-ana-scroll"
+        >
+          <div
+            class="ro-dash-note"
+            data-testid="rc-view-only"
+            role="note"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-lock"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="11"
+                rx="2"
+                ry="2"
+                width="18"
+                x="3"
+                y="11"
+              />
+              <path
+                d="M7 11V7a5 5 0 0 1 10 0v4"
+              />
+            </svg>
+             View only. Running a governed report needs an editor role in this organization.
+          </div>
+          <div
+            class="rc-opener"
+          >
+            <div
+              class="rc-op-head"
+            >
+              <span
+                class="rc-ana-mark sm"
+              >
+                *
+              </span>
+              <span>
+                Where to start
+              </span>
+            </div>
+            <div
+              class="rc-op-headline"
+            >
+              Build any governed report or dashboard — describe what you need.
+            </div>
+            <div
+              class="rc-op-body"
+            >
+              BX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.
+            </div>
+            <button
+              class="rc-preset-btn"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Build the 
+              BLA assembly pack
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-right"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m9 18 6-6-6-6"
+                />
+              </svg>
+            </button>
+            <div
+              class="rc-op-why"
+            >
+              Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+            </div>
+            <div
+              class="rc-chips"
+            >
+              <button
+                class="rc-chip"
+              >
+                Build the BLA assembly pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                How ready is BX204 to file?
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Run the audit assurance pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Compare readiness across all my programs
+              </button>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-user"
+          >
+            <div
+              class="rc-bub"
+            >
+              Run the executive readiness digest report
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+          >
+            <span
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                class="rc-bub rc-ana-bub"
+              >
+                Running the Executive Readiness Digest for BX204 against the governed record. Every value is computed from the governed record; none is originated here.
+              </div>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+          >
+            <span
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                class="rc-bub rc-ana-bub"
+              >
+                "Executive Readiness Digest" wasn't run. Running a report creates a governed record, which needs an editor role in this organization.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="rc-composer"
+        >
+          <div
+            aria-label="Subscription tier"
+            class="rc-tier"
+            role="group"
+          >
+            <span
+              class="rc-tier-lbl"
+            >
+              Plan
+            </span>
+            <button
+              aria-pressed="true"
+              class="rc-tier-b on"
+            >
+              Standard
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Professional
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Enterprise
+            </button>
+          </div>
+          <div
+            class="rc-input"
+          >
+            <textarea
+              aria-label="Describe the report or dashboard you need"
+              placeholder="Describe the report or dashboard you need for BX204..."
+              rows="1"
+            />
+            <button
+              aria-label="Send"
+              class="rc-send"
+              disabled=""
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-arrow-up"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m5 12 7-7 7 7"
+                />
+                <path
+                  d="M12 19V5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="rc-guardrail"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.
+          </div>
+        </div>
+      </div>
+      <div
+        class="rc-canvas"
+      >
+        <div
+          class="rc-empty"
+        >
+          <div
+            class="rc-empty-mark"
+          >
+            *
+          </div>
+          <h2
+            class="rc-empty-h"
+          >
+            Governed reports, built to order.
+          </h2>
+          <p
+            class="rc-empty-s"
+          >
+            Describe what you need on the left, or start from one of the standard packs for 
+            BX204
+            . Every value is computed from the governed record; nothing is estimated.
+          </p>
+          <div
+            class="rc-empty-presets"
+          >
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                BLA assembly pack
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                3
+                 governed reports
+              </div>
+            </button>
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                Nonclinical & CMC readiness
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Confirm Module 4 / SEND datasets and the audit trail are submission-grade.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                2
+                 governed reports
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx:183:32
+    181|     find(field, 'Run the executive readiness digest report');
+    182|
+    183|     const alert = await screen.findByRole('alert');
+       |                                ^
+    184|     expect(alert.textContent).toMatch(/"Executive Readiness Digest" wa…
+    185|     expect(runs).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > a run that completes says so, in place of "Running the …"
+TestingLibraryElementError: Unable to find an element by: [data-testid="rc-find-result"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="rc"
+    >
+      <div
+        class="rc-ana"
+        style=""
+      >
+        <div
+          class="rc-ana-head"
+        >
+          <div
+            class="rc-ana-id"
+          >
+            <span
+              class="rc-ana-mark"
+            >
+              *
+            </span>
+            <div>
+              <div
+                class="nm"
+              >
+                Report builder
+              </div>
+              <div
+                class="sub"
+              >
+                BX204 — NDA — Biotech
+              </div>
+            </div>
+          </div>
+          <button
+            class="pj-card-h-go"
+            type="button"
+          >
+            Audit & compliance reports
+          </button>
+        </div>
+        <div
+          class="rc-ana-scroll"
+        >
+          <div
+            class="rc-opener"
+          >
+            <div
+              class="rc-op-head"
+            >
+              <span
+                class="rc-ana-mark sm"
+              >
+                *
+              </span>
+              <span>
+                Where to start
+              </span>
+            </div>
+            <div
+              class="rc-op-headline"
+            >
+              Build any governed report or dashboard — describe what you need.
+            </div>
+            <div
+              class="rc-op-body"
+            >
+              BX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.
+            </div>
+            <button
+              class="rc-preset-btn"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Build the 
+              BLA assembly pack
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-right"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m9 18 6-6-6-6"
+                />
+              </svg>
+            </button>
+            <div
+              class="rc-op-why"
+            >
+              Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+            </div>
+            <div
+              class="rc-chips"
+            >
+              <button
+                class="rc-chip"
+              >
+                Build the BLA assembly pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                How ready is BX204 to file?
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Run the audit assurance pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Compare readiness across all my programs
+              </button>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-user"
+          >
+            <div
+              class="rc-bub"
+            >
+              Run the executive readiness digest report
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+          >
+            <span
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                class="rc-bub rc-ana-bub"
+              >
+                Running the Executive Readiness Digest for BX204 against the governed record. Every value is computed from the governed record; none is originated here.
+              </div>
+            </div>
+          </div>
+          <div
+            class="rc-msg rc-ana-msg"
+            role="status"
+          >
+            <span
+              aria-hidden="true"
+              class="rc-ana-mark sm"
+            >
+              *
+            </span>
+            <div
+              class="rc-ana-body"
+            >
+              <div
+                aria-hidden="true"
+                class="rc-typing"
+              >
+                <span />
+                <span />
+                <span />
+              </div>
+              <span
+                class="sr-only"
+              >
+                Preparing your report…
+              </span>
+            </div>
+          </div>
+        </div>
+        <div
+          class="rc-composer"
+        >
+          <div
+            aria-label="Subscription tier"
+            class="rc-tier"
+            role="group"
+          >
+            <span
+              class="rc-tier-lbl"
+            >
+              Plan
+            </span>
+            <button
+              aria-pressed="true"
+              class="rc-tier-b on"
+            >
+              Standard
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Professional
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Enterprise
+            </button>
+          </div>
+          <div
+            class="rc-input"
+          >
+            <textarea
+              aria-label="Describe the report or dashboard you need"
+              placeholder="Describe the report or dashboard you need for BX204..."
+              rows="1"
+            />
+            <button
+              aria-label="Send"
+              class="rc-send"
+              disabled=""
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-arrow-up"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m5 12 7-7 7 7"
+                />
+                <path
+                  d="M12 19V5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="rc-guardrail"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.
+          </div>
+        </div>
+      </div>
+      <div
+        class="rc-canvas"
+      >
+        <div
+          class="rc-empty"
+        >
+          <div
+            class="rc-empty-mark"
+          >
+            *
+          </div>
+          <h2
+            class="rc-empty-h"
+          >
+            Governed reports, built to order.
+          </h2>
+          <p
+            class="rc-empty-s"
+          >
+            Describe what you need on the left, or start from one of the standard packs for 
+            BX204
+            . Every value is computed from the governed record; nothing is estimated.
+          </p>
+          <div
+            class="rc-empty-presets"
+          >
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                BLA assembly pack
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                3
+                 governed reports
+              </div>
+            </button>
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                Nonclinical & CMC readiness
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Confirm Module 4 / SEND datasets and the audit trail are submission-grade.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                2
+                 governed reports
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ resultStatus client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx:95:35
+     93|
+     94| /** The result's live region: the one status region that is not the bu…
+     95| const resultStatus = () => screen.getByTestId('rc-find-result').queryS…
+       |                                   ^
+     96| afterEach(() => cleanup());
+     97|
+ ❯ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx:193:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > keeps the result's live region mounted from the start, so the first result is announced
+TestingLibraryElementError: Unable to find an element by: [data-testid="rc-find-result"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="rc"
+    >
+      <div
+        class="rc-ana"
+        style=""
+      >
+        <div
+          class="rc-ana-head"
+        >
+          <div
+            class="rc-ana-id"
+          >
+            <span
+              class="rc-ana-mark"
+            >
+              *
+            </span>
+            <div>
+              <div
+                class="nm"
+              >
+                Report builder
+              </div>
+              <div
+                class="sub"
+              >
+                BX204 — NDA — Biotech
+              </div>
+            </div>
+          </div>
+          <button
+            class="pj-card-h-go"
+            type="button"
+          >
+            Audit & compliance reports
+          </button>
+        </div>
+        <div
+          class="rc-ana-scroll"
+        >
+          <div
+            class="rc-opener"
+          >
+            <div
+              class="rc-op-head"
+            >
+              <span
+                class="rc-ana-mark sm"
+              >
+                *
+              </span>
+              <span>
+                Where to start
+              </span>
+            </div>
+            <div
+              class="rc-op-headline"
+            >
+              Build any governed report or dashboard — describe what you need.
+            </div>
+            <div
+              class="rc-op-body"
+            >
+              BX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.
+            </div>
+            <button
+              class="rc-preset-btn"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Build the 
+              BLA assembly pack
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-right"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m9 18 6-6-6-6"
+                />
+              </svg>
+            </button>
+            <div
+              class="rc-op-why"
+            >
+              Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+            </div>
+            <div
+              class="rc-chips"
+            >
+              <button
+                class="rc-chip"
+              >
+                Build the BLA assembly pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                How ready is BX204 to file?
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Run the audit assurance pack
+              </button>
+              <button
+                class="rc-chip"
+              >
+                Compare readiness across all my programs
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          class="rc-composer"
+        >
+          <div
+            aria-label="Subscription tier"
+            class="rc-tier"
+            role="group"
+          >
+            <span
+              class="rc-tier-lbl"
+            >
+              Plan
+            </span>
+            <button
+              aria-pressed="true"
+              class="rc-tier-b on"
+            >
+              Standard
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Professional
+            </button>
+            <button
+              aria-pressed="false"
+              class="rc-tier-b"
+            >
+              Enterprise
+            </button>
+          </div>
+          <div
+            class="rc-input"
+          >
+            <textarea
+              aria-label="Describe the report or dashboard you need"
+              placeholder="Describe the report or dashboard you need for BX204..."
+              rows="1"
+            />
+            <button
+              aria-label="Send"
+              class="rc-send"
+              disabled=""
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-arrow-up"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m5 12 7-7 7 7"
+                />
+                <path
+                  d="M12 19V5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="rc-guardrail"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.
+          </div>
+        </div>
+      </div>
+      <div
+        class="rc-canvas"
+      >
+        <div
+          class="rc-empty"
+        >
+          <div
+            class="rc-empty-mark"
+          >
+            *
+          </div>
+          <h2
+            class="rc-empty-h"
+          >
+            Governed reports, built to order.
+          </h2>
+          <p
+            class="rc-empty-s"
+          >
+            Describe what you need on the left, or start from one of the standard packs for 
+            BX204
+            . Every value is computed from the governed record; nothing is estimated.
+          </p>
+          <div
+            class="rc-empty-presets"
+          >
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                BLA assembly pack
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Tracks readiness and closes the evidence and financial-disclosure gaps before filing.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                3
+                 governed reports
+              </div>
+            </button>
+            <button
+              class="rc-empty-preset"
+            >
+              <div
+                class="rc-ep-h"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-chart-column"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 3v16a2 2 0 0 0 2 2h16"
+                  />
+                  <path
+                    d="M18 17V9"
+                  />
+                  <path
+                    d="M13 17V5"
+                  />
+                  <path
+                    d="M8 17v-3"
+                  />
+                </svg>
+                 
+                Nonclinical & CMC readiness
+              </div>
+              <div
+                class="rc-ep-s"
+              >
+                Confirm Module 4 / SEND datasets and the audit trail are submission-grade.
+              </div>
+              <div
+                class="rc-ep-types"
+              >
+                2
+                 governed reports
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ resultStatus client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx:95:35
+     93|
+     94| /** The result's live region: the one status region that is not the bu…
+     95| const resultStatus = () => screen.getByTestId('rc-find-result').queryS…
+       |                                   ^
+     96| afterEach(() => cleanup());
+     97|
+ ❯ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx:203:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  07:52:11
+   Duration  12.45s (transform 582ms, setup 178ms, import 688ms, tests 10.64s, environment 480ms)
+

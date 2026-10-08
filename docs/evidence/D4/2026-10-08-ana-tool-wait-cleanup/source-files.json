@@ -1,0 +1,13 @@
+{
+  "local_qualification_checkpoint": "a8f59c24c74f1870d7590bb06424f42f0dbcbcae",
+  "reproduction_base": "b0b1694aa00ee991b6792edab530f9fa59f1df93",
+  "publication_base": "4536fe4c2a4ad16a9722c9bfe61bc1a403426c06",
+  "git_blob_sha1": {
+    "server/services/ana/agentic-loop.ts": "b955329341a955d4353d7388d25c256b68051a75",
+    "server/services/ana/AnaToolExecutor.ts": "3cfd37e4361b15c6b194d75f03ccc8ec27b862df",
+    "server/routes/ana-ri/stream.ts": "5a32d94a87ee92fe5b302e79557f23880cdeb7b5",
+    "server/services/ana/__tests__/tool-wait-cleanup.test.ts": "9109ec8fb45f132b44be7c0b8c640234840ed18f",
+    "server/services/ana/__tests__/executor-tool-wait-cleanup.test.ts": "e69640a964e5ee091192319f771a7d9a7ec501ad",
+    "server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts": "2ef38606a8458fbacf9c493dec1cd12022b38756"
+  }
+}

@@ -1,0 +1,39 @@
+# red: the path-spelling cases against the middleware as wave 2D's first pass left it (exact, case-sensitive match; trailing slash not dropped)
+# command: npx vitest run --config vitest.config.ts server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts -t 'every spelling'
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review 34ms
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review/ 18ms
+   → {"reached":"request-review","id":"10000000-0000-4000-8000-000000000001"}: expected 200 to be 403 // Object.is equality
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Request-Review 8ms
+   → {"reached":"request-review","id":"10000000-0000-4000-8000-000000000001"}: expected 200 to be 403 // Object.is equality
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/Documents/10000000-0000-4000-8000-000000000001/request-review 6ms
+   → {"reached":"request-review","id":"10000000-0000-4000-8000-000000000001"}: expected 200 to be 403 // Object.is equality
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/documents/10000000-0000-4000-8000-000000000001/request-review 8ms
+   → {"reached":"request-review","id":"10000000-0000-4000-8000-000000000001"}: expected 200 to be 403 // Object.is equality
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /API/AUTHORING/DOCUMENTS/10000000-0000-4000-8000-000000000001/REQUEST-REVIEW/ 5ms
+   → {"reached":"request-review","id":"10000000-0000-4000-8000-000000000001"}: expected 200 to be 403 // Object.is equality
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions/ 6ms
+   → {"reached":"decision","id":"10000000-0000-4000-8000-000000000001"}: expected 200 to be 403 // Object.is equality
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Tracked-Change-Decisions 5ms
+   → {"reached":"decision","id":"10000000-0000-4000-8000-000000000001"}: expected 200 to be 403 // Object.is equality
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/docs/10000000-0000-4000-8000-000000000001/freeze/ 10ms
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/Docs/10000000-0000-4000-8000-000000000001/Freeze 5ms
+   → {"reached":"freeze","id":"10000000-0000-4000-8000-000000000001"}: expected 200 to be 403 // Object.is equality
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > decides on the document the handler acts on: the id keeps the spelling the caller sent 8ms
+   → expected undefined to deeply equal [ …(2) ]
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > a path that only begins like an authoring route is still not classified 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review/
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Request-Review
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/Documents/10000000-0000-4000-8000-000000000001/request-review
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/documents/10000000-0000-4000-8000-000000000001/request-review
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /API/AUTHORING/DOCUMENTS/10000000-0000-4000-8000-000000000001/REQUEST-REVIEW/
+AssertionError: {"reached":"request-review","id":"10000000-0000-4000-8000-000000000001"}: expected 200 to be 403 // Object.is equality
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions/
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Tracked-Change-Decisions
+AssertionError: {"reached":"decision","id":"10000000-0000-4000-8000-000000000001"}: expected 200 to be 403 // Object.is equality
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/Docs/10000000-0000-4000-8000-000000000001/Freeze
+AssertionError: {"reached":"freeze","id":"10000000-0000-4000-8000-000000000001"}: expected 200 to be 403 // Object.is equality
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > decides on the document the handler acts on: the id keeps the spelling the caller sent
+AssertionError: expected undefined to deeply equal [ …(2) ]
+ Test Files  1 failed (1)
+      Tests  9 failed | 3 passed | 11 skipped (23)

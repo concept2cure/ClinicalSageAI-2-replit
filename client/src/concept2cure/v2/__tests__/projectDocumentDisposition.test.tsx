@@ -9,6 +9,12 @@ import { ProjectHome } from '../surfaces/ProjectHome';
 import { Vault } from '../surfaces/Vault';
 import { PID, DOC_ID, ok, props, uploadDoc, cabinetTree, vaultPayload, mockVaultApi } from './_vault-surface-fixtures';
 
+/** The data room is on Project home's Evidence tab (FILING_SPINE.md F3). */
+const openEvidence = () => {
+  const tab = Array.from(document.querySelectorAll<HTMLButtonElement>('.pj-lc-stage')).find((b) => b.textContent?.trim() === 'Evidence');
+  if (!tab) throw new Error('Project home has no Evidence tab');
+  fireEvent.click(tab);
+};
 const source = (over: Record<string, unknown> = {}) => ({ id: 1, title: 'Protocol.pdf', checksum: 'a'.repeat(64), ingestionStatus: 'ingested',
   extractionStatus: 'extracted', createdAt: '2026-10-06', mimeType: 'application/pdf', fileSize: 1400, artifactId: null,
   origin: 'chat_upload', extractionMethod: 'pdf-text', isCurrent: true, dataEligible: true, originalFileAvailable: true, ...over });
@@ -34,7 +40,7 @@ describe('reachable project document lifecycle controls', () => {
       }
       return ok({});
     });
-    const onAsk = vi.fn(); render(<ProjectHome {...props()} onAsk={onAsk} />);
+    const onAsk = vi.fn(); render(<ProjectHome {...props()} onAsk={onAsk} />); openEvidence();
     const pin = await screen.findByRole('checkbox', { name: 'Use Protocol.pdf as context' });
     fireEvent.click(pin); fireEvent.click(screen.getByRole('button', { name: /Draft with 1 pinned source/ }));
     expect(window.C2C_SOURCE_PINS).toEqual(['1']);
@@ -53,7 +59,7 @@ describe('reachable project document lifecycle controls', () => {
   it('superseded data remains visible as history and cannot be pinned', async () => {
     apiRequest.mockImplementation(async (_method: string, url: string) => url.endsWith('/sources')
       ? ok({ sources: [source({ disposition: 'supersede', dataEligible: false, originalFileAvailable: false })] }) : ok({}));
-    render(<ProjectHome {...props()} />);
+    render(<ProjectHome {...props()} />); openEvidence();
     expect((await screen.findByRole('checkbox', { name: 'Use Protocol.pdf as context' }) as HTMLInputElement).disabled).toBe(true);
     expect(screen.getByText('Replaced by newer data')).toBeTruthy();
   });

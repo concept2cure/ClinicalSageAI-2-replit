@@ -1,0 +1,12 @@
+# $ npm run -s ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+# exit: 0
+# $ node scripts/design/generate-surface-text-ramp.mjs
+[surface-text-ramp] wrote client/src/concept2cure/v2/styles/surface-text-ramp.css (857 lines)
+[surface-text-ramp] wrote client/src/concept2cure/mdx/surface-text-ramp.css (258 lines)
+[surface-text-ramp] wrote client/src/concept2cure/pdev/surface-text-ramp.css (119 lines)
+# $ git status --short -- client/src/concept2cure/v2/styles (the ramp sheets: no change from regenerating)
+ M client/src/concept2cure/v2/styles/app-v2.css
+# $ npm run -s ci:surface-text-ramp
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+# exit: 0

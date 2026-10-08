@@ -3846,7 +3846,9 @@ export function DocumentWorkbench({
                 2026-10-08: "Assign review" created a task the Review board
                 never reads. Send for review records the review request the
                 board lists, and each reviewer's task with it, as one act. The
-                gate stays the task create's, which is part of that act. */}
+                gate is that act's: the task create's role check, then the
+                request's Owner or Author grant on a document that is not
+                sealed (wave 2D, authoring.router.ts callerDocumentAccess). */}
             {activeDoc && (
               <button
                 className="btn ghost"

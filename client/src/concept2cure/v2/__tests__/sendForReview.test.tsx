@@ -26,6 +26,12 @@
  *     back with a verdict gets no task and is never reported as requested;
  *   · a roster, or existing requests, that could not be read can be read again;
  *   · each task says the verdict is recorded on the Review board.
+ *
+ * Wave 2D (2026-10-08): the route reopens a recorded verdict on a new request
+ * (the row is pending again; the verdict keeps its own audit row), so a member
+ * whose verdict is recorded can be asked again and is told the verdict stays in
+ * the record; only a member whose review is pending cannot be chosen. A
+ * reviewer's verdict now completes their review task, and the task says so.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -233,6 +239,23 @@ describe('Send for review — a refusal, an unknown outcome and a failed task ar
     expect((within(dlg).getByTestId('sfr-submit') as HTMLButtonElement).disabled).toBe(false);
   });
 
+  it('the object gate’s refusal is said as what it means for this act, not as “the authoring object”', async () => {
+    answerRequest = () => {
+      throw new ApiRequestError(
+        'You do not have permission to perform this action on the authoring object.', 403,
+        { error: { code: 'AUTHORING_OBJECT_FORBIDDEN', message: 'You do not have permission to perform this action on the authoring object.' } },
+        'AUTHORING_OBJECT_FORBIDDEN',
+      );
+    };
+    const dlg = await openDialog();
+    fill(dlg, ['42']);
+    fireEvent.click(within(dlg).getByTestId('sfr-submit'));
+    const alert = await within(dlg).findByTestId('sfr-error');
+    expect(alert.textContent).toBe('The review request was refused: Sending this document for review needs an Owner or Author grant on it.');
+    expect(alert.textContent).not.toContain('authoring object');
+    expect(calls('POST', '/api/tasks/tasks')).toHaveLength(0);
+  });
+
   it('an outcome nobody can confirm is unknown: no task, no second send, and the board is offered to check', async () => {
     answerRequest = () => { throw new ApiRequestError('Bad gateway', 502); };
     const p = props();
@@ -344,14 +367,16 @@ describe('Send for review — a task whose answer was lost is unknown, not absen
 });
 
 describe('Send for review — a member who already has a review request', () => {
-  it('is shown with that request and cannot be chosen; the others can', async () => {
+  it('a member whose review is pending cannot be chosen; one whose verdict is recorded can be asked again, and is told the verdict stays in the record', async () => {
     answerReviews = () => ok({ success: true, reviews: [standingRow('42', 'OQ Signer', 'changes_requested'), standingRow('7', 'Dana Chen', 'pending')] });
     const { dlg } = await openOwnDialog();
+    // A recorded verdict: offered again, since a new request reopens the review (wave 2D).
     const decided = (await within(dlg).findByTestId('sfr-reviewer-42')) as HTMLInputElement;
-    expect(decided.disabled).toBe(true);
+    expect(decided.disabled).toBe(false);
     const decidedNote = within(dlg).getByTestId('sfr-prior-42');
-    expect(decidedNote.textContent).toMatch(/^Changes requested on .+\. A new request does not reopen a recorded verdict, so they cannot be asked again here\.$/);
+    expect(decidedNote.textContent).toMatch(/^Changes requested on .+\. That verdict stays in the record; choosing them requests a new review\.$/);
     expect(decided.getAttribute('aria-describedby')).toBe(decidedNote.id);
+    // A pending request: already asked, so not offered.
     const asked = within(dlg).getByTestId('sfr-reviewer-7') as HTMLInputElement;
     expect(asked.disabled).toBe(true);
     expect(within(dlg).getByTestId('sfr-prior-7').textContent).toMatch(/^Already asked on .+; their review is pending\.$/);
@@ -359,18 +384,25 @@ describe('Send for review — a member who already has a review request', () => 
     expect(free.disabled).toBe(false);
     expect(within(dlg).queryByTestId('sfr-prior-9')).toBeNull();
 
-    // A click on a member who cannot be asked again chooses nobody.
-    fireEvent.click(decided);
+    // A click on the member already asked chooses nobody; the member with a verdict is chosen.
+    fireEvent.click(asked);
     fireEvent.change(within(dlg).getByTestId('sfr-reason'), { target: { value: REASON } });
     expect((within(dlg).getByTestId('sfr-submit') as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.click(free);
+    fireEvent.click(decided);
+    expect(decided.checked).toBe(true);
     fireEvent.click(within(dlg).getByTestId('sfr-submit'));
     await waitFor(() => expect(calls('POST', REQUEST_URL)).toHaveLength(1));
-    expect(calls('POST', REQUEST_URL)[0][2]).toEqual({ reviewers: [{ id: '9', name: 'Ira Patel' }], reason: REASON });
+    expect(calls('POST', REQUEST_URL)[0][2]).toEqual({ reviewers: [{ id: '42', name: 'OQ Signer' }], reason: REASON });
+    // The server reopened the review (the row comes back pending), so the reviewer gets a new task.
+    await waitFor(() => expect(calls('POST', '/api/tasks/tasks')).toHaveLength(1));
+    expect((calls('POST', '/api/tasks/tasks')[0][2] as { assigneeId: number }).assigneeId).toBe(42);
+    expect(within(await within(dlg).findByTestId('sfr-result')).getByTestId('sfr-reviews').textContent).toContain('OQ Signer · Pending');
   });
 
   it('a row that comes back with a verdict gets no task, and is never reported as requested', async () => {
-    // Asked in between: the server kept the verdict (ON CONFLICT refreshes requested_at only).
+    // A row that comes back with a verdict was not reopened. The route resets a
+    // re-requested row to pending since wave 2D, so this is a server that did not;
+    // the dialog still makes no task for it and says the verdict stands.
     answerRequest = body => ok({
       success: true,
       reviews: body.reviewers.map(r => ({ ...standingRow(r.id, r.name ?? r.id, r.id === '42' ? 'changes_requested' : 'pending'), id: `rev-${r.id}` })),
@@ -436,13 +468,13 @@ describe('Send for review — reads that failed can be read again', () => {
 });
 
 describe('Send for review — the task says where the verdict goes', () => {
-  it('each reviewer’s task says the verdict is recorded on the Review board, not by completing the task', async () => {
+  it('each reviewer’s task says the verdict is recorded on the Review board and completes the task, not the other way round', async () => {
     const { dlg } = await openOwnDialog();
     fill(dlg, ['42']);
     fireEvent.click(within(dlg).getByTestId('sfr-submit'));
     await waitFor(() => expect(calls('POST', '/api/tasks/tasks')).toHaveLength(1));
     expect(String((calls('POST', '/api/tasks/tasks')[0][2] as { description: string }).description))
-      .toContain('Record your verdict on the Review board; completing this task does not record one.');
+      .toContain('Record your verdict on the Review board; recording it completes this task. Completing the task does not record a verdict.');
   });
 });
 

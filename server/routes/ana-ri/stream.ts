@@ -2471,11 +2471,10 @@ export function mountStreamRoute(router: Router): void {
                   // between a stop that lands in a second and one that waits
                   // out a forty-second search.
                   generated = newGenerationCapture();
-                  resultStr = await Promise.race([
-                    // Inside the run's scope, so the gateway calls the tool makes
-                    // are listed under this run on the ledger (D6); and inside a
-                    // capture, so what a model writes for it is known.
-                    runCapturingGenerations(generated, () =>
+                  // Inside the run's scope, so the gateway calls the tool makes
+                  // are listed under this run on the ledger (D6); and inside a
+                  // capture, so what a model writes for it is known.
+                  const toolWork = runCapturingGenerations(generated, () =>
                     runWithRunScope({ runId }, () =>
                     handler(toolUse.input, {
                       organizationId: orgId,
@@ -2491,9 +2490,13 @@ export function mountStreamRoute(router: Router): void {
                       turnState: driveTurnState,
                       signal: runSignal,
                       ...readReceiptContext(readReceipts, toolUse.id),
-                    }))),
-                    abortRace(runSignal),
-                  ]);
+                    })));
+                  const cancellationWait = abortRace(runSignal);
+                  try {
+                    resultStr = await Promise.race([toolWork, cancellationWait]);
+                  } finally {
+                    cancellationWait.dispose();
+                  }
                 } catch (toolErr: any) {
                   if (toolErr instanceof ToolRunCancelled) {
                     // Not an error: the person stopped it. Falls through to
@@ -3262,10 +3265,11 @@ export function mountStreamRoute(router: Router): void {
             // that point on (read every round).
             maxRoundsFloor: () =>
               driveState.enabled && driveState.mode === 'demo' ? DEMO_MAX_ROUNDS : 0,
+            // Stop during a tool halts before another gateway call.
             // An expired hold halts; a policy turn ends on an unanswered
             // approval; Auto ends at its time ceilings. Never for a turn with
             // no policy (run-status.ts policyStopDirective).
-            stopWhen: turnPolicy.stopWhen,
+            stopWhen: () => (runSignal?.aborted ? 'halt' : turnPolicy.stopWhen()),
           }
         );
         loopStoppedReason = loopResult.stoppedReason;

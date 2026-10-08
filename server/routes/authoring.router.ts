@@ -1546,9 +1546,14 @@ router.post('/docs/from-draft', async (req: Request, res: Response) => {
                    'export' (any status; OWNER, AUTHOR or APPROVER), then the
                    vault ingest's vaultWriteRefusal() on the request's
                    tenant-scope role.
-     assignReview  POST /api/tasks/tasks runs requireEditorAccess, whose role
-                   rule is membership of GOVERNED_WRITE_ROLES on the request's
-                   role — the same set, read the same way, here.
+     assignReview  Send for review. POST /api/tasks/tasks runs
+                   requireEditorAccess, whose role rule is membership of
+                   GOVERNED_WRITE_ROLES on the request's role — the same set,
+                   read the same way, here. Then POST
+                   /documents/:id/request-review, which
+                   authoringObjectAuthorization classifies as 'edit' (wave 2D):
+                   an OWNER or AUTHOR grant, or a global admin, on a document
+                   that is not sealed.
 
    Each entry is `{ allowed, reason }`, or null when this read could not
    determine it (a lookup failed, no tenant scope): the client treats null as
@@ -1656,14 +1661,24 @@ async function callerDocumentAccess(req: Request, tenantId: number, docId: strin
     };
   });
 
-  const assignGate = await settle('editor-access', docId, (): DocumentActGate => {
+  /* Send for review meets two checks, reported in this order so a viewer reads
+     the organization-role sentence first: the role (requireEditorAccess on the
+     task create), then the document. POST /documents/:id/request-review is
+     classified 'edit' by authoringObjectAuthorization since wave 2D: an Owner
+     or Author grant, or a global admin, on a document that is not sealed. Until
+     then this reported the role only, so a member without the grant, or anyone
+     on a FROZEN document, was offered the control and refused after filling it
+     in (docs/evidence/D2-ONE-ANA/2026-10-08/ana-2d-review-loop-closes/). */
+  const assignGate = await settle('editor-access', docId, async (): Promise<DocumentActGate> => {
     const role = String((req as Request & { userRole?: string }).userRole || req.user?.role || '').toLowerCase();
-    if (!role) return null;
-    if (GOVERNED_WRITE_ROLES.has(role)) return { allowed: true, reason: null };
-    return {
-      allowed: false,
-      reason: `Assigning a review needs an editing role in this organization. Your role: ${role}.`,
-    };
+    const roleGate: DocumentActGate = !role
+      ? null
+      : GOVERNED_WRITE_ROLES.has(role)
+        ? { allowed: true, reason: null }
+        : { allowed: false, reason: `Sending for review needs an editing role in this organization. Your role: ${role}.` };
+    if (roleGate && !roleGate.allowed) return roleGate;
+    const edit = await settle('edit', docId, () => decideAuthoringPermission({ pool, principal, scope, action: 'edit' }));
+    return bothGates(roleGate, edit ? objectGate(edit, 'Sending for review', 'an Owner or Author grant') : null);
   });
 
   return {
@@ -3179,6 +3194,146 @@ router.get('/documents/:id/reviews', async (req: Request, res: Response) => {
   }
 });
 
+type ReviewTaskLedgerRow = import('../services/tasking/task-audit').AuditTaskActionParams;
+type ReviewTaskNotice = import('../services/tasking/task-side-effects').TaskEventNotice;
+
+/** What a verdict did to its reviewer's review tasks on the document. */
+interface VerdictTaskClosure {
+  /** Completed by the verdict, in task-id order. */
+  completed: string[];
+  /** Left open, and why: completing it needs the reviewer's signature, or its predecessors are not done. */
+  leftOpen: Array<{ taskId: string; why: 'signature-required' | 'blocked' }>;
+  /** Sent once the verdict has committed. */
+  notices: ReviewTaskNotice[];
+  /** Writes the tasks' ledger rows; called after the verdict's own audit row. */
+  record: () => Promise<void>;
+}
+
+/**
+ * A reviewer's verdict completes their open review tasks on the same document,
+ * on the verdict's own transaction (wave 2D; outside-file request E of wave 2C,
+ * docs/evidence/D2-ONE-ANA/2026-10-08/ana-2d-review-loop-closes/).
+ *
+ * The verdict lives in authoring_reviews. The reviewer's My work task lives in
+ * unified_tasks: SendForReviewDialog.tsx creates it with sourceEntityType
+ * 'authoring_document', sourceEntityId <docId>, taskType 'review' and the
+ * reviewer as assignee. Nothing joined the two, so a verdict left its task open
+ * and the Tasks rail could only reconcile them on screen. The task now moves
+ * through the tasking path's own audited transition, composed as
+ * PATCH /api/regulatory/tasks/:id/status composes it: the state machine
+ * (isLegalTransition), the canonical status write
+ * (unifiedTaskService.updateTaskStatus, a compare-and-set), the completion
+ * cascade (cascadeUnblockOnCompletionInTx) and one `task.transition` lineage
+ * row per move (auditTaskActionInTx). Nothing here writes a task column itself.
+ * The verdict, the task and their ledger rows commit together, or none of them
+ * does.
+ *
+ * Two phases, for lock order. Every task row lock (the task, then its
+ * dependents) is taken here, before the verdict's own audit row takes the
+ * audit-chain lock: the one order every task transaction uses
+ * (taskManagement.routes.ts). The ledger rows are written by `record`, after
+ * the verdict's row, so the trail shows the verdict before the task it closed.
+ *
+ * What it does not do:
+ *   - an approval-gated task that is not yet approved is left open. Completing
+ *     it is the reviewer's §11.50 signature, and a verdict is not one. The
+ *     Tasks rail offers Complete once the verdict exists, and the server takes
+ *     the signature there.
+ *   - a blocked task is left open: its predecessors are not complete.
+ *   - a pending task is started, then completed. The state machine has no
+ *     pending → completed move, and each step gets its own ledger row.
+ *   - a reviewer id that is not a users.id integer has no task (assignee_id is
+ *     an integer column), so nothing is looked up.
+ */
+async function closeReviewTasksOnVerdict(
+  client: Queryable,
+  v: { tenantId: number; docId: string; reviewerId: string; verdict: string; reviewId: string; reason: string | null },
+): Promise<VerdictTaskClosure> {
+  const closure: VerdictTaskClosure = { completed: [], leftOpen: [], notices: [], record: async () => undefined };
+  const actor = /^[1-9][0-9]*$/.test(v.reviewerId) ? Number(v.reviewerId) : NaN;
+  if (!Number.isSafeInteger(actor)) return closure;
+
+  const [{ drizzle }, schema, orm, { default: unifiedTaskService }, { isLegalTransition }, sideEffects, { auditTaskActionInTx }] =
+    await Promise.all([
+      import('drizzle-orm/node-postgres'),
+      import('../../shared/schema'),
+      import('drizzle-orm'),
+      import('../services/unifiedTaskService'),
+      import('../services/tasking/task-state-machine'),
+      import('../services/tasking/task-side-effects'),
+      import('../services/tasking/task-audit'),
+    ]);
+  const { unifiedTasks } = schema;
+  // Drizzle over this transaction's own client: every read, write and ledger
+  // row below runs on the verdict's connection.
+  const tx = drizzle(client as never, { schema });
+  const open = await tx
+    .select({
+      taskId: unifiedTasks.taskId,
+      status: unifiedTasks.status,
+      title: unifiedTasks.title,
+      createdById: unifiedTasks.createdById,
+      approvalRequired: unifiedTasks.approvalRequired,
+      approvalStatus: unifiedTasks.approvalStatus,
+    })
+    .from(unifiedTasks)
+    .where(orm.and(
+      orm.eq(unifiedTasks.organizationId, v.tenantId),
+      orm.eq(unifiedTasks.sourceEntityType, 'authoring_document'),
+      orm.eq(unifiedTasks.sourceEntityId, v.docId),
+      orm.eq(unifiedTasks.taskType, 'review'),
+      orm.eq(unifiedTasks.assigneeId, actor),
+      orm.isNull(unifiedTasks.deletedAt),
+      orm.inArray(unifiedTasks.status, ['pending', 'in-progress', 'review', 'blocked']),
+    ))
+    .orderBy(unifiedTasks.taskId)
+    .for('no key update');
+
+  const ledger: ReviewTaskLedgerRow[] = [];
+  const cause = { cause: 'review-verdict', verdict: v.verdict, reviewId: v.reviewId, docId: v.docId };
+  for (const t of open) {
+    if (t.approvalRequired === true && t.approvalStatus !== 'approved') {
+      closure.leftOpen.push({ taskId: t.taskId, why: 'signature-required' });
+      continue;
+    }
+    const steps = isLegalTransition(t.status, 'completed') ? ['completed'] : t.status === 'pending' ? ['in-progress', 'completed'] : null;
+    if (!steps) {
+      closure.leftOpen.push({ taskId: t.taskId, why: 'blocked' });
+      continue;
+    }
+    let from = t.status;
+    for (const to of steps) {
+      const moved = await unifiedTaskService.updateTaskStatus(t.taskId, to, actor, { organizationId: v.tenantId, expectedStatus: from }, tx);
+      // The row is locked above, so a lost compare-and-set is a defect, not a
+      // race: it rolls the verdict back with it.
+      if (!moved) throw new Error(`Review task ${t.taskId} did not move from ${from} to ${to} under its lock.`);
+      ledger.push({
+        orgId: v.tenantId,
+        userId: actor,
+        command: 'task.transition',
+        taskId: t.taskId,
+        payload: { from, to, ...cause },
+        // The reason the reviewer stated with the verdict (none for an approval
+        // given without one), never a sentence composed here.
+        reason: v.reason,
+        summary: to === 'completed' ? 'Completed by the reviewer’s verdict on the document' : 'Started by the reviewer’s verdict on the document',
+      });
+      from = to;
+    }
+    const cascade = await sideEffects.cascadeUnblockOnCompletionInTx(v.tenantId, t.taskId, { tx, actorUserId: actor });
+    ledger.push(...cascade.ledger);
+    closure.notices.push(...cascade.notices);
+    if (t.createdById && t.createdById !== actor) {
+      closure.notices.push({ organizationId: v.tenantId, recipientUserId: t.createdById, category: 'task_completed', title: `Completed: ${t.title}`, taskId: t.taskId });
+    }
+    closure.completed.push(t.taskId);
+  }
+  closure.record = async () => {
+    for (const entry of ledger) await auditTaskActionInTx(tx, entry);
+  };
+  return closure;
+}
+
 // POST /api/authoring/documents/:id/review - Submit review
 router.post('/documents/:id/review', async (req: Request, res: Response) => {
   try {
@@ -3245,6 +3400,18 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
         );
       }
 
+      const review = result.rows[0];
+      // The reviewer's open review tasks on this document, completed by this
+      // verdict: their row locks now, before the audit-chain lock below.
+      const tasks = await closeReviewTasksOnVerdict(client, {
+        tenantId,
+        docId: String(id),
+        reviewerId,
+        verdict: review_status,
+        reviewId: String(review.id),
+        reason: reviewComments ?? null,
+      });
+
       // Create audit event
       // The reviewer's comments are the stated reason the route requires for a
       // rejection or a change request (and accepts for an approval).
@@ -3252,13 +3419,22 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
         review_status,
         review_comments: reviewComments,
       }, client);
-      return result.rows[0];
+      // The tasks' ledger rows, after the verdict that caused them.
+      await tasks.record();
+      return { review, tasks };
     });
     if (!savedReview) return res.status(404).json({ success: false, error: 'Document not found' });
 
+    // Only now the verdict and the tasks it closed have committed.
+    if (savedReview.tasks.notices.length) {
+      const { notifyTaskEvent } = await import('../services/tasking/task-side-effects');
+      for (const notice of savedReview.tasks.notices) notifyTaskEvent(notice);
+    }
+
     res.json({
       success: true,
-      review: savedReview,
+      review: savedReview.review,
+      tasks: { completed: savedReview.tasks.completed, leftOpen: savedReview.tasks.leftOpen },
       message: `Document ${review_status.replace('_', ' ')} successfully`,
     });
   } catch (error) {
@@ -3375,6 +3551,19 @@ router.post('/documents/:id/request-review', async (req: Request, res: Response)
       const author = String(scope?.createdBy ?? '').trim();
       const self = reviewers.find((r) => author !== '' && String(r.id).trim() === author);
       if (self) return { refused: 'REVIEWER_IS_AUTHOR' as const };
+      /* A request asks for a new review. Asking a reviewer who already recorded
+         a verdict (changes requested, revised, asked again) reopens their row:
+         pending, with no verdict time and no comments. Until 2026-10-08 the
+         ON CONFLICT refreshed requested_at only, so the earlier verdict stayed
+         the current one and the loop could not be closed (wave 2D, request D
+         of wave 2C). The earlier verdict is not lost: its own document_reviewed
+         audit row keeps it, untouched, and the verdicts read here are named on
+         this request's audit row. */
+      const reopened = await client.query(
+        `SELECT id, reviewer_id, review_status, reviewed_at FROM authoring_reviews
+          WHERE doc_id = $1 AND tenant_id = $2 AND reviewer_id = ANY($3::text[]) AND review_status <> 'pending'`,
+        [id, tenantId, reviewers.map(r => String(r.id).trim())],
+      );
       const reviews = [];
       for (const reviewer of reviewers) {
         const result = await client.query(
@@ -3382,7 +3571,8 @@ router.post('/documents/:id/request-review', async (req: Request, res: Response)
            (id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, requested_by, tenant_id, created_at)
            VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, NOW())
            ON CONFLICT (doc_id, reviewer_id, tenant_id)
-           DO UPDATE SET requested_at = NOW(), requested_by = $6
+           DO UPDATE SET requested_at = NOW(), requested_by = $6, review_status = 'pending',
+                         reviewed_at = NULL, review_comments = NULL, updated_at = NOW()
            RETURNING *`,
           [crypto.randomUUID(), id, String(reviewer.id).trim(), reviewer.name, reviewer.email, requestedBy, tenantId],
         );
@@ -3392,6 +3582,9 @@ router.post('/documents/:id/request-review', async (req: Request, res: Response)
       const grants = await grantRequestedReviewers({ client, req, docId: String(id), tenantId, scope, principal, reviews, reason: statedReason.reason });
       await createAuditTrail(req, id, null, 'review_requested', null, null, statedReason.reason, {
         reviewerIds: reviews.map(r => r.reviewer_id), reviewIds: reviews.map(r => r.id), grants,
+        reopenedVerdicts: reopened.rows.map((r: { id: string; reviewer_id: string; review_status: string; reviewed_at: unknown }) => ({
+          reviewId: r.id, reviewerId: r.reviewer_id, verdict: r.review_status, reviewedAt: r.reviewed_at,
+        })),
       }, client);
       return { reviews, grants };
     });
