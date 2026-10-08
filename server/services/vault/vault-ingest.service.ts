@@ -55,7 +55,7 @@ import {
 } from './vault-ingest-discard.js';
 import { vaultWriteRefusal } from './vault-write-authority.js';
 import { readRecordedVersion, reuploadChanges, reuploadDiffers, type ReuploadChange, type ReuploadDiffer } from './vault-reupload.js';
-import { checkInArgumentRefusal, inheritedPlacement, planCheckIn, recheckUnderLock } from './vault-version-checkin.js';
+import { checkInArgumentRefusal, currentVersionOfCode, inheritedPlacement, planCheckIn, recheckUnderLock } from './vault-version-checkin.js';
 import {
   classifyForFiling,
   filingVocabularyRefusal,
@@ -151,7 +151,20 @@ export type VaultIngestResult =
       /** Present when these bytes were already recorded here (vault-reupload.ts). */
       reupload?: { unchanged: boolean; changes: ReuploadChange[]; differs: ReuploadDiffer[] };
     }
-  | { ok: false; status: number; code: string; message: string };
+  | {
+      ok: false;
+      status: number;
+      code: string;
+      message: string;
+      /**
+       * VERSION_CONTENT_CONFLICT only: the current version at the conflicting
+       * code, which a new version of these bytes is added to (a check-in). Named
+       * so a surface can offer it rather than leave the file at a dead end
+       * (QA-2026-10-08). Absent when no document holds the code.
+       */
+      headDocumentId?: string;
+      headVersion?: string;
+    };
 
 /**
  * Admit a document into the governed vault. Must be called inside the acting
@@ -578,7 +591,9 @@ async function admitVaultDocument(
       [
         args.programId,
         documentCode,
-        args.documentTitle,
+        // A new version is the same document as its head: its title too, not the
+        // title of the upload that adds it (a data-room file carries a derived one).
+        checkIn ? (checkIn.head.document_title ?? args.documentTitle) : args.documentTitle,
         // A new version is the same kind of document as its head.
         checkIn?.head.document_type ?? args.documentType,
         version,
@@ -618,6 +633,11 @@ async function admitVaultDocument(
        trail says was admitted. Refuse, and say what to do: a new version is a
        new record, not an edit of the old one. */
     if (!doc) {
+      /* Name the current version at this code, so the caller can offer the new
+         version rather than refuse with no way forward. A data-room filing and a
+         Vault upload of the same file name reach this same code (vault-file-upload-
+         to-vault.ts), so both get the same offer. */
+      const head = await currentVersionOfCode(client, { organizationId: orgId, programId: args.programId, documentCode });
       await client.query('ROLLBACK');
       return {
         ok: false, status: 409, code: 'VERSION_CONTENT_CONFLICT',
@@ -625,6 +645,7 @@ async function admitVaultDocument(
           `A different document is already recorded at code "${documentCode}" ` +
           `version "${version}" for this program. Nothing was changed. ` +
           'Add it as a new version of that document instead of replacing the recorded one.',
+        ...(head ? { headDocumentId: head.id, headVersion: head.version } : {}),
       };
     }
 

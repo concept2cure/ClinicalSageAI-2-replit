@@ -33,6 +33,8 @@ export interface CheckInQueryable {
 export interface CheckInHead {
   id: string;
   document_code: string;
+  /** The document's own title: a new version keeps it, not the title of the upload that adds it. */
+  document_title: string | null;
   document_type: string | null;
   version: string;
   folder_id: string | null;
@@ -82,7 +84,7 @@ export async function planCheckIn(
   if (!UUID_RE.test(p.headId)) return notFound;
 
   const { rows } = await q.query(
-    `SELECT d.id::text AS id, d.document_code, d.document_type, d.version, d.folder_id, d.evidence_kind, d.ctd_section,
+    `SELECT d.id::text AS id, d.document_code, d.document_title, d.document_type, d.version, d.folder_id, d.evidence_kind, d.ctd_section,
             d.placement_status, d.placement_confidence, d.placement_rationale, d.placed_by,
             d.classification, d.retention_policy
        FROM vault.documents d
@@ -183,6 +185,37 @@ export async function planCheckIn(
   }
 
   return { ok: true, head, version };
+}
+
+/**
+ * The current version of the document recorded at `documentCode` in this
+ * program and organization: the end of its successor chain, which is the one a
+ * new version is added to (planCheckIn refuses any other). Used when an upload
+ * conflicts with a recorded version, so the refusal can name what to add to.
+ * Null when no document of the caller's holds that code.
+ *
+ * Read-only. A conflict that names another document's version is no offer.
+ */
+export async function currentVersionOfCode(
+  q: CheckInQueryable,
+  p: { organizationId: number; programId: string; documentCode: string },
+): Promise<{ id: string; version: string } | null> {
+  const { rows } = await q.query(
+    `SELECT d.id::text AS id, d.version
+       FROM vault.documents d
+      WHERE d.program_id = $1::uuid AND d.organization_id = $2 AND d.document_code = $3
+        AND d.deleted_at IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM vault.documents s
+           WHERE s.supersedes_id = d.id AND s.deleted_at IS NULL
+             AND s.program_id = d.program_id AND s.organization_id = d.organization_id
+             AND s.document_code IS NOT DISTINCT FROM d.document_code
+        )
+      ORDER BY d.created_at DESC
+      LIMIT 1`,
+    [p.programId, p.organizationId, p.documentCode],
+  );
+  return (rows[0] as { id: string; version: string } | undefined) ?? null;
 }
 
 /**

@@ -1,0 +1,361 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > the next version (FD1: sequential majors) > is the next major, and nothing for a version that is not a number 3ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > planCheckIn without the program-hash unique index > refuses bytes the document already holds, naming the version 18ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > planCheckIn without the program-hash unique index > names the end of the chain when an older version is named 6ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > planCheckIn without the program-hash unique index > does not find another organization's version, nor a malformed id 7ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > planCheckIn without the program-hash unique index > assigns the next version to the current head 13ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > currentVersionOfCode: the head a new version is offered against (QA-2026-10-08) > is the end of the successor chain at that code 7ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > currentVersionOfCode: the head a new version is offered against (QA-2026-10-08) > is the one document at the code when nothing supersedes it 2ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > currentVersionOfCode: the head a new version is offered against (QA-2026-10-08) > is null when no document holds the code, and never another organization's document 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > offers a checkbox only for sources not yet filed 185ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > files the chosen sources and answers for each one, saying the batch was not complete 420ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > a refusal of the whole request says nothing was filed, and gives the reason 177ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > a dropped connection says the outcome is not known 175ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > can select every source not yet filed in one step 133ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > a revised file refused as a conflict is offered as the next version (QA-2026-10-08) > offers the recorded document, and files the source as its next version 281ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > a revised file refused as a conflict is offered as the next version (QA-2026-10-08) > a refusal that is not a conflict offers no new version 224ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > already in the Vault names the version and what replaced it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > a source the classifier could not place says it is not in a folder yet 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > a complete batch has no caveat 0ms
+stderr | server/routes/__tests__/vault-data-room-file.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/vault-data-room-file.test.ts
+{
+  "timestamp": "2026-10-08T01:20:02.608Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/vault-data-room-file.test.ts
+{
+  "timestamp": "2026-10-08T01:20:03.848Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:20:03.848Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/vault-data-room-file.test.ts
+{
+  "timestamp": "2026-10-08T01:20:03.848Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/vault-data-room-file.test.ts > each source is filed on its own > an unexpected failure on one source is that source’s refusal, not the batch’s
+{
+  "timestamp": "2026-10-08T01:20:03.972Z",
+  "level": "error",
+  "message": "[vault-data-room-filing] data room filing failed for one source",
+  "context": {
+    "sourceId": 1,
+    "err": "storage offline"
+  }
+}
+
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > each source is filed on its own > a 503 from the scanner on the second source leaves the first filed, and the batch is not complete 43ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > each source is filed on its own > an unexpected failure on one source is that source’s refusal, not the batch’s 7ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > each source is filed on its own > every source filed is complete 6ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > a revised file is offered as the next version of the document it is named for (QA-2026-10-08) > a source the person names a version of is filed as a check-in to that document, and no other is 4ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > a revised file is offered as the next version of the document it is named for (QA-2026-10-08) > a refused conflict says which current version it can be added to 5ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > a revised file is offered as the next version of the document it is named for (QA-2026-10-08) > a refusal with no version to offer carries no offer 5ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > the role is checked first > a viewer is refused 403 before any source is read 7ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > one upload-to-Vault orchestration > only vault-file-upload-to-vault.ts both loads an upload and admits it 1072ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > one upload-to-Vault orchestration > AnA’s filing tool and the data room both call it 2ms
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project
+{
+  "timestamp": "2026-10-08T01:20:06.450Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row
+{
+  "timestamp": "2026-10-08T01:20:06.457Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row
+{
+  "timestamp": "2026-10-08T01:20:06.459Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault file persistence failed — refusing to record the document",
+  "context": {
+    "reason": "bucket unreachable",
+    "contentHash": "f3c9d586682936c8987ce11239d2d886f1b9710840ddcf4d36211f4e6a3d3398"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses a programme the caller does not own, without touching storage
+{
+  "timestamp": "2026-10-08T01:20:06.463Z",
+  "level": "warn",
+  "message": "[vault-ingest] Vault ingest denied: program not owned by caller organization",
+  "context": {
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed
+{
+  "timestamp": "2026-10-08T01:20:06.465Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed
+{
+  "timestamp": "2026-10-08T01:20:06.467Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused: content already recorded in this program",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed
+{
+  "timestamp": "2026-10-08T01:20:06.468Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed
+{
+  "timestamp": "2026-10-08T01:20:06.469Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it
+{
+  "timestamp": "2026-10-08T01:20:06.471Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "chain tip locked"
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it
+{
+  "timestamp": "2026-10-08T01:20:06.471Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates
+{
+  "timestamp": "2026-10-08T01:20:06.473Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes
+{
+  "timestamp": "2026-10-08T01:20:06.477Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved
+{
+  "timestamp": "2026-10-08T01:20:06.479Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "chain tip locked"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved
+{
+  "timestamp": "2026-10-08T01:20:06.480Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest could not remove refused bytes from storage",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal
+{
+  "timestamp": "2026-10-08T01:20:06.481Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest could not remove refused bytes from storage",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7,
+    "err": "bucket unreachable"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted
+{
+  "timestamp": "2026-10-08T01:20:06.482Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "connection reset"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted
+{
+  "timestamp": "2026-10-08T01:20:06.482Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest reported a failure, but a record holds its stored bytes — kept",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > the INSERT computes retention_until from the named, active policy, bound to the same parameter as retention_policy, and a re-upload does not restart a clock that has started
+{
+  "timestamp": "2026-10-08T01:20:06.483Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > dates from the organisation's own period, else the 25-year default, and never earlier than a named policy (ADR-0014 §6)
+{
+  "timestamp": "2026-10-08T01:20:06.485Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a different file at an occupied code is refused with the document it can be added to (QA-2026-10-08) > names the current version at that code, so the screen can offer a new version of it
+{
+  "timestamp": "2026-10-08T01:20:06.486Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a different file at an occupied code is refused with the document it can be added to (QA-2026-10-08) > names no document when none holds the code, and the refusal is otherwise unchanged
+{
+  "timestamp": "2026-10-08T01:20:06.487Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a check-in keeps the document it adds to: its code, title and filing (QA-2026-10-08) > the new version takes the head's code and title, not the title the data room derived from the file name
+{
+  "timestamp": "2026-10-08T01:20:06.489Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-2",
+    "code": "Protocol-Stability.pdf",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project 10ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a role that may not write the Vault is refused before anything is stored > a viewer: 403, nothing stored, nothing written 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a role that may not write the Vault is refused before anything is stored > no role at all: refused the same way 0ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses a programme the caller does not own, without touching storage 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses with no organization context at all 0ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates 4ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > the INSERT computes retention_until from the named, active policy, bound to the same parameter as retention_policy, and a re-upload does not restart a clock that has started 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > dates from the organisation's own period, else the 25-year default, and never earlier than a named policy (ADR-0014 §6) 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a different file at an occupied code is refused with the document it can be added to (QA-2026-10-08) > names the current version at that code, so the screen can offer a new version of it 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a different file at an occupied code is refused with the document it can be added to (QA-2026-10-08) > names no document when none holds the code, and the refusal is otherwise unchanged 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a check-in keeps the document it adds to: its code, title and filing (QA-2026-10-08) > the new version takes the head's code and title, not the title the data room derived from the file name 2ms
+ ✓ shared/constants/domain/__tests__/vault-document-code.test.ts > vaultDocumentCodeForFile > keeps the extension: the code is the name the file was uploaded under 2ms
+ ✓ shared/constants/domain/__tests__/vault-document-code.test.ts > vaultDocumentCodeForFile > keeps a name with spaces as named, rather than rewriting it 0ms
+ ✓ shared/constants/domain/__tests__/vault-document-code.test.ts > vaultDocumentCodeForFile > keeps the extension, so Protocol.pdf and Protocol.docx are different codes 1ms
+ ✓ shared/constants/domain/__tests__/vault-document-code.test.ts > vaultDocumentCodeForFile > falls back only when there is no name at all 0ms
+ ✓ server/services/vault/__tests__/vault-file-upload-to-vault.test.ts > a file is named the same whichever route admits it > the data room files it under the name the Vault upload sends, extension included 2ms
+ ✓ server/services/vault/__tests__/vault-file-upload-to-vault.test.ts > a file is named the same whichever route admits it > a name with spaces is kept as the uploader named it 1ms
+ ✓ server/services/vault/__tests__/vault-file-upload-to-vault.test.ts > a file is named the same whichever route admits it > an explicit code the caller gives is used as given 0ms
+ ✓ server/services/vault/__tests__/vault-file-upload-to-vault.test.ts > a check-in names the document it adds to > passes the named head through to the ingest, which takes the code and filing from it 0ms
+ ✓ server/services/vault/__tests__/vault-file-upload-to-vault.test.ts > a check-in names the document it adds to > a file that is not a check-in carries no head 0ms
+
+ Test Files  6 passed (6)
+      Tests  57 passed (57)
+   Start at  01:19:45
+   Duration  21.78s (transform 6.01s, setup 420ms, import 9.66s, tests 8.87s, environment 765ms)
+

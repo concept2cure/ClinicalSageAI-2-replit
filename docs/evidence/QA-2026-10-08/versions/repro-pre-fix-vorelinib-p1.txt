@@ -1,0 +1,6 @@
+STEP1 Vault upload A (Protocol-Stability.pdf, bytes A)
+  HTTP 201
+  {"success":true,"document":{"id":"68687c91-6bfb-4c48-808c-36b12def5cf5","programId":"50c41bb6-5796-4dc6-a848-72e4d1246ebd","documentCode":"Protocol-Stability.pdf","documentTitle":"Protocol-Stability","documentType":"OTHER","version":"1.0","fileName":"Protocol-Stability.pdf","fileSize":625,"mimeType":"application/pdf","contentHash":"b0fda7fb90a3ea58b27e5516247bab6c42b0945da29bf50b4589fbad964cc758","processingStatus":"PENDING","hasExtractedText":true,"wordCount":10,"createdAt":"2026-10-08T01:12:19.267Z","updatedAt":"2026-10-08T01:12:19.267Z"},"filing":{"view":"pharma","folderId":"module-3","evidenceKind":"report","ctdSection":"3.2.P.8","placementStatus":"suggested","confidence":"high","rationa
+STEP2 Vault upload B (same name, DIFFERENT bytes B)
+  HTTP 409
+  {"error":{"code":"VERSION_CONTENT_CONFLICT","message":"A different document is already recorded at code \"Protocol-Stability.pdf\" version \"1.0\" for this program. Nothing was changed. Add it as a new version of that document instead of replacing the recorded one."}}

@@ -104,6 +104,38 @@ describe('each source is filed on its own', () => {
   });
 });
 
+describe('a revised file is offered as the next version of the document it is named for (QA-2026-10-08)', () => {
+  const HEAD = '44444444-4444-4444-8444-444444444444';
+  const CONFLICT = 'A different document is already recorded at code "Protocol-Stability.pdf" version "1.0" for this program. Nothing was changed. Add it as a new version of that document instead of replacing the recorded one.';
+
+  it('a source the person names a version of is filed as a check-in to that document, and no other is', async () => {
+    fileUploadIntoVault.mockResolvedValueOnce(filed('doc-1')).mockResolvedValueOnce(filed('doc-2'));
+    const res = await request(app('admin'))
+      .post(`/api/c2c/project-vault/${PROGRAM}/data-room/file`)
+      .send({ sourceIds: [1, 2], newVersionOf: { '1': HEAD } });
+    expect(res.status).toBe(200);
+    expect(fileUploadIntoVault.mock.calls.map(([a]) => a.supersedesDocumentId)).toEqual([HEAD, undefined]);
+  });
+
+  it('a refused conflict says which current version it can be added to', async () => {
+    fileUploadIntoVault
+      .mockResolvedValueOnce({ ok: false, status: 409, code: 'VERSION_CONTENT_CONFLICT', message: CONFLICT, headDocumentId: HEAD, headVersion: '2.0' })
+      .mockResolvedValueOnce(filed('doc-2'));
+    const res = await post('admin', [1, 2]);
+    expect(res.body.items[0]).toEqual({
+      sourceId: 1, outcome: 'refused', code: 'VERSION_CONTENT_CONFLICT', message: CONFLICT, headDocumentId: HEAD, headVersion: '2.0',
+    });
+    expect(res.body.complete).toBe(false);
+  });
+
+  it('a refusal with no version to offer carries no offer', async () => {
+    fileUploadIntoVault.mockResolvedValueOnce({ ok: false, status: 409, code: 'SOURCE_BYTES_CHANGED', message: 'Capture the file again.' })
+      .mockResolvedValueOnce(filed('doc-2'));
+    const res = await post('admin', [1, 2]);
+    expect(res.body.items[0]).not.toHaveProperty('headDocumentId');
+  });
+});
+
 describe('the role is checked first', () => {
   it('a viewer is refused 403 before any source is read', async () => {
     const res = await post('viewer', [1, 2]);

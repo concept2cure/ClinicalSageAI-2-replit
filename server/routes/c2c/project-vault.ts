@@ -1995,6 +1995,8 @@ export default function createProjectVaultRoutes(): Router {
         userId: (req as any).user?.id ?? null,
         programId: String(req.params.id),
         sourceIds: (req.body ?? {}).sourceIds,
+        // Sources the person adds as the next version of a named document (QA-2026-10-08).
+        newVersionOf: (req.body ?? {}).newVersionOf,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
       });

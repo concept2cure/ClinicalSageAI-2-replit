@@ -1,0 +1,12 @@
+STEP3 Data room: capture B (bytes B) and File into Vault [capture]
+  HTTP 200
+  {"fileId":"file_1791421942953_vahq7g","sourceId":16,"dataRoom":{"recorded":true}}
+STEP3 Data room: capture B (bytes B) and File into Vault [File into Vault]
+  HTTP 200
+  {"success":true,"complete":true,"items":[{"sourceId":16,"outcome":"filed","documentId":"e11a7095-15be-48e2-abc0-ca07384ede1e","version":"1.0","placementStatus":"suggested","folderLabel":"Module 3 · Quality","needsReview":false}]}
+STEP4 Data room: capture REVISED C (bytes C) and File into Vault [capture]
+  HTTP 200
+  {"fileId":"file_1791421945480_g30itt","sourceId":17,"dataRoom":{"recorded":true}}
+STEP4 Data room: capture REVISED C (bytes C) and File into Vault [File into Vault]
+  HTTP 200
+  {"success":true,"complete":false,"items":[{"sourceId":17,"outcome":"refused","code":"VERSION_CONTENT_CONFLICT","message":"A different document is already recorded at code \"Protocol-Stability\" version \"1.0\" for this program. Nothing was changed. Add it as a new version of that document instead of replacing the recorded one."}]}

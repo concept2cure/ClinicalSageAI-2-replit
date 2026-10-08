@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
-import { nextMajorVersion, planCheckIn } from '../vault-version-checkin';
+import { currentVersionOfCode, nextMajorVersion, planCheckIn } from '../vault-version-checkin';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const ORG = 7;
@@ -30,7 +30,7 @@ beforeAll(async () => {
     CREATE SCHEMA vault;
     CREATE TABLE vault.documents (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      program_id UUID NOT NULL, organization_id INTEGER, document_code TEXT, document_type TEXT, version TEXT,
+      program_id UUID NOT NULL, organization_id INTEGER, document_code TEXT, document_title TEXT, document_type TEXT, version TEXT,
       content_hash CHARACTER(64) NOT NULL, supersedes_id UUID, deleted_at TIMESTAMPTZ,
       folder_id TEXT, evidence_kind TEXT, ctd_section TEXT, placement_status TEXT NOT NULL DEFAULT 'unfiled',
       placement_confidence TEXT, placement_rationale TEXT, placed_by INTEGER,
@@ -80,5 +80,29 @@ describe('planCheckIn without the program-hash unique index', () => {
     const v1 = await version('DOC-D', '1.0', H('1'));
     const plan = await planCheckIn(q, { organizationId: ORG, programId: PROGRAM, headId: v1, contentHash: H('2') });
     expect(plan).toMatchObject({ ok: true, version: '2.0', head: { id: v1, document_code: 'DOC-D' } });
+  });
+});
+
+describe('currentVersionOfCode: the head a new version is offered against (QA-2026-10-08)', () => {
+  /* A conflict at (program, code, version) must name the version a new one is
+     added to. That is the end of the chain at that code, not the row that
+     happens to hold the conflicting version number. */
+  const at = (documentCode: string) => ({ organizationId: ORG, programId: PROGRAM, documentCode });
+
+  it('is the end of the successor chain at that code', async () => {
+    const v1 = await version('CUR-A.pdf', '1.0', H('5'));
+    const v2 = await version('CUR-A.pdf', '2.0', H('6'), v1);
+    expect(await currentVersionOfCode(q, at('CUR-A.pdf'))).toEqual({ id: v2, version: '2.0' });
+  });
+
+  it('is the one document at the code when nothing supersedes it', async () => {
+    const v1 = await version('CUR-B.pdf', '1.0', H('7'));
+    expect(await currentVersionOfCode(q, at('CUR-B.pdf'))).toEqual({ id: v1, version: '1.0' });
+  });
+
+  it("is null when no document holds the code, and never another organization's document", async () => {
+    await version('CUR-C.pdf', '1.0', H('8'), null, 99);
+    expect(await currentVersionOfCode(q, at('CUR-C.pdf'))).toBeNull();
+    expect(await currentVersionOfCode(q, at('CUR-NONE.pdf'))).toBeNull();
   });
 });
