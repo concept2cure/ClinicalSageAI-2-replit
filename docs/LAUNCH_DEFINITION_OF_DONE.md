@@ -241,6 +241,45 @@ filing block's "Looks like" line.
 Superseded versions, retired sources and withdrawn sources are not counted as records (`cc96676e3`), so the project
 home agrees with the Vault tree and the Data room.
 
+### P-18 — Signing authority is assigned, by role, to named people
+
+The signing policy stays as the security review left it (admin, approver, reviewer; P1-44b): a manager's password does
+not make a signature. The QA walk found the consequence: `approver` and `reviewer` could not be assigned, so only an
+administrator could sign anything, and an administrator who authored a document could not approve it. An administrator
+can now assign `approver` and `reviewer` in Admin Access, with a reason, like every membership change. An approver may do
+everything a manager may, and sign; a reviewer may do everything a member may, and sign. An author still cannot approve
+their own document. A deployment may still widen the policy with `ESIGNATURE_SIGNING_ROLES`.
+
+### P-19 — Every program a client can open has its project record
+
+Programs created after the dossier anchor existed (BX-256, Vorelinib in QA) have no `projects` row, so the schedule,
+tasks and AnA's project context answer "no record" for them. Intake creates the anchor in the same transaction as the
+program. Existing unanchored programs are anchored by an idempotent statement in the migration set (Rule 1), not by a
+laptop script.
+
+### P-20 — A safety report never infers what nobody stated
+
+The onset date is stated either as a date or explicitly as unknown; a blank is refused. When expectedness is not
+recorded, the expedited-reporting verdict is "not determined: expectedness not assessed", never "not reportable". A
+missing determination produces no verdict at all, so it cannot become an unsent 15-day report.
+
+### P-21 — Regulated choices start unstated
+
+Every select whose value lands in a regulated record starts on "Not stated — choose" and sends nothing until chosen. This
+covers safety-report determinations, the briefing-book meeting type, the LOA file type, the amendment category and the
+forms panel's phase. The filing-target picker pre-selects a sequence only when exactly one is open.
+
+### P-22 — Approval gates the release, not the technical validation
+
+A Vault leaf whose version is not approved and current blocks Freeze, dispatch and transmit. At Validated it is reported
+as a warning ("not yet approved"), not an error. Publishers validate while final approvals are still being collected, and
+the release gates already refuse an unapproved leaf.
+
+### P-23 — A signature serves only the act it was given for
+
+A signature collected for a freeze or transmit that the server then refuses is void. It cannot be reused later when the
+gate clears. Transmit checks a typed application number against the program's recorded one, as the export already does.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one
