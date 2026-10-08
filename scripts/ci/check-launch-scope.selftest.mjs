@@ -51,15 +51,21 @@ console.log('✅ selftest: gate exits 1 and names Vault.tsx / SELFTEST_FAKE_ROWS
 
 // ── Rule 2b: a launch module missing from 20260810's keep-list ─────────────
 // The regression found 2026-09-22: 'ectd-publishing' was seeded (so rule 2
-// passed) and re-deprecated on every deploy. Remove it from a copy of the file
-// and require the gate to name it.
+// passed) and re-deprecated on every deploy. That module left the launch catalog
+// by the 2026-10-08 CPO decision; use the still-launch 'ectd-compile' to exercise
+// the same failure, without restoring a retired surface or changing the gate.
+// Remove it from a copy of the file and require the gate to name it.
 const reconcileSrc = path.join(ROOT, 'db/migrations/20260810_reconcile_module_catalog.sql');
 const reconcileCopy = path.join(tmp, '20260810_reconcile_module_catalog.sql');
-const stripped = fs
-  .readFileSync(reconcileSrc, 'utf8')
+const reconcileText = fs.readFileSync(reconcileSrc, 'utf8');
+const stripped = reconcileText
   .split('\n')
-  .filter((line) => !/^\s*'ectd-publishing',/.test(line))
+  .filter((line) => !/^\s*'ectd-compile',/.test(line))
   .join('\n');
+if (stripped === reconcileText) {
+  console.error("selftest FAILED: could not remove 'ectd-compile' from the replay fixture");
+  process.exit(1);
+}
 fs.writeFileSync(reconcileCopy, stripped);
 const replay = run({ LAUNCH_SCOPE_RECONCILE_FILE: reconcileCopy });
 let replayParsed;
@@ -70,14 +76,14 @@ try {
   process.exit(1);
 }
 const replayCaught = replayParsed.findings.some(
-  (f) => f.rule === 'survives-replay' && /'ectd-publishing'/.test(f.detail),
+  (f) => f.rule === 'survives-replay' && /'ectd-compile'/.test(f.detail),
 );
 if (replay.status === 0 || !replayCaught) {
   console.error('selftest FAILED: the gate did not refuse a launch module missing from the 20260810 keep-list');
   console.error(JSON.stringify(replayParsed, null, 2));
   process.exit(1);
 }
-console.log("✅ selftest: gate exits 1 and names 'ectd-publishing' when it is missing from the 20260810 keep-list");
+console.log("✅ selftest: gate exits 1 and names 'ectd-compile' when it is missing from the 20260810 keep-list");
 
 // ── Rule 2c: a routable id the server never gives a verdict ────────────────
 // Route a new, unregistered key to a real component in a copy of

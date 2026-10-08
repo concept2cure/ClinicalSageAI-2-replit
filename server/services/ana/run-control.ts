@@ -162,6 +162,8 @@ export interface RunHandle {
   wake(timeoutMs: number): Promise<void>;
   /** Refresh `heartbeat_at` so the reaper does not orphan a live run. */
   heartbeat(round: number): Promise<void>;
+  /** Present only without a durable run row; a dropped socket can still stop local work. */
+  abortLocally?: () => void;
 }
 
 /** This process, for `owner_instance`. */
@@ -293,7 +295,7 @@ export function localOnlyRunHandle(): RunHandle {
     wake: async () => {},
     heartbeat: async () => {},
     abortLocally: () => controller.abort(),
-  } as RunHandle & { abortLocally: () => void };
+  };
 }
 
 /**

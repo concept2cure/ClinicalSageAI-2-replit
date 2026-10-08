@@ -1,0 +1,54 @@
+2026-10-08T03:40:59.5943628Z   Scanning 2 files with 2 ts rules.
+2026-10-08T03:41:01.2413005Z
+2026-10-08T03:41:01.2413397Z
+2026-10-08T03:41:01.2414012Z ┌─────────────────┐
+2026-10-08T03:41:01.2414441Z │ 7 Code Findings │
+2026-10-08T03:41:01.2414857Z └─────────────────┘
+2026-10-08T03:41:01.2415271Z
+2026-10-08T03:41:01.2416199Z     docs/evidence/QA-2026-10-08/roles/repro-scripts/send-for-review.mjs
+2026-10-08T03:41:01.2417290Z      ❱ javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring
+2026-10-08T03:41:01.2418106Z           ❰❰ Blocking ❱❱
+2026-10-08T03:41:01.2418865Z           Detected string concatenation with a non-literal variable in a util.format / console.log function.
+2026-10-08T03:41:01.2420045Z           If an attacker injects a format specifier in the string, it will forge the log message. Try to use
+2026-10-08T03:41:01.2420774Z           constant values for the format string.
+2026-10-08T03:41:01.2421408Z           Details: https://sg.run/7Y5R
+2026-10-08T03:41:01.2421930Z
+2026-10-08T03:41:01.2422552Z            60┆ console.info(`[${TAG || EMAIL}] versions heading present:`, hasVersions > 0);
+2026-10-08T03:41:01.2423564Z             ⋮┆----------------------------------------
+2026-10-08T03:41:01.2424149Z            61┆ if (hasVersions) console.info(`[${TAG || EMAIL}] versions context:`, await page.evaluate(()
+2026-10-08T03:41:01.2424769Z                => { const h = [...document.querySelectorAll('*')].find((e) => e.childNodes.length &&
+2026-10-08T03:41:01.2425654Z                [...e.childNodes].some((n) => n.nodeType === 3 && /^Versions/.test(n.textContent.trim()))
+2026-10-08T03:41:01.2426555Z                && e.innerText && e.innerText.length < 4000); return h ? h.innerText.replace(/\s+/g, '
+2026-10-08T03:41:01.2427214Z                ').slice(0, 600) : null; }));
+2026-10-08T03:41:01.2427675Z             ⋮┆----------------------------------------
+2026-10-08T03:41:01.2428106Z            64┆ console.info(`[${TAG || EMAIL}] role message:`, roleMessage);
+2026-10-08T03:41:01.2428527Z             ⋮┆----------------------------------------
+2026-10-08T03:41:01.2429031Z            65┆ console.info(`[${TAG || EMAIL}] send-for-review controls:`, JSON.stringify(before));
+2026-10-08T03:41:01.2429512Z             ⋮┆----------------------------------------
+2026-10-08T03:41:01.2430010Z            79┆ console.info(`[${TAG || EMAIL}] alerts after confirm:`, JSON.stringify(confirmAlerts));
+2026-10-08T03:41:01.2430487Z             ⋮┆----------------------------------------
+2026-10-08T03:41:01.2431001Z            82┆ console.info(`[${TAG || EMAIL}] api errors:`, JSON.stringify(traffic.filter((t) => t.status
+2026-10-08T03:41:01.2431588Z                >= 400).map((t) => ({ m: t.method, p: t.path, s: t.status, b: t.body.slice(0, 120) })),
+2026-10-08T03:41:01.2432065Z                null, 1));
+2026-10-08T03:41:01.2432462Z             ⋮┆----------------------------------------
+2026-10-08T03:41:01.2432982Z            83┆ console.info(`[${TAG || EMAIL}] lifecycle requests:`, JSON.stringify(lifecycle, null, 1));
+2026-10-08T03:41:01.2433383Z
+2026-10-08T03:41:01.2620734Z
+2026-10-08T03:41:01.2621273Z
+2026-10-08T03:41:01.2621717Z ┌──────────────┐
+2026-10-08T03:41:01.2622101Z │ Scan Summary │
+2026-10-08T03:41:01.2622483Z └──────────────┘
+2026-10-08T03:41:01.2622951Z ✅ Scan completed successfully.
+2026-10-08T03:41:01.2623542Z  • Findings: 7 (7 blocking)
+2026-10-08T03:41:01.2624056Z  • Rules run: 213
+2026-10-08T03:41:01.2624563Z  • Targets scanned: 217
+2026-10-08T03:41:01.2625077Z  • Parsed lines: ~100.0%
+2026-10-08T03:41:01.2625861Z  • Scan skipped:
+2026-10-08T03:41:01.2626457Z    ◦ Files matching .semgrepignore patterns: 1
+2026-10-08T03:41:01.2627322Z  • Scan was limited to files changed since baseline commit.
+2026-10-08T03:41:01.2628304Z  • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+2026-10-08T03:41:01.2628849Z Ran 213 rules on 217 files: 7 findings.
+2026-10-08T03:41:01.5108852Z ##[error]Semgrep found what ca051e95053a2ef160183d6456e3ca82b8ebafa3 did not have (listed above). Fix it, or mark a reviewed false positive inline with 'nosemgrep: <rule-id>' and the reason.
+2026-10-08T03:41:01.5124668Z ##[error]Process completed with exit code 1.
+2026-10-08T03:41:01.5176355Z ##[group]Run status=0
+2026-10-08T03:41:01.5176655Z status=0

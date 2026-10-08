@@ -1377,8 +1377,11 @@ export function V2App() {
         /* Not on the conversation screen: its composer steers the run in
            flight there, and a second box beside it was a third place to type
            to AnA on one screen (docs/design/ONE_ANA_ONE_CANVAS.md, slice 4). */
+        /* Whichever chat drives: the shell's own drive hands the strip its
+           controls too, so "controls present" never meant "another chat"
+           (found in a real browser, 2026-10-08). */
         onSteer={
-          ownsConversation && !driveControlsRef.current
+          ownsConversation
             ? undefined
             : (m) => (driveControlsRef.current ? driveControlsRef.current.interject(m) : anaChat.interject(m))
         }

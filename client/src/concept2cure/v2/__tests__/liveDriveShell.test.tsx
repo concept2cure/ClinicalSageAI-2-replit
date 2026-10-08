@@ -591,3 +591,21 @@ describe('F / G — the strip names a screen only once it has opened, and words 
     expect(a.reportScreen.mock.calls[0][0]).toContain('Opening the CMC / Quality (Module 3) screen did not happen');
   });
 });
+
+/* docs/design/ONE_ANA_ONE_CANVAS.md, slice 4, found in a real browser on
+   2026-10-08 (docs/evidence/D2-ONE-ANA/2026-10-08/ana-9-rail-goes/screens/):
+   with Live Drive on, the conversation screen still showed the drive strip's
+   own "Ask or steer AnA…" box beside the composer that steers the run. The
+   shell's own drive hands the strip its controls, and the guard read any
+   controls as "another chat is driving". On a screen that owns its
+   conversation the strip draws no box, whichever chat drives. */
+describe('one box: the drive strip draws no steer field on the conversation screen', () => {
+  it('while the shell’s own turn drives', async () => {
+    await mountShell();
+    drive(START_ASSIST, turnControls());
+    expect(within(strip()!).getByText('AnA is driving')).toBeTruthy();
+    expect(strip()!.querySelector('.ana-drive-steer-input')).toBeNull();
+    // Stop and take-over stay.
+    expect(within(strip()!).getByRole('button', { name: /Stop/ })).toBeTruthy();
+  });
+});

@@ -172,10 +172,10 @@ describe('stream.ts carries the loop outcome — carriage', () => {
   });
 
   it('a Stop that aborts the model call saves the stopped answer before the record is filed', () => {
-    const at = src.indexOf('const stoppedByPerson = Boolean(runHandle?.cancelSignal.aborted);');
+    const at = src.indexOf('const stopped = Boolean(runHandle?.cancelSignal.aborted);');
     expect(at, 'the error path no longer tells a stop from a failure').toBeGreaterThan(-1);
-    const path = src.slice(at, src.indexOf("await fileTurnRecord(stoppedByPerson ? 'stopped' : 'failed')", at));
-    expect(path).toMatch(/if \(stoppedByPerson && stoppedTurnThreadId\) \{/);
+    const path = src.slice(at, src.indexOf("await fileTurnRecord(stopped ? 'stopped' : 'failed')", at));
+    expect(path).toMatch(/if \(stopped && stoppedTurnThreadId\) \{/);
     expect(path).toMatch(/await persistStoppedAnswer\(stoppedTurnThreadId, turnRecorder\?\.streamedText \?\? ''\)/);
     // The thread it saves into is the one the turn resolved and saved its question in.
     expect(src).toMatch(/turnRecorder\?\.setMessageIds\(\{ user: userMessageId \}\);\s*\n\s*stoppedTurnThreadId = threadId;/);

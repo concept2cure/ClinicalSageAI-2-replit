@@ -646,7 +646,9 @@ export function mountStreamRoute(router: Router): void {
       const stopKeepalive = () => clearInterval(streamKeepalive);
       res.on('close', stopKeepalive);
       res.on('finish', stopKeepalive);
-      req.on('close', stopKeepalive);
+      // IncomingMessage also closes when its body is fully received. A normal
+      // request completion must not clear the response's in-flight heartbeat.
+      req.on('close', () => { if (req.aborted) stopKeepalive(); });
 
       // Open a durable control record for this turn (pause / steer / cancel).
       // The client uses the emitted runId to call
@@ -717,8 +719,16 @@ export function mountStreamRoute(router: Router): void {
       // Hence two conditions: the response must not have ended (a finished
       // response is not a dropped socket), and the run settles exactly once.
       const disconnectRun = () => {
-        if (!runId || runSettled || res.writableEnded) return;
+        if (runSettled || res.writableEnded) return;
         runSettled = true;
+        if (!runId) {
+          // The existing local-only handle needs no row to abort the gateway
+          // and tools. Record the socket cause, without inventing a person's
+          // cancel or attempting a durable control/audit write for no run.
+          turnRecorder?.warn('The connection dropped before this turn completed.');
+          runHandle?.abortLocally?.();
+          return;
+        }
         // Pressing Stop sends the cancel AND drops the socket. Fired in
         // parallel, the close usually landed first, so a person's decision was
         // recorded as `client_disconnected` and their cancel then arrived at a
@@ -734,7 +744,7 @@ export function mountStreamRoute(router: Router): void {
         void stopRunInternally(getPool(), runId, 'client_disconnected', runOrgId ?? undefined);
       };
       res.on('close', disconnectRun);
-      req.on('close', disconnectRun);
+      req.on('close', () => { if (req.aborted) disconnectRun(); });
 
       // Status: orchestrating (planning the response, running route prefetch)
       res.write(
@@ -755,6 +765,10 @@ export function mountStreamRoute(router: Router): void {
         projectId: project_id || resolveProjectIdFromBody(req.body),
         surface: req.body.context?.screenName,
       });
+      // The socket may have closed while beginRun was awaiting its row,
+      // before the disconnect listeners existed. Settle that missed close
+      // after opening the recorder so its cause is retained too.
+      if (res.destroyed || req.aborted) disconnectRun();
       /* The tenant's permitted tool surface, resolved in parallel with context
          assembly. Composed by governedToolsetFor so this path and
          POST /api/chat/send-message cannot drift on whether the deny-list is
@@ -928,6 +942,24 @@ export function mountStreamRoute(router: Router): void {
           turnRecorder?.setMessageIds({ user: userMessageId });
           stoppedTurnThreadId = threadId;
         } catch (e: any) {
+          /* Matched by code: a conversation bound to another project than the
+             one this turn names (chat-thread-helpers getOrCreateThread). */
+          if (e?.code === 'THREAD_PROJECT_MISMATCH') {
+            turnRecorder?.warn('Refused: this conversation belongs to another project than the one the turn named.');
+            streamFailed = true;
+            const turnRecord = await fileTurnRecord('failed');
+            res.write(
+              `data: ${JSON.stringify({
+                type: 'error',
+                code: 'THREAD_PROJECT_MISMATCH',
+                error: 'This conversation belongs to another project. Start a new conversation in the project you have open.',
+                threadProgramId: typeof e.threadProgramId === 'string' ? e.threadProgramId : null,
+                turnRecord,
+              })}\n\n`
+            );
+            res.end();
+            return;
+          }
           if (e instanceof ThreadAccessError) {
             console.warn('[AnA RI Stream] Refused caller-supplied thread id:', e.code);
             // Refused before any model ran — still a turn someone attempted,
@@ -978,6 +1010,20 @@ export function mountStreamRoute(router: Router): void {
       const intelligencePrefixPromise = getIntelligencePrefix(orgId ? Number(orgId) : undefined, streamProjectId).catch(err => {
         console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
         return '';
+      });
+      // Conversation admission and persistence are complete. Recall can now
+      // overlap independent optional route reads; handle rejection at startup
+      // so a quick memory failure is contained while prefetch is pending.
+      const memoryContextPromise = buildMemoryContextForChat({
+        threadId: threadId || '',
+        organizationId: orgId ? Number(orgId) : undefined,
+        projectId: streamProjectId || undefined,
+        query: message,
+        limitPerLayer: 4,
+        maxChars: 3500,
+      }).catch(err => {
+        console.warn('[AnA RI] Memory context failed:', err?.message);
+        return { memoryBlock: '', atoms: [], diagnostics: null };
       });
 
       const prefetchedStreamContext = await prefetchRouteIntelligenceContext({
@@ -1069,17 +1115,7 @@ export function mountStreamRoute(router: Router): void {
       const streamContextStart = Date.now();
       const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
         intelligencePrefixPromise,
-        buildMemoryContextForChat({
-          threadId: threadId || '',
-          organizationId: orgId ? Number(orgId) : undefined,
-          projectId: streamProjectId || undefined,
-          query: message,
-          limitPerLayer: 4,
-          maxChars: 3500,
-        }).catch(err => {
-          console.warn('[AnA RI] Memory context failed:', err?.message);
-          return { memoryBlock: '', atoms: [], diagnostics: null };
-        }),
+        memoryContextPromise,
         enrichContextForChat({
           message,
           projectId: streamProjectId,
@@ -3230,17 +3266,17 @@ export function mountStreamRoute(router: Router): void {
       // The turn is recorded as it ended: with the part of the answer the
       // person saw, and why it stopped. A stop that aborted the model call
       // lands here too, and is recorded as stopped, not failed.
-      const stoppedByPerson = Boolean(runHandle?.cancelSignal.aborted);
+      const stopped = Boolean(runHandle?.cancelSignal.aborted);
       if (turnRecorder) {
         turnRecorder.setAnswer({ streamed: turnRecorder.streamedText });
         turnRecorder.setControls(await readControlEvents());
-        if (!stoppedByPerson) {
+        if (!stopped) {
           turnRecorder.warn(`The turn ended with an error: ${String(error?.message ?? error).slice(0, 500)}`);
         }
       }
       // The stop is saved in the conversation as well as the record, with what
       // had streamed: otherwise the question stood alone (QA 2026-10-08, j5).
-      if (stoppedByPerson && stoppedTurnThreadId) {
+      if (stopped && stoppedTurnThreadId) {
         try {
           const answerId = await persistStoppedAnswer(stoppedTurnThreadId, turnRecorder?.streamedText ?? '');
           turnRecorder?.setMessageIds({ assistant: answerId });
@@ -3248,7 +3284,7 @@ export function mountStreamRoute(router: Router): void {
           console.error('[AnA RI Stream] Stopped answer persist failed:', saveErr?.message);
         }
       }
-      const turnRecord = await fileTurnRecord(stoppedByPerson ? 'stopped' : 'failed');
+      const turnRecord = await fileTurnRecord(stopped ? 'stopped' : 'failed');
       if (res.headersSent) {
         res.write(
           `data: ${JSON.stringify({

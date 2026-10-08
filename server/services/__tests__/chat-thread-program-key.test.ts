@@ -89,12 +89,42 @@ describe('getOrCreateThread — the program key', () => {
 
   it('does not re-home an existing thread — continuing a conversation never rewrites its program', async () => {
     query.mockImplementation(async (sql: string) =>
-      /SELECT id, user_id, organization_id FROM chat_threads/.test(sql)
+      /SELECT id, user_id, organization_id(, program_id)? FROM chat_threads/.test(sql)
         ? { rows: [{ id: 'ana-ri_existing', user_id: 1, organization_id: 7 }] }
         : { rows: [] });
     const id = await getOrCreateThread('ana-ri_existing', 1, 'ana-ri', 7, PROGRAM);
     expect(id).toBe('ana-ri_existing');
     expect(insert()).toBeUndefined();
+  });
+
+  /* docs/design/ONE_ANA_ONE_CANVAS.md §4.8, slice 5: a conversation writes only
+     into its own project. */
+  const existingBoundTo = (program: string | null) =>
+    query.mockImplementation(async (sql: string) =>
+      /SELECT id, user_id, organization_id, program_id FROM chat_threads/.test(sql)
+        ? { rows: [{ id: 'ana-ri_existing', user_id: 1, organization_id: 7, program_id: program }] }
+        : { rows: [] });
+  const OTHER = '9a7f0b10-0000-4000-8000-0000000000bb';
+
+  it('refuses a turn that names another project than the conversation is bound to, before anything is written', async () => {
+    existingBoundTo(PROGRAM.toLowerCase());
+    await expect(getOrCreateThread('ana-ri_existing', 1, 'ana-ri', 7, OTHER)).rejects.toMatchObject({
+      code: 'THREAD_PROJECT_MISMATCH',
+      threadProgramId: PROGRAM.toLowerCase(),
+    });
+    expect(insert()).toBeUndefined();
+  });
+
+  it('continues a conversation in its own project, whatever the case of the id', async () => {
+    existingBoundTo(PROGRAM.toLowerCase());
+    await expect(getOrCreateThread('ana-ri_existing', 1, 'ana-ri', 7, PROGRAM)).resolves.toBe('ana-ri_existing');
+  });
+
+  it('leaves an unbound conversation, and a turn that names no project, as they were', async () => {
+    existingBoundTo(null);
+    await expect(getOrCreateThread('ana-ri_existing', 1, 'ana-ri', 7, OTHER)).resolves.toBe('ana-ri_existing');
+    existingBoundTo(PROGRAM.toLowerCase());
+    await expect(getOrCreateThread('ana-ri_existing', 1, 'ana-ri', 7, null)).resolves.toBe('ana-ri_existing');
   });
 
   it('programIdForThread accepts only a UUID', () => {
@@ -112,5 +142,18 @@ describe('the stream route hands the mint its program key', () => {
       'utf8',
     );
     expect(src).toMatch(/programIdForThread\(\s*project_id \|\| resolveProjectIdFromBody\(req\.body\)\s*\)/);
+  });
+
+  it('answers a turn refused for naming another project with its code, before any model runs (slice 5)', () => {
+    const src = fs.readFileSync(
+      path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../routes/ana-ri/stream.ts'),
+      'utf8',
+    );
+    const at = src.indexOf("e?.code === 'THREAD_PROJECT_MISMATCH'");
+    expect(at).toBeGreaterThan(-1);
+    // It is handled in the thread-resolution catch, which ends the response.
+    const handler = src.slice(at, at + 900);
+    expect(handler).toMatch(/code: 'THREAD_PROJECT_MISMATCH'/);
+    expect(handler).toMatch(/res\.end\(\);\s*return;/);
   });
 });

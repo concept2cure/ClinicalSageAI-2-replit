@@ -247,19 +247,31 @@ describe("a minted thread is bound only to a program of its own organization (PF
     expect(await programOf(id)).toBeNull();
   });
 
-  it("the program list shows the thread under its own program, never under another organization's", async () => {
+  it("the program list shows only the caller's own threads in its program", async () => {
     const { listThreads } = await import('../../server/routes/chat/threads');
-    const list = async (orgId: number, program: string) => {
+    const list = async (orgId: number, program: string, userId: number | null) => {
       const r: { body?: { threads: Array<{ id: string }> } } = {};
       const res = { status: () => res, json: (b: { threads: Array<{ id: string }> }) => { r.body = b; return res; } };
-      await listThreads({ query: { program_id: program }, tenantId: orgId } as never, res as never);
+      await listThreads({ query: { program_id: program }, tenantId: orgId, userId } as never, res as never);
       return (r.body?.threads ?? []).map((t) => t.id);
     };
     const { getOrCreateThread } = await import('../../server/services/chat-thread-helpers');
     const ours = await getOrCreateThread(null, ALICE, 'ana-ri', ORG_A, P_A);
+    const colleague = await getOrCreateThread(null, BOB, 'ana-ri', ORG_A, P_A);
+    const otherTenant = await getOrCreateThread(null, CAROL, 'ana-ri', ORG_B, P_B);
     const foreignAttempt = await getOrCreateThread(null, ALICE, 'ana-ri', ORG_A, P_B);
-    expect(await list(ORG_A, P_A)).toContain(ours);
-    expect(await list(ORG_B, P_B)).not.toContain(foreignAttempt);
-    expect(await list(ORG_A, P_B)).not.toContain(foreignAttempt);
+    const aliceThreads = await list(ORG_A, P_A, ALICE);
+    const bobThreads = await list(ORG_A, P_A, BOB);
+    const carolThreads = await list(ORG_B, P_B, CAROL);
+    expect(aliceThreads).toContain(ours);
+    expect(aliceThreads).not.toContain(colleague);
+    expect(aliceThreads).not.toContain(otherTenant);
+    expect(bobThreads).toContain(colleague);
+    expect(bobThreads).not.toContain(ours);
+    expect(carolThreads).toContain(otherTenant);
+    expect(carolThreads).not.toContain(ours);
+    expect(carolThreads).not.toContain(foreignAttempt);
+    expect(await list(ORG_A, P_B, ALICE)).toEqual([]);
+    expect(await list(ORG_A, P_A, null)).toEqual([]);
   });
 });

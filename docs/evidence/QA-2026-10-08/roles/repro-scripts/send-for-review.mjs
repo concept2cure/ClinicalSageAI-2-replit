@@ -57,12 +57,12 @@ const hasVersions = await versionsHeading.count();
 if (hasVersions) await versionsHeading.scrollIntoViewIfNeeded().catch(() => {});
 await page.waitForTimeout(3000);
 const bodyText = await page.innerText('body');
-console.info(`[${TAG || EMAIL}] versions heading present:`, hasVersions > 0);
-if (hasVersions) console.info(`[${TAG || EMAIL}] versions context:`, await page.evaluate(() => { const h = [...document.querySelectorAll('*')].find((e) => e.childNodes.length && [...e.childNodes].some((n) => n.nodeType === 3 && /^Versions/.test(n.textContent.trim())) && e.innerText && e.innerText.length < 4000); return h ? h.innerText.replace(/\s+/g, ' ').slice(0, 600) : null; }));
+console.info('[%s] versions heading present:', TAG || EMAIL, hasVersions > 0);
+if (hasVersions) console.info('[%s] versions context:', TAG || EMAIL, await page.evaluate(() => { const h = [...document.querySelectorAll('*')].find((e) => e.childNodes.length && [...e.childNodes].some((n) => n.nodeType === 3 && /^Versions/.test(n.textContent.trim())) && e.innerText && e.innerText.length < 4000); return h ? h.innerText.replace(/\s+/g, ' ').slice(0, 600) : null; }));
 const roleMessage = (bodyText.match(/Your role does not send[^.]*\./) || [null])[0];
 const before = await controls();
-console.info(`[${TAG || EMAIL}] role message:`, roleMessage);
-console.info(`[${TAG || EMAIL}] send-for-review controls:`, JSON.stringify(before));
+console.info('[%s] role message:', TAG || EMAIL, roleMessage);
+console.info('[%s] send-for-review controls:', TAG || EMAIL, JSON.stringify(before));
 await page.screenshot({ path: `${OUT}/${TAG || 'send'}-detail.png` });
 
 let confirmAlerts = null;
@@ -76,10 +76,10 @@ if (CONFIRM === '1' && before.length && !before[0].disabled) {
   }
   await page.waitForTimeout(4000);
   confirmAlerts = await page.$$eval('[role=alert], [role=status]', (els) => els.map((e) => (e.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 300)).filter(Boolean));
-  console.info(`[${TAG || EMAIL}] alerts after confirm:`, JSON.stringify(confirmAlerts));
+  console.info('[%s] alerts after confirm:', TAG || EMAIL, JSON.stringify(confirmAlerts));
 }
 const lifecycle = traffic.filter((t) => t.path.startsWith('/api/regulatory/documents'));
-console.info(`[${TAG || EMAIL}] api errors:`, JSON.stringify(traffic.filter((t) => t.status >= 400).map((t) => ({ m: t.method, p: t.path, s: t.status, b: t.body.slice(0, 120) })), null, 1));
-console.info(`[${TAG || EMAIL}] lifecycle requests:`, JSON.stringify(lifecycle, null, 1));
+console.info('[%s] api errors:', TAG || EMAIL, JSON.stringify(traffic.filter((t) => t.status >= 400).map((t) => ({ m: t.method, p: t.path, s: t.status, b: t.body.slice(0, 120) })), null, 1));
+console.info('[%s] lifecycle requests:', TAG || EMAIL, JSON.stringify(lifecycle, null, 1));
 fs.writeFileSync(`${OUT}/${TAG || 'send'}.json`, JSON.stringify({ email: EMAIL, roleMessage, controlsBefore: before, confirmAlerts, traffic: traffic.slice(-30) }, null, 2));
 await browser.close();

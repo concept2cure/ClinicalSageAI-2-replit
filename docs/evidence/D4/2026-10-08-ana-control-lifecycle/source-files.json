@@ -1,0 +1,35 @@
+{
+  "validated_local_checkpoint": "eaa43f7e5de2c16ed5aa5c5eee4515e67e3f5afd",
+  "files": [
+    {
+      "path": "client/src/concept2cure/components/ana/useAnaChat.ts",
+      "git_blob_sha": "2cb054799a52a5df75205108319916ccaa489066",
+      "sha256": "6e1da255bc77e470aafaa26f291e3b7f9be1fb2fdcdf4ccbf11aadfbcf74c4e5",
+      "bytes": 97766
+    },
+    {
+      "path": "client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts",
+      "git_blob_sha": "a90aca4309cac34a5daf0418bfa27c15dc6b6f56",
+      "sha256": "64e8107bedf242db9db97b2ac2c9b365f11202a00e7b263e899eb171d2fb5c6e",
+      "bytes": 11571
+    },
+    {
+      "path": "server/routes/ana-ri/stream.ts",
+      "git_blob_sha": "b5ae61116ffb993b2e63874c2d8bf06d896d4e32",
+      "sha256": "9d21525c20d673850598efbb8c42c7b1cadc55b2f3bf287c7783118bad59865c",
+      "bytes": 173480
+    },
+    {
+      "path": "server/services/ana/run-control.ts",
+      "git_blob_sha": "ad749e60cd773d2407cbfb0a2cb1f1125a6a6c6f",
+      "sha256": "4830a850ae2fdbef46958f5ae2f54d6a8e9cafc26219cbde5c5db9889cb7edc7",
+      "bytes": 48367
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-disconnect.test.ts",
+      "git_blob_sha": "3da31ee487954ad318e9a81ccc60901838caa5dd",
+      "sha256": "75acb2e437a2fb66e20216a4f202deec681c1998e4e728696d83d787ff6fd99f",
+      "bytes": 13160
+    }
+  ]
+}

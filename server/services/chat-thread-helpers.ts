@@ -128,18 +128,18 @@ export async function resolveAccessibleThread(
   threadId: string,
   organizationId: number | null | undefined,
   userId?: number | string | null
-): Promise<{ id: string; user_id: number | null; organization_id: number | null } | null> {
+): Promise<{ id: string; user_id: number | null; organization_id: number | null; program_id?: string | null } | null> {
   await ensureChatTables();
   const orgId = organizationId === null || organizationId === undefined ? null : Number(organizationId);
   // No organization to scope by → nothing can be proven about the id, so it
   // resolves to nothing. Callers without a tenant get a fresh thread.
   if (orgId === null || !Number.isFinite(orgId)) return null;
   const existing = await pool.query(
-    'SELECT id, user_id, organization_id FROM chat_threads WHERE id = $1 AND organization_id = $2',
+    'SELECT id, user_id, organization_id, program_id FROM chat_threads WHERE id = $1 AND organization_id = $2',
     [threadId, orgId]
   );
   const row = existing.rows[0] as
-    | { id: string; user_id: number | null; organization_id: number | null }
+    | { id: string; user_id: number | null; organization_id: number | null; program_id?: string | null }
     | undefined;
   if (!row) return null;
   if (!threadOwnerMatches(row.user_id, userId)) {
@@ -162,6 +162,24 @@ export async function resolveAccessibleThread(
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
+ * A turn that names a project other than the one its conversation is bound to
+ * (ONE_ANA_ONE_CANVAS.md §4.8, slice 5). Callers match it by `code`.
+ */
+export class ThreadProjectMismatchError extends Error {
+  readonly code = 'THREAD_PROJECT_MISMATCH';
+  constructor(readonly threadProgramId: string) {
+    super('This conversation belongs to another project.');
+  }
+}
+
+/** Throws when a bound conversation is asked a turn that names another project. */
+function refuseAnotherProject(threadProgram: string | null | undefined, turnProgram: unknown): void {
+  const bound = typeof threadProgram === 'string' && threadProgram ? threadProgram.toLowerCase() : null;
+  const asked = programIdForThread(turnProgram);
+  if (bound && asked && bound !== asked) throw new ThreadProjectMismatchError(bound);
+}
+
+/**
  * The program a thread was started in, as the shell names it (a
  * regulatory_programs UUID), or null. The table's `project_id` column is an
  * integer that the shell's key never fits, so the program has its own column,
@@ -181,7 +199,18 @@ export async function getOrCreateThread(
   await ensureChatTables();
   if (threadId) {
     const accessible = await resolveAccessibleThread(threadId, organizationId, userId);
-    if (accessible) return accessible.id;
+    if (accessible) {
+      /* A conversation writes only into its own project
+         (docs/design/ONE_ANA_ONE_CANVAS.md §4.8, slice 5). Its project is
+         fixed when it is minted; the turn's project comes from the request.
+         An existing conversation bound to one project, continued with a turn
+         that names another, is refused here, before its question is saved or
+         any model or tool runs. Unbound conversations, and a turn naming no
+         project, are unchanged. Only a caller that names the turn's project
+         (the AnA stream) is checked. */
+      refuseAnotherProject(accessible.program_id, programId);
+      return accessible.id;
+    }
   }
   const newId = `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const ownerId =
