@@ -191,6 +191,9 @@ export function stoppedNoteText(
   const steps = stepList(pendingSteps);
   const fixed = reason ? FIXED_STOP_NOTES.get(reason) : undefined;
   if (fixed) return fixed;
+  // A limit, the session, a restart or a dead server ended work that was
+  // going somewhere; none was a person's decision (§5.3). A `cancelled`,
+  // by the person or an administrator, stays not continuable.
   switch (reason) {
     case 'max_rounds':
       return typeof rounds === 'number' && rounds > 0
@@ -237,9 +240,6 @@ export function isContinuable(reason: AnaStoppedReason | undefined, interruptedW
     case 'hold_expired':
     case 'hold_unavailable':
     case 'client_disconnected':
-    // A limit, the session, a restart or a dead server ended work that was
-    // going somewhere; none was a person's decision (§5.3). A `cancelled`,
-    // by the person or an administrator, stays not continuable.
     case 'unattended_limit':
     case 'session_ended':
     case 'server_shutdown':
