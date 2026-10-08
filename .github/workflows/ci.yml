@@ -600,6 +600,15 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:internals-in-copy
 
+      - name: Guardrails — every in-scope AnA tool reads from its register entry (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # ANA-SUMMARY S3: a step's label, tense and source come from the tool's
+        # `present` block (closed verb and source tables, shared/ana/step-verbs.ts),
+        # never from its name; an `engine` claim is refused when the handler can
+        # reach a model. The selftest runs first, so a gate that can no longer
+        # fail is caught before its clean result is believed.
+        run: npm run ci:step-presentation:selftest && npm run ci:step-presentation
+
       - name: Guardrails — no clearance copy chosen by an empty collection
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:empty-state-honesty

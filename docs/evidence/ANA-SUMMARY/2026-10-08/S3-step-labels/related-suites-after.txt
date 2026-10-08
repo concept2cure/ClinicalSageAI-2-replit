@@ -1,0 +1,19 @@
+# Related suites after the change, 2026-10-08, RLS_ENFORCE=off (summaries; full logs are 1 MB and were not filed)
+
+## Server: npx vitest run server/services/ana/__tests__ server/routes/ana-ri/__tests__ tests/services/agentic-loop.test.ts tests/services/tool-trace.test.ts tests/services/trace-timeline.test.ts
+ Test Files  1 failed | 312 passed | 1 skipped (314)
+      Tests  1 failed | 4626 passed | 3 skipped (4630)
+ FAIL  server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was
+
+## Client: npx vitest run client/src/concept2cure/components/ana/__tests__ client/src/concept2cure/v2/__tests__/ana* client/src/concept2cure/v2/__tests__/conversation* client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx
+ Test Files  1 failed | 80 passed (81)
+      Tests  1 failed | 798 passed (799)
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > holds a steer as pending from acceptance until the server confirms it landed
+
+## npm run test:ana
+ Test Files  4 passed (4)
+      Tests  303 passed (303)
+
+## The two failures are pre-existing: both fail with HEAD's source for every file this change touches (red-before-fix.txt).
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > holds a steer as pending from acceptance until the server confirms it landed

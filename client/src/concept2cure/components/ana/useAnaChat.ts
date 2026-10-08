@@ -83,6 +83,7 @@ import { getAnaLockedScreens } from './anaLockedScreens';
 import { isAnaRunPolicy, stepLabels } from '@shared/ana/run-policy';
 import { clientContinuationContext } from '@shared/ana/continuation-context';
 import { MAX_INTERJECTION_CHARS, type AnaRunPolicy } from '@shared/ana/run-control-limits';
+import { unknownStepLabel, type StepFact, type StepSource } from '@shared/ana/step-verbs';
 import { readGroundingStrip, readStoredVerification } from './anaAnswerCheck';
 
 import type {
@@ -333,89 +334,85 @@ export function mapConsistencyResult(
 }
 
 /**
- * Human-readable labels for AnA's tools, so the chat shows "Computing sample
- * size (biostatistics engine)" instead of a raw tool name. Anything not listed
- * falls back to a humanized form of the tool name.
- */
-const TOOL_LABELS: Record<string, string> = {
-  compute_sample_size: 'Computing sample size — biostatistics engine',
-  compare_statistical_scenarios: 'Comparing study scenarios — biostatistics engine',
-  assess_statistical_defensibility: 'Assessing statistical defensibility',
-  analyze_missing_data_impact: 'Analyzing missing-data impact',
-  generate_statistical_document: 'Drafting statistical document',
-  search_clinical_evidence: 'Searching clinical evidence',
-  search_literature: 'Searching the literature',
-  lookup_fda_guidance: 'Looking up FDA guidance',
-  lookup_ich_guideline: 'Looking up ICH guidance',
-  check_regulatory_compliance: 'Checking regulatory compliance',
-  mine_precedents: 'Mining regulatory precedents',
-  lookup_regulatory_precedents: 'Looking up regulatory precedents',
-  check_numerical_integrity: 'Checking numerical integrity',
-  check_dossier_consistency: 'Checking dossier consistency',
-  author_docx_native: 'Authoring the document',
-  build_from_template: 'Building from your template',
-  surgical_docx_xml_edit: 'Applying edits to the document',
-  validate_docx: 'Validating document integrity',
-  verify_docx_against_source: 'Verifying against your source',
-};
-
-
-function toolLabel(name: string): string {
-  if (TOOL_LABELS[name]) return TOOL_LABELS[name];
-  const spaced = name.replace(/_/g, ' ').trim();
-  return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : 'Running a tool';
-}
-
-
-
-
-
-/**
  * Persisted tool-trace entries → the transcript's step rows. Exported for its
  * test. A `not_found` step (no handler here) is a step that did not complete,
  * with the same sentence the live stream uses for it, so the record reads the
  * same whether it was watched live or reopened later.
  */
-export function hydrateToolTrace(
-  trace: Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }> | undefined,
-): AnaToolCall[] {
+export function hydrateToolTrace(trace: PersistedTraceEntry[] | undefined): AnaToolCall[] {
   if (!Array.isArray(trace)) return [];
   const calls: AnaToolCall[] = [];
   for (const t of trace) {
     const name = typeof t?.tool === 'string' ? t.tool : '';
     if (!name) continue;
-    const label = typeof t.label === 'string' && t.label ? t.label : toolLabel(name);
-    const humanStep = label.charAt(0).toLowerCase() + label.slice(1);
+    // The label the server recorded; a step with none is never shown by its name.
+    const label =
+      typeof t.label === 'string' && t.label ? t.label : unknownStepLabel(t.status === 'success' ? 'done' : 'doing');
+    const shown = tracePresentation(t);
     if (t.status === 'success') {
       // The persisted result summary rides along as the call's `result`: it
       // is the server's capped copy of what the tool returned, and it is how
       // a reopened thread still knows which authoring document a
       // draft_authoring_document step produced (ConversationThread reads the
-      // ids out of it). Absent when the trace carried none.
+      // ids out of it). Never rendered. Absent when the trace carried none.
       const result = typeof t.resultSummary === 'string' && t.resultSummary ? t.resultSummary : undefined;
-      calls.push({ name, label, status: 'success', ...(result ? { result } : {}) });
-    } else if (t.status === 'not_found') {
-      calls.push({
-        name,
-        label,
-        status: 'error',
-        message: `This step (${humanStep}) isn't available here. AnA will work around it.`,
-      });
-    } else if (t.status === 'incomplete') {
-      // A sub-agent that stopped at its budget (row 74, S5): the same sentence
-      // the live tool_result carried, not "AnA couldn't finish".
-      const summary = typeof t.resultSummary === 'string' && t.resultSummary ? t.resultSummary : humanStep;
-      calls.push({ name, label, status: 'error', message: `The agent's result is incomplete: ${summary}.` });
+      calls.push({ name, label, status: 'success', ...shown, ...(result ? { result } : {}) });
     } else {
-      calls.push({
-        name,
-        label,
-        status: 'error',
-        message: `AnA couldn't finish ${humanStep}. She'll continue with what she has.`,
-      });
+      calls.push({ name, label, status: 'error', ...shown, message: shown.message ?? legacyTraceMessage(t, label) });
     }
   }
   return calls;
+}
+
+type PersistedTraceEntry = {
+  tool?: string;
+  label?: string;
+  status?: string;
+  resultSummary?: string;
+  source?: unknown;
+  preview?: unknown;
+  facts?: unknown;
+  usedModel?: unknown;
+  message?: unknown;
+};
+
+/** The presentation a trace written since ANA-SUMMARY S3 carries, read field by field. */
+function tracePresentation(t: PersistedTraceEntry): Partial<AnaToolCall> {
+  const facts = Array.isArray(t.facts)
+    ? (t.facts as StepFact[]).filter((f) => f && typeof f.name === 'string' && typeof f.value === 'string')
+    : undefined;
+  return {
+    ...(typeof t.source === 'string' ? { source: t.source as StepSource } : {}),
+    ...(typeof t.preview === 'string' ? { preview: t.preview } : {}),
+    ...(facts && facts.length > 0 ? { facts } : {}),
+    ...(typeof t.usedModel === 'boolean' ? { usedModel: t.usedModel } : {}),
+    ...(typeof t.message === 'string' && t.message ? { message: t.message } : {}),
+  };
+}
+
+/**
+ * The sentence for a step that did not succeed in a trace written before
+ * ANA-SUMMARY S3, which carries no `message`: the words those turns were shown
+ * live. Every newer trace carries the server's own sentence (stepMessage).
+ * A `not_found` step is a step that did not complete; an `incomplete` one is a
+ * sub-agent that stopped at its budget (row 74, S5).
+ */
+function legacyTraceMessage(t: PersistedTraceEntry, label: string): string {
+  const humanStep = label.charAt(0).toLowerCase() + label.slice(1);
+  if (t.status === 'not_found') return `This step (${humanStep}) isn't available here. AnA will work around it.`;
+  if (t.status === 'incomplete') {
+    const summary = typeof t.resultSummary === 'string' && t.resultSummary ? t.resultSummary : humanStep;
+    return `The agent's result is incomplete: ${summary}.`;
+  }
+  return `AnA couldn't finish ${humanStep}. She'll continue with what she has.`;
+}
+
+/** What a `tool_use` or `tool_result` frame says about its step, read field by field. */
+function framePresentation(event: Record<string, unknown>): Partial<AnaToolCall> {
+  const shown = tracePresentation(event as PersistedTraceEntry);
+  // The result's sentence is read where it always was (the tool_result branch).
+  delete shown.message;
+  return { ...shown, ...(event.preview === null ? { preview: null } : {}) };
 }
 
 /**
@@ -1596,14 +1593,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 );
               }
             } else if (event.type === 'tool_use') {
-              // AnA invoked a tool — show a calm "running" status row. Prefer the
-              // server-provided label (single source of truth, and input-aware —
-              // e.g. "Searching the document for \"X\""); fall back to the local
-              // map only when the server didn't send one.
+              // AnA invoked a tool — show a calm "running" status row under the
+              // server's label (step-presentation.ts, the one table). A frame with
+              // none reads "Running a step", never the tool's name.
               const name: string = event.name || '';
               if (name) {
                 const label: string =
-                  typeof event.label === 'string' && event.label ? event.label : toolLabel(name);
+                  typeof event.label === 'string' && event.label ? event.label : unknownStepLabel('doing');
                 const round: number | undefined =
                   typeof event.round === 'number' && event.round > 0 ? event.round : undefined;
                 setMessages(prev =>
@@ -1626,6 +1622,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                               startedAt: Date.now(),
                               ...(round ? { round } : {}),
                               ...(event.input !== undefined ? { input: event.input } : {}),
+                              ...framePresentation(event),
                             },
                           ],
                         }
@@ -1737,6 +1734,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                           : undefined;
                       calls[realIdx] = {
                         ...calls[realIdx],
+                        // The finished label (done form when it succeeded), its facts and usedModel.
+                        ...(typeof event.label === 'string' && event.label ? { label: event.label } : {}),
+                        ...framePresentation(event),
                         status: failed ? 'error' : 'success',
                         endedAt: Date.now(),
                         ...(typeof event.latencyMs === 'number' && event.latencyMs >= 0

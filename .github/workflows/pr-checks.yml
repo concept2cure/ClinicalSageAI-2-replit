@@ -90,6 +90,13 @@ jobs:
         # only when somebody remembered to run it by hand.
         run: npm run ci:internals-in-copy
 
+      - name: Every in-scope AnA tool reads from its register entry (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # ANA-SUMMARY S3 (scripts/ci/check-step-presentation.mjs): no tool name on
+        # screen, both tenses from one table, an engine claim only where no model
+        # call is reachable. Selftest first, then the gate.
+        run: npm run ci:step-presentation:selftest && npm run ci:step-presentation
+
       - name: No clearance copy chosen by an empty collection
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The same omission as the step above, one gate over. This one exists to

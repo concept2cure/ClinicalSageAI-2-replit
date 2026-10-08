@@ -1831,6 +1831,9 @@
 .c2c-v2 .ana-activity-chev svg{font-size:12px;}
 /* A failure is said in the server's sentence, always visible, under the row. */
 .c2c-v2 .ana-activity-note{grid-column:2;color:var(--warning);font-size:11.5px;line-height:1.5;}
+/* Line two of a step: what it was asked ("shelf life"), muted, cut at the end so
+   the label above it keeps the useful part at 390px. */
+.c2c-v2 .ana-activity-preview{grid-column:2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;line-height:1.45;color:var(--text-300);}
 /* A turn that was not recorded, said under the turn and never folded. */
 .c2c-v2 .ana-activity-unrecorded{display:flex;align-items:baseline;gap:6px;margin:4px 0 0;font-size:12px;line-height:1.5;font-weight:500;color:var(--text-100);}
 /* A hash or an id reads as one, beside the full hash set in the same face. */

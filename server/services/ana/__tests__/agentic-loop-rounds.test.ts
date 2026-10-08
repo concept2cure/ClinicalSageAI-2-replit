@@ -175,7 +175,8 @@ describe('buildAdaptationNote', () => {
     );
     expect(note).toContain('2 of 3 tool calls failed');
     expect(note).toContain('Searching the literature — timeout after 30s');
-    expect(note).toContain('Lookup fda guidance — HTTP 404');
+    // A failure with no label of its own is named from its register entry (step-presentation.ts), never its tool name.
+    expect(note).toContain('Looking up FDA guidance — HTTP 404');
     expect(note).toContain('Do not repeat a failed call verbatim');
   });
 

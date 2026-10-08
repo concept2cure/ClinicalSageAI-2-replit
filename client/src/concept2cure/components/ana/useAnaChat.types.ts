@@ -23,6 +23,7 @@ import type { BriefingBookPremortemResult } from './BriefingBookPanel';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 import type { DetectedDocumentTemplatePayload } from '../../../../../shared/types/ana-document-detection';
 import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
+import type { StepFact, StepSource } from '@shared/ana/step-verbs';
 
 /** Shape of an action chip produced by the server's guidance/command executors. */
 export interface AnaChatAction {
@@ -88,14 +89,31 @@ export interface AnaToolCall {
    * multi-round investigation reads as the progression it actually was.
    */
   round?: number;
-  /** The input args AnA passed to the tool — for the audit/inspect disclosure. */
+  /**
+   * The input args AnA passed to the tool. Kept for the client's own parsers;
+   * never rendered (ANA-SUMMARY S3): a step's details are its `facts`.
+   */
   input?: unknown;
-  /** The tool's returned result, capped client-side — for the audit disclosure. */
+  /**
+   * The tool's returned result, capped client-side. Kept for the client's own
+   * parsers (a drafted document's id, a verification); never rendered.
+   */
   result?: string;
+  /** Where the step worked, from the server's closed source list (shared/ana/step-verbs.ts). */
+  source?: StepSource;
+  /** One allow-listed input field, as the server cleaned it: "shelf life". */
+  preview?: string | null;
+  /** What the step's details state, built by the server from allow-listed fields only. */
+  facts?: StepFact[];
+  /**
+   * The step's generation capture saw a model generation (true), saw none
+   * (false), or could not see (null). The engine glyph needs false.
+   */
+  usedModel?: boolean | null;
   /**
    * The server's own human-readable note for a step that did not succeed, e.g.
-   * "AnA couldn't finish searching the literature. She'll continue with what
-   * she has." Written server-side (stream.ts) precisely so the UI never has to
+   * "AnA couldn't finish searching the literature and continued without it."
+   * Written server-side (step-presentation.ts stepMessage) so the UI never has to
    * render a raw tool payload at a user: `result` is the uncapped truth for the
    * audit disclosure, this is the sentence.
    */
@@ -479,8 +497,9 @@ export interface AnaChatMessage {
   };
   /**
    * Tools AnA invoked this turn, shown as calm status rows for transparency
-   * and audit (e.g. "Computing sample size — biostatistics engine"). Lets the
-   * user see that a deterministic engine ran rather than a free-text guess.
+   * and audit (e.g. "Computed the sample size", with the engine glyph when the
+   * step's capture saw no model). Lets the user see that a deterministic engine
+   * ran rather than a free-text guess.
    */
   toolCalls?: AnaToolCall[];
   /**

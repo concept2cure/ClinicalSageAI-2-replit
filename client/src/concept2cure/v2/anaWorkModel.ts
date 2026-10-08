@@ -13,6 +13,7 @@
 import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../components/ana/useAnaChat';
 import type { AnaProgressPhase, AnaRunHold, AnaStoppedReason } from '../components/ana/useAnaChat.types';
 import { AUTO_TIME_WORDS, MANUAL_UNAVAILABLE_TEXT, PAUSE_WORDS, stepLabels } from '@shared/ana/run-policy';
+import { unknownStepLabel, type StepFact } from '@shared/ana/step-verbs';
 import {
   formatElapsed,
   formatStepDuration,
@@ -276,6 +277,27 @@ export function stepDuration(c: AnaToolCall, now: number): string {
   return c.status === 'running' ? formatStepDuration(now - c.startedAt) : '';
 }
 
+/**
+ * The engine glyph: a step the register claims is computed deterministically,
+ * that succeeded, and whose generation capture saw no model call. A step whose
+ * handler made a model generation never shows it, whatever the register says;
+ * an unknown capture (null) is not "none".
+ */
+export function showsEngineGlyph(c: AnaToolCall): boolean {
+  return c.source === 'engine' && c.usedModel === false && c.status === 'success';
+}
+
+/**
+ * What a step's chevron opens: the server's facts, built from allow-listed
+ * fields only, and the row's own measured duration when the server sent none.
+ * Never the inputs she passed and never the result: both carry ids and
+ * internals (ANA-SUMMARY S3; the inputs were rendered raw until then).
+ */
+export function stepFacts(c: AnaToolCall, took: string): StepFact[] {
+  const facts = c.facts ?? [];
+  return took && !facts.some((f) => f.name === 'Took') ? [...facts, { name: 'Took', value: took }] : facts;
+}
+
 export function clip(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
@@ -309,7 +331,8 @@ export function conversationTools(messages: AnaChatMessage[]): string[] {
   for (const m of messages) {
     for (const c of m.toolCalls ?? []) {
       if (c.name === PLAN_TOOL) continue;
-      if (!seen.has(c.name)) seen.set(c.name, c.label || c.name);
+      // The server's label; a step with none is never listed by its tool name.
+      if (!seen.has(c.name)) seen.set(c.name, c.label || unknownStepLabel('done'));
     }
   }
   return [...seen.values()];

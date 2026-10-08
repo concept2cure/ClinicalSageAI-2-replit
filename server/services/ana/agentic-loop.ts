@@ -24,6 +24,7 @@
 
 import { stableStringify } from '../../../shared/canonical-json.js';
 import { AUTO_MAX_ROUNDS, type AnaRunPolicy } from '../../../shared/ana/run-control-limits.js';
+import { presentStep } from './step-presentation.js';
 
 export interface ToolCall {
   id: string;
@@ -685,7 +686,7 @@ export interface FailedToolCall {
 export function buildAdaptationNote(failures: FailedToolCall[], totalCalls: number): string {
   if (failures.length === 0) return '';
   const describe = (f: FailedToolCall): string => {
-    const who = f.label || humanizeToolName(f.name);
+    const who = f.label || presentStep(f.name, {}).label;
     const why = f.error ? ` — ${f.error.length > 120 ? f.error.slice(0, 120) + '…' : f.error}` : '';
     return `${who}${why}`;
   };
@@ -730,151 +731,16 @@ export interface PlanStep {
   label: string;
 }
 
-function quoteArg(value: unknown, max = 60): string {
-  if (value === undefined || value === null || value === '') return 'it';
-  const s = String(value);
-  return `"${s.length > max ? s.slice(0, max) + '…' : s}"`;
-}
-
-function humanizeToolName(name: string): string {
-  const words = name.replace(/_/g, ' ').trim();
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
-/** Friendly per-tool step labels for surfacing the investigation plan. */
-const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = {
-  get_document_section_requirements: i =>
-    i.section ? `Reading the requirements for ${quoteArg(i.document)} section ${quoteArg(i.section)}` : `Reading the requirements for ${quoteArg(i.document)}`,
-  plan_submission_from_database_lock: i =>
-    i.step ? `Reading the submission step ${quoteArg(i.step)}` : 'Checking where the submission stands, from database lock to filing',
-  list_fda_technical_rules: i => (i.area ? `Reading FDA's ${String(i.area)} rules` : "Reading FDA's technical submission rules"),
-  find_cmc_guidance: i => `Looking up the CMC guidance on ${quoteArg(i.query)}`,
-  get_cmc_requirements: i =>
-    i.authority ? `Reading what ${String(i.authority)} requires of the CMC dossier` : 'Reading the CMC requirements that apply',
-  explain_cmc_topic: i => `Reading the CMC science behind ${quoteArg(i.query)}`,
-  extract_document_structure: () => 'Analyzing the document structure',
-  search_document: i => `Searching the document for ${quoteArg(i.query)}`,
-  compare_document_versions: () => 'Comparing the two document versions',
-  search_clinical_evidence: i => `Searching clinical trials for ${quoteArg(i.query)}`,
-  search_literature: i => `Searching the literature for ${quoteArg(i.query)}`,
-  search_device_adverse_events: i => `Checking device adverse events for ${quoteArg(i.device ?? i.query)}`,
-  search_drug_adverse_events: i => `Checking drug adverse events for ${quoteArg(i.drug ?? i.query)}`,
-  lookup_fda_guidance: i => `Looking up FDA guidance${i.topic ? ` on ${quoteArg(i.topic)}` : ''}`,
-  lookup_ich_guideline: i => `Looking up the ICH guideline${i.guideline ? ` ${quoteArg(i.guideline)}` : ''}`,
-  check_regulatory_compliance: () => 'Checking regulatory compliance',
-  mine_precedents: i => `Mining precedents${i.document_type ? ` for ${humanizeToolName(String(i.document_type))}` : ''}`,
-  analyze_predicate_device: i => `Analyzing predicate device${i.predicate_510k_number ? ` ${quoteArg(i.predicate_510k_number)}` : ''}`,
-  generate_document: () => 'Drafting the document',
-  generate_statistical_document: () => 'Drafting the statistical document',
-  compute_sample_size: () => 'Computing the sample size',
-  compute_fih_dose: () => 'Computing the first-in-human dose',
-  classify_tox_findings: () => 'Classifying the toxicology findings',
-  select_exposure_response_dose: () => 'Selecting the dose from exposure-response',
-  load_nonclinical_program: () => 'Loading the nonclinical studies for the program',
-  get_nonclinical_template: () => 'Fetching the nonclinical document template',
-  get_csr_template: () => 'Fetching the Module 5 clinical study report template',
-  draft_nonclinical_overview_m2_4: () => 'Drafting the Module 2.4 nonclinical overview',
-  draft_nonclinical_summaries_m2_6: () => 'Drafting the Module 2.6 nonclinical summaries',
-  draft_quality_overall_summary_m2_3: () => 'Drafting the Module 2.3 Quality Overall Summary',
-  list_platform_commands: () => 'Listing the platform command surface',
-  execute_platform_command: (i: Record<string, unknown>) => `Executing platform command: ${typeof i?.command === 'string' ? i.command : '…'}`,
-  assess_nonclinical_program: () => 'Assessing the nonclinical study program',
-  assess_nonclinical_safety: () => 'Assembling the integrated nonclinical safety assessment',
-  assess_concentration_qtc: () => 'Assessing the concentration-QTc relationship',
-  assess_ddi_risk: () => 'Assessing drug-interaction risk',
-  characterize_pk: () => 'Characterizing the pharmacokinetics',
-  draft_clinical_summary_m2_7: () => 'Drafting the Module 2.7 clinical summary',
-  check_numerical_integrity: () => 'Checking numerical integrity',
-  check_dossier_consistency: () => 'Checking consistency across the dossier',
-  check_consistency: () => 'Checking consistency across the dossier',
-  // Proactive / situational-awareness tools
-  regulatory_deadline_radar: () => 'Scanning regulatory deadlines',
-  scan_project_risks: () => 'Scanning open project risks',
-  get_session_briefing: () => 'Reconciling where your program stands',
-  // Evidence-discipline self-checks
-  detect_evidence_contradictions: () => 'Checking the evidence for contradictions',
-  detect_evidence_gaps: () => 'Checking the evidence for coverage gaps',
-  assess_claim_evidence_integrity: () => 'Checking that claims are backed by evidence',
-  assess_output_confidence: () => 'Assessing how confident this answer can be',
-  ana_tool_pedigree: () => 'Checking how reliable a tool’s output is',
-  // Submission diligence
-  lookup_submission_deficiencies: i =>
-    `Looking up likely submission deficiencies${i.submission_type ? ` for ${humanizeToolName(String(i.submission_type))}` : ''}`,
-  scan_regulatory_deficiencies: () => 'Scanning for likely reviewer deficiencies',
-  compare_submission_against_precedent: () => 'Comparing the submission against precedent',
-  lookup_regulatory_precedents: i => `Looking up regulatory precedents${i.topic ? ` on ${quoteArg(i.topic)}` : ''}`,
-  compile_correspondence_response_package: () => 'Compiling the correspondence response package',
-  // Document authoring — the human should see WHAT is being drafted, calmly.
-  draft_clinical_overview_m2_5: () => 'Drafting the Module 2.5 Clinical Overview',
-  batch_draft_sections: i => {
-    const n = Array.isArray(i.sections) ? i.sections.length : 0;
-    return n > 0 ? `Drafting ${n} section${n === 1 ? '' : 's'} in parallel` : 'Drafting sections in parallel';
-  },
-  draft_fda_ir_response: () => 'Drafting the FDA Information Request response',
-  convene_drafting_council: i =>
-    `Convening the drafting council${i.section_path ? ` for ${quoteArg(i.section_path)}` : ''} — draft, verify, critique, synthesize`,
-  start_deep_investigation: i =>
-    `Starting a background deep investigation${i.question ? ` — ${quoteArg(i.question)}` : ''}`,
-  check_deep_investigation: () => 'Checking on the background investigation',
-  // quoteArg does not escape `"`, and the client splits a label on its first
-  // quoted span, so a quote inside the objective is shown as ' (brief D21).
-  run_agent: i => {
-    const objective = typeof i.objective === 'string' ? quoteArg(i.objective.replace(/"/g, "'")) : 'it';
-    return i.role === 'verify' ? `Running a verification agent - ${objective}` : `Running an agent - ${objective}`;
-  },
-  get_client_journey: () => 'Getting your bearings — from license to submission',
-  // Drafting and project search, named by what they act on — the transcript
-  // shows the quoted argument as the row's object.
-  draft_authoring_document: i => (i.title ? `Drafting ${quoteArg(i.title)}` : 'Drafting the document'),
-  project_knowledge_search: i => `Searching the project's documents${i.query ? ` for ${quoteArg(i.query)}` : ''}`,
-  update_plan: i => {
-    const n = Array.isArray(i.steps) ? i.steps.length : 0;
-    return n > 0 ? `Updating the plan · ${n} step${n === 1 ? '' : 's'}` : 'Updating the plan';
-  },
-  // Project-folder catalog — legible "she knows the files and is studying them".
-  list_project_documents: () => 'Checking the project folder',
-  file_chat_upload_to_vault: () => 'Filing the document into the project vault',
-  read_project_document: i =>
-    typeof i.offset === 'number' && i.offset > 0
-      ? 'Reading the document — continuing where it left off'
-      : 'Reading the document in full',
-  catalog_project_document: () => 'Recording what this document is',
-  search_project_documents: i => `Searching the project files for ${quoteArg(i.query)}`,
-  // Document vault / governed reads — legible "she's reading the right thing".
-  list_vault_documents: () => 'Listing Artifacts Center documents',
-  read_vault_document: () => 'Reading an Artifacts Center document',
-  get_document_versions: () => 'Reviewing the document version history',
-  list_governed_documents: () => 'Listing the governed documents',
-  read_governed_document: () => 'Reading the governed document',
-  save_document_to_vault: () => 'Saving the document to the vault',
-  update_vault_document: () => 'Updating the vault document',
-  compare_vault_versions: () => 'Comparing the document versions',
-  // eTMF / inspection readiness (CRO).
-  get_tmf_view: () => 'Opening the Trial Master File',
-  seed_tmf: () => 'Setting up the Trial Master File structure',
-  // Reporting & analytics canvas.
-  generate_report: i => (i.report_type_id ? `Generating the ${quoteArg(i.report_type_id)} report` : 'Generating the report'),
-  suggest_reports: () => 'Finding the reports that fit your programs',
-  explain_report_blockers: () => 'Explaining what is blocking this report',
-  save_report_definition: () => 'Saving the dashboard',
-  list_report_definitions: () => 'Listing your saved dashboards',
-  list_report_types: () => 'Listing the available reports',
-  get_portfolio_readiness: () => 'Assessing portfolio readiness',
-  search_connected_repositories: i => `Searching your connected repositories${i.query ? ` for ${quoteArg(i.query)}` : ''}`,
-};
-
 /**
- * Turn a round's tool calls into a human-readable plan for the UI to surface
- * (e.g. "Analyzing the document structure", "Searching the document for
- * \"indemnification\""). Deterministic; unknown tools fall back to a humanized
- * name so every step gets a sensible label.
+ * Turn a round's tool calls into the steps the UI announces ("Searching the
+ * Vault", "Validating the eCTD package"), in the doing form. Every label comes
+ * from the tool's register entry through presentStep (step-presentation.ts);
+ * a tool with no entry reads "Running a step", never its name. The server's
+ * own label table and its humanised-name fallback were deleted in ANA-SUMMARY
+ * S3: 519 in-scope tools reached the screen as their raw names.
  */
 export function describeToolPlan(calls: ToolCall[]): PlanStep[] {
-  return calls.map(c => {
-    const labeler = TOOL_LABELS[c.name];
-    const label = labeler ? labeler(c.input ?? {}) : humanizeToolName(c.name);
-    return { tool: c.name, label };
-  });
+  return calls.map(c => ({ tool: c.name, label: presentStep(c.name, c.input ?? {}).label }));
 }
 
 /**

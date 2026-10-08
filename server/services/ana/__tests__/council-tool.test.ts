@@ -59,11 +59,11 @@ describe('convene_drafting_council — executor handler', () => {
 });
 
 describe('convene_drafting_council — transparency + pedigree', () => {
-  it('gets a calm, input-aware step label', () => {
+  it('gets a calm step label from its register entry; the input is not in it (ANA-SUMMARY S3)', () => {
     const [step] = describeToolPlan([
       { id: '1', name: 'convene_drafting_council', input: { section_path: '2.5' } },
     ]);
-    expect(step.label).toBe('Convening the drafting council for "2.5" — draft, verify, critique, synthesize');
+    expect(step.label).toBe('Running the drafting council');
   });
 
   it('classifies as model_assisted (LLM pipeline output — verify before relying)', () => {

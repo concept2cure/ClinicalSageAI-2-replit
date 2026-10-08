@@ -1,0 +1,88 @@
+# GREEN: the five new S3 suites on the working tree, 2026-10-08T11:28:47Z, RLS_ENFORCE=off
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > names a document of the open project 58ms
+ ✓ server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > gives no title to a document of another project of the same organisation 18ms
+ ✓ server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > gives no title to another organisation's document, even with no project open 7ms
+ ✓ server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > with no project open, names any document of the organisation (as the read allows) 8ms
+ ✓ server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > gives no title to a deleted document or one whose data was removed 16ms
+ ✓ server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > a scope that refuses the read gives no title and runs no query 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 1 — redaction: no id in a step's opened details > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} shows no uuid anywhere 80ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 3 — no tool names on screen > a step with no label reads "Ran a step" in its row and its details, never "sentinel" 171ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 3 — no tool names on screen > a running step with no label reads "Running a step" 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 — the row: the server's label on line one, the preview muted beneath > reads "Searched the Vault" with "shelf life" beneath it, and opens to the facts 35ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 — the row: the server's label on line one, the preview muted beneath > a step that did not succeed shows the server's sentence, never folded 31ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 6 — the engine glyph needs the capture to have seen no model > a step whose handler made a generation has no engine glyph, and says a model wrote part of it 13ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 6 — the engine glyph needs the capture to have seen no model > control: the same step whose capture saw no model shows the engine glyph 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 6 — the engine glyph needs the capture to have seen no model > shows only for a successful engine step whose capture saw none; unknown is not none 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > live frames > S3 test 3: a frame with no label reads "Running a step", never the tool's name 81ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > live frames > S3 test 3: the finished frame's "Ran a step" replaces the announced label 56ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > live frames > S3 test 4: a live step reads in the doing form and the finished one in the done form, with its facts 84ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > a reopened trace > S3 test 3: an entry with no label reads "Ran a step", never the tool's name 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > a reopened trace > carries the presentation the server recorded, and its sentence for a step that did not succeed 1ms
+stdout | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+{
+  "timestamp": "2026-10-08T11:28:59.914Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T11:28:59.915Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+{
+  "timestamp": "2026-10-08T11:28:59.915Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 4. tense: the live step reads "Searching the Vault", the finished one "Searched the Vault", with "shelf life" beneath 44ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a read is announced by the title of its document, scoped to the open project 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a document id outside the open project yields no title 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a project with no program (the read would be refused) yields no title at all 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 3. a tool with no register entry never reaches a frame by its name 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 6. a step whose handler made a model generation carries usedModel: true and the Model fact 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 6. control: the same engine step with no generation carries usedModel: false and no Model fact 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 1. (server half) no id reaches what a row is built from 10ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > labels come from the register, never from a tool name > a tool with no entry reads "Running a step" live and "Ran a step" finished 2ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > labels come from the register, never from a tool name > the unknown-step words are the shared table's, both halves 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > a live step reads in the doing form, a finished one in the done form 14ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > a step that did not succeed keeps the doing form: a failed validation never reads "Validated" 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > every verb has both forms, and they differ 7ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > previews the query beneath "Searched the Vault" 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > drops a value that looks like a uuid or a long hex string, keeps numbers 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > caps a preview at 80 characters and never lets a double quote split the label 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} carries no uuid 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > counts are read from allow-listed numeric fields and nothing else 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a listing states the scope's total, not the page it returned; the Vault search counts its hits 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a read states the Vault title and the characters it delivered 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > document titles (S3 test 5, presentation half) > names the document when the stream resolved its title, and reads generically when it did not 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > connected systems > one system searched reads as that system; the reasons are said in words, never as tool names 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > connected systems > several systems read as "connected" 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > true when the capture noted a generation, false when none, null when the handler ran elsewhere 2ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > a step whose handler made a generation says so, whatever the register claims 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > not_found (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > cancelled (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: true, why: declined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: true, why: no decision within the approval window) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > not_run (held back: false, why: manual hold) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > success (held back: false, why: undefined) 0ms
+
+ Test Files  5 passed (5)
+      Tests  51 passed (51)
+   Start at  11:28:48
+   Duration  16.82s (transform 6.97s, setup 305ms, import 10.91s, tests 3.46s, environment 1.14s)
+

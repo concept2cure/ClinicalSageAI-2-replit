@@ -185,7 +185,8 @@ describe('get_client_journey — tool wiring', () => {
 
   it('gets a calm transparency label', () => {
     const [step] = describeToolPlan([{ id: '1', name: 'get_client_journey', input: {} }]);
-    expect(step.label).toBe('Getting your bearings — from license to submission');
+    // From its register entry (ANA-SUMMARY S3).
+    expect(step.label).toBe('Looking up where you are in your journey');
   });
 
   it('classifies as deterministic_query (a reproducible read over live state)', () => {

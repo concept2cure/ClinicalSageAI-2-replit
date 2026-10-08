@@ -211,9 +211,16 @@ import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part
 import {
   describeServerToolStep,
   serverToolEvidence,
+  serverToolStepFields,
   summariseServerToolResult,
   serverToolStepIdField,
 } from '../../services/ana/server-tool-steps.js';
+import {
+  announcedStepFields,
+  finishedStep,
+  resolveStepDocumentTitles,
+  stepUsedModel,
+} from '../../services/ana/step-presentation.js';
 import type { GatewayServerToolUse } from '../../services/ai-gateway/types.js';
 import { resolveOrgId, resolveUserId } from '../../types/auth-request.js';
 import { clientIpOf } from '../../utils/client-ip';
@@ -484,12 +491,6 @@ export function unavailableContextWarning(
   return `${parts.join(' ')} ${tail}`;
 }
 
-/** What the person reads for a step that did not run because it was not authorised. */
-function heldBackMessage(step: string, why: string | undefined): string {
-  if (why === 'declined') return `You declined ${step}, so it did not run.`;
-  return `${step.charAt(0).toUpperCase()}${step.slice(1)} did not run: it needs a person's authorisation${why ? ` (${why})` : ''}.`;
-}
-
 /**
  * The turn's round-boundary hold (services/ana/run-hold.ts), wired to its run
  * row. The checkpoint's pause wait used to be a loop written inline in the
@@ -665,7 +666,7 @@ export function mountStreamRoute(router: Router): void {
         turnRecorder?.addStep({
           round,
           tool: step.name,
-          label: describeServerToolStep(step),
+          label: describeServerToolStep(step, step.isError ? 'doing' : 'done'),
           status: step.isError ? 'error' : 'success',
           input: step.input ?? {},
           result: step.result === undefined ? null : canonicalJson(step.result),
@@ -674,20 +675,20 @@ export function mountStreamRoute(router: Router): void {
       }
       if (res.writableEnded) return;
       for (const step of steps) {
-        const label = describeServerToolStep(step);
+        // Source `web`, the query as preview, both tenses (server-tool-steps.ts).
+        const shown = serverToolStepFields(step);
         const status = step.isError ? 'error' : 'success';
         // The step's own id as the pairing key (see serverToolStepIdField).
         const stepId = serverToolStepIdField(step);
-        res.write(`data: ${JSON.stringify({ type: 'tool_use', round, name: step.name, ...stepId, label, input: step.input ?? {} })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'tool_use', round, name: step.name, ...stepId, ...shown.announced, input: step.input ?? {} })}\n\n`);
         res.write(
           `data: ${JSON.stringify({
             type: 'tool_result',
             round,
             name: step.name,
             ...stepId,
-            label,
+            ...shown.finished,
             status,
-            ...(step.isError ? { message: 'This search did not return results.' } : {}),
             result: JSON.stringify(summariseServerToolResult(step)),
           })}\n\n`
         );
@@ -2372,12 +2373,19 @@ export function mountStreamRoute(router: Router): void {
                   : `Round ${round} — running ${stepCount} more ${stepWord}…`,
             })}\n\n`
           );
+          // The round's Vault titles, resolved before anything is announced, so a
+          // read names its document from the start; scoped like the handler
+          // (step-presentation.ts resolveStepDocumentTitles).
+          const roundTitles = await resolveStepDocumentTitles(calls, {
+            organizationId: orgId,
+            ...turnToolContext(streamProjectId, { threadId, turnId: runId, servingModel: lastServedModel }),
+          });
           res.write(
             `data: ${JSON.stringify({
               type: 'step',
               round,
               tools: calls.map(c => c.name),
-              plan: describeToolPlan(calls),
+              plan: calls.map(c => ({ tool: c.name, label: announcedStepFields(c, roundTitles).label })),
             })}\n\n`
           );
           // Announce all tool invocations in order, then run their handlers with
@@ -2394,7 +2402,8 @@ export function mountStreamRoute(router: Router): void {
                 // call that produced it. Several calls of one tool run in the
                 // same step, so a name cannot tell them apart (see tool_result).
                 toolUseId: toolUse.id,
-                label: describeToolPlan([toolUse])[0].label,
+                // Label, source, preview and facts: presentStep, never the tool's name.
+                ...announcedStepFields(toolUse, roundTitles),
                 input: toolUse.input,
               })}\n\n`
             );
@@ -2543,7 +2552,11 @@ export function mountStreamRoute(router: Router): void {
               // The same server-measured duration the telemetry row gets, so the
               // client's work panel can show how long each step really took
               // rather than timing the round-trip from its own side.
-              return { toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs: Date.now() - toolStart, generated };
+              return {
+                toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs: Date.now() - toolStart, generated,
+                // From the capture, never from a list of tools (generation-capture.ts).
+                usedModel: stepUsedModel(generated, approval !== undefined),
+              };
             },
             4
           );
@@ -2580,9 +2593,14 @@ export function mountStreamRoute(router: Router): void {
             });
           };
           const roundFailures: FailedToolCall[] = [];
-          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs } of ran) {
+          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs, usedModel } of ran) {
             entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
-            const stepLabel = describeToolPlan([toolUse])[0].label;
+            // The finished step: its label in the right tense, its facts and the
+            // sentence for a step that did not succeed (step-presentation.ts).
+            const step = finishedStep(toolUse, roundTitles, {
+              status: toolStatus, heldBack, why: toolErrorMessage, result: resultStr, latencyMs, usedModel,
+            });
+            const stepLabel = step.label;
             turnRecorder?.addStep({
               toolUseId: toolUse.id,
               round,
@@ -2595,7 +2613,7 @@ export function mountStreamRoute(router: Router): void {
               error: toolErrorMessage ?? null,
             });
             // Record this call in the turn's tool-trace memory + evidence corpus.
-            toolTrace.push(buildTraceEntry(toolUse.name, stepLabel, toolStatus, resultStr));
+            toolTrace.push({ ...buildTraceEntry(toolUse.name, stepLabel, toolStatus, resultStr), ...step.trace });
             // Failures collected for the round's adaptation note (see below).
             // A cancelled step is NOT a failure to adapt to: the note tells the
             // model "these did not work, try something else", and the run is
@@ -2608,26 +2626,12 @@ export function mountStreamRoute(router: Router): void {
             if (toolStatus !== 'success' && toolStatus !== 'cancelled' && !heldBack) {
               roundFailures.push({
                 name: toolUse.name,
-                label: stepLabel,
+                label: step.doing,
                 error:
                   toolErrorMessage ||
                   (toolStatus === 'not_found' ? 'no handler available' : undefined),
               });
             }
-            // Calm, human-facing message for a non-success step so the client can
-            // render an honest state ("AnA couldn't finish X") instead of a raw
-            // error string — trust is the interface, including when something
-            // fails. The lower-cased label reads naturally mid-sentence.
-            const humanStep = stepLabel.charAt(0).toLowerCase() + stepLabel.slice(1);
-            const humanMessage = heldBack
-              ? heldBackMessage(humanStep, toolErrorMessage)
-              : toolStatus === 'error'
-                ? `AnA couldn't finish ${humanStep}. She'll continue with what she has.`
-                : toolStatus === 'not_found'
-                ? `This step (${humanStep}) isn't available here. AnA will work around it.`
-                : toolStatus === 'cancelled'
-                ? `You stopped ${humanStep} before it finished.`
-                : undefined;
             res.write(
               `data: ${JSON.stringify({
                 type: 'tool_result',
@@ -2639,10 +2643,10 @@ export function mountStreamRoute(router: Router): void {
                    same-named calls in one step were swapped every time, each
                    query shown against the other's results. The id ends that. */
                 toolUseId: toolUse.id,
-                label: stepLabel,
+                // Label, source, preview, facts, usedModel and the status sentence.
+                ...step.frame,
                 status: toolStatus,
                 latencyMs,
-                ...(humanMessage ? { message: humanMessage } : {}),
                 result: resultStr,
               })}\n\n`
             );

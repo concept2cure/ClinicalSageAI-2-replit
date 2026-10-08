@@ -372,26 +372,21 @@ describe('AnaActivity — the clock', () => {
 });
 
 describe('AnaActivity — each row opens in place, like the work it records', () => {
-  it('puts a step\'s duration and the inputs she passed behind that step\'s own chevron', () => {
-    const { container } = render(
-      <AnaActivity
-        streaming
-        toolCalls={[call({ label: 'Searching the literature for "estimand"', latencyMs: 2_340, round: 1, input: { alpha: 0.05 } })]}
-      />,
-    );
-    const row = screen.getByRole('button', { name: /Searching the literature for/ });
+  it('puts a step\'s facts behind that step\'s own chevron — never the inputs she passed (ANA-SUMMARY S3)', () => {
+    const facts = [{ name: 'Characters read' as const, value: '4,812 of 60,000' }];
+    const step = call({ label: 'Read "Stability report 2025"', latencyMs: 2_340, round: 1, input: { alpha: 0.05 }, facts });
+    const { container } = render(<AnaActivity streaming toolCalls={[step]} />);
+    const row = screen.getByRole('button', { name: /Read Stability report 2025/ });
     // Verb muted, object not: the eye lands on what she worked on.
-    expect(container.querySelector('.ana-activity-obj')?.textContent).toBe('estimand');
+    expect(container.querySelector('.ana-activity-obj')?.textContent).toBe('Stability report 2025');
     expect(row.getAttribute('aria-expanded')).toBe('false');
     // Mounted while collapsed so aria-controls resolves; hidden until opened.
     const detail = document.getElementById(row.getAttribute('aria-controls') as string) as HTMLElement;
     expect(detail.hasAttribute('hidden')).toBe(true);
     fireEvent.click(row);
     expect(detail.hasAttribute('hidden')).toBe(false);
-    expect(within(detail).getByText(/Took 2\.3s · round 1/)).toBeTruthy();
-    const inputs = within(detail).getByRole('region', { name: 'Inputs AnA passed to this step' });
-    expect(inputs.textContent).toContain('"alpha": 0.05');
-    expect(inputs.getAttribute('tabindex')).toBe('0');
+    // The server's fact, and the row's own duration where the server sent none.
+    expect(detail.textContent).toBe('Characters read: 4,812 of 60,000Took: 2.3s');
   });
 
   it('records her plan once as "Planned N steps", with the steps behind the chevron', () => {
@@ -475,8 +470,10 @@ describe('AnaActivity — her plan, live and reopened', () => {
   it('claims no duration for a settled step whose end was never recorded', () => {
     vi.useFakeTimers();
     vi.setSystemTime(1_700_000_100_000);
-    render(<AnaActivity streaming toolCalls={[call({ status: 'success', startedAt: 1_700_000_000_000, input: { a: 1 } })]} />);
-    const row = screen.getByRole('button', { name: /Sample size/ });
+    const { container } = render(<AnaActivity streaming toolCalls={[call({ status: 'success', startedAt: 1_700_000_000_000, input: { a: 1 } })]} />);
+    // With no duration and no facts the row has nothing behind a chevron: it is static.
+    const row = container.querySelector('.ana-activity-step .ana-activity-row') as HTMLElement;
+    expect(row.textContent).toContain('Sample size');
     // A clock read off "now" for a finished step would say 1m 40s and keep growing.
     expect(row.textContent).not.toMatch(/\d+(\.\d)?s|\dm/);
     vi.useRealTimers();

@@ -1,21 +1,36 @@
 {
- "$comment": "AnA tool register (P1-34). One entry per registered tool: its class, what it writes, where. Classes and the input rules are explained in tool-authorization.ts. Classification evidence: docs/evidence/D6/2026-09-26-p1-34/.",
+ "$comment": "AnA tool register (P1-34). One entry per registered tool: its class, what it writes, where. Classes and the input rules are explained in tool-authorization.ts. Classification evidence: docs/evidence/D6/2026-09-26-p1-34/. `present` (ANA-SUMMARY S3): how a step of the tool reads on screen, a verb and a source from shared/ana/step-verbs.ts; required for every in-scope tool by scripts/ci/check-step-presentation.mjs; review evidence docs/evidence/ANA-SUMMARY/2026-10-08/S3-step-labels/.",
  "tools": {
   "ack_training": {
    "class": "refuse",
    "writes": "training attestation in the user's name (method 'attestation', model-supplied quiz_score)",
    "site": "AnaToolExecutor.ts:13771",
-   "why": "A training acknowledgement is the trainee’s own attestation; they record it themselves on the document’s training record."
+   "why": "A training acknowledgement is the trainee’s own attestation; they record it themselves on the document’s training record.",
+   "present": {
+    "verb": "record",
+    "object": "a training acknowledgement",
+    "source": "qms"
+   }
   },
   "act_on_screen": {
    "class": "self",
    "writes": "view-only screen directive and in-turn program focus",
-   "site": "AnaToolExecutor.ts:17134"
+   "site": "AnaToolExecutor.ts:17134",
+   "present": {
+    "verb": "run",
+    "object": "an on-screen action",
+    "source": "screen"
+   }
   },
   "add_amendment_change": {
    "class": "confirm",
    "writes": "INSERT protocol_amendment_changes + governed-action row",
-   "site": "protocol-amendments-service.ts:151"
+   "site": "protocol-amendments-service.ts:151",
+   "present": {
+    "verb": "add",
+    "object": "a change to the amendment",
+    "source": "authoring"
+   }
   },
   "add_biological_agent": {
    "class": "confirm",
@@ -25,7 +40,12 @@
   "add_capa_action": {
    "class": "confirm",
    "writes": "INSERT protocol_capa_actions; deviation -> capa_pending + governed-action row",
-   "site": "protocol-deviations-service.ts:171"
+   "site": "protocol-deviations-service.ts:171",
+   "present": {
+    "verb": "add",
+    "object": "a CAPA action",
+    "source": "authoring"
+   }
   },
   "add_committee_agenda_item": {
    "class": "confirm",
@@ -55,7 +75,12 @@
   "add_eligibility_criterion": {
    "class": "confirm",
    "writes": "INSERT protocol_eligibility_criteria + governed-action row",
-   "site": "AnaToolExecutor.ts:11530"
+   "site": "AnaToolExecutor.ts:11530",
+   "present": {
+    "verb": "add",
+    "object": "an eligibility criterion",
+    "source": "authoring"
+   }
   },
   "add_grant_budget_line": {
    "class": "confirm",
@@ -65,7 +90,12 @@
   "add_irb_site": {
    "class": "confirm",
    "writes": "INSERT irb_sites + governed-action row",
-   "site": "AnaToolExecutor.ts:10389"
+   "site": "AnaToolExecutor.ts:10389",
+   "present": {
+    "verb": "add",
+    "object": "a site to the IRB submission",
+    "source": "authoring"
+   }
   },
   "add_labeling_symbol": {
    "class": "confirm",
@@ -91,27 +121,52 @@
   "add_protocol_budget_item": {
    "class": "confirm",
    "writes": "INSERT protocol_budget_items + governed-action row",
-   "site": "protocol-budget-service.ts:33"
+   "site": "protocol-budget-service.ts:33",
+   "present": {
+    "verb": "add",
+    "object": "a budget line to the protocol",
+    "source": "authoring"
+   }
   },
   "add_protocol_milestone": {
    "class": "confirm",
    "writes": "INSERT protocol_milestones + governed-action row",
-   "site": "protocol-milestones-service.ts:31"
+   "site": "protocol-milestones-service.ts:31",
+   "present": {
+    "verb": "add",
+    "object": "a protocol milestone",
+    "source": "authoring"
+   }
   },
   "add_protocol_objective": {
    "class": "confirm",
    "writes": "INSERT protocol_objectives + governed-action row",
-   "site": "AnaToolExecutor.ts:11506"
+   "site": "AnaToolExecutor.ts:11506",
+   "present": {
+    "verb": "add",
+    "object": "an objective to the protocol",
+    "source": "authoring"
+   }
   },
   "add_protocol_review_comment": {
    "class": "confirm",
    "writes": "INSERT protocol_review_comments + governed-action row",
-   "site": "protocol-reviews-service.ts:203"
+   "site": "protocol-reviews-service.ts:203",
+   "present": {
+    "verb": "add",
+    "object": "a review comment",
+    "source": "authoring"
+   }
   },
   "add_protocol_risk": {
    "class": "confirm",
    "writes": "INSERT protocol_risks + audit",
-   "site": "AnaToolExecutor.ts:11399"
+   "site": "AnaToolExecutor.ts:11399",
+   "present": {
+    "verb": "add",
+    "object": "a risk to the protocol",
+    "source": "authoring"
+   }
   },
   "add_risk_control": {
    "class": "conditional",
@@ -122,162 +177,322 @@
   "add_soa_assessment": {
    "class": "confirm",
    "writes": "INSERT protocol_soa_assessments + governed-action row",
-   "site": "protocol-soa-service.ts:31"
+   "site": "protocol-soa-service.ts:31",
+   "present": {
+    "verb": "add",
+    "object": "an assessment to the schedule",
+    "source": "authoring"
+   }
   },
   "adjust_multiplicity": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15609"
+   "site": "AnaToolExecutor.ts:15609",
+   "present": {
+    "verb": "apply",
+    "object": "a multiplicity adjustment",
+    "source": "engine"
+   }
   },
   "advise_coa_selection": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2877"
+   "site": "AnaToolExecutor.ts:2877",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance on COA selection",
+    "source": "knowledge"
+   }
   },
   "advise_ctd_structure": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2832"
+   "site": "AnaToolExecutor.ts:2832",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance on CTD structure",
+    "source": "knowledge"
+   }
   },
   "advise_data_integrity": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2086"
+   "site": "AnaToolExecutor.ts:2086",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance on data integrity",
+    "source": "knowledge"
+   }
   },
   "advise_device_readiness": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2097"
+   "site": "AnaToolExecutor.ts:2097",
+   "present": {
+    "verb": "assess",
+    "object": "eSTAR readiness",
+    "source": "knowledge"
+   }
   },
   "advise_estimand": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2795"
+   "site": "AnaToolExecutor.ts:2795",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance on estimands",
+    "source": "knowledge"
+   }
   },
   "advise_eu_technical_file_readiness": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2128"
+   "site": "AnaToolExecutor.ts:2128",
+   "present": {
+    "verb": "assess",
+    "object": "EU technical-file readiness",
+    "source": "knowledge"
+   }
   },
   "advise_gcp": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2860"
+   "site": "AnaToolExecutor.ts:2860",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance on GCP",
+    "source": "knowledge"
+   }
   },
   "advise_global_market_strategy": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2105"
+   "site": "AnaToolExecutor.ts:2105",
+   "present": {
+    "verb": "assess",
+    "object": "market-entry options",
+    "source": "knowledge"
+   }
   },
   "advise_global_submission_plan": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2145"
+   "site": "AnaToolExecutor.ts:2145",
+   "present": {
+    "verb": "plan",
+    "object": "the multi-market device submission",
+    "source": "knowledge"
+   }
   },
   "advise_labeling_structure": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2584"
+   "site": "AnaToolExecutor.ts:2584",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance on labeling structure",
+    "source": "knowledge"
+   }
   },
   "advise_medical_information": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2785"
+   "site": "AnaToolExecutor.ts:2785",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance on medical information",
+    "source": "knowledge"
+   }
   },
   "advise_midd": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17701"
+   "site": "AnaToolExecutor.ts:17701",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance on model-informed development",
+    "source": "knowledge"
+   }
   },
   "advise_pharmacovigilance": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2818"
+   "site": "AnaToolExecutor.ts:2818",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance on pharmacovigilance",
+    "source": "knowledge"
+   }
   },
   "advise_pma_readiness": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2137"
+   "site": "AnaToolExecutor.ts:2137",
+   "present": {
+    "verb": "assess",
+    "object": "PMA readiness",
+    "source": "knowledge"
+   }
   },
   "advise_regulatory_pathway": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3445"
+   "site": "AnaToolExecutor.ts:3445",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance on the regulatory pathway",
+    "source": "knowledge"
+   }
   },
   "advise_reporting_guideline": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2076"
+   "site": "AnaToolExecutor.ts:2076",
+   "present": {
+    "verb": "look_up",
+    "object": "the reporting guideline",
+    "source": "knowledge"
+   }
   },
   "advise_risk_management": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2895"
+   "site": "AnaToolExecutor.ts:2895",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance on risk management",
+    "source": "knowledge"
+   }
   },
   "advise_rwe_design": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2546"
+   "site": "AnaToolExecutor.ts:2546",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance on real-world evidence design",
+    "source": "knowledge"
+   }
   },
   "advise_special_designation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2846"
+   "site": "AnaToolExecutor.ts:2846",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance on special designations",
+    "source": "knowledge"
+   }
   },
   "advise_study_design": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2555"
+   "site": "AnaToolExecutor.ts:2555",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance on study design",
+    "source": "knowledge"
+   }
   },
   "amend_fda_form": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:418"
+   "site": "AnaToolExecutor.ts:418",
+   "present": {
+    "verb": "update",
+    "object": "an FDA form",
+    "source": "authoring"
+   }
   },
   "amend_schedule_of_events": {
    "class": "confirm",
    "writes": "UPDATE project_workflow_stages, schedule revision row",
-   "site": "AnaToolExecutor.ts:2408"
+   "site": "AnaToolExecutor.ts:2408",
+   "present": {
+    "verb": "update",
+    "object": "a milestone in the schedule of events",
+    "source": "project"
+   }
   },
   "ana_tool_pedigree": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2162"
+   "site": "AnaToolExecutor.ts:2162",
+   "present": {
+    "verb": "check",
+    "object": "how reliable a tool's output is",
+    "source": "project"
+   }
   },
   "analyze_exposure_response": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17694"
+   "site": "AnaToolExecutor.ts:17694",
+   "present": {
+    "verb": "plan",
+    "object": "the exposure-response analysis",
+    "source": "knowledge"
+   }
   },
   "analyze_external_control_borrow": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15578"
+   "site": "AnaToolExecutor.ts:15578",
+   "present": {
+    "verb": "analyze",
+    "object": "external-control borrowing",
+    "source": "engine"
+   }
   },
   "analyze_missing_data_impact": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5484"
+   "site": "AnaToolExecutor.ts:5484",
+   "present": {
+    "verb": "analyze",
+    "object": "the impact of missing data",
+    "source": "engine"
+   }
   },
   "analyze_predicate_device": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4304"
+   "site": "AnaToolExecutor.ts:4304",
+   "present": {
+    "verb": "look_up",
+    "object": "a predicate device",
+    "source": "agency"
+   }
   },
   "analyze_rmst": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15557"
+   "site": "AnaToolExecutor.ts:15557",
+   "present": {
+    "verb": "compute",
+    "object": "the restricted mean survival time",
+    "source": "engine"
+   }
   },
   "analyze_safety_signal": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15585"
+   "site": "AnaToolExecutor.ts:15585",
+   "present": {
+    "verb": "compute",
+    "object": "the disproportionality ratios",
+    "source": "engine"
+   }
   },
   "analyze_win_ratio": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15545"
+   "site": "AnaToolExecutor.ts:15545",
+   "present": {
+    "verb": "compute",
+    "object": "the win ratio",
+    "source": "engine"
+   }
   },
   "answer_intelligence_question": {
    "class": "self",
@@ -287,17 +502,32 @@
   "apply_fact_change": {
    "class": "confirm",
    "writes": "re-versions a canonical fact; drift cascade; audit",
-   "site": "AnaToolExecutor.ts:5964"
+   "site": "AnaToolExecutor.ts:5964",
+   "present": {
+    "verb": "apply",
+    "object": "a change to a governed value",
+    "source": "authoring"
+   }
   },
   "apply_protocol_design_derivation": {
    "class": "confirm",
    "writes": "overwrites bound study design + governed-action row",
-   "site": "AnaToolExecutor.ts:20436"
+   "site": "AnaToolExecutor.ts:20436",
+   "present": {
+    "verb": "apply",
+    "object": "accepted design derivations",
+    "source": "authoring"
+   }
   },
   "approve_import": {
    "class": "confirm",
    "writes": "INSERT concept2cure_artifacts (draft); import job completed; human route needs no e-signature",
-   "site": "AnaToolExecutor.ts:14455"
+   "site": "AnaToolExecutor.ts:14455",
+   "present": {
+    "verb": "finalize",
+    "object": "the import",
+    "source": "data_room"
+   }
   },
   "approve_no_cost_extension": {
    "class": "refuse",
@@ -311,7 +541,12 @@
    "writes": "none; the handler already refuses (e-signed route)",
    "site": "AnaToolExecutor.ts:13645",
    "refusedBy": "handler",
-   "why": "An approval is an e-signed act: the person does it with the Approve button, which asks for their password and second factor."
+   "why": "An approval is an e-signed act: the person does it with the Approve button, which asks for their password and second factor.",
+   "present": {
+    "verb": "explain",
+    "object": "how to approve the controlled document",
+    "source": "qms"
+   }
   },
   "approve_rbm_assessment": {
    "class": "refuse",
@@ -336,417 +571,835 @@
   "assemble_crl_premortem_artifact": {
    "class": "self",
    "writes": "scratch .docx under tmp/docbuilder when export is true",
-   "site": "AnaToolExecutor.ts:6951"
+   "site": "AnaToolExecutor.ts:6951",
+   "present": {
+    "verb": "assemble",
+    "object": "a pre-mortem report",
+    "source": "submissions",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "assemble_device_submission": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15865"
+   "site": "AnaToolExecutor.ts:15865",
+   "present": {
+    "verb": "assess",
+    "object": "the device submission assembly",
+    "source": "submissions"
+   }
   },
   "assemble_ectd_module_from_artifacts": {
    "class": "self",
    "writes": "scratch .docx/.pdf under tmp/docbuilder, not filed",
-   "site": "docx/masterDocumentBuilder.ts:373"
+   "site": "docx/masterDocumentBuilder.ts:373",
+   "present": {
+    "verb": "assemble",
+    "object": "an eCTD module from the artifacts",
+    "source": "submissions"
+   }
   },
   "assess_abuse_liability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18268"
+   "site": "AnaToolExecutor.ts:18268",
+   "present": {
+    "verb": "assess",
+    "object": "the abuse potential",
+    "source": "knowledge"
+   }
   },
   "assess_accelerated_stability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:6163"
+   "site": "AnaToolExecutor.ts:6163",
+   "present": {
+    "verb": "compute",
+    "object": "the shelf life from accelerated data",
+    "source": "engine"
+   }
   },
   "assess_ai_ml_device": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18817"
+   "site": "AnaToolExecutor.ts:18817",
+   "present": {
+    "verb": "assess",
+    "object": "the AI/ML device function",
+    "source": "knowledge"
+   }
   },
   "assess_analytical_method_validation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16906"
+   "site": "AnaToolExecutor.ts:16906",
+   "present": {
+    "verb": "assess",
+    "object": "the method-validation data",
+    "source": "engine"
+   }
   },
   "assess_analytical_similarity": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5555"
+   "site": "AnaToolExecutor.ts:5555",
+   "present": {
+    "verb": "assess",
+    "object": "the analytical similarity",
+    "source": "engine"
+   }
   },
   "assess_analytical_similarity_biosimilar": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18041"
+   "site": "AnaToolExecutor.ts:18041",
+   "present": {
+    "verb": "assess",
+    "object": "biosimilar analytical similarity",
+    "source": "knowledge"
+   }
   },
   "assess_api_gmp": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18543"
+   "site": "AnaToolExecutor.ts:18543",
+   "present": {
+    "verb": "look_up",
+    "object": "API GMP expectations",
+    "source": "knowledge"
+   }
   },
   "assess_atmp_comparability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17840"
+   "site": "AnaToolExecutor.ts:17840",
+   "present": {
+    "verb": "assess",
+    "object": "ATMP comparability",
+    "source": "knowledge"
+   }
   },
   "assess_batch_poolability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16097"
+   "site": "AnaToolExecutor.ts:16097",
+   "present": {
+    "verb": "check",
+    "object": "whether batches can be pooled",
+    "source": "engine"
+   }
   },
   "assess_benefit_risk": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16778"
+   "site": "AnaToolExecutor.ts:16778",
+   "present": {
+    "verb": "compute",
+    "object": "the benefit-risk score",
+    "source": "engine"
+   }
   },
   "assess_benefit_risk_balance": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18920"
+   "site": "AnaToolExecutor.ts:18920",
+   "present": {
+    "verb": "assess",
+    "object": "the benefit-risk balance",
+    "source": "engine"
+   }
   },
   "assess_biomarker_analytical_validation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18639"
+   "site": "AnaToolExecutor.ts:18639",
+   "present": {
+    "verb": "assess",
+    "object": "the biomarker assay validation",
+    "source": "knowledge"
+   }
   },
   "assess_biomarker_clinical_validation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18646"
+   "site": "AnaToolExecutor.ts:18646",
+   "present": {
+    "verb": "compute",
+    "object": "the biomarker validation figures",
+    "source": "engine"
+   }
   },
   "assess_biosimilar_cmc": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18076"
+   "site": "AnaToolExecutor.ts:18076",
+   "present": {
+    "verb": "assess",
+    "object": "the biosimilar CMC strategy",
+    "source": "knowledge"
+   }
   },
   "assess_biowaiver": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17664"
+   "site": "AnaToolExecutor.ts:17664",
+   "present": {
+    "verb": "check",
+    "object": "biowaiver eligibility",
+    "source": "knowledge"
+   }
   },
   "assess_bla_filing_risk": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5609"
+   "site": "AnaToolExecutor.ts:5609",
+   "present": {
+    "verb": "assess",
+    "object": "the BLA filing risk",
+    "source": "engine"
+   }
   },
   "assess_boxed_warning": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18144"
+   "site": "AnaToolExecutor.ts:18144",
+   "present": {
+    "verb": "assess",
+    "object": "the need for a boxed warning",
+    "source": "knowledge"
+   }
   },
   "assess_br_uncertainty": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18934"
+   "site": "AnaToolExecutor.ts:18934",
+   "present": {
+    "verb": "assess",
+    "object": "the benefit-risk uncertainty",
+    "source": "knowledge"
+   }
   },
   "assess_carcinogenicity_need": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17745"
+   "site": "AnaToolExecutor.ts:17745",
+   "present": {
+    "verb": "assess",
+    "object": "the need for carcinogenicity studies",
+    "source": "knowledge"
+   }
   },
   "assess_cardiovascular_safety_pharmacology": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18240"
+   "site": "AnaToolExecutor.ts:18240",
+   "present": {
+    "verb": "assess",
+    "object": "the cardiovascular safety package",
+    "source": "knowledge"
+   }
   },
   "assess_cart_requirements": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17826"
+   "site": "AnaToolExecutor.ts:17826",
+   "present": {
+    "verb": "look_up",
+    "object": "CAR-T requirements",
+    "source": "knowledge"
+   }
   },
   "assess_cell_therapy_manufacturing": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17819"
+   "site": "AnaToolExecutor.ts:17819",
+   "present": {
+    "verb": "look_up",
+    "object": "cell-therapy manufacturing requirements",
+    "source": "knowledge"
+   }
   },
   "assess_claim_evidence_integrity": {
    "class": "confirm",
    "writes": "INSERT submission_twin_evidence_links on every call",
-   "site": "submission-twin-service.ts:219"
+   "site": "submission-twin-service.ts:219",
+   "present": {
+    "verb": "check",
+    "object": "that claims are backed by evidence",
+    "source": "project"
+   }
   },
   "assess_cns_safety_pharmacology": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18247"
+   "site": "AnaToolExecutor.ts:18247",
+   "present": {
+    "verb": "assess",
+    "object": "the CNS safety package",
+    "source": "knowledge"
+   }
   },
   "assess_coa_fit_for_purpose": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18350"
+   "site": "AnaToolExecutor.ts:18350",
+   "present": {
+    "verb": "assess",
+    "object": "whether the COA fits its use",
+    "source": "knowledge"
+   }
   },
   "assess_coa_validation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18336"
+   "site": "AnaToolExecutor.ts:18336",
+   "present": {
+    "verb": "assess",
+    "object": "the COA validation",
+    "source": "knowledge"
+   }
   },
   "assess_combination_product": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9818"
+   "site": "AnaToolExecutor.ts:9818",
+   "present": {
+    "verb": "assess",
+    "object": "the combination product",
+    "source": "knowledge"
+   }
   },
   "assess_comparability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5573"
+   "site": "AnaToolExecutor.ts:5573",
+   "present": {
+    "verb": "assess",
+    "object": "the comparability",
+    "source": "engine"
+   }
   },
   "assess_comparability_protocol": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17980"
+   "site": "AnaToolExecutor.ts:17980",
+   "present": {
+    "verb": "look_up",
+    "object": "the comparability requirements",
+    "source": "knowledge"
+   }
   },
   "assess_computer_system_validation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18557"
+   "site": "AnaToolExecutor.ts:18557",
+   "present": {
+    "verb": "assess",
+    "object": "the computer system validation",
+    "source": "knowledge"
+   }
   },
   "assess_concentration_qtc": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5313"
+   "site": "AnaToolExecutor.ts:5313",
+   "present": {
+    "verb": "assess",
+    "object": "the concentration-QTc relationship",
+    "source": "engine"
+   }
   },
   "assess_correlate_of_protection": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18865"
+   "site": "AnaToolExecutor.ts:18865",
+   "present": {
+    "verb": "assess",
+    "object": "the correlate of protection",
+    "source": "knowledge"
+   }
   },
   "assess_data_integrity": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18522"
+   "site": "AnaToolExecutor.ts:18522",
+   "present": {
+    "verb": "assess",
+    "object": "the data integrity",
+    "source": "knowledge"
+   }
   },
   "assess_ddi_risk": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5362"
+   "site": "AnaToolExecutor.ts:5362",
+   "present": {
+    "verb": "assess",
+    "object": "the drug-interaction risk",
+    "source": "engine"
+   }
   },
   "assess_device_constituent_controls": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18454"
+   "site": "AnaToolExecutor.ts:18454",
+   "present": {
+    "verb": "look_up",
+    "object": "the device-constituent design controls",
+    "source": "knowledge"
+   }
   },
   "assess_device_cybersecurity": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18845"
+   "site": "AnaToolExecutor.ts:18845",
+   "present": {
+    "verb": "assess",
+    "object": "the device cybersecurity",
+    "source": "knowledge"
+   }
   },
   "assess_device_evidence_structure": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9650"
+   "site": "AnaToolExecutor.ts:9650",
+   "present": {
+    "verb": "check",
+    "object": "the device evidence document",
+    "source": "knowledge"
+   }
   },
   "assess_dispatch_readiness": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9884"
+   "site": "AnaToolExecutor.ts:9884",
+   "present": {
+    "verb": "check",
+    "object": "whether the sequence is clear to dispatch",
+    "source": "submissions"
+   }
   },
   "assess_dissolution_similarity": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17657"
+   "site": "AnaToolExecutor.ts:17657",
+   "present": {
+    "verb": "compute",
+    "object": "the dissolution similarity",
+    "source": "engine"
+   }
   },
   "assess_dose_exposure_response": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18412"
+   "site": "AnaToolExecutor.ts:18412",
+   "present": {
+    "verb": "assess",
+    "object": "the exposure-response",
+    "source": "engine"
+   }
   },
   "assess_essential_principles": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18790"
+   "site": "AnaToolExecutor.ts:18790",
+   "present": {
+    "verb": "build",
+    "object": "the essential-principles matrix",
+    "source": "knowledge"
+   }
   },
   "assess_established_conditions": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18961"
+   "site": "AnaToolExecutor.ts:18961",
+   "present": {
+    "verb": "assess",
+    "object": "the established conditions",
+    "source": "knowledge"
+   }
   },
   "assess_expedited_program": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17993"
+   "site": "AnaToolExecutor.ts:17993",
+   "present": {
+    "verb": "assess",
+    "object": "expedited-program eligibility",
+    "source": "knowledge"
+   }
   },
   "assess_food_effect": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17932"
+   "site": "AnaToolExecutor.ts:17932",
+   "present": {
+    "verb": "assess",
+    "object": "the food-effect risk",
+    "source": "knowledge"
+   }
   },
   "assess_gcp_compliance": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18728"
+   "site": "AnaToolExecutor.ts:18728",
+   "present": {
+    "verb": "assess",
+    "object": "GCP conformance",
+    "source": "knowledge"
+   }
   },
   "assess_gene_therapy_requirements": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17812"
+   "site": "AnaToolExecutor.ts:17812",
+   "present": {
+    "verb": "look_up",
+    "object": "gene-therapy requirements",
+    "source": "knowledge"
+   }
   },
   "assess_gmlp": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18831"
+   "site": "AnaToolExecutor.ts:18831",
+   "present": {
+    "verb": "assess",
+    "object": "GMLP conformity",
+    "source": "knowledge"
+   }
   },
   "assess_immunogenicity": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5591"
+   "site": "AnaToolExecutor.ts:5591",
+   "present": {
+    "verb": "compute",
+    "object": "the immunogenicity incidence",
+    "source": "engine"
+   }
   },
   "assess_immunogenicity_comparability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18220"
+   "site": "AnaToolExecutor.ts:18220",
+   "present": {
+    "verb": "assess",
+    "object": "immunogenicity comparability",
+    "source": "knowledge"
+   }
   },
   "assess_immunogenicity_risk": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18185"
+   "site": "AnaToolExecutor.ts:18185",
+   "present": {
+    "verb": "assess",
+    "object": "the immunogenicity risk",
+    "source": "knowledge"
+   }
   },
   "assess_indication_extrapolation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18055"
+   "site": "AnaToolExecutor.ts:18055",
+   "present": {
+    "verb": "assess",
+    "object": "indication extrapolation",
+    "source": "knowledge"
+   }
   },
   "assess_inspection_readiness": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18721"
+   "site": "AnaToolExecutor.ts:18721",
+   "present": {
+    "verb": "assess",
+    "object": "inspection readiness",
+    "source": "knowledge"
+   }
   },
   "assess_interchangeability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18062"
+   "site": "AnaToolExecutor.ts:18062",
+   "present": {
+    "verb": "assess",
+    "object": "interchangeability",
+    "source": "knowledge"
+   }
   },
   "assess_intercurrent_event_strategy": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18481"
+   "site": "AnaToolExecutor.ts:18481",
+   "present": {
+    "verb": "assess",
+    "object": "the intercurrent-event strategies",
+    "source": "knowledge"
+   }
   },
   "assess_iso17511_traceability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:6126"
+   "site": "AnaToolExecutor.ts:6126",
+   "present": {
+    "verb": "assess",
+    "object": "the traceability chain",
+    "source": "knowledge"
+   }
   },
   "assess_ivd_analytical_extensions": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15736"
+   "site": "AnaToolExecutor.ts:15736",
+   "present": {
+    "verb": "compute",
+    "object": "the IVD analytical performance",
+    "source": "engine"
+   }
   },
   "assess_lot_consistency": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18879"
+   "site": "AnaToolExecutor.ts:18879",
+   "present": {
+    "verb": "design",
+    "object": "the lot-consistency study",
+    "source": "engine"
+   }
   },
   "assess_mdr_reportability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:6288"
+   "site": "AnaToolExecutor.ts:6288",
+   "present": {
+    "verb": "check",
+    "object": "whether the event is reportable",
+    "source": "engine"
+   }
   },
   "assess_metabolite_safety": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18584"
+   "site": "AnaToolExecutor.ts:18584",
+   "present": {
+    "verb": "assess",
+    "object": "the metabolite safety",
+    "source": "knowledge"
+   }
   },
   "assess_nitrosamine_risk": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18117"
+   "site": "AnaToolExecutor.ts:18117",
+   "present": {
+    "verb": "assess",
+    "object": "the nitrosamine risk",
+    "source": "knowledge"
+   }
   },
   "assess_nonclinical_program": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5285"
+   "site": "AnaToolExecutor.ts:5285",
+   "present": {
+    "verb": "check",
+    "object": "the nonclinical program for gaps",
+    "source": "engine"
+   }
   },
   "assess_nonclinical_safety": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5259"
+   "site": "AnaToolExecutor.ts:5259",
+   "present": {
+    "verb": "assemble",
+    "object": "the nonclinical safety assessment",
+    "source": "engine"
+   }
   },
   "assess_orphan_designation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18007"
+   "site": "AnaToolExecutor.ts:18007",
+   "present": {
+    "verb": "assess",
+    "object": "orphan-designation eligibility",
+    "source": "knowledge"
+   }
   },
   "assess_otc_labeling": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18172"
+   "site": "AnaToolExecutor.ts:18172",
+   "present": {
+    "verb": "look_up",
+    "object": "the OTC labeling requirements",
+    "source": "knowledge"
+   }
   },
   "assess_output_confidence": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:943"
+   "site": "AnaToolExecutor.ts:943",
+   "present": {
+    "verb": "assess",
+    "object": "how confident the answer can be",
+    "source": "engine"
+   }
   },
   "assess_pathway_eligibility": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9604"
+   "site": "AnaToolExecutor.ts:9604",
+   "present": {
+    "verb": "check",
+    "object": "designation eligibility",
+    "source": "knowledge"
+   }
   },
   "assess_pathway_readiness": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9360"
+   "site": "AnaToolExecutor.ts:9360",
+   "present": {
+    "verb": "check",
+    "object": "the sequence for its pathway",
+    "source": "submissions"
+   }
   },
   "assess_pediatric_extrapolation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17775"
+   "site": "AnaToolExecutor.ts:17775",
+   "present": {
+    "verb": "assess",
+    "object": "pediatric extrapolation",
+    "source": "knowledge"
+   }
   },
   "assess_pediatric_requirements": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17796"
+   "site": "AnaToolExecutor.ts:17796",
+   "present": {
+    "verb": "look_up",
+    "object": "the pediatric requirements",
+    "source": "knowledge"
+   }
   },
   "assess_plr_structure": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18137"
+   "site": "AnaToolExecutor.ts:18137",
+   "present": {
+    "verb": "look_up",
+    "object": "the PLR labeling structure",
+    "source": "knowledge"
+   }
   },
   "assess_postapproval_comparability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18982"
+   "site": "AnaToolExecutor.ts:18982",
+   "present": {
+    "verb": "assess",
+    "object": "post-approval comparability",
+    "source": "knowledge"
+   }
   },
   "assess_pregnancy_lactation_labeling": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18158"
+   "site": "AnaToolExecutor.ts:18158",
+   "present": {
+    "verb": "look_up",
+    "object": "the pregnancy and lactation labeling",
+    "source": "knowledge"
+   }
   },
   "assess_process_validation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17973"
+   "site": "AnaToolExecutor.ts:17973",
+   "present": {
+    "verb": "look_up",
+    "object": "process-validation guidance",
+    "source": "knowledge"
+   }
   },
   "assess_project_optimus_alignment": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18384"
+   "site": "AnaToolExecutor.ts:18384",
+   "present": {
+    "verb": "assess",
+    "object": "Project Optimus alignment",
+    "source": "knowledge"
+   }
   },
   "assess_protein_binding": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18605"
+   "site": "AnaToolExecutor.ts:18605",
+   "present": {
+    "verb": "assess",
+    "object": "the protein binding",
+    "source": "engine"
+   }
   },
   "assess_pv_causality": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18288"
+   "site": "AnaToolExecutor.ts:18288",
+   "present": {
+    "verb": "assess",
+    "object": "the case causality",
+    "source": "engine"
+   }
   },
   "assess_qms": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9837"
+   "site": "AnaToolExecutor.ts:9837",
+   "present": {
+    "verb": "check",
+    "object": "the QMS against ISO 13485",
+    "source": "knowledge"
+   }
   },
   "assess_qtc_risk": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17904"
+   "site": "AnaToolExecutor.ts:17904",
+   "present": {
+    "verb": "assess",
+    "object": "the QTc risk",
+    "source": "knowledge"
+   }
   },
   "assess_rare_disease_endpoint": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18694"
+   "site": "AnaToolExecutor.ts:18694",
+   "present": {
+    "verb": "assess",
+    "object": "rare-disease endpoints",
+    "source": "knowledge"
+   }
   },
   "assess_readability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3543"
+   "site": "AnaToolExecutor.ts:3543",
+   "present": {
+    "verb": "score",
+    "object": "the text for readability",
+    "source": "engine"
+   }
   },
   "assess_recorded_batch_poolability": {
    "class": "read",
@@ -766,42 +1419,85 @@
   "assess_regulatory_landscape": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3645"
+   "site": "AnaToolExecutor.ts:3645",
+   "present": {
+    "verb": "assess",
+    "object": "the regulatory landscape",
+    "source": "agency",
+    "preview": [
+     "topic"
+    ]
+   }
   },
   "assess_respiratory_safety_pharmacology": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18254"
+   "site": "AnaToolExecutor.ts:18254",
+   "present": {
+    "verb": "assess",
+    "object": "the respiratory safety package",
+    "source": "knowledge"
+   }
   },
   "assess_rolling_submission": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18021"
+   "site": "AnaToolExecutor.ts:18021",
+   "present": {
+    "verb": "assess",
+    "object": "rolling-submission eligibility",
+    "source": "knowledge"
+   }
   },
   "assess_rwe_bias_risk": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17877"
+   "site": "AnaToolExecutor.ts:17877",
+   "present": {
+    "verb": "assess",
+    "object": "the RWE bias risk",
+    "source": "knowledge"
+   }
   },
   "assess_rwe_regulatory_acceptability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17884"
+   "site": "AnaToolExecutor.ts:17884",
+   "present": {
+    "verb": "assess",
+    "object": "the RWE acceptability",
+    "source": "knowledge"
+   }
   },
   "assess_scientific_validity": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:6135"
+   "site": "AnaToolExecutor.ts:6135",
+   "present": {
+    "verb": "assess",
+    "object": "the scientific validity",
+    "source": "knowledge"
+   }
   },
   "assess_shelf_life_stability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:6154"
+   "site": "AnaToolExecutor.ts:6154",
+   "present": {
+    "verb": "compute",
+    "object": "the shelf life",
+    "source": "engine"
+   }
   },
   "assess_signal_priority": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18309"
+   "site": "AnaToolExecutor.ts:18309",
+   "present": {
+    "verb": "score",
+    "object": "the signal priority",
+    "source": "engine"
+   }
   },
   "assess_site_risk": {
    "class": "confirm",
@@ -811,12 +1507,22 @@
   "assess_small_population_design": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18680"
+   "site": "AnaToolExecutor.ts:18680",
+   "present": {
+    "verb": "assess",
+    "object": "small-population designs",
+    "source": "knowledge"
+   }
   },
   "assess_statistical_defensibility": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5449"
+   "site": "AnaToolExecutor.ts:5449",
+   "present": {
+    "verb": "assess",
+    "object": "the statistical defensibility",
+    "source": "engine"
+   }
   },
   "assess_stored_cer": {
    "class": "read",
@@ -826,7 +1532,12 @@
   "assess_structural_alerts": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18103"
+   "site": "AnaToolExecutor.ts:18103",
+   "present": {
+    "verb": "assess",
+    "object": "the structural alerts",
+    "source": "knowledge"
+   }
   },
   "assess_study_onboarding": {
    "class": "read",
@@ -836,22 +1547,42 @@
   "assess_submission_package": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15833"
+   "site": "AnaToolExecutor.ts:15833",
+   "present": {
+    "verb": "assess",
+    "object": "the submission package",
+    "source": "submissions"
+   }
   },
   "assess_substantial_equivalence": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18776"
+   "site": "AnaToolExecutor.ts:18776",
+   "present": {
+    "verb": "assess",
+    "object": "the substantial equivalence",
+    "source": "engine"
+   }
   },
   "assess_trial_feasibility": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3812"
+   "site": "AnaToolExecutor.ts:3812",
+   "present": {
+    "verb": "assess",
+    "object": "trial feasibility from ClinicalTrials.gov",
+    "source": "agency"
+   }
   },
   "assess_vaccine_platform": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18886"
+   "site": "AnaToolExecutor.ts:18886",
+   "present": {
+    "verb": "assess",
+    "object": "the vaccine platform",
+    "source": "knowledge"
+   }
   },
   "assign_committee_member": {
    "class": "confirm",
@@ -861,62 +1592,125 @@
   "assign_protocol_reviewer": {
    "class": "confirm",
    "writes": "INSERT protocol_review_assignments + audit",
-   "site": "AnaToolExecutor.ts:10952"
+   "site": "AnaToolExecutor.ts:10952",
+   "present": {
+    "verb": "update",
+    "object": "a reviewer assignment",
+    "source": "authoring"
+   }
   },
   "author_docx_native": {
    "class": "self",
    "writes": "scratch .docx under tmp/docbuilder, not filed",
-   "site": "AnaToolExecutor.ts:6880"
+   "site": "AnaToolExecutor.ts:6880",
+   "present": {
+    "verb": "build",
+    "object": "a Word document",
+    "source": "authoring",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "batch_draft_sections": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:14969"
+   "site": "AnaToolExecutor.ts:14969",
+   "present": {
+    "verb": "draft",
+    "object": "several sections at once",
+    "source": "authoring"
+   }
   },
   "benchmark_precedent_trials": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15821"
+   "site": "AnaToolExecutor.ts:15821",
+   "present": {
+    "verb": "compute",
+    "object": "a benchmark from precedent trials",
+    "source": "literature"
+   }
   },
   "bind_protocol_to_study_design": {
    "class": "confirm",
    "writes": "UPDATE protocol_documents study_design link + governed-action row",
-   "site": "AnaToolExecutor.ts:20395"
+   "site": "AnaToolExecutor.ts:20395",
+   "present": {
+    "verb": "link",
+    "object": "the protocol to its study design",
+    "source": "authoring"
+   }
   },
   "build_abbreviation_list": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3553"
+   "site": "AnaToolExecutor.ts:3553",
+   "present": {
+    "verb": "check",
+    "object": "the draft for abbreviations",
+    "source": "engine"
+   }
   },
   "build_device_blueprint": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9719"
+   "site": "AnaToolExecutor.ts:9719",
+   "present": {
+    "verb": "build",
+    "object": "the device submission blueprint",
+    "source": "knowledge"
+   }
   },
   "build_effects_table": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18913"
+   "site": "AnaToolExecutor.ts:18913",
+   "present": {
+    "verb": "build",
+    "object": "the effects table",
+    "source": "knowledge"
+   }
   },
   "build_from_template": {
    "class": "self",
    "writes": "scratch .docx under tmp/docbuilder, not filed",
-   "site": "docx/masterDocumentBuilder.ts:262"
+   "site": "docx/masterDocumentBuilder.ts:262",
+   "present": {
+    "verb": "build",
+    "object": "a document from your template",
+    "source": "authoring"
+   }
   },
   "build_global_device_strategy": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9742"
+   "site": "AnaToolExecutor.ts:9742",
+   "present": {
+    "verb": "build",
+    "object": "the global device strategy",
+    "source": "knowledge"
+   }
   },
   "build_pathway_manifest": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9385"
+   "site": "AnaToolExecutor.ts:9385",
+   "present": {
+    "verb": "build",
+    "object": "the pathway table of contents",
+    "source": "submissions"
+   }
   },
   "build_postmarket_report": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:6182"
+   "site": "AnaToolExecutor.ts:6182",
+   "present": {
+    "verb": "draft",
+    "object": "a post-market report",
+    "source": "knowledge"
+   }
   },
   "build_sae_line_listing": {
    "class": "read",
@@ -926,12 +1720,22 @@
   "calculate_safety_margin": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17731"
+   "site": "AnaToolExecutor.ts:17731",
+   "present": {
+    "verb": "compute",
+    "object": "the safety margin",
+    "source": "engine"
+   }
   },
   "calculate_ttc": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18096"
+   "site": "AnaToolExecutor.ts:18096",
+   "present": {
+    "verb": "compute",
+    "object": "the TTC limit",
+    "source": "engine"
+   }
   },
   "cast_committee_vote": {
    "class": "refuse",
@@ -942,7 +1746,15 @@
   "catalog_project_document": {
    "class": "confirm",
    "writes": "UPDATE vault.document_catalog (shared comprehension record)",
-   "site": "vault/document-catalog.service.ts:354"
+   "site": "vault/document-catalog.service.ts:354",
+   "present": {
+    "verb": "record",
+    "object": "what a Vault document is",
+    "source": "vault",
+    "preview": [
+     "@documentTitle"
+    ]
+   }
   },
   "categorize_clia_complexity": {
    "class": "confirm",
@@ -959,82 +1771,165 @@
   "characterize_pk": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5334"
+   "site": "AnaToolExecutor.ts:5334",
+   "present": {
+    "verb": "analyze",
+    "object": "the pharmacokinetics",
+    "source": "engine"
+   }
   },
   "check_consistency": {
    "class": "confirm",
    "writes": "INSERT consistency_findings + audit",
-   "site": "truth-engine/truth-engine-service.ts:174"
+   "site": "truth-engine/truth-engine-service.ts:174",
+   "present": {
+    "verb": "check",
+    "object": "figures across the dossier",
+    "source": "submissions"
+   }
   },
   "check_dataset_conformance": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17359"
+   "site": "AnaToolExecutor.ts:17359",
+   "present": {
+    "verb": "check",
+    "object": "the dataset spec",
+    "source": "engine"
+   }
   },
   "check_deep_investigation": {
    "class": "read",
    "writes": "none",
-   "site": "agentic-workflow-tools.ts:288"
+   "site": "agentic-workflow-tools.ts:288",
+   "present": {
+    "verb": "check",
+    "object": "the background investigation",
+    "source": "project"
+   }
   },
   "check_dossier_consistency": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5687"
+   "site": "AnaToolExecutor.ts:5687",
+   "present": {
+    "verb": "check",
+    "object": "figures across the dossier",
+    "source": "engine"
+   }
   },
   "check_ectd_cross_references": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9042"
+   "site": "AnaToolExecutor.ts:9042",
+   "present": {
+    "verb": "check",
+    "object": "the eCTD cross-references",
+    "source": "engine"
+   }
   },
   "check_grounding": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:987"
+   "site": "AnaToolExecutor.ts:987",
+   "present": {
+    "verb": "check",
+    "object": "the draft for ungrounded figures",
+    "source": "engine"
+   }
   },
   "check_guidance_freshness": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17534"
+   "site": "AnaToolExecutor.ts:17534",
+   "present": {
+    "verb": "check",
+    "object": "that the cited guidance is current",
+    "source": "engine"
+   }
   },
   "check_numerical_integrity": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4792"
+   "site": "AnaToolExecutor.ts:4792",
+   "present": {
+    "verb": "check",
+    "object": "the draft for conflicting figures",
+    "source": "engine"
+   }
   },
   "check_regulatory_compliance": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4215"
+   "site": "AnaToolExecutor.ts:4215",
+   "present": {
+    "verb": "check",
+    "object": "the text against expected topics",
+    "source": "engine"
+   }
   },
   "check_regulatory_currency": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15769"
+   "site": "AnaToolExecutor.ts:15769",
+   "present": {
+    "verb": "check",
+    "object": "that the rule is still current",
+    "source": "knowledge",
+    "preview": [
+     "topic"
+    ]
+   }
   },
   "check_submission_status": {
    "class": "confirm",
    "writes": "agency-polling gateways UPDATE submission_transmittals.status (target-dependent; fail closed)",
-   "site": "submission-gateways/rest-gateway-helpers.ts:143"
+   "site": "submission-gateways/rest-gateway-helpers.ts:143",
+   "present": {
+    "verb": "check",
+    "object": "the submission status",
+    "source": "submissions"
+   }
   },
   "classify_atmp": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17805"
+   "site": "AnaToolExecutor.ts:17805",
+   "present": {
+    "verb": "classify",
+    "object": "the advanced therapy",
+    "source": "engine"
+   }
   },
   "classify_bcs": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17643"
+   "site": "AnaToolExecutor.ts:17643",
+   "present": {
+    "verb": "classify",
+    "object": "the BCS class",
+    "source": "engine"
+   }
   },
   "classify_biomarker": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18618"
+   "site": "AnaToolExecutor.ts:18618",
+   "present": {
+    "verb": "classify",
+    "object": "the biomarker",
+    "source": "engine"
+   }
   },
   "classify_combination_product": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18433"
+   "site": "AnaToolExecutor.ts:18433",
+   "present": {
+    "verb": "classify",
+    "object": "the combination product",
+    "source": "engine"
+   }
   },
   "classify_coverage_item": {
    "class": "confirm",
@@ -1044,37 +1939,72 @@
   "classify_cyp_phenotype": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17918"
+   "site": "AnaToolExecutor.ts:17918",
+   "present": {
+    "verb": "classify",
+    "object": "the CYP phenotype",
+    "source": "engine"
+   }
   },
   "classify_ddi_risk": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17897"
+   "site": "AnaToolExecutor.ts:17897",
+   "present": {
+    "verb": "classify",
+    "object": "the drug-interaction risk",
+    "source": "engine"
+   }
   },
   "classify_device": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9674"
+   "site": "AnaToolExecutor.ts:9674",
+   "present": {
+    "verb": "classify",
+    "object": "the device",
+    "source": "engine"
+   }
   },
   "classify_expedited_reporting": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18281"
+   "site": "AnaToolExecutor.ts:18281",
+   "present": {
+    "verb": "classify",
+    "object": "the safety case for reporting",
+    "source": "engine"
+   }
   },
   "classify_gmp_deviation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18536"
+   "site": "AnaToolExecutor.ts:18536",
+   "present": {
+    "verb": "classify",
+    "object": "the GMP deviation",
+    "source": "engine"
+   }
   },
   "classify_immunogenicity_clinical_impact": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18199"
+   "site": "AnaToolExecutor.ts:18199",
+   "present": {
+    "verb": "classify",
+    "object": "the immunogenicity impact",
+    "source": "engine"
+   }
   },
   "classify_impurity": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17959"
+   "site": "AnaToolExecutor.ts:17959",
+   "present": {
+    "verb": "classify",
+    "object": "the impurity",
+    "source": "engine"
+   }
   },
   "classify_ivd_device": {
    "class": "confirm",
@@ -1084,42 +2014,82 @@
   "classify_medical_device": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18762"
+   "site": "AnaToolExecutor.ts:18762",
+   "present": {
+    "verb": "classify",
+    "object": "the medical device",
+    "source": "engine"
+   }
   },
   "classify_mutagenic_impurity": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18089"
+   "site": "AnaToolExecutor.ts:18089",
+   "present": {
+    "verb": "classify",
+    "object": "the mutagenic impurity",
+    "source": "engine"
+   }
   },
   "classify_pediatric_age": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17761"
+   "site": "AnaToolExecutor.ts:17761",
+   "present": {
+    "verb": "classify",
+    "object": "the pediatric age band",
+    "source": "engine"
+   }
   },
   "classify_post_approval_change": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18954"
+   "site": "AnaToolExecutor.ts:18954",
+   "present": {
+    "verb": "classify",
+    "object": "the post-approval change",
+    "source": "engine"
+   }
   },
   "classify_post_submission_change": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9626"
+   "site": "AnaToolExecutor.ts:9626",
+   "present": {
+    "verb": "classify",
+    "object": "the post-approval change",
+    "source": "engine"
+   }
   },
   "classify_protocol_deviation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18742"
+   "site": "AnaToolExecutor.ts:18742",
+   "present": {
+    "verb": "classify",
+    "object": "the protocol deviation",
+    "source": "engine"
+   }
   },
   "classify_samd": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18810"
+   "site": "AnaToolExecutor.ts:18810",
+   "present": {
+    "verb": "classify",
+    "object": "the software as a medical device",
+    "source": "engine"
+   }
   },
   "classify_submission_document": {
    "class": "read",
    "writes": "none (proposes a section and the leaf to place; places nothing, changes no document; the AI call's audit row only)",
-   "site": "ingestion/ingestion-service.ts:classifyDocument"
+   "site": "ingestion/ingestion-service.ts:classifyDocument",
+   "present": {
+    "verb": "classify",
+    "object": "a submission document",
+    "source": "submissions"
+   }
   },
   "classify_tmf_artifact": {
    "class": "conditional",
@@ -1130,32 +2100,71 @@
   "classify_tox_findings": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4956"
+   "site": "AnaToolExecutor.ts:4956",
+   "present": {
+    "verb": "classify",
+    "object": "the toxicology findings",
+    "source": "engine"
+   }
   },
   "clone_protocol_template": {
    "class": "confirm",
    "writes": "INSERT protocol_documents + sections + governed-action row",
-   "site": "protocol-templates-service.ts:64"
+   "site": "protocol-templates-service.ts:64",
+   "present": {
+    "verb": "create",
+    "object": "a protocol from a template",
+    "source": "authoring",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "code_drug": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15949"
+   "site": "AnaToolExecutor.ts:15949",
+   "present": {
+    "verb": "code",
+    "object": "a drug name in RxNorm",
+    "source": "agency"
+   }
   },
   "code_meddra": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16003"
+   "site": "AnaToolExecutor.ts:16003",
+   "present": {
+    "verb": "code",
+    "object": "a term in MedDRA",
+    "source": "agency",
+    "preview": [
+     "term"
+    ]
+   }
   },
   "code_whodrug": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16030"
+   "site": "AnaToolExecutor.ts:16030",
+   "present": {
+    "verb": "code",
+    "object": "a drug in WHODrug",
+    "source": "agency"
+   }
   },
   "commit_document_revision": {
    "class": "confirm",
    "writes": "new artifact version; status -> review by default; audit",
-   "site": "document-spine.ts:414"
+   "site": "document-spine.ts:414",
+   "present": {
+    "verb": "save",
+    "object": "a governed revision of the document",
+    "source": "vault",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "commit_intelligence_flow": {
    "class": "conditional",
@@ -1166,17 +2175,32 @@
   "compare_document_versions": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4368"
+   "site": "AnaToolExecutor.ts:4368",
+   "present": {
+    "verb": "compare",
+    "object": "two versions of the text",
+    "source": "engine"
+   }
   },
   "compare_global_pathways": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18028"
+   "site": "AnaToolExecutor.ts:18028",
+   "present": {
+    "verb": "compare",
+    "object": "pathways across markets",
+    "source": "knowledge"
+   }
   },
   "compare_proposed_design_to_precedent": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:13943"
+   "site": "AnaToolExecutor.ts:13943",
+   "present": {
+    "verb": "compare",
+    "object": "the design to precedent",
+    "source": "literature"
+   }
   },
   "compare_recorded_dissolution": {
    "class": "read",
@@ -1186,22 +2210,42 @@
   "compare_statistical_scenarios": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5409"
+   "site": "AnaToolExecutor.ts:5409",
+   "present": {
+    "verb": "compare",
+    "object": "two study-design scenarios",
+    "source": "engine"
+   }
   },
   "compare_submission_against_precedent": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:6648"
+   "site": "AnaToolExecutor.ts:6648",
+   "present": {
+    "verb": "compare",
+    "object": "the submission against precedent",
+    "source": "submissions"
+   }
   },
   "compare_vault_versions": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:19889"
+   "site": "AnaToolExecutor.ts:19889",
+   "present": {
+    "verb": "compare",
+    "object": "two versions of a Vault document",
+    "source": "vault"
+   }
   },
   "compile_correspondence_response_package": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2264"
+   "site": "AnaToolExecutor.ts:2264",
+   "present": {
+    "verb": "assemble",
+    "object": "the correspondence response package",
+    "source": "submissions"
+   }
   },
   "compose_510k_summary": {
    "class": "read",
@@ -1221,37 +2265,72 @@
   "compute_analytical_performance": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15651"
+   "site": "AnaToolExecutor.ts:15651",
+   "present": {
+    "verb": "compute",
+    "object": "the analytical performance",
+    "source": "engine"
+   }
   },
   "compute_assurance": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15698"
+   "site": "AnaToolExecutor.ts:15698",
+   "present": {
+    "verb": "compute",
+    "object": "the assurance",
+    "source": "engine"
+   }
   },
   "compute_diagnostic_accuracy": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15616"
+   "site": "AnaToolExecutor.ts:15616",
+   "present": {
+    "verb": "compute",
+    "object": "the diagnostic accuracy",
+    "source": "engine"
+   }
   },
   "compute_fih_dose": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4934"
+   "site": "AnaToolExecutor.ts:4934",
+   "present": {
+    "verb": "compute",
+    "object": "the first-in-human dose",
+    "source": "engine"
+   }
   },
   "compute_lifecycle_operations": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:8901"
+   "site": "AnaToolExecutor.ts:8901",
+   "present": {
+    "verb": "compute",
+    "object": "the eCTD lifecycle operations",
+    "source": "engine"
+   }
   },
   "compute_sample_size": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4884"
+   "site": "AnaToolExecutor.ts:4884",
+   "present": {
+    "verb": "compute",
+    "object": "the sample size",
+    "source": "engine"
+   }
   },
   "control_mutagenic_impurity": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18124"
+   "site": "AnaToolExecutor.ts:18124",
+   "present": {
+    "verb": "design",
+    "object": "the mutagenic-impurity control",
+    "source": "knowledge"
+   }
   },
   "convene_committee_meeting": {
    "class": "confirm",
@@ -1261,18 +2340,33 @@
   "convene_drafting_council": {
    "class": "self",
    "writes": "lumen council working/audit rows; final text not saved to a tenant record",
-   "site": "agentic-workflow-tools.ts:124"
+   "site": "agentic-workflow-tools.ts:124",
+   "present": {
+    "verb": "run",
+    "object": "the drafting council",
+    "source": "authoring"
+   }
   },
   "convert_docx_to_pdf": {
    "class": "conditional",
    "writes": "writes or overwrites a PDF next to the input or at output_pdf_path",
    "site": "scripts/docx_pdf_pipeline.py:77",
-   "rule": "output path under tmp/ -> self; otherwise (uploads/) -> confirm"
+   "rule": "output path under tmp/ -> self; otherwise (uploads/) -> confirm",
+   "present": {
+    "verb": "convert",
+    "object": "the Word document to PDF",
+    "source": "authoring"
+   }
   },
   "convert_to_rps_v4": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:8968"
+   "site": "AnaToolExecutor.ts:8968",
+   "present": {
+    "verb": "convert",
+    "object": "the leaves to eCTD v4",
+    "source": "engine"
+   }
   },
   "create_biosketch": {
    "class": "confirm",
@@ -1282,7 +2376,12 @@
   "create_calendar_event": {
    "class": "confirm",
    "writes": "external Google Calendar event",
-   "site": "AnaToolExecutor.ts:4035"
+   "site": "AnaToolExecutor.ts:4035",
+   "present": {
+    "verb": "create",
+    "object": "a calendar event",
+    "source": "connected"
+   }
   },
   "create_clinical_investigator": {
    "class": "confirm",
@@ -1308,7 +2407,15 @@
   "create_consent_form": {
    "class": "confirm",
    "writes": "INSERT consent_forms + elements + governed-action row",
-   "site": "AnaToolExecutor.ts:11000"
+   "site": "AnaToolExecutor.ts:11000",
+   "present": {
+    "verb": "create",
+    "object": "a consent form",
+    "source": "authoring",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "create_coverage_analysis": {
    "class": "confirm",
@@ -1368,7 +2475,15 @@
   "create_irb_submission": {
    "class": "confirm",
    "writes": "INSERT irb_submissions + governed-action row",
-   "site": "AnaToolExecutor.ts:10364"
+   "site": "AnaToolExecutor.ts:10364",
+   "present": {
+    "verb": "create",
+    "object": "an IRB submission",
+    "source": "authoring",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "create_labeling_document": {
    "class": "confirm",
@@ -1404,17 +2519,38 @@
   "create_protocol_amendment": {
    "class": "confirm",
    "writes": "INSERT protocol_amendments + snapshot + governed-action row",
-   "site": "AnaToolExecutor.ts:10857"
+   "site": "AnaToolExecutor.ts:10857",
+   "present": {
+    "verb": "create",
+    "object": "a protocol amendment",
+    "source": "authoring",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "create_protocol_document": {
    "class": "confirm",
    "writes": "INSERT protocol_documents + sections + governed-action row",
-   "site": "AnaToolExecutor.ts:11460"
+   "site": "AnaToolExecutor.ts:11460",
+   "present": {
+    "verb": "create",
+    "object": "a protocol document",
+    "source": "authoring",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "create_protocol_template": {
    "class": "confirm",
    "writes": "INSERT protocol_templates + sections + governed-action row",
-   "site": "AnaToolExecutor.ts:10708"
+   "site": "AnaToolExecutor.ts:10708",
+   "present": {
+    "verb": "create",
+    "object": "a protocol template",
+    "source": "authoring"
+   }
   },
   "create_q_sub": {
    "class": "confirm",
@@ -1424,7 +2560,15 @@
   "create_qms_document": {
    "class": "confirm",
    "writes": "INSERT qms_documents (draft) + governed-action row",
-   "site": "AnaToolExecutor.ts:13583"
+   "site": "AnaToolExecutor.ts:13583",
+   "present": {
+    "verb": "create",
+    "object": "a controlled document",
+    "source": "qms",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "create_regulatory_commitment": {
    "class": "confirm",
@@ -1465,22 +2609,42 @@
   "critique_document": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3935"
+   "site": "AnaToolExecutor.ts:3935",
+   "present": {
+    "verb": "critique",
+    "object": "the document",
+    "source": "authoring"
+   }
   },
   "critique_draft": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3886"
+   "site": "AnaToolExecutor.ts:3886",
+   "present": {
+    "verb": "critique",
+    "object": "the draft",
+    "source": "authoring"
+   }
   },
   "cross_region_gap_analysis": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9270"
+   "site": "AnaToolExecutor.ts:9270",
+   "present": {
+    "verb": "compare",
+    "object": "what another region needs",
+    "source": "knowledge"
+   }
   },
   "define_estimand": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18474"
+   "site": "AnaToolExecutor.ts:18474",
+   "present": {
+    "verb": "build",
+    "object": "the estimand",
+    "source": "engine"
+   }
   },
   "define_kri": {
    "class": "confirm",
@@ -1490,302 +2654,605 @@
   "derive_ctq_factors": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20903"
+   "site": "AnaToolExecutor.ts:20903",
+   "present": {
+    "verb": "derive",
+    "object": "the critical-to-quality factors",
+    "source": "authoring"
+   }
   },
   "describe_capabilities": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3575"
+   "site": "AnaToolExecutor.ts:3575",
+   "present": {
+    "verb": "check",
+    "object": "what AnA can do here",
+    "source": "project"
+   }
   },
   "design_ada_assay_strategy": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18192"
+   "site": "AnaToolExecutor.ts:18192",
+   "present": {
+    "verb": "design",
+    "object": "the ADA assay strategy",
+    "source": "knowledge"
+   }
   },
   "design_adaptive_design": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18495"
+   "site": "AnaToolExecutor.ts:18495",
+   "present": {
+    "verb": "design",
+    "object": "the adaptive design",
+    "source": "knowledge"
+   }
   },
   "design_adme_program": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18570"
+   "site": "AnaToolExecutor.ts:18570",
+   "present": {
+    "verb": "design",
+    "object": "the ADME program",
+    "source": "knowledge"
+   }
   },
   "design_backfill_strategy": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18405"
+   "site": "AnaToolExecutor.ts:18405",
+   "present": {
+    "verb": "design",
+    "object": "the backfill strategy",
+    "source": "knowledge"
+   }
   },
   "design_bayesian_device": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15640"
+   "site": "AnaToolExecutor.ts:15640",
+   "present": {
+    "verb": "compute",
+    "object": "the Bayesian device study size",
+    "source": "engine"
+   }
   },
   "design_be_study": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17650"
+   "site": "AnaToolExecutor.ts:17650",
+   "present": {
+    "verb": "design",
+    "object": "the bioequivalence study",
+    "source": "knowledge"
+   }
   },
   "design_bioanalytical_method": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17925"
+   "site": "AnaToolExecutor.ts:17925",
+   "present": {
+    "verb": "design",
+    "object": "the bioanalytical method",
+    "source": "knowledge"
+   }
   },
   "design_biosimilar_clinical": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18048"
+   "site": "AnaToolExecutor.ts:18048",
+   "present": {
+    "verb": "design",
+    "object": "the biosimilar clinical program",
+    "source": "knowledge"
+   }
   },
   "design_capa": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18529"
+   "site": "AnaToolExecutor.ts:18529",
+   "present": {
+    "verb": "design",
+    "object": "a CAPA plan",
+    "source": "knowledge"
+   }
   },
   "design_cdx_codevelopment": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18632"
+   "site": "AnaToolExecutor.ts:18632",
+   "present": {
+    "verb": "design",
+    "object": "the CDx co-development",
+    "source": "knowledge"
+   }
   },
   "design_core_battery": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18233"
+   "site": "AnaToolExecutor.ts:18233",
+   "present": {
+    "verb": "design",
+    "object": "the safety pharmacology battery",
+    "source": "knowledge"
+   }
   },
   "design_device_clinical_evidence": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18783"
+   "site": "AnaToolExecutor.ts:18783",
+   "present": {
+    "verb": "design",
+    "object": "the device clinical evidence",
+    "source": "knowledge"
+   }
   },
   "design_dose_finding": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15527"
+   "site": "AnaToolExecutor.ts:15527",
+   "present": {
+    "verb": "compute",
+    "object": "the dose-finding boundaries",
+    "source": "engine"
+   }
   },
   "design_external_control": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18673"
+   "site": "AnaToolExecutor.ts:18673",
+   "present": {
+    "verb": "design",
+    "object": "the external control",
+    "source": "knowledge"
+   }
   },
   "design_followup_safety_study": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18261"
+   "site": "AnaToolExecutor.ts:18261",
+   "present": {
+    "verb": "design",
+    "object": "the follow-up safety studies",
+    "source": "knowledge"
+   }
   },
   "design_genotox_battery": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17738"
+   "site": "AnaToolExecutor.ts:17738",
+   "present": {
+    "verb": "design",
+    "object": "the genotoxicity battery",
+    "source": "knowledge"
+   }
   },
   "design_group_sequential": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15508"
+   "site": "AnaToolExecutor.ts:15508",
+   "present": {
+    "verb": "compute",
+    "object": "the group-sequential boundaries",
+    "source": "engine"
+   }
   },
   "design_human_factors_study": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18447"
+   "site": "AnaToolExecutor.ts:18447",
+   "present": {
+    "verb": "design",
+    "object": "the human factors study",
+    "source": "knowledge"
+   }
   },
   "design_informed_consent": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18735"
+   "site": "AnaToolExecutor.ts:18735",
+   "present": {
+    "verb": "design",
+    "object": "the informed-consent framework",
+    "source": "knowledge"
+   }
   },
   "design_mass_balance_study": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18577"
+   "site": "AnaToolExecutor.ts:18577",
+   "present": {
+    "verb": "design",
+    "object": "the mass-balance study",
+    "source": "knowledge"
+   }
   },
   "design_mmrm": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15501"
+   "site": "AnaToolExecutor.ts:15501",
+   "present": {
+    "verb": "compute",
+    "object": "the MMRM sample size",
+    "source": "engine"
+   }
   },
   "design_monitoring_plan": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18714"
+   "site": "AnaToolExecutor.ts:18714",
+   "present": {
+    "verb": "design",
+    "object": "the monitoring plan",
+    "source": "knowledge"
+   }
   },
   "design_mrmc_reader_study": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15569"
+   "site": "AnaToolExecutor.ts:15569",
+   "present": {
+    "verb": "compute",
+    "object": "the reader-study power",
+    "source": "engine"
+   }
   },
   "design_nab_assay": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18206"
+   "site": "AnaToolExecutor.ts:18206",
+   "present": {
+    "verb": "design",
+    "object": "the NAb assay",
+    "source": "knowledge"
+   }
   },
   "design_natural_history_study": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18666"
+   "site": "AnaToolExecutor.ts:18666",
+   "present": {
+    "verb": "design",
+    "object": "the natural-history study",
+    "source": "knowledge"
+   }
   },
   "design_organ_impairment_study": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17911"
+   "site": "AnaToolExecutor.ts:17911",
+   "present": {
+    "verb": "design",
+    "object": "the organ-impairment study",
+    "source": "knowledge"
+   }
   },
   "design_pacmp": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18968"
+   "site": "AnaToolExecutor.ts:18968",
+   "present": {
+    "verb": "design",
+    "object": "the change management protocol",
+    "source": "knowledge"
+   }
   },
   "design_pccp": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18824"
+   "site": "AnaToolExecutor.ts:18824",
+   "present": {
+    "verb": "design",
+    "object": "the change control plan",
+    "source": "knowledge"
+   }
   },
   "design_pediatric_investigation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17768"
+   "site": "AnaToolExecutor.ts:17768",
+   "present": {
+    "verb": "design",
+    "object": "the pediatric plan",
+    "source": "knowledge"
+   }
   },
   "design_popk_study": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17680"
+   "site": "AnaToolExecutor.ts:17680",
+   "present": {
+    "verb": "design",
+    "object": "the population PK analysis",
+    "source": "knowledge"
+   }
   },
   "design_propensity_analysis": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17863"
+   "site": "AnaToolExecutor.ts:17863",
+   "present": {
+    "verb": "design",
+    "object": "the propensity analysis",
+    "source": "knowledge"
+   }
   },
   "design_purge_study": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18110"
+   "site": "AnaToolExecutor.ts:18110",
+   "present": {
+    "verb": "design",
+    "object": "the purge assessment",
+    "source": "knowledge"
+   }
   },
   "design_pv_system": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18316"
+   "site": "AnaToolExecutor.ts:18316",
+   "present": {
+    "verb": "design",
+    "object": "the pharmacovigilance system",
+    "source": "knowledge"
+   }
   },
   "design_randomized_dose_comparison": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18391"
+   "site": "AnaToolExecutor.ts:18391",
+   "present": {
+    "verb": "design",
+    "object": "the randomized dose comparison",
+    "source": "knowledge"
+   }
   },
   "design_reaction_phenotyping": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18598"
+   "site": "AnaToolExecutor.ts:18598",
+   "present": {
+    "verb": "design",
+    "object": "the reaction-phenotyping study",
+    "source": "knowledge"
+   }
   },
   "design_rems": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18151"
+   "site": "AnaToolExecutor.ts:18151",
+   "present": {
+    "verb": "design",
+    "object": "the REMS",
+    "source": "knowledge"
+   }
   },
   "design_repeat_dose_study": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17724"
+   "site": "AnaToolExecutor.ts:17724",
+   "present": {
+    "verb": "design",
+    "object": "the repeat-dose study",
+    "source": "knowledge"
+   }
   },
   "design_repro_tox_study": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17752"
+   "site": "AnaToolExecutor.ts:17752",
+   "present": {
+    "verb": "design",
+    "object": "the reproductive toxicology studies",
+    "source": "knowledge"
+   }
   },
   "design_samd_clinical_validation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18838"
+   "site": "AnaToolExecutor.ts:18838",
+   "present": {
+    "verb": "design",
+    "object": "the SaMD clinical validation",
+    "source": "knowledge"
+   }
   },
   "design_stability_study": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17945"
+   "site": "AnaToolExecutor.ts:17945",
+   "present": {
+    "verb": "design",
+    "object": "the stability study",
+    "source": "knowledge"
+   }
   },
   "design_sterile_controls": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18550"
+   "site": "AnaToolExecutor.ts:18550",
+   "present": {
+    "verb": "design",
+    "object": "the contamination control strategy",
+    "source": "knowledge"
+   }
   },
   "design_target_trial": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17849"
+   "site": "AnaToolExecutor.ts:17849",
+   "present": {
+    "verb": "design",
+    "object": "the target trial emulation",
+    "source": "knowledge"
+   }
   },
   "design_toxicokinetics": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18591"
+   "site": "AnaToolExecutor.ts:18591",
+   "present": {
+    "verb": "design",
+    "object": "the toxicokinetics",
+    "source": "knowledge"
+   }
   },
   "design_vaccine_clinical_program": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18872"
+   "site": "AnaToolExecutor.ts:18872",
+   "present": {
+    "verb": "design",
+    "object": "the vaccine clinical program",
+    "source": "knowledge"
+   }
   },
   "design_vaccine_cmc": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18858"
+   "site": "AnaToolExecutor.ts:18858",
+   "present": {
+    "verb": "design",
+    "object": "the vaccine CMC plan",
+    "source": "knowledge"
+   }
   },
   "design_value_tree": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18927"
+   "site": "AnaToolExecutor.ts:18927",
+   "present": {
+    "verb": "design",
+    "object": "the benefit-risk value tree",
+    "source": "knowledge"
+   }
   },
   "detect_evidence_contradictions": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2176"
+   "site": "AnaToolExecutor.ts:2176",
+   "present": {
+    "verb": "check",
+    "object": "the evidence for contradictions",
+    "source": "engine"
+   }
   },
   "detect_evidence_gaps": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2183"
+   "site": "AnaToolExecutor.ts:2183",
+   "present": {
+    "verb": "check",
+    "object": "the evidence for gaps",
+    "source": "engine"
+   }
   },
   "detect_safety_signal": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18302"
+   "site": "AnaToolExecutor.ts:18302",
+   "present": {
+    "verb": "check",
+    "object": "for a safety signal",
+    "source": "engine"
+   }
   },
   "determine_assay_cutoff": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:6144"
+   "site": "AnaToolExecutor.ts:6144",
+   "present": {
+    "verb": "determine",
+    "object": "the assay cutoff",
+    "source": "engine"
+   }
   },
   "determine_meaningful_change": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18343"
+   "site": "AnaToolExecutor.ts:18343",
+   "present": {
+    "verb": "determine",
+    "object": "the meaningful-change threshold",
+    "source": "engine"
+   }
   },
   "determine_primary_mode_of_action": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18426"
+   "site": "AnaToolExecutor.ts:18426",
+   "present": {
+    "verb": "determine",
+    "object": "the primary mode of action",
+    "source": "engine"
+   }
   },
   "dispatch_qc_check": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9292"
+   "site": "AnaToolExecutor.ts:9292",
+   "present": {
+    "verb": "check",
+    "object": "the sequence before dispatch",
+    "source": "submissions"
+   }
   },
   "draft_510k_substantial_equivalence": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:14777"
+   "site": "AnaToolExecutor.ts:14777",
+   "present": {
+    "verb": "draft",
+    "object": "the 510(k) substantial-equivalence comparison",
+    "source": "authoring"
+   }
   },
   "draft_authoring_document": {
    "class": "confirm",
    "writes": "creates an authoring document, sections, revisions + audit",
-   "site": "authoring/authoring-from-draft.ts:229"
+   "site": "authoring/authoring-from-draft.ts:229",
+   "present": {
+    "verb": "create",
+    "object": "an authoring document",
+    "source": "authoring",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "draft_clinical_overview_m2_5": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:14856"
+   "site": "AnaToolExecutor.ts:14856",
+   "present": {
+    "verb": "draft",
+    "object": "the Module 2.5 Clinical Overview",
+    "source": "authoring"
+   }
   },
   "draft_clinical_summary_m2_7": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5379"
+   "site": "AnaToolExecutor.ts:5379",
+   "present": {
+    "verb": "draft",
+    "object": "the Module 2.7 Clinical Summary",
+    "source": "authoring"
+   }
   },
   "draft_fda_ir_response": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15044"
+   "site": "AnaToolExecutor.ts:15044",
+   "present": {
+    "verb": "draft",
+    "object": "the FDA Information Request response",
+    "source": "authoring"
+   }
   },
   "draft_monitoring_plan": {
    "class": "confirm",
@@ -1795,27 +3262,52 @@
   "draft_nonclinical_overview_m2_4": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5010"
+   "site": "AnaToolExecutor.ts:5010",
+   "present": {
+    "verb": "draft",
+    "object": "the Module 2.4 Nonclinical Overview",
+    "source": "authoring"
+   }
   },
   "draft_nonclinical_summaries_m2_6": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5232"
+   "site": "AnaToolExecutor.ts:5232",
+   "present": {
+    "verb": "draft",
+    "object": "the Module 2.6 Nonclinical Summaries",
+    "source": "authoring"
+   }
   },
   "draft_quality_overall_summary_m2_3": {
    "class": "read",
    "writes": "none",
-   "site": "cmc-quality-summary-tool.ts:113"
+   "site": "cmc-quality-summary-tool.ts:113",
+   "present": {
+    "verb": "draft",
+    "object": "the Module 2.3 Quality Overall Summary",
+    "source": "authoring"
+   }
   },
   "draft_safety_narrative": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3470"
+   "site": "AnaToolExecutor.ts:3470",
+   "present": {
+    "verb": "draft",
+    "object": "a patient safety narrative",
+    "source": "authoring"
+   }
   },
   "edit_spreadsheet": {
    "class": "confirm",
    "writes": "new .xlsx upload + file_uploads row",
-   "site": "AnaToolExecutor.ts:4727"
+   "site": "AnaToolExecutor.ts:4727",
+   "present": {
+    "verb": "edit",
+    "object": "an uploaded spreadsheet",
+    "source": "data_room"
+   }
   },
   "establish_governed_fact": {
    "class": "confirm",
@@ -1830,12 +3322,22 @@
   "estimate_sample_size": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18509"
+   "site": "AnaToolExecutor.ts:18509",
+   "present": {
+    "verb": "compute",
+    "object": "the sample size",
+    "source": "engine"
+   }
   },
   "estimate_shelf_life": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16796"
+   "site": "AnaToolExecutor.ts:16796",
+   "present": {
+    "verb": "estimate",
+    "object": "the shelf life",
+    "source": "engine"
+   }
   },
   "evaluate_kris_qtls": {
    "class": "read",
@@ -1845,13 +3347,23 @@
   "evaluate_pbpk_model": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17687"
+   "site": "AnaToolExecutor.ts:17687",
+   "present": {
+    "verb": "assess",
+    "object": "the PBPK model",
+    "source": "knowledge"
+   }
   },
   "execute_platform_command": {
    "class": "command",
    "writes": "whatever the command does; the command partition (command-rbac.ts, part11-governance.ts) classifies it",
    "site": "AnaToolExecutor.ts:5162",
-   "rule": "command effect read -> read; write -> confirm (proposed by the command partition); PART11 e-sign command -> refuse"
+   "rule": "command effect read -> read; write -> confirm (proposed by the command partition); PART11 e-sign command -> refuse",
+   "present": {
+    "verb": "run",
+    "object": "a platform command",
+    "source": "project"
+   }
   },
   "execute_research_agreement": {
    "class": "refuse",
@@ -1870,67 +3382,141 @@
   "explain_cmc_topic": {
    "class": "read",
    "writes": "none",
-   "site": "cmc-knowledge-tools.ts:260"
+   "site": "cmc-knowledge-tools.ts:260",
+   "present": {
+    "verb": "explain",
+    "object": "a CMC topic",
+    "source": "knowledge",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "explain_design_risk": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:13972"
+   "site": "AnaToolExecutor.ts:13972",
+   "present": {
+    "verb": "explain",
+    "object": "the risk of the design feature",
+    "source": "literature"
+   }
   },
   "explain_report_blockers": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20224"
+   "site": "AnaToolExecutor.ts:20224",
+   "present": {
+    "verb": "explain",
+    "object": "what is blocking the report",
+    "source": "reports"
+   }
   },
   "explain_resolution_plan": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:6076"
+   "site": "AnaToolExecutor.ts:6076",
+   "present": {
+    "verb": "explain",
+    "object": "the resolution plan",
+    "source": "literature"
+   }
   },
   "explain_validation_findings": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9250"
+   "site": "AnaToolExecutor.ts:9250",
+   "present": {
+    "verb": "explain",
+    "object": "the validation findings",
+    "source": "submissions"
+   }
   },
   "export_protocol_document": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:10790"
+   "site": "AnaToolExecutor.ts:10790",
+   "present": {
+    "verb": "assemble",
+    "object": "the protocol document",
+    "source": "authoring"
+   }
   },
   "export_usdm_projection": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20908"
+   "site": "AnaToolExecutor.ts:20908",
+   "present": {
+    "verb": "build",
+    "object": "the USDM view of the study design",
+    "source": "authoring"
+   }
   },
   "extract_document_structure": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4347"
+   "site": "AnaToolExecutor.ts:4347",
+   "present": {
+    "verb": "extract",
+    "object": "the document's structure",
+    "source": "engine"
+   }
   },
   "extract_submission_document": {
    "class": "confirm",
    "writes": "INSERT submission_evidence_links (the document is not changed)",
-   "site": "ingestion/ingestion-service.ts:extractStructure"
+   "site": "ingestion/ingestion-service.ts:extractStructure",
+   "present": {
+    "verb": "extract",
+    "object": "a submission document",
+    "source": "submissions"
+   }
   },
   "fetch_fda_guidance_list": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17512"
+   "site": "AnaToolExecutor.ts:17512",
+   "present": {
+    "verb": "list",
+    "object": "FDA guidance documents",
+    "source": "agency",
+    "preview": [
+     "topic"
+    ]
+   }
   },
   "fetch_ich_guideline_updates": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17524"
+   "site": "AnaToolExecutor.ts:17524",
+   "present": {
+    "verb": "look_up",
+    "object": "ICH guideline updates",
+    "source": "knowledge"
+   }
   },
   "fetch_template_and_fill": {
    "class": "self",
    "writes": "scratch filled .docx under tmp/docbuilder, not filed",
-   "site": "docx/masterDocumentBuilder.ts:262"
+   "site": "docx/masterDocumentBuilder.ts:262",
+   "present": {
+    "verb": "build",
+    "object": "a document from the template library",
+    "source": "authoring"
+   }
   },
   "file_chat_upload_to_vault": {
    "class": "confirm",
    "writes": "INSERT vault.documents + catalog + audit",
-   "site": "vault/vault-ingest.service.ts:452"
+   "site": "vault/vault-ingest.service.ts:452",
+   "present": {
+    "verb": "file",
+    "object": "an upload into the Vault",
+    "source": "vault",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "finalize_biosketch": {
    "class": "refuse",
@@ -1972,12 +3558,25 @@
    "writes": "none; the handler already refuses (signatureRequired)",
    "site": "AnaToolExecutor.ts:11572",
    "refusedBy": "handler",
-   "why": "Finalizing is a signed act the person performs on its own surface."
+   "why": "Finalizing is a signed act the person performs on its own surface.",
+   "present": {
+    "verb": "check",
+    "object": "whether the protocol can be finalized",
+    "source": "authoring"
+   }
   },
   "find_cmc_guidance": {
    "class": "read",
    "writes": "none",
-   "site": "cmc-knowledge-tools.ts:258"
+   "site": "cmc-knowledge-tools.ts:258",
+   "present": {
+    "verb": "look_up",
+    "object": "the CMC guidance",
+    "source": "knowledge",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "find_grant_opportunities": {
    "class": "read",
@@ -1987,17 +3586,35 @@
   "fire_notification": {
    "class": "confirm",
    "writes": "INSERT mdx_notifications to users/roles",
-   "site": "AnaToolExecutor.ts:9905"
+   "site": "AnaToolExecutor.ts:9905",
+   "present": {
+    "verb": "send",
+    "object": "a notification",
+    "source": "project",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "forecast_enrollment": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15676"
+   "site": "AnaToolExecutor.ts:15676",
+   "present": {
+    "verb": "forecast",
+    "object": "enrollment",
+    "source": "engine"
+   }
   },
   "format_references": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17385"
+   "site": "AnaToolExecutor.ts:17385",
+   "present": {
+    "verb": "format",
+    "object": "the references",
+    "source": "engine"
+   }
   },
   "fulfill_regulatory_commitment": {
    "class": "confirm",
@@ -2007,43 +3624,86 @@
   "gateway_configuration_status": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:8872"
+   "site": "AnaToolExecutor.ts:8872",
+   "present": {
+    "verb": "check",
+    "object": "which gateways are configured",
+    "source": "submissions"
+   }
   },
   "generate_citation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4281"
+   "site": "AnaToolExecutor.ts:4281",
+   "present": {
+    "verb": "format",
+    "object": "a citation",
+    "source": "literature"
+   }
   },
   "generate_ctgov_registration_draft": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:10803"
+   "site": "AnaToolExecutor.ts:10803",
+   "present": {
+    "verb": "generate",
+    "object": "a ClinicalTrials.gov registration draft",
+    "source": "authoring"
+   }
   },
   "generate_declaration_of_conformity": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:6172"
+   "site": "AnaToolExecutor.ts:6172",
+   "present": {
+    "verb": "generate",
+    "object": "the Declaration of Conformity",
+    "source": "knowledge"
+   }
   },
   "generate_define_xml": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17592"
+   "site": "AnaToolExecutor.ts:17592",
+   "present": {
+    "verb": "generate",
+    "object": "the define.xml",
+    "source": "engine"
+   }
   },
   "generate_document": {
    "class": "conditional",
    "writes": "scratch DOCX/PDF/XML under tmp/docbuilder",
    "site": "docx/masterDocumentBuilder.ts:335",
-   "rule": "input.output_format === 'xml' -> confirm (its path is built from the unsanitised title); else self"
+   "rule": "input.output_format === 'xml' -> confirm (its path is built from the unsanitised title); else self",
+   "present": {
+    "verb": "draft",
+    "object": "a regulatory document",
+    "source": "authoring",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "generate_dsur_structure": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17569"
+   "site": "AnaToolExecutor.ts:17569",
+   "present": {
+    "verb": "generate",
+    "object": "the DSUR structure",
+    "source": "knowledge"
+   }
   },
   "generate_psur_structure": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17562"
+   "site": "AnaToolExecutor.ts:17562",
+   "present": {
+    "verb": "generate",
+    "object": "the PSUR structure",
+    "source": "knowledge"
+   }
   },
   "generate_rbm_plan": {
    "class": "read",
@@ -2058,12 +3718,22 @@
   "generate_report": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20186"
+   "site": "AnaToolExecutor.ts:20186",
+   "present": {
+    "verb": "generate",
+    "object": "a report",
+    "source": "reports"
+   }
   },
   "generate_schedule_of_events": {
    "class": "confirm",
    "writes": "replaces AnA-sourced milestones; revision row",
-   "site": "AnaToolExecutor.ts:2351"
+   "site": "AnaToolExecutor.ts:2351",
+   "present": {
+    "verb": "generate",
+    "object": "the schedule of events",
+    "source": "project"
+   }
   },
   "generate_se_matrix": {
    "class": "confirm",
@@ -2073,117 +3743,238 @@
   "generate_sop": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5627"
+   "site": "AnaToolExecutor.ts:5627",
+   "present": {
+    "verb": "draft",
+    "object": "an SOP",
+    "source": "authoring",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "generate_spl": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17323"
+   "site": "AnaToolExecutor.ts:17323",
+   "present": {
+    "verb": "generate",
+    "object": "the SPL document",
+    "source": "knowledge"
+   }
   },
   "generate_spl_xml": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17548"
+   "site": "AnaToolExecutor.ts:17548",
+   "present": {
+    "verb": "generate",
+    "object": "an SPL skeleton",
+    "source": "knowledge"
+   }
   },
   "generate_statistical_document": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5509"
+   "site": "AnaToolExecutor.ts:5509",
+   "present": {
+    "verb": "draft",
+    "object": "a statistical document",
+    "source": "authoring"
+   }
   },
   "generate_stf": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9017"
+   "site": "AnaToolExecutor.ts:9017",
+   "present": {
+    "verb": "generate",
+    "object": "the study tagging file",
+    "source": "engine"
+   }
   },
   "get_billing_credits": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20067"
+   "site": "AnaToolExecutor.ts:20067",
+   "present": {
+    "verb": "look_up",
+    "object": "your usage credits",
+    "source": "project"
+   }
   },
   "get_biocompatibility_endpoints": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9705"
+   "site": "AnaToolExecutor.ts:9705",
+   "present": {
+    "verb": "look_up",
+    "object": "the biocompatibility endpoints",
+    "source": "knowledge"
+   }
   },
   "get_biotech_program_status": {
    "class": "read",
    "writes": "none",
-   "site": "biotech-program.ts:554"
+   "site": "biotech-program.ts:554",
+   "present": {
+    "verb": "look_up",
+    "object": "the biotech program status",
+    "source": "project"
+   }
   },
   "get_client_journey": {
    "class": "read",
    "writes": "none",
-   "site": "agentic-workflow-tools.ts:206"
+   "site": "agentic-workflow-tools.ts:206",
+   "present": {
+    "verb": "look_up",
+    "object": "where you are in your journey",
+    "source": "project"
+   }
   },
   "get_cmc_requirements": {
    "class": "read",
    "writes": "none",
-   "site": "cmc-knowledge-tools.ts:259"
+   "site": "cmc-knowledge-tools.ts:259",
+   "present": {
+    "verb": "look_up",
+    "object": "the CMC requirements",
+    "source": "knowledge"
+   }
   },
   "get_csr_template": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5075"
+   "site": "AnaToolExecutor.ts:5075",
+   "present": {
+    "verb": "look_up",
+    "object": "the Module 5 report template",
+    "source": "authoring"
+   }
   },
   "get_ctd_module_home": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5669"
+   "site": "AnaToolExecutor.ts:5669",
+   "present": {
+    "verb": "look_up",
+    "object": "the CTD Module 1 and 2 structure",
+    "source": "submissions"
+   }
   },
   "get_device_labeling": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9849"
+   "site": "AnaToolExecutor.ts:9849",
+   "present": {
+    "verb": "look_up",
+    "object": "the device labeling requirements",
+    "source": "knowledge"
+   }
   },
   "get_device_reviewer_checklist": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9690"
+   "site": "AnaToolExecutor.ts:9690",
+   "present": {
+    "verb": "look_up",
+    "object": "the device reviewer checklist",
+    "source": "submissions"
+   }
   },
   "get_document_section_requirements": {
    "class": "read",
    "writes": "none",
-   "site": "regulatory-knowledge-tools.ts:295"
+   "site": "regulatory-knowledge-tools.ts:295",
+   "present": {
+    "verb": "look_up",
+    "object": "what the document must contain",
+    "source": "knowledge",
+    "preview": [
+     "section"
+    ]
+   }
   },
   "get_document_template": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9498"
+   "site": "AnaToolExecutor.ts:9498",
+   "present": {
+    "verb": "look_up",
+    "object": "a document template",
+    "source": "authoring"
+   }
   },
   "get_document_versions": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:19506"
+   "site": "AnaToolExecutor.ts:19506",
+   "present": {
+    "verb": "look_up",
+    "object": "a Vault document's version history",
+    "source": "vault"
+   }
   },
   "get_electrical_standards": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9778"
+   "site": "AnaToolExecutor.ts:9778",
+   "present": {
+    "verb": "look_up",
+    "object": "the electrical-safety standards",
+    "source": "knowledge"
+   }
   },
   "get_market_submission_spec": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9472"
+   "site": "AnaToolExecutor.ts:9472",
+   "present": {
+    "verb": "look_up",
+    "object": "a market's submission specification",
+    "source": "submissions"
+   }
   },
   "get_nonclinical_template": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5050"
+   "site": "AnaToolExecutor.ts:5050",
+   "present": {
+    "verb": "look_up",
+    "object": "the Module 4 report template",
+    "source": "authoring"
+   }
   },
   "get_org_capabilities": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20083"
+   "site": "AnaToolExecutor.ts:20083",
+   "present": {
+    "verb": "look_up",
+    "object": "your organization's capabilities",
+    "source": "project"
+   }
   },
   "get_plan_usage": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20052"
+   "site": "AnaToolExecutor.ts:20052",
+   "present": {
+    "verb": "look_up",
+    "object": "your plan usage",
+    "source": "project"
+   }
   },
   "get_portfolio_readiness": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20148"
+   "site": "AnaToolExecutor.ts:20148",
+   "present": {
+    "verb": "look_up",
+    "object": "portfolio readiness",
+    "source": "reports"
+   }
   },
   "get_predicate_defense_preview": {
    "class": "read",
@@ -2198,22 +3989,42 @@
   "get_regulatory_timeline": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9754"
+   "site": "AnaToolExecutor.ts:9754",
+   "present": {
+    "verb": "look_up",
+    "object": "the review timeline",
+    "source": "knowledge"
+   }
   },
   "get_session_briefing": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2491"
+   "site": "AnaToolExecutor.ts:2491",
+   "present": {
+    "verb": "look_up",
+    "object": "where your program stands",
+    "source": "project"
+   }
   },
   "get_sterilization_requirements": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9795"
+   "site": "AnaToolExecutor.ts:9795",
+   "present": {
+    "verb": "look_up",
+    "object": "the sterilization requirements",
+    "source": "knowledge"
+   }
   },
   "get_submission_ack": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:8744"
+   "site": "AnaToolExecutor.ts:8744",
+   "present": {
+    "verb": "look_up",
+    "object": "the submission acknowledgment",
+    "source": "submissions"
+   }
   },
   "get_submission_readiness_twin": {
    "class": "read",
@@ -2223,162 +4034,325 @@
   "get_submission_requirements": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9580"
+   "site": "AnaToolExecutor.ts:9580",
+   "present": {
+    "verb": "look_up",
+    "object": "the submission requirements",
+    "source": "submissions"
+   }
   },
   "get_tmf_view": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:19623"
+   "site": "AnaToolExecutor.ts:19623",
+   "present": {
+    "verb": "open",
+    "object": "the Trial Master File",
+    "source": "project"
+   }
   },
   "get_usage_and_license_status": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:429"
+   "site": "AnaToolExecutor.ts:429",
+   "present": {
+    "verb": "look_up",
+    "object": "your usage and license standing",
+    "source": "project"
+   }
   },
   "global_ri_advanced_therapy": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "classify",
+    "object": "the advanced therapy for a region",
+    "source": "knowledge"
+   }
   },
   "global_ri_bcs_biowaiver": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "BCS biowaiver eligibility",
+    "source": "knowledge"
+   }
   },
   "global_ri_bioequivalence_criteria": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "the bioequivalence criteria",
+    "source": "knowledge"
+   }
   },
   "global_ri_cmc_specifications": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "the specification tests",
+    "source": "knowledge"
+   }
   },
   "global_ri_companion_diagnostic": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "the companion-diagnostic framework",
+    "source": "knowledge"
+   }
   },
   "global_ri_controlled_substance": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "the controlled-substance schedule",
+    "source": "knowledge"
+   }
   },
   "global_ri_device_classification": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "the device market pathway",
+    "source": "knowledge"
+   }
   },
   "global_ri_dossier_classifier": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "classify",
+    "object": "the dossier type",
+    "source": "knowledge"
+   }
   },
   "global_ri_establishment_registration": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "the registration obligations",
+    "source": "knowledge"
+   }
   },
   "global_ri_evidence_standard": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "the evidence standard",
+    "source": "knowledge"
+   }
   },
   "global_ri_exclusivity": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "compute",
+    "object": "regulatory exclusivity",
+    "source": "knowledge"
+   }
   },
   "global_ri_expanded_access": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "expanded-access options",
+    "source": "knowledge"
+   }
   },
   "global_ri_expedited_programs": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "expedited programs",
+    "source": "knowledge"
+   }
   },
   "global_ri_fee_estimate": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "estimate",
+    "object": "agency fees",
+    "source": "knowledge"
+   }
   },
   "global_ri_import_export": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "import and export licensing",
+    "source": "knowledge"
+   }
   },
   "global_ri_lifecycle_schedule": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "build",
+    "object": "the lifecycle calendar",
+    "source": "knowledge"
+   }
   },
   "global_ri_pediatric_plan": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "the pediatric plan requirements",
+    "source": "knowledge"
+   }
   },
   "global_ri_post_approval_change": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "classify",
+    "object": "the post-approval change",
+    "source": "knowledge"
+   }
   },
   "global_ri_process_validation": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "the process-validation framework",
+    "source": "knowledge"
+   }
   },
   "global_ri_promotional_compliance": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "the promotion rules",
+    "source": "knowledge"
+   }
   },
   "global_ri_regulatory_pathway": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "the regulatory pathway",
+    "source": "knowledge"
+   }
   },
   "global_ri_reliance_pathways": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "reliance pathways",
+    "source": "knowledge"
+   }
   },
   "global_ri_safety_reporting": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "classify",
+    "object": "the safety case for reporting",
+    "source": "knowledge"
+   }
   },
   "global_ri_special_designations": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "designation eligibility",
+    "source": "knowledge"
+   }
   },
   "global_ri_stability_conditions": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "look_up",
+    "object": "the stability conditions",
+    "source": "knowledge"
+   }
   },
   "global_ri_strategy_brief": {
    "class": "read",
    "writes": "none (pure global-RI knowledge service)",
-   "site": "global-ri/ana-tools-dispatch.ts"
+   "site": "global-ri/ana-tools-dispatch.ts",
+   "present": {
+    "verb": "build",
+    "object": "the global strategy brief",
+    "source": "knowledge"
+   }
   },
   "global_search": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:14245"
+   "site": "AnaToolExecutor.ts:14245",
+   "present": {
+    "verb": "search",
+    "object": "across the platform",
+    "source": "project",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "guidance_change_radar": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15806"
+   "site": "AnaToolExecutor.ts:15806",
+   "present": {
+    "verb": "check",
+    "object": "the draft against guidance changes",
+    "source": "authoring"
+   }
   },
   "guidance_for_anda": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17671"
+   "site": "AnaToolExecutor.ts:17671",
+   "present": {
+    "verb": "look_up",
+    "object": "guidance for a generic application",
+    "source": "knowledge"
+   }
   },
   "import_citi_records": {
    "class": "confirm",
@@ -2388,47 +4362,96 @@
   "import_ris_references": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17373"
+   "site": "AnaToolExecutor.ts:17373",
+   "present": {
+    "verb": "convert",
+    "object": "RIS references",
+    "source": "engine"
+   }
   },
   "insert_clause_template": {
    "class": "self",
    "writes": "writes edited .docx copy to tmp/docbuilder",
-   "site": "AnaToolExecutor.ts:7421"
+   "site": "AnaToolExecutor.ts:7421",
+   "present": {
+    "verb": "add",
+    "object": "a clause to the Word document",
+    "source": "authoring"
+   }
   },
   "insert_document_content": {
    "class": "self",
    "writes": "writes an edited .docx under tmp/docbuilder",
-   "site": "AnaToolExecutor.ts:7179"
+   "site": "AnaToolExecutor.ts:7179",
+   "present": {
+    "verb": "edit",
+    "object": "the Word document",
+    "source": "authoring"
+   }
   },
   "inspect_uploaded_document": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4422"
+   "site": "AnaToolExecutor.ts:4422",
+   "present": {
+    "verb": "check",
+    "object": "an uploaded file before reading it",
+    "source": "data_room"
+   }
   },
   "ivd_knowledge_lookup": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2119"
+   "site": "AnaToolExecutor.ts:2119",
+   "present": {
+    "verb": "look_up",
+    "object": "IVD knowledge",
+    "source": "knowledge",
+    "preview": [
+     "query",
+     "topic"
+    ]
+   }
   },
   "link_program_clinical_study": {
    "class": "confirm",
    "writes": "UPDATE regulatory_programs.metadata (clinicalStudyId)",
-   "site": "AnaToolExecutor.ts:7824"
+   "site": "AnaToolExecutor.ts:7824",
+   "present": {
+    "verb": "link",
+    "object": "the program to its clinical study",
+    "source": "authoring"
+   }
   },
   "lint_references": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17397"
+   "site": "AnaToolExecutor.ts:17397",
+   "present": {
+    "verb": "check",
+    "object": "the reference list",
+    "source": "engine"
+   }
   },
   "list_app_screens": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16926"
+   "site": "AnaToolExecutor.ts:16926",
+   "present": {
+    "verb": "list",
+    "object": "the app screens",
+    "source": "screen"
+   }
   },
   "list_authoring_outline": {
    "class": "read",
    "writes": "none",
-   "site": "authoring-read-tools.ts:346"
+   "site": "authoring-read-tools.ts:346",
+   "present": {
+    "verb": "list",
+    "object": "the authoring outline",
+    "source": "authoring"
+   }
   },
   "list_cmc_registers": {
    "class": "read",
@@ -2438,22 +4461,42 @@
   "list_demo_scripts": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17186"
+   "site": "AnaToolExecutor.ts:17186",
+   "present": {
+    "verb": "list",
+    "object": "the product demonstrations",
+    "source": "screen"
+   }
   },
   "list_fda_forms": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:410"
+   "site": "AnaToolExecutor.ts:410",
+   "present": {
+    "verb": "list",
+    "object": "the FDA forms",
+    "source": "authoring"
+   }
   },
   "list_fda_technical_rules": {
    "class": "read",
    "writes": "none",
-   "site": "regulatory-knowledge-tools.ts:297"
+   "site": "regulatory-knowledge-tools.ts:297",
+   "present": {
+    "verb": "look_up",
+    "object": "FDA's technical submission rules",
+    "source": "knowledge"
+   }
   },
   "list_governed_documents": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:19534"
+   "site": "AnaToolExecutor.ts:19534",
+   "present": {
+    "verb": "list",
+    "object": "the governed documents",
+    "source": "submissions"
+   }
   },
   "list_governed_facts": {
    "class": "read",
@@ -2463,57 +4506,118 @@
   "list_intelligence_flows": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:19317"
+   "site": "AnaToolExecutor.ts:19317",
+   "present": {
+    "verb": "list",
+    "object": "the questioning flows",
+    "source": "project"
+   }
   },
   "list_platform_commands": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5143"
+   "site": "AnaToolExecutor.ts:5143",
+   "present": {
+    "verb": "list",
+    "object": "the platform commands",
+    "source": "project",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "list_project_documents": {
    "class": "read",
    "writes": "none",
-   "site": "document-catalog-tools.ts:624"
+   "site": "document-catalog-tools.ts:624",
+   "present": {
+    "verb": "list",
+    "object": "the Vault documents",
+    "source": "vault"
+   }
   },
   "list_protocol_templates": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:10744"
+   "site": "AnaToolExecutor.ts:10744",
+   "present": {
+    "verb": "list",
+    "object": "the protocol templates",
+    "source": "authoring"
+   }
   },
   "list_regulatory_capabilities": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9808"
+   "site": "AnaToolExecutor.ts:9808",
+   "present": {
+    "verb": "list",
+    "object": "the Submission Center's capabilities",
+    "source": "submissions"
+   }
   },
   "list_report_definitions": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20316"
+   "site": "AnaToolExecutor.ts:20316",
+   "present": {
+    "verb": "list",
+    "object": "your saved dashboards",
+    "source": "reports"
+   }
   },
   "list_report_types": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20100"
+   "site": "AnaToolExecutor.ts:20100",
+   "present": {
+    "verb": "list",
+    "object": "the available reports",
+    "source": "reports"
+   }
   },
   "list_screen_actions": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17071"
+   "site": "AnaToolExecutor.ts:17071",
+   "present": {
+    "verb": "list",
+    "object": "the on-screen actions",
+    "source": "screen"
+   }
   },
   "list_validation_rules": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9415"
+   "site": "AnaToolExecutor.ts:9415",
+   "present": {
+    "verb": "list",
+    "object": "the validation rules",
+    "source": "submissions"
+   }
   },
   "list_vault_documents": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:19388"
+   "site": "AnaToolExecutor.ts:19388",
+   "present": {
+    "verb": "list",
+    "object": "the Artifacts Center documents",
+    "source": "project",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "load_nonclinical_program": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5100"
+   "site": "AnaToolExecutor.ts:5100",
+   "present": {
+    "verb": "read",
+    "object": "the nonclinical studies for the program",
+    "source": "project"
+   }
   },
   "log_cs_transaction": {
    "class": "conditional",
@@ -2529,7 +4633,12 @@
   "log_nonconforming_product": {
    "class": "confirm",
    "writes": "INSERT qms_nonconforming_products",
-   "site": "AnaToolExecutor.ts:14093"
+   "site": "AnaToolExecutor.ts:14093",
+   "present": {
+    "verb": "record",
+    "object": "a nonconforming product",
+    "source": "qms"
+   }
   },
   "log_study_ae": {
    "class": "confirm",
@@ -2544,92 +4653,198 @@
   "lookup_fda_guidance": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4120"
+   "site": "AnaToolExecutor.ts:4120",
+   "present": {
+    "verb": "look_up",
+    "object": "FDA guidance",
+    "source": "knowledge",
+    "preview": [
+     "topic"
+    ]
+   }
   },
   "lookup_icd10_code": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3517"
+   "site": "AnaToolExecutor.ts:3517",
+   "present": {
+    "verb": "look_up",
+    "object": "ICD-10 codes",
+    "source": "agency",
+    "preview": [
+     "term"
+    ]
+   }
   },
   "lookup_ich_guideline": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4186"
+   "site": "AnaToolExecutor.ts:4186",
+   "present": {
+    "verb": "look_up",
+    "object": "ICH guidelines",
+    "source": "knowledge",
+    "preview": [
+     "section",
+     "topic"
+    ]
+   }
   },
   "lookup_published_label": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16055"
+   "site": "AnaToolExecutor.ts:16055",
+   "present": {
+    "verb": "look_up",
+    "object": "the published label",
+    "source": "agency"
+   }
   },
   "lookup_regulatory_pathway": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9431"
+   "site": "AnaToolExecutor.ts:9431",
+   "present": {
+    "verb": "look_up",
+    "object": "expedited pathways",
+    "source": "knowledge",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "lookup_regulatory_precedents": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:6613"
+   "site": "AnaToolExecutor.ts:6613",
+   "present": {
+    "verb": "look_up",
+    "object": "regulatory precedents",
+    "source": "literature",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "lookup_submission_deficiencies": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2193"
+   "site": "AnaToolExecutor.ts:2193",
+   "present": {
+    "verb": "look_up",
+    "object": "likely submission deficiencies",
+    "source": "submissions"
+   }
   },
   "medical_writing_guidance": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2000"
+   "site": "AnaToolExecutor.ts:2000",
+   "present": {
+    "verb": "look_up",
+    "object": "medical-writing guidance",
+    "source": "authoring"
+   }
   },
   "medical_writing_review": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3560"
+   "site": "AnaToolExecutor.ts:3560",
+   "present": {
+    "verb": "review",
+    "object": "the draft against medical-writing standards",
+    "source": "authoring"
+   }
   },
   "mine_precedents": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4750"
+   "site": "AnaToolExecutor.ts:4750",
+   "present": {
+    "verb": "plan",
+    "object": "the precedent search",
+    "source": "literature"
+   }
   },
   "model_budget_impact": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17283"
+   "site": "AnaToolExecutor.ts:17283",
+   "present": {
+    "verb": "compute",
+    "object": "the budget impact",
+    "source": "engine"
+   }
   },
   "model_budget_impact_mix": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17308"
+   "site": "AnaToolExecutor.ts:17308",
+   "present": {
+    "verb": "compute",
+    "object": "the budget impact",
+    "source": "engine"
+   }
   },
   "model_cost_effectiveness": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17295"
+   "site": "AnaToolExecutor.ts:17295",
+   "present": {
+    "verb": "compute",
+    "object": "the cost-effectiveness",
+    "source": "engine"
+   }
   },
   "model_cost_effectiveness_nmb": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17315"
+   "site": "AnaToolExecutor.ts:17315",
+   "present": {
+    "verb": "compute",
+    "object": "the cost-effectiveness",
+    "source": "engine"
+   }
   },
   "model_markov_cohort": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16814"
+   "site": "AnaToolExecutor.ts:16814",
+   "present": {
+    "verb": "simulate",
+    "object": "a Markov cohort",
+    "source": "engine"
+   }
   },
   "narrate_statistical_result": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2027"
+   "site": "AnaToolExecutor.ts:2027",
+   "present": {
+    "verb": "draft",
+    "object": "a statement of the statistical result",
+    "source": "authoring"
+   }
   },
   "navigate_to": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16961"
+   "site": "AnaToolExecutor.ts:16961",
+   "present": {
+    "verb": "open",
+    "object": "a screen",
+    "source": "screen"
+   }
   },
   "ocr_document_pages": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4571"
+   "site": "AnaToolExecutor.ts:4571",
+   "present": {
+    "verb": "read",
+    "object": "scanned pages",
+    "source": "data_room"
+   }
   },
   "open_device_capa": {
    "class": "confirm",
@@ -2644,12 +4859,25 @@
   "override_import_mapping": {
    "class": "confirm",
    "writes": "UPDATE import_job_files mapping",
-   "site": "AnaToolExecutor.ts:14375"
+   "site": "AnaToolExecutor.ts:14375",
+   "present": {
+    "verb": "update",
+    "object": "an imported file's mapping",
+    "source": "data_room"
+   }
   },
   "package_ectd_for_region": {
    "class": "confirm",
    "writes": "writes an eCTD zip to output_dir",
-   "site": "submission-gateways/regional-packager.ts:1042"
+   "site": "submission-gateways/regional-packager.ts:1042",
+   "present": {
+    "verb": "package",
+    "object": "the eCTD for a region",
+    "source": "submissions",
+    "preview": [
+     "sequence"
+    ]
+   }
   },
   "pair_companion_diagnostic": {
    "class": "confirm",
@@ -2659,133 +4887,269 @@
   "pdf_overlay": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:6592"
+   "site": "AnaToolExecutor.ts:6592",
+   "present": {
+    "verb": "run",
+    "object": "a PDF overlay",
+    "source": "authoring"
+   }
   },
   "place_into_sequence": {
    "class": "confirm",
    "writes": "UPSERT submission_leaves (unlocked sequence) + audit row",
-   "site": "AnaToolExecutor.ts:9169"
+   "site": "AnaToolExecutor.ts:9169",
+   "present": {
+    "verb": "place",
+    "object": "a document in the sequence",
+    "source": "submissions",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "place_project_document": {
    "class": "conditional",
    "writes": "UPDATE vault.documents placement + audit",
    "site": "vault/vault-placement.service.ts:309",
-   "rule": "input.confirm_suggested === true -> refuse (the handler already refuses); else confirm"
+   "rule": "input.confirm_suggested === true -> refuse (the handler already refuses); else confirm",
+   "present": {
+    "verb": "place",
+    "object": "a Vault document in its folder",
+    "source": "vault",
+    "preview": [
+     "@documentTitle"
+    ]
+   }
   },
   "plan_aggregate_safety_report": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18295"
+   "site": "AnaToolExecutor.ts:18295",
+   "present": {
+    "verb": "plan",
+    "object": "the aggregate safety reports",
+    "source": "knowledge"
+   }
   },
   "plan_annual_report": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18975"
+   "site": "AnaToolExecutor.ts:18975",
+   "present": {
+    "verb": "plan",
+    "object": "the annual report",
+    "source": "knowledge"
+   }
   },
   "plan_bayesian_borrowing": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18687"
+   "site": "AnaToolExecutor.ts:18687",
+   "present": {
+    "verb": "plan",
+    "object": "Bayesian borrowing",
+    "source": "knowledge"
+   }
   },
   "plan_biomarker_qualification": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18625"
+   "site": "AnaToolExecutor.ts:18625",
+   "present": {
+    "verb": "plan",
+    "object": "the biomarker qualification",
+    "source": "knowledge"
+   }
   },
   "plan_biosimilar_ip_strategy": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18069"
+   "site": "AnaToolExecutor.ts:18069",
+   "present": {
+    "verb": "plan",
+    "object": "the biosimilar IP strategy",
+    "source": "knowledge"
+   }
   },
   "plan_br_communication": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18941"
+   "site": "AnaToolExecutor.ts:18941",
+   "present": {
+    "verb": "plan",
+    "object": "the benefit-risk communication",
+    "source": "knowledge"
+   }
   },
   "plan_coa_development": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18364"
+   "site": "AnaToolExecutor.ts:18364",
+   "present": {
+    "verb": "plan",
+    "object": "the COA development",
+    "source": "knowledge"
+   }
   },
   "plan_combination_cgmp": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18440"
+   "site": "AnaToolExecutor.ts:18440",
+   "present": {
+    "verb": "plan",
+    "object": "the combination-product cGMP",
+    "source": "knowledge"
+   }
   },
   "plan_device_submission": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18797"
+   "site": "AnaToolExecutor.ts:18797",
+   "present": {
+    "verb": "plan",
+    "object": "the device submission",
+    "source": "knowledge"
+   }
   },
   "plan_enrichment_strategy": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18653"
+   "site": "AnaToolExecutor.ts:18653",
+   "present": {
+    "verb": "plan",
+    "object": "the enrichment strategy",
+    "source": "knowledge"
+   }
   },
   "plan_essential_documents": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18749"
+   "site": "AnaToolExecutor.ts:18749",
+   "present": {
+    "verb": "plan",
+    "object": "the essential documents",
+    "source": "knowledge"
+   }
   },
   "plan_fda_meeting": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18000"
+   "site": "AnaToolExecutor.ts:18000",
+   "present": {
+    "verb": "plan",
+    "object": "the FDA meeting",
+    "source": "knowledge"
+   }
   },
   "plan_immunogenicity_sampling": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18213"
+   "site": "AnaToolExecutor.ts:18213",
+   "present": {
+    "verb": "plan",
+    "object": "the immunogenicity sampling",
+    "source": "knowledge"
+   }
   },
   "plan_ind_module_authoring": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2723"
+   "site": "AnaToolExecutor.ts:2723",
+   "present": {
+    "verb": "plan",
+    "object": "the IND module",
+    "source": "authoring"
+   }
   },
   "plan_labeling_authoring": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2599"
+   "site": "AnaToolExecutor.ts:2599",
+   "present": {
+    "verb": "plan",
+    "object": "the labeling authoring",
+    "source": "authoring"
+   }
   },
   "plan_lifecycle_management": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18989"
+   "site": "AnaToolExecutor.ts:18989",
+   "present": {
+    "verb": "plan",
+    "object": "the lifecycle management",
+    "source": "knowledge"
+   }
   },
   "plan_multiplicity_control": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18488"
+   "site": "AnaToolExecutor.ts:18488",
+   "present": {
+    "verb": "plan",
+    "object": "the multiplicity control",
+    "source": "knowledge"
+   }
   },
   "plan_orphan_drug_designation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2637"
+   "site": "AnaToolExecutor.ts:2637",
+   "present": {
+    "verb": "plan",
+    "object": "the orphan-drug designation request",
+    "source": "knowledge"
+   }
   },
   "plan_rare_disease_program": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18701"
+   "site": "AnaToolExecutor.ts:18701",
+   "present": {
+    "verb": "plan",
+    "object": "the rare-disease program",
+    "source": "knowledge"
+   }
   },
   "plan_submission": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9228"
+   "site": "AnaToolExecutor.ts:9228",
+   "present": {
+    "verb": "plan",
+    "object": "the submission",
+    "source": "submissions"
+   }
   },
   "plan_submission_from_database_lock": {
    "class": "read",
    "writes": "none",
-   "site": "regulatory-knowledge-tools.ts:296"
+   "site": "regulatory-knowledge-tools.ts:296",
+   "present": {
+    "verb": "look_up",
+    "object": "the steps from database lock to filing",
+    "source": "knowledge"
+   }
   },
   "plan_vaccine_special_populations": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18893"
+   "site": "AnaToolExecutor.ts:18893",
+   "present": {
+    "verb": "plan",
+    "object": "the vaccine special populations",
+    "source": "knowledge"
+   }
   },
   "position_coa_endpoint": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18357"
+   "site": "AnaToolExecutor.ts:18357",
+   "present": {
+    "verb": "select",
+    "object": "the COA endpoint's position",
+    "source": "knowledge"
+   }
   },
   "predict_change_impact": {
    "class": "confirm",
@@ -2800,7 +5164,12 @@
   "prepare_fda_form": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:414"
+   "site": "AnaToolExecutor.ts:414",
+   "present": {
+    "verb": "draft",
+    "object": "an FDA form",
+    "source": "authoring"
+   }
   },
   "prepare_meeting_package": {
    "class": "read",
@@ -2820,43 +5189,92 @@
   "project_csr_evidence": {
    "class": "confirm",
    "writes": "bulk-creates evidence sources, studies and relationships",
-   "site": "clinical-regulatory-evidence/csr-adapter.service.ts:85"
+   "site": "clinical-regulatory-evidence/csr-adapter.service.ts:85",
+   "present": {
+    "verb": "add",
+    "object": "the study reports to the evidence base",
+    "source": "data_room"
+   }
   },
   "project_events": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15687"
+   "site": "AnaToolExecutor.ts:15687",
+   "present": {
+    "verb": "forecast",
+    "object": "event accrual",
+    "source": "engine"
+   }
   },
   "project_knowledge_search": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:527"
+   "site": "AnaToolExecutor.ts:527",
+   "present": {
+    "verb": "search",
+    "object": "the project's documents",
+    "source": "data_room",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "project_knowledge_search_multi": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:619"
+   "site": "AnaToolExecutor.ts:619",
+   "present": {
+    "verb": "search",
+    "object": "the project's documents",
+    "source": "data_room",
+    "preview": [
+     "queries[0]"
+    ]
+   }
   },
   "qms_change_create": {
    "class": "confirm",
    "writes": "INSERT qms_change_controls + audit row",
-   "site": "AnaToolExecutor.ts:13798"
+   "site": "AnaToolExecutor.ts:13798",
+   "present": {
+    "verb": "create",
+    "object": "a change request",
+    "source": "qms",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "qms_change_link": {
    "class": "confirm",
    "writes": "INSERT qms_change_links + audit",
-   "site": "AnaToolExecutor.ts:13881"
+   "site": "AnaToolExecutor.ts:13881",
+   "present": {
+    "verb": "link",
+    "object": "a change to a quality record",
+    "source": "qms"
+   }
   },
   "qms_change_transition": {
    "class": "conditional",
    "writes": "UPDATE qms_change_controls + audit",
    "site": "AnaToolExecutor.ts:13834",
-   "rule": "input.to in (approved, closed) -> refuse; else confirm"
+   "rule": "input.to in (approved, closed) -> refuse; else confirm",
+   "present": {
+    "verb": "update",
+    "object": "a change request's status",
+    "source": "qms"
+   }
   },
   "query_rim_patterns_by_domain": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:769"
+   "site": "AnaToolExecutor.ts:769",
+   "present": {
+    "verb": "look_up",
+    "object": "learned regulatory patterns",
+    "source": "project"
+   }
   },
   "raise_monitoring_signal": {
    "class": "confirm",
@@ -2866,37 +5284,75 @@
   "rasterize_page": {
    "class": "self",
    "writes": "scratch .png (and, for a DOCX, its converted .pdf) under tmp/docbuilder, not filed",
-   "site": "AnaToolExecutor.ts:6575"
+   "site": "AnaToolExecutor.ts:6575",
+   "present": {
+    "verb": "render",
+    "object": "a page as an image",
+    "source": "data_room"
+   }
   },
   "read_authoring_section": {
    "class": "read",
    "writes": "none",
-   "site": "authoring-read-tools.ts:347"
+   "site": "authoring-read-tools.ts:347",
+   "present": {
+    "verb": "read",
+    "object": "an authoring section",
+    "source": "authoring"
+   }
   },
   "read_governed_document": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:19569"
+   "site": "AnaToolExecutor.ts:19569",
+   "present": {
+    "verb": "read",
+    "object": "a governed document",
+    "source": "submissions"
+   }
   },
   "read_project_document": {
    "class": "self",
    "writes": "her read-coverage receipt; extraction outcome backfill",
-   "site": "vault/document-catalog.service.ts:224"
+   "site": "vault/document-catalog.service.ts:224",
+   "present": {
+    "verb": "read",
+    "object": "a Vault document",
+    "source": "vault",
+    "preview": [
+     "@documentTitle"
+    ]
+   }
   },
   "read_spreadsheet": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4656"
+   "site": "AnaToolExecutor.ts:4656",
+   "present": {
+    "verb": "read",
+    "object": "an uploaded spreadsheet",
+    "source": "data_room"
+   }
   },
   "read_uploaded_document": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4473"
+   "site": "AnaToolExecutor.ts:4473",
+   "present": {
+    "verb": "read",
+    "object": "an uploaded file",
+    "source": "data_room"
+   }
   },
   "read_vault_document": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:19463"
+   "site": "AnaToolExecutor.ts:19463",
+   "present": {
+    "verb": "read",
+    "object": "an Artifacts Center document",
+    "source": "project"
+   }
   },
   "read_vigilance_timeline": {
    "class": "read",
@@ -2906,12 +5362,22 @@
   "recall_rim_patterns": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:738"
+   "site": "AnaToolExecutor.ts:738",
+   "present": {
+    "verb": "look_up",
+    "object": "learned regulatory patterns",
+    "source": "project"
+   }
   },
   "recall_session_context": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:696"
+   "site": "AnaToolExecutor.ts:696",
+   "present": {
+    "verb": "recall",
+    "object": "where we left off",
+    "source": "project"
+   }
   },
   "reconcile_device_documents": {
    "class": "read",
@@ -2921,12 +5387,22 @@
   "reconcile_dossier_numbers": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17485"
+   "site": "AnaToolExecutor.ts:17485",
+   "present": {
+    "verb": "check",
+    "object": "figures across the dossier",
+    "source": "engine"
+   }
   },
   "reconcile_extracted_figures": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5763"
+   "site": "AnaToolExecutor.ts:5763",
+   "present": {
+    "verb": "check",
+    "object": "figures across the dossier",
+    "source": "engine"
+   }
   },
   "record_analytical_performance_study": {
    "class": "confirm",
@@ -2981,7 +5457,12 @@
   "record_validation_finding": {
    "class": "confirm",
    "writes": "INSERT submission_validation_findings",
-   "site": "AnaToolExecutor.ts:8779"
+   "site": "AnaToolExecutor.ts:8779",
+   "present": {
+    "verb": "record",
+    "object": "a validation finding",
+    "source": "submissions"
+   }
   },
   "register_animal_cohort": {
    "class": "confirm",
@@ -3006,28 +5487,53 @@
   "register_supplier": {
    "class": "confirm",
    "writes": "INSERT qms_suppliers (pending)",
-   "site": "AnaToolExecutor.ts:14056"
+   "site": "AnaToolExecutor.ts:14056",
+   "present": {
+    "verb": "add",
+    "object": "a supplier",
+    "source": "qms"
+   }
   },
   "regulatory_deadline_radar": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2233"
+   "site": "AnaToolExecutor.ts:2233",
+   "present": {
+    "verb": "scan",
+    "object": "regulatory deadlines",
+    "source": "project"
+   }
   },
   "remember_document_in_project": {
    "class": "confirm",
    "writes": "INSERT project_ingested_documents (tenant-visible) + memory entries",
-   "site": "AnaToolExecutor.ts:1537"
+   "site": "AnaToolExecutor.ts:1537",
+   "present": {
+    "verb": "save",
+    "object": "a document to project memory",
+    "source": "data_room"
+   }
   },
   "render_signature_manifestation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:872"
+   "site": "AnaToolExecutor.ts:872",
+   "present": {
+    "verb": "render",
+    "object": "a signature manifestation",
+    "source": "project"
+   }
   },
   "report_protocol_deviation": {
    "class": "conditional",
    "writes": "INSERT protocol_deviations + governed-action row",
    "site": "AnaToolExecutor.ts:10905",
-   "rule": "input.severity and input.affects_safety both supplied -> refuse (stamps the person's reportability assessment); else confirm"
+   "rule": "input.severity and input.affects_safety both supplied -> refuse (stamps the person's reportability assessment); else confirm",
+   "present": {
+    "verb": "record",
+    "object": "a protocol deviation",
+    "source": "authoring"
+   }
   },
   "request_no_cost_extension": {
    "class": "confirm",
@@ -3042,22 +5548,42 @@
   "reset_project_goals": {
    "class": "confirm",
    "writes": "revises goals, org-wide notification",
-   "site": "AnaToolExecutor.ts:2451"
+   "site": "AnaToolExecutor.ts:2451",
+   "present": {
+    "verb": "update",
+    "object": "the project's goals",
+    "source": "project"
+   }
   },
   "resolve_regulatory_structure": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9454"
+   "site": "AnaToolExecutor.ts:9454",
+   "present": {
+    "verb": "look_up",
+    "object": "the regulatory structure",
+    "source": "submissions"
+   }
   },
   "resolve_submission_plan": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5650"
+   "site": "AnaToolExecutor.ts:5650",
+   "present": {
+    "verb": "plan",
+    "object": "the multi-region submission",
+    "source": "submissions"
+   }
   },
   "resolve_validation_finding": {
    "class": "confirm",
    "writes": "UPDATE submission_validation_findings resolved",
-   "site": "AnaToolExecutor.ts:8844"
+   "site": "AnaToolExecutor.ts:8844",
+   "present": {
+    "verb": "resolve",
+    "object": "a validation finding",
+    "source": "submissions"
+   }
   },
   "resume_intelligence_flow": {
    "class": "read",
@@ -3069,12 +5595,22 @@
    "writes": "none; the handler refuses (e-signed route, 2026-09-28 Q-0928-1 / SEC-0928-1: was confirm and retired the document with a reason only)",
    "site": "AnaToolExecutor.ts:13751",
    "refusedBy": "handler",
-   "why": "Retiring a controlled document is an e-signed act: the person does it with the document's Retire action in the Quality register, which asks for their password and second factor."
+   "why": "Retiring a controlled document is an e-signed act: the person does it with the document's Retire action in the Quality register, which asks for their password and second factor.",
+   "present": {
+    "verb": "explain",
+    "object": "how to retire the controlled document",
+    "source": "qms"
+   }
   },
   "review_amendment": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:10893"
+   "site": "AnaToolExecutor.ts:10893",
+   "present": {
+    "verb": "review",
+    "object": "the amendment",
+    "source": "authoring"
+   }
   },
   "review_biosketch_completeness": {
    "class": "read",
@@ -3084,7 +5620,12 @@
   "review_biospecimen_profile": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20960"
+   "site": "AnaToolExecutor.ts:20960",
+   "present": {
+    "verb": "review",
+    "object": "the biospecimen collection",
+    "source": "authoring"
+   }
   },
   "review_commitment_portfolio": {
    "class": "read",
@@ -3094,7 +5635,12 @@
   "review_consent_completeness": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:11023"
+   "site": "AnaToolExecutor.ts:11023",
+   "present": {
+    "verb": "review",
+    "object": "the consent form",
+    "source": "authoring"
+   }
   },
   "review_cost_share": {
    "class": "read",
@@ -3114,17 +5660,32 @@
   "review_dct_profile": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20913"
+   "site": "AnaToolExecutor.ts:20913",
+   "present": {
+    "verb": "review",
+    "object": "the decentralised elements",
+    "source": "authoring"
+   }
   },
   "review_deviation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:10937"
+   "site": "AnaToolExecutor.ts:10937",
+   "present": {
+    "verb": "review",
+    "object": "the deviation",
+    "source": "authoring"
+   }
   },
   "review_deviation_trends": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20990"
+   "site": "AnaToolExecutor.ts:20990",
+   "present": {
+    "verb": "review",
+    "object": "the deviation trends",
+    "source": "authoring"
+   }
   },
   "review_dms_plan_completeness": {
    "class": "read",
@@ -3134,12 +5695,22 @@
   "review_dose_escalation_design": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20924"
+   "site": "AnaToolExecutor.ts:20924",
+   "present": {
+    "verb": "review",
+    "object": "the dose-escalation rules",
+    "source": "authoring"
+   }
   },
   "review_enrollment_forecast": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20930"
+   "site": "AnaToolExecutor.ts:20930",
+   "present": {
+    "verb": "review",
+    "object": "the enrollment forecast",
+    "source": "authoring"
+   }
   },
   "review_expiring_training": {
    "class": "read",
@@ -3154,7 +5725,12 @@
   "review_external_control_plan": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20948"
+   "site": "AnaToolExecutor.ts:20948",
+   "present": {
+    "verb": "review",
+    "object": "the external-control plan",
+    "source": "authoring"
+   }
   },
   "review_financial_disclosure": {
    "class": "read",
@@ -3189,7 +5765,12 @@
   "review_informed_consent": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2870"
+   "site": "AnaToolExecutor.ts:2870",
+   "present": {
+    "verb": "review",
+    "object": "the informed-consent form",
+    "source": "authoring"
+   }
   },
   "review_inspection_readiness": {
    "class": "read",
@@ -3199,7 +5780,12 @@
   "review_interim_operating_characteristics": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20936"
+   "site": "AnaToolExecutor.ts:20936",
+   "present": {
+    "verb": "review",
+    "object": "the interim-analysis plan",
+    "source": "authoring"
+   }
   },
   "review_invention_disclosure": {
    "class": "read",
@@ -3209,7 +5795,12 @@
   "review_irb_submission": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:10421"
+   "site": "AnaToolExecutor.ts:10421",
+   "present": {
+    "verb": "review",
+    "object": "the IRB submission",
+    "source": "authoring"
+   }
   },
   "review_label_currency": {
    "class": "read",
@@ -3224,17 +5815,32 @@
   "review_master_protocol": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20966"
+   "site": "AnaToolExecutor.ts:20966",
+   "present": {
+    "verb": "review",
+    "object": "the master-protocol plan",
+    "source": "authoring"
+   }
   },
   "review_mmrm_sizing": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20942"
+   "site": "AnaToolExecutor.ts:20942",
+   "present": {
+    "verb": "review",
+    "object": "the MMRM sizing",
+    "source": "authoring"
+   }
   },
   "review_multiplicity_control": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20954"
+   "site": "AnaToolExecutor.ts:20954",
+   "present": {
+    "verb": "review",
+    "object": "the multiplicity control",
+    "source": "authoring"
+   }
   },
   "review_other_support": {
    "class": "read",
@@ -3244,22 +5850,42 @@
   "review_protocol_budget": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:10650"
+   "site": "AnaToolExecutor.ts:10650",
+   "present": {
+    "verb": "review",
+    "object": "the protocol budget",
+    "source": "authoring"
+   }
   },
   "review_protocol_completeness": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:11555"
+   "site": "AnaToolExecutor.ts:11555",
+   "present": {
+    "verb": "review",
+    "object": "the protocol for completeness",
+    "source": "authoring"
+   }
   },
   "review_protocol_design_derivation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20407"
+   "site": "AnaToolExecutor.ts:20407",
+   "present": {
+    "verb": "review",
+    "object": "the protocol's study design",
+    "source": "authoring"
+   }
   },
   "review_protocol_design_gates": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20496"
+   "site": "AnaToolExecutor.ts:20496",
+   "present": {
+    "verb": "review",
+    "object": "the study-design checks",
+    "source": "authoring"
+   }
   },
   "review_protocol_portfolio": {
    "class": "read",
@@ -3274,27 +5900,52 @@
   "review_protocol_redline": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:21014"
+   "site": "AnaToolExecutor.ts:21014",
+   "present": {
+    "verb": "review",
+    "object": "two protocol versions",
+    "source": "authoring"
+   }
   },
   "review_protocol_regulatory_rules": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20472"
+   "site": "AnaToolExecutor.ts:20472",
+   "present": {
+    "verb": "review",
+    "object": "the protocol against the regulatory rules",
+    "source": "authoring"
+   }
   },
   "review_protocol_review_status": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:10983"
+   "site": "AnaToolExecutor.ts:10983",
+   "present": {
+    "verb": "review",
+    "object": "the protocol review status",
+    "source": "authoring"
+   }
   },
   "review_protocol_risk_register": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:11430"
+   "site": "AnaToolExecutor.ts:11430",
+   "present": {
+    "verb": "review",
+    "object": "the protocol risk register",
+    "source": "authoring"
+   }
   },
   "review_protocol_timeline": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:10778"
+   "site": "AnaToolExecutor.ts:10778",
+   "present": {
+    "verb": "review",
+    "object": "the protocol timeline",
+    "source": "authoring"
+   }
   },
   "review_research_agreement": {
    "class": "read",
@@ -3305,7 +5956,12 @@
    "class": "conditional",
    "writes": "milestone status changes, tasks, org notifications (apply defaults true)",
    "site": "AnaToolExecutor.ts:2428",
-   "rule": "input.apply === false -> read; else confirm"
+   "rule": "input.apply === false -> read; else confirm",
+   "present": {
+    "verb": "review",
+    "object": "the schedule of events",
+    "source": "project"
+   }
   },
   "review_send_readiness": {
    "class": "read",
@@ -3315,12 +5971,22 @@
   "review_soa_matrix": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:10690"
+   "site": "AnaToolExecutor.ts:10690",
+   "present": {
+    "verb": "review",
+    "object": "the schedule of assessments",
+    "source": "authoring"
+   }
   },
   "review_spirit_conformance": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20972"
+   "site": "AnaToolExecutor.ts:20972",
+   "present": {
+    "verb": "review",
+    "object": "the protocol against SPIRIT",
+    "source": "authoring"
+   }
   },
   "review_tmf_completeness": {
    "class": "read",
@@ -3340,27 +6006,55 @@
   "review_trial_schema": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20898"
+   "site": "AnaToolExecutor.ts:20898",
+   "present": {
+    "verb": "review",
+    "object": "the trial schema",
+    "source": "authoring"
+   }
   },
   "review_who_ictrp_record": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20918"
+   "site": "AnaToolExecutor.ts:20918",
+   "present": {
+    "verb": "review",
+    "object": "the WHO registration record",
+    "source": "authoring"
+   }
   },
   "revise_qms_document": {
    "class": "confirm",
    "writes": "opens a controlled revision (reason of 8+ characters required; caller must hold an editor role in organization_users, 2026-09-28 Q-0928-2): document back to draft, approval cleared; the effective version is withdrawn in place (hand-on) + governed-action row",
-   "site": "AnaToolExecutor.ts:13678"
+   "site": "AnaToolExecutor.ts:13678",
+   "present": {
+    "verb": "create",
+    "object": "a controlled revision",
+    "source": "qms"
+   }
   },
   "run_agent": {
    "class": "self",
    "writes": "none to a tenant record; starts bounded read-only sub-agents inside this turn, whose model calls are ledgered under their own run id with this run as parent",
-   "site": "agentic-workflow-tools.ts registerAgenticWorkflowHandlers -> sub-agent.ts runSubAgent"
+   "site": "agentic-workflow-tools.ts registerAgenticWorkflowHandlers -> sub-agent.ts runSubAgent",
+   "present": {
+    "verb": "run",
+    "object": "an agent",
+    "source": "project",
+    "preview": [
+     "objective"
+    ]
+   }
   },
   "run_cdisc_pipeline": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16838"
+   "site": "AnaToolExecutor.ts:16838",
+   "present": {
+    "verb": "check",
+    "object": "the dataset against CDISC",
+    "source": "engine"
+   }
   },
   "run_central_monitoring": {
    "class": "read",
@@ -3370,27 +6064,52 @@
   "run_compliance_checklist": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:13132"
+   "site": "AnaToolExecutor.ts:13132",
+   "present": {
+    "verb": "look_up",
+    "object": "the compliance checklist",
+    "source": "knowledge"
+   }
   },
   "run_in_container": {
    "class": "confirm",
    "writes": "runs model-written script in Docker",
-   "site": "AnaToolExecutor.ts:7614"
+   "site": "AnaToolExecutor.ts:7614",
+   "present": {
+    "verb": "run",
+    "object": "a script in the sandbox",
+    "source": "project"
+   }
   },
   "run_monte_carlo_simulation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15714"
+   "site": "AnaToolExecutor.ts:15714",
+   "present": {
+    "verb": "simulate",
+    "object": "the outcome distributions",
+    "source": "engine"
+   }
   },
   "run_probabilistic_sensitivity": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16826"
+   "site": "AnaToolExecutor.ts:16826",
+   "present": {
+    "verb": "run",
+    "object": "a probabilistic sensitivity analysis",
+    "source": "engine"
+   }
   },
   "run_python_script": {
    "class": "confirm",
    "writes": "runs model code, writes output files to tmp",
-   "site": "AnaToolExecutor.ts:7124"
+   "site": "AnaToolExecutor.ts:7124",
+   "present": {
+    "verb": "run",
+    "object": "a script in the sandbox",
+    "source": "project"
+   }
   },
   "run_rbm_assessment": {
    "class": "conditional",
@@ -3401,33 +6120,69 @@
   "run_shadow_review": {
    "class": "confirm",
    "writes": "INSERT shadow_review_runs + findings + audit",
-   "site": "shadow-review/shadow-review-service.ts:169"
+   "site": "shadow-review/shadow-review-service.ts:169",
+   "present": {
+    "verb": "run",
+    "object": "a shadow review",
+    "source": "submissions"
+   }
   },
   "run_submission_premortem": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:1021"
+   "site": "AnaToolExecutor.ts:1021",
+   "present": {
+    "verb": "run",
+    "object": "a submission pre-mortem",
+    "source": "submissions"
+   }
   },
   "save_document_as_template": {
    "class": "confirm",
    "writes": "INSERT protocol_templates + sections + audit",
-   "site": "AnaToolExecutor.ts:10732"
+   "site": "AnaToolExecutor.ts:10732",
+   "present": {
+    "verb": "save",
+    "object": "the protocol as a template",
+    "source": "authoring"
+   }
   },
   "save_document_to_vault": {
    "class": "confirm",
    "writes": "new governed artifact + version + governed-action row",
-   "site": "AnaToolExecutor.ts:19670"
+   "site": "AnaToolExecutor.ts:19670",
+   "present": {
+    "verb": "save",
+    "object": "a document to the Vault",
+    "source": "vault",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "save_report_definition": {
    "class": "confirm",
    "writes": "INSERT report definition",
-   "site": "AnaToolExecutor.ts:20293"
+   "site": "AnaToolExecutor.ts:20293",
+   "present": {
+    "verb": "save",
+    "object": "the dashboard",
+    "source": "reports",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "scan_document_citations": {
    "class": "conditional",
    "writes": "binds citations to governed facts, writes drift rows",
    "site": "living-record/document-binder.ts:248",
-   "rule": "input.persist === true -> confirm; else read"
+   "rule": "input.persist === true -> confirm; else read",
+   "present": {
+    "verb": "scan",
+    "object": "the document for citations",
+    "source": "authoring"
+   }
   },
   "scan_patient_profiles": {
    "class": "read",
@@ -3437,42 +6192,82 @@
   "scan_project_risks": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2305"
+   "site": "AnaToolExecutor.ts:2305",
+   "present": {
+    "verb": "scan",
+    "object": "open project risks",
+    "source": "project"
+   }
   },
   "scan_regulatory_deficiencies": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:1381"
+   "site": "AnaToolExecutor.ts:1381",
+   "present": {
+    "verb": "scan",
+    "object": "the text for likely deficiencies",
+    "source": "engine"
+   }
   },
   "score_predicate_adequacy": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15920"
+   "site": "AnaToolExecutor.ts:15920",
+   "present": {
+    "verb": "score",
+    "object": "the candidate predicates",
+    "source": "engine"
+   }
   },
   "score_rwe_data_source": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17856"
+   "site": "AnaToolExecutor.ts:17856",
+   "present": {
+    "verb": "score",
+    "object": "the real-world data source",
+    "source": "engine"
+   }
   },
   "screen_compound_liabilities": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3843"
+   "site": "AnaToolExecutor.ts:3843",
+   "present": {
+    "verb": "screen",
+    "object": "the compound for liabilities",
+    "source": "engine"
+   }
   },
   "screen_promotional_language": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3463"
+   "site": "AnaToolExecutor.ts:3463",
+   "present": {
+    "verb": "screen",
+    "object": "the text for promotional claims",
+    "source": "engine"
+   }
   },
   "screen_restricted_party": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:13316"
+   "site": "AnaToolExecutor.ts:13316",
+   "present": {
+    "verb": "screen",
+    "object": "a party against SAM.gov",
+    "source": "agency"
+   }
   },
   "screen_signal_panel": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:6114"
+   "site": "AnaToolExecutor.ts:6114",
+   "present": {
+    "verb": "screen",
+    "object": "for safety signals",
+    "source": "engine"
+   }
   },
   "screen_subaward": {
    "class": "conditional",
@@ -3483,202 +6278,475 @@
   "search_all_documents": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20015"
+   "site": "AnaToolExecutor.ts:20015",
+   "present": {
+    "verb": "search",
+    "object": "every document store",
+    "source": "vault",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_authoring_sections": {
    "class": "read",
    "writes": "none",
-   "site": "authoring-read-tools.ts:348"
+   "site": "authoring-read-tools.ts:348",
+   "present": {
+    "verb": "search",
+    "object": "the authoring documents",
+    "source": "authoring",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_chembl_compound": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3721"
+   "site": "AnaToolExecutor.ts:3721",
+   "present": {
+    "verb": "search",
+    "object": "ChEMBL",
+    "source": "literature",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_clinical_evidence": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:1570"
+   "site": "AnaToolExecutor.ts:1570",
+   "present": {
+    "verb": "search",
+    "object": "ClinicalTrials.gov",
+    "source": "agency",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_clinical_regulatory_evidence": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:13916"
+   "site": "AnaToolExecutor.ts:13916",
+   "present": {
+    "verb": "search",
+    "object": "the clinical-regulatory evidence",
+    "source": "literature",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_connected_repositories": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:1959"
+   "site": "AnaToolExecutor.ts:1959",
+   "present": {
+    "verb": "search",
+    "object": "your connected repositories",
+    "source": "connected",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_crm": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4007"
+   "site": "AnaToolExecutor.ts:4007",
+   "present": {
+    "verb": "search",
+    "object": "the CRM",
+    "source": "connected",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_device_adverse_events": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:1633"
+   "site": "AnaToolExecutor.ts:1633",
+   "present": {
+    "verb": "search",
+    "object": "device adverse events",
+    "source": "agency",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_device_recalls": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3964"
+   "site": "AnaToolExecutor.ts:3964",
+   "present": {
+    "verb": "search",
+    "object": "FDA device recalls",
+    "source": "agency",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_document": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4387"
+   "site": "AnaToolExecutor.ts:4387",
+   "present": {
+    "verb": "search",
+    "object": "inside the document",
+    "source": "authoring",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_document_passages": {
    "class": "read",
    "writes": "none",
-   "site": "document-passage-tools.ts:162"
+   "site": "document-passage-tools.ts:162",
+   "present": {
+    "verb": "search",
+    "object": "inside the Vault documents",
+    "source": "vault",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_drug_adverse_events": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:1675"
+   "site": "AnaToolExecutor.ts:1675",
+   "present": {
+    "verb": "search",
+    "object": "drug adverse events",
+    "source": "agency",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_drug_approvals": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3676"
+   "site": "AnaToolExecutor.ts:3676",
+   "present": {
+    "verb": "search",
+    "object": "FDA drug approvals",
+    "source": "agency",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_drug_labels": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3925"
+   "site": "AnaToolExecutor.ts:3925",
+   "present": {
+    "verb": "search",
+    "object": "FDA drug labels",
+    "source": "agency",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_ema_epar": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:1866"
+   "site": "AnaToolExecutor.ts:1866",
+   "present": {
+    "verb": "search",
+    "object": "EMA assessment reports",
+    "source": "agency",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_eu_ctis": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:1911"
+   "site": "AnaToolExecutor.ts:1911",
+   "present": {
+    "verb": "search",
+    "object": "EU CTIS",
+    "source": "agency",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_eudamed": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:1821"
+   "site": "AnaToolExecutor.ts:1821",
+   "present": {
+    "verb": "search",
+    "object": "EUDAMED",
+    "source": "agency",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_grants_gov": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:13296"
+   "site": "AnaToolExecutor.ts:13296",
+   "present": {
+    "verb": "search",
+    "object": "Grants.gov",
+    "source": "agency",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_ivd_knowledge": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9519"
+   "site": "AnaToolExecutor.ts:9519",
+   "present": {
+    "verb": "search",
+    "object": "the IVD knowledge base",
+    "source": "knowledge",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_large_document": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:1445"
+   "site": "AnaToolExecutor.ts:1445",
+   "present": {
+    "verb": "search",
+    "object": "inside a large uploaded file",
+    "source": "data_room",
+    "preview": [
+     "queries[0]",
+     "query"
+    ]
+   }
   },
   "search_literature": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:1717"
+   "site": "AnaToolExecutor.ts:1717",
+   "present": {
+    "verb": "search",
+    "object": "the literature",
+    "source": "literature",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_medicare_coverage": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4077"
+   "site": "AnaToolExecutor.ts:4077",
+   "present": {
+    "verb": "search",
+    "object": "Medicare coverage",
+    "source": "agency"
+   }
   },
   "search_preprints": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3769"
+   "site": "AnaToolExecutor.ts:3769",
+   "present": {
+    "verb": "search",
+    "object": "preprints",
+    "source": "literature",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_project_documents": {
    "class": "read",
    "writes": "none",
-   "site": "document-catalog-tools.ts:630"
+   "site": "document-catalog-tools.ts:630",
+   "present": {
+    "verb": "search",
+    "object": "the Vault",
+    "source": "vault",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "search_regulatory_correspondence": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4055"
+   "site": "AnaToolExecutor.ts:4055",
+   "present": {
+    "verb": "search",
+    "object": "the regulatory mailbox",
+    "source": "mailbox",
+    "preview": [
+     "query"
+    ]
+   }
   },
   "seed_tmf": {
    "class": "confirm",
    "writes": "INSERT tmf_artifacts + governed-action row",
-   "site": "AnaToolExecutor.ts:19939"
+   "site": "AnaToolExecutor.ts:19939",
+   "present": {
+    "verb": "create",
+    "object": "the Trial Master File structure",
+    "source": "project"
+   }
   },
   "select_505_pathway": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18014"
+   "site": "AnaToolExecutor.ts:18014",
+   "present": {
+    "verb": "select",
+    "object": "the 505 pathway",
+    "source": "knowledge"
+   }
   },
   "select_atmp_pathway": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17833"
+   "site": "AnaToolExecutor.ts:17833",
+   "present": {
+    "verb": "select",
+    "object": "the advanced-therapy pathway",
+    "source": "knowledge"
+   }
   },
   "select_coa_type": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18329"
+   "site": "AnaToolExecutor.ts:18329",
+   "present": {
+    "verb": "select",
+    "object": "the COA type",
+    "source": "knowledge"
+   }
   },
   "select_combination_submission_pathway": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18461"
+   "site": "AnaToolExecutor.ts:18461",
+   "present": {
+    "verb": "select",
+    "object": "the combination-product pathway",
+    "source": "knowledge"
+   }
   },
   "select_device_pathway": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18769"
+   "site": "AnaToolExecutor.ts:18769",
+   "present": {
+    "verb": "select",
+    "object": "the device pathway",
+    "source": "knowledge"
+   }
   },
   "select_dose": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17708"
+   "site": "AnaToolExecutor.ts:17708",
+   "present": {
+    "verb": "select",
+    "object": "the dose framework",
+    "source": "knowledge"
+   }
   },
   "select_dose_finding_design": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18377"
+   "site": "AnaToolExecutor.ts:18377",
+   "present": {
+    "verb": "select",
+    "object": "the dose-finding design",
+    "source": "knowledge"
+   }
   },
   "select_exposure_response_dose": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4978"
+   "site": "AnaToolExecutor.ts:4978",
+   "present": {
+    "verb": "select",
+    "object": "a dose from exposure-response",
+    "source": "engine"
+   }
   },
   "select_missing_data_strategy": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18502"
+   "site": "AnaToolExecutor.ts:18502",
+   "present": {
+    "verb": "select",
+    "object": "the missing-data strategy",
+    "source": "knowledge"
+   }
   },
   "select_pediatric_dose": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17789"
+   "site": "AnaToolExecutor.ts:17789",
+   "present": {
+    "verb": "select",
+    "object": "the pediatric dose method",
+    "source": "knowledge"
+   }
   },
   "select_pediatric_formulation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17782"
+   "site": "AnaToolExecutor.ts:17782",
+   "present": {
+    "verb": "select",
+    "object": "the pediatric formulation",
+    "source": "knowledge"
+   }
   },
   "select_rp2d": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18398"
+   "site": "AnaToolExecutor.ts:18398",
+   "present": {
+    "verb": "select",
+    "object": "the phase 2 dose",
+    "source": "knowledge"
+   }
   },
   "select_rwe_design": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17870"
+   "site": "AnaToolExecutor.ts:17870",
+   "present": {
+    "verb": "select",
+    "object": "the RWE design",
+    "source": "knowledge"
+   }
   },
   "select_tox_species": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17717"
+   "site": "AnaToolExecutor.ts:17717",
+   "present": {
+    "verb": "select",
+    "object": "the toxicology species",
+    "source": "knowledge"
+   }
   },
   "set_coverage_qualifying_determination": {
    "class": "confirm",
@@ -3698,17 +6766,32 @@
   "set_program_metadata": {
    "class": "confirm",
    "writes": "UPDATE regulatory_programs.metadata",
-   "site": "AnaToolExecutor.ts:7815"
+   "site": "AnaToolExecutor.ts:7815",
+   "present": {
+    "verb": "update",
+    "object": "the program's details",
+    "source": "project"
+   }
   },
   "set_protocol_budget_params": {
    "class": "confirm",
    "writes": "UPSERT protocol_budget_params + governed-action row",
-   "site": "protocol-budget-service.ts:42"
+   "site": "protocol-budget-service.ts:42",
+   "present": {
+    "verb": "update",
+    "object": "the protocol's budget settings",
+    "source": "authoring"
+   }
   },
   "set_protocol_milestone_status": {
    "class": "confirm",
    "writes": "UPDATE protocol_milestones + governed-action row",
-   "site": "protocol-milestones-service.ts:42"
+   "site": "protocol-milestones-service.ts:42",
+   "present": {
+    "verb": "update",
+    "object": "a milestone's status",
+    "source": "authoring"
+   }
   },
   "set_qtl": {
    "class": "confirm",
@@ -3724,12 +6807,22 @@
   "set_soa_cell": {
    "class": "confirm",
    "writes": "UPSERT protocol_soa_cells + governed-action row",
-   "site": "protocol-soa-service.ts:46"
+   "site": "protocol-soa-service.ts:46",
+   "present": {
+    "verb": "update",
+    "object": "the schedule of assessments",
+    "source": "authoring"
+   }
   },
   "set_specifications": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17966"
+   "site": "AnaToolExecutor.ts:17966",
+   "present": {
+    "verb": "look_up",
+    "object": "the specification tests",
+    "source": "knowledge"
+   }
   },
   "simulate_reviewer_challenges": {
    "class": "confirm",
@@ -3744,12 +6837,22 @@
   "size_diagnostic_study": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:15626"
+   "site": "AnaToolExecutor.ts:15626",
+   "present": {
+    "verb": "compute",
+    "object": "the diagnostic study size",
+    "source": "engine"
+   }
   },
   "start_deep_investigation": {
    "class": "confirm",
    "writes": "INSERT ana_deep_investigations and starts an unattended background run",
-   "site": "ana/deep-investigation.ts:148"
+   "site": "ana/deep-investigation.ts:148",
+   "present": {
+    "verb": "start",
+    "object": "a background investigation",
+    "source": "project"
+   }
   },
   "start_intelligence_flow": {
    "class": "self",
@@ -3759,32 +6862,62 @@
   "start_legacy_import": {
    "class": "confirm",
    "writes": "INSERT import_jobs/files/findings",
-   "site": "AnaToolExecutor.ts:14289"
+   "site": "AnaToolExecutor.ts:14289",
+   "present": {
+    "verb": "start",
+    "object": "a legacy import",
+    "source": "data_room"
+   }
   },
   "start_product_demo": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17214"
+   "site": "AnaToolExecutor.ts:17214",
+   "present": {
+    "verb": "start",
+    "object": "a product demonstration",
+    "source": "screen"
+   }
   },
   "start_war_game": {
    "class": "self",
    "writes": "her own WAR_GAME_RUN audit entry; engine is pure",
-   "site": "AnaToolExecutor.ts:19340"
+   "site": "AnaToolExecutor.ts:19340",
+   "present": {
+    "verb": "simulate",
+    "object": "an auditor's review",
+    "source": "project"
+   }
   },
   "stress_test_protocol": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:13994"
+   "site": "AnaToolExecutor.ts:13994",
+   "present": {
+    "verb": "select",
+    "object": "stress scenarios for the protocol",
+    "source": "authoring"
+   }
   },
   "structure_benefit_risk_framework": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18906"
+   "site": "AnaToolExecutor.ts:18906",
+   "present": {
+    "verb": "build",
+    "object": "the benefit-risk framework",
+    "source": "knowledge"
+   }
   },
   "structure_smpc": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:18165"
+   "site": "AnaToolExecutor.ts:18165",
+   "present": {
+    "verb": "build",
+    "object": "the SmPC structure",
+    "source": "knowledge"
+   }
   },
   "submit_invention_disclosure": {
    "class": "confirm",
@@ -3799,27 +6932,52 @@
   "suggest_reports": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20258"
+   "site": "AnaToolExecutor.ts:20258",
+   "present": {
+    "verb": "look_up",
+    "object": "reports that fit your programs",
+    "source": "reports"
+   }
   },
   "summarize_onboarding_readiness": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:1622"
+   "site": "AnaToolExecutor.ts:1622",
+   "present": {
+    "verb": "summarize",
+    "object": "onboarding readiness",
+    "source": "project"
+   }
   },
   "summarize_rim_intelligence": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:805"
+   "site": "AnaToolExecutor.ts:805",
+   "present": {
+    "verb": "summarize",
+    "object": "the regulatory intelligence",
+    "source": "project"
+   }
   },
   "surgical_docx_xml_edit": {
    "class": "self",
    "writes": "scratch edited .docx under tmp/docbuilder, not filed",
-   "site": "AnaToolExecutor.ts:7268"
+   "site": "AnaToolExecutor.ts:7268",
+   "present": {
+    "verb": "edit",
+    "object": "the Word document",
+    "source": "authoring"
+   }
   },
   "trace_design_recommendation": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:14016"
+   "site": "AnaToolExecutor.ts:14016",
+   "present": {
+    "verb": "trace",
+    "object": "the evidence behind a recommendation",
+    "source": "project"
+   }
   },
   "trace_fact_to_source": {
    "class": "read",
@@ -3829,14 +6987,27 @@
   "trace_provenance": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9315"
+   "site": "AnaToolExecutor.ts:9315",
+   "present": {
+    "verb": "trace",
+    "object": "a section's sources",
+    "source": "submissions"
+   }
   },
   "transmit_submission": {
    "class": "refuse",
    "writes": "none; the handler already refuses (transmission is a person's signed act)",
    "site": "AnaToolExecutor.ts:8660",
    "refusedBy": "handler",
-   "why": "Transmitting a submission to an agency is a person’s authorised, signed act, done from the Submission Center."
+   "why": "Transmitting a submission to an agency is a person’s authorised, signed act, done from the Submission Center.",
+   "present": {
+    "verb": "explain",
+    "object": "how to transmit the submission",
+    "source": "submissions",
+    "preview": [
+     "sequence"
+    ]
+   }
   },
   "triage_capa_mdr_queue": {
    "class": "read",
@@ -3846,7 +7017,12 @@
   "triage_compliance_attention": {
    "class": "confirm",
    "writes": "creates review tasks + governed-action row",
-   "site": "AnaToolExecutor.ts:12562"
+   "site": "AnaToolExecutor.ts:12562",
+   "present": {
+    "verb": "create",
+    "object": "review tasks for critical items",
+    "source": "project"
+   }
   },
   "triage_signal": {
    "class": "confirm",
@@ -3861,7 +7037,12 @@
   "update_consent_element": {
    "class": "confirm",
    "writes": "UPDATE consent_form_elements + audit",
-   "site": "AnaToolExecutor.ts:11010"
+   "site": "AnaToolExecutor.ts:11010",
+   "present": {
+    "verb": "update",
+    "object": "a consent element",
+    "source": "authoring"
+   }
   },
   "update_dms_plan_element": {
    "class": "confirm",
@@ -3892,12 +7073,22 @@
   "update_plan": {
    "class": "read",
    "writes": "no side effect; plan UI event",
-   "site": "agentic-workflow-tools.ts:343"
+   "site": "agentic-workflow-tools.ts:343",
+   "present": {
+    "verb": "update",
+    "object": "the plan",
+    "source": "plan"
+   }
   },
   "update_protocol_section": {
    "class": "confirm",
    "writes": "UPDATE protocol_sections + lineage + governed-action row",
-   "site": "AnaToolExecutor.ts:11493"
+   "site": "AnaToolExecutor.ts:11493",
+   "present": {
+    "verb": "update",
+    "object": "a protocol section",
+    "source": "authoring"
+   }
   },
   "update_q_sub_commitment_rolled_in": {
    "class": "confirm",
@@ -3918,87 +7109,172 @@
   "update_vault_document": {
    "class": "confirm",
    "writes": "new artifact version (approved-status overwrite noted as finding)",
-   "site": "AnaToolExecutor.ts:19829"
+   "site": "AnaToolExecutor.ts:19829",
+   "present": {
+    "verb": "save",
+    "object": "a new version of a Vault document",
+    "source": "vault"
+   }
   },
   "validate_adam_dataset": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17585"
+   "site": "AnaToolExecutor.ts:17585",
+   "present": {
+    "verb": "validate",
+    "object": "the ADaM dataset",
+    "source": "engine"
+   }
   },
   "validate_analytical_method": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17952"
+   "site": "AnaToolExecutor.ts:17952",
+   "present": {
+    "verb": "validate",
+    "object": "the method-validation parameters",
+    "source": "knowledge"
+   }
   },
   "validate_cdisc_dataset": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17346"
+   "site": "AnaToolExecutor.ts:17346",
+   "present": {
+    "verb": "validate",
+    "object": "the CDISC dataset",
+    "source": "engine"
+   }
   },
   "validate_cross_references": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4264"
+   "site": "AnaToolExecutor.ts:4264",
+   "present": {
+    "verb": "check",
+    "object": "the CTD cross-references",
+    "source": "engine"
+   }
   },
   "validate_docx": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:7475"
+   "site": "AnaToolExecutor.ts:7475",
+   "present": {
+    "verb": "validate",
+    "object": "the Word document",
+    "source": "engine"
+   }
   },
   "validate_ectd_package": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9123"
+   "site": "AnaToolExecutor.ts:9123",
+   "present": {
+    "verb": "validate",
+    "object": "the eCTD package",
+    "source": "engine"
+   }
   },
   "validate_market_formatting": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9557"
+   "site": "AnaToolExecutor.ts:9557",
+   "present": {
+    "verb": "check",
+    "object": "a market's formatting rules",
+    "source": "engine"
+   }
   },
   "validate_sdtm_dataset": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17578"
+   "site": "AnaToolExecutor.ts:17578",
+   "present": {
+    "verb": "validate",
+    "object": "the SDTM dataset",
+    "source": "engine"
+   }
   },
   "validate_spl": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17334"
+   "site": "AnaToolExecutor.ts:17334",
+   "present": {
+    "verb": "validate",
+    "object": "the SPL",
+    "source": "engine"
+   }
   },
   "validate_spl_structure": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:17555"
+   "site": "AnaToolExecutor.ts:17555",
+   "present": {
+    "verb": "validate",
+    "object": "the SPL XML",
+    "source": "engine"
+   }
   },
   "validate_udi": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:9766"
+   "site": "AnaToolExecutor.ts:9766",
+   "present": {
+    "verb": "validate",
+    "object": "the UDI",
+    "source": "engine"
+   }
   },
   "value_dossier_guidance": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:2059"
+   "site": "AnaToolExecutor.ts:2059",
+   "present": {
+    "verb": "look_up",
+    "object": "value-dossier guidance",
+    "source": "knowledge"
+   }
   },
   "verify_citations": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:4638"
+   "site": "AnaToolExecutor.ts:4638",
+   "present": {
+    "verb": "check",
+    "object": "the references exist",
+    "source": "literature"
+   }
   },
   "verify_docx_against_source": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:7514"
+   "site": "AnaToolExecutor.ts:7514",
+   "present": {
+    "verb": "check",
+    "object": "the Word document against its source",
+    "source": "engine"
+   }
   },
   "verify_memory_atom": {
    "class": "confirm",
    "writes": "marks a memory atom verified by the user (the yes is the verification)",
-   "site": "AnaToolExecutor.ts:13530"
+   "site": "AnaToolExecutor.ts:13530",
+   "present": {
+    "verb": "record",
+    "object": "a memory item as verified",
+    "source": "project"
+   }
   },
   "verify_revision": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:3911"
+   "site": "AnaToolExecutor.ts:3911",
+   "present": {
+    "verb": "check",
+    "object": "that the revision improved the draft",
+    "source": "authoring"
+   }
   },
   "write_kit_section": {
    "class": "confirm",
