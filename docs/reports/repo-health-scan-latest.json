@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T01:03:26.151Z",
+  "generatedAt": "2026-10-08T01:11:58.688Z",
   "git": {
-    "sha": "a910e5a5dfd2ade026ef3b98c8da26f4dd86c715",
+    "sha": "d390f96465ed6d88f02befb966cd5cc7f4614197",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 51,
-    "largeFilesByLines": 111
+    "largeFilesByLines": 112
   },
   "findings": {
     "duplicateBasenames": [
@@ -2696,6 +2696,10 @@
         "lines": 1552
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 1541
+      },
+      {
         "file": "server/services/grdhe/grdheService.ts",
         "lines": 1522
       }
@@ -2725,7 +2729,7 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
       "largeByBytes": 6,
-      "largeByLines": 16
+      "largeByLines": 17
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",
