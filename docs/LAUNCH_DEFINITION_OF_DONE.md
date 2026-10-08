@@ -272,6 +272,16 @@ The onset date is stated either as a date or explicitly as unknown; a blank is r
 recorded, the expedited-reporting verdict is "not determined: expectedness not assessed", never "not reportable". A
 missing determination produces no verdict at all, so it cannot become an unsent 15-day report.
 
+Follow-up decisions on P-20, from the second IND pass (`d155ef099`):
+- "Not determined" applies only where expectedness decides the outcome. An event recorded as non-serious, or as not
+  suspected, is not expedited on those stated facts, and the verdict says so.
+- Every IND submission carries a Form 1571, under 21 CFR 312. A continuing IND sequence is held to its 1.1 form even
+  though it is not held to the original's Module 1 list.
+- Save to dossier for a program with no project record answers 409, not 200 with `governed:false`.
+- No screen matches a program to an application by name, including Dispatch readiness.
+- The sponsor address and IND type are stored on the program, in additive columns under Rule 1. Today they are sent
+  with each build.
+
 ### P-21 — Regulated choices start unstated
 
 Every select whose value lands in a regulated record starts on "Not stated — choose" and sends nothing until chosen. This
