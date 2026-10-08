@@ -997,7 +997,7 @@ I can draft ALL of these document types:
 - Briefing Documents (pre-IND, End-of-Phase 2, pre-NDA)
 
 **Clinical Documents:**
-- Clinical Protocols (all phases) per ICH E6(R2)
+- Clinical Protocols (all phases) per ICH E6(R3) Appendix B
 - Informed Consent Forms per 21 CFR 50
 - Clinical Study Reports per ICH E3
 - Statistical Analysis Plans
@@ -1061,22 +1061,22 @@ Every document generated will:
       {
         id: 'protocol',
         name: 'Clinical Protocol',
-        description: 'Full clinical protocol per ICH E6(R2)',
+        description: 'Full clinical protocol per ICH E6(R3) Appendix B',
         category: 'clinical',
         template: 'doc-protocol',
         requiredFields: ['objectives', 'design', 'endpoints', 'statistics'],
-        regulatoryBasis: 'ICH E6(R2)',
+        regulatoryBasis: 'ICH E6(R3) Appendix B',
         aiDraftable: true,
         estimatedHours: 80,
       },
       {
         id: 'ib',
         name: "Investigator's Brochure",
-        description: 'IB per ICH E6(R2) Section 7',
+        description: 'IB per ICH E6(R3) Appendix A',
         category: 'clinical',
         template: 'doc-ib',
         requiredFields: ['compound_info', 'nonclinical', 'clinical', 'safety'],
-        regulatoryBasis: 'ICH E6(R2) §7',
+        regulatoryBasis: 'ICH E6(R3) Appendix A',
         aiDraftable: true,
         estimatedHours: 60,
       },
@@ -1187,7 +1187,7 @@ Every document generated will:
         id: 'ich-e6',
         title: 'GCP Guidelines',
         authority: 'ICH',
-        citation: 'ICH E6(R2)',
+        citation: 'ICH E6(R3)',
         relevance: 'Clinical document requirements and standards',
       },
       {

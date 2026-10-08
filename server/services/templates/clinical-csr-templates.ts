@@ -14,7 +14,7 @@
  * discovery/fetch path and the same ANA tool ergonomics.
  *
  * @compliance ICH E3 (Structure and Content of Clinical Study Reports);
- *             ICH E6(R2) GCP; ICH M4E(R2) (CTD Efficacy); ICH E9 (statistics);
+ *             ICH E6(R3) GCP; ICH M4E(R2) (CTD Efficacy); ICH E9 (statistics);
  *             FDA IND/NDA Module 5 organization (21 CFR 314.50).
  */
 
@@ -202,12 +202,12 @@ Age, sex, race, disease severity, region: [EFFICACY_SUBGROUPS]
     region: 'ICH',
     version: '4.0',
     description:
-      'Clinical study protocol scaffold per ICH E6(R2) §6 — objectives, design, eligibility, treatments, assessments, and statistics. Files under 5.3.5.1 §16.1.1 as a CSR appendix or as the standalone protocol.',
+      'Clinical study protocol scaffold per ICH E6(R3) Appendix B (Clinical Trial Protocol and Protocol Amendment(s)) — objectives, design, eligibility, treatments, assessments, and statistics. Files under 5.3.5.1 §16.1.1 as a CSR appendix or as the standalone protocol.',
     module_number: '5',
     sectionCode: '5.3.5.1',
     granule_id: 'm5-3-5-clinical-protocol',
     category: 'clinical',
-    content: `CLINICAL STUDY PROTOCOL (ICH E6(R2) §6)
+    content: `CLINICAL STUDY PROTOCOL (ICH E6(R3) Appendix B)
 
 PROTOCOL TITLE: [PROTOCOL_TITLE]
 PROTOCOL NUMBER: [PROTOCOL_NUMBER]    VERSION/DATE: [VERSION_DATE]

@@ -72,7 +72,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'eTMF inspection-readiness (CRO deliverable). Completeness is assessed against the DIA TMF Reference Model — 11 zones, ICH E6(R2) §8 essential documents — and gaps are filed from the same screen. AnA generates the inspection-readiness package itself rather than showing a dashboard about it. The package ZIP is not built yet: Download produces the in-browser readiness report instead, and says so.',
+    notes: 'eTMF inspection-readiness (CRO deliverable). Completeness is assessed against the DIA TMF Reference Model — 11 zones, ICH E6(R3) Appendix C essential records — and gaps are filed from the same screen. AnA generates the inspection-readiness package itself rather than showing a dashboard about it. The package ZIP is not built yet: Download produces the in-browser readiness report instead, and says so.',
     engineering: 'assessTmfCompleteness via GET /api/etmf/trials/:trialId/completeness; file gaps via POST .../artifacts. The inspection-package ZIP and artifacts/bulk endpoints are unbuilt; Download degrades live-first.',
   },
   {

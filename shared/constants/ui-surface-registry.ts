@@ -610,7 +610,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'ICH E6(R2) §7 IB section tree with per-section readiness over ib-builder.',
+    notes: 'ICH E6(R3) Appendix A IB section tree with per-section readiness over ib-builder.',
   },
   {
     id: 'csr-workflow',

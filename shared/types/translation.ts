@@ -13,7 +13,7 @@
  *    states require human post-edit ('mt_postedited' or 'human') plus
  *    back-translation evidence. See TranslationSegment.status / .provenance.
  *  - Identifiers in the do-not-translate (DNT) set — regulatory citations
- *    (21 CFR, ICH E6(R2)), eCTD module labels (M1..M5), agency names
+ *    (21 CFR, ICH E6(R3)), eCTD module labels (M1..M5), agency names
  *    (FDA/EMA/PMDA), INN / drug names, MedDRA terms, codes, JSON keys, slash
  *    commands — are never machine-translated. They are masked before
  *    translation and restored after (mirrors the principle in
@@ -218,7 +218,7 @@ export interface GlossaryTerm {
  * non-DNT mandated translations (e.g. controlled clinical vocabulary).
  */
 export type GlossaryCategory =
-  | 'regulatory_citation' // 21 CFR, ICH E6(R2), eCTD, M1..M5
+  | 'regulatory_citation' // 21 CFR, ICH E6(R3), eCTD, M1..M5
   | 'agency_name'         // FDA, EMA, PMDA, NMPA, MFDS, ...
   | 'evidence_label'      // [KNOWN] / [INFERRED] / [MISSING]
   | 'slash_command'       // /audit, /readiness, ...

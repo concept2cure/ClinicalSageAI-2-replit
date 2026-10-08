@@ -4,7 +4,7 @@
  * Pure, DB-free, LLM-free: the DIA TMF Reference Model zone catalog, a keyword-
  * based artifact auto-classifier (the deterministic baseline an LLM can refine),
  * and the completeness gap-check that feeds inspection readiness. Grounded in the
- * DIA TMF Reference Model and ICH E6(R2) §8.
+ * DIA TMF Reference Model and ICH E6(R3) Appendix C (essential records).
  *
  * @module server/services/etmf/etmf-logic
  */
@@ -126,7 +126,7 @@ export function evaluateCompleteness(artifacts: CompletenessArtifact[]): Complet
      no expected artifacts was therefore reported to the sponsor, and by AnA in
      conversation, as "TMF 100% complete — inspection ready". Nothing had been
      indexed, so nothing had been checked: that is the absence of an assessment,
-     not the result of one. ICH E6(R2) §8 readiness is a claim a sponsor acts on
+     not the result of one. ICH E6(R3) Appendix C readiness is a claim a sponsor acts on
      in front of an inspector; it is never the default. */
   if (totalRequired === 0) {
     return { completenessPct: null, totalRequired: 0, present: 0, gaps, byZone, verdict: 'not_assessed' };

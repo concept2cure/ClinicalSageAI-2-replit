@@ -1,0 +1,319 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/regulatory/ich-e6r3-citations.test.ts > the record > has the 11 principles and Annex 1 §1–§4 with the appendices 5ms
+ ✓ tests/regulatory/ich-e6r3-citations.test.ts > the record > maps R2 sections to where R3 put them, by the most specific prefix 1ms
+ ✓ tests/regulatory/ich-e6r3-citations.test.ts > the record > every citation is a well-formed recall basis, labelled as unread 2ms
+ × tests/regulatory/ich-e6r3-citations.test.ts > what the platform serves > never cites E6(R2) as the guideline in force 94ms
+   → server/bootstrap/register-inline-routes.ts (1): gister — likelihood × impact risk assessment (ICH E6(R2) §5.0 / ISO 14971). try { const protocolRisksMod
+server/huggingface-service.ts (2): : 'United States FDA (21 CFR Parts 50/56/312, ICH E6(R2) GCP, FDORA 2022 diversity requirements)', EMA: 'Eur
+server/lib/index.ts (1): pliance FDA 21 CFR Part 11, OWASP LLM Top 10, ICH E6(R2) */ // Circuit Breaker - External service failure pr
+server/lib/tamper-proof-audit.ts (2): R Part 11.10(k.2): Electronic signatures * - ICH E6(R2) 5.5.3: Data integrity * * @module TamperProofAuditL
+server/protocol-analyzer-service.ts (1): : protocols should comply ' + 'with ICH E6(R2) Good Clinical Practice guidelines.', /* `glo
+server/routes/analytics-demo-analysis.ts (5): ew Boards', 'FDA Guidance for Industry: E6(R2) Good Clinical Practice', 'FDA Guidance for 
+server/routes/decision-lineage.ts (4):  @compliance FDA 21 CFR Part 11, EU Annex 11, ICH E6(R2), PMDA ERES */ import { Router, Request, Response } 
+server/routes/etmf.routes.ts (1): facts against the DIA TMF * Reference Model (ICH E6(R2) §8 essential documents). Mounted at /api/etmf * with
+server/routes/investigator-brochure.routes.ts (3): /** * Investigator's Brochure (IB) — ICH E6(R2) §7 section-structure read. * * GET /api/investigato
+server/services/advanced-therapy/atmp-knowledge.ts (1): eously', 'Harmonized clinical protocol: ICH E6(R2) GCP compliance accepted by FDA, EMA, and PMDA', 
+server/services/ana/document-surface-tool-defs.ts (1): keleton from the TMF Reference Model catalog (ICH E6(R2) §8 essential documents). Idempotent — artifacts alrea
+server/services/ana/guidanceIngestionTools.ts (1): le or identifier of the cited guidance (e.g. "ICH E6(R2)", "EU AI Act", "LDT final rule").', }, 
+server/services/ana/intelligence-questions/flows/ind-submission.ts (3): dance: 'Per 21 CFR 312.23(a)(5) and ICH E6(R2) Section 7, the Investigator\'s Brochure must contain 
+server/services/ana/intelligence-questions/flows/protocol-development.ts (12): his trial?", guidance: 'Per ICH E6(R2) Section 6.1, the protocol should include a descriptiv
+server/services/ana/intelligence-questions/flows/safety-narrative.ts (4): nblinding was required for patient safety per ICH E6(R2) Section 3.3.3. The temporal relationship between drug
+server/services/ana/intelligence-questions/war-game/auditors/csr-auditor.ts (9): nical Study Report against ICH E3, ICH E9, * ICH E6(R2), ICH E9(R1), and 21 CFR 314.50. * * Covers: ICH E3 
+server/services/ana/intelligence-questions/war-game/auditors/pma-auditor.ts (1):  '21 CFR 812; 21 CFR 50; 21 CFR 56; ICH E6(R2)', 'Provide documentation of GCP compliance 
+server/services/ana/intelligence-questions/war-game/auditors/protocol-auditor.ts (12): on.', '21 CFR 312.23(a)(6)(iii)(a); ICH E6(R2) Section 6.1', 'Provide a concise, descripti
+server/services/ana/intelligence-questions/war-game/auditors/safety-narrative-auditor.ts (15):  narrative consistency with source documents. ICH E6(R2) Section 5.18.4(e) mandates that case narratives accur
+server/services/ana/intelligence-questions/war-game/auditors/sop-auditor.ts (36): ainst * 21 CFR 211 (cGMP), 21 CFR 820 (QSR), ICH E6(R2) (GCP), and * 21 CFR Part 11 (electronic records). *
+server/services/ana/medical-writing.ts (2):  segment: 'drug', governingStandards: ['ICH E6(R2) GCP', 'ICH E8(R1)', 'ICH E9 (statistics)', 'SPIRIT 20
+server/services/ana/notifications-study-memory-tool-defs.ts (1): ster, scored on a likelihood × impact matrix (ICH E6(R2) §5.0). Categories: participant_safety, data_integrity
+server/services/ana-biostats/domain-adapter.ts (1): ers['regulatory_framework'] = 'ICH E9/E9(R1), ICH E6(R2)'; templateModifiers['estimand_section'] = 'requir
+server/services/ana-personality.ts (1): uirements, Form FDA 1571, protocol design per ICH E6(R2)/E8(R1), CMC modules 3.2.S and 3.2.P, nonclinical phar
+server/services/ana-ri/locale-overlays.ts (15): es citations et codes réglementaires (21 CFR, ICH E6(R2), eCTD, modules M1–M5), les noms d'agences et acronyme
+server/services/authoring/ib-builder.ts (6): thoring/ib-builder * * Generates a complete ICH E6(R2) §7 Investigator's Brochure with AI-powered * section
+server/services/authoring/investigator-brochure-view-assembler.ts (3): igatorBrochure surface's render contract (the ICH E6(R2) * §7 IB section tree with a per-section readiness ve
+server/services/embedding-corpus-policy.ts (1): from bypassing the runtime. * * @compliance ICH E6(R2) data integrity — the same query against the same * 
+server/services/etmf/etmf-logic.ts (2): rounded in the * DIA TMF Reference Model and ICH E6(R2) §8. * * @module server/services/etmf/etmf-logic */
+server/services/etmf/tmf-completeness.ts (3):  * An eTMF must hold the essential documents (ICH E6(R2) §8) organized to the DIA * TMF Reference Model's zon
+server/services/etmf/tmf-inspection-package.ts (2):  referenceModel: 'DIA TMF Reference Model (ICH E6(R2) §8)', ready: completeness.ready, summary: com
+server/services/figureGenerationService.ts (1): ance: 'Include reporting lines, key roles per ICH E6(R2).', }, gantt_chart: { preferredFormat: 'mermai
+server/services/gcp-operations/gcp-operations-knowledge.ts (1): " R3 reorganises the historic 13 * principles of E6(R2) into a set of overarching, media-neutral principles 
+server/services/global-ri/gcp-essential-documents.ts (22): ts daily: * * A) the core GCP principles (ICH E6(R2) §2 — the "13 principles"); * B) the essential docu
+server/services/global-ri/inspection-readiness.ts (2):  bimo_gcp: 'EMA-coordinated GCP inspections; ICH E6(R2) GCP; Dir 2005/28/EC', supplier_qualification: 'EU
+server/services/global-ri/regulatory-guidance-map.ts (3): ch: ['E6', 'E8', 'E9', 'M11'], regulations: ['ICH E6(R2) §6'], description: 'Clinical trial protocol design an
+server/services/ind/ctd/lifecycle-document-types.ts (8): 4S / M4E (Common Technical Document)", "ICH E6(R2) Good Clinical Practice", "ICH M3(R2) Nonclinica
+server/services/intelligence/template-seeds.ts (2):  submissionType: null, sourceReference: 'ICH E6(R2)', sections: PROTOCOL_OUTLINE_ICH_E6, }, { 
+server/services/intelligent-report-engine.ts (1):  code: 'EMA/GCP/206830', title: 'ICH E6(R2) GCP Guideline', applicableDomains: ['clinical
+server/services/lumen-context/base-system-prompt.ts (3): ional Plan - Investigator's Brochure (IB) per ICH E6(R2) — full nonclinical + clinical compilation - Clinical 
+server/services/lumen-context/sections.ts (1): on ${sectionCode}. Format per ICH E3. Include ICH E6(R2) GCP compliance. Reference ICH E-series guidelines for
+server/services/lumen-context-builder.ts (1): ase 1 protocol is critical path — ensure it's ICH E6(R2) compliant - Flag any missing ICH M4 sections and sugg
+server/services/market-specs/document-template-library.ts (1): lies: ['ectd', 'ctis'], regulatoryBasis: 'ICH E6(R2) Good Clinical Practice §7', sections: [ { n
+server/services/module-intelligence.ts (6): ents:** - Clinical Protocols (all phases) per ICH E6(R2) - Informed Consent Forms per 21 CFR 50 - Clinical Stu
+server/services/multi-agent-council.ts (1): sion 3.1.0 * @compliance FDA 21 CFR Part 11, ICH E6(R2), GAMP 5, OWASP LLM Top 10 */ import { Pool } from '
+server/services/protocol-amendments/protocol-amendments-logic.ts (2): IRB review, which no regulation supports; the ICH E6(R2) 3.3.7/4.5.2 * "logistical or administrative" carve-o
+server/services/protocol-development/protocol-development-logic.ts (2):  bump. Section sets are grounded in ICH M11 / ICH E6(R2) (clinical * protocol contents), PHS Policy / AWA 9 C
+server/services/protocol-deviations/deviation-trends.ts (2): ll documented and reported to * the sponsor (ICH E6(R2) 4.5.3), so the rest are not "not reported". * * ## 
+server/services/protocol-deviations/protocol-deviations-logic.ts (4): evious version cited 45 CFR 46.108(a)(4) and "ICH E6(R2) §4.5.3 / * §5.20 (prompt deviation reporting)" and a
+server/services/protocol-reviews/protocol-reviews-logic.ts (2): ow a review board resolves dispositions under ICH E6(R2) §5.0 and * 45 CFR 46.111 — any reject is dispositive
+server/services/protocol-risks/protocol-risks-logic.ts (2): ws standard quality-risk-management practice (ICH E6(R2) §5.0, * ISO 14971): score = likelihood-rank × impact
+server/services/protocol-soa/protocol-soa-logic.ts (2): lidate it for common SoA defects. Grounded in ICH E6(R2) / ICH M11 * (the protocol must specify the schedule 
+server/services/regulatory-currency/guidance-ingestion-service.ts (2): uideline codes named in a title, normalised: "ICH E6 (R2)" → "E6(R2)", * "q3d(r2)" → "Q3D(R2)", "M11" → "M11"
+server/services/regulatory-intelligence-service.ts (3):  { agency: 'FDA', guideline: 'ICH E6(R2)', requirement: 'Ensure adequate inf
+server/services/research-compliance/compliance-checklist.ts (1): _gcp', appliesTo: 'investigators', citation: 'ICH E6(R2) GCP; FDA/NIH GCP training' }); } } if (p.invo
+server/services/revectorize-corpus.ts (1): s the eight corpus tables). * * @compliance ICH E6(R2) data integrity — the same query against the same * 
+server/services/templates/clinical-csr-templates.ts (3): nt of Clinical Study Reports); * ICH E6(R2) GCP; ICH M4E(R2) (CTD Efficacy); ICH E9 (statistics);
+server/services/translation/glossary.ts (1): ?![A-Za-z0-9])/gi, }, // ICH guideline codes: E6(R2), Q8(R2), M4, S7B, E2B(R3) … letter + number + // op
+server/services/translation/terminology/domains/regulatory-ctd.ts (3): ons like * 21 CFR, ICH guideline ids like ICH E6(R2)) carry `doNotTranslate: true` and * `target: null
+server/services/translation/translation-memory.ts (1):  a TM source). * - DNT identifiers (21 CFR, ICH E6(R2), M1..M5, FDA/EMA/PMDA, INN/drug names, * MedDRA t
+server/services/workflow/DecisionLineageService.ts (3):  Compliant — FDA 21 CFR Part 11, EU Annex 11, ICH E6(R2), PMDA ERES * * @module server/services/workflow/Dec
+server/src/control-plane/rule-catalog.ts (1):  regulatoryReferences: ['21 CFR Part 11', 'GCP E6(R2)', 'FDA data integrity guidance'], }, { ruleId
+shared/constants/domain/tmf-reference-model.ts (1): ess.ts — zones + essential artifacts * (ICH E6(R2) §8) + inspection-readiness assessment * * Client co
+shared/constants/ui-surface-registry.ts (1): y', compliance: [A11Y, TONE], notes: 'ICH E6(R2) §7 IB section tree with per-section readiness over ib
+shared/constants/ui-surface-registry.ui-v2.ts (1): ainst the DIA TMF Reference Model — 11 zones, ICH E6(R2) §8 essential documents — and gaps are filed from the 
+shared/regulatory/global-document-registry.ts (2):  'none', dossierStandard: 'none', synonyms: ['ICH E6(R2)'], description: 'ICH E6(R2) GCP compliance documentat
+shared/regulatory/ich-e6r3.ts (5): tion => ({ kind: 'appendix', id }); /** * Where E6(R2) content lives in E6(R3), for the R2 sections this pla
+shared/regulatory/project-bootstrap.ts (2): urpose}`, })); /** Investigator's Brochure — ICH E6(R2) §7 structure. */ const IB_SECTIONS: SectionDefinition
+shared/regulatory/protocol-m11.ts (1): e, protocol version and amendment scope. Existing E6(R2) projects require a reviewed mapping before adopting t
+shared/schema/etmf.ts (1): ed in the DIA TMF Reference Model (11 zones), ICH E6(R2) §8 essential * documents, and the contemporaneous-fi
+shared/schema/index.ts (1): ss gap-check feeding // inspection readiness. ICH E6(R2) §8. Service: server/services/etmf; migration: // migr
+shared/schema/irb.ts (1): d Common Rule (45 CFR 46), FDA 21 CFR 56, and ICH E6(R2). * Conventions match the platform; status/type colum
+shared/schema/protocol-development.ts (1): id). * * Section templates follow ICH M11 / ICH E6(R2) (clinical), PHS Policy / AWA 9 CFR * 2.31 3Rs (IACUC
+shared/schema/protocol-reviews.ts (1): ns and open blocking * comments. Grounded in ICH E6(R2) §5.0 (quality / review) and 45 CFR 46.111 * (IRB app
+shared/schema/protocol-risks.ts (1): tic * (protocol-risks-logic.ts). Grounded in ICH E6(R2) §5.0 (quality risk management) * and ISO 14971 risk-
+shared/types/translation.ts (2): NT) set — regulatory citations * (21 CFR, ICH E6(R2)), eCTD module labels (M1..M5), agency names * (FD
+client/src/concept2cure/v2/fixtures/decision-lineage-data.ts (1): 14 Electronic signatures'] }, { framework: 'ICH E6(R2) GCP', sections: ['§5.5.3 Data integrity'] }, { fram
+client/src/concept2cure/v2/fixtures/etmf.ts (1): MF Reference Model v3.x -- 11 zones, * ICH E6(R2) section 8 essential documents; exact codes/names/esse
+client/src/concept2cure/v2/surfaces/Etmf.tsx (9): reads the // DIA TMF Reference Model catalog (ICH E6(R2) §8) — canonical reference config, // not fixture DATA
+client/src/concept2cure/v2/surfaces/InvestigatorBrochure.tsx (9): /** * Investigator's Brochure -- ICH E6(R2) §7 IB section tree with per-section * completeness/v
+client/src/concept2cure/v2/surfaces/ProtocolDevForms.tsx (1): er', title: 'Record residual risk', sub: 'ICH E6(R2) §5.0 — the rating that remains after the mitigation i
+client/src/concept2cure/v2/surfaces/ProtocolRegisterForms.tsx (2): ister', title: 'Add protocol risk', sub: 'ICH E6(R2) §5.0 — risk-based quality management. Recorded as a g
+client/src/concept2cure/v2/surfaces/ReportEngine.tsx (2):  4.5)\n`; s += `- **Data management plan** (ICH E6(R2), Section 5.5)\n`; s += `- **Randomization implement: expected [ …(83) ] to deeply equal []
+ × tests/regulatory/ich-e6r3-citations.test.ts > what the platform serves > every E6(R3) citation that names a section names one that exists 59ms
+   → server/routes/data-lineage.ts: "E6(R3) §5.5.3"
+server/services/ana/gap-classifier.ts: "E6(R3) §7"
+server/services/biostatistics-bridge/filing-placement.ts: "E6(R3) §6.9"
+server/services/data-lineage-service.ts: "E6(R3) §5.5.3"
+shared/schema.ts: "E6(R3) §5.5.3": expected [ …(5) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/ich-e6r3-citations.test.ts > what the platform serves > never cites E6(R2) as the guideline in force
+AssertionError: server/bootstrap/register-inline-routes.ts (1): gister — likelihood × impact risk assessment (ICH E6(R2) §5.0 / ISO 14971). try { const protocolRisksMod
+server/huggingface-service.ts (2): : 'United States FDA (21 CFR Parts 50/56/312, ICH E6(R2) GCP, FDORA 2022 diversity requirements)', EMA: 'Eur
+server/lib/index.ts (1): pliance FDA 21 CFR Part 11, OWASP LLM Top 10, ICH E6(R2) */ // Circuit Breaker - External service failure pr
+server/lib/tamper-proof-audit.ts (2): R Part 11.10(k.2): Electronic signatures * - ICH E6(R2) 5.5.3: Data integrity * * @module TamperProofAuditL
+server/protocol-analyzer-service.ts (1): : protocols should comply ' + 'with ICH E6(R2) Good Clinical Practice guidelines.', /* `glo
+server/routes/analytics-demo-analysis.ts (5): ew Boards', 'FDA Guidance for Industry: E6(R2) Good Clinical Practice', 'FDA Guidance for 
+server/routes/decision-lineage.ts (4):  @compliance FDA 21 CFR Part 11, EU Annex 11, ICH E6(R2), PMDA ERES */ import { Router, Request, Response } 
+server/routes/etmf.routes.ts (1): facts against the DIA TMF * Reference Model (ICH E6(R2) §8 essential documents). Mounted at /api/etmf * with
+server/routes/investigator-brochure.routes.ts (3): /** * Investigator's Brochure (IB) — ICH E6(R2) §7 section-structure read. * * GET /api/investigato
+server/services/advanced-therapy/atmp-knowledge.ts (1): eously', 'Harmonized clinical protocol: ICH E6(R2) GCP compliance accepted by FDA, EMA, and PMDA', 
+server/services/ana/document-surface-tool-defs.ts (1): keleton from the TMF Reference Model catalog (ICH E6(R2) §8 essential documents). Idempotent — artifacts alrea
+server/services/ana/guidanceIngestionTools.ts (1): le or identifier of the cited guidance (e.g. "ICH E6(R2)", "EU AI Act", "LDT final rule").', }, 
+server/services/ana/intelligence-questions/flows/ind-submission.ts (3): dance: 'Per 21 CFR 312.23(a)(5) and ICH E6(R2) Section 7, the Investigator\'s Brochure must contain 
+server/services/ana/intelligence-questions/flows/protocol-development.ts (12): his trial?", guidance: 'Per ICH E6(R2) Section 6.1, the protocol should include a descriptiv
+server/services/ana/intelligence-questions/flows/safety-narrative.ts (4): nblinding was required for patient safety per ICH E6(R2) Section 3.3.3. The temporal relationship between drug
+server/services/ana/intelligence-questions/war-game/auditors/csr-auditor.ts (9): nical Study Report against ICH E3, ICH E9, * ICH E6(R2), ICH E9(R1), and 21 CFR 314.50. * * Covers: ICH E3 
+server/services/ana/intelligence-questions/war-game/auditors/pma-auditor.ts (1):  '21 CFR 812; 21 CFR 50; 21 CFR 56; ICH E6(R2)', 'Provide documentation of GCP compliance 
+server/services/ana/intelligence-questions/war-game/auditors/protocol-auditor.ts (12): on.', '21 CFR 312.23(a)(6)(iii)(a); ICH E6(R2) Section 6.1', 'Provide a concise, descripti
+server/services/ana/intelligence-questions/war-game/auditors/safety-narrative-auditor.ts (15):  narrative consistency with source documents. ICH E6(R2) Section 5.18.4(e) mandates that case narratives accur
+server/services/ana/intelligence-questions/war-game/auditors/sop-auditor.ts (36): ainst * 21 CFR 211 (cGMP), 21 CFR 820 (QSR), ICH E6(R2) (GCP), and * 21 CFR Part 11 (electronic records). *
+server/services/ana/medical-writing.ts (2):  segment: 'drug', governingStandards: ['ICH E6(R2) GCP', 'ICH E8(R1)', 'ICH E9 (statistics)', 'SPIRIT 20
+server/services/ana/notifications-study-memory-tool-defs.ts (1): ster, scored on a likelihood × impact matrix (ICH E6(R2) §5.0). Categories: participant_safety, data_integrity
+server/services/ana-biostats/domain-adapter.ts (1): ers['regulatory_framework'] = 'ICH E9/E9(R1), ICH E6(R2)'; templateModifiers['estimand_section'] = 'requir
+server/services/ana-personality.ts (1): uirements, Form FDA 1571, protocol design per ICH E6(R2)/E8(R1), CMC modules 3.2.S and 3.2.P, nonclinical phar
+server/services/ana-ri/locale-overlays.ts (15): es citations et codes réglementaires (21 CFR, ICH E6(R2), eCTD, modules M1–M5), les noms d'agences et acronyme
+server/services/authoring/ib-builder.ts (6): thoring/ib-builder * * Generates a complete ICH E6(R2) §7 Investigator's Brochure with AI-powered * section
+server/services/authoring/investigator-brochure-view-assembler.ts (3): igatorBrochure surface's render contract (the ICH E6(R2) * §7 IB section tree with a per-section readiness ve
+server/services/embedding-corpus-policy.ts (1): from bypassing the runtime. * * @compliance ICH E6(R2) data integrity — the same query against the same * 
+server/services/etmf/etmf-logic.ts (2): rounded in the * DIA TMF Reference Model and ICH E6(R2) §8. * * @module server/services/etmf/etmf-logic */
+server/services/etmf/tmf-completeness.ts (3):  * An eTMF must hold the essential documents (ICH E6(R2) §8) organized to the DIA * TMF Reference Model's zon
+server/services/etmf/tmf-inspection-package.ts (2):  referenceModel: 'DIA TMF Reference Model (ICH E6(R2) §8)', ready: completeness.ready, summary: com
+server/services/figureGenerationService.ts (1): ance: 'Include reporting lines, key roles per ICH E6(R2).', }, gantt_chart: { preferredFormat: 'mermai
+server/services/gcp-operations/gcp-operations-knowledge.ts (1): " R3 reorganises the historic 13 * principles of E6(R2) into a set of overarching, media-neutral principles 
+server/services/global-ri/gcp-essential-documents.ts (22): ts daily: * * A) the core GCP principles (ICH E6(R2) §2 — the "13 principles"); * B) the essential docu
+server/services/global-ri/inspection-readiness.ts (2):  bimo_gcp: 'EMA-coordinated GCP inspections; ICH E6(R2) GCP; Dir 2005/28/EC', supplier_qualification: 'EU
+server/services/global-ri/regulatory-guidance-map.ts (3): ch: ['E6', 'E8', 'E9', 'M11'], regulations: ['ICH E6(R2) §6'], description: 'Clinical trial protocol design an
+server/services/ind/ctd/lifecycle-document-types.ts (8): 4S / M4E (Common Technical Document)", "ICH E6(R2) Good Clinical Practice", "ICH M3(R2) Nonclinica
+server/services/intelligence/template-seeds.ts (2):  submissionType: null, sourceReference: 'ICH E6(R2)', sections: PROTOCOL_OUTLINE_ICH_E6, }, { 
+server/services/intelligent-report-engine.ts (1):  code: 'EMA/GCP/206830', title: 'ICH E6(R2) GCP Guideline', applicableDomains: ['clinical
+server/services/lumen-context/base-system-prompt.ts (3): ional Plan - Investigator's Brochure (IB) per ICH E6(R2) — full nonclinical + clinical compilation - Clinical 
+server/services/lumen-context/sections.ts (1): on ${sectionCode}. Format per ICH E3. Include ICH E6(R2) GCP compliance. Reference ICH E-series guidelines for
+server/services/lumen-context-builder.ts (1): ase 1 protocol is critical path — ensure it's ICH E6(R2) compliant - Flag any missing ICH M4 sections and sugg
+server/services/market-specs/document-template-library.ts (1): lies: ['ectd', 'ctis'], regulatoryBasis: 'ICH E6(R2) Good Clinical Practice §7', sections: [ { n
+server/services/module-intelligence.ts (6): ents:** - Clinical Protocols (all phases) per ICH E6(R2) - Informed Consent Forms per 21 CFR 50 - Clinical Stu
+server/services/multi-agent-council.ts (1): sion 3.1.0 * @compliance FDA 21 CFR Part 11, ICH E6(R2), GAMP 5, OWASP LLM Top 10 */ import { Pool } from '
+server/services/protocol-amendments/protocol-amendments-logic.ts (2): IRB review, which no regulation supports; the ICH E6(R2) 3.3.7/4.5.2 * "logistical or administrative" carve-o
+server/services/protocol-development/protocol-development-logic.ts (2):  bump. Section sets are grounded in ICH M11 / ICH E6(R2) (clinical * protocol contents), PHS Policy / AWA 9 C
+server/services/protocol-deviations/deviation-trends.ts (2): ll documented and reported to * the sponsor (ICH E6(R2) 4.5.3), so the rest are not "not reported". * * ## 
+server/services/protocol-deviations/protocol-deviations-logic.ts (4): evious version cited 45 CFR 46.108(a)(4) and "ICH E6(R2) §4.5.3 / * §5.20 (prompt deviation reporting)" and a
+server/services/protocol-reviews/protocol-reviews-logic.ts (2): ow a review board resolves dispositions under ICH E6(R2) §5.0 and * 45 CFR 46.111 — any reject is dispositive
+server/services/protocol-risks/protocol-risks-logic.ts (2): ws standard quality-risk-management practice (ICH E6(R2) §5.0, * ISO 14971): score = likelihood-rank × impact
+server/services/protocol-soa/protocol-soa-logic.ts (2): lidate it for common SoA defects. Grounded in ICH E6(R2) / ICH M11 * (the protocol must specify the schedule 
+server/services/regulatory-currency/guidance-ingestion-service.ts (2): uideline codes named in a title, normalised: "ICH E6 (R2)" → "E6(R2)", * "q3d(r2)" → "Q3D(R2)", "M11" → "M11"
+server/services/regulatory-intelligence-service.ts (3):  { agency: 'FDA', guideline: 'ICH E6(R2)', requirement: 'Ensure adequate inf
+server/services/research-compliance/compliance-checklist.ts (1): _gcp', appliesTo: 'investigators', citation: 'ICH E6(R2) GCP; FDA/NIH GCP training' }); } } if (p.invo
+server/services/revectorize-corpus.ts (1): s the eight corpus tables). * * @compliance ICH E6(R2) data integrity — the same query against the same * 
+server/services/templates/clinical-csr-templates.ts (3): nt of Clinical Study Reports); * ICH E6(R2) GCP; ICH M4E(R2) (CTD Efficacy); ICH E9 (statistics);
+server/services/translation/glossary.ts (1): ?![A-Za-z0-9])/gi, }, // ICH guideline codes: E6(R2), Q8(R2), M4, S7B, E2B(R3) … letter + number + // op
+server/services/translation/terminology/domains/regulatory-ctd.ts (3): ons like * 21 CFR, ICH guideline ids like ICH E6(R2)) carry `doNotTranslate: true` and * `target: null
+server/services/translation/translation-memory.ts (1):  a TM source). * - DNT identifiers (21 CFR, ICH E6(R2), M1..M5, FDA/EMA/PMDA, INN/drug names, * MedDRA t
+server/services/workflow/DecisionLineageService.ts (3):  Compliant — FDA 21 CFR Part 11, EU Annex 11, ICH E6(R2), PMDA ERES * * @module server/services/workflow/Dec
+server/src/control-plane/rule-catalog.ts (1):  regulatoryReferences: ['21 CFR Part 11', 'GCP E6(R2)', 'FDA data integrity guidance'], }, { ruleId
+shared/constants/domain/tmf-reference-model.ts (1): ess.ts — zones + essential artifacts * (ICH E6(R2) §8) + inspection-readiness assessment * * Client co
+shared/constants/ui-surface-registry.ts (1): y', compliance: [A11Y, TONE], notes: 'ICH E6(R2) §7 IB section tree with per-section readiness over ib
+shared/constants/ui-surface-registry.ui-v2.ts (1): ainst the DIA TMF Reference Model — 11 zones, ICH E6(R2) §8 essential documents — and gaps are filed from the 
+shared/regulatory/global-document-registry.ts (2):  'none', dossierStandard: 'none', synonyms: ['ICH E6(R2)'], description: 'ICH E6(R2) GCP compliance documentat
+shared/regulatory/ich-e6r3.ts (5): tion => ({ kind: 'appendix', id }); /** * Where E6(R2) content lives in E6(R3), for the R2 sections this pla
+shared/regulatory/project-bootstrap.ts (2): urpose}`, })); /** Investigator's Brochure — ICH E6(R2) §7 structure. */ const IB_SECTIONS: SectionDefinition
+shared/regulatory/protocol-m11.ts (1): e, protocol version and amendment scope. Existing E6(R2) projects require a reviewed mapping before adopting t
+shared/schema/etmf.ts (1): ed in the DIA TMF Reference Model (11 zones), ICH E6(R2) §8 essential * documents, and the contemporaneous-fi
+shared/schema/index.ts (1): ss gap-check feeding // inspection readiness. ICH E6(R2) §8. Service: server/services/etmf; migration: // migr
+shared/schema/irb.ts (1): d Common Rule (45 CFR 46), FDA 21 CFR 56, and ICH E6(R2). * Conventions match the platform; status/type colum
+shared/schema/protocol-development.ts (1): id). * * Section templates follow ICH M11 / ICH E6(R2) (clinical), PHS Policy / AWA 9 CFR * 2.31 3Rs (IACUC
+shared/schema/protocol-reviews.ts (1): ns and open blocking * comments. Grounded in ICH E6(R2) §5.0 (quality / review) and 45 CFR 46.111 * (IRB app
+shared/schema/protocol-risks.ts (1): tic * (protocol-risks-logic.ts). Grounded in ICH E6(R2) §5.0 (quality risk management) * and ISO 14971 risk-
+shared/types/translation.ts (2): NT) set — regulatory citations * (21 CFR, ICH E6(R2)), eCTD module labels (M1..M5), agency names * (FD
+client/src/concept2cure/v2/fixtures/decision-lineage-data.ts (1): 14 Electronic signatures'] }, { framework: 'ICH E6(R2) GCP', sections: ['§5.5.3 Data integrity'] }, { fram
+client/src/concept2cure/v2/fixtures/etmf.ts (1): MF Reference Model v3.x -- 11 zones, * ICH E6(R2) section 8 essential documents; exact codes/names/esse
+client/src/concept2cure/v2/surfaces/Etmf.tsx (9): reads the // DIA TMF Reference Model catalog (ICH E6(R2) §8) — canonical reference config, // not fixture DATA
+client/src/concept2cure/v2/surfaces/InvestigatorBrochure.tsx (9): /** * Investigator's Brochure -- ICH E6(R2) §7 IB section tree with per-section * completeness/v
+client/src/concept2cure/v2/surfaces/ProtocolDevForms.tsx (1): er', title: 'Record residual risk', sub: 'ICH E6(R2) §5.0 — the rating that remains after the mitigation i
+client/src/concept2cure/v2/surfaces/ProtocolRegisterForms.tsx (2): ister', title: 'Add protocol risk', sub: 'ICH E6(R2) §5.0 — risk-based quality management. Recorded as a g
+client/src/concept2cure/v2/surfaces/ReportEngine.tsx (2):  4.5)\n`; s += `- **Data management plan** (ICH E6(R2), Section 5.5)\n`; s += `- **Randomization implement: expected [ …(83) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "server/bootstrap/register-inline-routes.ts (1): gister — likelihood × impact risk assessment (ICH E6(R2) §5.0 / ISO 14971). try { const protocolRisksMod",
++   "server/huggingface-service.ts (2): : 'United States FDA (21 CFR Parts 50/56/312, ICH E6(R2) GCP, FDORA 2022 diversity requirements)', EMA: 'Eur",
++   "server/lib/index.ts (1): pliance FDA 21 CFR Part 11, OWASP LLM Top 10, ICH E6(R2) */ // Circuit Breaker - External service failure pr",
++   "server/lib/tamper-proof-audit.ts (2): R Part 11.10(k.2): Electronic signatures * - ICH E6(R2) 5.5.3: Data integrity * * @module TamperProofAuditL",
++   "server/protocol-analyzer-service.ts (1): : protocols should comply ' + 'with ICH E6(R2) Good Clinical Practice guidelines.', /* `glo",
++   "server/routes/analytics-demo-analysis.ts (5): ew Boards', 'FDA Guidance for Industry: E6(R2) Good Clinical Practice', 'FDA Guidance for ",
++   "server/routes/decision-lineage.ts (4):  @compliance FDA 21 CFR Part 11, EU Annex 11, ICH E6(R2), PMDA ERES */ import { Router, Request, Response } ",
++   "server/routes/etmf.routes.ts (1): facts against the DIA TMF * Reference Model (ICH E6(R2) §8 essential documents). Mounted at /api/etmf * with",
++   "server/routes/investigator-brochure.routes.ts (3): /** * Investigator's Brochure (IB) — ICH E6(R2) §7 section-structure read. * * GET /api/investigato",
++   "server/services/advanced-therapy/atmp-knowledge.ts (1): eously', 'Harmonized clinical protocol: ICH E6(R2) GCP compliance accepted by FDA, EMA, and PMDA', ",
++   "server/services/ana/document-surface-tool-defs.ts (1): keleton from the TMF Reference Model catalog (ICH E6(R2) §8 essential documents). Idempotent — artifacts alrea",
++   "server/services/ana/guidanceIngestionTools.ts (1): le or identifier of the cited guidance (e.g. \"ICH E6(R2)\", \"EU AI Act\", \"LDT final rule\").', }, ",
++   "server/services/ana/intelligence-questions/flows/ind-submission.ts (3): dance: 'Per 21 CFR 312.23(a)(5) and ICH E6(R2) Section 7, the Investigator\\'s Brochure must contain ",
++   "server/services/ana/intelligence-questions/flows/protocol-development.ts (12): his trial?\", guidance: 'Per ICH E6(R2) Section 6.1, the protocol should include a descriptiv",
++   "server/services/ana/intelligence-questions/flows/safety-narrative.ts (4): nblinding was required for patient safety per ICH E6(R2) Section 3.3.3. The temporal relationship between drug",
++   "server/services/ana/intelligence-questions/war-game/auditors/csr-auditor.ts (9): nical Study Report against ICH E3, ICH E9, * ICH E6(R2), ICH E9(R1), and 21 CFR 314.50. * * Covers: ICH E3 ",
++   "server/services/ana/intelligence-questions/war-game/auditors/pma-auditor.ts (1):  '21 CFR 812; 21 CFR 50; 21 CFR 56; ICH E6(R2)', 'Provide documentation of GCP compliance ",
++   "server/services/ana/intelligence-questions/war-game/auditors/protocol-auditor.ts (12): on.', '21 CFR 312.23(a)(6)(iii)(a); ICH E6(R2) Section 6.1', 'Provide a concise, descripti",
++   "server/services/ana/intelligence-questions/war-game/auditors/safety-narrative-auditor.ts (15):  narrative consistency with source documents. ICH E6(R2) Section 5.18.4(e) mandates that case narratives accur",
++   "server/services/ana/intelligence-questions/war-game/auditors/sop-auditor.ts (36): ainst * 21 CFR 211 (cGMP), 21 CFR 820 (QSR), ICH E6(R2) (GCP), and * 21 CFR Part 11 (electronic records). *",
++   "server/services/ana/medical-writing.ts (2):  segment: 'drug', governingStandards: ['ICH E6(R2) GCP', 'ICH E8(R1)', 'ICH E9 (statistics)', 'SPIRIT 20",
++   "server/services/ana/notifications-study-memory-tool-defs.ts (1): ster, scored on a likelihood × impact matrix (ICH E6(R2) §5.0). Categories: participant_safety, data_integrity",
++   "server/services/ana-biostats/domain-adapter.ts (1): ers['regulatory_framework'] = 'ICH E9/E9(R1), ICH E6(R2)'; templateModifiers['estimand_section'] = 'requir",
++   "server/services/ana-personality.ts (1): uirements, Form FDA 1571, protocol design per ICH E6(R2)/E8(R1), CMC modules 3.2.S and 3.2.P, nonclinical phar",
++   "server/services/ana-ri/locale-overlays.ts (15): es citations et codes réglementaires (21 CFR, ICH E6(R2), eCTD, modules M1–M5), les noms d'agences et acronyme",
++   "server/services/authoring/ib-builder.ts (6): thoring/ib-builder * * Generates a complete ICH E6(R2) §7 Investigator's Brochure with AI-powered * section",
++   "server/services/authoring/investigator-brochure-view-assembler.ts (3): igatorBrochure surface's render contract (the ICH E6(R2) * §7 IB section tree with a per-section readiness ve",
++   "server/services/embedding-corpus-policy.ts (1): from bypassing the runtime. * * @compliance ICH E6(R2) data integrity — the same query against the same * ",
++   "server/services/etmf/etmf-logic.ts (2): rounded in the * DIA TMF Reference Model and ICH E6(R2) §8. * * @module server/services/etmf/etmf-logic */",
++   "server/services/etmf/tmf-completeness.ts (3):  * An eTMF must hold the essential documents (ICH E6(R2) §8) organized to the DIA * TMF Reference Model's zon",
++   "server/services/etmf/tmf-inspection-package.ts (2):  referenceModel: 'DIA TMF Reference Model (ICH E6(R2) §8)', ready: completeness.ready, summary: com",
++   "server/services/figureGenerationService.ts (1): ance: 'Include reporting lines, key roles per ICH E6(R2).', }, gantt_chart: { preferredFormat: 'mermai",
++   "server/services/gcp-operations/gcp-operations-knowledge.ts (1): \" R3 reorganises the historic 13 * principles of E6(R2) into a set of overarching, media-neutral principles ",
++   "server/services/global-ri/gcp-essential-documents.ts (22): ts daily: * * A) the core GCP principles (ICH E6(R2) §2 — the \"13 principles\"); * B) the essential docu",
++   "server/services/global-ri/inspection-readiness.ts (2):  bimo_gcp: 'EMA-coordinated GCP inspections; ICH E6(R2) GCP; Dir 2005/28/EC', supplier_qualification: 'EU",
++   "server/services/global-ri/regulatory-guidance-map.ts (3): ch: ['E6', 'E8', 'E9', 'M11'], regulations: ['ICH E6(R2) §6'], description: 'Clinical trial protocol design an",
++   "server/services/ind/ctd/lifecycle-document-types.ts (8): 4S / M4E (Common Technical Document)\", \"ICH E6(R2) Good Clinical Practice\", \"ICH M3(R2) Nonclinica",
++   "server/services/intelligence/template-seeds.ts (2):  submissionType: null, sourceReference: 'ICH E6(R2)', sections: PROTOCOL_OUTLINE_ICH_E6, }, { ",
++   "server/services/intelligent-report-engine.ts (1):  code: 'EMA/GCP/206830', title: 'ICH E6(R2) GCP Guideline', applicableDomains: ['clinical",
++   "server/services/lumen-context/base-system-prompt.ts (3): ional Plan - Investigator's Brochure (IB) per ICH E6(R2) — full nonclinical + clinical compilation - Clinical ",
++   "server/services/lumen-context/sections.ts (1): on ${sectionCode}. Format per ICH E3. Include ICH E6(R2) GCP compliance. Reference ICH E-series guidelines for",
++   "server/services/lumen-context-builder.ts (1): ase 1 protocol is critical path — ensure it's ICH E6(R2) compliant - Flag any missing ICH M4 sections and sugg",
++   "server/services/market-specs/document-template-library.ts (1): lies: ['ectd', 'ctis'], regulatoryBasis: 'ICH E6(R2) Good Clinical Practice §7', sections: [ { n",
++   "server/services/module-intelligence.ts (6): ents:** - Clinical Protocols (all phases) per ICH E6(R2) - Informed Consent Forms per 21 CFR 50 - Clinical Stu",
++   "server/services/multi-agent-council.ts (1): sion 3.1.0 * @compliance FDA 21 CFR Part 11, ICH E6(R2), GAMP 5, OWASP LLM Top 10 */ import { Pool } from '",
++   "server/services/protocol-amendments/protocol-amendments-logic.ts (2): IRB review, which no regulation supports; the ICH E6(R2) 3.3.7/4.5.2 * \"logistical or administrative\" carve-o",
++   "server/services/protocol-development/protocol-development-logic.ts (2):  bump. Section sets are grounded in ICH M11 / ICH E6(R2) (clinical * protocol contents), PHS Policy / AWA 9 C",
++   "server/services/protocol-deviations/deviation-trends.ts (2): ll documented and reported to * the sponsor (ICH E6(R2) 4.5.3), so the rest are not \"not reported\". * * ## ",
++   "server/services/protocol-deviations/protocol-deviations-logic.ts (4): evious version cited 45 CFR 46.108(a)(4) and \"ICH E6(R2) §4.5.3 / * §5.20 (prompt deviation reporting)\" and a",
++   "server/services/protocol-reviews/protocol-reviews-logic.ts (2): ow a review board resolves dispositions under ICH E6(R2) §5.0 and * 45 CFR 46.111 — any reject is dispositive",
++   "server/services/protocol-risks/protocol-risks-logic.ts (2): ws standard quality-risk-management practice (ICH E6(R2) §5.0, * ISO 14971): score = likelihood-rank × impact",
++   "server/services/protocol-soa/protocol-soa-logic.ts (2): lidate it for common SoA defects. Grounded in ICH E6(R2) / ICH M11 * (the protocol must specify the schedule ",
++   "server/services/regulatory-currency/guidance-ingestion-service.ts (2): uideline codes named in a title, normalised: \"ICH E6 (R2)\" → \"E6(R2)\", * \"q3d(r2)\" → \"Q3D(R2)\", \"M11\" → \"M11\"",
++   "server/services/regulatory-intelligence-service.ts (3):  { agency: 'FDA', guideline: 'ICH E6(R2)', requirement: 'Ensure adequate inf",
++   "server/services/research-compliance/compliance-checklist.ts (1): _gcp', appliesTo: 'investigators', citation: 'ICH E6(R2) GCP; FDA/NIH GCP training' }); } } if (p.invo",
++   "server/services/revectorize-corpus.ts (1): s the eight corpus tables). * * @compliance ICH E6(R2) data integrity — the same query against the same * ",
++   "server/services/templates/clinical-csr-templates.ts (3): nt of Clinical Study Reports); * ICH E6(R2) GCP; ICH M4E(R2) (CTD Efficacy); ICH E9 (statistics);",
++   "server/services/translation/glossary.ts (1): ?![A-Za-z0-9])/gi, }, // ICH guideline codes: E6(R2), Q8(R2), M4, S7B, E2B(R3) … letter + number + // op",
++   "server/services/translation/terminology/domains/regulatory-ctd.ts (3): ons like * 21 CFR, ICH guideline ids like ICH E6(R2)) carry `doNotTranslate: true` and * `target: null",
++   "server/services/translation/translation-memory.ts (1):  a TM source). * - DNT identifiers (21 CFR, ICH E6(R2), M1..M5, FDA/EMA/PMDA, INN/drug names, * MedDRA t",
++   "server/services/workflow/DecisionLineageService.ts (3):  Compliant — FDA 21 CFR Part 11, EU Annex 11, ICH E6(R2), PMDA ERES * * @module server/services/workflow/Dec",
++   "server/src/control-plane/rule-catalog.ts (1):  regulatoryReferences: ['21 CFR Part 11', 'GCP E6(R2)', 'FDA data integrity guidance'], }, { ruleId",
++   "shared/constants/domain/tmf-reference-model.ts (1): ess.ts — zones + essential artifacts * (ICH E6(R2) §8) + inspection-readiness assessment * * Client co",
++   "shared/constants/ui-surface-registry.ts (1): y', compliance: [A11Y, TONE], notes: 'ICH E6(R2) §7 IB section tree with per-section readiness over ib",
++   "shared/constants/ui-surface-registry.ui-v2.ts (1): ainst the DIA TMF Reference Model — 11 zones, ICH E6(R2) §8 essential documents — and gaps are filed from the ",
++   "shared/regulatory/global-document-registry.ts (2):  'none', dossierStandard: 'none', synonyms: ['ICH E6(R2)'], description: 'ICH E6(R2) GCP compliance documentat",
++   "shared/regulatory/ich-e6r3.ts (5): tion => ({ kind: 'appendix', id }); /** * Where E6(R2) content lives in E6(R3), for the R2 sections this pla",
++   "shared/regulatory/project-bootstrap.ts (2): urpose}`, })); /** Investigator's Brochure — ICH E6(R2) §7 structure. */ const IB_SECTIONS: SectionDefinition",
++   "shared/regulatory/protocol-m11.ts (1): e, protocol version and amendment scope. Existing E6(R2) projects require a reviewed mapping before adopting t",
++   "shared/schema/etmf.ts (1): ed in the DIA TMF Reference Model (11 zones), ICH E6(R2) §8 essential * documents, and the contemporaneous-fi",
++   "shared/schema/index.ts (1): ss gap-check feeding // inspection readiness. ICH E6(R2) §8. Service: server/services/etmf; migration: // migr",
++   "shared/schema/irb.ts (1): d Common Rule (45 CFR 46), FDA 21 CFR 56, and ICH E6(R2). * Conventions match the platform; status/type colum",
++   "shared/schema/protocol-development.ts (1): id). * * Section templates follow ICH M11 / ICH E6(R2) (clinical), PHS Policy / AWA 9 CFR * 2.31 3Rs (IACUC",
++   "shared/schema/protocol-reviews.ts (1): ns and open blocking * comments. Grounded in ICH E6(R2) §5.0 (quality / review) and 45 CFR 46.111 * (IRB app",
++   "shared/schema/protocol-risks.ts (1): tic * (protocol-risks-logic.ts). Grounded in ICH E6(R2) §5.0 (quality risk management) * and ISO 14971 risk-",
++   "shared/types/translation.ts (2): NT) set — regulatory citations * (21 CFR, ICH E6(R2)), eCTD module labels (M1..M5), agency names * (FD",
++   "client/src/concept2cure/v2/fixtures/decision-lineage-data.ts (1): 14 Electronic signatures'] }, { framework: 'ICH E6(R2) GCP', sections: ['§5.5.3 Data integrity'] }, { fram",
++   "client/src/concept2cure/v2/fixtures/etmf.ts (1): MF Reference Model v3.x -- 11 zones, * ICH E6(R2) section 8 essential documents; exact codes/names/esse",
++   "client/src/concept2cure/v2/surfaces/Etmf.tsx (9): reads the // DIA TMF Reference Model catalog (ICH E6(R2) §8) — canonical reference config, // not fixture DATA",
++   "client/src/concept2cure/v2/surfaces/InvestigatorBrochure.tsx (9): /** * Investigator's Brochure -- ICH E6(R2) §7 IB section tree with per-section * completeness/v",
++   "client/src/concept2cure/v2/surfaces/ProtocolDevForms.tsx (1): er', title: 'Record residual risk', sub: 'ICH E6(R2) §5.0 — the rating that remains after the mitigation i",
++   "client/src/concept2cure/v2/surfaces/ProtocolRegisterForms.tsx (2): ister', title: 'Add protocol risk', sub: 'ICH E6(R2) §5.0 — risk-based quality management. Recorded as a g",
++   "client/src/concept2cure/v2/surfaces/ReportEngine.tsx (2):  4.5)\\n`; s += `- **Data management plan** (ICH E6(R2), Section 5.5)\\n`; s += `- **Randomization implement",
++ ]
+
+ ❯ tests/regulatory/ich-e6r3-citations.test.ts:103:45
+    101|       if (hits.length > allowed) offenders.push(`${f.rel} (${hits.leng…
+    102|     }
+    103|     expect(offenders, offenders.join('\n')).toEqual([]);
+       |                                             ^
+    104|   });
+    105|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/regulatory/ich-e6r3-citations.test.ts > what the platform serves > every E6(R3) citation that names a section names one that exists
+AssertionError: server/routes/data-lineage.ts: "E6(R3) §5.5.3"
+server/services/ana/gap-classifier.ts: "E6(R3) §7"
+server/services/biostatistics-bridge/filing-placement.ts: "E6(R3) §6.9"
+server/services/data-lineage-service.ts: "E6(R3) §5.5.3"
+shared/schema.ts: "E6(R3) §5.5.3": expected [ …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "server/routes/data-lineage.ts: \"E6(R3) §5.5.3\"",
++   "server/services/ana/gap-classifier.ts: \"E6(R3) §7\"",
++   "server/services/biostatistics-bridge/filing-placement.ts: \"E6(R3) §6.9\"",
++   "server/services/data-lineage-service.ts: \"E6(R3) §5.5.3\"",
++   "shared/schema.ts: \"E6(R3) §5.5.3\"",
++ ]
+
+ ❯ tests/regulatory/ich-e6r3-citations.test.ts:117:33
+    115|       }
+    116|     }
+    117|     expect(bad, bad.join('\n')).toEqual([]);
+       |                                 ^
+    118|   });
+    119| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  17:42:05
+   Duration  1.98s (transform 154ms, setup 149ms, import 1.24s, tests 169ms, environment 0ms)
+

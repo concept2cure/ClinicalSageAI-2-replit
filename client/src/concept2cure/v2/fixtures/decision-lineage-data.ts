@@ -181,7 +181,9 @@ export const LINEAGE_NODE_TYPES: Record<string, LineageNodeTypeConfig> = {
 export const LINEAGE_FRAMEWORKS: LineageFramework[] = [
   { framework: 'FDA 21 CFR Part 11', sections: ['§11.10(e) Audit trails', '§11.50 Signature manifestation'] },
   { framework: 'EU Annex 11', sections: ['§9 Audit trails', '§14 Electronic signatures'] },
-  { framework: 'ICH E6(R2) GCP', sections: ['§5.5.3 Data integrity'] },
+  /* `framework` is a join key: it must equal the label the server emits
+     (DecisionLineageService / routes/decision-lineage). */
+  { framework: 'ICH E6(R3) GCP', sections: ['ICH E6(R3) Annex 1 §4.3 Computerised systems (data integrity)'] },
   { framework: 'PMDA ERES', sections: ['Electronic records & signatures'] },
 ];
 

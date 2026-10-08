@@ -11,10 +11,11 @@
  *   1. Immutable — backed by tamper-proof hash-chain audit log
  *   2. Reportable — exportable as JSON, CSV, and regulatory-submission XML
  *   3. Queryable — by entity, user, date range, decision type
- *   4. Compliant — FDA 21 CFR Part 11, EU Annex 11, ICH E6(R2), PMDA ERES
+ *   4. Compliant — FDA 21 CFR Part 11, EU Annex 11, ICH E6(R3), PMDA ERES
  *
  * @module server/services/workflow/DecisionLineageService
- * @compliance FDA 21 CFR Part 11 §11.10(e), EU Annex 11 §9, ICH E6(R2) §5.5.3
+ * @compliance FDA 21 CFR Part 11 §11.10(e), EU Annex 11 §9,
+ *   ICH E6(R3) Annex 1 §4.3 (Computerised Systems)
  */
 
 import { db } from '../../db';
@@ -231,7 +232,7 @@ export function assessComplianceFrameworks(
   return [
     { framework: 'FDA 21 CFR Part 11', status: chainDependent },
     { framework: 'EU Annex 11', status: chainDependent },
-    { framework: 'ICH E6(R2) GCP', status: 'NOT_ASSESSED', note: NOT_EVALUATED_HERE },
+    { framework: 'ICH E6(R3) GCP', status: 'NOT_ASSESSED', note: NOT_EVALUATED_HERE },
     { framework: 'PMDA ERES Guidelines', status: chainDependent },
     { framework: 'GAMP 5', status: 'NOT_ASSESSED', note: NOT_EVALUATED_HERE },
   ];

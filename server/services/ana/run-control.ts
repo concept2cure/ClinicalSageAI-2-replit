@@ -245,6 +245,13 @@ export async function beginRun(input: BeginRunInput): Promise<{ runId: string; h
   localRuns.set(runId, local);
   void startRunControlListener(input.pool);
 
+  // Keepalive and round boundaries can overlap on a slow pool. Admit one
+  // write, then carry the newest requested beat forward without queuing every
+  // intermediate round. This is pending work only; the row still owns status.
+  let pendingHeartbeat: Promise<void> | null = null;
+  let latestHeartbeatRound = 0;
+  let heartbeatDirty = false;
+
   const handle: RunHandle = {
     runId,
     cancelSignal: local.controller.signal,
@@ -262,13 +269,38 @@ export async function beginRun(input: BeginRunInput): Promise<{ runId: string; h
         timer.unref?.();
         local.waiters.add(finish);
       }),
-    heartbeat: async (round: number) => {
-      await input.pool
-        .query(`UPDATE ana_runs SET heartbeat_at = now(), current_round = $2 WHERE id = $1`, [
-          runId,
-          round,
-        ])
-        .catch(err => log.warn(`[ana-run-control] heartbeat failed for ${runId}: ${err?.message}`));
+    heartbeat: (round: number) => {
+      if (localRuns.get(runId) !== local) return Promise.resolve();
+      latestHeartbeatRound = round;
+      if (pendingHeartbeat) {
+        heartbeatDirty = true;
+        return pendingHeartbeat;
+      }
+      heartbeatDirty = false;
+      // Register before invoking the pool, including synchronous reentry.
+      pendingHeartbeat = Promise.resolve().then(async () => {
+        let roundToWrite = round;
+        try {
+          while (localRuns.get(runId) === local) {
+            try {
+              await input.pool.query(
+                `UPDATE ana_runs SET heartbeat_at = now(), current_round = $2 WHERE id = $1`,
+                [runId, roundToWrite],
+              );
+            } catch (err: any) {
+              log.warn(`[ana-run-control] heartbeat failed for ${runId}: ${err?.message}`);
+            }
+            if (!heartbeatDirty) break;
+            roundToWrite = latestHeartbeatRound;
+            heartbeatDirty = false;
+          }
+        } finally {
+          // Clear admission in the same continuation as the final queue check.
+          // A call at settlement must open fresh work, never join a drained beat.
+          pendingHeartbeat = null;
+        }
+      });
+      return pendingHeartbeat;
     },
   };
 
