@@ -3059,6 +3059,15 @@ export const C2C_MIGRATION_FILES = [
   // docs/evidence/QA-2026-10-08/program-anchor/.
   'migrations/20261008_program_project_anchor_backfill.sql',
 
+  // ── The 1571's sponsor address and IND type, on the program (2026-10-08) ──
+  // P-20 follow-up: two nullable TEXT columns on regulatory_programs, which the
+  // IND forms panel saves (PUT /api/ind-forms/program-facts) and the 1571 build
+  // reads. ADD COLUMN IF NOT EXISTS only; no CHECK (the IND type is validated
+  // against the forms registry by the route), no DROP. regulatory_programs is
+  // public + organization_id INTEGER, so it creates nothing the sweeps below
+  // must reach. Evidence docs/evidence/QA-2026-10-08/ind-reporting-3/.
+  'migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

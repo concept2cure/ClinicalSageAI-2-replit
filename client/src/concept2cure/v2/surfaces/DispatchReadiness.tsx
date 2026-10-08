@@ -299,7 +299,6 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
           {programLabel ? <>{programLabel} · </> : null}
           {sequenceNumber ? <>Sequence {sequenceNumber} (id {a.sequenceId})</> : <>Sequence id {a.sequenceId}</>} · region{' '}
           {String(a.region || 'fda').toUpperCase()} · {a.leafCount} leaves · status {a.sequenceStatus}{a.validatedStage?.holds === false ? <span role="status" data-validated-stage="stale"> — {a.validatedStage.reason}</span> : null}
-          {discovery.state === 'sequence' && discovery.match === 'legacy-name' ? ' · submission matched by name: it has no project recorded' : null}
         </div>
       </div>
 

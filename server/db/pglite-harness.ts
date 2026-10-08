@@ -525,7 +525,8 @@ CREATE TABLE IF NOT EXISTS concept2cure_artifacts (
  * its `submissions` row by.
  *
  * Columns mirror shared/schema/programs.ts and migrations/20260524_program_
- * workbench_schema.sql (+ 20260907 `application_number`). NOT NULL is kept only
+ * workbench_schema.sql (+ 20260907 `application_number`, + 20261008b
+ * `sponsor_address` and `ind_type`). NOT NULL is kept only
  * where the real schema has it and an insert needs it, and there are no FKs
  * here — a fixture that drags in the whole graph stops being usable. The
  * same-organization keys other tables hold to it (PF-04) are the real
@@ -546,6 +547,8 @@ CREATE TABLE IF NOT EXISTS regulatory_programs (
   primary_agency         TEXT NOT NULL DEFAULT 'FDA',
   product_name           TEXT NOT NULL,
   application_number     TEXT,
+  sponsor_address        TEXT,
+  ind_type               TEXT,
   indication             TEXT,
   target_submission_date TIMESTAMPTZ,
   created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),

@@ -77,13 +77,15 @@ import { IND_SAFETY_REPORT_SECTION } from './ind-sequence-validation';
  * the determination that decides one (expectedness vs the IB / RSI) has not
  * been made — P-20 (product decision 2026-10-08): "When expectedness is not
  * recorded, the expedited-reporting verdict is 'not determined: expectedness
- * not assessed', never 'not reportable'."
+ * not assessed', never 'not reportable'." Its follow-up decision narrows that to
+ * where expectedness decides the outcome: a serious, suspected event. A
+ * non-serious or not-suspected event is NOT_REPORTABLE on those stated facts.
  */
 export type IndSafetyReportObligation =
   | 'SEVEN_DAY' // 312.32(c)(2): unexpected fatal/life-threatening suspected adverse reaction
   | 'FIFTEEN_DAY' // 312.32(c)(1)(i): serious + unexpected + suspected
   | 'NOT_REPORTABLE' // expected, non-serious, or not suspected (no individual expedited report)
-  | 'NOT_DETERMINED'; // expectedness not assessed — no verdict (P-20)
+  | 'NOT_DETERMINED'; // serious + suspected, expectedness not assessed — no verdict (P-20)
 
 /**
  * An intake event as the safety-report engine reads it: the AdverseEvent, plus
@@ -233,16 +235,58 @@ function assertStated(event: IndSafetyEvent): void {
 // ---------------------------------------------------------------------------
 
 /**
+ * The verdict for an event that is not suspected, or not serious, on those
+ * stated facts (P-20 follow-up, 2026-10-08). A not-suspected event (312.32(a):
+ * no reasonable possibility) and a non-serious one (312.32(c)(1)) are not
+ * expedited whatever the IB / RSI says, so "not determined" would withhold a
+ * verdict the stated facts give. The rationale names those facts and says
+ * expectedness was not needed for it; nothing is inferred about expectedness
+ * (`unexpected` stays null when it was not recorded).
+ */
+function notExpeditedOnStatedFacts(
+  event: IndSafetyEvent,
+  determinations: IndSafetyClassification['determinations'],
+): IndSafetyClassification {
+  const { suspected, serious, expectednessRecorded, unexpected } = determinations;
+  const base = { obligation: 'NOT_REPORTABLE' as const, reportingWindowDays: null, deadline: null, determinations };
+  // A recorded expectedness keeps the existing wording for this case.
+  if (expectednessRecorded && suspected && !serious && unexpected) {
+    return {
+      ...base,
+      regulatoryBasis: '21 CFR 312.32(c)(1) / 312.33',
+      rationale:
+        'Suspected and unexpected but non-serious — not individually expedited; captured in the IND annual report (312.33).',
+    };
+  }
+  const facts: string[] = [];
+  if (!suspected) {
+    facts.push(
+      `no reasonable possibility the drug caused the event (causality stated as ${event.causality}: not a suspected adverse reaction)`,
+    );
+  }
+  if (!serious) facts.push('the event is recorded as non-serious');
+  const expectednessNote = expectednessRecorded ? '' : ' Expectedness is not recorded; it does not change this verdict.';
+  return {
+    ...base,
+    regulatoryBasis: suspected ? '21 CFR 312.32(c)(1) / 312.33' : '21 CFR 312.32(a)',
+    rationale: `Not an individual expedited IND Safety Report on the stated facts: ${facts.join('; ')}.${expectednessNote}`,
+  };
+}
+
+/**
  * Classify a single adverse event against the IND expedited-reporting rules.
  *
  * Decision order (per 312.32(c)):
- *   1. Must be SUSPECTED (reasonable possibility) AND UNEXPECTED to be an
- *      individual expedited IND Safety Report at all — otherwise NOT_REPORTABLE.
- *   2. If also SERIOUS:
+ *   1. NOT SUSPECTED (no reasonable possibility) or NOT SERIOUS => NOT_REPORTABLE
+ *      as an individual expedited report, on those stated facts, whether or not
+ *      expectedness was recorded (a suspected, unexpected, non-serious reaction
+ *      goes to aggregate/annual reporting, 312.33).
+ *   2. Serious and suspected with expectedness NOT RECORDED => NOT_DETERMINED:
+ *      expectedness decides the outcome, and nobody has assessed it (P-20).
+ *   3. Serious and suspected but EXPECTED => NOT_REPORTABLE.
+ *   4. Serious, suspected and UNEXPECTED:
  *        a. fatal OR life-threatening => 7-calendar-day (312.32(c)(2)).
  *        b. otherwise               => 15-calendar-day (312.32(c)(1)(i)).
- *   3. Suspected + unexpected but NOT serious => NOT_REPORTABLE as an individual
- *      expedited report (handled via aggregate/annual reporting, 312.33).
  *
  * Pure: no DB, no side effects, deterministic for a given input + clock.
  * Throws IndSafetyReportIncompleteError (code VALIDATION) when a determination
@@ -267,11 +311,16 @@ export function classifyIndSafetyReport(
     fatalOrLifeThreatening: fatalOrLT,
   };
 
-  // Gate 0 (P-20, 2026-10-08): with expectedness not recorded there is no
-  // verdict. It used to read NOT_REPORTABLE ("not an individual expedited
-  // report"), which closes a case nobody assessed against the IB / RSI — and a
-  // reviewer reading "not reportable" has no reason to look again before the
-  // 15-day clock that may already be running.
+  // Gate 0 (P-20 follow-up, 2026-10-08): a stated fact that rules out an
+  // individual expedited report decides the verdict without expectedness.
+  if (!suspected || !serious) return notExpeditedOnStatedFacts(event, determinations);
+
+  // Gate 1 (P-20, 2026-10-08): for a serious, suspected event expectedness
+  // decides the outcome, and with it not recorded there is no verdict. It used
+  // to read NOT_REPORTABLE ("not an individual expedited report"), which closes
+  // a case nobody assessed against the IB / RSI — and a reviewer reading "not
+  // reportable" has no reason to look again before the 15-day clock that may
+  // already be running.
   if (!expectednessRecorded) {
     return {
       obligation: 'NOT_DETERMINED',
@@ -285,34 +334,16 @@ export function classifyIndSafetyReport(
     };
   }
 
-  // Gate 1: an individual expedited IND Safety Report requires a SUSPECTED and
-  // UNEXPECTED adverse reaction. Anything else is not an individual expedited
-  // report.
-  if (!suspected || !unexpected) {
-    const reason = !suspected
-      ? 'no reasonable possibility the drug caused the event (not a suspected adverse reaction)'
-      : 'event is expected (listed in the IB / consistent with the RSI)';
+  // Gate 2: a serious, suspected event recorded as EXPECTED (listed in the IB /
+  // consistent with the RSI) is not an individual expedited report.
+  if (!unexpected) {
     return {
       obligation: 'NOT_REPORTABLE',
       reportingWindowDays: null,
       deadline: null,
       determinations,
       regulatoryBasis: '21 CFR 312.32(a)',
-      rationale: `Not an individual expedited IND Safety Report: ${reason}.`,
-    };
-  }
-
-  // Gate 2: suspected + unexpected but non-serious => aggregate/annual, not
-  // individual expedited.
-  if (!serious) {
-    return {
-      obligation: 'NOT_REPORTABLE',
-      reportingWindowDays: null,
-      deadline: null,
-      determinations,
-      regulatoryBasis: '21 CFR 312.32(c)(1) / 312.33',
-      rationale:
-        'Suspected and unexpected but non-serious — not individually expedited; captured in the IND annual report (312.33).',
+      rationale: 'Not an individual expedited IND Safety Report: event is expected (listed in the IB / consistent with the RSI).',
     };
   }
 

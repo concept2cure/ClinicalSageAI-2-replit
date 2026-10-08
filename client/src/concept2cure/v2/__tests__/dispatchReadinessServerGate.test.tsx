@@ -69,7 +69,7 @@ function serve(assessment: unknown) {
     if (url === `/api/c2c/projects/${PROGRAM_UUID}`) {
       return { ok: true, status: 200, json: async () => ({ id: PROGRAM_UUID, name: 'NDA 2026', code: 'NDA-26', product_name: null, program_type: 'nda' }) } as Response;
     }
-    if (url === '/api/submissions') return ok([{ id: 3, title: 'NDA 2026', productName: 'NDA 2026', applicationType: 'NDA' }]);
+    if (url === '/api/submissions') return ok([{ id: 3, title: 'NDA 2026', productName: 'NDA 2026', applicationType: 'NDA', programId: PROGRAM_UUID }]);
     if (url === '/api/submissions/3/sequences') return ok([{ id: 7, sequenceNumber: '0001' }]);
     if (url.endsWith('/dispatch-readiness')) return ok(assessment);
     return ok([]);

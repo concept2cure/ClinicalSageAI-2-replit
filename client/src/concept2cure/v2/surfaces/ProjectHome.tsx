@@ -265,12 +265,12 @@ function ProjectEvidence({ pid, name, onNav, available }: {
    computes a figure: the verdict and every count are the server's.
 
    The two panels sit side by side, so they must never contradict each other.
-   The gate reads only the submission of the project's own type, and a
-   submission with no project recorded may reach it by name; the list holds
-   the submissions recorded to the project. So the readiness panel never says
-   "no submission" over the project's submissions of other types (it names
-   them), and the list says when the verdict above is for a submission it does
-   not hold. Both read one discovery (ProjectSubmitStage). */
+   The gate reads only the submission of the project's own type that records
+   the project; the list holds the submissions recorded to the project. So the
+   readiness panel never says "no submission" over the project's submissions
+   of other types (it names them). No submission is matched to the project by
+   name (P-20 follow-up), so the verdict is always for one the list holds. Both
+   read one discovery (ProjectSubmitStage). */
 
 /** The plain words for each state in which there is no verdict to show. */
 function notReadyCopy(d: Discovery): { title: string; hint: string } {
@@ -278,10 +278,7 @@ function notReadyCopy(d: Discovery): { title: string; hint: string } {
   if (d.state === 'no-sequence') {
     return {
       title: 'No sequence to gate yet',
-      hint:
-        d.match === 'legacy-name'
-          ? `Its submission "${d.submissionTitle}", matched by name because it has no project recorded, has no eCTD sequence yet.`
-          : `Its submission "${d.submissionTitle}" has no eCTD sequence yet.`,
+      hint: `Its submission "${d.submissionTitle}" has no eCTD sequence yet.`,
     };
   }
   if (d.state === 'sequence') {
@@ -306,7 +303,6 @@ function gatedSequenceLine(a: DispatchReadinessAssessment, d: Discovery): string
     a.region ? String(a.region).toUpperCase() : null,
     typeof a.leafCount === 'number' ? `${a.leafCount} ${a.leafCount === 1 ? 'leaf' : 'leaves'}` : null,
     a.sequenceStatus ? `status ${a.sequenceStatus}` : null,
-    d.state === 'sequence' && d.match === 'legacy-name' ? 'submission matched by name: it has no project recorded' : null,
   ].filter(Boolean).join(' · ');
 }
 
@@ -441,22 +437,14 @@ function SubmissionRowView({ s }: { s: SubRow }) {
   );
 }
 
-/** The submission the gate reads by name, when it has no project recorded:
- *  the list (the server's project scope) does not hold it, so it says so
- *  rather than leaving the verdict above about a submission it denies. */
-function legacyGated(d: Discovery): string | null {
-  return (d.state === 'sequence' || d.state === 'no-sequence') && d.match === 'legacy-name' ? d.submissionTitle : null;
-}
-
 /** The project's submissions: GET /api/submissions?programId=…, loading, a
  *  failure with a retry, an honest empty and the rows, each its own state. */
-function ProjectSubmissions({ subs, onRetry, discovery, onNav, available, ectdFiling }: {
-  subs: ListState<SubRow>; onRetry: () => void; discovery: Discovery;
+function ProjectSubmissions({ subs, onRetry, onNav, available, ectdFiling }: {
+  subs: ListState<SubRow>; onRetry: () => void;
   onNav: (id: string) => void; available: (id: string) => boolean;
   /** The project is read and is not a device or diagnostic filing. */
   ectdFiling: boolean;
 }) {
-  const legacy = legacyGated(discovery);
   return (
     <section className="pj-sec" aria-labelledby="pj-subs-h">
       <div className="pj-sec-h">
@@ -489,24 +477,12 @@ function ProjectSubmissions({ subs, onRetry, discovery, onNav, available, ectdFi
         <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load this project's submissions"
           hint="The submission store didn't respond, so nothing here says whether the project has any." retry={onRetry} />
       ) : subs.rows.length === 0 ? (
-        legacy ? (
-          <EmptyState icon={I.rocket} title="No submission is recorded to this project"
-            hint={`The dispatch readiness above is for "${legacy}", which has no project recorded and is matched to this one by name.`} />
-        ) : (
-          <EmptyState icon={I.rocket} title="No submissions for this project yet"
-            hint="A submission created in the Submission Center while this project is open belongs to it." />
-        )
+        <EmptyState icon={I.rocket} title="No submissions for this project yet"
+          hint="A submission created in the Submission Center while this project is open belongs to it." />
       ) : (
-        <>
-          <div className="pj-files" role="list" data-testid="pj-submissions">
-            {subs.rows.map((s) => <SubmissionRowView key={s.id} s={s} />)}
-          </div>
-          {legacy && (
-            <p className="pj-desc" data-testid="pj-submissions-legacy">
-              The dispatch readiness above is for &quot;{legacy}&quot;, which has no project recorded and is matched to this one by name, so it is not listed here.
-            </p>
-          )}
-        </>
+        <div className="pj-files" role="list" data-testid="pj-submissions">
+          {subs.rows.map((s) => <SubmissionRowView key={s.id} s={s} />)}
+        </div>
       )}
     </section>
   );
@@ -527,7 +503,7 @@ function ProjectSubmitStage({ pid, onNav, available, ectdFiling }: {
   return (
     <>
       <ProjectReadiness discovery={discovery} r={readiness} onRetry={() => setReload((k) => k + 1)} onNav={onNav} available={available} />
-      <ProjectSubmissions subs={subs} onRetry={() => setBump((b) => b + 1)} discovery={discovery} onNav={onNav} available={available} ectdFiling={ectdFiling} />
+      <ProjectSubmissions subs={subs} onRetry={() => setBump((b) => b + 1)} onNav={onNav} available={available} ectdFiling={ectdFiling} />
     </>
   );
 }

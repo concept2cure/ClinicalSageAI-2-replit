@@ -28,7 +28,8 @@ export interface RunComputationResult {
    * measures none and reports none (QA 2026-10-08, j8): its figure was
    * `95 − 20 × blockers` clamped to [25, 95] — a constant less a penalty,
    * printed as "Overall confidence 75%" beside a readiness that was not
-   * computed. The lineage trace measures one (computeLineageConfidence).
+   * computed. The lineage trace measures one: its provenance completeness
+   * (lineageTraceConfidence, P-26).
    */
   confidence: number | null;
   blockers: string[];

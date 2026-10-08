@@ -1560,8 +1560,9 @@ router.post('/runs', async (req: Request, res: Response) => {
 
     // Document-scoped evidence-trace: source the report body from the EXISTING
     // per-document lineage dossier (versions/decisions/provenance/reasoning/
-    // data-lineage) mapped into RenderedReport blocks with provenance atoms, and
-    // derive confidence from lineage completeness. Reuses the whole run/seal/
+    // data-lineage) mapped into RenderedReport blocks with provenance atoms. Its
+    // confidence is the lineage engine's measured provenance completeness, or
+    // none (P-26; lineageTraceConfidence). Reuses the whole run/seal/
     // render/finalize pipeline unchanged; the generic project-scope providers do
     // not apply to a single artifact, so their (spurious) blockers are dropped
     // for this type. It fell back to the generic run when the dossier was
@@ -1570,14 +1571,14 @@ router.post('/runs', async (req: Request, res: Response) => {
     let lineageRendered: RenderedReport | undefined;
     if (engine === 'lineage') {
       try {
-        const [{ buildDocumentLineageDossier }, { dossierToRenderedReport, computeLineageConfidence }] =
+        const [{ buildDocumentLineageDossier }, { dossierToRenderedReport, lineageTraceConfidence }] =
           await Promise.all([
             import('../services/ana/lineage-dossier.js'),
             import('../services/report-os/lineage-trace-report.js'),
           ]);
         const dossier = await buildDocumentLineageDossier(scopeId, orgId);
         if (dossier) {
-          computed.confidence = computeLineageConfidence(dossier);
+          computed.confidence = lineageTraceConfidence(dossier);
           computed.blockers = [];
           computed.criticalBlockers = [];
           computed.summary.lineageDocument = dossier.ledger.artifact.artifactId;

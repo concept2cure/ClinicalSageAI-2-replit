@@ -92,15 +92,46 @@ const runBodies = () =>
 const overviewUrls = () => apiRequest.mock.calls.map((c) => String(c[1])).filter((u) => u.startsWith('/api/insights-canvas/overview'));
 
 describe('1 — a type no engine computes', () => {
-  it('is a pack tile that says it is not computed, with no run', async () => {
+  /* P-26 (docs/LAUNCH_DEFINITION_OF_DONE.md): packs list only types an engine
+     computes. Engine-less types are listed once, as "not computed in this
+     release", rather than as tiles inside packs (4ac15bdd1 drew them as
+     locked "Not computed" tiles, so a pack of three showed one it could not run). */
+  it('a pack lists only the types an engine computes — no not-computed tile inside it', async () => {
     renderCanvas();
     await ready();
     fireEvent.click(document.querySelector('.rc-preset-btn') as HTMLElement);
     await waitFor(() => expect(document.querySelector('.ro-pack-grid')).not.toBeNull());
-    const tiles = screen.getAllByTestId('ro-pack-not-computed').map((t) => t.textContent ?? '');
-    expect(tiles.some((t) => /Evidence & Provenance Trace Report/.test(t) && /Not computed in this release/.test(t))).toBe(true);
-    const runnable = [...document.querySelectorAll('button.ro-pack-card')].map((b) => b.textContent ?? '');
-    expect(runnable.some((t) => /Evidence & Provenance/.test(t))).toBe(false);
+    expect(screen.queryAllByTestId('ro-pack-not-computed')).toEqual([]);
+    const grid = document.querySelector('.ro-pack-grid')!;
+    expect(grid.textContent).not.toMatch(/Evidence & Provenance Trace Report|Not computed in this release/);
+    // The BLA assembly pack: the digest and the FCOI register run; the trace has no engine.
+    const titles = [...grid.querySelectorAll('.ro-pack-title')].map((t) => t.textContent);
+    expect(titles).toEqual(['Executive Readiness Digest', 'Financial Disclosure Register (21 CFR 54)']);
+  });
+
+  it('a pack button counts the reports it runs, not the ones no engine computes', async () => {
+    renderCanvas();
+    await ready();
+    const presets = [...document.querySelectorAll('.rc-empty-preset')].map((b) => b.textContent ?? '');
+    // BLA assembly pack: 3 types, 2 computed. Nonclinical & CMC readiness: 2 types, 1 computed.
+    expect(presets.find((t) => /BLA assembly pack/.test(t))).toMatch(/2 governed reports/);
+    expect(presets.find((t) => /Nonclinical & CMC readiness/.test(t))).toMatch(/1 governed report\b/);
+  });
+
+  it('engine-less types are listed once, as not computed in this release', async () => {
+    renderCanvas();
+    await ready();
+    const list = await screen.findByTestId('ro-not-computed');
+    expect(list.textContent).toMatch(/Not computed in this release/);
+    const notComputed = catalogForSegment('biotech').filter((t) => !t.runnable).map((t) => t.label);
+    expect(notComputed.length).toBeGreaterThan(0);
+    for (const label of notComputed) {
+      expect(list.textContent, label).toContain(label);
+      // Once on the canvas, nowhere else.
+      expect(document.body.textContent!.split(label).length - 1, label).toBe(1);
+    }
+    // A computed type is not in the list.
+    expect(list.textContent).not.toContain('Executive Readiness Digest');
   });
 
   it('is said to be not computed when asked for, and nothing is run under its name', async () => {

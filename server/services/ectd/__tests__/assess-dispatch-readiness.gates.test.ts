@@ -257,15 +257,45 @@ describe('readinessOptionsForSequence — required sections decided per sequence
     expect(codes).not.toContain('1.20');
   });
 
-  it('a continuing IND sequence is not held to the application\'s requirements (no "1.20 missing" on an amendment)', () => {
+  it('a continuing IND sequence is not held to the application\'s Module 1 list (no "1.20 missing" on an amendment)', () => {
     const opts = readinessOptionsForSequence(amendment, 'ind', AS_OF);
-    expect(opts.requiredByRegulation).toBeUndefined();
     expect(opts.requiredSections ?? []).toEqual([]);
     const r = computeDispatchReadiness(
       [{ sectionCode: '1.1', title: 'Form FDA 1571', lifecycleOp: 'new', documentTable: 'rendered_leaf_files', documentId: 1 }],
       opts,
     );
     expect(r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION')).toEqual([]);
+  });
+
+  /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): every IND submission
+     carries a Form FDA 1571 (21 CFR 312), so a continuing IND sequence is held
+     to its 1.1 form even though it is not held to the original's Module 1
+     list. d155ef099 exempted continuing sequences from every requirement. */
+  it('a continuing IND sequence is held to its 1.1 form (Form FDA 1571), as an error, and to nothing else', () => {
+    const opts = readinessOptionsForSequence(amendment, 'ind', AS_OF);
+    expect(opts.requiredByRegulation?.codes).toEqual(['1.1']);
+    expect(opts.requiredByRegulation?.basis).toMatch(/Form FDA 1571/);
+    expect(opts.requiredByRegulation?.basis).toMatch(/21 CFR 312/);
+    // A protocol amendment with its cover letter and no 1571.
+    const r = computeDispatchReadiness(
+      [
+        { sectionCode: '1.2', title: 'Cover Letter', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 5 },
+        { sectionCode: '5.3.5.1', title: 'Protocol amendment', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 6 },
+      ],
+      opts,
+    );
+    const missing = r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION');
+    expect(missing.map((f) => [f.sectionCode, f.severity])).toEqual([['1.1', 'error']]);
+    expect(missing[0].message).toMatch(/Form FDA 1571/);
+    expect(r.errors).toBeGreaterThanOrEqual(1);
+    // A sequence numbered past 0000 with no type recorded is continuing too.
+    expect(readinessOptionsForSequence({ region: 'fda', type: null, sequenceNumber: '0003' }, 'ind', AS_OF).requiredByRegulation?.codes).toEqual(['1.1']);
+  });
+
+  it('a continuing marketing-application sequence is still not held to a Module 1 list', () => {
+    for (const kind of ['nda', 'bla', 'anda']) {
+      expect(readinessOptionsForSequence(amendment, kind, AS_OF).requiredByRegulation, kind).toBeUndefined();
+    }
   });
 
   it('a region or kind the record does not model keeps the profile list as warnings, never errors', () => {

@@ -546,7 +546,9 @@ describe('IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence
     });
     const card = await renderAndFindCard('IND Safety Report', 'Lifecycle');
     const exp = within(card).getByLabelText(/Expectedness/) as HTMLSelectElement;
-    expect(exp.options[exp.selectedIndex].text).toBe('Not assessed — the expedited verdict is not determined');
+    /* P-20 follow-up: an unassessed expectedness leaves the verdict undecided
+       only for a serious, suspected event, so the option says exactly that. */
+    expect(exp.options[exp.selectedIndex].text).toBe('Not assessed — decides the verdict only for a serious, suspected event');
     fireEvent.click(within(card).getByText('Assemble now'));
 
     await screen.findByText(/REAL SERVER SAFETY BODY/);

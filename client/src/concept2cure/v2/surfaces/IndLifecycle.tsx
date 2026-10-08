@@ -177,7 +177,10 @@ const SERIOUSNESS = OPTS(['death', 'life_threatening', 'hospitalization', 'disab
 const CAUSALITY = OPTS(['definite', 'probable', 'possible', 'unlikely', 'unrelated']);
 const OUTCOME = OPTS(['recovered', 'recovering', 'not_recovered', 'fatal', 'unknown']);
 const EXPECTEDNESS = [
-  { v: '', label: 'Not assessed — the expedited verdict is not determined' },
+  /* P-20 follow-up: an unassessed expectedness leaves the verdict undecided
+     only for a serious, suspected event; a non-serious or not-suspected one is
+     not expedited on those stated facts (the server's rationale says so). */
+  { v: '', label: 'Not assessed — decides the verdict only for a serious, suspected event' },
   { v: 'expected', label: 'Expected (listed in RSI)' },
   { v: 'unexpected', label: 'Unexpected (not listed in RSI)' },
 ];

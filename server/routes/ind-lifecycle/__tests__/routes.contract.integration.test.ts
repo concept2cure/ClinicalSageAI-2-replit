@@ -367,6 +367,27 @@ describe('document routes', () => {
     expect(drafted.body.error.code).toBe('NOT_DETERMINED');
   });
 
+  /* P-20 follow-up: "not determined" only where expectedness decides the
+     outcome. A non-serious or not-suspected event is not expedited on those
+     stated facts, whether or not expectedness was recorded. */
+  it('with expectedness not recorded, a non-serious or not-suspected event is NOT_REPORTABLE on its stated facts', async () => {
+    const nonSerious = { ...reportableEvent(), eventType: 'AE', seriousnessCriteria: undefined, expectedness: undefined };
+    const a = await request(app).post('/api/ind-lifecycle/safety-report/classify').send({ event: nonSerious });
+    expect(a.status, JSON.stringify(a.body)).toBe(200);
+    expect(a.body.obligation).toBe('NOT_REPORTABLE');
+    expect(a.body.rationale).toMatch(/non-serious/);
+    const notSuspected = { ...reportableEvent(), causality: 'unrelated', expectedness: undefined };
+    const b = await request(app).post('/api/ind-lifecycle/safety-report/classify').send({ event: notSuspected });
+    expect(b.status).toBe(200);
+    expect(b.body.obligation).toBe('NOT_REPORTABLE');
+    expect(b.body.rationale).toMatch(/not a suspected adverse reaction/);
+    const filed = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0042', event: notSuspected });
+    expect(filed.status).toBe(422);
+    expect(filed.body.error.code).toBe('NOT_REPORTABLE');
+  });
+
   it('POST /annual-report/line-listing → 200 with rows + tabulation', async () => {
     const res = await request(app)
       .post('/api/ind-lifecycle/annual-report/line-listing')

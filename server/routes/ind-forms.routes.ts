@@ -124,6 +124,10 @@ interface ResolvedProgram {
   applicationNumber: string | null;
   programType: string | null;
   sponsorName: string | null;
+  /** regulatory_programs.sponsor_address / ind_type (20261008b): the 1571's
+   *  address and IND type, stored on the program (P-20 follow-up). */
+  sponsorAddress: string | null;
+  indType: string | null;
 }
 
 /**
@@ -154,6 +158,8 @@ async function resolveProgramIdent(
         applicationNumber: regulatoryPrograms.applicationNumber,
         programType: regulatoryPrograms.programType,
         sponsorName: organizations.name,
+        sponsorAddress: regulatoryPrograms.sponsorAddress,
+        indType: regulatoryPrograms.indType,
       })
       .from(regulatoryPrograms)
       .leftJoin(organizations, eq(organizations.id, regulatoryPrograms.organizationId))
@@ -449,12 +455,113 @@ router.get('/', limiter, requireRole(AUTHOR), async (req, res) => {
         productName: program.productName,
         indication: program.indication,
         applicationNumber: program.applicationNumber,
+        sponsorAddress: program.sponsorAddress,
+        indType: program.indType,
         // Exactly what the builders will receive from the record, so the panel
         // shows the values the forms are filled from rather than a paraphrase.
         formMetadata: programToFormMetadata(program),
       },
       placements: await listFormPlacements(program, ctx.organizationId),
     });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** The registry's IND types for Form FDA 1571 — the one list, never a copy. */
+function registryIndTypes(): string[] {
+  const field = formsRegistry.getForm('FDA_1571')?.fields?.find((f: { id?: string }) => f?.id === 'ind_type') as
+    | { options?: unknown }
+    | undefined;
+  return Array.isArray(field?.options) ? field!.options.map(String) : [];
+}
+
+/** A clearable text from a request body: undefined = not sent (unchanged);
+ *  null or blank = cleared; otherwise the trimmed text. */
+function clearableText(v: unknown): string | null | undefined | false {
+  if (v === undefined) return undefined;
+  if (v === null) return null;
+  if (typeof v !== 'string') return false;
+  const t = v.trim();
+  return t === '' ? null : t;
+}
+
+const SPONSOR_ADDRESS_MAX = 1000;
+
+/**
+ * Record the sponsor's address and the IND type ON THE PROGRAM (P-20 follow-up,
+ * docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08). Form FDA 1571 requires both
+ * and no program column held either, so the forms panel sent them with every
+ * build and the program record never knew them. They are stored in
+ * regulatory_programs.sponsor_address / ind_type
+ * (migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql), and
+ * every build reads them from there (programToFormMetadata).
+ *
+ * Body: { projectIdent: program UUID or code, sponsorAddress?, indType? }. An
+ * absent field is left as recorded; null or a blank clears it. The IND type
+ * must be one of the registry's FDA_1571 ind_type options, and only an IND
+ * program has one. Org-scoped (404 for another organisation's program) and
+ * audited with the names of the fields it wrote.
+ */
+/** A stated program-facts request, or why it is refused (400). Pure. */
+type ProgramFactsPatch = { sponsorAddress?: string | null; indType?: string | null };
+function parseProgramFacts(
+  body: Record<string, unknown>,
+  indTypes: string[],
+): { ident: string; patch: ProgramFactsPatch } | { refusal: string } {
+  const ident = typeof body.projectIdent === 'string' ? body.projectIdent.trim() : '';
+  if (ident === '' || /^\d+$/.test(ident)) {
+    return { refusal: 'projectIdent (the program UUID or code) is required: these facts are recorded on a program.' };
+  }
+  const sponsorAddress = clearableText(body.sponsorAddress);
+  const indType = clearableText(body.indType);
+  if (sponsorAddress === false || indType === false) return { refusal: 'sponsorAddress and indType are text, or null to clear.' };
+  if (sponsorAddress === undefined && indType === undefined) return { refusal: 'State the sponsor address, the IND type, or both.' };
+  if (typeof sponsorAddress === 'string' && sponsorAddress.length > SPONSOR_ADDRESS_MAX) {
+    return { refusal: `The sponsor address is longer than ${SPONSOR_ADDRESS_MAX} characters.` };
+  }
+  if (typeof indType === 'string' && !indTypes.includes(indType)) return { refusal: `IND type must be one of ${indTypes.join(', ')}.` };
+  const patch: ProgramFactsPatch = {};
+  if (sponsorAddress !== undefined) patch.sponsorAddress = sponsorAddress;
+  if (indType !== undefined) patch.indType = indType;
+  return { ident, patch };
+}
+
+router.put('/program-facts', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = parseProgramFacts((req.body && typeof req.body === 'object' ? req.body : {}) as Record<string, unknown>, registryIndTypes());
+  if ('refusal' in parsed) return res.status(400).json({ error: { code: 'VALIDATION', message: parsed.refusal } });
+  const { ident, patch } = parsed;
+  try {
+    const program = await resolveProgramIdent(ident, ctx.organizationId);
+    if (!program) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
+    }
+    if (typeof patch.indType === 'string' && (program.programType ?? '').trim().toUpperCase() !== 'IND') {
+      return res.status(400).json({
+        error: { code: 'VALIDATION', message: `An IND type is recorded only on an IND program; this program is ${program.programType ?? 'of no recorded type'}.` },
+      });
+    }
+    await db
+      .update(regulatoryPrograms)
+      .set({ ...patch, updatedAt: new Date() })
+      .where(and(eq(regulatoryPrograms.id, program.id), eq(regulatoryPrograms.organizationId, ctx.organizationId)));
+
+    // Part 11 §11.10(e): who set the facts printed on the filed form, and which.
+    const audit = await auditService.logAction({
+      action: 'ind_form.program_facts.update',
+      userId: ctx.userId,
+      organizationId: ctx.organizationId,
+      resourceType: 'regulatory_program',
+      resourceId: program.id,
+      metadata: { fields: Object.keys(patch), programCode: program.code },
+    });
+    if (!audit?.persisted) {
+      logger.warn('ind-form program facts audit row was not persisted', { err: audit?.error ?? 'no durable store accepted the row' });
+    }
+    const next = { ...program, ...patch };
+    return res.status(200).json({ programId: program.id, sponsorAddress: next.sponsorAddress, indType: next.indType });
   } catch (err) {
     fail(res, err);
   }
@@ -579,22 +686,19 @@ router.post('/:formId/pdf-from-records', limiter, requireRole(AUTHOR), async (re
  * actually carries), both validated against the caller's org so an artifact is
  * never created under another tenant's project.
  *
- * Program-spine idents have NO legacy numeric project row, and the artifact
- * registry (concept2cure_artifacts.project_id → projects.id FK) predates the
- * program spine — so those saves use the audited-unplaced degradation contract
- * from the eSTAR /build handler: the built field map is content-hashed and
- * audit-logged (that audit row is the only persisted trace, so it is REQUIRED —
- * an audit failure fails the request rather than claiming `audited: true`), and
- * the response says plainly that registry placement is pending. No artifact row
- * is fabricated.
+ * A program ident is placed against the program's project record (the C1
+ * anchor, `projects.regulatory_program_id`; P-19 gives every program one). A
+ * program with no project record has no dossier, so the save is refused 409
+ * PROGRAM_NOT_ANCHORED and nothing is written (P-20 follow-up, 2026-10-08). It
+ * used to answer 200 { governed:false, audited:true } — an "audited-unplaced"
+ * success status over a save that placed nothing.
  *
  * Body: IndProjectMetadata + ({ projectId: number } | { projectIdent: string }).
  * For 1572 this persists the FIRST investigator's form (per-investigator
  * persistence mirrors /1572/pdf-all and is a follow-on).
  * Returns 201 { artifactId, formId, projectId, ready, missingRequired,
- * sponsorMustComplete, contentHash } for the governed path; 200
- * { governed:false, audited:true, artifactId:null, … } for the audited-unplaced
- * program path. `ready` is about the DATA (`missingRequired` is empty);
+ * sponsorMustComplete, contentHash }; 409 PROGRAM_NOT_ANCHORED for a program
+ * with no project record. `ready` is about the DATA (`missingRequired` is empty);
  * `sponsorMustComplete` is about the FORM — the required boxes the official
  * render leaves blank for the sponsor however complete the data is.
  */
@@ -621,8 +725,7 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
     });
   }
   // The project this artifact is registered against. For a program ident it is
-  // filled from the C1 anchor below when one exists; the audited-unplaced
-  // degradation is taken only when it does not.
+  // filled from the C1 anchor below; a program without one is refused 409.
   let effectiveProjectId = projectId;
   // Resolved once, below, and reused: the governed path used to re-resolve the
   // same ident a second time to fill the form from the record — a duplicate
@@ -647,8 +750,8 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
     const sponsorMustComplete = await requiredBoxesLeftToSponsor(formId);
 
     if (isProgramIdent) {
-      // Program-spine path: resolve org-scoped, then anchor, then — only if
-      // there is no anchor — the audited-unplaced degradation.
+      // Program-spine path: resolve org-scoped, then anchor; a program with no
+      // anchor has no dossier and is refused.
       const program = await resolveProgramIdent(rawIdent, ctx.organizationId);
       if (!program) {
         return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
@@ -657,74 +760,33 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
 
       // Document Identity Contract slice C1 gave the program spine the numeric
       // anchor this registry needs (`projects.regulatory_program_id`, written by
-      // intake in the same transaction that creates the program). Ask for it
-      // before degrading: the v2 wizard hands out program idents, so this is the
-      // id space real users' Module-1 forms actually arrive with — every one of
-      // them was landing unregistered.
+      // intake in the same transaction that creates the program). The v2
+      // wizard hands out program idents, so this is the id space real users'
+      // Module-1 forms actually arrive with.
       //
-      // The resolver is fail-soft by contract: null when the program predates
-      // C1, when intake skipped the anchor for one of its stated reasons, or
-      // when the migration is not applied here. Null keeps the existing
-      // behaviour exactly; a real anchor takes the governed path below.
+      // Strict: a lookup that could not complete is a failure (500), never
+      // read as "this program has no project record" — the 409 below states
+      // that as a fact, so it may only follow a lookup that answered.
       const anchoredProjectId = await resolveProgramProjectAnchor(db, {
         programId: program.id,
         orgId: ctx.organizationId,
         context: 'ind-forms.artifact',
+        strict: true,
       });
       if (anchoredProjectId === null) {
-        const builtForProgram = buildFormById(formId, { ...programToFormMetadata(program), ...statedFields(body) });
-        const programContent = JSON.stringify({
-          formId: builtForProgram.formId,
-          fields: builtForProgram.fields,
-          missingRequired: builtForProgram.missingRequired,
-        });
-        const programContentHash = crypto.createHash('sha256').update(programContent).digest('hex');
-        const ready = builtForProgram.missingRequired.length === 0;
-        // The audit row is the ONLY persisted trace on this path — it is required,
-        // not best-effort. logAction resolves an outcome instead of throwing on
-        // a persistence failure, so the outcome must be checked: without it the
-        // response claims `audited: true` over nothing.
-        const unplacedAudit = await auditService.logAction({
-          action: 'ind_form.artifact.unplaced',
-          userId: ctx.userId,
-          organizationId: ctx.organizationId,
-          resourceType: 'ind_form',
-          resourceId: `${formId}:${program.id}`,
-          metadata: {
-            formId,
-            programId: program.id,
-            programCode: program.code,
-            ready,
-            sponsorMustComplete,
-            contentHash: programContentHash,
-            // Stable audit enum, deliberately unchanged: existing Part 11 rows
-            // carry this value and queries match on it. What changed is WHICH
-            // requests reach here — only genuinely unanchored programs now do.
-            artifactRegistry: 'unplaced_pending_document_identity_contract',
-          },
-        });
-        if (!unplacedAudit?.persisted) {
-          return res.status(500).json({
-            error: 'AUDIT_WRITE_FAILED',
+        /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): a program with
+           no project record has no dossier, so nothing can be saved to it,
+           and the answer is a refusal. It was a 200 "audited-unplaced" answer
+           ({ governed: false }): a success status over a save that placed
+           nothing. Every program a client can open has its record (P-19), so
+           this is a gap to close, not a result. Nothing is written. */
+        return res.status(409).json({
+          error: {
+            code: 'PROGRAM_NOT_ANCHORED',
             message:
-              'the unplaced-artifact audit row is the only persisted trace on this path and it was not persisted',
-          });
-        }
-        return res.status(200).json({
-          governed: false,
-          audited: true,
-          artifactId: null,
-          formId,
-          projectId: null,
-          programId: program.id,
-          ready,
-          missingRequired: builtForProgram.missingRequired,
-          sponsorMustComplete,
-          contentHash: programContentHash,
-          artifact_registry:
-            'unplaced — this program has no anchored project row, and the governed artifact ' +
-            'registry (concept2cure_artifacts) requires one; the built field map is ' +
-            'audit-logged with its content hash',
+              'This program has no project record, so it has no dossier to save the form into. Nothing was saved. ' +
+              'An administrator can give the program its project record.',
+          },
         });
       }
       effectiveProjectId = anchoredProjectId;

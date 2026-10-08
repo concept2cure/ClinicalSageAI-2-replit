@@ -23,8 +23,9 @@
  *     submission" while the list below shows one;
  *   - a cleared verdict carries the server's "not assessed" sentence, as the
  *     readiness screen does, never a bare all-clear;
- *   - when the verdict is for a submission matched by name (no project
- *     recorded), the list says so instead of "no submissions".
+ *   - no submission is matched to the project by name (P-20 follow-up): one
+ *     with no project recorded is not gated here, and the readiness panel
+ *     says how many such submissions there are and how one is anchored.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -230,16 +231,19 @@ describe('Project home — the two Submit panels never contradict each other', (
     expect(panel.textContent).not.toMatch(/No submission for this project/);
   });
 
-  it('a verdict for a submission matched by name is named by the list, not denied', async () => {
+  /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): no screen matches a
+     program to an application by name. The gate used to read a same-named IND
+     with no project recorded and print its verdict here. */
+  it('a submission with no project recorded is not gated by name: no verdict, and the panels agree', async () => {
     // The scoped list (the server's anchor) is empty; the organization holds
-    // the legacy IND with no project recorded, which the gate reads by name.
+    // a same-named IND with no project recorded.
     serve({ subs: [], orgSubs: [{ ...SUB, programId: null }] });
     await openSubmit();
-    const verdict = await screen.findByTestId('pj-readiness-verdict');
-    expect(verdict.textContent).toContain('matched by name');
-    await waitFor(() => expect(sectionText('Submissions')).toContain('No submission is recorded to this project'));
-    expect(sectionText('Submissions')).toContain('The dispatch readiness above is for "ONC-221 IND"');
-    expect(sectionText('Submissions')).not.toContain('No submissions for this project yet');
+    await waitFor(() => expect(sectionText('Submissions')).toContain('No submissions for this project yet'));
+    expect(screen.queryByTestId('pj-readiness-verdict')).toBeNull();
+    expect(urls()).not.toContain('/api/submissions/sequences/905/dispatch-readiness');
+    expect(document.body.textContent).not.toMatch(/matched by name|matched to this one by name/);
+    expect(document.body.textContent).toMatch(/1 IND submission in this organisation has no program recorded/);
   });
 });
 

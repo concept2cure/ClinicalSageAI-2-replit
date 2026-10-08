@@ -1,0 +1,155 @@
+# DB tier on a fresh CI-shaped database (concept2cure-ri_qa_fresh2), RLS_ENFORCE=on, vitest.db.config.ts.
+# Connection strings and credentials are not reproduced here.
+
+## Before: regulatory_programs columns present (information_schema)
+application_number   (sponsor_address and ind_type absent)
+
+## deploy-migrate, run 1 and run 2 (same database)
+### run 1
+      [NOTICE] vault.legal_holds ready (RLS: tenant_isolation_policy)
+      [NOTICE] [ivdr-history-rls] parent-scoped tenant_isolation_policy applied to 0 table(s)
+  ✓ applied: migrations/20261008_program_project_anchor_backfill.sql
+  ✓ applied: migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql
+      [NOTICE] [uuid-rls] tenant_isolation_policy applied to 0 non-public uuid-tenant table(s); 2 skipped (unprovisioned/drift). federated_ml.federation_participants and audit.event_log are intentionally EXEMPT (cross-tenant by design).
+      [NOTICE] [rls-sweep] tenant_isolation_policy applied to 0 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+  tenant-parentage FKs: 6/6 present
+  tenant_isolation_policy: 19/19 tables policied
+  governed-content tree: 3/3 sentinel(s) present
+✅ Schema migration complete — safe to roll services.
+### run 2
+      [NOTICE] vault.legal_holds ready (RLS: tenant_isolation_policy)
+      [NOTICE] [ivdr-history-rls] parent-scoped tenant_isolation_policy applied to 0 table(s)
+  ✓ applied: migrations/20261008_program_project_anchor_backfill.sql
+  ✓ applied: migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql
+      [NOTICE] [uuid-rls] tenant_isolation_policy applied to 0 non-public uuid-tenant table(s); 2 skipped (unprovisioned/drift). federated_ml.federation_participants and audit.event_log are intentionally EXEMPT (cross-tenant by design).
+      [NOTICE] [rls-sweep] tenant_isolation_policy applied to 0 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+  tenant-parentage FKs: 6/6 present
+  tenant_isolation_policy: 19/19 tables policied
+  governed-content tree: 3/3 sentinel(s) present
+✅ Schema migration complete — safe to roll services.
+
+## After: columns, RLS, journal
+ind_type text nullable=YES
+sponsor_address text nullable=YES
+regulatory_programs: relrowsecurity=true, policies=1
+c2c_migration_journal: migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql | sha256 b0b9f8b60852… | apply_count 2 (same hash both runs: unchanged, no drift)
+
+## DB tests (10 files)
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read 127ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access-review runs as organisation A, verifies, and carries only A rows 70ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > authentication-events runs as organisation A, verifies, and carries only A rows 49ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > administrative-changes runs as organisation A, verifies, and carries only A rows 85ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > electronic-signatures runs as organisation A, verifies, and carries only A rows 29ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > audit-trail-integrity runs as organisation A, verifies, and carries only A rows 36ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > retention-legal-holds runs as organisation A, verifies, and carries only A rows 34ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > controlled-documents runs as organisation A, verifies, and carries only A rows 37ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > access review: A members only, with the last sign-in read from the sign-in audit row 71ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > sign-in events and administrative changes: A rows are there, B rows are not 55ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > signature register: the A fixture signature, never the B one 32ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > retention and holds: the vault is reached under its own policy, A hold and disposition only 30ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > with no organisation UUID in the session scope (the degraded membership path), the vault is still read as A, not read as empty 9ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > controlled documents: the A document only 26ms
+ ✓ tests/db/compliance-reports.dbtest.ts > administrator changes, as their writers record them, appear in the administrative changes report (P1-41) > a role change, a removal and a security settings change each appear, with what changed and why 174ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > integrity attestation: A's stores counted as the owner counts them, and each check a stated verdict 26ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > each run writes exactly one compliance.report_run row on A's chain, and none on B's 36ms
+ ✓ tests/db/compliance-reports.dbtest.ts > what the compliance reports say about what they cannot see > an account created by single sign-on is not reported as having the emailed code 34ms
+ ✓ tests/db/compliance-reports.dbtest.ts > what the compliance reports say about what they cannot see > the retention policies section says it is as at generation, not as at the period 28ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > creates a 510(k) device program and returns 201 with the portfolio shape 128ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > gives the program its project record in the same creation, and it resolves strict (P-19) 13ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > refuses a program whose project record has no workspace to go in, and writes nothing (P-19) 51ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > persists the device program as a device, never as a biologic 4ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > makes the created program retrievable through the list projection 13ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > writes a hash-chained audit row for the creation 2ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > creates an EU MDR technical file as a device, in the MDX workstream 51ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > creates an EU IVDR technical file as an IVD 40ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > refuses to record a device filing as a medicinal product 4ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > accepts the new device-family classes 52ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > creates an IVD 510(k) as an IVD 30ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > the fail-closed 503 discloses no schema object > returns a human message and a correlation id, and names no relation 20ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > applies to the provisioned database and registers every in-code type, column for column 16ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > re-applies idempotently: the code's values return, an operator's disable survives 17ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > as app_service under RLS, POST /runs for a seeded type creates the run and records it 154ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > a run and its chain row, together > when report_os.run_created is refused, the run and its snapshot roll back with it (503, nothing saved) 79ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > refuses a member: nothing is sealed and nothing is recorded 40ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > refuses a password that is not the signer's: nothing is sealed, signed or recorded 75ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > when the chain row is refused, the status and the seal roll back with it (503, nothing changed) 66ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > an admin finalizes: status, seal, one chained row and the signature, together 84ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > a second finalize is refused: the seal stands and nothing more is recorded 15ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize is the run's signed act (P1-44b) > refuses a manager whose role carries no signing authority, with the right password: nothing sealed, signed or recorded 43ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize is the run's signed act (P1-44b) > the signed final report is exported with no second ceremony, and the chain row names its signature 87ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > reads the seal back and re-verifies it, with the signer and the act (GET /runs/:id/seal) 36ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > another organisation's session reads neither the seal nor the sealed document: 404, nothing in the body 54ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > shows the final run as the stored sealed document (GET /runs/:id/rendered) 16ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > a stored document changed after sealing reads as a mismatch, not intact 60ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record: what a rewrite of the mutable rows cannot hide > a sealed document removed from the snapshot reads as a mismatch, and nothing is re-rendered in its place 43ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record: what a rewrite of the mutable rows cannot hide > a run whose status was rewritten after finalizing reads as a mismatch, not as a run never sealed 104ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the export of the sealed record > exports the final run as its sealed document, signed and verified, and records the export id it prints 380ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record: a forgery by the app role is not the record > a run given final status, a forged sealed document and an unchained finalization row reads as a mismatch 131ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > a bundle export on the record (review round 1, DP-50) > a bundle export is recorded on the chain with the hash of the bytes sent 80ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the user access review: "No access review recorded" 27ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the audit trail integrity attestation: "No audit trail review recorded" 28ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the review list says none for each kind 17ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the user access review as of today names the review signed today, current 41ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > as of yesterday the latest is the one signed four months ago, and it is overdue 23ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the audit trail integrity attestation names the audit-trail review, not the access review 27ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > organisation B's reports and list see none of A's reviews 66ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the review list names A's records and the status of each kind 52ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > the Vault binding, as the runtime role (VR-12) > reads this organization's version under a share lock, and not another's 1281ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > the Vault binding, as the runtime role (VR-12) > binds the version hash, and refuses when the document recorded another 9ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > separation of duties for a lifecycle document, as the runtime role > the creator and the uploader are its authors; a third person may sign 49ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > separation of duties for a lifecycle document, as the runtime role > the recorded creator cannot be reassigned 11ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > the runtime role is the one production requires — LOGIN, not superuser, no BYPASSRLS 5ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > stability_studies is RLS-enabled AND forced (owner-bypass closed) 3ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > the policy keys on organization_id — the column writers stamp, not the nullable tenant_id adapter 2ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > a tenant-scoped read returns that tenant’s rows and no other tenant’s 14ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > a UUID in app.current_org_id does not blow up the integer tenant predicate 4ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > a cross-tenant read of a known row returns nothing 2ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > a tenant-scoped write succeeds and stays inside the tenant 6ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > a cross-tenant INSERT is refused by WITH CHECK, not silently accepted 4ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > a cross-tenant UPDATE and DELETE affect zero rows 5ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > an unscoped connection sees no tenant rows at all 4ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > uuid-native tenant schemas > no policy casts app.current_org_id straight to uuid any more 171ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > uuid-native tenant schemas > identity.current_org_id() returns NULL for the empty string instead of raising 4ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > governed mutation paths stay auditable under the runtime role > audit tables are append-only for the runtime role (INSERT yes, UPDATE/DELETE no) 3ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > governed mutation paths stay auditable under the runtime role > audit_logs refuses UPDATE and DELETE with the IMMUTABILITY_VIOLATION it declares 52ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > production boot posture, evaluated against this database > a superuser/owner connection is refused 64ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > production boot posture, evaluated against this database > the non-superuser runtime role raises no role-related failure 109ms
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > is true for the caller's own live program 21ms
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > is false for another organization's program 10ms
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > is false for a deleted program — and true only when the caller opts in by name 9ms
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > is false for a program only the legacy registry holds 6ms
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > answers the same with the organization as a digit string 3ms
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > throws VerificationUnavailableError, not false, when it cannot run 7ms
+ ✓ tests/db/program-ownership.dbtest.ts > the RBM site-risk read asks whether the caller owns the program, not whether it mentions it > refuses tenant B a read for tenant A's program, though B holds a KRI naming it (RLS enforcing) 4ms
+ ✓ tests/db/program-ownership.dbtest.ts > the RBM site-risk read asks whether the caller owns the program, not whether it mentions it > does not refuse tenant A its own program for having no RBM records yet 13ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a plain member cannot deliver: 403, no letter and no chain row (DP-61) 112ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > platform_send as app_service under RLS: 'sent', with the letter, the record and one chained row 96ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a refused correspondence write is not sent: 503, and no record or chain row claims it 58ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a refused chain row is not sent: the letter and the record roll back with it 56ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > external_pdf_export of a final report with no signature is refused: 409, nothing recorded 26ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > a delivery record refused by the database: 503, and no log line carries the subject, the letter or a recipient 53ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs never lists another tenant's run, whatever org the query names 75ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs lists the session tenant's own runs 35ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs records for the session tenant and user, whatever the body names 77ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs over another tenant's project is not found and computes nothing 16ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group is made in the session tenant by the session user, whatever the body names 20ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group over another tenant's project is refused 15ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be changed 15ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be snapshotted 13ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle cannot take another tenant's run 23ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle of the session tenant's own run is stored and records the session user 102ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery cannot take another tenant's run 26ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery of the session tenant's own run records the session user 76ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > the removed correspondence capture door writes nothing 28ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > RLS filters for the non-superuser runtime role > SELECT returns only the scoped tenant's rows 304ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > RLS filters for the non-superuser runtime role > UPDATE cannot reach another tenant's row 6ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > RLS filters for the non-superuser runtime role > DELETE cannot reach another tenant's row 3ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > RLS filters for the non-superuser runtime role > INSERT of a foreign tenant_id is refused by WITH CHECK 4ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > RLS filters for the non-superuser runtime role > an unscoped connection sees nothing at all, rather than everything 1ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > RLS filters for the non-superuser runtime role > RLS_ENFORCE=off compiles the policy to a no-op — the documented shadow mode 2ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > the same policy does NOT filter a superuser/owner connection > reads both tenants' rows with enforcement fully on 3ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > assessRlsCatalogPosture against a real catalog > flags a superuser runtime role as a failure 91ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > assessRlsCatalogPosture against a real catalog > does not flag the provisioned runtime role as superuser or BYPASSRLS 66ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > the harness policy matches the migration it stands in for > uses the same four clauses 0021_enable_rls_everywhere.sql installs 1ms
+ Test Files  10 passed (10)
+      Tests  116 passed (116)

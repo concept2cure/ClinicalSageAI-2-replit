@@ -24,7 +24,7 @@ import express from 'express';
 import request from 'supertest';
 
 const h = await vi.hoisted(async () => (await import('./_report-os-route-harness')).createReportOsHarness());
-const x = vi.hoisted(() => ({ domain: vi.fn(), segments: vi.fn(), anchor: vi.fn() }));
+const x = vi.hoisted(() => ({ domain: vi.fn(), segments: vi.fn(), anchor: vi.fn(), dossier: vi.fn() }));
 
 vi.mock('../../db', () => ({ db: h.db, pool: h.pool, getPool: () => h.pool, getDb: () => h.db, query: vi.fn(), transaction: vi.fn() }));
 vi.mock('../../auth', () => ({ authMiddleware: (_req: unknown, _res: unknown, next: () => void) => next() }));
@@ -43,6 +43,10 @@ vi.mock('../../services/report-os/segment', async (importOriginal) => ({
   deriveScopeSegments: x.segments,
 }));
 vi.mock('../../services/c2c/program-project-anchor', () => ({ resolveProgramProjectAnchor: x.anchor }));
+vi.mock('../../services/ana/lineage-dossier.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/ana/lineage-dossier')>()),
+  buildDocumentLineageDossier: x.dossier,
+}));
 vi.mock('../../services/auditService', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/auditService')>()),
   writeChainedAuditRow: h.audit,
@@ -181,5 +185,57 @@ describe('a run computed with no blocker', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.data.status).toBe('partial');
     expect(JSON.stringify(res.body.data.sections)).not.toMatch(/Status: final/);
+  });
+});
+
+/*
+ * P-26 (docs/LAUNCH_DEFINITION_OF_DONE.md): "Confidence is a measured figure or
+ * nothing." The evidence & provenance trace requires one, and it is the lineage
+ * engine's measured provenance completeness — the share of the document's text
+ * whose origin the span lineage records — not computeLineageConfidence's count
+ * of which records exist (30 + 25 + 15 + 10 + 10 + 5, clamped to 30–95).
+ */
+describe('the evidence & provenance trace', () => {
+  const TRACE = type('provenance.evidence_trace_report', 'Evidence & Provenance Trace Report', 'evidence_provenance', ['pharma', 'device', 'biotech']);
+  const dossier = (provenanceCompleteness: unknown) => ({
+    schemaVersion: '1.0', generatedAt: '2026-10-08T06:00:00Z', threadId: null,
+    ledger: {
+      artifact: { artifactPk: 41, artifactId: 'artifact_abc', title: 'Clinical Overview', type: 'ectd_section', category: 'clinical', version: 3, status: 'draft', ctdSection: '2.5' },
+      organization: { organizationId: 7, uuid: null, name: 'Org' }, project: { projectId: 11, name: 'HLV-333' },
+      citations: null, authoringPlan: null, auditLog: [], auditLogUnavailable: null,
+      signatures: [{ id: 's1' }], signaturesUnavailable: null, proposals: [],
+      runs: { totalRuns: 0, latestRunId: null, latestRunAt: null, modelsUsed: [] },
+    },
+    // Every record the old count rewarded: a version, a decision a person executed, a provenance event, a lineage row.
+    versionHistory: [{ version: 3, contentHash: 'h3', changeDescription: 'Human edit', contentLength: 1000, createdById: 3, createdAt: '2026-10-01T00:00:00Z', isCurrent: true }],
+    decisions: [{ id: 'd1', authoredBy: 'ana', decidedBy: 'human', contextType: 'authoring', recommendationSummary: 'x', confidence: 'firm', actionState: 'executed', rejectedById: null, approvedById: 3 }],
+    decisionSummary: { unavailable: null, total: 1, anaAuthored: 1, humanAuthored: 0, humanDecided: 1, approved: 1, rejected: 0, pending: 0 },
+    provenanceEvents: [{ eventId: 'e1', eventType: 'generation', eventAction: 'ai_generate', actorName: 'AnA', createdAt: '2026-10-01T00:00:00Z' }],
+    reasoning: [], humanControls: [],
+    dataLineage: [{ sourceObjectType: 'external_evidence', sourceObjectId: 'PMID:1', sourceTitle: 'S', linkageType: 'cited_by', transformationType: null, confidenceScore: null, confidenceBasis: null, aiModelUsed: null }],
+    provenanceCompleteness,
+  });
+  const runConfidence = () => (h.audit.mock.calls.find((c) => (c[1] as { action?: string })?.action === 'report_os.run_created')?.[1] as { details: { confidence: unknown } }).details.confidence;
+
+  beforeEach(() => x.dossier.mockReset());
+
+  it('its confidence is the document\'s measured provenance completeness, not a count of the records present', async () => {
+    x.dossier.mockResolvedValue(dossier({
+      percent: 64, contentLength: 1000, attributedChars: 640, unattributedChars: 360, staleChars: 0,
+      byKind: { fromSources: 140, authorAsserted: 500, machineDrafted: 0, machineDraftedUnaccepted: 0 },
+    }));
+    h.queued.select.push([TRACE]);
+    const res = await post({ scopeType: 'document', scopeId: 'artifact_abc', reportTypeId: TRACE.typeId });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(x.dossier).toHaveBeenCalledWith('artifact_abc', 7);
+    expect(runConfidence()).toBe(64);
+  });
+
+  it('a completeness that was not measured is no confidence at all, so the run stays below final', async () => {
+    x.dossier.mockResolvedValue(dossier(null));
+    h.queued.select.push([TRACE]);
+    const res = await post({ scopeType: 'document', scopeId: 'artifact_abc', reportTypeId: TRACE.typeId });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(runConfidence()).toBeNull();
   });
 });

@@ -81,6 +81,9 @@ export function dispatchAsOfDate(now: Date = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
 
+/** The Module 1 heading every IND submission's Form FDA 1571 is filed under. */
+const IND_FORM_1571_SECTION = '1.1';
+
 /**
  * The validator options for one stored sequence. The region and as-of date go
  * through so a date-effective, region-scoped acceptance rule can be judged;
@@ -98,6 +101,11 @@ export function dispatchAsOfDate(now: Date = new Date()): string {
  *     Investigator's Brochure or the general investigational plan, and the
  *     record makes no per-sequence claim, so nothing is reported as missing
  *     (it used to say "Required section 1.20 has no leaf" of every amendment);
+ *   - except its Form FDA 1571: every IND submission carries one (21 CFR 312;
+ *     P-20 follow-up, docs/LAUNCH_DEFINITION_OF_DONE.md), so a continuing US
+ *     IND sequence is held to the 1.1 form, as an error, and to nothing else.
+ *     d155ef099 exempted continuing sequences from every requirement, which let
+ *     an IND amendment with no 1571 clear the structural gate;
  *   - an unmodelled region or kind keeps the region profile's list as
  *     informative warnings, as before.
  */
@@ -120,7 +128,16 @@ export function readinessOptionsForSequence(
               `${regulated.kind.toUpperCase()} application, so this sequence cannot be validated, frozen or dispatched without it.`,
           },
         }
-      : {};
+      : regulated.jurisdiction === 'US' && regulated.kind === 'ind'
+        ? {
+            requiredByRegulation: {
+              codes: [IND_FORM_1571_SECTION],
+              basis:
+                'Every IND submission carries a Form FDA 1571 (21 CFR 312), filed under 1.1 (Forms), so this ' +
+                'sequence cannot be validated, frozen or dispatched without it.',
+            },
+          }
+        : {};
   return {
     ...sections,
     isOriginalSequence,

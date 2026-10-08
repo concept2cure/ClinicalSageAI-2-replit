@@ -172,18 +172,18 @@ describe('IndFormsPanel — real FDA forms engine', () => {
     expect(msg).toMatch(/did not report which boxes are left on the form/);
   });
 
-  it('a program UUID project takes the audited-unplaced path and the note says exactly that', async () => {
+  /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): Save to dossier for a
+     program with no project record answers 409, not 200 with governed:false.
+     The panel reports the refusal in the server's words, as an error, and
+     never as a save. */
+  it('a program with no project record: the 409 is reported as nothing saved, never as a save or an audit-logged build', async () => {
     const uuid = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
     (window as any).C2C_PROJECT = { id: uuid };
+    const refusal = 'This program has no project record, so it has no dossier to save the form into. Nothing was saved. An administrator can give the program its project record.';
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
       if (method === 'POST' && url === '/api/ind-forms/1571/artifact') {
-        // The server's audited-unplaced degradation contract (no legacy project
-        // row → no registry placement; the audit row IS the record).
-        return {
-          ok: true, status: 200,
-          json: async () => ({ governed: false, audited: true, artifactId: null, formId: 'FDA_1571', projectId: null, programId: uuid, ready: false, missingRequired: ['drugName'], contentHash: 'abc' }),
-        } as Response;
+        return { ok: false, status: 409, json: async () => ({ error: { code: 'PROGRAM_NOT_ANCHORED', message: refusal } }) } as Response;
       }
       return { ok: true, status: 200, json: async () => ({}) } as Response;
     });
@@ -199,14 +199,28 @@ describe('IndFormsPanel — real FDA forms engine', () => {
       expect(call![2]).toMatchObject({ projectIdent: uuid });
       expect(call![2]).not.toHaveProperty('projectId');
     });
-    // The note reports the degradation honestly: audit-logged, NOT placed —
-    // never "saved to the dossier". QA 2026-10-08 (j7, finding 7): it arrived
-    // under the success tick and blamed a "legacy project row"; nothing was
-    // saved to the dossier, so it is an error, and it names what is missing
-    // (the program's project record, P-19) and who can supply it.
-    const unplaced = /audit-logged .*not placed in the dossier registry: this program has no project record, so nothing is in its dossier\. An administrator can give the program its project record\./;
-    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(unplaced), 'error'));
-    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/saved to the dossier|legacy project row/));
+    await waitFor(() => expect(note).toHaveBeenCalledWith(`FDA 1571 was not saved to the dossier. ${refusal}`, 'error'));
+    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/saved to the dossier as|audit-logged|legacy project row/), expect.anything());
+  });
+
+  /* The 200 governed:false answer is gone from the server; a panel that still
+     read one as "built and audit-logged" would describe a save nobody made. */
+  it('a 200 with no artifact id is not reported as any kind of save', async () => {
+    (window as any).C2C_PROJECT = { id: '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70' };
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
+      if (method === 'POST' && url === '/api/ind-forms/1571/artifact') {
+        return { ok: true, status: 200, json: async () => ({ governed: false, audited: true, artifactId: null, ready: false, missingRequired: [] }) } as Response;
+      }
+      return { ok: true, status: 200, json: async () => ({}) } as Response;
+    });
+    const note = vi.fn();
+    render(<IndFormsPanel note={note} />);
+    await screen.findByText(/FDA 1571/);
+    fireEvent.click(screen.getAllByRole('button', { name: /Save to dossier/ })[0]);
+    await waitFor(() => expect(note).toHaveBeenCalled());
+    expect(note).toHaveBeenCalledWith(expect.stringMatching(/^Couldn’t save form 1571/), 'error');
+    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/audit-logged/), expect.anything());
   });
 
   it('does NOT save (or guess a project) when no project is open', async () => {
@@ -489,23 +503,6 @@ describe('IndFormsPanel — the program record fills the forms', () => {
     const body = apiRequest.mock.calls.find((c) => String(c[1]).endsWith('/build'))![2];
     expect(body).not.toHaveProperty('studyPhase');
     expect(body).not.toHaveProperty('indType');
-  });
-
-  /* QA 2026-10-08 (j7, finding 3c): with a program open the panel offered only
-     Phase and Serial number, so sponsor_address and ind_type — required on the
-     1571, held by no program column — could never be supplied. */
-  it('with a program open, the sponsor address and IND type have inputs and go up where the build reads them', async () => {
-    mockProgramListing();
-    render(<IndFormsPanel note={vi.fn()} />);
-    await screen.findByText(/FDA 1571/);
-    fireEvent.change(screen.getByLabelText('Sponsor address'), { target: { value: '1 Main St, Boston MA 02110, US' } });
-    fireEvent.change(screen.getByLabelText('IND type'), { target: { value: 'Commercial IND' } });
-    fireEvent.change(screen.getByLabelText('Phase'), { target: { value: 'Phase 2' } });
-    fireEvent.click(screen.getAllByRole('button', { name: /Build & check/ })[0]);
-    await waitFor(() => expect(apiRequest.mock.calls.some((c) => String(c[1]).endsWith('/build'))).toBe(true));
-    const body = apiRequest.mock.calls.find((c) => String(c[1]).endsWith('/build'))![2];
-    expect(body).toMatchObject({ projectIdent: PROGRAM_UUID, sponsor: { address: '1 Main St, Boston MA 02110, US' }, indType: 'Commercial IND', studyPhase: 'Phase 2' });
-    expect(body).not.toHaveProperty('sponsorAddress');
   });
 
   it('with no program open it still works standalone and claims no record', async () => {

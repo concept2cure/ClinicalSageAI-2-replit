@@ -1,0 +1,17 @@
+# Scoped tsc (tsc -p a tsconfig extending the repo's, including only the 36 TypeScript files this change touches; noEmit).
+# 13 errors, none in a file this change touches: ambient-declaration gaps of a scoped config
+# (CSS modules, import.meta.env, Express request augmentation, jsonwebtoken/qrcode/pdf-parse types) in untouched files.
+
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(23,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/mdx/lib/sampleMode.ts(37,24): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+client/src/concept2cure/v2/surfaceActions.ts(305,19): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+server/middleware/establishRequestTenantScope.ts(163,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(165,9): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(228,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/memory/document-text-extraction.ts(41,54): error TS2339: Property 'default' does not exist on type 'typeof import("node_modules/pdf-parse/dist/pdf-parse/esm/index")'.
+server/services/mfaService.ts(15,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. 'node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+server/services/mfaService.ts(16,25): error TS7016: Could not find a declaration file for module 'qrcode'. 'node_modules/qrcode/lib/index.js' implicitly has an 'any' type.
+server/services/token-revocation.ts(20,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. 'node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. 'node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.

@@ -653,6 +653,85 @@ describe('the open program supplies the form facts', () => {
   });
 });
 
+describe('the sponsor address and IND type are recorded on the program', () => {
+  /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): the sponsor address
+     and the IND type are stored on the program, in additive columns
+     (migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql),
+     and the 1571 build reads them from the record. They used to travel with
+     every build request, so a build from anywhere else had none. */
+  it('PUT /program-facts records the sponsor address and IND type on the program, and the 1571 build reads them from the record', async () => {
+    const programId = await seedProgram({ code: 'BX-906', name: 'BX-906 (IND)', productName: 'Product 906', indication: 'V' });
+    const put = await request(app).put('/api/ind-forms/program-facts').send({
+      projectIdent: 'BX-906', sponsorAddress: ' 2 Kendall Sq, Cambridge MA 02139, US ', indType: 'Research IND',
+    });
+    expect(put.status, JSON.stringify(put.body)).toBe(200);
+    expect(put.body).toMatchObject({ programId, sponsorAddress: '2 Kendall Sq, Cambridge MA 02139, US', indType: 'Research IND' });
+    const row = await harness.pglite.query(`SELECT sponsor_address, ind_type FROM regulatory_programs WHERE id = $1`, [programId]);
+    expect(row.rows[0]).toEqual({ sponsor_address: '2 Kendall Sq, Cambridge MA 02139, US', ind_type: 'Research IND' });
+
+    // Nothing in the build request: the record supplies both.
+    const built = await request(app).post('/api/ind-forms/FDA_1571/build').send({ projectIdent: 'BX-906' });
+    expect(built.status).toBe(200);
+    expect(built.body.fields).toMatchObject({ sponsor_address: '2 Kendall Sq, Cambridge MA 02139, US', ind_type: 'Research IND' });
+    expect(built.body.missingRequired).not.toContain('sponsor_address');
+    expect(built.body.missingRequired).not.toContain('ind_type');
+
+    // The listing shows the recorded values, and what the builders receive.
+    const listed = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-906' });
+    expect(listed.body.program).toMatchObject({ sponsorAddress: '2 Kendall Sq, Cambridge MA 02139, US', indType: 'Research IND' });
+    expect(listed.body.program.formMetadata).toMatchObject({ sponsor: { address: '2 Kendall Sq, Cambridge MA 02139, US' }, indType: 'Research IND' });
+
+    // The write is audited with the fields it changed.
+    const auditService = (await import('../../services/auditService')).default as unknown as { logAction: ReturnType<typeof vi.fn> };
+    expect(auditService.logAction).toHaveBeenCalledWith(expect.objectContaining({
+      action: 'ind_form.program_facts.update', resourceType: 'regulatory_program', resourceId: programId,
+      metadata: expect.objectContaining({ fields: ['sponsorAddress', 'indType'] }),
+    }));
+
+    // A blank clears the address; an absent field is left as recorded.
+    const cleared = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-906', sponsorAddress: '' });
+    expect(cleared.status).toBe(200);
+    const after = await harness.pglite.query(`SELECT sponsor_address, ind_type FROM regulatory_programs WHERE id = $1`, [programId]);
+    expect(after.rows[0]).toEqual({ sponsor_address: null, ind_type: 'Research IND' });
+  });
+
+  it('PUT /program-facts refuses an IND type outside the registry, an IND type on a program that is not an IND, an empty body, and another organisation\'s program — writing nothing', async () => {
+    const ind = await seedProgram({ code: 'BX-907', name: 'BX-907 (IND)', productName: 'Product 907' });
+    await seedProgram({ code: 'BX-908', name: 'BX-908 (NDA)', productName: 'Product 908', programType: 'NDA' });
+    await seedProgram({ org: 2, code: 'BX-909', name: 'BX-909 (IND)', productName: 'Product 909' });
+
+    const unknown = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-907', indType: 'Phase 1' });
+    expect(unknown.status).toBe(400);
+    expect(unknown.body.error.message).toMatch(/Commercial IND/);
+    const notInd = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-908', indType: 'Research IND' });
+    expect(notInd.status).toBe(400);
+    expect(notInd.body.error.message).toMatch(/IND type/);
+    const empty = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-907' });
+    expect(empty.status).toBe(400);
+    const numeric = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: '12', sponsorAddress: 'x' });
+    expect(numeric.status).toBe(400);
+    const foreign = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-909', sponsorAddress: 'Somewhere' });
+    expect(foreign.status).toBe(404);
+
+    const rows = await harness.pglite.query(
+      `SELECT code, sponsor_address, ind_type FROM regulatory_programs WHERE code IN ('BX-907','BX-908','BX-909') ORDER BY code`,
+    );
+    expect(rows.rows).toEqual([
+      { code: 'BX-907', sponsor_address: null, ind_type: null },
+      { code: 'BX-908', sponsor_address: null, ind_type: null },
+      { code: 'BX-909', sponsor_address: null, ind_type: null },
+    ]);
+    expect(ind).toBeTruthy();
+  });
+
+  it('a stated value in the build request still wins over the recorded one', async () => {
+    await seedProgram({ code: 'BX-910A', name: 'BX-910A (IND)', productName: 'Product 910A' });
+    await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-910A', sponsorAddress: 'Recorded St', indType: 'Commercial IND' });
+    const built = await request(app).post('/api/ind-forms/FDA_1571/build').send({ projectIdent: 'BX-910A', indType: 'Treatment IND' });
+    expect(built.body.fields).toMatchObject({ sponsor_address: 'Recorded St', ind_type: 'Treatment IND' });
+  });
+});
+
 /* QA 2026-10-08 (j7, finding 7): "Save to dossier" for the open program
    answered governed:false — "this program has no legacy project row for the
    registry yet" — and nothing was saved. P-19 gives every program its project
@@ -678,11 +757,26 @@ describe('Save to dossier for an open program', () => {
     expect(row.rows[0]).toEqual({ project_id: Number(p.rows[0].id), organization_id: 1 });
   });
 
-  it('a program with no project record is told that nothing was saved to its dossier', async () => {
-    await seedProgram({ code: 'BX-905', name: 'BX-905 (IND)', productName: 'Product 905' });
+  /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): Save to dossier for a
+     program with no project record answers 409, not 200 with governed:false.
+     A 200 is a success status over a save that placed nothing. */
+  it('a program with no project record is refused 409 PROGRAM_NOT_ANCHORED, and nothing is written', async () => {
+    const programId = await seedProgram({ code: 'BX-905', name: 'BX-905 (IND)', productName: 'Product 905' });
+    const auditService = (await import('../../services/auditService')).default as unknown as { logAction: ReturnType<typeof vi.fn> };
+    auditService.logAction.mockClear();
+    const countArtifacts = async () => Number(((await harness.pglite.query(`SELECT count(*)::int AS n FROM concept2cure_artifacts`)).rows[0] as { n: number }).n);
+    const before = await countArtifacts();
     const res = await request(app).post('/api/ind-forms/FDA_1571/artifact').send({ projectIdent: 'BX-905' });
-    expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ governed: false, artifactId: null, audited: true });
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.error.code).toBe('PROGRAM_NOT_ANCHORED');
+    expect(res.body.error.message).toMatch(/no project record/);
+    expect(res.body.error.message).toMatch(/Nothing was saved/);
+    expect(res.body).not.toHaveProperty('governed');
+    expect(res.body).not.toHaveProperty('audited');
+    // No artifact row, and no "unplaced" audit row standing in for one.
+    expect(await countArtifacts()).toBe(before);
+    expect(auditService.logAction.mock.calls.some((c) => (c[0] as { action?: string })?.action === 'ind_form.artifact.unplaced')).toBe(false);
+    expect(programId).toBeTruthy();
   });
 });
 

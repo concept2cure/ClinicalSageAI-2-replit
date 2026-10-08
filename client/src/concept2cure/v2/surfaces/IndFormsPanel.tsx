@@ -20,15 +20,18 @@
  * the open program's record (regulatory_programs + its organisation) by the
  * SERVER, on every request. They are shown here read-only, exactly as the forms
  * will carry them, because a regulated filing's sponsor name must not depend on
- * who typed it into which panel. Only what the record has no column for — the
- * sponsor's address, the IND type, the study phase, the submission's serial
- * number — is entered here, and an unfilled field arrives at the server as
- * absent so `missingRequired` stays truthful. Those four travel with each
- * request: the build reads them from the request body merged over the record
- * (ind-forms.routes metaForRequest → statedFields), which is the only store
- * the build has for them (QA 2026-10-08, j7 finding 3c: with a program open
- * there was no input for sponsor_address or ind_type, so Build & check could
- * never go green).
+ * who typed it into which panel.
+ *
+ * The sponsor's address and the IND type are recorded ON THE PROGRAM too
+ * (P-20 follow-up, 2026-10-08; regulatory_programs.sponsor_address / ind_type).
+ * They are edited here and saved to the record with "Save to program"
+ * (PUT /api/ind-forms/program-facts); every build reads the recorded values,
+ * so with a program open they are not sent with a build. They used to travel
+ * with each request (QA 2026-10-08, j7 finding 3c), so the program never held
+ * them. Only the study phase and the submission's serial number, which belong
+ * to one submission rather than to the program, are still sent with each
+ * request, and an unfilled one arrives as absent so `missingRequired` stays
+ * truthful.
  *
  * The IND type and the phase are regulated choices: they start on "Not stated
  * — choose" and send nothing until chosen (P-21, 2026-10-08; the phase used to
@@ -70,6 +73,9 @@ interface ProgramFacts {
   productName: string | null;
   indication: string | null;
   applicationNumber: string | null;
+  /** Recorded on the program (20261008b); null when not stated. */
+  sponsorAddress?: string | null;
+  indType?: string | null;
   formMetadata: Record<string, unknown>;
 }
 
@@ -156,6 +162,49 @@ const shortFormId = (formId: string): string => formId.replace(/^FDA[_-]?/i, '')
 
 const bytesLabel = (n: number): string => (n < 1024 ? `${n} B` : n < 1024 * 1024 ? `${Math.round(n / 1024)} KB` : `${(n / (1024 * 1024)).toFixed(1)} MB`);
 
+/** The address and IND type as the program records them ('' when not stated). */
+type RecordedFacts = { sponsorAddress: string; indType: string };
+
+/** Show the program's recorded address and IND type in the inputs, and keep
+ *  them as the baseline an edit is compared with. No program: nothing changes. */
+function showRecordedFacts<M extends RecordedFacts>(
+  prog: ProgramFacts | null,
+  setRecorded: (r: RecordedFacts) => void,
+  setMeta: React.Dispatch<React.SetStateAction<M>>,
+): void {
+  if (!prog) return;
+  const recorded = { sponsorAddress: prog.sponsorAddress ?? '', indType: prog.indType ?? '' };
+  setRecorded(recorded);
+  setMeta((m) => ({ ...m, ...recorded }));
+}
+
+/** Whether the inputs hold an edit of the recorded address or IND type. */
+function factsDiffer(meta: RecordedFacts, recorded: RecordedFacts): boolean {
+  return meta.sponsorAddress.trim() !== recorded.sponsorAddress.trim() || meta.indType !== recorded.indType;
+}
+
+/** An IND program, or no program (standalone): the only cases with an IND type. */
+function isIndProgram(program: ProgramFacts | null): boolean {
+  return !program || (program.programType ?? '').trim().toUpperCase() === 'IND';
+}
+
+/** "Save to program", and what an unsaved edit means for the forms. */
+function ProgramFactsSave({ show, dirty, busy, onSave }: { show: boolean; dirty: boolean; busy: string | null; onSave: () => void }) {
+  if (!show) return null;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', margin: '-4px 0 12px', fontSize: 12 }}>
+      <button className="nda-open" onClick={onSave} disabled={busy != null || !dirty}>
+        {I.database} {busy === 'facts' ? 'Saving…' : 'Save to program'}
+      </button>
+      {dirty && (
+        <span role="status" style={{ color: 'var(--text-400)' }}>
+          Not saved. The forms read the program’s recorded sponsor address and IND type until you save these to the program.
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function IndFormsPanel({ note }: { note: FireToast }) {
   const [forms, setForms] = useState<string[]>([]);
   const [plans, setPlans] = useState<Record<string, RenderPlan>>({});
@@ -164,6 +213,9 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
   const [state, setState] = useState<'loading' | 'ready' | 'forbidden' | 'error'>('loading');
   const [meta, setMeta] = useState({ sponsorName: '', sponsorAddress: '', drugName: '', indNumber: '', indType: '', studyPhase: '', indication: '', serialNumber: '' });
   const [choices, setChoices] = useState<{ indType: string[]; studyPhase: string[] }>({ indType: [], studyPhase: [] });
+  /* With a program open, the address and IND type as RECORDED on it, and the
+     edit of them not yet saved. The forms read the recorded pair. */
+  const [recordedFacts, setRecordedFacts] = useState({ sponsorAddress: '', indType: '' });
   const [checks, setChecks] = useState<Record<string, BuildResult>>({});
   const [busy, setBusy] = useState<string | null>(null);
   // One hidden file picker per form, opened by that row's button. The picker
@@ -195,7 +247,9 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
       const defs = (Array.isArray(json.formDefinitions) ? json.formDefinitions : []) as FormDefinition[];
       setChoices({ indType: registryOptions(defs, 'FDA_1571', 'ind_type'), studyPhase: registryOptions(defs, 'FDA_1571', 'phase_of_study') });
       setPlans(Object.fromEntries(((json.renderPlans ?? []) as RenderPlan[]).map((p) => [p.formId, p])));
-      setProgram((json.program ?? null) as ProgramFacts | null);
+      const prog = (json.program ?? null) as ProgramFacts | null;
+      setProgram(prog);
+      showRecordedFacts(prog, setRecordedFacts, setMeta);
       const byForm: Record<string, Placement[]> = {};
       for (const p of (json.placements ?? []) as Placement[]) (byForm[p.formId] ??= []).push(p);
       setPlacements(byForm);
@@ -211,13 +265,42 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
     // absent so missingRequired is truthful; the record-backed fields are NOT
     // echoed back from here — the server reads them itself, so there is one
     // source for them rather than a copy this panel could hold stale.
-    const { sponsorAddress, ...flat } = meta;
+    const { sponsorAddress, indType, ...flat } = meta;
     const entered: Record<string, unknown> = Object.fromEntries(Object.entries(flat).filter(([, v]) => v.trim() !== ''));
+    // With a program open the address and IND type are the program's RECORDED
+    // values, which the server reads itself; sending the panel's copy would
+    // make an unsaved edit look recorded. Standalone, they are sent as typed.
+    if (programIdent) return { ...entered, projectIdent: programIdent };
+    if (indType.trim() !== '') entered.indType = indType.trim();
     // The 1571 builder reads the sponsor's address from `sponsor.address`
     // (SponsorInfo), the shape the master-data path fills.
     if (sponsorAddress.trim() !== '') entered.sponsor = { address: sponsorAddress.trim() };
-    return programIdent ? { ...entered, projectIdent: programIdent } : entered;
+    return entered;
   }, [meta, programIdent]);
+
+  /* The program's sponsor address and IND type, saved to its record
+     (P-20 follow-up). A blank address clears it; the IND type is sent only for
+     an IND program, the only kind that has one. The record is re-read after,
+     so what the panel shows is what the forms will read. */
+  const factsDirty = programIdent != null && factsDiffer(meta, recordedFacts);
+  const indProgram = isIndProgram(program);
+  const saveFacts = useCallback(async () => {
+    if (!programIdent) return;
+    setBusy('facts');
+    try {
+      const body: Record<string, unknown> = { projectIdent: programIdent, sponsorAddress: meta.sponsorAddress.trim() };
+      if (indProgram) body.indType = meta.indType === '' ? null : meta.indType;
+      const res = await apiRequest('PUT', '/api/ind-forms/program-facts', body);
+      const json = await res.json().catch(() => null);
+      if (res.status === 401 || res.status === 403) { note('Saving to the program record requires the regulatory-author role.', 'error'); return; }
+      if (!res.ok) {
+        note(`Couldn’t save to the program record — ${serverMessage(json) ?? `the save was refused (HTTP ${res.status})`}.`, 'error');
+        return;
+      }
+      note(indProgram ? 'Sponsor address and IND type saved to the program record.' : 'Sponsor address saved to the program record.');
+      void load();
+    } finally { setBusy(null); }
+  }, [programIdent, meta.sponsorAddress, meta.indType, indProgram, note, load]);
 
   const check = useCallback(async (formId: string) => {
     setBusy('check-' + formId);
@@ -313,9 +396,8 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
   // downloaded file). Needs the open program's identity — without it we do NOT
   // guess; we tell the user to open a project. A program UUID/code is placed
   // against the program's project record (resolveProgramProjectAnchor; every
-  // program has one, P-19); a program without one gets the server's
-  // audited-unplaced answer, reported as the error it is. The note says
-  // exactly which of the two happened.
+  // program has one, P-19); a program without one is refused 409 and nothing
+  // is saved (P-20 follow-up: it was a 200 "audited-unplaced" answer).
   const save = useCallback(async (formId: string) => {
     const ident = readProjectIdent();
     if (ident == null) {
@@ -329,6 +411,12 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
       const json = await res.json().catch(() => null);
       if (res.status === 401 || res.status === 403) { note('Saving a governed artifact requires the regulatory-author role.', 'error'); return; }
       if (res.status === 404) { note('Couldn’t save — the open project isn’t in your organization.', 'error'); return; }
+      if (res.status === 409) {
+        // The program has no project record, so it has no dossier: the server
+        // says so and saved nothing. Its own sentence names who can close it.
+        note(`FDA ${shortFormId(formId)} was not saved to the dossier. ${serverMessage(json) ?? 'This program has no project record, so nothing was saved.'}`, 'error');
+        return;
+      }
       const missing = Array.isArray(json?.missingRequired) ? json.missingRequired.length : 0;
       /* TWO FACTS, NOT ONE. `ready` answers "is the project DATA complete" —
          this artifact stores a field map, not a PDF — and `sponsorMustComplete`
@@ -350,20 +438,6 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
             : ' (ready)';
       if (res.ok && json?.artifactId) {
         note(`FDA ${shortFormId(formId)} saved to the dossier as a governed artifact${readiness}.`);
-        return;
-      }
-      if (res.ok && json?.audited === true && json?.governed === false) {
-        // The server built the form and audit-logged it with its content hash,
-        // but did NOT place it in the dossier registry: the program has no
-        // project record. Every program a client can open has one (P-19,
-        // 2026-10-08), so this is a gap to report, not a result: an error, and
-        // it names who can close it. (QA j7, finding 7: it arrived under the
-        // success tick and blamed a "legacy project row".)
-        note(
-          `FDA ${shortFormId(formId)} built and audit-logged (content hash recorded)${readiness}, but not placed in the dossier registry: ` +
-            'this program has no project record, so nothing is in its dossier. An administrator can give the program its project record.',
-          'error',
-        );
         return;
       }
       // This read only `error.message`, so a server that put its sentence in
@@ -464,11 +538,15 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
             <label style={{ fontSize: 12 }}>Indication<input className="c2c-input" style={{ height: 30 }} value={meta.indication} onChange={(e) => setMeta({ ...meta, indication: e.target.value })} /></label>
           </>
         )}
-        <label style={{ fontSize: 12 }}>Sponsor address<input className="c2c-input" style={{ height: 30 }} value={meta.sponsorAddress} onChange={(e) => setMeta({ ...meta, sponsorAddress: e.target.value })} placeholder={program ? 'not on the program record' : undefined} /></label>
-        <label style={{ fontSize: 12 }}>IND type<select className="c2c-input" style={{ height: 30 }} value={meta.indType} onChange={(e) => setMeta({ ...meta, indType: e.target.value })}><option value="">{NOT_STATED}</option>{choices.indType.map((t) => <option key={t} value={t}>{t}</option>)}</select></label>
+        <label style={{ fontSize: 12 }}>Sponsor address<input className="c2c-input" style={{ height: 30 }} value={meta.sponsorAddress} onChange={(e) => setMeta({ ...meta, sponsorAddress: e.target.value })} placeholder={program ? 'not recorded on the program' : undefined} /></label>
+        {indProgram && (
+          <label style={{ fontSize: 12 }}>IND type<select className="c2c-input" style={{ height: 30 }} value={meta.indType} onChange={(e) => setMeta({ ...meta, indType: e.target.value })}><option value="">{NOT_STATED}</option>{choices.indType.map((t) => <option key={t} value={t}>{t}</option>)}</select></label>
+        )}
         <label style={{ fontSize: 12 }}>Phase<select className="c2c-input" style={{ height: 30 }} value={meta.studyPhase} onChange={(e) => setMeta({ ...meta, studyPhase: e.target.value })}><option value="">{NOT_STATED}</option>{choices.studyPhase.map((p) => <option key={p} value={p}>{p}</option>)}</select></label>
         <label style={{ fontSize: 12 }}>Serial number<input className="c2c-input" style={{ height: 30 }} value={meta.serialNumber} onChange={(e) => setMeta({ ...meta, serialNumber: e.target.value })} placeholder="e.g. 0000" /></label>
       </div>
+
+      <ProgramFactsSave show={programIdent != null} dirty={factsDirty} busy={busy} onSave={() => void saveFacts()} />
 
       {programIdent && (
         <section className="indf-target" aria-label="Where completed forms are filed">

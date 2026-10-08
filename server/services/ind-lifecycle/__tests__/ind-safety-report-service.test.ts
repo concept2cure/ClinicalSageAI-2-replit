@@ -170,15 +170,81 @@ describe('P-20: with expectedness not recorded there is no verdict', () => {
     expect(c.rationale).not.toMatch(/Not an individual expedited|not reportable|event is expected/i);
   });
 
-  it('expectedness not recorded is NOT_DETERMINED whatever else was stated — never NOT_REPORTABLE (P-20)', () => {
+  it('expectedness not recorded on a serious, suspected event is NOT_DETERMINED — expectedness decides it', () => {
     for (const over of [
-      { causality: 'unrelated' as Causality },
-      { eventType: 'AE' as EventType },
       { seriousnessCriteria: 'hospitalization' as const, causality: 'possible' as Causality },
+      { seriousnessCriteria: 'death' as const, causality: 'definite' as Causality },
+      { eventType: 'SUSAR' as EventType, seriousnessCriteria: 'medically_important' as const, causality: 'probable' as Causality },
     ]) {
       const c = classifyIndSafetyReport(makeEvent({ ...over, expectedness: '  ' }));
       expect(c.obligation, JSON.stringify(over)).toBe('NOT_DETERMINED');
     }
+  });
+});
+
+describe('P-20 follow-up: "not determined" only where expectedness decides the outcome', () => {
+  /* Follow-up decision on P-20 (docs/LAUNCH_DEFINITION_OF_DONE.md, from the
+     second IND pass): an event recorded as non-serious, or as not suspected, is
+     not expedited on those stated facts, and the verdict says so. Expectedness
+     is the deciding determination only for a serious, suspected event. */
+  it('a NOT-SUSPECTED event with expectedness unrecorded is not reportable, on the stated causality', () => {
+    for (const causality of ['unrelated', 'unlikely'] as Causality[]) {
+      const c = classifyIndSafetyReport(
+        makeEvent({ seriousnessCriteria: 'life_threatening', causality, expectedness: null }),
+      );
+      expect(c.obligation, causality).toBe('NOT_REPORTABLE');
+      expect(c.reportingWindowDays).toBeNull();
+      expect(c.deadline).toBeNull();
+      // Nothing is inferred about expectedness: it stays unrecorded.
+      expect(c.determinations.unexpected).toBeNull();
+      expect(c.determinations.expectednessRecorded).toBe(false);
+      expect(c.rationale).toMatch(/not a suspected adverse reaction/);
+      expect(c.rationale).toMatch(new RegExp(`causality stated as ${causality}`));
+      expect(c.rationale).toMatch(/Expectedness is not recorded; it does not change this verdict/);
+      expect(c.rationale).not.toMatch(/Not determined/);
+    }
+  });
+
+  it('a NON-SERIOUS event with expectedness unrecorded is not reportable, on the stated seriousness', () => {
+    const c = classifyIndSafetyReport(
+      makeEvent({ eventType: 'AE' as EventType, causality: 'probable', expectedness: undefined }),
+    );
+    expect(c.obligation).toBe('NOT_REPORTABLE');
+    expect(c.determinations.serious).toBe(false);
+    expect(c.determinations.unexpected).toBeNull();
+    expect(c.regulatoryBasis).toContain('312.32(c)(1)');
+    expect(c.rationale).toMatch(/non-serious/);
+    expect(c.rationale).toMatch(/Expectedness is not recorded; it does not change this verdict/);
+    expect(c.rationale).not.toMatch(/Not determined/);
+  });
+
+  it('non-serious AND not suspected names both stated facts', () => {
+    const c = classifyIndSafetyReport(
+      makeEvent({ eventType: 'AE' as EventType, causality: 'unrelated', expectedness: null }),
+    );
+    expect(c.obligation).toBe('NOT_REPORTABLE');
+    expect(c.rationale).toMatch(/not a suspected adverse reaction/);
+    expect(c.rationale).toMatch(/non-serious/);
+  });
+
+  it('the assembled report of such an event has no report to file and reads "not individually reportable", with expectedness "not recorded"', () => {
+    const r = assembleIndSafetyReport(makeEvent({ eventType: 'AE' as EventType, causality: 'possible', expectedness: null }));
+    expect(r.classification.obligation).toBe('NOT_REPORTABLE');
+    expect(r.amendmentIntent).toBeNull();
+    const ident = r.document.sections.find((s) => s.key === 'identification')!.body;
+    expect(ident).toContain('IND Safety Report (not individually reportable).');
+    const assessment = r.document.sections.find((s) => s.key === 'assessment')!.body;
+    expect(assessment).toContain('Expectedness: not recorded');
+  });
+
+  it('a recorded expectedness on a non-serious or not-suspected event keeps its existing verdict', () => {
+    const notSuspected = classifyIndSafetyReport(makeEvent({ causality: 'unrelated', expectedness: 'unexpected' }));
+    expect(notSuspected.obligation).toBe('NOT_REPORTABLE');
+    expect(notSuspected.determinations.unexpected).toBe(true);
+    expect(notSuspected.rationale).not.toMatch(/Expectedness is not recorded/);
+    const nonSerious = classifyIndSafetyReport(makeEvent({ eventType: 'AE' as EventType, causality: 'possible', expectedness: 'unexpected' }));
+    expect(nonSerious.obligation).toBe('NOT_REPORTABLE');
+    expect(nonSerious.regulatoryBasis).toContain('312.33');
   });
 
   it('a not-determined verdict produces no report to file and says so in the document', () => {

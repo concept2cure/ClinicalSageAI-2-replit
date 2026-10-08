@@ -294,11 +294,21 @@ const RO_PRESETS: Record<string, Preset[]> = {
   ],
 };
 
-/** The standard packs for a segment that hold at least one report this program's
- *  catalog runs. A pack of reports no engine computes is not offered as a pack. */
+/** The standard packs for a segment, each holding only the reports this
+ *  program's catalog computes; a pack left with none is not offered. P-26
+ *  (2026-10-08): packs list only types an engine computes. The engine-less
+ *  ones are listed once, as not computed in this release (roNotComputed), not
+ *  as tiles inside packs. */
 function roPresetsForSeg(seg: string, types: ReportType[]): Preset[] {
   const runs = new Set(types.filter((t) => t.runnable).map((t) => t.typeId));
-  return (RO_PRESETS[seg] || RO_PRESETS.pharma).filter((p) => p.types.some((id) => runs.has(id)));
+  return (RO_PRESETS[seg] || RO_PRESETS.pharma)
+    .map((p) => ({ ...p, types: p.types.filter((id) => runs.has(id)) }))
+    .filter((p) => p.types.length > 0);
+}
+
+/** The program's catalog types no engine computes, by label, each once. */
+function roNotComputed(types: ReportType[]): string[] {
+  return [...new Set(types.filter((t) => !t.runnable).map((t) => t.label))];
 }
 
 /* ── Guardrail ──
@@ -879,8 +889,11 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog }: { dashb
   }
 
   /* preset pack -- grid of governed report cards */
-  // A pack's types that apply to this program (the catalog is the program's).
-  const types = (dashboard.types || []).map(id => catalog.find(t => t.typeId === id)).filter(Boolean) as ReportType[];
+  // A pack's types that apply to this program (the catalog is the program's)
+  // and that an engine computes (P-26): an engine-less type is listed once on
+  // the canvas, never as a tile inside a pack.
+  const types = ((dashboard.types || []).map(id => catalog.find(t => t.typeId === id)).filter(Boolean) as ReportType[])
+    .filter(t => t.runnable);
   return (
     <div className="ro-dash">
       {/* "AnA-curated" claimed a curator. The pack is RO_PRESETS[segment], a
@@ -904,15 +917,6 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog }: { dashb
           /* A type that does not run at this scope (research_admin.scorecard runs
              over a program group or account) says so instead of offering a run
              the server refuses. */
-          /* No engine computes it: said so, never run as the readiness digest
-             under its title (QA 2026-10-08, j8). */
-          if (!t.runnable) return (
-            <div key={t.typeId} className="ro-pack-card is-locked" data-testid="ro-pack-not-computed">
-              <div className="ro-pack-fam">{fam.label}{fam.region ? <span className="ro-region">{fam.region}</span> : null}</div>
-              <div className="ro-pack-title">{t.label}</div>
-              <div className="ro-pack-sub">Not computed in this release. No engine produces this report, so it is not run.</div>
-            </div>
-          );
           if (!t.scopes.includes(scope)) return (
             <div key={t.typeId} className="ro-pack-card is-locked">
               <div className="ro-pack-fam">{fam.label}</div>
@@ -1576,10 +1580,21 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
                   <button key={pr.id} className="rc-empty-preset" onClick={() => buildPreset(pr)}>
                     <div className="rc-ep-h">{I.barChart || I.grid} {pr.label}</div>
                     <div className="rc-ep-s">{pr.why}</div>
-                    <div className="rc-ep-types">{pr.types.length} governed reports</div>
+                    <div className="rc-ep-types">{pr.types.length} governed report{pr.types.length === 1 ? '' : 's'}</div>
                   </button>
                 ))}
               </div>
+              {/* P-26: the program's report types no engine computes, listed
+                  once, here, and never as tiles inside a pack. Asking for one
+                  by name says the same and runs nothing (roRouteReply). */}
+              {roNotComputed(catalog).length > 0 && (
+                <section aria-label="Not computed in this release" data-testid="ro-not-computed">
+                  <div className="ro-rep-eyebrow">Not computed in this release</div>
+                  <p className="rc-empty-s">
+                    No engine produces these reports for {p.code}, so no pack offers them and none is run: {roNotComputed(catalog).join('; ')}.
+                  </p>
+                </section>
+              )}
             </div>
           )}
       </div>
