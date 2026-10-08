@@ -84,6 +84,23 @@ import { lockDocumentDispositionProgram } from '../../services/document-data-dis
 import { readRecordedUploadLineage } from '../../services/document-data-disposition/recorded-lineage.js';
 import { loadUploadedFile, sha256Hex, UploadedFileError, type UploadedFile } from '../../services/ana/uploaded-file-access.js';
 import { supersededSql } from '../../services/vault/vault-version-family.js';
+import { documentAgencyFor, marketOfferGivenOutline, type FilingOffer, type MarketInput } from '../../services/regulatory/market-support.js';
+
+/** A filing the market verdict does not offer, found once the scaffold has
+ *  resolved its outline. Thrown inside the creation transaction so it rolls
+ *  back, and answered 422 FILING_NOT_OFFERED. */
+class FilingNotOfferedError extends Error {
+  readonly offer: FilingOffer;
+  constructor(offer: FilingOffer) {
+    super(offer.reason);
+    this.name = 'FilingNotOfferedError';
+    this.offer = offer;
+  }
+}
+
+function sendFilingNotOffered(res: Response, offer: FilingOffer) {
+  return res.status(422).json({ error: 'FILING_NOT_OFFERED', message: offer.reason, marketSupport: offer });
+}
 
 // People are named through public.actor_name, not a join on users: since users
 // took row-level security (D3, 2026-09-28) a tenant scope reads only current
@@ -677,7 +694,10 @@ router.get('/', async (req: Request, res: Response) => {
 // teamMembers?, code? }. Org-scoped; the creating user becomes the lead.
 // 400 on a missing/invalid required field; 503 PENDING_STORE on 42P01 or an
 // absent anchor column; 409 PROJECT_RECORD_UNAVAILABLE when no workspace can be
-// chosen for the program's record. Nothing is written on any refusal.
+// chosen for the program's record; 422 FILING_NOT_OFFERED, with the reason, for
+// a filing the product does not offer in that market (the one verdict,
+// services/regulatory/market-support.ts `offer`). Nothing is written on any
+// refusal: a refusal found after the scaffold rolls the transaction back.
 
 router.post('/', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
@@ -717,6 +737,26 @@ router.post('/', async (req: Request, res: Response) => {
   if (!VALID_PROGRAM_TYPES.has(programType)) {
     return send400(res, `programType must be one of: ${[...VALID_PROGRAM_TYPES].join(', ')}`);
   }
+  // A filing the product does not offer in this market is refused, with the
+  // verdict's own reason (WORKFLOW_DECISION_2026-10-08 §4 Q2; FILING_SPINE F19,
+  // services/regulatory/market-support.ts `offer`). Health Canada, an MHRA
+  // "IND", a new Japanese application, an agency with no outline or none
+  // mapped: each used to create a program with an empty outline, or a spine for
+  // a sequence the agency would reject. The verdict is the one the market rows
+  // and the New project picker read (GET /api/submissions/market-support), so
+  // the picker never offers what this refuses. An agency-assigned number marks
+  // a continuing application.
+  //
+  // Two points, one verdict. Here, before anything is written: whatever no
+  // outline could lift. After the scaffold, which reads the pack for this class
+  // in the verdict's own order: a filing with no outline, rolled back (below).
+  const marketInput: MarketInput = {
+    applicationType: programType,
+    market: primaryAgency,
+    continuingLifecycle: applicationNumber != null,
+  };
+  const offer = marketOfferGivenOutline(marketInput, true);
+  if (offer.tier === 'not_offered') return sendFilingNotOffered(res, offer);
   // The product class. Derived from the FILING TYPE when the client omits it —
   // a 510(k) is a device submission, an EU IVDR technical file is about an IVD,
   // and neither can be about a drug. The old derivation ended in a bare
@@ -896,10 +936,24 @@ router.post('/', async (req: Request, res: Response) => {
       // (unmapped program type, no pack) is returned rather than thrown — the
       // project is still legitimately created — and surfaced in the 201 body so
       // it is never silent.
+      // The class is resolved from the agency the verdict judged (2026-10-08,
+      // F19b review): 'us' and 'EU' read as FDA and EMA, and an 'EU / Notified
+      // Body' device filing as the 'ema' key its packs carry. Without this the
+      // verdict offered those filings and the scaffold, which knows only agency
+      // names, found no class and the creation was refused with a false "no
+      // outline" reason. The program keeps the agency as it was sent.
       scaffold = await scaffoldProjectDocuments({
         client, orgId, userId, projectId: newId,
-        programType, primaryAgency, productName,
+        programType, primaryAgency: documentAgencyFor(marketInput) ?? primaryAgency, productName,
       });
+      // No outline for this class (no pack, or no document class for the
+      // program type): nothing to author, so the filing is not offered. Until
+      // 2026-10-08 the project was created anyway with an empty Vault and the
+      // skip reported in the 201. Rolled back, never half-created.
+      if (scaffold.skipped === 'NO_RULE_PACK' || scaffold.skipped === 'UNMAPPED_PROGRAM_TYPE') {
+        const noOutline = marketOfferGivenOutline(marketInput, false);
+        if (noOutline.tier === 'not_offered') throw new FilingNotOfferedError(noOutline);
+      }
 
       // Canonical submission spine, SAME transaction. Intake wrote
       // regulatory_programs + the document scaffold but never a `submissions`
@@ -1018,6 +1072,9 @@ router.post('/', async (req: Request, res: Response) => {
         documentId: scaffold.documentId,
         scaffoldedSections: scaffold.sectionCount,
         ...(scaffold.skipped ? { scaffoldSkipped: scaffold.skipped, scaffoldDetail: scaffold.detail } : {}),
+        // What the product offers for this market (build and sequence, or
+        // author documents only), with its reason: the verdict creation used.
+        marketSupport: offer,
         // Surfaced so the spine linkage is never silent: present for drug
         // programs (submissionCreated=false means a spine already anchored to
         // this program was reused), absent for device/CER/MDR program types.
@@ -1030,6 +1087,7 @@ router.post('/', async (req: Request, res: Response) => {
       },
     });
   } catch (err: unknown) {
+    if (err instanceof FilingNotOfferedError) return sendFilingNotOffered(res, err.offer);
     if (err instanceof ProgramAnchorUnavailableError) {
       return sendProjectRecordRefusal(err, req, res, orgId);
     }

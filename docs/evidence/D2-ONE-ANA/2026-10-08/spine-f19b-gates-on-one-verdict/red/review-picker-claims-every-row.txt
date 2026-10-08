@@ -1,0 +1,83 @@
+# Mutation (review fix removed, everything else as now): in client/src/concept2cure/v2/surfaces/AnaVerbs.tsx
+# - if (Array.isArray(scope) && 
+# + if (false && Array.isArray(scope) && 
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-10-08T17:14:52.148Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:14:52.149Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-10-08T17:14:52.149Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > for every catalog row, a tile is shown exactly when the server offers the filing, and author-only ones say so 1243ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > offers no Health Canada filing, and a search for one says why, in the server's words 62ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a filing whose agency the server names no market for is not offered, and its reason is the server's 73ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > the chosen filing states its offer as text 39ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > lists nothing while the verdict is pending 9ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a failed read is an error with Retry, never an empty or a full list 49ms
+ × client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a filing that creates an NDA without being one (a Type A meeting) states no tier; the NDA itself says Build and sequence 45ms
+   → expected 'Build and sequence. Authored, built a…' to match /^No tier is stated for this filing\./
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the EU MDR/IVDR lane at a Notified Body is offered for authoring, asked of the server by its own market 68ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a search lists not-offered filings by the same fields as offered ones (an eCTD search finds Health Canada) 73ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the not-offered note counts the tab it is shown on 405ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > Retry stays mounted and busy while it reads again, and focus lands on the search box when the list arrives 90ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a filing that creates an NDA without being one (a Type A meeting) states no tier; the NDA itself says Build and sequence
+AssertionError: expected 'Build and sequence. Authored, built a…' to match /^No tier is stated for this filing\./
+
+- Expected:
+/^No tier is stated for this filing\./
+
++ Received:
+"Build and sequence. Authored, built and frozen here as an eCTD sequence for FDA. Transmit not proven: the ESG AS2 envelope is not PKCS#7 signed, so FDA would reject it, and no ESG account, DTDs or accepted test sequence are in place."
+
+ ❯ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx:141:21
+    139|     await waitFor(() => expect(screen.getByTestId('rpk-chosen-offer'))…
+    140|     const meeting = screen.getByTestId('rpk-chosen-offer').textContent…
+    141|     expect(meeting).toMatch(/^No tier is stated for this filing\./);
+       |                     ^
+    142|     expect(meeting).toMatch(/New Drug Application/);
+    143|     expect(meeting).not.toMatch(/Authored, built and frozen here/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  17:14:47
+   Duration  7.57s (transform 2.94s, setup 231ms, import 4.25s, tests 2.16s, environment 700ms)
+
