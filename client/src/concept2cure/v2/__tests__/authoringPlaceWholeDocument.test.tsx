@@ -150,3 +150,69 @@ describe('a whole document is filed at its own code, and a repeat placement says
     expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/already placed/i));
   });
 });
+
+/* QA 2026-10-08, walk 2 (j4 blocker). After the document was edited, Place
+   rewrote the filing copy leaf #81 files, and the dialog said "Already placed …
+   Nothing was written". The server now refuses a re-take over a copy a leaf
+   files (409 FILING_COPY_PINNED) and says whether a re-take wrote the copy at
+   all (`written`); the dialog shows exactly that. */
+describe('a re-placement says exactly what was written', () => {
+  const CODES = ['2.7.3', '2.7.4'];
+  const PINNED =
+    'This document is already filed: leaf #58 at 2.7 in sequence 0000 (draft) holds its filing copy (Authored document #52), ' +
+    'as the document was when it was placed. The document has changed since it was placed, and a filed copy is never rewritten. ' +
+    'Nothing was written. To file the document as it is now, remove that leaf in Submission Center, then place the document again.';
+
+  const leafUnchanged = { ok: true, status: 200, json: async () => ({ id: 58, sequenceId: 31, documentTable: 'coauthor_documents', documentId: 52, auditTrail: null, unchanged: true, sectionCode: '2.7', title: 'M2.7 Clinical Summary', lifecycleOp: 'new' }) };
+
+  it('an edited document over a filed copy: the server’s refusal verbatim, and no leaf is requested', async () => {
+    let puts = 0;
+    mockApi((method, url) => {
+      if (method === 'POST' && String(url).split('?')[0] === '/api/coauthor/documents') {
+        return { ok: false, status: 409, json: async () => ({ error: 'FILING_COPY_PINNED', code: 'FILING_COPY_PINNED', message: PINNED }) };
+      }
+      if (method === 'PUT') { puts += 1; return leafUnchanged; }
+      return undefined;
+    });
+    const { fireToast } = renderSeam({ sectionCodes: CODES });
+    await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await waitFor(() => expect(document.body.textContent).toContain(PINNED));
+    expect(puts).toBe(0);
+    expect(document.body.textContent).not.toMatch(/Already placed|Placed as leaf|could not be created/);
+    expect(document.body.textContent).not.toContain('Nothing was placed');
+    expect(fireToast).not.toHaveBeenCalled();
+  });
+
+  it('an unchanged re-placement says nothing was written', async () => {
+    mockApi((method, url) => {
+      if (method === 'POST' && String(url).split('?')[0] === '/api/coauthor/documents') {
+        return { ok: true, status: 200, json: async () => ({ success: true, replaced: true, written: false, document: { id: 52, status: 'draft', metadata: { source: 'authoring-document', docId: 'D1' } } }) };
+      }
+      if (method === 'PUT' && url === '/api/submissions/sequences/31/leaves') return leafUnchanged;
+      return undefined;
+    });
+    renderSeam({ sectionCodes: CODES });
+    await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await waitFor(() => expect(document.body.textContent).toMatch(/Already placed: leaf #58/));
+    expect(document.body.textContent).toContain('Nothing was written.');
+  });
+
+  it('a re-placement that promoted the copy’s status says so, and never says nothing was written', async () => {
+    mockApi((method, url) => {
+      if (method === 'POST' && String(url).split('?')[0] === '/api/coauthor/documents') {
+        return { ok: true, status: 200, json: async () => ({ success: true, replaced: true, written: true, document: { id: 52, status: 'approved', metadata: { source: 'authoring-document', docId: 'D1' } } }) };
+      }
+      if (method === 'PUT' && url === '/api/submissions/sequences/31/leaves') return leafUnchanged;
+      return undefined;
+    });
+    const { fireToast } = renderSeam({ sectionCodes: CODES });
+    await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await waitFor(() => expect(document.body.textContent).toMatch(/Already placed: leaf #58/));
+    expect(document.body.textContent).toMatch(/now carries the document’s current status \(approved\)/);
+    expect(document.body.textContent).not.toContain('Nothing was written');
+    expect(fireToast).not.toHaveBeenCalledWith(expect.stringContaining('Nothing was written'));
+  });
+});

@@ -1,0 +1,11 @@
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied 2691ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a second factor the caller asserts is not a second factor 6ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a wrong password is refused and counted against the account 6ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > an account taken out of use cannot sign it (F-28) 4ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a verified signer: the service is handed what the ceremony verified, never the credentials 6ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a rewrite applied without a signature asks for no credential 4ms
+ × tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: signing authority before the password > a manager signing is refused 403 ESIGNATURE_NO_AUTHORITY; no password is compared, nothing applied 9ms
+ × tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: signing authority before the password > a member signing is refused 403 ESIGNATURE_NO_AUTHORITY; no password is compared, nothing applied 4ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: signing authority before the password > an unsigned rewrite does not ask for the role 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 7 passed (9)

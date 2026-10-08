@@ -120,7 +120,9 @@ const place = (sequenceId: number, documentId: number, sectionCode = '2.5') =>
   );
 
 beforeAll(async () => {
-  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
+  // The program spine: a transmit precheck reads what the package would name as
+  // its applicant and application (package-identity.ts, QA 2026-10-08 j6).
+  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true, programSpine: true });
   holder.db = harness.db;
   holder.pool = { query: (text: string, params?: unknown[]) => harness.pglite.query(text, params as unknown[]) };
   await harness.pglite.exec(`

@@ -170,6 +170,13 @@ export function openReviewDocument(
 
 /* ── Review-decision modal ── */
 
+/** Why the server did not record a review decision, or null when it did. */
+async function decisionRefusal(res: Response): Promise<string | null> {
+  const body = await res.json().catch(() => null);
+  if (res.ok && (body as { success?: boolean } | null)?.success === true) return null;
+  return serverMessage(body) ?? 'The decision was not recorded (HTTP ' + res.status + '). Nothing changed.';
+}
+
 function DecisionModal({ onClose, item, onRecorded }: {
   onClose: () => void;
   item: ReviewItem;
@@ -190,16 +197,21 @@ function DecisionModal({ onClose, item, onRecorded }: {
    * exists: server/routes/authoring.router.ts applies a re-verified signature
    * bound to a frozen document version, from the authoring workspace.
    */
-  const [decision, setDecision] = useState<Verdict>('approved');
+  /* P-21 (docs/LAUNCH_DEFINITION_OF_DONE.md): a regulated choice starts
+     unstated. This opened on 'approved' with a "Record approval" button, so one
+     click recorded an approval verdict nobody chose (QA 2026-10-08, walk 2,
+     j4). '' is "Not stated — choose", and nothing is sent until a verdict is. */
+  const [decision, setDecision] = useState<Verdict | ''>('');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  const needsReason = decision !== 'approved';
+  const chosen = decision !== '';
+  const needsReason = chosen && decision !== 'approved';
   const reasonOk = !needsReason || reason.trim().length >= 8;
 
   const record = async () => {
-    if (busy) return;
+    if (busy || decision === '') return;
     if (!reasonOk) {
       setErr('A change request or a rejection needs a reason of at least 8 characters — it is what the author has to act on.');
       return;
@@ -212,10 +224,9 @@ function DecisionModal({ onClose, item, onRecorded }: {
         '/api/authoring/documents/' + encodeURIComponent(String(item?.id ?? '')) + '/review',
         { review_status: decision, review_comments: reason.trim() || undefined },
       );
-      const body = await res.json().catch(() => null);
-      const payload = body as { success?: boolean } | null;
-      if (!res.ok || payload?.success !== true) {
-        setErr(serverMessage(body) ?? 'The decision was not recorded (HTTP ' + res.status + '). Nothing changed.');
+      const refused = await decisionRefusal(res);
+      if (refused) {
+        setErr(refused);
         return;
       }
       onRecorded?.(decision);
@@ -234,7 +245,8 @@ function DecisionModal({ onClose, item, onRecorded }: {
   const submitLabel =
     decision === 'approved' ? 'Record approval'
     : decision === 'changes_requested' ? 'Record change request'
-    : 'Record rejection';
+    : decision === 'rejected' ? 'Record rejection'
+    : 'Record decision';
 
   return (
     <div className="esign-bd" onClick={onClose}>
@@ -263,8 +275,9 @@ function DecisionModal({ onClose, item, onRecorded }: {
             <select
               id="rv-decision"
               value={decision}
-              onChange={(e) => setDecision(e.target.value as Verdict)}
+              onChange={(e) => setDecision(e.target.value as Verdict | '')}
             >
+              <option value="">Not stated — choose</option>
               <option value="approved">Approve</option>
               <option value="changes_requested">Request changes — send it back with a reason</option>
               <option value="rejected">Decline — reject this document</option>
@@ -286,9 +299,15 @@ function DecisionModal({ onClose, item, onRecorded }: {
           </div>
           {err && <div className="esign-err" role="alert">{err}</div>}
           <div className="esign-manifest">
-            This records your review verdict — <b>{REVIEW_STATUS_LABEL[decision]}</b> — on
-            the document in the authoring workflow, where the author and the other
-            reviewers see it. It is <b>not</b> a 21 CFR §11.50 signature manifestation —
+            {chosen ? (
+              <>This records your review verdict — <b>{REVIEW_STATUS_LABEL[decision]}</b> — on
+              the document in the authoring workflow, where the author and the other
+              reviewers see it.</>
+            ) : (
+              <>No verdict is chosen yet, and nothing is recorded until one is. The verdict you
+              choose is recorded on the document in the authoring workflow, where the author and
+              the other reviewers see it.</>
+            )} It is <b>not</b> a 21 CFR §11.50 signature manifestation —
             no signer identity is re-verified here and nothing is sealed against a
             frozen document version. Apply a binding signature from the authoring
             workspace, where the signer's password is re-verified and the signature sealed.
@@ -300,7 +319,7 @@ function DecisionModal({ onClose, item, onRecorded }: {
             className="btn primary"
             style={{ flex: 1, justifyContent: 'center' }}
             onClick={record}
-            disabled={busy || !reasonOk}
+            disabled={busy || !chosen || !reasonOk}
           >
             {I.shieldCheck} {busy ? 'Recording…' : submitLabel}
           </button>

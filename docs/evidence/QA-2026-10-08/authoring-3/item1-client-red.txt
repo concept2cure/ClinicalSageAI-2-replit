@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > prefills the document’s own code — the parent of its sections — not the open section’s 359ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > refuses one of the document’s own section codes — the leaf would hold the other sections too — and writes nothing 149ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > a one-section document is filed at that section’s code 94ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > a repeat placement the server answers with the existing leaf is reported as already placed, not as a new leaf 112ms
+ × client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > an edited document over a filed copy: the server’s refusal verbatim, and no leaf is requested 94ms
+   → expected ' Place into filingAuthoring → filingP…' not to match /Already placed|Placed as leaf|could n…/
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > an unchanged re-placement says nothing was written 98ms
+ × client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > a re-placement that promoted the copy’s status says so, and never says nothing was written 61ms
+   → expected ' Place into filingAuthoring → filingP…' to match /now carries the document’s current st…/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > an edited document over a filed copy: the server’s refusal verbatim, and no leaf is requested
+AssertionError: expected ' Place into filingAuthoring → filingP…' not to match /Already placed|Placed as leaf|could n…/
+
+- Expected:
+/Already placed|Placed as leaf|could not be created/
+
++ Received:
+" Place into filingAuthoring → filingPlace into filingThe submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.Target submissionChoose a submission…ZX-9 First-in-Human · IND · FDASequenceChoose a sequence…0000 · original · Draft0001 · amendment · Frozen — leaves immutable0001 is frozen — a frozen or dispatched sequence’s leaves are immutable, so it cannot be placed into.Section code*Files the whole saved document (2 sections) as one leaf, at the document’s own code 2.7. Edit to file elsewhere.Files as 2.7 at m2/2-7/.Lifecycle operationNewReplaceAppendDeleteReason for this placement*Clinical summary approved for sequence 0000Required, at least 8 characters. Recorded with the placement in the audit trail.The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.The filing snapshot could not be created — This document is already filed: leaf #58 at 2.7 in sequence 0000 (draft) holds its filing copy (Authored document #52), as the document was when it was placed. The document has changed since it was placed, and a filed copy is never rewritten. Nothing was written. To file the document as it is now, remove that leaf in Submission Center, then place the document again.. Nothing was placed.Cancel Place leaf in the sequence"
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx:182:43
+    180|     await waitFor(() => expect(document.body.textContent).toContain(PI…
+    181|     expect(puts).toBe(0);
+    182|     expect(document.body.textContent).not.toMatch(/Already placed|Plac…
+       |                                           ^
+    183|     expect(document.body.textContent).not.toContain('Nothing was place…
+    184|     expect(fireToast).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > a re-placement that promoted the copy’s status says so, and never says nothing was written
+AssertionError: expected ' Place into filingAuthoring → filingP…' to match /now carries the document’s current st…/
+
+- Expected:
+/now carries the document’s current status \(approved\)/
+
++ Received:
+" Place into filingAuthoring → filingPlace into filingThe submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.Target submissionChoose a submission…ZX-9 First-in-Human · IND · FDASequenceChoose a sequence…0000 · original · Draft0001 · amendment · Frozen — leaves immutable0001 is frozen — a frozen or dispatched sequence’s leaves are immutable, so it cannot be placed into.Section code*Files the whole saved document (2 sections) as one leaf, at the document’s own code 2.7. Edit to file elsewhere.Files as 2.7 at m2/2-7/.Lifecycle operationNewReplaceAppendDeleteReason for this placement*Clinical summary approved for sequence 0000Required, at least 8 characters. Recorded with the placement in the audit trail.The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.Already placed: leaf #58 at 2.7 in sequence 0000 · original holds this document (Authored document #52). Nothing was written. Open in Submission CenterClose Place leaf in the sequence"
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx:214:39
+    212|     fireEvent.click(screen.getByRole('button', { name: /Place leaf/ })…
+    213|     await waitFor(() => expect(document.body.textContent).toMatch(/Alr…
+    214|     expect(document.body.textContent).toMatch(/now carries the documen…
+       |                                       ^
+    215|     expect(document.body.textContent).not.toContain('Nothing was writt…
+    216|     expect(fireToast).not.toHaveBeenCalledWith(expect.stringContaining…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  13:40:10
+   Duration  2.90s (transform 701ms, setup 187ms, import 878ms, tests 973ms, environment 626ms)
+

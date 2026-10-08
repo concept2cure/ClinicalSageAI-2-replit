@@ -286,7 +286,7 @@ function AuthoringPlaceIntoFilingForDocument({
         setVerdict(copy.verdict);
         return;
       }
-      const { snapshotId } = copy;
+      const { snapshotId, written, copyStatus } = copy;
 
       // 3. The canonical write: the leaf, pointing at the snapshot. Verdict verbatim.
       const put = await mutateVerbatim<PlacedLeaf>('PUT', `/api/submissions/sequences/${filing.seq.id}/leaves`, {
@@ -309,13 +309,17 @@ function AuthoringPlaceIntoFilingForDocument({
       /* The server answers a repeat placement of the same document at the same
          section with the leaf that already holds it, and writes nothing
          (QA 2026-10-08: 2.5.1 was placed twice as two live leaves). Said as
-         what it is — not as a placement, and not as an unrecorded one. */
+         what it is — not as a placement, and not as an unrecorded one.
+         Walk 2 (j4 blocker): "Nothing was written" was said over a copy the
+         snapshot step had just rewritten. It is said now only when the server
+         reports that the copy was not written (alreadyPlacedText). */
       if (put.data.unchanged) {
-        const text =
-          `Already placed: leaf #${put.data.id} at ${put.data.sectionCode} in sequence ${sequenceLabel} holds this document ` +
-          `(${documentSourceLabel('coauthor_documents', snapshotId)}). Nothing was written.`;
+        const text = alreadyPlacedText({ leafId: put.data.id, sectionCode: put.data.sectionCode, sequenceLabel, snapshotId, written, copyStatus });
         setVerdict({ tone: 'ok', text });
-        fireToast(`Already placed — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber} holds this document. Nothing was written.`);
+        fireToast(
+          `Already placed — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber} holds this document.` +
+            (written === false ? ' Nothing was written.' : ''),
+        );
         return;
       }
       const auditWarning = placementAuditWarning(put.data);
@@ -502,11 +506,42 @@ export function AuthoringPlaceIntoFiling(props: AuthoringPlaceIntoFilingProps) {
   return <AuthoringPlaceIntoFilingForDocument key={JSON.stringify([props.docId, project])} {...props} />;
 }
 
-interface SnapshotRow { id?: number; metadata?: { source?: string; docId?: string } | null }
+interface SnapshotRow { id?: number; status?: string; metadata?: { source?: string; docId?: string } | null }
 
 type CopyResult =
-  | { ok: true; snapshotId: number }
+  /** `written`: the server's word on whether this placement wrote the copy; undefined when it gave none. */
+  | { ok: true; snapshotId: number; written: boolean | undefined; copyStatus: string | null }
   | { ok: false; unconfirmed: boolean; verdict: NonNullable<Verdict> };
+
+/**
+ * What a repeat placement did, in words. "Nothing was written" only when the
+ * server said it wrote nothing: a re-take may promote the copy's status (the
+ * same text, now approved) without touching the leaf.
+ */
+export function alreadyPlacedText(a: {
+  leafId: number;
+  sectionCode: string;
+  sequenceLabel: string;
+  snapshotId: number;
+  written: boolean | undefined;
+  copyStatus: string | null;
+}): string {
+  const held =
+    `Already placed: leaf #${a.leafId} at ${a.sectionCode} in sequence ${a.sequenceLabel} holds this document ` +
+    `(${documentSourceLabel('coauthor_documents', a.snapshotId)}).`;
+  if (a.written === false) return `${held} Nothing was written.`;
+  if (a.written === true) {
+    return (
+      `${held} Its filing copy now carries the document’s current status` +
+      (a.copyStatus ? ` (${a.copyStatus})` : '') +
+      '; the text that leaf filed is unchanged, and the leaf was not changed.'
+    );
+  }
+  return `${held} The leaf was not changed.`;
+}
+
+/** The snapshot step's refusal of a copy that a leaf already files: the server's sentence is complete. */
+const FILING_COPY_PINNED = 'FILING_COPY_PINNED';
 
 /** Read saved content and request the existing governed snapshot. A context
  * switch after the read stops the next write; an already-sent write may commit. */
@@ -526,13 +561,27 @@ async function takeFilingCopy(docId: string, docTitle: string, sectionCode: stri
     ok: false, unconfirmed: false,
     verdict: { tone: 'err', text: 'This document has no saved section content yet — there is nothing to file. Nothing was created.' },
   };
-  const snap = await mutateVerbatim<{ success?: boolean; document?: SnapshotRow }>('POST', '/api/coauthor/documents', {
+  const snap: SnapshotReply = await mutateVerbatim('POST', '/api/coauthor/documents', {
     title: docTitle, moduleNumber: sectionCode, content: assembleSnapshot(saved), sourceAuthoringDocId: docId,
   });
   if (!current()) return null;
-  const snapshotId = snap.data?.document?.id;
-  if (validReceiptId(snapshotId) && matchingSnapshotSource(snap.data?.document, docId) && snap.data?.success !== false) return { ok: true, snapshotId };
-  return snapshotFailure(snap);
+  return copyReceipt(snap, docId) ?? snapshotFailure(snap);
+}
+
+type SnapshotReply = MutateResult<{ success?: boolean; written?: unknown; document?: SnapshotRow }>;
+
+/** The copy the server confirmed for this document, or its refusal of a copy a leaf files; null otherwise. */
+function copyReceipt(snap: SnapshotReply, docId: string): CopyResult | null {
+  const doc = snap.data?.document;
+  const id = doc?.id;
+  if (doc && validReceiptId(id) && matchingSnapshotSource(doc, docId) && snap.data?.success !== false) {
+    const written = typeof snap.data?.written === 'boolean' ? snap.data.written : undefined;
+    return { ok: true, snapshotId: id, written, copyStatus: typeof doc.status === 'string' ? doc.status : null };
+  }
+  if (snap.code === FILING_COPY_PINNED && snap.error) {
+    return { ok: false, unconfirmed: false, verdict: { tone: 'err', text: snap.error } };
+  }
+  return null;
 }
 
 function snapshotFailure(snap: MutateResult<unknown>): CopyResult {

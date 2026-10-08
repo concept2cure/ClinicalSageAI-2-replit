@@ -36,6 +36,7 @@ import {
   upsertLeaf,
   removeLeaf,
   anchorSubmissionToProgram,
+  listAnchorCandidates,
   SUBMISSION_ERROR_STATUS,
 } from '../services/submission-service/submission-service';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
@@ -918,6 +919,20 @@ router.post('/:id/sequences', limiter, requireRole(AUTHOR), async (req, res) => 
 // a reason, on the audit chain (anchorSubmissionToProgram). The role is the
 // membership row's, never the token's or the body's.
 const anchorProgramSchema = z.object({ programId: z.string().uuid() });
+// The projects this submission may be anchored to: its own filing type, by the
+// rule the anchor applies (listAnchorCandidates). QA 2026-10-08 (j6): the
+// control offered every programme, a device programme for an NDA among them.
+router.get('/:id/program-anchor', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  try {
+    res.json(await listAnchorCandidates(id, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
 router.post('/:id/program-anchor', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
@@ -1836,7 +1851,7 @@ const transmitSchema = z.object({
   environment: z.enum(['staging', 'production']).optional(),
   applicationId: z.string().min(1).max(128).optional(),
   sponsorId: z.string().min(1).max(128).optional(),
-  sponsorName: z.string().min(1).max(256).optional(),
+  // No sponsorName: the package names the organisation's recorded name (QA j6).
 });
 router.post('/sequences/:seqId/transmit', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
@@ -1854,7 +1869,6 @@ router.post('/sequences/:seqId/transmit', limiter, requireRole(AUTHOR), async (r
       environment: parsed.data.environment,
       applicationId: parsed.data.applicationId,
       sponsorId: parsed.data.sponsorId,
-      sponsorName: parsed.data.sponsorName,
     });
     res.json(result);
   } catch (err) {

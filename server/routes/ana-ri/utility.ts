@@ -634,11 +634,12 @@ export function mountUtilityRoutes(router: Router): void {
     // re-verify the signer server-side for the e-sign tier (never a client flag).
     const eSignRequired = tier === 'esignature';
 
-    // The signer's declared §11.50 meaning, then re-verification (§11.200), in
-    // that order and before the audit row — see governed-esignature.ts. An act
+    // The signer's declared §11.50 meaning, then signing authority (§11.10(g)),
+    // then re-verification (§11.200), in that order and before the audit row —
+    // see governed-esignature.ts. An act
     // that fixes its meaning (approving or locking an artifact) refuses any
     // other before the password is checked.
-    const esign = eSignRequired ? await verifyGovernedESignature(userId, body, isTool ? null : requiredSignatureMeaning(command, params)) : undefined;
+    const esign = eSignRequired ? await verifyGovernedESignature(userId, numericOrgId, body, isTool ? null : requiredSignatureMeaning(command, params)) : undefined;
     if (esign && !esign.ok) return sendError(res, esign.status, esign.error, esign.details, esign.code);
     const signatureMeaning = esign?.meaning;
     const secondFactorVerified = esign?.secondFactorVerified ?? false;

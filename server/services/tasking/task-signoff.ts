@@ -7,6 +7,8 @@
  * "e-signature on regulated task sign-off"). Completing such a task now
  * demands a signature ceremony:
  *
+ *   · the signer's role carries signing authority (signing-authority-gate.ts,
+ *     the platform's one policy; since 2026-10-08), asked before the password,
  *   · the signer is re-verified by the platform's one signing ceremony
  *     (services/part11/reverify-signer.ts): the account password, the second
  *     factor when one is enrolled, and the account's lockout. Until
@@ -25,6 +27,7 @@
  */
 import { reverifySigner, type ReverifySignerDeps } from '../part11/reverify-signer';
 import { signerReverificationDeps } from '../part11/reverify-signer-deps';
+import { checkSigningAuthority } from '../part11/signing-authority-gate';
 import { TASK_SIGNATURE_MEANINGS } from '../part11/signature-meanings';
 
 export interface SignoffActor {
@@ -179,6 +182,12 @@ export async function requireTaskSignoff(params: {
   const input = ceremonyInput(signature, reason, actor.userId);
   if ('ok' in input) return input;
   const { signature: sig, reason: why, signerId } = input;
+
+  // §11.10(g), before the password: the sign-off is an electronic signature, so
+  // the signer's role must carry signing authority under the platform's one
+  // policy (P-18). QA 2026-10-08 (j6 sweep): only the password was asked.
+  const authority = await checkSigningAuthority(signerId, params.organizationId);
+  if (authority) return refuse(authority.status, authority.code, authority.message);
 
   const verified = await reverifySigner(
     signerId,

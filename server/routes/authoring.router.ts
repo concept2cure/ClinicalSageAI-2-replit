@@ -31,6 +31,7 @@ import {
   commitSectionToFiling,
   type CommitSectionResult,
 } from '../services/c2c/commit-section-to-filing.js';
+import { filingResponse } from '../services/c2c/filing-section-target.js';
 // Span lineage: every span of an authored document must trace to where it came
 // from. The gate is factored into one helper so every authored-content write
 // (interactive save AND section create) applies the identical rule.
@@ -2252,13 +2253,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       revision_created: content !== undefined,
       // Whether the text reached the filing. Present on every content save:
       // an unbound save is legitimate, a silently unbound one is the drift.
-      ...(governedCommit
-        ? {
-            filing: governedCommit.committed
-              ? { committed: true, documentId: governedCommit.documentId, sectionKey: governedCommit.sectionKey }
-              : { committed: false, reason: governedCommit.reason },
-          }
-        : {}),
+      ...(governedCommit ? { filing: filingResponse(governedCommit) } : {}),
     });
   } catch (error) {
     console.error('Error updating section:', error);
@@ -4173,13 +4168,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       /* Whether the accepted text reached the filing — honest either way, the
          same as the manual save. An unbound accept says it did not, rather than
          letting the two stores drift apart in silence. */
-      ...(governedCommit
-        ? {
-            filing: governedCommit.committed
-              ? { committed: true, documentId: governedCommit.documentId, sectionKey: governedCommit.sectionKey }
-              : { committed: false, reason: governedCommit.reason },
-          }
-        : {}),
+      ...(governedCommit ? { filing: filingResponse(governedCommit) } : {}),
     });
   } catch (error) {
     console.error('Error accepting AI draft:', error);

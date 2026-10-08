@@ -130,6 +130,16 @@ describe('the save confirmation carries whether the text reached the filing', ()
     expect(document.body.textContent).not.toMatch(/not in the filing/i);
   });
 
+  /* QA 2026-10-08, walk 2 (j4): a section of a document the outline files as
+     one node (2.5.1 of the 2.5 Clinical Overview) reaches the filing as part of
+     that node; the confirmation names the node it went to. */
+  it('names the filing section a part-of save went into', async () => {
+    filing = { committed: true, documentId: 'C1', sectionKey: '2.5', partOf: '2.5' };
+    await saveOnce();
+    await waitFor(() => expect(screen.getByText(/committed to the filing/i)).toBeTruthy());
+    expect(document.body.textContent).toContain('committed to the filing as part of its section 2.5, with this document’s other sections under 2.5');
+  });
+
   it('claims nothing about the filing when the server reported nothing', async () => {
     await saveOnce();
     await waitFor(() => expect(screen.getByText(/Section saved/i)).toBeTruthy());

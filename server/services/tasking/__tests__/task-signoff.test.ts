@@ -6,9 +6,19 @@
  * that a session could set and that ignored the second factor (VSR-001 §13.3
  * item 3). The ceremony's dependencies are injected, as in its own suite.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReverifySignerDeps } from '../../part11/reverify-signer';
 import { requireTaskSignoff } from '../task-signoff';
+
+// §11.10(g): the signer's role, as the membership row holds it (approver unless a case says otherwise).
+const { signerRole } = vi.hoisted(() => ({ signerRole: vi.fn(async (): Promise<string | null> => 'approver') }));
+vi.mock('../../part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: (...a: unknown[]) => signerRole(...(a as [])),
+}));
+beforeEach(() => {
+  signerRole.mockReset();
+  signerRole.mockResolvedValue('approver');
+});
 
 const gatedTask = {
   taskId: 'TASK-1',
@@ -184,5 +194,41 @@ describe('requireTaskSignoff — ceremony validation', () => {
     });
     if (!r.required || !('ok' in r) || !r.ok) throw new Error('expected ok');
     expect(r.manifestation.method).toBe('password');
+  });
+});
+
+/* QA 2026-10-08 (j6 sweep): the sign-off re-verified the signer and recorded a
+   §11.50 manifestation without asking whether their role may sign, so a
+   member's (or a manager's, P-18) password cleared an approval checkpoint. The
+   platform's one policy, after the request's own shape and before the password. */
+describe('requireTaskSignoff — signing authority before the password', () => {
+  it.each(['manager', 'member'])('a %s is refused 403 ESIGNATURE_NO_AUTHORITY, and no password is compared', async (role) => {
+    signerRole.mockResolvedValue(role);
+    const deps = account();
+    const r = await requireTaskSignoff({
+      organizationId: 2, task: gatedTask, toStatus: 'completed', actor, deps,
+      signature: { password: 'right-password', meaning: 'APPROVED' }, reason: 'reviewed',
+    });
+    expect(r).toMatchObject({ required: true, ok: false, status: 403, code: 'ESIGNATURE_NO_AUTHORITY' });
+    expect(signerRole).toHaveBeenCalledWith(7, 2);
+    expect(deps.comparePassword).not.toHaveBeenCalled();
+  });
+
+  it('a role lookup that cannot run refuses 503 and compares no password', async () => {
+    signerRole.mockRejectedValue(new Error('organization_users unreadable'));
+    const deps = account();
+    const r = await requireTaskSignoff({
+      organizationId: 2, task: gatedTask, toStatus: 'completed', actor, deps,
+      signature: { password: 'right-password', meaning: 'APPROVED' }, reason: 'reviewed',
+    });
+    expect(r).toMatchObject({ ok: false, status: 503, code: 'SIGNING_AUTHORITY_UNVERIFIED' });
+    expect(deps.comparePassword).not.toHaveBeenCalled();
+  });
+
+  it('a transition that needs no signature asks nothing of the role', async () => {
+    signerRole.mockResolvedValue('member');
+    const r = await requireTaskSignoff({ organizationId: 2, task: gatedTask, toStatus: 'review', actor });
+    expect(r).toEqual({ required: false });
+    expect(signerRole).not.toHaveBeenCalled();
   });
 });

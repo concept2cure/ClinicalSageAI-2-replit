@@ -1,0 +1,55 @@
+# DB tier: vitest.db.config.ts on concept2cure-ri_qa_fresh2 (CI=true NODE_ENV=test RLS_ENFORCE=on). No migration added.
+# Files: every *.dbtest.ts naming submission|ectd|gateway|transmittal|electronic_signatures|signGovernedAct|reverifySigner|verifyReauth|isSigningAuthorized|signing (49).
+ Test Files  49 passed (49)
+      Tests  669 passed (669)
+
+## Files
+server/mcp/__tests__/mcp-account-standing.dbtest.ts
+server/mcp/__tests__/mcp-connector.dbtest.ts
+server/mcp/__tests__/mcp-consent-delegated.dbtest.ts
+server/middleware/__tests__/delegated-credential-scope.dbtest.ts
+server/services/c2c/__tests__/project-retention-locks.dbtest.ts
+tests/db/account-standing.dbtest.ts
+tests/db/ai-gateway-audit-log.dbtest.ts
+tests/db/append-only-store-grants.dbtest.ts
+tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+tests/db/authoring-section-concurrency.dbtest.ts
+tests/db/c2c-project-persistence.dbtest.ts
+tests/db/child-table-parent-scoped-rls.dbtest.ts
+tests/db/compliance-reports.dbtest.ts
+tests/db/compliance-review-fix-round.dbtest.ts
+tests/db/compliance-review-records.dbtest.ts
+tests/db/correspondence-work-items.dbtest.ts
+tests/db/cross-object-resolver.dbtest.ts
+tests/db/document-catalog-recall.dbtest.ts
+tests/db/domain-history-append-only.dbtest.ts
+tests/db/domain-sign-ceremony.dbtest.ts
+tests/db/drafting-tasks-tenant-scope.dbtest.ts
+tests/db/entitlement-grants-resolution.dbtest.ts
+tests/db/gateway-accounts.dbtest.ts
+tests/db/one-time-credentials.dbtest.ts
+tests/db/pdfa-requirement.dbtest.ts
+tests/db/phase5-intelligent-docs.dbtest.ts
+tests/db/project-delete-held-by-store.dbtest.ts
+tests/db/protocol-reviewer-signing-authority.dbtest.ts
+tests/db/qms-document-signature-required.dbtest.ts
+tests/db/report-os-delivery-recording.dbtest.ts
+tests/db/report-os-registry-seed.dbtest.ts
+tests/db/research-admin-sign-ceremony.dbtest.ts
+tests/db/retrieval-floor.dbtest.ts
+tests/db/rls-bypass-does-not-outlive-release.dbtest.ts
+tests/db/second-factor-binding.dbtest.ts
+tests/db/session-activity-across-tasks.dbtest.ts
+tests/db/session-termination.dbtest.ts
+tests/db/signed-act-meaning-and-lock.dbtest.ts
+tests/db/signer-authenticator-required.dbtest.ts
+tests/db/signing-lockout.dbtest.ts
+tests/db/signup-launch-catalog.dbtest.ts
+tests/db/task-board-every-store.dbtest.ts
+tests/db/tenant-export-withheld-columns.dbtest.ts
+tests/db/tenant-purge-artifact-records.dbtest.ts
+tests/db/two-tenant-application-rls.dbtest.ts
+tests/db/vault-lifecycle.dbtest.ts
+tests/db/vault-passage-search.dbtest.ts
+tests/db/vault-program-ownership.dbtest.ts
+tests/db/vault-where-used.dbtest.ts

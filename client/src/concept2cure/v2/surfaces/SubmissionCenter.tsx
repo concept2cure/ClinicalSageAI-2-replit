@@ -1193,8 +1193,6 @@ export function SubmissionCenter({
       {sub && sub.programId === null && (
         <SubmissionProgramAnchor
           submission={sub}
-          programmes={programmes.rows}
-          programmesUnreadable={Boolean(programmes.error)}
           onAnchored={(n) => {
             setNotice(n);
             setSubsBump((b) => b + 1);

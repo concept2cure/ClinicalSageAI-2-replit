@@ -45,6 +45,7 @@ import {
 } from '../services/fcoi-metrics';
 import { clientIpOf } from '../utils/client-ip';
 import { signMeaningRefusal, type GovernedSignMeaning } from '../services/part11/signature-meanings';
+import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 
@@ -314,6 +315,12 @@ router.post('/disclosures/:id/certify', async (req, res) => {
     return res.status(400).json({ error: { code: meaningRefused.error, message: meaningRefused.detail } });
   }
   const meaning = parsed.data.meaning as GovernedSignMeaning;
+
+  // §11.10(g), before the password: a certification is a signed Form FDA
+  // 3454/3455, so the certifier's role must carry signing authority under the
+  // platform's one policy. QA 2026-10-08 (j6 sweep): only the password was asked.
+  const authority = await checkSigningAuthority(userId, orgId);
+  if (authority) return res.status(authority.status).json({ error: { code: authority.code, message: authority.message } });
 
   // Re-authenticate even with an active session (21 CFR 11 signing).
   const reauth = await verifyReauth(userId, parsed.data.reauth);

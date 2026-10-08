@@ -43,7 +43,7 @@ vi.mock('../../auditService', async (importOriginal) => ({
   default: { logAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })) },
 }));
 
-import { anchorSubmissionToProgram, upsertLeaf, SubmissionError } from '../submission-service';
+import { anchorSubmissionToProgram, listAnchorCandidates, upsertLeaf, SubmissionError } from '../submission-service';
 
 let h: IndPgliteDb;
 const ORG = 1;
@@ -54,6 +54,10 @@ const MEMBER = { organizationId: ORG, userId: 22, orgRole: 'member' };
 const P_A = '0a000000-0000-4000-8000-00000000000a';
 const P_B = '0b000000-0000-4000-8000-00000000000b';
 const P_X = '0e000000-0000-4000-8000-00000000000e'; // another organization's
+// QA 2026-10-08 (j6): projects of other filing types, as the walk's list held them.
+const P_DEVICE = '0d000000-0000-4000-8000-00000000000d'; // a 510(k) device programme
+const P_NDA = '0c000000-0000-4000-8000-00000000000c'; // a drug programme, but an NDA
+const P_UNKNOWN = '0f000000-0000-4000-8000-00000000000f'; // a type no registry entry resolves
 const V_A = 'a1000000-0000-4000-8000-0000000000a1';
 const V_B = 'b1000000-0000-4000-8000-0000000000b1';
 const REASON = 'Legacy IND created before submissions recorded their project.';
@@ -103,6 +107,13 @@ beforeAll(async () => {
       `INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_name, lead_user_id)
        VALUES ($1, $2, $3, $4, 'ind', 'Alpha', $5)`,
       [id, org, `Program ${code}`, code, lead],
+    );
+  }
+  for (const [id, code, type] of [[P_DEVICE, 'BX-204', '510K'], [P_NDA, 'N-1', 'NDA'], [P_UNKNOWN, 'U-1', 'Combination']] as const) {
+    await q(
+      `INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_name, lead_user_id)
+       VALUES ($1, $2, $3, $4, $5, 'Alpha', NULL)`,
+      [id, ORG, `Program ${code}`, code, type],
     );
   }
   for (const [id, programId, hash] of [[V_A, P_A, 'a'.repeat(64)], [V_B, P_B, 'b'.repeat(64)]]) {
@@ -199,5 +210,52 @@ describe('the unanchored-placement refusal names the control that anchors the su
     expect(refused).toMatchObject({ code: 'UNANCHORED_SUBMISSION' });
     expect(refused.message).toMatch(/in Submission Center, open this submission and choose “Anchor to a project”/);
     expect(refused.message).toMatch(/Nothing was placed\.$/);
+  });
+});
+
+/* QA 2026-10-08 (j6): "Anchor to a project" offered every programme, a device
+   programme (BX-204 Continuous Glucose Monitor) for the NDA named BX-204 among
+   them, and the server checked no type. An anchor is not undone here, so the
+   wrong one is permanent. The rule is the platform's one submission-type
+   resolution (shared/regulatory/submission-type-bridge resolveToRegistryId),
+   never a name: the project's programme type and the submission's application
+   type resolve to the same registry entry, or the anchor is refused. */
+describe('a submission is anchored only to a project of its own filing type', () => {
+  it.each([
+    ['a 510(k) device programme', P_DEVICE, /510\(k\)/],
+    ['an NDA programme', P_NDA, /NDA/],
+    ['a programme whose type resolves to no filing', P_UNKNOWN, /Combination/],
+  ])('an IND is not anchored to %s: 409 APPLICATION_TYPE_MISMATCH, and nothing changes', async (_label, programId, names) => {
+    const [sub] = await legacySubmission();
+    const refused = await anchorSubmissionToProgram({ submissionId: sub, programId, reason: REASON }, MANAGER).catch((e) => e);
+    expect(refused).toBeInstanceOf(SubmissionError);
+    expect(refused).toMatchObject({ code: 'APPLICATION_TYPE_MISMATCH' });
+    expect(refused.message).toMatch(/IND/);
+    expect(refused.message).toMatch(names);
+    expect(refused.message).toMatch(/Nothing was changed\.$/);
+    expect(await programOf(sub)).toBeNull();
+    expect(await anchorRows(sub)).toEqual([]);
+  });
+
+  it('the type is checked even for someone who could not anchor at all: the refusal says what is wrong with the choice', async () => {
+    const [sub] = await legacySubmission();
+    const refused = await anchorSubmissionToProgram({ submissionId: sub, programId: P_DEVICE, reason: REASON }, MEMBER).catch((e) => e);
+    expect(refused).toMatchObject({ code: 'APPLICATION_TYPE_MISMATCH' });
+  });
+
+  it('the candidates offered are this organization’s live projects of the same filing type, and the rest are counted, never named', async () => {
+    const [sub] = await legacySubmission();
+    const offered = await listAnchorCandidates(sub, { organizationId: ORG, userId: 9 });
+    expect(offered.applicationType).toBe('ind');
+    expect(offered.applicationTypeLabel).toBe('IND');
+    expect(offered.candidates.map((c) => c.id).sort()).toEqual([P_A, P_B].sort());
+    expect(offered.candidates.find((c) => c.id === P_A)).toEqual({ id: P_A, code: 'A-1', title: 'Program A-1' });
+    // BX-204 (510K), N-1 (NDA) and U-1 (Combination); another organization's project is not counted.
+    expect(offered.otherTypes).toBe(3);
+  });
+
+  it('another organization’s submission has no candidates: it is not found', async () => {
+    const [sub] = await legacySubmission();
+    await expect(listAnchorCandidates(sub, { organizationId: OTHER_ORG, userId: 9 })).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });

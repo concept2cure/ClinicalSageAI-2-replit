@@ -888,3 +888,101 @@ describe('the two stores move together or neither does', () => {
     expect(after[0].content).toBe(before[0].content);
   }, T);
 });
+
+/* QA 2026-10-08, walk 2 (j4). The "2.5 Clinical Overview" template seeds
+   2.5.1 … 2.5.7 — ICH M4E's headings inside the Clinical Overview — while the
+   IND outline files the Clinical Overview as ONE node, 2.5 (eCTD files 2.5 as
+   one document; the placement dialog already files such a document at its own
+   code, 2.5). So every save said the text did not reach the filing. A section
+   whose code sits under an outline node the outline does not subdivide is a
+   part of that node's document: the node receives the document's sections
+   under it, in order. A node the outline DOES subdivide is a container, not a
+   document, and a section under it with no slot of its own still does not
+   reach the filing — that refusal stays exactly as true as it was. */
+describe('a document whose sections sit under one outline node commits into that node', () => {
+  const DOC2 = 'doc_filing_contract_children';
+  let childDocId = '';
+  const childIds: Record<string, string> = {};
+  const saveChild = (code: string, content: string) =>
+    as(request(app).patch(`/api/authoring/sections/${childIds[code]}`)).send({
+      content, changeReason: 'drafting the clinical overview',
+    });
+  const governed = async (key: string) =>
+    (await q<{ text: string | null }>(
+      `SELECT content ->> 'text' AS text FROM c2c_document_sections WHERE document_id = $1 AND section_key = $2`,
+      [DOC2, key],
+    ))[0]?.text ?? null;
+
+  it('sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided', async () => {
+    const pack = await q<{ version: string }>(
+      `SELECT version FROM c2c_rule_packs WHERE doc_type='ind' AND agency='fda' LIMIT 1`,
+    );
+    await q(
+      `INSERT INTO c2c_documents (id, org_id, project_id, doc_type, agency, rule_pack_version, title, status, readiness)
+       VALUES ($1, 1, $2, 'ind', 'fda', $3, 'IND (children)', 'draft', 0)`,
+      [DOC2, PROJECT, pack[0].version],
+    );
+    await q(
+      `INSERT INTO c2c_document_sections (document_id, section_key, label, path_order, status)
+       VALUES ($1, '2.5', 'Clinical overview', 1, 'todo'),
+              ($1, '3.2.S', 'Drug substance', 2, 'todo'),
+              ($1, '3.2.S.1', 'General information', 3, 'todo')`,
+      [DOC2],
+    );
+    const created = await as(request(app).post('/api/authoring/docs')).send({
+      title: '2.5 Clinical Overview', module: 'M2', client_program_id: PROJECT,
+    });
+    expect(created.status).toBe(201);
+    childDocId = created.body.document.id;
+    await q(`UPDATE authoring_documents SET c2c_document_id = $1 WHERE id = $2`, [DOC2, childDocId]);
+    const sections: Array<[string, string, number]> = [
+      ['2.5.1', 'Product Development Rationale', 100],
+      ['2.5.2', 'Overview of Biopharmaceutics', 200],
+      ['3.2.S.9', 'Not in the outline', 300],
+    ];
+    for (const [code, title, order] of sections) {
+      const s = await as(request(app).post('/api/authoring/sections')).send({
+        doc_id: childDocId, code, title, content: '', order_index: order,
+      });
+      expect(s.status, JSON.stringify(s.body)).toBe(201);
+      childIds[code] = s.body.section.id;
+    }
+  }, T);
+
+  it('a save of 2.5.1 reaches the filing’s 2.5, and says that is where it went', async () => {
+    const res = await saveChild('2.5.1', '<p>Tolvexa is an inhaled antifibrotic for IPF.</p>');
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.filing).toMatchObject({ committed: true, documentId: DOC2, sectionKey: '2.5', partOf: '2.5' });
+    // Only sections with text are filed; 2.5.2 is still empty.
+    expect(await governed('2.5')).toBe(
+      '## 2.5.1 — Product Development Rationale\n\n<p>Tolvexa is an inhaled antifibrotic for IPF.</p>',
+    );
+  }, T);
+
+  it('a save of 2.5.2 keeps 2.5.1 in the node and adds itself after it, in the document’s order', async () => {
+    const res = await saveChild('2.5.2', '<p>Oral bioavailability is not relevant to an inhaled product.</p>');
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.filing).toMatchObject({ committed: true, sectionKey: '2.5' });
+    expect(await governed('2.5')).toBe(
+      '## 2.5.1 — Product Development Rationale\n\n<p>Tolvexa is an inhaled antifibrotic for IPF.</p>\n\n' +
+      '## 2.5.2 — Overview of Biopharmaceutics\n\n<p>Oral bioavailability is not relevant to an inhaled product.</p>',
+    );
+    // The superseded text entered the Part 11 ledger, attributed and with the reason.
+    const [v] = await q<{ author_id: number; reason: string; content: { text?: string } }>(
+      `SELECT v.author_id, v.reason, v.content FROM c2c_document_section_versions v
+         JOIN c2c_document_sections s ON s.id = v.section_id
+        WHERE s.document_id = $1 AND s.section_key = '2.5' ORDER BY v.version DESC LIMIT 1`,
+      [DOC2],
+    );
+    expect(v).toMatchObject({ author_id: 42, reason: 'drafting the clinical overview' });
+    expect(v.content.text).toContain('2.5.1 — Product Development Rationale');
+  }, T);
+
+  it('a section under a node the outline subdivides is still not filed, and says so', async () => {
+    const res = await saveChild('3.2.S.9', '<p>Text with no slot in the filing.</p>');
+    expect(res.status).toBe(200);
+    expect(res.body.filing).toMatchObject({ committed: false });
+    expect(res.body.filing.reason).toMatch(/no section "3\.2\.S\.9"/);
+    expect((await governed('3.2.S')) ?? '').not.toContain('Text with no slot');
+  }, T);
+});

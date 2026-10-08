@@ -1,0 +1,132 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > refuses to re-place an edited document over the copy leaf 2.5 files: text, title and hash stay the pin 107ms
+   → {"success":true,"document":{"id":1,"organizationId":7,"title":"Clinical Overview","content":"## 2.5.1 — Product Development Rationale\n\n<p>The rationale as first placed.</p>\n\n## 2.5.2 — Overview of Biopharmaceutics\n\n<p>An overview added after the first placement.</p>","sections":null,"status":"draft","templateId":null,"createdBy":"3","clientWorkspace":null,"completionPercentage":null,"regulatoryComplianceScore":null,"metadata":{"source":"authoring-document","docId":"a0000001-0000-4000-8000-00000000c0de","status":"DRAFT"},"ectdModuleId":null,"moduleNumber":"2.5","moduleName":null,"embedding":null,"createdAt":"2026-10-08T13:38:22.417Z","updatedAt":"2026-10-08T13:38:22.477Z"},"replaced":true}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > a leaf in a dispatched sequence pins its copy the same way, and the refusal says the sequence keeps it 39ms
+   → {"success":true,"document":{"id":2,"organizationId":7,"title":"Clinical Overview","content":"## 2.5.1 — Product Development Rationale\n\n<p>A rationale revised after dispatch.</p>\n\n## 2.5.2 — Overview of Biopharmaceutics","sections":null,"status":"draft","templateId":null,"createdBy":"3","clientWorkspace":null,"completionPercentage":null,"regulatoryComplianceScore":null,"metadata":{"source":"authoring-document","docId":"a0000002-0000-4000-8000-00000000c0de","status":"DRAFT"},"ectdModuleId":null,"moduleNumber":"2.5","moduleName":null,"embedding":null,"createdAt":"2026-10-08T13:38:22.500Z","updatedAt":"2026-10-08T13:38:22.529Z"},"replaced":true}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > the same text, now approved, promotes the copy status in place and says it wrote; the pin still holds 61ms
+   → expected undefined to be true // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > an unchanged re-place writes nothing, and says so 29ms
+   → expected undefined to be false // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > once the leaf is removed the copy is no longer filed, and an edited document is re-taken into it 59ms
+   → expected undefined to be true // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > upsertLeaf answers "unchanged" only while the pin still matches > re-placing a document whose text changed since its leaf pinned it is refused by name, and the leaf is untouched 47ms
+   → expected { id: 6, sequenceId: 6, …(20) } to be an instance of SubmissionError
+ ✓ server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > upsertLeaf answers "unchanged" only while the pin still matches > the same document with its pinned text intact is still answered unchanged 44ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > refuses to re-place an edited document over the copy leaf 2.5 files: text, title and hash stay the pin
+AssertionError: {"success":true,"document":{"id":1,"organizationId":7,"title":"Clinical Overview","content":"## 2.5.1 — Product Development Rationale\n\n<p>The rationale as first placed.</p>\n\n## 2.5.2 — Overview of Biopharmaceutics\n\n<p>An overview added after the first placement.</p>","sections":null,"status":"draft","templateId":null,"createdBy":"3","clientWorkspace":null,"completionPercentage":null,"regulatoryComplianceScore":null,"metadata":{"source":"authoring-document","docId":"a0000001-0000-4000-8000-00000000c0de","status":"DRAFT"},"ectdModuleId":null,"moduleNumber":"2.5","moduleName":null,"embedding":null,"createdAt":"2026-10-08T13:38:22.417Z","updatedAt":"2026-10-08T13:38:22.477Z"},"replaced":true}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts:232:54
+    230|     const again = await place(docId);
+    231|
+    232|     expect(again.status, JSON.stringify(again.body)).toBe(409);
+       |                                                      ^
+    233|     expect(again.body.error).toBe('FILING_COPY_PINNED');
+    234|     expect(again.body.message).toContain(`leaf #${leaf.id}`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > a leaf in a dispatched sequence pins its copy the same way, and the refusal says the sequence keeps it
+AssertionError: {"success":true,"document":{"id":2,"organizationId":7,"title":"Clinical Overview","content":"## 2.5.1 — Product Development Rationale\n\n<p>A rationale revised after dispatch.</p>\n\n## 2.5.2 — Overview of Biopharmaceutics","sections":null,"status":"draft","templateId":null,"createdBy":"3","clientWorkspace":null,"completionPercentage":null,"regulatoryComplianceScore":null,"metadata":{"source":"authoring-document","docId":"a0000002-0000-4000-8000-00000000c0de","status":"DRAFT"},"ectdModuleId":null,"moduleNumber":"2.5","moduleName":null,"embedding":null,"createdAt":"2026-10-08T13:38:22.500Z","updatedAt":"2026-10-08T13:38:22.529Z"},"replaced":true}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts:263:54
+    261|     const again = await place(docId);
+    262|
+    263|     expect(again.status, JSON.stringify(again.body)).toBe(409);
+       |                                                      ^
+    264|     expect(again.body.error).toBe('FILING_COPY_PINNED');
+    265|     expect(again.body.message).toContain(`leaf #${leaf.id}`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > the same text, now approved, promotes the copy status in place and says it wrote; the pin still holds
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts:278:32
+    276|
+    277|     expect(again.status, JSON.stringify(again.body)).toBe(200);
+    278|     expect(again.body.written).toBe(true);
+       |                                ^
+    279|     const after = await copy(copyId);
+    280|     expect(after.status).toBe('approved');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > an unchanged re-place writes nothing, and says so
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts:289:32
+    287|     const again = await place(docId);
+    288|     expect(again.status, JSON.stringify(again.body)).toBe(200);
+    289|     expect(again.body.written).toBe(false);
+       |                                ^
+    290|     expect((await copy(copyId)).updated_at).toBe(filed.updated_at);
+    291|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > once the leaf is removed the copy is no longer filed, and an edited document is re-taken into it
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts:301:32
+    299|
+    300|     expect(again.status, JSON.stringify(again.body)).toBe(200);
+    301|     expect(again.body.written).toBe(true);
+       |                                ^
+    302|     const after = await copy(copyId);
+    303|     expect(after.content).toContain('The overview, revised.');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > upsertLeaf answers "unchanged" only while the pin still matches > re-placing a document whose text changed since its leaf pinned it is refused by name, and the leaf is untouched
+AssertionError: expected { id: 6, sequenceId: 6, …(20) } to be an instance of SubmissionError
+ ❯ server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts:319:17
+    317|     const err = await placeLeaf(seqId, copyId).catch((e) => e);
+    318|
+    319|     expect(err).toBeInstanceOf(SubmissionError);
+       |                 ^
+    320|     expect(err.code).toBe('ALREADY_PLACED');
+    321|     expect(err.message).toContain(String(leaf.id));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  13:38:13
+   Duration  9.52s (transform 2.71s, setup 96ms, import 4.78s, tests 4.36s, environment 0ms)
+

@@ -50,6 +50,12 @@ vi.mock('../server/services/auth-security-service', async (importOriginal) => ({
   isAccountLocked: async () => ({ locked: false }),
   recordFailedLogin: async () => ({ locked: false, remainingAttempts: 5 }),
 }));
+// §11.10(g): the transmit asks the signer's role on the membership row
+// (checkSigningAuthority) before the password. The operator here is an admin
+// there too; tests/mdx-submission-gateway-routes.test.ts pins the refusals.
+vi.mock('../server/services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async () => 'admin',
+}));
 vi.mock('../server/db', () => ({
   pool: {
     query:   (...args: unknown[]) => queryFn(...args),

@@ -1,0 +1,17 @@
+BEGIN
+ leaf_id | organization_id | sequence_number | sequence_status | section_code | copy_id |    copy_source     |         source_authoring_doc         | pinned_sha256 | current_sha256 |     document_pinned_at     |     copy_updated_at     | retaken_after_pin | pinned_text_in_version 
+---------+-----------------+-----------------+-----------------+--------------+---------+--------------------+--------------------------------------+---------------+----------------+----------------------------+-------------------------+-------------------+------------------------
+      81 |               1 | 0000            | draft           | 2.5          |      53 | authoring-document | a96e686c-7098-4602-81db-5c762c234fe4 | 54633e7a69f9  | cf26c5e1eb0f   | 2026-10-08 12:58:10.771+00 | 2026-10-08 13:00:09.671 | t                 |                      1
+(1 row)
+
+ROLLBACK
+BEGIN
+ leaf_id | organization_id | sequence_id | section_code | copy_id | leaf_created_at | retaken_at | replaced_sha256 | replaced_text_in_version 
+---------+-----------------+-------------+--------------+---------+-----------------+------------+-----------------+--------------------------
+(0 rows)
+
+ROLLBACK
+BEGIN
+live coauthor leaves: 59, pinned: 3
+retake events: 1
+ROLLBACK

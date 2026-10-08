@@ -371,6 +371,12 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
      explaining. */
   const ask = onAsk;
   const [gateways, setGateways] = useState<GatewayInfo[]>([]);
+  /* Whether this person may sign a transmit or a technical rejection, as the
+     server's signing-authority check answers it (GET /gateways meta.signing).
+     false hides the two signed acts; null (not answered, or not readable) hides
+     nothing, because unknown is not "you cannot" and the server still decides.
+     QA 2026-10-08 (j6): a manager reached the transmit's password. */
+  const [canSign, setCanSign] = useState<boolean | null>(null);
   /* The org's submission packages for the picker; null = the list could not be
      loaded (the forms then fall back to the numeric id and say so). */
   const [packages, setPackages] = useState<PackageOption[] | null>(null);
@@ -417,6 +423,8 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     // what has or hasn't already been sent.
     if (!t.ok || !g.ok) { setState('error'); return; }
     setGateways(Array.isArray(g.data) ? g.data : []);
+    const signing = g.raw?.meta?.signing?.canSign;
+    setCanSign(typeof signing === 'boolean' ? signing : null);
     setRows(Array.isArray(t.data) ? t.data : []);
     setState('ready');
   }, []);
@@ -438,6 +446,8 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     // Every refusal closes the drawer: the rejected password must not sit in
     // the field for a resubmit, and the toast carries the reason.
     if (status === 401) { setDialog(null); fireToast('Not transmitted — re-authentication failed (§11). Nothing left the platform.', 'error'); return; }
+    // Signing authority (§11.10(g)), refused before the password: the server's sentence.
+    if (status === 403 && serverMessage(raw)) { setDialog(null); fireToast('Not transmitted — ' + serverMessage(raw), 'error'); return; }
     if (status === 409) {
       // The active-transmittal lock, or a sequence already on file as another bundle.
       setDialog(null);
@@ -774,6 +784,9 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
      own toast, and the context says so too, so AnA cannot offer to undo a
      transmission. */
   const configuredGateways = gateways.filter((g) => g.configured);
+  /** A technical rejection is a signed act: offered only on a row that can take
+   *  one, and not to someone the server says may not sign. */
+  const offerRejection = (t: Transmittal): boolean => canSign !== false && canRecordRejection(t);
   const anaContext = useMemo(
     () => ({
       summary: state === 'loading'
@@ -816,9 +829,16 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
             {ask && <button className="reg-cta" onClick={() => ask('Explain our agency gateway posture: which gateways hold credentials and can transmit, what the unconfigured ones are missing, and which transmittals are still awaiting acknowledgement. Do not treat an unreachable dispatch layer as having no gateways.')}>{I.sparkles} Explain gateway posture</button>}
             <button className="btn" style={{ height: 32 }} onClick={() => setDialog('identifiers')}>{I.penLine} Record identifiers</button>
             <button className="btn" style={{ height: 32 }} onClick={() => setDialog('assemble')}>{I.layers} Assemble bundle</button>
-            <button className="btn primary" style={{ height: 32 }} onClick={() => setDialog('transmit')}>{I.upload} Transmit</button>
+            {canSign !== false && <button className="btn primary" style={{ height: 32 }} onClick={() => setDialog('transmit')}>{I.upload} Transmit</button>}
           </span>
         </div>
+        {canSign === false && (
+          <div className="pj-card-b" role="note" style={{ fontSize: 12 }}>
+            Transmitting is an electronic signature, and your role does not sign (21 CFR Part 11 §11.10(g)), so Transmit and
+            Technical rejection are not offered to you. A colleague whose role carries signing authority sends the package; you
+            can still record identifiers and assemble it.
+          </div>
+        )}
         <div className="pj-card-b" style={{ padding: 0 }}>
           {state === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading gateways…" /></div>
             : state === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t reach the dispatch layer" hint="The dispatch layer didn’t respond. Sign in to your tenant and retry." /></div>
@@ -863,7 +883,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
                     <button className="nda-open" onClick={() => checkStatus(t.id)}>{I.zap} Status</button>
                     <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => downloadAck(t.id)} disabled={!t.ack_received_at} title={t.ack_received_at ? 'Download the acknowledgment or transmittal record — the file states which' : 'Nothing to download yet'}>{I.download} ACK</button>
                     <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setDialog({ rollback: t.id })}>{I.rotateCcw} Rollback</button>
-                    {canRecordRejection(t) && (
+                    {offerRejection(t) && (
                       <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setDialog({ rejection: t.id })}
                         title="Record that the agency did not load the sequence this transmittal filed">{I.alertTriangle} Technical rejection</button>
                     )}

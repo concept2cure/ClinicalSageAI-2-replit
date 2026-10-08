@@ -51,10 +51,10 @@ import {
 import { createScopedLogger } from '../../utils/logger';
 import { canMutateProgram, programInOrganization } from '../c2c/program-access';
 import { requiresIndependence } from '../governance/separation-of-duties';
-import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge';
+import { isSameSubmissionType, resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge';
 import { cespChannelRefusal } from '../submission-gateways/ema-cesp';
-import { regulatoryPrograms } from '../../../shared/schema/programs';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
+import { packageIdentityRefusal, readRecordedPackageIdentity } from '../ectd/package-identity';
 import type { DispatchReadinessAssessment } from '../ectd/assess-dispatch-readiness';
 import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage';
 import {
@@ -78,7 +78,9 @@ export type SubmissionErrorCode =
   | 'ALREADY_PLACED'
   | 'VALIDATION_FAILED'
   | 'UNANCHORED_SUBMISSION'
-  | 'APPLICATION_NUMBER_MISMATCH';
+  | 'APPLICATION_NUMBER_MISMATCH'
+  | 'APPLICATION_TYPE_MISMATCH'
+  | 'PACKAGE_IDENTITY_MISSING';
 
 /**
  * Transitions that are irreversible / outward-facing and must go through the
@@ -112,6 +114,11 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   UNANCHORED_SUBMISSION: 409,
   // The status the eCTD export answers for the same contradiction (ectd-export.ts).
   APPLICATION_NUMBER_MISMATCH: 409,
+  // A submission anchored only to a project of its own filing type (QA j6).
+  APPLICATION_TYPE_MISMATCH: 409,
+  // The record names no application number or no applicant (QA j6), as the
+  // eCTD export answers it (ectd-export.ts classifyError).
+  PACKAGE_IDENTITY_MISSING: 409,
 };
 
 // ── Pure lifecycle rules ────────────────────────────────────────────────────
@@ -372,7 +379,12 @@ async function leavesOfAnotherProgram(submissionId: number, programId: string, o
  *     project" rule; what is not done here is moving a filing between projects;
  *   - CROSS_PROJECT: the submission already files another project's document,
  *     placed before P-14 refused it. A filing holds only its own project's
- *     documents (PF-11), so those leaves are removed first.
+ *     documents (PF-11), so those leaves are removed first;
+ *   - APPLICATION_TYPE_MISMATCH: the project files another kind of application
+ *     than the submission (isSameSubmissionType, the shared submission-type
+ *     resolution; never a name). QA 2026-10-08 (j6): the control offered a
+ *     device programme for an NDA, the server checked no type, and an anchor
+ *     is not undone here. listAnchorCandidates offers only what this admits.
  * The update is a compare-and-set on program_id IS NULL, and it commits with
  * its chained SUBMISSION_PROGRAM_ANCHORED audit row, carrying the reason, or
  * neither does (§11.10(e)).
@@ -385,7 +397,7 @@ export async function anchorSubmissionToProgram(
   if (!reason) throw new SubmissionError('VALIDATION', 'A reason for anchoring the submission is required. Nothing was changed.');
   const current = await getSubmission(input.submissionId, ctx);
   if (current.programId) throw alreadyAnchoredRefusal(current.programId, input.programId);
-  await assertMayAnchorTo(input.programId, ctx);
+  await assertMayAnchorTo(input.programId, current.applicationType, ctx);
   const foreign = await leavesOfAnotherProgram(input.submissionId, input.programId, ctx.organizationId);
   if (foreign.length > 0) throw foreignLeavesRefusal(foreign);
   await writeSubmissionAnchor(input.submissionId, input.programId, reason, ctx);
@@ -405,16 +417,24 @@ function alreadyAnchoredRefusal(current: string, requested: string): SubmissionE
   );
 }
 
-/** The project is a live one of this organization, and the caller leads it or manages the organization. */
-async function assertMayAnchorTo(programId: string, ctx: AnchorContext): Promise<void> {
+/**
+ * The project is a live one of this organization, files the submission's kind
+ * of application, and the caller leads it or manages the organization. The type
+ * is judged before the role, so a wrong choice is told what is wrong with it.
+ */
+async function assertMayAnchorTo(programId: string, applicationType: string, ctx: AnchorContext): Promise<void> {
   if (!(await programInOrganization(pool, programId, ctx.organizationId))) {
     throw new SubmissionError('NOT_FOUND', 'Project not found for this organization. Nothing was changed.');
   }
   const lead = await pool.query(
-    `SELECT lead_user_id FROM regulatory_programs WHERE id = $1 AND organization_id = $2`,
+    `SELECT lead_user_id, program_type, code FROM regulatory_programs WHERE id = $1 AND organization_id = $2`,
     [programId, ctx.organizationId],
   );
-  const raw = lead.rows[0]?.lead_user_id;
+  const program = lead.rows[0] as { lead_user_id?: unknown; program_type?: string | null; code?: string | null } | undefined;
+  if (!isSameSubmissionType(program?.program_type, applicationType)) {
+    throw applicationTypeMismatch(applicationType, program?.program_type ?? null, program?.code ?? null);
+  }
+  const raw = program?.lead_user_id;
   const leadUserId = raw == null ? null : Number(raw);
   if (!canMutateProgram({ actor: { userId: ctx.userId, orgRole: ctx.orgRole }, program: { leadUserId } })) {
     throw new SubmissionError(
@@ -422,6 +442,58 @@ async function assertMayAnchorTo(programId: string, ctx: AnchorContext): Promise
       'Only the project’s lead or an organization manager can anchor a submission to it. Nothing was changed.',
     );
   }
+}
+
+/** A filing type as the reader knows it ('NDA', '510(k)'), from the shared registry; the raw value when unknown. */
+const filingTypeLabel = (t: string | null): string => (t ? resolveToRegistryEntry(t)?.applicationType ?? t : 'not recorded');
+
+function applicationTypeMismatch(applicationType: string, programType: string | null, code: string | null): SubmissionError {
+  return new SubmissionError(
+    'APPLICATION_TYPE_MISMATCH',
+    `This submission's filing type is ${filingTypeLabel(applicationType)}; project${code ? ` ${code}` : ''}'s is ` +
+      `${filingTypeLabel(programType)}, so the submission cannot be anchored to it. Choose a project of the same filing type. ` +
+      'Nothing was changed.',
+  );
+}
+
+export interface AnchorCandidates {
+  /** submissions.application_type, the type a candidate must file. */
+  applicationType: string;
+  /** That type as the reader knows it ('NDA', '510(k)'), from the shared registry. */
+  applicationTypeLabel: string;
+  /** This organization's live projects of that type, ordered by code. */
+  candidates: Array<{ id: string; code: string; title: string }>;
+  /** Live projects of other filing types: counted, never named. */
+  otherTypes: number;
+}
+
+/**
+ * The projects a submission may be anchored to: this organization's live
+ * projects (not deleted, as programInOrganization reads them) whose type is the
+ * submission's (isSameSubmissionType, the rule the anchor applies). The Submission Center offers exactly these; the anchor still
+ * judges type, role and leaves itself. NOT_FOUND for another organization's
+ * submission (getSubmission).
+ */
+export async function listAnchorCandidates(
+  submissionId: number,
+  ctx: { organizationId: number; userId: number },
+): Promise<AnchorCandidates> {
+  const current = await getSubmission(submissionId, ctx);
+  const rows = (
+    await pool.query(
+      `SELECT id::text AS id, code, name, program_type FROM regulatory_programs
+        WHERE organization_id = $1 AND deleted_at IS NULL
+        ORDER BY code, name, id`,
+      [ctx.organizationId],
+    )
+  ).rows as Array<{ id: string; code: string | null; name: string | null; program_type: string | null }>;
+  const same = rows.filter((r) => isSameSubmissionType(r.program_type, current.applicationType));
+  return {
+    applicationType: current.applicationType,
+    applicationTypeLabel: filingTypeLabel(current.applicationType),
+    candidates: same.map((r) => ({ id: r.id, code: r.code ?? '', title: r.name ?? '' })),
+    otherTypes: rows.length - same.length,
+  };
 }
 
 /** The refusal for a submission that already files another project's documents. */
@@ -1708,7 +1780,8 @@ export interface TransmitSequenceParams {
    */
   applicationId?: string;
   sponsorId?: string;
-  sponsorName?: string;
+  /* No sponsorName: the applicant is the organisation's recorded name
+     (package-identity.ts), never a value the caller supplies. QA 2026-10-08 (j6). */
 }
 
 export interface TransmitSequenceResult {
@@ -1811,25 +1884,13 @@ export interface SequenceTransmitReadiness {
   configured: { staging: boolean | null; production: boolean | null };
   /** The program's recorded agency application number, when one is usable. */
   recordedApplicationNumber: string | null;
+  /** The organisation's recorded name, which the package names as the applicant. */
+  recordedApplicant: string | null;
   /** The transmit-time dispatch gate (`gate`, every gate composed). */
   gate: { cleared: boolean; blockers: string[] };
   /** Why transmit would be refused before the wire — for `environment` when
    *  one is given, else for every environment — or null when it would not. */
   refusal: string | null;
-}
-
-/**
- * The program's recorded agency application number, when one is usable; null
- * for a submission with no program, or a program with no usable number.
- */
-async function programApplicationNumber(programId: string | null | undefined, organizationId: number): Promise<string | null> {
-  if (!programId) return null;
-  const [program] = await db
-    .select({ applicationNumber: regulatoryPrograms.applicationNumber })
-    .from(regulatoryPrograms)
-    .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, organizationId)))
-    .limit(1);
-  return usableIdentifier('applicationNumber', program?.applicationNumber ?? null);
 }
 
 /**
@@ -1839,8 +1900,10 @@ async function programApplicationNumber(programId: string | null | undefined, or
  * does (assemble-from-core.ts exportApplicationId, answered 409
  * APPLICATION_NUMBER_MISMATCH by ectd-export.ts). The record is authoritative;
  * a number it contradicts would be written into the backbone and the package
- * name and sent to the agency. A program with no usable recorded number accepts
- * any usable one: there is nothing to contradict.
+ * name and sent to the agency. A program with no usable recorded number is
+ * refused before this is asked (packageIdentityRefusal, QA 2026-10-08 j6): it
+ * used to accept any usable typed number, so a package went out under a number
+ * no record held.
  */
 export function transmitApplicationNumberRefusal(typed: string, recorded: string | null): SubmissionError | null {
   const usable = usableIdentifier('applicationNumber', typed);
@@ -1911,8 +1974,12 @@ export async function sequenceTransmitReadiness(
   const assessment = await assessSequenceDispatchReadiness({ sequenceId, organizationId: ctx.organizationId });
   const gate = { cleared: assessment.gate.cleared, blockers: [...assessment.gate.blockers] };
 
-  const recordedApplicationNumber = await programApplicationNumber(submission.programId, ctx.organizationId);
-  const typedNumberRefusal = typedApplicationNumberRefusal(applicationId, recordedApplicationNumber);
+  // The applicant and the application the package would name, from the record
+  // (package-identity.ts); with either missing transmit refuses, and says so here.
+  const identity = await readRecordedPackageIdentity(pool, ctx.organizationId, submission.programId);
+  const recordedApplicationNumber = identity.applicationNumber;
+  const identityRefusal = packageIdentityRefusal(identity, 'Nothing can be sent until it is recorded.')?.message ?? null;
+  const typedNumberRefusal = identityRefusal ?? typedApplicationNumberRefusal(applicationId, recordedApplicationNumber);
 
   const gatewayRefusal = (): string | null => {
     if (!route.ok) return route.reason;
@@ -1938,6 +2005,7 @@ export async function sequenceTransmitReadiness(
     route,
     configured,
     recordedApplicationNumber,
+    recordedApplicant: identity.applicantName,
     gate,
     refusal,
   };
@@ -2009,11 +2077,14 @@ async function transmitDispatchedSequence(
   // The typed application number against the program's record (P-23), as the
   // eCTD export judges it. The submission is read here, once, for the route too.
   const submission = await getSubmission(seq.submissionId, ctx);
-  const numberRefusal = transmitApplicationNumberRefusal(
-    applicationId,
-    await programApplicationNumber(submission.programId, ctx.organizationId),
-  );
+  // The package names its applicant and its application from the record, or it
+  // is not sent (package-identity.ts, QA 2026-10-08 j6).
+  const identity = await readRecordedPackageIdentity(pool, ctx.organizationId, submission.programId);
+  const missingIdentity = packageIdentityRefusal(identity, 'Nothing was sent.');
+  if (missingIdentity) throw new SubmissionError('PACKAGE_IDENTITY_MISSING', missingIdentity.message);
+  const numberRefusal = transmitApplicationNumberRefusal(applicationId, identity.applicationNumber);
   if (numberRefusal) throw numberRefusal;
+  const applicantName = identity.applicantName as string;
 
   // Gate 1 — Part 11 e-signature on this sequence, for transmit, by this actor.
   const target = `ectd-sequence:${sequenceId}`;
@@ -2101,8 +2172,10 @@ async function transmitDispatchedSequence(
     // also a package filename component. An unassigned value SAYS it is
     // unassigned, in the wording the transmit path already uses.
     applicationId,
+      // The applicant's <id> (D-U-N-S) has no recorded home on this path yet
+      // (package-identity.ts header); its name is the organisation's.
       sponsorId: params.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
-      sponsorName: params.sponsorName ?? `UNASSIGNED (organization ${ctx.organizationId})`,
+      sponsorName: applicantName,
     });
   } catch (err) {
     await releaseTransmitSlot(sequenceId, ctx.organizationId);
@@ -3083,7 +3156,7 @@ export async function upsertLeaf(
       .returning();
     return { kind: 'inserted' as const, inserted };
   }, (r) => r.kind === 'inserted');
-  if (placed.kind === 'live') return alreadyPlaced(placed.live, input);
+  if (placed.kind === 'live') return alreadyPlaced(placed.live, input, documentContentSha256);
   const row = placed.inserted;
   // Part 11 §11.10(e), on the same terms as the update branch: the INSERT above
   // is committed, the placement stands, and the outcome rides out on the row.
@@ -3112,14 +3185,30 @@ export async function upsertLeaf(
  * is written and nothing is audited. A different operation is refused by name,
  * because handing back a leaf the caller did not ask for would read as a
  * placement that did not happen.
+ *
+ * 2026-10-08 (QA walk 2, j4 blocker): "unchanged" also means the leaf's pin
+ * still matches the document. A document whose content changed after its leaf
+ * pinned it was answered `unchanged: true`, and the placement dialog said
+ * "Already placed … holds this document. Nothing was written" over a leaf that
+ * no longer held what the document says. That placement is refused by name
+ * too; nothing is written, and re-pinning stays an explicit act (remove the
+ * leaf and place again).
  */
-function alreadyPlaced(live: SubmissionLeaf, input: UpsertLeafInput): UpsertedLeaf {
+function alreadyPlaced(live: SubmissionLeaf, input: UpsertLeafInput, currentSha256: string | null): UpsertedLeaf {
   const requested = input.lifecycleOp ?? 'new';
   if ((live.lifecycleOp ?? 'new') !== requested) {
     throw new SubmissionError(
       'ALREADY_PLACED',
       `This document is already placed at ${live.sectionCode} in this sequence as ${live.lifecycleOp} (leaf ${live.id}). ` +
         'Nothing was written. To change its operation, remove that leaf first.',
+    );
+  }
+  if ((live.documentContentSha256 ?? null) !== currentSha256) {
+    throw new SubmissionError(
+      'ALREADY_PLACED',
+      `This document is already placed at ${live.sectionCode} in this sequence (leaf ${live.id}), and its content has ` +
+        'changed since that leaf pinned it. Nothing was written. To file the content as it is now, remove that leaf, ' +
+        'then place the document again.',
     );
   }
   return { ...live, auditTrail: null, unchanged: true };

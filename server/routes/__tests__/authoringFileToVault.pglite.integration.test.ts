@@ -23,7 +23,11 @@ import type { PoolClient } from 'pg';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import { PREREQ, VAULT_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
 
-const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown, put: vi.fn() }));
+const h = vi.hoisted(() => ({
+  db: null as unknown, pool: null as unknown, put: vi.fn(),
+  /** The engine's answer: true is the plain-text stand-in a missing Puppeteer produces. */
+  fallback: false,
+}));
 vi.mock('../../db', () => ({
   get db() { return h.db; },
   get pool() { return h.pool; },
@@ -60,7 +64,7 @@ vi.mock('../../export/renderers', () => ({
   // The export renders through the tracked form (QA 2026-10-08, j4); same stub.
   renderHtmlToPdfTracked: async (html: string) => ({
     buffer: Buffer.from(`%PDF-1.7\n% rendered by the test engine\n${html}`),
-    usedFallback: false,
+    usedFallback: h.fallback,
   }),
 }));
 const lastStoredBytes = (): Buffer => (h.put.mock.calls.at(-1)?.[0] as { bytes: Buffer }).bytes;
@@ -254,6 +258,38 @@ describe('POST /docs/:docId/file-to-vault', () => {
       mime_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       folder_id: 'module-2',
     });
+  });
+
+  /* QA 2026-10-08, walk 2 (j4): with no PDF engine, File to vault (PDF) stored
+     the plain-text stand-in whose first line says "Do not file this rendering"
+     as the governed Vault copy, and said nothing. No decision allows filing it
+     with an acknowledgement (docs/LAUNCH_DEFINITION_OF_DONE.md, docs/design),
+     so it fails closed. */
+  it('refuses a PDF the engine could only render as plain text: 503, nothing filed, nothing recorded; DOCX is unaffected', async () => {
+    const docId = await draftDocument('Module 2.5 — no PDF engine');
+    const count = async (sql: string) => ((await jdb.pool.query(sql)).rows[0] as { n: number }).n;
+    const vaultBefore = await count('SELECT count(*)::int AS n FROM vault.documents');
+    const auditBefore = await count('SELECT count(*)::int AS n FROM audit_logs');
+    const historyBefore = await count('SELECT count(*)::int AS n FROM authoring_export_history');
+    const putsBefore = h.put.mock.calls.length;
+    h.fallback = true;
+    try {
+      const res = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
+      expect(res.status, JSON.stringify(res.body)).toBe(503);
+      expect(res.body.error.code).toBe('PDF_RENDERER_UNAVAILABLE');
+      expect(res.body.error.message).toContain(
+        'The PDF renderer is not available here; this would file a plain-text rendering. Nothing was filed.',
+      );
+      expect(h.put.mock.calls.length).toBe(putsBefore);
+      expect(await count('SELECT count(*)::int AS n FROM vault.documents')).toBe(vaultBefore);
+      expect(await count('SELECT count(*)::int AS n FROM audit_logs')).toBe(auditBefore);
+      expect(await count('SELECT count(*)::int AS n FROM authoring_export_history')).toBe(historyBefore);
+
+      const docx = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'docx' });
+      expect(docx.status, JSON.stringify(docx.body)).toBe(201);
+    } finally {
+      h.fallback = false;
+    }
   });
 
   it('never leaves a partial write: a failure after ingest reverts the vault row and answers 500', async () => {

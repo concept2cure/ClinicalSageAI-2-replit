@@ -56,6 +56,11 @@ export function buildUsRegionalEnvelope(input: EctdEnvelopeInput): string {
   if (!input.applicationNumber || input.applicationNumber.trim().length === 0) {
     throw new Error('ENVELOPE_INVALID: applicationNumber is required.');
   }
+  // The applicant is required as the number is (QA 2026-10-08, j6): an envelope
+  // with an empty <sponsor> block was built silently. Refused by name instead.
+  if (typeof input.sponsorName !== 'string' || input.sponsorName.trim().length === 0) {
+    throw new Error('ENVELOPE_INVALID: sponsorName is required.');
+  }
   if (!/^\d{4}$/.test(input.sequenceNumber)) {
     throw new Error('ENVELOPE_INVALID: sequenceNumber must be 4 digits, e.g. "0000".');
   }

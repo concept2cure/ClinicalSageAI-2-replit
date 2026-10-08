@@ -50,6 +50,7 @@ import { EmptyState } from '../dataConnect';
 import { useAnaChat } from '../../components/ana/useAnaChat';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { AnaActivity, activityPropsFor } from '../AnaActivity';
+import { useHostSummary } from '../TurnSummary';
 import { RunPolicyDockNote } from '../RunPolicySwitch';
 import { AnaGrounding } from '../AnaGrounding';
 import { AnaOutputCards } from '../AnaOutputs';
@@ -96,6 +97,7 @@ import { getAuthToken } from '@/utils/authToken';
 import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
 
 import { useFilingOutline, findSectionForNode, nodeHasDraft } from '../useFilingOutline';
+import { outlineReadState, unboundNodeTitle, unboundNodeToast } from './outlineReadState';
 import {
   editorTargetDocLabel,
   clearEditorTarget,
@@ -623,7 +625,13 @@ export function readDocumentAccess(raw: unknown): DocumentAccess {
  */
 export function filingCommitNote(filing: unknown): string {
   if (!filing || typeof filing !== 'object') return '';
-  const f = filing as { committed?: unknown; reason?: unknown };
+  const f = filing as { committed?: unknown; reason?: unknown; partOf?: unknown };
+  /* QA 2026-10-08, walk 2: a section under an undivided outline node (2.5.1 of
+     the 2.5 Clinical Overview) goes into that node with the document's other
+     sections there; the server names the node as `partOf`. */
+  if (f.committed === true && typeof f.partOf === 'string' && f.partOf.trim()) {
+    return ` The text was committed to the filing as part of its section ${f.partOf}, with this document’s other sections under ${f.partOf}.`;
+  }
   if (f.committed === true) return ' The text was committed to the filing.';
   if (f.committed === false) {
     const why = typeof f.reason === 'string' && f.reason.trim() ? f.reason.trim() : 'the server gave no reason.';
@@ -939,6 +947,9 @@ export function DocumentWorkbench({
      dropdown pair, defaulted to M3, identical for every filing type. */
   const projectIdForOutline = programId;
   const filing = useFilingOutline(projectIdForOutline);
+  /* The outline's keys: a node the outline does not subdivide opens the
+     document's sections under it (findSectionForNode; QA 2026-10-08, walk 2). */
+  const outlineKeys = useMemo(() => filing.flat.map(n => n.key), [filing.flat]);
   /* The program's name and phase, for the header. Read from the one program
      route (GET /api/c2c/projects/:id); null while unread or with no program. */
   const program = useProgramSummary(programId);
@@ -1463,6 +1474,8 @@ export function DocumentWorkbench({
      every other host (workDock.ts), toggled by the chip in the pane header,
      and the background queue read only while shown. */
   const dock = useProgressDock();
+  /* A turn's Summary: the panel at that turn, or the sheet below 760px (S4). */
+  const summary = useHostSummary(ana.messages, dock, ana.isStreaming);
   const anaWorkQueue = useAgentActivity(dock.open, ana.isStreaming);
   const anaComposerRef = useRef<HTMLTextAreaElement>(null);
   const anaReturnFocusRef = useRef<HTMLElement | null>(null);
@@ -3420,9 +3433,12 @@ export function DocumentWorkbench({
                  failed, so every node rendered dimmed, "not started in this
                  document yet", with its "required" chip and a "no draft yet"
                  toast on click — drafting-status claims produced by a read that
-                 had not happened. Unread is now its own state. */
-              const sectionsUnread = sectionsState !== 'ready';
-              const bound = sectionsUnread ? null : findSectionForNode(sections, node.key);
+                 had not happened. Unread is now its own state — and so is
+                 "no document open", which read as "still being read" forever
+                 (QA 2026-10-08, walk 2, j4; ./outlineReadState.ts). */
+              const readState = outlineReadState({ activeDocId, docsState, sectionsState });
+              const sectionsUnread = readState !== 'ready';
+              const bound = sectionsUnread ? null : findSectionForNode(sections, node.key, outlineKeys);
               const isActive = bound != null && bound.id === activeSectionId;
               return (
                 <button
@@ -3431,20 +3447,15 @@ export function DocumentWorkbench({
                   data-active={isActive || undefined}
                   style={{ paddingLeft: 10 + node.depth * 12, opacity: bound || sectionsUnread ? 1 : 0.62 }}
                   title={
-                    sectionsUnread
-                      ? `${node.label} — this document’s sections have not been read yet`
+                    readState !== 'ready'
+                      ? unboundNodeTitle(node.label, readState)
                       : bound
                         ? `${node.label} — open`
                         : `${node.label} — not started in this document yet`
                   }
                   onClick={() => {
-                    if (sectionsUnread) {
-                      fireToast(
-                        sectionsState === 'error'
-                          ? 'This document’s sections could not be read, so nothing is known about whether this part is drafted. Retry from the tree.'
-                          : 'This document’s sections are still being read.',
-                        'error'
-                      );
+                    if (readState !== 'ready') {
+                      fireToast(unboundNodeToast(node, readState), 'error');
                     } else if (bound) {
                       // The module rides with the navigation: a nav the guard
                       // holds must not move the create/export default to a
@@ -4591,7 +4602,7 @@ export function DocumentWorkbench({
                 messages={ana.messages}
                 streaming={ana.isStreaming}
                 open={dock.open}
-                onToggle={dock.toggle}
+                onToggle={summary.toggleDock}
                 controls={dock.panelId}
               />
               <button
@@ -4611,6 +4622,7 @@ export function DocumentWorkbench({
             <div className="ana-work-host">
               <AnaWorkPanel
                 id={dock.panelId}
+                turn={summary.panelTurn}
                 messages={ana.messages}
                 streaming={ana.isStreaming}
                 runStatus={ana.runStatus}
@@ -4628,6 +4640,7 @@ export function DocumentWorkbench({
               />
             </div>
           )}
+          {summary.sheet}
           {/* A labelled region, NOT a live one. As a polite `log` marked busy
               while streaming, it made the whole transcript a live region and
               held every announcement inside it until the turn ended — the
@@ -4676,7 +4689,7 @@ export function DocumentWorkbench({
                     {/* Her work first — while she works, its live phase is the
                         waiting state, so this pane no longer prints the same
                         phase a second time under it — then the answer. */}
-                    <AnaActivity {...activityPropsFor(m)} />
+                    <AnaActivity {...activityPropsFor(m)} onSummary={() => summary.openFor(m.id)} />
                     {m.text && <AnaMarkdown text={m.text} />}
                     {/* The grounding verdict and her output — with the record
                         above, the same three every host renders. This pane had

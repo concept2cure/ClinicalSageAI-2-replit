@@ -86,9 +86,33 @@ describe('recording a review decision', () => {
     fireEvent.click(screen.getByRole('button', { name: /Record review decision/ }));
     await screen.findByLabelText('Decision');
   }
+  /** The verdict is chosen, never preselected (P-21). */
+  async function openAndApprove() {
+    await openModal();
+    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'approved' } });
+  }
+
+  /* QA 2026-10-08, walk 2 (j4): the dialog opened on "Approve" with a
+     "Record approval" button, so one click recorded an approval nobody chose.
+     P-21 (docs/LAUNCH_DEFINITION_OF_DONE.md): a regulated choice starts on
+     "Not stated — choose" and sends nothing until chosen. */
+  it('starts on "Not stated — choose" and records nothing until a decision is chosen (P-21)', async () => {
+    await openModal();
+    const select = screen.getByLabelText('Decision') as HTMLSelectElement;
+    expect(select.value).toBe('');
+    expect(select.selectedOptions[0]?.textContent).toBe('Not stated — choose');
+    expect(screen.queryByRole('button', { name: /Record approval/ })).toBeNull();
+    const btn = screen.getByRole('button', { name: /Record decision/ }) as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    fireEvent.click(btn);
+    expect(writes().length).toBe(0);
+    expect(document.body.textContent).not.toMatch(/verdict — Approved/);
+    fireEvent.change(select, { target: { value: 'approved' } });
+    expect((screen.getByRole('button', { name: /Record approval/ }) as HTMLButtonElement).disabled).toBe(false);
+  });
 
   it('POSTs the verdict and the note to the authoring review transition', async () => {
-    await openModal();
+    await openAndApprove();
     fireEvent.change(screen.getByLabelText('Note for the thread (optional)'), {
       target: { value: 'Efficacy claim reads correctly now' },
     });
@@ -114,7 +138,7 @@ describe('recording a review decision', () => {
   });
 
   it('re-reads the board after the decision, so the row comes from the record', async () => {
-    await openModal();
+    await openAndApprove();
     const before = boardReads().length;
     fireEvent.click(screen.getByRole('button', { name: /Record approval/ }));
     await waitFor(() => expect(boardReads().length).toBeGreaterThan(before));
@@ -122,7 +146,7 @@ describe('recording a review decision', () => {
 
   it('says the decision was NOT recorded when the server refuses, and stays open', async () => {
     writeAnswer = { ok: false, status: 403, body: { success: false, error: 'Access denied: you are not a reviewer on this document' } };
-    await openModal();
+    await openAndApprove();
     fireEvent.click(screen.getByRole('button', { name: /Record approval/ }));
     await waitFor(() => {
       const banner = document.querySelector('.esign-err');

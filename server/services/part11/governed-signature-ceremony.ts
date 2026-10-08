@@ -49,8 +49,7 @@ import {
 } from '../governance/separation-of-duties';
 import { can } from '../governance/permissions';
 import { persistGovernedSignSignature } from './signature-persistence';
-import { resolveSignerOrgRole } from './resolve-signer-role';
-import { isSigningAuthorized } from './signing-authority';
+import { checkSigningAuthority } from './signing-authority-gate';
 import { AUTHENTICATOR_REQUIRED_MESSAGE } from './reverify-signer';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import { clientIpOf, type HasClientIp } from '../../utils/client-ip';
@@ -133,24 +132,10 @@ const SOD_UNVERIFIED_MESSAGE =
  * cannot run signs nothing; its cause is logged, never shown.
  */
 async function assertSigningAuthority(userId: number, orgId: number): Promise<void> {
-  let role: string | null;
-  try {
-    role = await resolveSignerOrgRole(userId, orgId);
-  } catch (err) {
-    console.error('[governed-signature] signer role lookup failed:', err instanceof Error ? err.message : err);
-    throw new GovernedSignatureRefusal(
-      503,
-      'SIGNING_AUTHORITY_UNVERIFIED',
-      'Your signing authority could not be checked, so nothing was signed. Try again; if this continues, contact your administrator.',
-    );
-  }
-  if (!isSigningAuthorized(role)) {
-    throw new GovernedSignatureRefusal(
-      403,
-      'ESIGNATURE_NO_AUTHORITY',
-      'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.',
-    );
-  }
+  // The check itself lives in signing-authority-gate.ts (moved there 2026-10-08
+  // so the routes that sign in their own handlers ask it too, not a copy of it).
+  const refusal = await checkSigningAuthority(userId, orgId);
+  if (refusal) throw new GovernedSignatureRefusal(refusal.status, refusal.code, refusal.message);
 }
 
 async function checkMeaningAgainstAuthorship(

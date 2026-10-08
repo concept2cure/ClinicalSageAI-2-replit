@@ -158,6 +158,66 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
     }
   });
 
+  /* QA 2026-10-08, walk 2 (j4): a new project has a filing outline and no
+     document. Every outline node was titled "this document’s sections have not
+     been read yet" and a click said "This document’s sections are still being
+     read." — a read that never starts, so it never finished. With no document
+     open nothing is being read; the node and the click say what is true and
+     where to go. (Starting the section from the outline is FILING_SPINE F4.) */
+  it('with no document open, the outline says so — never that sections are being read', async () => {
+    (window as any).C2C_PROJECT = { id: 'P-1' };
+    try {
+      wire((m, u) => {
+        if (m === 'GET' && u.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [] });
+        if (m === 'GET' && u.startsWith('/api/c2c/documents?projectId=')) {
+          return ok({ documents: [{ id: 'F1', doc_type: 'ind', agency: 'fda', title: 'IND 2026', rule_pack_version: '1', status: 'draft', readiness: 0 }] });
+        }
+        if (m === 'GET' && u === '/api/c2c/documents/F1/outline') {
+          return ok({
+            document: { id: 'F1', title: 'IND 2026', doc_type: 'ind', agency: 'fda', status: 'draft', readiness: 0 },
+            outline: [{ key: '1.1.1', parent_key: null, label: 'Form FDA 1571', mandatory: true, path_order: 1, status: 'todo', draft_source: null, has_content: false, version: 1 }],
+          });
+        }
+        return undefined;
+      });
+      render(<DocumentAuthoring {...props()} />);
+      const node = await screen.findByTitle(/Form FDA 1571 — no document is open/);
+      expect(screen.queryByTitle(/have not been read yet/)).toBeNull();
+      fireEvent.click(node);
+      await waitFor(() => expect(text()).toMatch(/No document is open, so 1\.1\.1 Form FDA 1571 has nothing to edit yet/));
+      expect(text()).toMatch(/New document/);
+      expect(text()).not.toMatch(/still being read/);
+    } finally {
+      delete (window as any).C2C_PROJECT;
+    }
+  });
+
+  it('while the project’s documents are still being read, the outline says that — not that a document’s sections are', async () => {
+    (window as any).C2C_PROJECT = { id: 'P-1' };
+    try {
+      wire((m, u) => {
+        if (m === 'GET' && u.startsWith('/api/authoring/docs?')) return never();
+        if (m === 'GET' && u.startsWith('/api/c2c/documents?projectId=')) {
+          return ok({ documents: [{ id: 'F1', doc_type: 'ind', agency: 'fda', title: 'IND 2026', rule_pack_version: '1', status: 'draft', readiness: 0 }] });
+        }
+        if (m === 'GET' && u === '/api/c2c/documents/F1/outline') {
+          return ok({
+            document: { id: 'F1', title: 'IND 2026', doc_type: 'ind', agency: 'fda', status: 'draft', readiness: 0 },
+            outline: [{ key: '1.1.1', parent_key: null, label: 'Form FDA 1571', mandatory: true, path_order: 1, status: 'todo', draft_source: null, has_content: false, version: 1 }],
+          });
+        }
+        return undefined;
+      });
+      render(<DocumentAuthoring {...props()} />);
+      const node = await screen.findByTitle(/Form FDA 1571 — this project’s documents are still being read/);
+      fireEvent.click(node);
+      await waitFor(() => expect(text()).toMatch(/This project’s documents are still being read\./));
+      expect(text()).not.toMatch(/This document’s sections are still being read/);
+    } finally {
+      delete (window as any).C2C_PROJECT;
+    }
+  });
+
   it('switching documents clears the previous document’s comment threads instead of leaving them live', async () => {
     const DOCS2 = { success: true, documents: [
       DOCS.documents[0],

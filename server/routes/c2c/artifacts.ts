@@ -58,6 +58,7 @@ import {
 } from './shared';
 import { authorizedProjectId, loadProjectArtifact } from './artifact-project-scope';
 import { verifyReauth } from './actions';
+import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
 import { clientIpKey } from '../../utils/client-ip';
 
 const logger = createScopedLogger('concept2cure-artifacts');
@@ -2649,6 +2650,15 @@ router.put(
       });
 
       if (actMeaning) {
+        // §11.10(g), before the password: approve and lock write a signature, so
+        // the signer's role on the MEMBERSHIP row must carry signing authority
+        // under the platform's one policy. The status table above reads the
+        // session's role (req.userRole) and decides who may move an artifact;
+        // it never decided who may sign. QA 2026-10-08 (j6 sweep).
+        const authority = await checkSigningAuthority(userId, organizationId);
+        if (authority) {
+          return sendError(res, authority.status, authority.message, undefined, authority.code);
+        }
         const reauth = await verifyReauth(userId, req.body?.reauth);
         if (!reauth.ok) {
           return sendError(

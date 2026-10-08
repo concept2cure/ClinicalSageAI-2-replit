@@ -197,7 +197,8 @@ async function freezeDispatchTransmit(w: World): Promise<request.Response> {
     expect(r.status, JSON.stringify(r.body)).toBe(200);
   }
   return as(4)(request(w.app).post(`/api/submissions/sequences/${seqId}/transmit`)).send({
-    signatureActionId: await sign('transmit'), environment: 'staging', applicationId: '123456', sponsorId: 'C2C-SPONSOR', sponsorName: 'Founder Org',
+    // No sponsorName: the package names the organisation's recorded name (QA j6).
+    signatureActionId: await sign('transmit'), environment: 'staging', applicationId: '123456', sponsorId: 'C2C-SPONSOR',
   });
 }
 

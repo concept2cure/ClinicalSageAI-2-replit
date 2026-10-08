@@ -27,8 +27,9 @@ import path from 'path';
 import { eq, and, isNull, desc } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
-import { regulatoryPrograms } from '../../../shared/schema/programs';
-import { recordedApplicationId, usableIdentifier } from './regulatory-identifiers';
+import { usableIdentifier } from './regulatory-identifiers';
+import { readRecordedPackageIdentity, packageIdentityRefusal } from './package-identity';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable';
 import { packageSequenceFromCore, type PackageFromCoreResult, type PriorState } from './package-from-core';
 import { materializeLeafSources, leafSourceKey, type UnresolvedLeaf } from './leaf-source-resolver';
 import { validateLeafPaths } from './leaf-path-safety';
@@ -431,9 +432,9 @@ export interface AssembleSubmissionParams {
    */
   sequenceNumber?: string;
   /**
-   * Recorded agency application number for the backbone envelope. When absent
-   * the package is built with a value that SAYS it is unassigned — see the
-   * applicant fields below and regulatory-identifiers.ts.
+   * An application number the caller states. It must be usable and equal the
+   * number the submission's project records; the package carries the RECORDED
+   * number, and with none recorded it is not built (package-identity.ts).
    */
   applicationNumber?: string;
   /**
@@ -452,7 +453,6 @@ export interface AssembleSubmissionParams {
    * already used on the transmit path in submission-ops.
    */
   applicantId?: string;
-  applicantName?: string;
   /**
    * Requested region (accepts core codes fda|eu|jp and agency names FDA|EMA|
    * PMDA). The sequence's RECORDED region is always authoritative for what gets
@@ -515,56 +515,42 @@ export interface AssembleSubmissionResult {
 }
 
 /**
- * The application number a submission's package carries, from its program's
- * record (recordedApplicationId): the recorded agency number, else the
- * program's code, else a handle that says it is unassigned. The record is
- * authoritative, as it is for the region: a caller-supplied number must be a
- * usable identifier and must not contradict a recorded agency number.
+ * The application and the applicant a submission's package names, from the
+ * record only (package-identity.ts): the project's recorded agency number and
+ * the organisation's recorded name. With either missing the package is refused
+ * by name (PackageIdentityMissingError) — never built with a placeholder, and
+ * never with the program code as the number. A caller-supplied number must be
+ * usable and must equal the recorded one.
  *
  * 2026-09-29 (W5/D7, WO-9 Click 6): the number came only from the caller, which
- * the compile surface never sends — BX-512 compiled as IND 000512 and exported
- * as UNASSIGNED-SEQ-6 — and a supplied one went unvalidated into a filename
- * and the backbone.
+ * the compile surface never sends. 2026-10-08 (QA j6): with no number recorded
+ * it fell back to the program code (PLR-606 shipped as the FDA application
+ * number), then to UNASSIGNED-SEQ-<id>, and the applicant was
+ * "UNASSIGNED (organization N)".
  */
-async function exportApplicationId(
+async function exportIdentity(
   submission: { programId: string | null },
-  sequenceId: number,
   organizationId: number,
   supplied: string | undefined,
-): Promise<string> {
-  const [program] = submission.programId
-    ? await db
-        .select({ applicationNumber: regulatoryPrograms.applicationNumber, code: regulatoryPrograms.code })
-        .from(regulatoryPrograms)
-        .where(
-          and(
-            eq(regulatoryPrograms.id, submission.programId),
-            eq(regulatoryPrograms.organizationId, organizationId),
-            isNull(regulatoryPrograms.deletedAt),
-          ),
-        )
-        .limit(1)
-    : [];
-  const recorded = recordedApplicationId(
-    { applicationNumber: program?.applicationNumber ?? null, programCode: program?.code ?? null },
-    `UNASSIGNED-SEQ-${sequenceId}`,
-  );
-  if (supplied === undefined) return recorded;
-  const usable = usableIdentifier('applicationNumber', supplied);
+): Promise<{ applicationId: string; applicantName: string }> {
+  const usable = supplied === undefined ? undefined : usableIdentifier('applicationNumber', supplied);
   if (usable === null) {
     throw new Error(
       `"${supplied}" is not a usable application number: it must start with a letter or digit and hold only ` +
         'letters, digits, ".", "_" or "-" (up to 64).',
     );
   }
-  const recordedNumber = usableIdentifier('applicationNumber', program?.applicationNumber);
-  if (recordedNumber !== null && usable !== recordedNumber) {
+  const identity = await readRecordedPackageIdentity(queryableFromDrizzle(db), organizationId, submission.programId);
+  const refusal = packageIdentityRefusal(identity, 'Nothing was built.');
+  if (refusal) throw refusal;
+  const recorded = identity.applicationNumber as string;
+  if (usable !== undefined && usable !== recorded) {
     throw new Error(
-      `Application number "${usable}" does not match the program's recorded application number "${recordedNumber}". ` +
+      `Application number "${usable}" does not match the program's recorded application number "${recorded}". ` +
         'The record is authoritative; omit the number to package as recorded.',
     );
   }
-  return usable;
+  return { applicationId: recorded, applicantName: identity.applicantName as string };
 }
 
 /**
@@ -637,19 +623,18 @@ export async function assembleSubmissionEctd(
     }
   }
 
-  const applicationId = await exportApplicationId(submission, sequence.id, organizationId, params.applicationNumber);
+  // The application and the applicant come from the record, or nothing is built.
+  const { applicationId, applicantName } = await exportIdentity(submission, organizationId, params.applicationNumber);
 
   const assembled = await assembleSequence({
     sequenceId: sequence.id,
     organizationId,
     userId,
-    // Never fabricate an agency identifier. The program's record decides it
-    // (exportApplicationId); an unassigned value says so, in the same wording
-    // the transmit path already uses (submission-ops), so a reviewer reading
-    // the backbone sees a gap instead of a plausible applicant.
     applicationId,
+    // The applicant's <id> (D-U-N-S) has no recorded home on this path yet; an
+    // absent one still says it is unassigned (package-identity.ts header).
     sponsorId: params.applicantId ?? `UNASSIGNED-ORG-${organizationId}`,
-    sponsorName: params.applicantName ?? `UNASSIGNED (organization ${organizationId})`,
+    sponsorName: applicantName,
     priorState: params.priorState,
   });
 

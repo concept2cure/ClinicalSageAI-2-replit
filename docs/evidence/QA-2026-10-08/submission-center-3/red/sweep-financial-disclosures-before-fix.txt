@@ -1,0 +1,9 @@
+ ✓ server/routes/__tests__/financial-disclosure-certify-meaning.test.ts > certify: the meaning is required, and one of the governed meanings > no meaning is refused 400 before the signer is asked for a password, and nothing is opened 20ms
+ ✓ server/routes/__tests__/financial-disclosure-certify-meaning.test.ts > certify: the meaning is required, and one of the governed meanings > an empty meaning is refused 400 before the signer is asked for a password, and nothing is opened 4ms
+ ✓ server/routes/__tests__/financial-disclosure-certify-meaning.test.ts > certify: the meaning is required, and one of the governed meanings > the old default, outside the vocabulary is refused 400 before the signer is asked for a password, and nothing is opened 3ms
+ ✓ server/routes/__tests__/financial-disclosure-certify-meaning.test.ts > certify: the meaning is required, and one of the governed meanings > a governed meaning is carried, unchanged, into the certification, the ledger and the signature row 4ms
+ × server/routes/__tests__/financial-disclosure-certify-meaning.test.ts > certify: signing authority (§11.10(g)) before the password > a manager is refused 403 ESIGNATURE_NO_AUTHORITY; no password is asked and nothing is opened 6ms
+ × server/routes/__tests__/financial-disclosure-certify-meaning.test.ts > certify: signing authority (§11.10(g)) before the password > a member is refused 403 ESIGNATURE_NO_AUTHORITY; no password is asked and nothing is opened 3ms
+ × server/routes/__tests__/financial-disclosure-certify-meaning.test.ts > certify: signing authority (§11.10(g)) before the password > a role lookup that cannot run refuses 503, names no cause, and asks for no password 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 4 passed (7)

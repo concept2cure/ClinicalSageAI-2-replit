@@ -163,6 +163,40 @@ describe('the dispatched sequence has a package and a transmit (the blocker)', (
     expect((screen.getByLabelText('Agency application number') as HTMLInputElement).value).toBe('000512');
   });
 
+  /* QA 2026-10-08 (j6): the package named "UNASSIGNED (organization 1)" as the
+     applicant and the program code as the application number. The Dispatch tab
+     says, before anyone signs, what the package names — from the record. */
+  it('says what the package names as its applicant and its application, from the record', async () => {
+    seqs = [seqRow({ status: 'dispatched' })];
+    mockApi((method, url) =>
+      method === 'POST' && url === '/api/submissions/sequences/21/governed-precheck'
+        ? ok({ step: 'transmit', cleared: true, refusal: null, transmit: { ...TRANSMIT({ staging: true, production: false }), recordedApplicant: 'Concept2Cure Therapeutics' } })
+        : undefined,
+    );
+    await ready();
+    openWorkspace('Dispatch');
+    await waitFor(() => expect(document.body.textContent).toContain('FDA ESG (FDA)'));
+    expect(document.body.textContent).toContain('ApplicantConcept2Cure Therapeutics');
+    expect(document.body.textContent).toContain('Application number000512');
+  });
+
+  it('with no application number or applicant on record, says "not recorded" and the server refusal, never a placeholder', async () => {
+    seqs = [seqRow({ status: 'dispatched' })];
+    const refusal = 'A package names its application and its applicant from the record, never a placeholder, and its project records no agency application number (record the number the agency assigned on the project; the program code is not one). Nothing can be sent until it is recorded.';
+    mockApi((method, url) =>
+      method === 'POST' && url === '/api/submissions/sequences/21/governed-precheck'
+        ? ok({ step: 'transmit', cleared: false, refusal, transmit: { ...TRANSMIT({ staging: true, production: false }), recordedApplicationNumber: null, recordedApplicant: null, refusal } })
+        : undefined,
+    );
+    await ready();
+    openWorkspace('Dispatch');
+    await waitFor(() => expect(document.body.textContent).toContain('FDA ESG (FDA)'));
+    expect(document.body.textContent).toContain('Applicantnot recorded');
+    expect(document.body.textContent).toContain('Application numbernot recorded');
+    expect(document.body.textContent).toContain('its project records no agency application number');
+    expect(document.body.textContent).not.toMatch(/UNASSIGNED/);
+  });
+
   it('a configured gateway transmits through the signed chain: gates, sign (intent transmit), transmit', async () => {
     seqs = [seqRow({ status: 'dispatched' })];
     const posts: Array<{ url: string; body: unknown }> = [];
