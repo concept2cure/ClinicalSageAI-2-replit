@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T15:49:05.203Z",
+  "generatedAt": "2026-10-08T16:35:46.980Z",
   "git": {
-    "sha": "97ab887d43273dc69f01d5c5b66273ce154a2408",
+    "sha": "bcc296f80f4cd50890057dff45dd812c4f44f02c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,7 +15,7 @@
     "duplicateBasenames": 217,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 55,
+    "largeFilesByBytes": 56,
     "largeFilesByLines": 113
   },
   "findings": {
@@ -2236,7 +2236,7 @@
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 108582
+        "bytes": 108555
       },
       {
         "file": "server/routes/auth.ts",
@@ -2245,6 +2245,14 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "bytes": 102946
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "bytes": 102540
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
@@ -2259,12 +2267,8 @@
         "bytes": 101005
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "bytes": 100852
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 100434
+        "bytes": 100548
       },
       {
         "file": "server/routes/submissions.ts",
@@ -2466,7 +2470,11 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2149
+        "lines": 2150
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 2119
       },
       {
         "file": "server/services/precedent-engine.ts",
@@ -2493,12 +2501,12 @@
         "lines": 2076
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 2069
-      },
-      {
         "file": "server/services/pharmacovigilance/pharmacovigilance-knowledge.ts",
         "lines": 2068
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2067
       },
       {
         "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
@@ -2527,10 +2535,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
         "lines": 2015
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2006
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
@@ -2749,7 +2753,7 @@
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
-      "largeByBytes": 8,
+      "largeByBytes": 9,
       "largeByLines": 17
     },
     {
