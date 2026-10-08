@@ -45,6 +45,7 @@ vi.mock('../runtime', () => ({ getPool: () => driverPool }));
 
 import { instrumentPool } from '../poolInstrumentation';
 import { withTenantConnection } from '../withTenantConnection';
+import { CLEAR_SESSION_SCOPE_SQL, RESET_ENFORCEMENT_SQL } from '../sessionScope';
 import { getTenantScope, runWithTenantScope } from '../tenantStore';
 
 const TENANT_LOCAL_SQL_PREFIX = "SELECT set_config('app.current_tenant_id', $1, true)";
@@ -131,14 +132,13 @@ describe('request-path callers that already hold a scope keep today\'s behaviour
 
     expect(inside).toMatchObject({ tenantId: '0', role: 'app_super_admin', caller: 'c2c/actions/verify-chain' });
     expect(after).toMatchObject({ tenantId: '5', role: 'member', caller: 'req' });
+    // One statement applies the scope with the isolation switches pinned; the
+    // release clears it and resets enforcement (server/db/sessionScope.ts).
     expect(driverLog.map(e => e.sql)).toEqual([
-      "SELECT set_config('app.current_tenant_id', $1, false)",
-      "SELECT set_config('app.current_org_id', $1, false)",
-      "SELECT set_config('app.current_user_role', $1, false)",
+      expect.stringMatching(/^SELECT set_config\('app\.current_tenant_id', \$1, false\), .*set_config\('app\.rls_enforce'/),
       'SELECT 1 FROM audit_logs',
-      "SELECT set_config('app.current_tenant_id', '', false)",
-      "SELECT set_config('app.current_org_id', '', false)",
-      "SELECT set_config('app.current_user_role', '', false)",
+      CLEAR_SESSION_SCOPE_SQL,
+      RESET_ENFORCEMENT_SQL,
     ]);
     expect(driverRelease).toHaveBeenCalledWith(undefined);
   });
