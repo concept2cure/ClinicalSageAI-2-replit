@@ -83,6 +83,8 @@ import { NewSubmissionForm } from './NewSubmissionForm';
 import { gatewayLabel } from '../gatewayLabels';
 import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
 import { useSurfaceAvailable } from '../surfaceAvailable';
+import { consumeNavParams } from '../navParams';
+import { readSubmissionNavTarget, useOpenOnNavTarget } from './submissionNavTarget';
 
 /* ── Display types aligned to the canonical submission core's ACTUAL columns
    (shared/schema/submissions.ts; server/services/submission-service). Only
@@ -605,6 +607,17 @@ export function SubmissionCenter({
     setSelSeq(null);
     setNotice(null);
   }, [subId]);
+
+  /* F10: opened on the submission, sequence and tab a sender named (Place into
+     filing's "Open in Submission Center"). Read once on mount; opened against
+     the rows the server returned, after the reset above, never guessed. */
+  const [navTarget] = React.useState(() => {
+    const p = consumeNavParams('submission-center');
+    return p ? readSubmissionNavTarget({ submissionId: p.submissionId, sequenceId: p.sequenceId, ws: p.ws }) : null;
+  });
+  const navMiss = useOpenOnNavTarget(navTarget, {
+    subs, sub, seqs, ws, selSeq, selectSubmission: setSelSub, selectSequence: setSelSeq, openWorkspace: setWs,
+  });
 
   /**
    * Create a submission — POST /api/submissions.
@@ -1220,6 +1233,7 @@ export function SubmissionCenter({
 
       {/* The latest server verdict (transition / governed outcome) — verbatim. */}
       <VerdictNote notice={notice} />
+      <VerdictNote notice={navMiss} />
 
       {newOpen && (
         <NewSubmissionForm

@@ -70,6 +70,7 @@ import {
 import { mutateVerbatim, type MutateResult } from './SubmissionSeqWorkspaces';
 import { SC_LIFECYCLE_OPS } from '../fixtures/submission';
 import type { FireToast } from '../toast';
+import { stashNavParamsForTarget } from '../navParams';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
@@ -225,6 +226,8 @@ interface Placement {
   unchanged: boolean;
   seqId: number;
   sequenceNumber: string;
+  /** The submission the sequence belongs to, for "Open in Submission Center". */
+  submissionId: number | null;
 }
 
 function AuthoringPlaceIntoFilingForDocument({
@@ -306,7 +309,7 @@ function AuthoringPlaceIntoFilingForDocument({
      code the note announces ("Files as 3.2.S.4.2"), not at the keystrokes:
      upsertLeaf stores a section code as sent, and the Vault filing dialog,
      sharing this judgement, sends the canonical form too. */
-  const filing = canPlace && seq && sectionJudged.canonical ? { seq, sectionCode: sectionJudged.canonical } : null;
+  const filing = canPlace && seq && sectionJudged.canonical ? { seq, sectionCode: sectionJudged.canonical, subId: target.subId } : null;
 
   const place = async () => {
     if (!filing || pending.current) return;
@@ -347,6 +350,7 @@ function AuthoringPlaceIntoFilingForDocument({
       setPlacement({
         leafId: put.data.id, sectionCode: put.data.sectionCode, sequenceLabel, snapshotId,
         copyStatus, unchanged: !!put.data.unchanged, seqId: filing.seq.id, sequenceNumber: filing.seq.sequenceNumber,
+        submissionId: filing.subId,
       });
       /* The server answers a repeat placement of the same document at the same
          section with the leaf that already holds it, and writes nothing
@@ -550,6 +554,12 @@ function AuthoringPlaceIntoFilingForDocument({
                     style={{ height: 30 }}
                     onClick={() => {
                       setOpen(false);
+                      /* F10: the Submission Center opens on the sequence this
+                         document went into (or was being placed into), in the
+                         Builder, where its leaves are. */
+                      const subId = placement ? placement.submissionId : target.subId;
+                      const seqId = placement ? placement.seqId : seq?.id;
+                      stashNavParamsForTarget('submission-center', { submissionId: String(subId ?? ''), sequenceId: String(seqId ?? ''), ws: 'builder' });
                       onNav('submission-center');
                     }}
                   >
