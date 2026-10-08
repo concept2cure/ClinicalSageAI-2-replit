@@ -42,7 +42,7 @@ function documentPanels() {
         documentId={DOC}
         title="Vorelinib DS specification"
         onDownload={() => {}}
-        downloadingId={null}
+        downloadingId=""
         onUploadNewVersion={() => {}}
         uploading={false}
         onLifecycleChanged={() => {}}

@@ -2342,7 +2342,7 @@ export async function upsertLeaf(
      erroring"), not a refusal, so it is not judged here. */
   const placed = await lockSequenceForLeafWrite(input.sequenceId, ctx, async (tx) => {
     const live = await sameDocumentLeafInSection(tx, input, ctx.organizationId);
-    if (live) return { live };
+    if (live) return { kind: 'live' as const, live };
     const [inserted] = await tx
       .insert(submissionLeaves)
       .values({
@@ -2363,9 +2363,9 @@ export async function upsertLeaf(
         createdBy: ctx.userId,
       })
       .returning();
-    return { inserted };
+    return { kind: 'inserted' as const, inserted };
   });
-  if ('live' in placed) return alreadyPlaced(placed.live, input);
+  if (placed.kind === 'live') return alreadyPlaced(placed.live, input);
   const row = placed.inserted;
   // Part 11 §11.10(e), on the same terms as the update branch: the INSERT above
   // is committed, the placement stands, and the outcome rides out on the row.

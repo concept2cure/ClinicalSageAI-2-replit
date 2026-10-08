@@ -49,7 +49,7 @@ function res(payload: unknown, status = 200) {
 }
 
 /* The list as the server returns it: scoped to ?programId when given (QA j3 finding (b)). */
-function submissionList(rows: Array<{ programId?: string | null }>, url: string) {
+function submissionList<T extends { programId?: string | null }>(rows: T[], url: string): T[] {
   const program = new URL(url, 'http://localhost').searchParams.get('programId');
   return program ? rows.filter((row) => row.programId === program) : rows;
 }
