@@ -38,8 +38,21 @@ vi.mock('../../services/report-os/portfolio/fetch', async (importOriginal) => ({
 vi.mock('../../services/c2c/program-project-anchor', () => ({ resolveProgramProjectAnchor: h.anchor }));
 
 import createInsightsCanvasRoutes from '../insights-canvas-routes';
+import { requestDb } from '../../db/requestDb';
 
+/* The request-scoped client the mount's authenticateToken installs in
+   production (establishRequestTenantScope). A request sent with
+   `x-test-no-request-db` has none, as a mount that skipped the auth boundary
+   would. */
+let lastReq: express.Request | null = null;
 const app = express();
+app.use((req, _res, next) => {
+  lastReq = req;
+  if (!req.headers['x-test-no-request-db']) {
+    (req as unknown as { dbClient: unknown }).dbClient = { query: vi.fn(async () => ({ rows: [] })) };
+  }
+  next();
+});
 app.use('/api/insights-canvas', createInsightsCanvasRoutes());
 const PROGRAM = 'd979e567-4622-46f1-8cb7-8bf434227f25';
 const overview = (q = '') => request(app).get('/api/insights-canvas/overview' + q);
@@ -66,6 +79,25 @@ describe('GET /overview?programId= — the open program leads', () => {
     expect(h.anchor).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ programId: PROGRAM, orgId: 7, strict: true }));
     expect(res.body.data.leadProgram).toMatchObject({ projectId: 11, label: 'HLV-333', scopeId: '11' });
     expect(res.body.data.openProgram).toEqual({ programId: PROGRAM, state: 'lead' });
+  });
+
+  /* The anchor read runs on the request's RLS-scoped client, never the shared
+     pool (resolveProgramProjectAnchor's contract; ci requestDb adoption gate).
+     The canvas read it through the shared `db` (4ac15bdd1). */
+  it('resolves the open program on the request-scoped client, not the shared pool', async () => {
+    h.anchor.mockResolvedValue(11);
+    const res = await overview(`?programId=${PROGRAM}`);
+    expect(res.status).toBe(200);
+    expect(lastReq).not.toBeNull();
+    expect(h.anchor.mock.calls[0][0]).toBe(requestDb(lastReq!));
+    expect(h.anchor.mock.calls[0][0]).not.toEqual({ __db: true });
+  });
+
+  it('with no request-scoped client the open program is not read at all — no shared-pool fallback', async () => {
+    const res = await overview(`?programId=${PROGRAM}`).set('x-test-no-request-db', '1');
+    expect(res.status).toBe(500);
+    expect(res.body.success).toBe(false);
+    expect(h.anchor).not.toHaveBeenCalled();
   });
 
   it('a program with no project record has no lead — and is not given the flagship', async () => {

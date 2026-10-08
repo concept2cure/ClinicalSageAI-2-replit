@@ -8,26 +8,28 @@
  *   • projectId (numeric) — unchanged governed path: org-scoped project check,
  *     concept2cure_artifacts insert, 201.
  *   • projectIdent (program UUID or code) — resolved org-scoped against
- *     regulatory_programs; the artifact registry's projects.id FK has no
- *     mapping for the program spine, so the route uses the eSTAR /build
- *     audited-unplaced degradation: the built field map is content-hashed and
- *     audit-logged (the audit row IS the record — REQUIRED, fail-closed), and
- *     the 200 response says `governed:false, audited:true, artifactId:null`
- *     with the unplaced reason. No artifact row is fabricated.
- *   • an unresolvable ident is a 404 that leaks nothing; an audit failure is a
- *     500 — never a response claiming `audited: true` over nothing.
+ *     regulatory_programs, then to its project record (the C1 anchor,
+ *     projects.regulatory_program_id); with one, the same governed path.
+ *   • a program with NO project record is refused 409 PROGRAM_NOT_ANCHORED and
+ *     nothing is written (P-20 follow-up, aac603a1b). It used to answer 200
+ *     `governed:false, audited:true` over an "unplaced" audit row: a success
+ *     status over a save that placed nothing. That branch was removed by
+ *     decision; ind-forms.contract.integration.test.ts pins the refusal against
+ *     real tables, and this file pins it at the handler.
+ *   • the anchor lookup is strict: one that cannot complete is a 500, never read
+ *     as "no project record". An unresolvable ident is a 404 that leaks nothing.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createMockRequest, createMockResponse } from '../setup';
 
 const { mockSelectRows, mockInsertReturning, auditLog } = vi.hoisted(() => ({
-  mockSelectRows: vi.fn<[], unknown[]>(() => []),
+  mockSelectRows: vi.fn((): unknown[] => []),
   mockInsertReturning: vi.fn(async () => [{ id: 5 }]),
   // logAction resolves an AuditWriteResult (server/services/auditService.ts)
   // and the governed path dereferences it (.persisted / .error), so the mock
   // must resolve the real success shape — resolving undefined makes the route
   // throw a TypeError and 500.
-  auditLog: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
+  auditLog: vi.fn(async (): Promise<{ persisted: boolean; chained: boolean; tamperProof: boolean; error?: string }> => ({ persisted: true, chained: true, tamperProof: true })),
 }));
 
 // Fake drizzle db, built inside vi.hoisted per the 510k-device-routes idiom.
@@ -134,40 +136,25 @@ describe('POST /:formId/artifact — numeric legacy path (unchanged)', () => {
   });
 });
 
-describe('POST /:formId/artifact — program-spine ident (audited-unplaced degradation)', () => {
-  it('resolves the program org-scoped, audit-logs the content hash, and says the registry placement is pending', async () => {
+describe('POST /:formId/artifact — program-spine ident (anchored, or refused)', () => {
+  it('refuses 409 PROGRAM_NOT_ANCHORED for a program with no project record — nothing inserted, no "unplaced" audit row', async () => {
+    // The program resolves in the caller's org; its anchor lookup finds no
+    // projects row (a non-integer id is not an anchor). Before aac603a1b this
+    // answered 200 governed:false over an "ind_form.artifact.unplaced" audit row.
     mockSelectRows.mockReturnValue([{ id: UUID, code: 'BX-204', name: 'BX-204 CGM' }]);
     const req = makeReq({ projectIdent: UUID, sponsorName: 'Acme Bio' });
     const res = createMockResponse() as any;
 
     await artifactHandler()(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.status).toHaveBeenCalledWith(409);
     const payload = res.json.mock.calls[0][0];
-    expect(payload).toMatchObject({
-      governed: false,
-      audited: true,
-      artifactId: null,
-      projectId: null,
-      programId: UUID,
-      formId: 'FDA_1571',
-    });
-    expect(String(payload.artifact_registry)).toContain('unplaced');
-    expect(String(payload.contentHash)).toMatch(/^[0-9a-f]{64}$/);
-    // The audit row carries the same content hash — it IS the persisted record.
-    expect(auditLog).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'ind_form.artifact.unplaced',
-        organizationId: 2,
-        metadata: expect.objectContaining({
-          programId: UUID,
-          contentHash: payload.contentHash,
-          artifactRegistry: 'unplaced_pending_document_identity_contract',
-        }),
-      }),
-    );
-    // NOTHING was inserted into the artifact registry — no fabricated row.
+    expect(payload.error.code).toBe('PROGRAM_NOT_ANCHORED');
+    expect(payload.error.message).toMatch(/Nothing was saved/);
+    expect(payload).not.toHaveProperty('governed');
+    expect(payload).not.toHaveProperty('audited');
     expect(fakeDb.insert).not.toHaveBeenCalled();
+    expect(auditLog).not.toHaveBeenCalled();
   });
 
   it('registers a GOVERNED artifact when the program HAS a C1 project anchor', async () => {
@@ -199,10 +186,9 @@ describe('POST /:formId/artifact — program-spine ident (audited-unplaced degra
     );
   });
 
-  it('keeps the audited-unplaced path when the program has NO anchor', async () => {
-    // A program with no anchored project row is a fact about the data — created
-    // before C1, or intake skipped the anchor for one of its stated reasons —
-    // not a failure to try. It must degrade exactly as it did before.
+  it('a program whose anchor lookup answers "none" is refused, not saved unplaced', async () => {
+    // A program with no anchored project row is a fact about the data. It has
+    // no dossier, so the save is refused — the governed:false branch is gone.
     mockSelectRows
       .mockReturnValueOnce([{ id: UUID, code: 'BX-204', name: 'BX-204 CGM' }])
       .mockReturnValueOnce([]);
@@ -212,13 +198,27 @@ describe('POST /:formId/artifact — program-spine ident (audited-unplaced degra
 
     await artifactHandler()(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json.mock.calls[0][0].error.code).toBe('PROGRAM_NOT_ANCHORED');
     expect(fakeDb.insert).not.toHaveBeenCalled();
-    expect(res.json.mock.calls[0][0]).toMatchObject({
-      governed: false,
-      audited: true,
-      artifactId: null,
-    });
+    expect(auditLog).not.toHaveBeenCalled();
+  });
+
+  it('an anchor lookup that cannot complete is a 500 — never read as "no project record", never a save', async () => {
+    mockSelectRows
+      .mockReturnValueOnce([{ id: UUID, code: 'BX-204', name: 'BX-204 CGM' }])
+      .mockImplementationOnce(() => {
+        throw new Error('connection reset');
+      });
+    const req = makeReq({ projectIdent: UUID, sponsorName: 'Acme Bio' });
+    const res = createMockResponse() as any;
+
+    await artifactHandler()(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(JSON.stringify(res.json.mock.calls[0][0])).not.toContain('PROGRAM_NOT_ANCHORED');
+    expect(fakeDb.insert).not.toHaveBeenCalled();
+    expect(auditLog).not.toHaveBeenCalled();
   });
 
   it('404s an ident that resolves to nothing in the caller org', async () => {
@@ -233,36 +233,24 @@ describe('POST /:formId/artifact — program-spine ident (audited-unplaced degra
     expect(auditLog).not.toHaveBeenCalled();
   });
 
-  it('FAILS CLOSED when the audit write fails — never claims audited:true over nothing', async () => {
+  it.each([
+    ['rejects', () => auditLog.mockRejectedValueOnce(new Error('audit store down'))],
+    ['resolves unpersisted', () => auditLog.mockResolvedValueOnce({ persisted: false, chained: false, tamperProof: false, error: 'audit store down' })],
+  ])('the refusal claims nothing when the audit store %s — no audited:true, no write', async (_label, arrange) => {
+    // The two fail-closed cases the unplaced branch had. With that branch gone
+    // the refusal writes no audit row at all, so whatever the audit store does
+    // cannot turn it into a claimed save.
+    arrange();
     mockSelectRows.mockReturnValue([{ id: UUID, code: 'BX-204', name: 'BX-204 CGM' }]);
-    auditLog.mockRejectedValueOnce(new Error('audit store down'));
     const req = makeReq({ projectIdent: UUID, sponsorName: 'Acme Bio' });
     const res = createMockResponse() as any;
 
     await artifactHandler()(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(500);
-    const payload = res.json.mock.calls[0][0];
-    expect(JSON.stringify(payload)).not.toContain('"audited":true');
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(JSON.stringify(res.json.mock.calls[0][0])).not.toContain('"audited":true');
     expect(fakeDb.insert).not.toHaveBeenCalled();
-  });
-
-  it('FAILS CLOSED when the audit write resolves unpersisted — the real service reports failure this way', async () => {
-    // logAction does not reject on a persistence failure; it resolves
-    // { persisted: false, ... }. The route must read the outcome, or it
-    // answers audited:true over nothing.
-    mockSelectRows.mockReturnValue([{ id: UUID, code: 'BX-204', name: 'BX-204 CGM' }]);
-    auditLog.mockResolvedValueOnce({ persisted: false, chained: false, tamperProof: false, error: 'audit store down' });
-    const req = makeReq({ projectIdent: UUID, sponsorName: 'Acme Bio' });
-    const res = createMockResponse() as any;
-
-    await artifactHandler()(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    const payload = res.json.mock.calls[0][0];
-    expect(JSON.stringify(payload)).not.toContain('"audited":true');
-    expect(payload.error).toBe('AUDIT_WRITE_FAILED');
-    expect(fakeDb.insert).not.toHaveBeenCalled();
+    expect(auditLog).not.toHaveBeenCalled();
   });
 
   it('400s when neither projectId nor projectIdent is supplied', async () => {

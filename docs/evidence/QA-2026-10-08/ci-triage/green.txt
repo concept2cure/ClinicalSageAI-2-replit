@@ -1,0 +1,105 @@
+# GREEN — HEAD e79cca4d9 + this change
+# cmd: RLS_ENFORCE=off CI=true npx vitest run --config vitest.config.ts <files>
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > leads with the open program’s anchored project, not the flagship 83ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > resolves the open program on the request-scoped client, not the shared pool 20ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > with no request-scoped client the open program is not read at all — no shared-pool fallback 6ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > a program with no project record has no lead — and is not given the flagship 24ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > an anchored project outside the computed portfolio is named as such, with no lead 24ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > a programId that is not a program UUID is refused, not guessed 15ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > with no program open no program leads — the flagship does not stand in 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > keeps every phase in order, times the steps, and closes on post_done 113ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > records a stopped turn as stopped in the phase it was cut short 80ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > holds a steer as pending from acceptance until the server confirms it landed 85ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > drops a steer the run never reached when the run ends 57ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > reopening a conversation restores the work record > maps the persisted tool trace and steers back onto the turn 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > reopening a conversation restores the work record > hydrates nothing from a turn that has no trace 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=false 44ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true 19ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > warns when requested enrichment is unavailable and retains its model availability notice 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > reports unavailable optional context to the person and includes it in the model input 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > Continue receives the visible partial draft even when stored history lacks it 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > encapsulates the handoff with the request and never sends an unguarded duplicate 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > does not attach a continuation draft to an unrelated request 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > premise: the record tool is not always offered, so only the carry can offer it 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 21ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > reads memory only with the resolved thread ID 61ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails 24ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > does not queue an already-landed steer when its SSE receipt arrives before HTTP success 21ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > shows accepted work waiting when HTTP succeeds first, then clears it on SSE confirmation 9ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > never shows an unaccepted steer after a control refusal 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > never shows an unaccepted steer after a control timeout 39ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > reconciles one duplicate receipt with success and refusal in failure-first order 8ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > reconciles one duplicate receipt with success and refusal in success-first order 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > keeps exactly one duplicate pending after one receipt and out-of-order HTTP successes 8ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > does not use an earlier same-text receipt to confirm a later submission 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > does not transfer a refused earlier attempt receipt to a later same-text submission 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > does not save an unmatched same-text echo as confirmation for a future request 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > does not consume unrelated pending work on an unmatched external echo 9ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > matches whitespace and character-cap normalization in echo-first order 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > matches whitespace and character-cap normalization in response-first order 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > matches the real queue and drain cap-boundary echo in echo-first order 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > matches the real queue and drain cap-boundary echo in response-first order 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > preserves accepted-but-abandoned acknowledgment without affecting a replacement run 5ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > programIdForThread > accepts a UUID (normalised to lower case) and nothing else 2ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > lists the org's threads bound to the program, newest first, with the first user message as title 2ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > refuses a program id that is not a UUID rather than querying with it 1ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > returns nothing without an organization — never a cross-tenant list 0ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > reports a failed read as a failure, not as no threads 1ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > scopes the recents list to the signed-in person 1ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > scopes the project list to the signed-in person 0ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > lists nothing for a caller it cannot identify, rather than the organisation's 0ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > with no program open > leads with no program — not project 1 — and lists the programs to open 28ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > offers no device-only report for a biologic program 42ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > offers it for a device program 24ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > marks the digest and the registers runnable, and the rest not 25ms
+ ✓ server/routes/__tests__/chat-threads-program-paging.test.ts > a program’s conversations page past the first screenful > takes an offset, after the order, bound as a parameter 40ms
+ ✓ server/routes/__tests__/chat-threads-program-paging.test.ts > a program’s conversations page past the first screenful > starts at the newest when no offset, or no usable one, is given 21ms
+ ✓ server/routes/__tests__/chat-threads-program-paging.test.ts > a program’s conversations page past the first screenful > is still the caller’s own conversations in the program 5ms
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > answers 503 PORTFOLIO_UNAVAILABLE when the portfolio read fails, never the empty answer 21ms
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > still answers 200 with leadProgram null for an organisation that has no program 6ms
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > answers 200 with the open program when there are programs 32ms
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > names the lead program as the project its readiness was computed for 18ms
+ Test Files  8 passed (8)
+      Tests  61 passed (61)
+
+# cmd: node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression   (HEAD + this change)
+[ci:requestdb-coverage] RLS request-scoped DB adoption
+  route files touching the DB : 270
+  using requestDb(req)        : 42
+  still on the shared pool    : 227 (migration backlog)
+    JWT boundary auto-scoped  : 225
+    explicit pre-tenant scope : 2
+    unclassified              : 0
+[ci:requestdb-coverage] 1 route(s) migrated off the shared pool — re-run with --write-baseline to ratchet the backlog down.
+[ci:requestdb-coverage] OK — no new shared-pool routes (227 current, 228 baseline)
+exit=0
+
+# GREEN (proof tier) — HEAD + this change: tests/schema-contract/biopharma-programs-router-columns.contract.test.ts
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > the fixture table matches the Drizzle definition column-for-column 23ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > extracts every SELECT in the router — the gate is not vacuous 1ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > no statement references a column its table does not have 0ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > no statement references a table that does not exist 0ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > every extracted statement plans cleanly 0ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma route registration order > registers /meetings before /:id so it is reachable 1ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+
+# GREEN — HEAD + this change: tests/routes/ind-forms-artifact-ident.test.ts
+ ✓ tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — numeric legacy path (unchanged) > persists a governed artifact for a numeric projectId 50ms
+ ✓ tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — numeric legacy path (unchanged) > a numeric projectIdent string takes the same governed path 1ms
+ ✓ tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (anchored, or refused) > refuses 409 PROGRAM_NOT_ANCHORED for a program with no project record — nothing inserted, no "unplaced" audit row 3ms
+ ✓ tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (anchored, or refused) > registers a GOVERNED artifact when the program HAS a C1 project anchor 3ms
+ ✓ tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (anchored, or refused) > a program whose anchor lookup answers "none" is refused, not saved unplaced 1ms
+ ✓ tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (anchored, or refused) > an anchor lookup that cannot complete is a 500 — never read as "no project record", never a save 3ms
+ ✓ tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (anchored, or refused) > 404s an ident that resolves to nothing in the caller org 1ms
+ ✓ tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (anchored, or refused) > the refusal claims nothing when the audit store rejects — no audited:true, no write 1ms
+ ✓ tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (anchored, or refused) > the refusal claims nothing when the audit store resolves unpersisted — no audited:true, no write 3ms
+ ✓ tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (anchored, or refused) > 400s when neither projectId nor projectIdent is supplied 1ms
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+
+# GREEN — final, HEAD e79cca4d9 + every change in this triage, the 10 touched/neighbouring test files + ind-forms.contract.integration
+ Test Files  11 passed (11)
+      Tests  137 passed (137)

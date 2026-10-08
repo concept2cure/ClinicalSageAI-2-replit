@@ -41,6 +41,12 @@ vi.mock('../../services/report-os/portfolio/fetch', async (importOriginal) => ({
 import createInsightsCanvasRoutes from '../insights-canvas-routes';
 
 const app = express();
+// The request-scoped client the production mount's authenticateToken installs
+// (establishRequestTenantScope); the open program's anchor is read on it.
+app.use((req, _res, next) => {
+  (req as unknown as { dbClient: unknown }).dbClient = { query: vi.fn(async () => ({ rows: [] })) };
+  next();
+});
 app.use('/api/insights-canvas', createInsightsCanvasRoutes());
 const overview = (q = '') => request(app).get('/api/insights-canvas/overview' + q);
 /* The canvas leads with the program the shell has open (QA 2026-10-08, j8: with

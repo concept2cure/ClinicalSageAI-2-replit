@@ -49,7 +49,10 @@ describe('listThreads by program', () => {
     expect(sql).toMatch(/organization_id = \$1/);
     expect(sql).toMatch(/role = 'user'/);
     expect(sql).toMatch(/t\.user_id = \$4/);
-    expect(params).toEqual([7, PID.toLowerCase(), 5, 41]);
+    // $5 is the list position (e04b568fe, QA 2026-10-08 j5): no offset asked
+    // for starts at the newest. chat-threads-program-paging.test.ts pins paging.
+    expect(sql).toMatch(/LIMIT \$3 OFFSET \$5/);
+    expect(params).toEqual([7, PID.toLowerCase(), 5, 41, 0]);
   });
 
   it('refuses a program id that is not a UUID rather than querying with it', async () => {

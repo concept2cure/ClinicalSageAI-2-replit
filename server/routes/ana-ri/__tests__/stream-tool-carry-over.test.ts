@@ -73,12 +73,19 @@ const h = vi.hoisted(() => {
   /**
    * A governed toolset over the selection cap: the core, the record tool a
    * previous turn ran, and sixty tools no follow-up's words select.
+   *
+   * The record tool must be one the selector does NOT always offer, or the
+   * carry is invisible. It was get_cmc_requirements until a0b3de231 made that
+   * tool always-on, after which "a step the person declined is not carried"
+   * failed (the tool was offered anyway) and "the tool the previous turn ran is
+   * offered" passed without the carry. list_cmc_registers is a CMC record tool
+   * outside ALWAYS_ON_TOOLS; the premise test below pins that.
    */
   const toolset = [
     'list_platform_commands',
     'execute_platform_command',
     'search_literature',
-    'get_cmc_requirements',
+    'list_cmc_registers',
     ...Array.from({ length: 60 }, (_, i) => `filler_${i}`),
   ].map((name) => ({ name, description: name.startsWith('filler_') ? 'unrelated utility' : name, input_schema: { type: 'object', properties: {} } }));
   const prefix = vi.fn(async () => '');
@@ -208,6 +215,7 @@ vi.mock('../../../services/anthropic-files.js', () => ({
 }));
 
 import { mountStreamRoute } from '../stream.js';
+import { ALWAYS_ON_TOOLS } from '../../../services/ana/tool-selection.js';
 
 const app = express();
 app.use(express.json());
@@ -363,20 +371,24 @@ describe('a follow-up keeps the tools its conversation used (TP-RL-3)', () => {
     expect(h.state.gatewayCalls[0].messages.some(m => typeof m.content === 'string' && m.content.includes('client-reported unfinished draft'))).toBe(false);
   });
 
+  it('premise: the record tool is not always offered, so only the carry can offer it', () => {
+    expect(ALWAYS_ON_TOOLS.has('list_cmc_registers')).toBe(false);
+  });
+
   it('the tool the previous turn ran is offered on the first call and on every round after it', async () => {
-    thread([{ tool: 'get_cmc_requirements', status: 'success' }], 'and for the EU?');
+    thread([{ tool: 'list_cmc_registers', status: 'success' }], 'and for the EU?');
     h.state.script = [[{ id: 'tu_1', name: 'search_literature', input: { query: 'EU CMC' } }], 'Done.'];
     await turn('and for the EU?');
     expect(h.state.gatewayCalls.length).toBeGreaterThanOrEqual(2);
     const [first, ...rounds] = h.state.gatewayCalls;
-    expect(first.tools).toContain('get_cmc_requirements');
+    expect(first.tools).toContain('list_cmc_registers');
     for (const round of rounds) expect(round.tools).toEqual(first.tools);
   });
 
   it('a step the person declined is not carried, and a first turn is offered what it was', async () => {
-    thread([{ tool: 'get_cmc_requirements', status: 'error' }], 'and for the EU?');
+    thread([{ tool: 'list_cmc_registers', status: 'error' }], 'and for the EU?');
     await turn('and for the EU?');
-    expect(h.state.gatewayCalls[0].tools).not.toContain('get_cmc_requirements');
+    expect(h.state.gatewayCalls[0].tools).not.toContain('list_cmc_registers');
 
     h.state.gatewayCalls = [];
     h.state.history = [{ role: 'user', content: 'and for the EU?' }];
