@@ -243,7 +243,7 @@ describe('ProjectHome — set-stage drives the lifecycle rail', () => {
     const out = apply('project-home.set-stage', { stage: 'evidence' });
     expect(out.status).toBe('applied');
     await waitFor(() => {
-      const active = document.querySelector('.pj-lc-stage[aria-selected="true"]');
+      const active = document.querySelector('.pj-lc-stage[aria-current="step"]');
       expect(active?.textContent).toContain('Evidence');
     });
   });

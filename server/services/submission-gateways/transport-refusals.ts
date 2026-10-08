@@ -19,8 +19,8 @@ export const PMDA_PROTOCOL_UNVERIFIED =
  * CONFORMANCE GAP"; launch row D7).
  */
 export const FDA_ESG_NOT_PROVEN =
-  'the ESG AS2 envelope is not PKCS#7 signed, so FDA would reject it, and no ESG account, DTDs or accepted test ' +
-  'sequence are in place';
+  'the ESG transmission is not signed as FDA requires, so FDA would reject it, and no ESG account, DTDs or ' +
+  'accepted test sequence are in place';
 
 /**
  * Why an adapter that posts to an agency endpoint is not a channel: its

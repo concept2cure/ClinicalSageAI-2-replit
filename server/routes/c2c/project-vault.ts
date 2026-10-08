@@ -51,13 +51,13 @@ import type { PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger.js';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
 import {
-  filingTypesForView,
   foldersForView,
   VAULT_FOLDER_PRESETS,
   VAULT_VIEWS,
   VAULT_DOC_KINDS,
   type VaultViewId,
   vaultIngestTypeLabel,
+  vaultSpineLabel,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, sectionCompletionPct } from '../../services/c2c/section-content.js';
 import {
@@ -420,17 +420,6 @@ function normalizeStatus(raw: string | null | undefined, hasContent: boolean): s
     case 'todo':     return 'not_started';
     default:         return hasContent ? 'draft' : 'not_started';
   }
-}
-
-/** Spine label = the view's primary filing framework + its governing refs
- *  (same basis the shipped client `vaultStructureToSpine` converter uses). */
-function vaultViewLabel(view: VaultViewId): string {
-  const filings = filingTypesForView(view);
-  const primary = filings[0];
-  if (!primary) return view;
-  const refs = (primary as { regulatoryRefs?: string[] }).regulatoryRefs;
-  const suffix = refs && refs.length ? ` · ${refs.join(' · ')}` : '';
-  return `${primary.label}${suffix}`;
 }
 
 /** Bytes → '3.4 MB' (real size only; null → em dash, never invented). */
@@ -1482,7 +1471,7 @@ export default function createProjectVaultRoutes(): Router {
       });
       const data: VaultDisplayShape = {
         program: project.name || 'Vault',
-        spine: vaultViewLabel(view),
+        spine: vaultSpineLabel(view, project.program_type),
         standard: view,
         documentCount:
           documentCounts.authored + (documentCounts.cmcArtifacts ?? 0) + (documentCounts.uploads ?? 0),

@@ -31,7 +31,7 @@ const SUBS = [
   { id: 62, title: 'ONC-221 MAA', applicationType: 'maa', clientType: 'biotech', primaryRegion: 'eu', status: 'planning', lifecycleStage: 'original', programId: PID },
 ];
 const SUPPORT: Record<string, { summary: string; line: string; buildable: boolean; offered: boolean }> = {
-  'nda|fda': { summary: 'Structured Module 1', line: 'Transmit not proven: the ESG AS2 envelope is not PKCS#7 signed', buildable: true, offered: true },
+  'nda|fda': { summary: 'Structured Module 1', line: 'Transmit not proven: the ESG transmission is not signed as FDA requires', buildable: true, offered: true },
   'maa|eu': { summary: 'Flat Module 1, no channel', line: 'Applicant uploads through the EMA eSubmission Gateway / Web Client', buildable: false, offered: true },
 };
 
@@ -77,7 +77,7 @@ describe('market rows state what the platform can carry (F19)', () => {
     await openSubmit();
     const [nda, maa] = screen.getAllByTestId('pj-submission');
     await waitFor(() => expect(within(nda).getByTestId('market-support').getAttribute('data-state')).toBe('buildable'));
-    expect(within(nda).getByTestId('market-support').textContent).toBe('Structured Module 1. Transmit not proven: the ESG AS2 envelope is not PKCS#7 signed');
+    expect(within(nda).getByTestId('market-support').textContent).toBe('Structured Module 1. Transmit not proven: the ESG transmission is not signed as FDA requires.');
     await waitFor(() => expect(within(maa).getByTestId('market-support').getAttribute('data-state')).toBe('limited'));
     expect(within(maa).getByTestId('market-support').textContent).toContain('Flat Module 1, no channel');
     expect(apiRequest).toHaveBeenCalledWith('GET', marketSupportPath('nda', 'fda'));
@@ -91,7 +91,9 @@ describe('market rows state what the platform can carry (F19)', () => {
     await waitFor(() => expect(within(nda).getByTestId('market-support').getAttribute('data-state')).toBe('error'));
     expect(within(nda).getByTestId('market-support').textContent).toMatch(/could not be read/);
     serve(false);
-    fireEvent.click(within(nda).getByRole('button', { name: 'Retry' }));
+    // One status per row, not one alert per row; the Retry names its market.
+    expect(within(nda).getByTestId('market-support').getAttribute('role')).toBe('status');
+    fireEvent.click(within(nda).getByRole('button', { name: 'Retry: platform support for NDA in fda' }));
     await waitFor(() => expect(within(nda).getByTestId('market-support').getAttribute('data-state')).toBe('buildable'));
   });
 });
@@ -114,8 +116,18 @@ describe('MarketSupportLine', () => {
   });
 
   it('does not repeat the summary when the line says the same thing', () => {
-    expect(marketSupportText({ summary: 'No outline, no channel', line: 'No outline; no channel' })).toBe('No outline, no channel');
-    expect(marketSupportText({ summary: 'Unmapped', line: 'Refused at creation: No document agency is defined for \'ANVISA\'.' }))
-      .toBe("Unmapped. Refused at creation: No document agency is defined for 'ANVISA'.");
+    expect(marketSupportText({ summary: 'No outline, no channel', line: 'No outline; no channel' })).toBe('No outline, no channel.');
+    expect(marketSupportText({ summary: 'Flat Module 1, no channel', line: 'Applicant uploads through the EMA eSubmission Gateway' }))
+      .toBe('Flat Module 1, no channel. Applicant uploads through the EMA eSubmission Gateway.');
+  });
+
+  /* Design review 2026-10-08 (.design/filing-spine/DESIGN_REVIEW.md): a line
+     that opens with its summary was printed after it, "Not offered. Not
+     offered: the UK has no IND application type". */
+  it('a line that opens with the summary is shown once, not after the summary', () => {
+    expect(marketSupportText({ summary: 'Not offered', line: 'Not offered: the UK has no IND application type' }))
+      .toBe('Not offered: the UK has no IND application type.');
+    expect(marketSupportText({ summary: 'Not supported', line: 'Not supported: the platform has no filing outline or channel for ANVISA' }))
+      .toBe('Not supported: the platform has no filing outline or channel for ANVISA.');
   });
 });

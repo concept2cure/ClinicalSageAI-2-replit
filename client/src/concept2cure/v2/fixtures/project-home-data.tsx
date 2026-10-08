@@ -303,7 +303,7 @@ export const PJ_LIFECYCLE: LifecycleStage[] = [
   { id: 'author', label: 'Author', icon: 'penLine', blurb: 'Draft eCTD sections with AnA, track changes' },
   { id: 'review', label: 'Review', icon: 'checkCircle', blurb: 'Review, approve & e-sign' },
   {
-    id: 'submit', label: 'Submit', icon: 'rocket', blurb: 'Assemble eCTD, validate & transmit',
+    id: 'submit', label: 'Submit', icon: 'rocket', blurb: "Build and validate each market's eCTD sequence",
     aliases: ['plan', 'lifecycle'],
     later:
       'Registrations, market access and pharmacovigilance; the variation classifier; IND annual-report tracking; ' +
@@ -312,7 +312,7 @@ export const PJ_LIFECYCLE: LifecycleStage[] = [
       'Registrations, market access and post-market vigilance; regulatory intelligence, precedent and agency meetings.',
   },
   {
-    id: 'respond', label: 'Respond', icon: 'messageCircle', blurb: 'Health-authority questions & responses',
+    id: 'respond', label: 'Respond', icon: 'messageCircle', blurb: 'Draft responses to agency letters',
     later: 'Question-by-question tracking of agency letters, agency meetings and precedent responses.',
   },
 ];

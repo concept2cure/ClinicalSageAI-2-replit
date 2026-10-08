@@ -1,0 +1,111 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a draft document: the copy will be a draft, which freeze refuses 231ms
+   → expected 'Filed as draft. Freeze will refuse it…' to contain 'Will be filed as a draft. Freeze refu…'
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a document in review is filed as a draft too 50ms
+   → expected 'Filed as draft. Freeze will refuse it…' to contain 'Will be filed as a draft.'
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a frozen, unsigned document is filed as finalized, which freeze also refuses 44ms
+   → expected 'Filed as finalized, not approved. Fre…' to match /Will be filed as finalized, not appro…/
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an approved document: filed as approved, with no refusal 38ms
+   → expected 'Filed as approved: this document carr…' to contain 'Will be filed as approved once the se…'
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an unknown state claims neither: it states the rule 55ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > after placing, the server's copy status is stated, and a draft copy carries the refusal 71ms
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed, and the copy is now approved: "Re-place approved version" rewrites the same leaf by id 88ms
+   → expected <button class="btn" …(1)></button> to have property "disabled" with value true
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed with a draft copy: no re-place is offered, and the refusal is stated 80ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a draft document: the copy will be a draft, which freeze refuses
+AssertionError: expected 'Filed as draft. Freeze will refuse it…' to contain 'Will be filed as a draft. Freeze refu…'
+
+Expected: "Will be filed as a draft. Freeze refuses it until you re-place the document after approval."
+Received: "Filed as draft. Freeze will refuse it until you re-place it after approval."
+
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:107:24
+    105|     renderDialog('DRAFT');
+    106|     await openAndTarget();
+    107|     expect(copyLine()).toContain('Will be filed as a draft. Freeze ref…
+       |                        ^
+    108|   });
+    109|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a document in review is filed as a draft too
+AssertionError: expected 'Filed as draft. Freeze will refuse it…' to contain 'Will be filed as a draft.'
+
+Expected: "Will be filed as a draft."
+Received: "Filed as draft. Freeze will refuse it until you re-place it after approval."
+
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:114:24
+    112|     renderDialog('IN_REVIEW');
+    113|     await openAndTarget();
+    114|     expect(copyLine()).toContain('Will be filed as a draft.');
+       |                        ^
+    115|   });
+    116|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a frozen, unsigned document is filed as finalized, which freeze also refuses
+AssertionError: expected 'Filed as finalized, not approved. Fre…' to match /Will be filed as finalized, not appro…/
+
+- Expected:
+/Will be filed as finalized, not approved\. Freeze refuses it until you re-place the document after approval\./
+
++ Received:
+"Filed as finalized, not approved. Freeze will refuse it until you re-place it after approval."
+
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:121:24
+    119|     renderDialog('FROZEN');
+    120|     await openAndTarget();
+    121|     expect(copyLine()).toMatch(/Will be filed as finalized, not approv…
+       |                        ^
+    122|   });
+    123|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an approved document: filed as approved, with no refusal
+AssertionError: expected 'Filed as approved: this document carr…' to contain 'Will be filed as approved once the se…'
+
+Expected: "Will be filed as approved once the server verifies its approval seal."
+Received: "Filed as approved: this document carries its approval signature."
+
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:128:24
+    126|     renderDialog('APPROVED');
+    127|     await openAndTarget();
+    128|     expect(copyLine()).toContain('Will be filed as approved once the s…
+       |                        ^
+    129|     expect(copyLine()).not.toMatch(/refuse|carries its approval signat…
+    130|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed, and the copy is now approved: "Re-place approved version" rewrites the same leaf by id
+AssertionError: expected <button class="btn" …(1)></button> to have property "disabled" with value true
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:160:21
+    158|        would change. It states its effect and takes its own reason. */
+    159|     const replace = await screen.findByRole('button', { name: 'Re-plac…
+    160|     expect(replace).toHaveProperty('disabled', true);
+       |                     ^
+    161|     expect(document.body.textContent).toMatch(/Re-placing pins leaf #7…
+    162|     fireEvent.change(screen.getByLabelText(/^Reason for re-placing/), …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 3 passed (8)
+   Start at  17:21:34
+   Duration  2.23s (transform 569ms, setup 153ms, import 727ms, tests 662ms, environment 509ms)
+

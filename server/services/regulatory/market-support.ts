@@ -33,6 +33,7 @@ import {
   PROGRAM_TO_DOC_TYPE,
   describeUnmappedClass,
 } from '../c2c/document-class.js';
+import { workstreamForFilingType } from '../../../shared/constants/domain/product-types.js';
 import { listActiveRulePacks, type RulePackQueryable } from '../c2c/rule-pack-lookup.js';
 import { module1ShapeOf, type Module1Shape } from '../ectd/regional-backbone-readiness.js';
 import { pmdaEctdV4Fact } from '../ectd/dispatch-readiness.js';
@@ -102,13 +103,14 @@ export interface MarketSupport {
   /** True when the gate checks this region's Module 1 against a region profile. */
   regionProfile: boolean;
   channel: { state: ChannelState; detail: string };
-  /** The short statement: "Structured Module 1", "Flat Module 1, no channel", "No outline, no channel", "Unmapped", "Not offered". */
+  /** The short statement: "Structured Module 1", "Flat Module 1, no channel", "No outline, no channel",
+   *  "Outline only, no package" (a device filing), "Not supported", "Not offered". */
   summary: string;
   /** The sentence a market row says (FILING_SPINE.md §3, "Market row says"). */
   line: string;
   /** A region-correct dossier can be built: an outline, and Module 1 to the agency's own headings. */
   buildable: boolean;
-  /** False when the platform refuses the market at creation or does not offer it. */
+  /** False when the platform maps no outline or channel for the market, or the agency has no such application. */
   offered: boolean;
   /**
    * What the product offers for a filing in this market, read from the fields
@@ -183,7 +185,7 @@ function notOfferedReason(
   pmdaBlocked: boolean,
   continuing: boolean,
 ): string | null {
-  // Refused at creation, or not offered (MHRA "IND"): the statement's own line.
+  // Not supported (an unmapped market) or not offered (MHRA "IND"): the statement's own line.
   if (!s.offered) return `${s.line.replace(/\.$/, '')}.`;
   if (s.outline.state !== 'outline') {
     const noChannel = NO_CHANNEL_STATES.has(s.channel.state) ? ' and no channel to send it' : '';
@@ -278,7 +280,7 @@ export function channelSupportFor(entry: RegulatoryApplicationType | null): { st
       const name = `${ch.region}:${ch.name}`;
       if (ch.region === 'pmda') return { state: 'refused', detail: PMDA_PROTOCOL_UNVERIFIED, channel: name };
       if (ch.region === 'fda' && ch.name === 'esg') return { state: 'unproven', detail: FDA_ESG_NOT_PROVEN, channel: name };
-      if (ch.region === 'ema') return { state: 'unproven', detail: `the ${name} adapter is wired and nothing has been accepted through it`, channel: name };
+      if (ch.region === 'ema') return { state: 'unproven', detail: 'the EMA gateway is connected and no submission has been accepted through it', channel: name };
       if (ch.region === 'ca') return { state: 'none', detail: HEALTH_CANADA_NO_TRANSPORT, channel: name };
       return { state: 'none', detail: ADAPTER_UNSOURCED, channel: name };
     }
@@ -382,21 +384,37 @@ export function documentAgencyFor(input: MarketInput): string | null {
   return base.agency === NOTIFIED_BODY.agency ? NOTIFIED_BODY.documentAgency : identity.agency;
 }
 
-/** Refused at creation: the agency is one the platform maps to no governed class. */
+/**
+ * A market the platform maps to no governed document class: no outline and no
+ * channel, so it is not offered (project creation refuses it, F19b). The line
+ * states what is missing in the platform's terms, not its internals, and claims
+ * no refusal: a submission row for such a market can exist, and read "Refused
+ * at creation" beside the row nothing refused (design review, 2026-10-08). A
+ * Notified Body asked for a class it does not assess is the agency's limit,
+ * not the platform's: "Not offered", with the Notified Body's reason.
+ */
 function unmappedSupport(base: Base, identity: Identity | null): MarketSupport {
   const nbClass = base.agency === NOTIFIED_BODY.agency && PROGRAM_TO_DOC_TYPE[base.applicationType.toLowerCase()];
   const reason = nbClass
     ? `A Notified Body assesses EU MDR and IVDR technical documentation and clinical evaluation reports; it takes no ${applicationName(base.applicationType)}.`
     : describeUnmappedClass(base.applicationType, base.agency ?? identity?.agency ?? base.market);
   const shape = identity ? module1ShapeOf(identity.gatewaySlug) : null;
-  const line = `Refused at creation: ${reason}`;
+  const summary = nbClass ? 'Not offered' : 'Not supported';
+  // Which half is unmapped decides whose limit the line names: the application
+  // type's (no document class for it) or the market's.
+  const typeUnmapped = !PROGRAM_TO_DOC_TYPE[base.applicationType.trim().toLowerCase()];
+  const line = nbClass
+    ? `Not offered: ${reason.replace(/\.$/, '')}`
+    : typeUnmapped
+      ? `Not supported: the platform has no filing outline for the application type '${base.applicationType || 'none'}'`
+      : `Not supported: the platform has no filing outline or channel for ${agencyName(base.agency, base.market || 'this market')}`;
   return {
     ...base,
     outline: { state: 'unmapped', pack: null, detail: reason },
     module1: { state: shape, detail: shape ? MODULE1_DETAIL[shape] : 'no region' },
     regionProfile: false,
-    channel: { state: 'none', detail: 'the market is refused at creation' },
-    summary: 'Unmapped',
+    channel: { state: 'none', detail: 'the platform maps no channel for this market' },
+    summary,
     line,
     buildable: false,
     offered: false,
@@ -426,6 +444,29 @@ function outlineFor(docType: string | null, agencyCode: string, applicationType:
     detail: docType
       ? `no rule pack defines '${docType}' for '${agencyCode}'`
       : `the application type '${applicationType}' has no governed document class`,
+  };
+}
+
+/**
+ * A device filing (510(k), De Novo, PMA, IDE, MDR, IVDR, CER) is not eCTD, and
+ * the platform builds no device package or transmit yet (FILING_SPINE.md §4).
+ * Its outline is stated and nothing more is claimed: it read "Structured
+ * Module 1. Transmit not proven…" and buildable (design review, 2026-10-08).
+ */
+function deviceStatement(
+  shared: Omit<MarketSupport, 'outline' | 'summary' | 'line' | 'buildable' | 'offered' | 'offer'>,
+  outline: MarketSupport['outline'],
+): Omit<MarketSupport, 'offer'> {
+  const lead = outline.state === 'outline' ? 'Outline only' : 'No outline';
+  return {
+    ...shared,
+    outline,
+    module1: { state: null, detail: 'a device filing is not eCTD, so it has no Module 1' },
+    channel: { state: 'none', detail: 'the platform transmits no device filing yet' },
+    summary: `${lead}, no package`,
+    line: `${lead}: device filings are not eCTD, and the platform builds no device package or transmit yet`,
+    buildable: false,
+    offered: true,
   };
 }
 
@@ -471,7 +512,7 @@ export function marketSupport(input: MarketInput, packs: ActiveRulePacks, asOf: 
       ...shared,
       outline: { state: 'no_outline', pack: null, detail: 'the ind:mhra rule pack is mislabelled: the UK has no IND' },
       summary: 'Not offered',
-      line: 'Not offered: the UK has no IND, and the ind:mhra rule pack is mislabelled',
+      line: 'Not offered: the UK has no IND application type',
       buildable: false,
       offered: false,
     };
@@ -479,6 +520,11 @@ export function marketSupport(input: MarketInput, packs: ActiveRulePacks, asOf: 
   }
 
   const outline = outlineFor(docType, agencyCode, applicationType, packs);
+  if (workstreamForFilingType(applicationType) === 'MDX') {
+    // A device filing is not eCTD, so PMDA's eCTD v4.0 rule does not block it.
+    const device = deviceStatement(shared, outline);
+    return { ...device, offer: filingOfferFor(device, entry, false, continuing) };
+  }
   const statement: Omit<MarketSupport, 'offer'> = {
     ...shared,
     outline,
@@ -517,6 +563,10 @@ export async function readMarketSupport(
   asOf?: string,
 ): Promise<MarketSupport[]> {
   const rows = await listActiveRulePacks(client);
+  /* No active pack at all is a store that was not read (unseeded, or emptied),
+     not a platform with no outline for any market: said as a failure, it
+     reaches the caller's error state instead of "No outline" on every row. */
+  if (rows.length === 0) throw new Error('No active rule pack could be read, so no market can be judged.');
   const byKey = new Map(rows.map((r) => [`${r.doc_type}:${r.agency}`, { version: r.version, label: r.label }]));
   const packs: ActiveRulePacks = { find: (docType, agency) => byKey.get(`${docType}:${agency}`) ?? null };
   return inputs.map((input) => marketSupport(input, packs, asOf));

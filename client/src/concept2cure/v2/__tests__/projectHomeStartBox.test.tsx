@@ -10,6 +10,8 @@
  * now says what it does, and what is typed in it starts a new conversation in
  * this project, where AnA answers.
  */
+import fs from 'node:fs';
+import path from 'node:path';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -70,5 +72,16 @@ describe('Project home — the start box', () => {
     fireEvent.keyDown(box, { key: 'Enter' });
     await waitFor(() => expect(p.onNav).not.toHaveBeenCalledWith('conversation-thread'));
     expect((window as any).C2C_CONVO).toBeUndefined();
+  });
+
+  /* The box is styled by one rule. A second `.pj-convo` rule, left from a
+     conversation row nothing renders any more, laid the box out as a centred
+     row: on a desktop the composer shrank to the width of its placeholder
+     (.design/filing-spine/screenshots/review-project-author-desktop-1280.png). */
+  it('is styled by one .pj-convo rule, not also by a row rule that centres it', () => {
+    const css = fs.readFileSync(path.resolve(__dirname, '..', 'styles', 'app-v2.css'), 'utf8');
+    const blocks = [...css.matchAll(/\.c2c-v2 \.pj-convo(?![\w-])[^{,]*\{([^}]*)\}/g)];
+    expect(blocks.length).toBe(1);
+    expect(blocks[0][1]).not.toMatch(/align-items\s*:\s*center/);
   });
 });

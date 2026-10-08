@@ -70,7 +70,13 @@ const props = () => ({
 
 function route(workResponse: () => Response) {
   apiRequest.mockReset();
-  apiRequest.mockImplementation(async (_m: string, url: string) => (url === WORK_URL ? workResponse() : ok({})));
+  apiRequest.mockImplementation(async (_m: string, url: string) => {
+    if (url === WORK_URL) return workResponse();
+    // The conversations list above the tabs: a reply without `threads` is now
+    // a failed read (projectThreads.ts), so the empty list is given as one.
+    if (url.startsWith('/api/chat/threads?')) return ok({ threads: [] });
+    return ok({});
+  });
 }
 
 function openReviewStage() {
