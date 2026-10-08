@@ -1,0 +1,5 @@
+# affected suites (compile routes and client, Submission Center, Project home, markets, filing path, cmc spine, tests/ui), final tree
+ Test Files  101 passed (101)
+      Tests  1505 passed (1505)
+   Duration  140.12s (transform 8.27s, setup 4.25s, import 36.54s, tests 61.92s, environment 21.25s)
+# npm run typecheck (after narrowing spineForRequest's anchor type to SpineAnchor; the first run found TS2345 at the eValidator import)

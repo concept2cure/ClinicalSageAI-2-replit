@@ -38,6 +38,7 @@ import { PlacementReasonField, placementReasonOk } from './filingTarget';
 import { downloadBlob } from '../download';
 import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
 import { useSurfaceAvailable } from '../surfaceAvailable';
+import { stashNavParamsForTarget } from '../navParams';
 import { SequenceAssembleTestPackage } from './SequenceAssembleTestPackage';
 import {
   SC_LENSES,
@@ -1764,11 +1765,15 @@ export function DispatchWorkspace({
   sub,
   seq,
   onGoverned,
+  onNav,
 }: {
   sub: SubLike;
   seq: SeqRow;
   onGoverned: (seq: SeqRow, kind: GovernedKind, transmit?: TransmitRequest) => void;
+  /** Shell navigation, for the compile screen opened on this sequence (F14). */
+  onNav?: (id: string) => void;
 }) {
+  const available = useSurfaceAvailable();
   const path = `/api/submissions/sequences/${seq.id}/dispatch-readiness`;
   const live = useLiveData<ReadinessAssessment>(
     path,
@@ -1977,6 +1982,22 @@ export function DispatchWorkspace({
               )}
             </div>
             <SequenceAssembleTestPackage seq={seq} />
+            {/* Compile carries the sequence (FILING_SPINE.md F14): the compile
+                screen, opened on THIS sequence, for its validation, compile
+                history and an agency validator's report. It compiled the
+                submission the project's application type picked, so an MAA
+                sequence of an NDA project could not reach it. */}
+            {onNav && available('ectd-compile') && (
+              <div className="cm-pushbar sc-mt">
+                <button
+                  type="button"
+                  className="sc-trans-b"
+                  onClick={() => { stashNavParamsForTarget('ectd-compile', { sequenceId: String(seq.id) }); onNav('ectd-compile'); }}
+                >
+                  Validate and compile this sequence {I.right}
+                </button>
+              </div>
+            )}
             <PackageAndTransmit
               sub={sub}
               seq={seq}

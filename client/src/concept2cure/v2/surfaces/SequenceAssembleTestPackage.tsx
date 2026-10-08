@@ -21,9 +21,11 @@
  *     built the package and written its audit row;
  *   • an audit entry the server could not persist, in its own words, on a
  *     success and on a refusal alike.
- * The request carries no agency identifiers, so the server writes the
- * application number and sponsor as UNASSIGNED; this control says so, and
- * labels the hash as the test package's own.
+ * The request carries no agency identifiers, so the server names the
+ * application and the applicant with dry-run placeholders
+ * (package-identity.ts dryRunPackageIdentity); this control says so without
+ * printing one, since the Dispatch tab never shows a placeholder as an
+ * identifier (2026-10-08), and labels the hash as the test package's own.
  *
  * @module client/src/concept2cure/v2/surfaces/SequenceAssembleTestPackage
  */
@@ -142,7 +144,7 @@ export function SequenceAssembleTestPackage({ seq }: { seq: { id: number; sequen
       <div className="scaf-note sc-mb">
         Assembles sequence {seq.sequenceNumber}&#39;s leaves into an eCTD package on the server, reports what in those
         leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency
-        identifiers: the server writes the application number and sponsor as UNASSIGNED.
+        identifiers: its application number and applicant are placeholders, not the ones on record.
       </div>
       <div className="cm-pushbar sc-mb">
         <button type="button" className="sc-trans-b" disabled={run.phase === 'running'} onClick={assemble}>

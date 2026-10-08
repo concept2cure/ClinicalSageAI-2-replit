@@ -170,7 +170,9 @@ describe('POST /api/c2c/projects — the create answers with the same serializer
     // Nothing to measure is not "0% ready": a program with no governed sections
     // has no readiness figure (7196d63d1 — ProjectHome and the card both say
     // "Readiness not measured"). This expected 0 from before that change.
-    expect(res.body.program).toEqual({ ...serializeProgramDetail(deviceRow()), readiness: null });
+    // 2026-10-08: the read also says when it measured readiness, and with no
+    // figure it gives no time (filing-spine design review, open item 9).
+    expect(res.body.program).toEqual({ ...serializeProgramDetail(deviceRow()), readiness: null, readinessAsOf: null });
     expect(res.body.program).toMatchObject({ device_class: 'II', product_code: 'QNX', predicate_devices: [{ kNumber: 'K223456' }], review_panel: 'Microbiology', product_type: 'ivd' });
 
     // The detail re-select is the SAME SQL the read issues (one projection, one serializer).

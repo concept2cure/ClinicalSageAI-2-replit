@@ -1,0 +1,27 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > with no application number or applicant on record, says "not recorded" and the server refusal, never a placeholder
+AssertionError: expected 'SubmissionSubmission centerPlan, buil…' not to match /UNASSIGNED/
+
+- Expected:
+/UNASSIGNED/
+
++ Received:
+"SubmissionSubmission centerPlan, build, validate and dispatch each market's eCTD v3.2.2 sequences.ZX-9 First-in-Human · IND · FDA (US) Where ZX-9 First-in-Human standsZX-9 First-in-Human (Zexanib) — IND · FDA (US), at the original stage.1 eCTD sequence tracked. Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled. I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you. Open the sequencesOr move through the workspaces below — plan, build, validate, dispatch.SubmissionsPlannerBuilderSequencesValidationShadow reviewDispatchWorking sequence0000 · original · DispatchedDispatchedDispatch · sequence 0000dispatch readiness · QCDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature. Dispatch gate clear0 validation errors · 0 unacknowledged shadow criticals · 1 shadow review run · 1 leaf · status DispatchedTest packageAssembles sequence 0000's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: the server writes the application number and sponsor as UNASSIGNED. Assemble a test packageValidate and compile this sequence Package and transmit Download the eCTD package (zip)Applicantnot recordedApplication numbernot recordedGatewayFDA ESG (FDA)Staging credentialsconfiguredProduction credentialsnot configuredDispatch statuspendingEnvironmentStaging (agency test)ProductionAgency application number Transmit sequence 0000 (Part 11 e-signature)Transmit is not available: A package names its application and its applicant from the record, never a placeholder, and its project records no agency application number (record the number the agency assigned on the project; the program code is not one). Nothing can be sent until it is recorded.Transmissions and acknowledgementsThis submission is not anchored to a project, so its transmissions cannot be listed by project here. Anchor it to its project, under the submission's title, to list them. Run dispatch QC"
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx:197:43
+    195|     expect(document.body.textContent).toContain('Application numbernot…
+    196|     expect(document.body.textContent).toContain('its project records n…
+    197|     expect(document.body.textContent).not.toMatch(/UNASSIGNED/);
+       |                                           ^
+    198|   });
+    199|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 45 passed (46)
+      Tests  1 failed | 373 passed (374)
+   Start at  21:14:21
+   Duration  86.12s (transform 7.20s, setup 3.01s, import 25.78s, tests 31.55s, environment 18.47s)

@@ -1673,6 +1673,7 @@ export function SubmissionCenter({
                   key={`${seq.id}:${seq.status}`}
                   sub={sub}
                   seq={seq}
+                  onNav={onNav}
                   onGoverned={(s, kind, transmit) => void requestGoverned(s, kind, transmit)}
                 />
               )}

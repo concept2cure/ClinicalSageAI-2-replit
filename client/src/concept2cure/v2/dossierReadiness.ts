@@ -23,3 +23,11 @@ export const DOSSIER_READINESS_MEANS =
 export function dossierReadinessValue(readiness: number | null | undefined): string {
   return typeof readiness === 'number' && Number.isFinite(readiness) ? `${readiness}%` : 'not measured';
 }
+
+/** When the server measured the figure, as a sentence; null with no usable time
+ *  (the figure is measured on each read: filing-spine design review, item 9). */
+export function dossierReadinessAsOf(iso: string | null | undefined): string | null {
+  const d = iso ? new Date(iso) : null;
+  if (!d || Number.isNaN(d.getTime())) return null;
+  return `Measured ${d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}.`;
+}

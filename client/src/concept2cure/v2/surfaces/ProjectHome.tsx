@@ -6,7 +6,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { useSurfaceAvailable } from '../surfaceAvailable';
-import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue } from '../dossierReadiness';
+import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessAsOf, dossierReadinessValue } from '../dossierReadiness';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
@@ -95,6 +95,8 @@ interface ProgramRow {
    *  server could not measure it. (This read `progress_percent` until
    *  2026-09-24: a column written once as 0 and never updated.) */
   readiness?: number | null;
+  /** When the server measured `readiness` (ISO); null with no figure. */
+  readinessAsOf?: string | null;
   /** The device taxonomy intake stores for a device / IVD program
    *  (regulatory_programs columns + the metadata-held fields the read lifts).
    *  Every one is null for a drug program, and absent on a server that predates
@@ -271,22 +273,26 @@ function StagePanel({ stage, onNav, available }: { stage: string; onNav: (id: st
      in this release" panel is not a thing this project can do. A stage left
      with no tool says what comes later instead. */
   const tools = (PJ_STAGE_TOOLS[stage] || []).filter(t => available(t.id));
+  /* The coming-later line sits under the card, bare, as it does on Submit
+     (filing-spine design review, open item 10, 2026-10-08). */
   return (
-    <section className="pj-sec">
-      <div className="pj-sec-h"><h2>{meta.label}</h2><span className="sec-sub">{meta.blurb}</span></div>
-      {tools.length > 0 && (
-        <div className="pj-tools">
-          {tools.map(t => (
-            <button key={t.id} className="pj-tool" onClick={() => onNav(t.id)}>
-              <span className="pj-tool-ico">{I[t.icon] || I.grid}</span>
-              <span className="pj-tool-b"><span className="pj-tool-t">{t.label}</span><span className="pj-tool-d">{t.desc}</span></span>
-              <span className="pj-tool-go">{I.right}</span>
-            </button>
-          ))}
-        </div>
-      )}
+    <div className="pj-stagebody">
+      <section className="pj-sec">
+        <div className="pj-sec-h"><h2>{meta.label}</h2><span className="sec-sub">{meta.blurb}</span></div>
+        {tools.length > 0 && (
+          <div className="pj-tools">
+            {tools.map(t => (
+              <button key={t.id} className="pj-tool" onClick={() => onNav(t.id)}>
+                <span className="pj-tool-ico">{I[t.icon] || I.grid}</span>
+                <span className="pj-tool-b"><span className="pj-tool-t">{t.label}</span><span className="pj-tool-d">{t.desc}</span></span>
+                <span className="pj-tool-go">{I.right}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
       <ComingLater stage={stage} />
-    </section>
+    </div>
   );
 }
 
@@ -1478,12 +1484,14 @@ function ModuleRow({ w, match, onOpen }: {
 }
 
 function AuthorWorkspace({
-  pid, completion, onNav, teamState, activityState, wsState, docs, onRetryDocs, onOpenDoc,
+  pid, completion, readinessAsOf, onNav, teamState, activityState, wsState, docs, onRetryDocs, onOpenDoc,
 }: {
   /** regulatory_programs UUID — scopes the records to this project. */
   pid: string | null;
   /** Dossier readiness percent from the program row, or null when unknown. */
   completion: number | null;
+  /** "Measured …" for that figure, or null. */
+  readinessAsOf: string | null;
   onNav: (id: string) => void;
   teamState: DataState<{ team: TeamRow[] }>;
   activityState: DataState<{ activity: ActivityRow[] }>;
@@ -1605,9 +1613,12 @@ function AuthorWorkspace({
             <span className="sec-sub">{dossierReadinessValue(completion)}</span>
           </div>
           {completion != null ? (
-            <div className="pj-map" title={DOSSIER_READINESS_MEANS}>
-              <div className="pj-map-ring"><Ring value={completion} size={104} stroke={9} /><div className="pj-map-ring-l">Dossier<br />readiness</div></div>
-            </div>
+            <>
+              <div className="pj-map" title={DOSSIER_READINESS_MEANS}>
+                <div className="pj-map-ring"><Ring value={completion} size={104} stroke={9} /><div className="pj-map-ring-l">Dossier<br />readiness</div></div>
+              </div>
+              {readinessAsOf && <p className="pj-card-note">{readinessAsOf}</p>}
+            </>
           ) : (
             <p className="pj-card-note">
               {DOSSIER_READINESS_MEANS} There are no governed sections to measure on this program yet, or the
@@ -1719,6 +1730,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   const priority = prog?.priority ?? null;
   const phase = prog?.phase ?? null;
   const completion = typeof prog?.readiness === 'number' ? prog.readiness : null;
+  const readinessAsOf = completion === null ? null : dossierReadinessAsOf(prog?.readinessAsOf);
   /* The device taxonomy, read from the row only. A device / IVD program shows
      its class, path, product code, regulation, panel, predicate and flags —
      each field stated as absent when the row lacks it; a drug program shows
@@ -2027,6 +2039,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
             <AuthorWorkspace
               pid={pid}
               completion={completion}
+              readinessAsOf={readinessAsOf}
               onNav={onNav}
               teamState={teamState}
               activityState={activityState}

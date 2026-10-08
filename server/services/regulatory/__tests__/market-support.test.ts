@@ -26,6 +26,10 @@ import {
   type ActiveRulePacks,
 } from '../market-support';
 import { resolveSubmissionPlan, submissionCoverageMatrix } from '../submission-resolver';
+import { pmdaEctdV4Fact } from '../../ectd/dispatch-readiness';
+
+/** The date marketSupport judges as of when given none. */
+const today = () => new Date().toISOString().slice(0, 10);
 
 /** The packs live on trunk (migrations 20260528/20260529/20260804/20260806b/20260810b), by (doc_type, agency). */
 const LIVE_PACKS = new Set([
@@ -87,7 +91,12 @@ describe('marketSupport — the FILING_SPINE.md F19 table', () => {
     const s = marketSupport({ applicationType: 'jnda', market: 'PMDA' }, packs);
     expect(s.summary).toBe('Flat Module 1, no channel');
     expect(s.channel.state).toBe('refused');
-    expect(s.line).toBe('New applications blocked: eCTD v4.0 required');
+    // 2026-10-08 (filing-spine review, open item 9): the line is true only
+    // from a date, so it names that date — the dated registry fact's, read
+    // where the block is decided. It read "…eCTD v4.0 required" with no date.
+    const fact = pmdaEctdV4Fact(today());
+    expect(fact?.effectiveDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(s.line).toBe(`New applications blocked: eCTD v4.0 required from ${fact?.effectiveDate}`);
     expect(s.buildable).toBe(false);
   });
 

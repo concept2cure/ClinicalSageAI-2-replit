@@ -477,7 +477,9 @@ describe('GET /:projectIdent/status — a program\'s readiness comes from what i
     expect(m3).toMatchObject({ requiredSections: 2, completedRequired: 1 });
     // Placement, not approval: the basis is stated so 100% is never read as "approved".
     expect(payload.readinessBasis).toBe('placed');
-    expect(payload.sequence).toEqual({ sequenceNumber: '0000', region: 'fda', leafCount: 2 });
+    // 2026-10-08 (FILING_SPINE.md F14): the sequence carries its id, so the
+    // compile screen can name the sequence it was opened on.
+    expect(payload.sequence).toEqual({ id: 9, sequenceNumber: '0000', region: 'fda', leafCount: 2 });
   });
 });
 
