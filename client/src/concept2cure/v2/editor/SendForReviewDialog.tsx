@@ -44,6 +44,16 @@
  * the roster gives it. The roster carries no email, and none is invented.
  * `name` is the roster's name, which the board shows.
  *
+ * ── Who may review, and with what access (QA 2026-10-08, j4) ────────────────
+ * The author could ask herself, and a reviewer was granted nothing on the
+ * document, so could neither comment nor sign the review. The route refuses
+ * the document's author (409 REVIEWER_IS_AUTHOR), and this dialog does not
+ * offer her (useReviewerRoster, `authorId`). When the requester may manage
+ * the document's access (its owner or an administrator), the route grants
+ * each reviewer the Reviewer role in the same transaction and answers with
+ * `grants`; the receipt and the toast say who was granted it, or, in the
+ * server's words, why no access was granted.
+ *
  * ── Part 11 ─────────────────────────────────────────────────────────────────
  * The request is the person's act. Nothing here runs without their click, and
  * AnA has no path to it. The route accepts an optional reason
@@ -66,7 +76,7 @@ import {
   createReviewTask,
   alreadyAsked,
   isSubmittableReviewer,
-  useAssigneeRoster,
+  useReviewerRoster,
   type AssignOutcome,
   type Assignee,
   type Priority,
@@ -79,6 +89,11 @@ export interface ReviewRequestReceipt {
   reviewerId: string;
   reviewer: string;
   status: string;
+  /** Whether the request gave this reviewer the Reviewer role on the document
+   *  (the server's `grants`); absent when the answer did not say. */
+  granted?: boolean;
+  /** Why no access was granted, in the server's words. */
+  grantNote?: string;
 }
 
 /** What became of one reviewer's task. */
@@ -98,6 +113,9 @@ export interface SendForReviewDialogProps {
   docTitle: string;
   programId: string | null;
   sectionCode: string | null;
+  /** The document's author (authoring_documents.created_by): not offered as a
+   *  reviewer. The server refuses the author either way (REVIEWER_IS_AUTHOR). */
+  authorId?: string | null;
   onClose: () => void;
   /** Called once the server has confirmed the request, with what became of each task. */
   onSent?: (result: SendForReviewResult) => void;
@@ -154,14 +172,24 @@ export function askedReviews(reviews: ReviewRequestReceipt[]): ReviewRequestRece
 }
 
 type ReviewRow = { id?: unknown; doc_id?: unknown; reviewer_id?: unknown; reviewer_name?: unknown; reviewer_email?: unknown; review_status?: unknown };
+type GrantRow = { reviewerId?: unknown; granted?: unknown; reason?: unknown };
 
-function toReceipt(r: ReviewRow): ReviewRequestReceipt {
+/** What the server's `grants` say about one reviewer's access; nothing when they do not say. */
+function grantFor(grants: GrantRow[], reviewerId: string): Pick<ReviewRequestReceipt, 'granted' | 'grantNote'> {
+  const grant = grants.find(g => String(g?.reviewerId ?? '').trim() === reviewerId);
+  if (typeof grant?.granted !== 'boolean') return {};
+  const grantNote = grant.granted ? null : text(grant.reason);
+  return grantNote ? { granted: grant.granted, grantNote } : { granted: grant.granted };
+}
+
+function toReceipt(r: ReviewRow, grants: GrantRow[]): ReviewRequestReceipt {
   const reviewerId = String(r?.reviewer_id ?? '').trim();
   return {
     id: String(r?.id ?? ''),
     reviewerId,
     reviewer: text(r?.reviewer_name) ?? text(r?.reviewer_email) ?? reviewerId,
     status: String(r?.review_status ?? ''),
+    ...grantFor(grants, reviewerId),
   };
 }
 
@@ -170,11 +198,12 @@ function toReceipt(r: ReviewRow): ReviewRequestReceipt {
  * row, and every row is on this document. Anything else is not a receipt.
  */
 export function confirmedReviews(json: unknown, docId: string, reviewerIds: string[]): ReviewRequestReceipt[] | null {
-  const body = json as { success?: unknown; reviews?: unknown } | null;
+  const body = json as { success?: unknown; reviews?: unknown; grants?: unknown } | null;
   if (!body || body.success !== true || !Array.isArray(body.reviews)) return null;
   const rows = body.reviews as ReviewRow[];
   if (rows.some(r => String(r?.doc_id ?? '') !== docId)) return null;
-  const receipts = rows.map(toReceipt);
+  const grants = Array.isArray(body.grants) ? (body.grants as GrantRow[]) : [];
+  const receipts = rows.map(r => toReceipt(r, grants));
   const got = new Set(receipts.map(r => r.reviewerId));
   if (!receipts.every(r => r.id) || !reviewerIds.every(id => got.has(id))) return null;
   return receipts;
@@ -265,11 +294,28 @@ export function tasksSentence(tasks: ReviewTaskOutcome[]): string | null {
   return `Review tasks: ${groups.join(', ')}.${unknown ? ' Check the task list before sending again.' : ''}`;
 }
 
+/**
+ * What access the request gave the reviewers it asked: who now has the
+ * Reviewer role on the document, and, in the server's words, why anyone was
+ * granted none. Null when the answer said nothing about access.
+ */
+export function accessSentence(reviews: ReviewRequestReceipt[]): string | null {
+  const asked = askedReviews(reviews);
+  const granted = asked.filter(r => r.granted === true).map(r => r.reviewer);
+  const notes = [...new Set(asked.flatMap(r => (r.granted === false && r.grantNote ? [r.grantNote] : [])))];
+  const parts = [
+    granted.length ? `${granted.join(', ')} ${granted.length === 1 ? 'has' : 'have'} the Reviewer role on this document.` : null,
+    ...notes,
+  ].filter(Boolean);
+  return parts.length ? parts.join(' ') : null;
+}
+
 export function sentToast(r: SendForReviewResult): string {
   const asked = askedReviews(r.reviews).map(x => x.reviewer);
   const kept = r.reviews.filter(x => x.status !== 'pending').map(x => `${x.reviewer} (${reviewStatusLabel(x.status)})`);
   return [
     asked.length ? `Review requested from ${asked.join(', ')}. It is listed on the Review board.` : null,
+    accessSentence(r.reviews),
     kept.length ? `Not reopened; the earlier verdict stands: ${kept.join(', ')}.` : null,
     tasksSentence(r.tasks),
   ].filter(Boolean).join(' ');
@@ -375,6 +421,7 @@ function receiptHeadline(reviews: ReviewRequestReceipt[]): string {
 /** The server's answer: the requests it recorded, and what became of each task. */
 function SentReceipt({ result }: { result: SendForReviewResult }) {
   const reopened = askedReviews(result.reviews).length > 0;
+  const access = accessSentence(result.reviews);
   return (
     <div data-testid="sfr-result">
       <div className="de-gov" role="status">
@@ -388,6 +435,7 @@ function SentReceipt({ result }: { result: SendForReviewResult }) {
           </li>
         ))}
       </ul>
+      {access && <div className="de-desc" data-testid="sfr-access">{access}</div>}
       {result.tasks.length > 0 && (
         <ul aria-label="Review tasks" style={{ listStyle: 'none', padding: 0, margin: '10px 0', fontSize: 13 }} data-testid="sfr-tasks">
           {result.tasks.map(t => (
@@ -403,11 +451,11 @@ function SentReceipt({ result }: { result: SendForReviewResult }) {
 
 /** The dialog's state and its one act. Its own hook so the dialog body is markup. */
 function useSendForReview(props: SendForReviewDialogProps) {
-  const { docId, docTitle, programId, sectionCode, fireToast, onSent } = props;
+  const { docId, docTitle, programId, sectionCode, authorId, fireToast, onSent } = props;
   const generation = useRef(0);
   const pending = useRef(false);
   useEffect(() => () => { generation.current++; }, []);
-  const { roster, rosterState, reload: reloadRoster } = useAssigneeRoster();
+  const { roster, rosterState, reload: reloadRoster, authorWithheld } = useReviewerRoster(authorId);
   const standing = useDocumentReviews(docId);
   const [selected, setSelected] = useState<string[]>([]);
   const [reason, setReason] = useState('');
@@ -465,7 +513,7 @@ function useSendForReview(props: SendForReviewDialogProps) {
   };
 
   return {
-    roster, rosterState, reloadRoster, standing, chosenCount: chosen.length, toggle, selected, reason, setReason,
+    roster, rosterState, reloadRoster, authorWithheld, standing, chosenCount: chosen.length, toggle, selected, reason, setReason,
     instructions, setInstructions, due, setDue, priority, setPriority, phase, error, needsReconciliation, result,
     reasonProblem, canSend, send,
   };
@@ -556,7 +604,7 @@ function SendForReviewDialogForSource(props: SendForReviewDialogProps) {
             <>
               <ReviewerChecklist
                 roster={s.roster} rosterState={s.rosterState} onReloadRoster={s.reloadRoster}
-                standing={s.standing} selected={s.selected} onToggle={s.toggle}
+                standing={s.standing} selected={s.selected} onToggle={s.toggle} authorWithheld={s.authorWithheld}
               />
               <ReasonField value={s.reason} onChange={s.setReason} />
               <TaskFields
@@ -566,7 +614,7 @@ function SendForReviewDialogForSource(props: SendForReviewDialogProps) {
               <div className="de-gov">
                 <span className="ico">{I.lock}</span>
                 <span className="de-gov-t">
-                  One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. Then a review task is added to each reviewer’s My work. Reviewers record their verdicts on the Review board, which completes their task; a binding §11.50 signature is applied on the document.
+                  One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. When you own the document (or are an administrator), each reviewer is granted the Reviewer role on it, which lets them comment and sign the review. Then a review task is added to each reviewer’s My work. Reviewers record their verdicts on the Review board, which completes their task; a binding §11.50 signature is applied on the document.
                 </span>
               </div>
             </>

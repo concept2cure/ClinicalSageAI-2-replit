@@ -9,6 +9,7 @@ import {
 } from '@shared/constants/domain/product-types';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { publishShellProject } from '../shellProject';
+import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue } from '../dossierReadiness';
 import {
   listedChoices,
   notifySurfaceActionReady,
@@ -293,16 +294,28 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
     productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg),
   );
 
+  /* The name and product exactly as they will be saved — the review prints
+     these and the create call sends these, so the two cannot disagree. The
+     name used to fall back to the filing type's label ("Investigational New
+     Drug Application") while the review read "(unnamed)", and programs were
+     saved under identical generic names (QA 2026-10-08, j1). It is required
+     now. A blank product is recorded as the name, which is what the server
+     does with one (POST /api/c2c/projects: productName || name), and the
+     review says so. */
+  const savedName = name.trim();
+  const savedProduct = product.trim() || savedName;
+
   // Persist a real regulatory program (POST /api/c2c/projects → regulatory_programs)
   // then navigate into it using the id the store assigns. On failure we surface
   // the error instead of pretending the project was created.
   const doCreate = async () => {
+    if (!savedName) return;
     setCreating(true);
     setOutcome(null);
     const taLabel = TA_LIST.find(t => t.id === ta)?.label ?? null;
     const body = {
-      name: name || selTpl?.label || 'New project',
-      productName: product || name || (selTpl?.label ?? ''),
+      name: savedName,
+      productName: savedProduct,
       programType: programTypeFor(selTpl, uiSeg),
       productType: productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg),
       primaryAgency: selTpl?.agency || 'FDA',
@@ -342,34 +355,9 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
       // technical file as a US NDA is worse than filing nothing — but only if
       // the customer is told which of the two happened. Surfacing it is the
       // other half of routing those 33 registry rows to their true program type.
-      // The SAME silence, one field along. The server also reports when it
-      // created the program but declined the PM-spine anchor
-      // (meta.projectAnchorSkipped / projectAnchorDetail, from
-      // services/c2c/program-project-anchor.ts). Nothing read that either, so
-      // an unanchored program looked like a normal creation and surfaced weeks
-      // later as a permanently empty artifact registry: compile reports
-      // success, every section skips the bridge, and the Vault shows no
-      // Module 3 branch. Checked BEFORE the scaffold skip because it is the
-      // more consequential of the two — a scaffold can be added by hand, an
-      // anchor cannot.
-      const anchorSkipped = j?.meta?.projectAnchorSkipped as string | undefined;
-      if (anchorSkipped) {
-        const anchorDetail =
-          typeof j?.meta?.projectAnchorDetail === 'string' ? j.meta.projectAnchorDetail : '';
-        setOutcome({
-          kind: 'notice',
-          message: (
-            anchorDetail ||
-            'Project created without a project-management anchor, so governed exports cannot be ' +
-              'placed into the document registry for it.'
-          ).replace(/\s+/g, ' '),
-        });
-        setCreating(false);
-        // Same reasoning as the scaffold skip below: the project exists and is
-        // listed, and dropping the user into it is how this went unnoticed.
-        return;
-      }
-
+      // (The server used to report a declined PM-spine anchor here too. Since
+      // P-19 it refuses the program instead — 409 PROJECT_RECORD_UNAVAILABLE,
+      // nothing saved — and that refusal reaches the catch below like any other.)
       const skipped = j?.meta?.scaffoldSkipped as string | undefined;
       if (skipped) {
         const detail = typeof j?.meta?.scaffoldDetail === 'string' ? j.meta.scaffoldDetail : '';
@@ -547,7 +535,13 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder={`e.g. ${selTpl.id === '510k' ? 'Aurora CGM — 510(k)' : 'BX-204 — ' + selTpl.label}`}
+                    required
+                    aria-required="true"
+                    aria-describedby="npw-name-help"
                   />
+                  <span className="npw-field-help" id="npw-name-help">
+                    Required. The program is listed under this name.
+                  </span>
                 </label>
 
                 <label className="npw-field">
@@ -732,11 +726,14 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                 )}
                 <div className="npw-review-row">
                   <dt>Project name</dt>
-                  <dd>{name || '(unnamed)'}</dd>
+                  <dd>{savedName}</dd>
                 </div>
                 <div className="npw-review-row">
                   <dt>Product</dt>
-                  <dd>{product || '—'}</dd>
+                  <dd>
+                    {savedProduct}
+                    {!product.trim() && <span style={{ color: 'var(--text-300)' }}> (same as the project name)</span>}
+                  </dd>
                 </div>
                 <div className="npw-review-row">
                   <dt>Therapeutic area</dt>
@@ -878,12 +875,17 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
           {step > 0 && <button type="button" className="btn ghost" onClick={() => setStep(s => s - 1)}>Back</button>}
           <span className="npw-foot-gap" />
           {step < 2 && (
-            <button type="button" className="btn primary" disabled={step === 0 && !tpl} onClick={() => setStep(s => s + 1)}>
+            <button
+              type="button"
+              className="btn primary"
+              disabled={(step === 0 && !tpl) || (step === 1 && !savedName)}
+              onClick={() => setStep(s => s + 1)}
+            >
               Continue
             </button>
           )}
           {step === 2 && (
-            <button type="button" className="btn primary" disabled={creating} onClick={doCreate}>
+            <button type="button" className="btn primary" disabled={creating || !savedName} onClick={doCreate}>
               {creating ? 'Creating project…' : <>{I.plus} Create project</>}
             </button>
           )}
@@ -953,6 +955,13 @@ function daysUntil(isoDate: string | null | undefined, today: Date = new Date())
 
 /** Workstream → chip tone (presentation config, not data). */
 const WS_TONE: Record<string, string> = { MDX: 'ai', Biotech: 'ok', Pharma: 'warn', CRO: 'idle' };
+
+/* A program whose stored status is `blocked` while the list carries no blocker
+   for it. The product writes only active and archived (POST and the close-out
+   routes); a `blocked` row comes from data loaded some other way, and the list
+   does not assess blockers. The card states the gap instead of a bare red chip. */
+const BLOCKED_NO_CAUSE = 'No cause recorded';
+const BLOCKED_NO_CAUSE_TITLE = 'This program’s status is recorded as blocked, and no blocker is recorded against it.';
 
 export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [ws, setWs] = useState('all');
@@ -1343,7 +1352,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
                 <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: (p.readiness ?? 0) + '%' }} />
               </div>
               <div className="pj-card-r">
-                <span>{p.readiness == null ? 'Readiness not measured' : `${p.readiness}% ready`}</span><span>{p.due}</span>
+                <span title={DOSSIER_READINESS_MEANS}>{DOSSIER_READINESS_LABEL} {dossierReadinessValue(p.readiness)}</span><span>{p.due}</span>
               </div>
               <div className="pj-card-f">
                 <span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span>
@@ -1356,6 +1365,12 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
                     assess blockers, so "No open blockers" was an all-clear
                     nothing had checked. */}
                 {p.blocker && <span className="pj-card-blk">{I.alertTriangle} {p.blocker}</span>}
+                {/* A status of blocked with no blocker behind it (NM-512 in the
+                    QA organisation, QA 2026-10-08 j1) says so in words. The red
+                    chip alone read as a finding with its cause withheld. */}
+                {!p.blocker && p.status === 'blocked' && (
+                  <span className="pj-card-blk" title={BLOCKED_NO_CAUSE_TITLE}>{I.alertTriangle} {BLOCKED_NO_CAUSE}</span>
+                )}
               </div>
             </button>
           ))}
@@ -1377,8 +1392,16 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
                 <div className="ph-bar-track" style={{ marginTop: 5 }}>
                   <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: (p.readiness ?? 0) + '%' }} />
                 </div>
+                <div style={{ fontSize: 11, color: 'var(--text-300)', marginTop: 3 }} title={DOSSIER_READINESS_MEANS}>
+                  {DOSSIER_READINESS_LABEL} {dossierReadinessValue(p.readiness)}
+                </div>
               </div>
-              <div style={{ fontSize: 11, color: p.blocker ? 'var(--warning)' : 'var(--text-400)' }}>{p.blocker ? '1 blocker' : '—'}</div>
+              <div
+                style={{ fontSize: 11, color: p.blocker || p.status === 'blocked' ? 'var(--warning)' : 'var(--text-400)' }}
+                title={!p.blocker && p.status === 'blocked' ? BLOCKED_NO_CAUSE_TITLE : undefined}
+              >
+                {p.blocker ? '1 blocker' : p.status === 'blocked' ? BLOCKED_NO_CAUSE : '—'}
+              </div>
               <div style={{ fontSize: 11.5 }}>{p.lead}</div>
               <div style={{ fontSize: 11, color: 'var(--text-300)' }}>{p.due}</div>
             </button>

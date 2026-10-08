@@ -1074,7 +1074,10 @@ async function enrichWithProjectSummary(projectId: ProjectRowId, orgId?: number)
   if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   if (!orgId) return '';
   try {
-    const intel = await getProjectIntelligence(Number(projectId), orgId);
+    /* Keyed by the integer projects row that enrichContextForChat resolved once
+       (strictProjectRowForRef, below). This was getProjectIntelligence(Number(uuid)):
+       NaN on every v2 project turn (QA 2026-10-08 j5; ana-14). */
+    const intel = await getProjectIntelligence(projectId, orgId);
     if (!intel) return '';
 
     const parts: string[] = ['## Project Intelligence Profile'];

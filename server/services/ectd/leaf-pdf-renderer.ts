@@ -447,7 +447,10 @@ export function htmlToPlainText(input: string): string {
   // [+...+] because silently settling an unresolved suggestion either way
   // fabricates a decision nobody made. One implementation, both callers - these
   // two pipelines had already drifted apart on the identical table-cell defect.
-  const marked = inlineMarksToText(input);
+  /* A document-type declaration is not text. The parser keeps `<!doctype html>`
+     as a text node, so a whole HTML document (the authoring PDF export hands the
+     fallback renderer one) printed it above the title (QA 2026-10-08, j4). */
+  const marked = inlineMarksToText(String(input ?? '').replace(/<!doctype[^>]*>/gi, ''));
 
   let raw: string;
   try {

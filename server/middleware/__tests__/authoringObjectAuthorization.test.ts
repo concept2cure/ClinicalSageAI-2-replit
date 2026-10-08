@@ -244,6 +244,32 @@ describe('mandatory authoring object authorization middleware', () => {
     expect(deniedRes.statusCode).toBe(403);
   });
 
+  /* QA 2026-10-08 (browser walk j4-authoring). Every /e-sign was classed as an
+     approval, so a reviewer holding the REVIEWER role on a document could not
+     apply the REVIEW signature the Vault carry-over requires ("a REVIEWER
+     signature … by a different person"). The review signature is a 'review'
+     act; an approval (and an authorship signature, and a freeze) stays 'approve'. */
+  it('lets a REVIEWER apply the review signature, and nothing more', async () => {
+    const reviewer = { ...author, id: 'reviewer-user', userId: 'reviewer-user', email: 'reviewer@example.com' };
+    const sign = async (roles: string[], body: Record<string, unknown>, route = 'e-sign') => {
+      installQueryBehavior({ status: 'draft', roles });
+      const res = response();
+      const next = vi.fn();
+      await authoringObjectAuthorization(
+        request({ method: 'POST', path: `/authoring/docs/${DOC_ID}/${route}`, user: reviewer, body }),
+        res,
+        next,
+      );
+      return { allowed: next.mock.calls.length === 1, status: res.statusCode };
+    };
+    expect(await sign(['REVIEWER'], { meaning: 'REVIEWER' })).toEqual({ allowed: true, status: undefined });
+    expect(await sign(['REVIEWER'], { meaning: 'APPROVER' })).toEqual({ allowed: false, status: 403 });
+    expect(await sign(['REVIEWER'], { meaning: 'AUTHOR' })).toEqual({ allowed: false, status: 403 });
+    expect(await sign(['VIEWER'], { meaning: 'REVIEWER' })).toEqual({ allowed: false, status: 403 });
+    // A freeze seals the document whatever meaning it carries: still an approval act.
+    expect(await sign(['REVIEWER'], { meaning: 'REVIEWER' }, 'freeze')).toEqual({ allowed: false, status: 403 });
+  });
+
   /* 2026-09-28. Export, file-to-vault and send-to-packager read the document
      and produce the record elsewhere (the export ledger, the project vault, the
      eCTD packager); none writes the document. They fell through to `edit`, and

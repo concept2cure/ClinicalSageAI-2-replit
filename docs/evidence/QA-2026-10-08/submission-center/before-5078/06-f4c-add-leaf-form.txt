@@ -1,0 +1,123 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+RP
+Concept2Cure.RI
+›
+Submission center
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+SUBMISSION
+Submission center
+
+Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+
+HLV-333 — Investigational New Drug Application (QA-J1) · IND · FDA (US)
+Investigational New Drug Application · IND · FDA (US)
+QA-J1 Ardemvir · relapsing multiple sclerosis (IND) · IND · FDA (US)
+Investigational New Drug Application · IND · FDA (US)
+QA member-created project (should be refused) · IND · FDA (US)
+Nexavir · moderate-to-severe Crohn's disease (IND) · IND · FDA (US)
+C2C-001 IND (FDA) · IND · FDA (US)
+Vorelinib · KIT-mutant GIST (IND) · IND · FDA (US)
+BX-256 · systemic lupus erythematosus (IND) · IND · FDA (US)
+BX-301 (anti-BCMA mAb) · IND · FDA (US)
+BX-204 (NDA 212345 · 505(b)(1)) · NDA · FDA (US)
+MDX-100 510(k) (FDA) · 510(k) · FDA (US)
+WHERE VORELINIB · KIT-MUTANT GIST (IND) STANDS
+Vorelinib · KIT-mutant GIST (IND) (Vorelinib · BX-512) — a FDA (US) IND at the original stage.
+2 eCTD sequences tracked. Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.
+I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.
+Open the sequences
+Or move through the workspaces below — plan, build, validate, dispatch.
+Submissions
+Planner
+Builder
+Sequences
+Validation
+Shadow review
+Cross-region
+Dispatch
+Working sequence
+0000 · original · Validated
+0001 · amendment · Draft
+VALIDATED
+Builder · eCTD leaves · sequence 0000
+governed leaves
+SECTION	TITLE	OPERATION	GRANULARITY	SOURCE DOCUMENT
+1.5	Table of Contents	NEW	—	Authored document #37 NO CONTENT PIN
+2.5.1	QA J4 2.5 Clinical Overview - Vorelinib	NEW	—	Authored document #52 SOURCE VERIFIED
+2.5.1	QA J4 2.5 Clinical Overview - Vorelinib	NEW	—	Authored document #52 SOURCE VERIFIED
+3.2.P.8	Vorelinib DS Stability Protocol STB-0042	NEW	—	Vault document #3551f13c… SOURCE VERIFIED
+3.2.S.4.1	Vorelinib-DS-Specification-J3	NEW	—	Vault document #805b9144… SOURCE VERIFIED
+3.2.S.4.1	Vorelinib-DS-Specification-J3-r2	NEW	—	Vault document #45224282… SOURCE VERIFIED
+Source document
+Choose a document…
+QA J4 2.5 Clinical Overview - Vorelinib · 2.5.1 · approved
+C2C-001 Clinical Summary (source) · 2.7 · draft
+C2C-001 Quality Overall Summary (source) · 2.3 · draft
+Form FDA 356h (Application to Market a New Drug) · m1.1 · approved
+Cover Letter · m1.2 · approved
+Field Copy Certification · m1.3.1 · approved
+Application User Fee Cover Sheet (Form FDA 3397) · m1.4.3 · approved
+Financial Disclosure (Forms FDA 3454 / 3455) · m1.12.14 · draft
+Introduction · m2.2 · approved
+Quality Overall Summary · m2.3 · approved
+Nonclinical Overview · m2.4 · approved
+Clinical Overview · m2.5 · review
+Nonclinical Written and Tabulated Summaries · m2.6 · approved
+Summary of Clinical Efficacy · m2.7.3 · approved
+Summary of Clinical Safety · m2.7.4 · draft
+Manufacture (Drug Substance) · m3.2.S.2 · approved
+Control of Drug Substance · m3.2.S.4 · approved
+Justification of Specification / Comparability (post-change lots) · m3.2.S.4.4 · draft
+Stability (Drug Substance) · m3.2.S.7 · approved
+Manufacture (Drug Product) · m3.2.P.3 · approved
+Stability (Drug Product) · m3.2.P.8 · approved
+Pharmacology Study Reports · m4.2.1 · approved
+Pharmacokinetic Study Reports · m4.2.2 · approved
+Toxicology Study Reports · m4.2.3 · approved
+Tabular Listing of All Clinical Studies · m5.2 · approved
+Reports of Biopharmaceutic Studies · m5.3.1 · approved
+Controlled Clinical Study Report (Study 301) · m5.3.5.1 · approved
+Uncontrolled Clinical Study Report (Study 302) · m5.3.5.2 · approved
+Integrated Summary of Safety (ISS) · m5.3.5.3 · draft
+Integrated Summary of Efficacy (ISE) · m5.3.5.4 · review
+Case Report Forms and Individual Patient Listings · m5.3.7 · approved
+Form FDA 1571 · m1.1.1 · approved
+Form FDA 1572 · m1.1.2 · approved
+Form FDA 3674 · m1.1.3 · draft
+Cover Letter · m1.2 · finalized
+Debarment Certification · m1.3.3 · approved
+Table of Contents · m1.5 · approved
+Introductory Statement · m1.6.1 · approved
+General Investigational Plan · m1.6.2 · review
+Investigator's Brochure · m1.7 · draft
+Environmental Assessment or Claim of Categorical Exclusion · m1.9 · approved
+Quality Overall Summary · m2.3 · approved
+Nonclinical Overview · m2.4 · review
+Nonclinical Written and Tabulated Summaries · m2.6 · approved
+Manufacture · m3.2.S.2 · approved
+C2C-001 Clinical Overview (source) · 2.5 · draft
+Stability · m3.2.S.7 · draft
+Manufacture · m3.2.P.3 · approved
+Stability · m3.2.P.8 · draft
+Pharmacology · m4.2.1 · approved
+Section code
+Lifecycle operation
+New
+Replace
+Append
+Delete
+Reason for this placement*
+Required, at least 8 characters. Recorded with the placement in the audit trail.
+Place leaf in the sequence
+Cancel

@@ -58,6 +58,18 @@ const FORM_SECTIONS: Array<{ code: string; id: string; title: string; label: str
   }));
 const FORM_CODES = new Set(FORM_SECTIONS.map((f) => f.code));
 
+/**
+ * The FDA Module 1 forms heading. For an IND it is satisfied by the forms an
+ * IND requires (IND_FORM_REQUIREMENTS: 1571, 1572, 3674) and by nothing else:
+ * whatever document sits at the heading itself is not one of them. QA
+ * 2026-10-08 (j7, finding 9): the only approved document at Vorelinib's 1.1
+ * was a placed Form FDA 356h — an NDA / ANDA / BLA form — and the checklist
+ * counted it as the IND's "FDA Forms" approved. The heading's status is now
+ * derived from the IND's own forms, and a document at the bare heading is not
+ * listed as that section.
+ */
+const FORMS_HEADING = 'm1.1';
+
 /** The blueprint's spelling of a placed section code. upsertLeaf stores a code
  *  exactly as its writer spelled it and the writers do not agree — the Vault
  *  filing dialog stores the canonical '1.1.1', a person may type 'M1.2' or
@@ -430,7 +442,7 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
     const statusByCode = placedBySub.get(subId) ?? new Map<string, { status: string; name: string }>();
 
     const sections = [...statusByCode.entries()]
-      .filter(([code]) => !FORM_CODES.has(code))
+      .filter(([code]) => !FORM_CODES.has(code) && code !== FORMS_HEADING)
       .map(([code, v]) => enrichSection(code, v.status, v.name))
       .sort((a, b) => compareSectionCode(a.code, b.code));
 
@@ -448,6 +460,9 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
     for (const form of FORM_SECTIONS) {
       if (forms.some((f) => f.id === form.id && f.done)) sectionStatus[form.code] = 'approved';
     }
+    // The forms heading is complete exactly when the IND's own forms are.
+    delete sectionStatus[FORMS_HEADING];
+    if (forms.every((f) => f.done)) sectionStatus[FORMS_HEADING] = 'approved';
     const readiness = evaluateIndReadiness({
       filingType: 'initial', sectionStatus,
       completedForms: forms.filter((f) => f.done).map((f) => f.id),

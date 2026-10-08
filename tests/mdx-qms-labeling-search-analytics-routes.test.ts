@@ -106,14 +106,15 @@ const SIGNED_APPROVAL = {
 };
 
 /** The approval transaction: the FOR UPDATE read sees `current`; the UPDATE
- *  flips it to effective only when it was draft/in_review (the route's WHERE). */
+ *  flips it to effective only when it was in_review (the route's WHERE; a
+ *  draft is sent for review first — QA walk 2026-10-08, J8). */
 function scriptApprovalTx(current: Record<string, unknown> | null) {
   S.txQuery.mockImplementation(async (sql: unknown) => {
     const text = String(sql).trim();
     if (/^(BEGIN|COMMIT|ROLLBACK)/.test(text)) return { rows: [] };
     if (text.includes('FOR UPDATE')) return { rows: current ? [current] : [] };
     if (text.startsWith('UPDATE qms_documents')) {
-      const approvable = current && ['draft', 'in_review'].includes(String(current.status));
+      const approvable = current && String(current.status) === 'in_review';
       return { rows: approvable ? [{ ...current, status: 'effective', effective_date: '2026-05-19' }] : [] };
     }
     throw new Error(`unexpected transaction query: ${text.slice(0, 60)}`);
@@ -179,8 +180,8 @@ describe('QMS routes', () => {
      send `{}` and mock one pool.query; they now send the signature the route
      legitimately requires and script its transaction, and still assert the
      same two transitions. */
-  it('approve flips draft → effective', async () => {
-    scriptApprovalTx({ ...QMS_DOC, status: 'draft' });
+  it('approve flips in_review → effective', async () => {
+    scriptApprovalTx({ ...QMS_DOC, status: 'in_review' });
     const res = await request(makeApp())
       .post('/api/mdx/qms/documents/1/approve')
       .send(SIGNED_APPROVAL);
@@ -189,7 +190,7 @@ describe('QMS routes', () => {
     expect(S.txQuery.mock.calls.map((c) => String(c[0]).trim().split(/\s+/)[0])).toContain('COMMIT');
   });
 
-  it('approve 409 when not in draft/in_review', async () => {
+  it('approve 409 when not in_review', async () => {
     scriptApprovalTx({ ...QMS_DOC, status: 'retired' });
     const res = await request(makeApp())
       .post('/api/mdx/qms/documents/1/approve')

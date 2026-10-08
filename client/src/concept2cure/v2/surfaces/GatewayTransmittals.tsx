@@ -52,6 +52,7 @@ import { useAuthUser } from '@/services/portal/authService';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
+import { gatewayLabel, transmittalStatusTone as statusTone } from '../gatewayLabels';
 
 interface GatewayInfo { region?: string; gateway?: string; name?: string; configured?: boolean; environment?: string; [k: string]: unknown; }
 interface Transmittal {
@@ -205,30 +206,7 @@ export function parseWithdrawals(raw: string | undefined): Array<{ ctdSection: s
     .filter((w) => w.ctdSection && w.fileName);
 }
 
-/* ── Gateway names ───────────────────────────────────────────────────────────
-   GET /api/mdx/gateways answers { region, gateway, transport, configured } — a
-   registry key, no display name — and the table rendered `g.name ?? g.gateway`,
-   so the operator read "pmda_gateway", "hc_cesg", "swissmedic_egateway". The
-   names below are the ones each implementation's own header gives
-   (server/services/submission-gateways/*.ts). A key not listed here is shown
-   as sent, never guessed at. */
-const GATEWAY_LABEL: Record<string, string> = {
-  esg: 'FDA ESG',
-  cesp: 'CESP',
-  eudamed: 'EUDAMED',
-  pmda_gateway: 'PMDA Gateway',
-  hc_cesg: 'Health Canada CESG',
-  mhra_gateway: 'MHRA Gateway',
-  nmpa_gateway: 'NMPA Gateway',
-  tga_ebs: 'TGA eBusiness Services',
-  swissmedic_egateway: 'Swissmedic eGateway',
-  anvisa_gateway: 'ANVISA Gateway',
-  cdsco_sugam: 'CDSCO SUGAM',
-  mfds_dbio: 'MFDS dBio',
-  hsa_prism: 'HSA PRISM',
-};
-const gatewayLabel = (key: string | null | undefined): string =>
-  key ? (GATEWAY_LABEL[key] ?? key) : '—';
+/* Gateway names: gatewayLabels.ts (one map, shared with the Submission Center). */
 
 /* The transmit form's options carry the route's keys as values and a name as
    the label — it offered the raw keys ("pmda_gateway") and lowercase region
@@ -254,13 +232,6 @@ async function readData<T = any>(method: 'GET' | 'POST' | 'PUT', path: string, b
     return { ok: false, status: 0, data: null, raw: null };
   }
 }
-function statusTone(s: string) {
-  const v = s.toLowerCase();
-  if (v.includes('ack') || v.includes('complete') || v.includes('success')) return 'ok';
-  if (v.includes('fail') || v.includes('error') || v.includes('reject')) return 'err';
-  return 'warn';
-}
-
 const TRANSMIT_FORM = (def: string | undefined, packages: PackageOption[] | null): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch · §11 re-authentication',
   title: 'Transmit to agency gateway',
@@ -482,7 +453,15 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       // The structural gate ran — a 422 from it is that evidence — so an empty list
       // is a refusal that carried no findings, not a clean bundle.
       setRefusal({ source: 'transmit', message, findings, findingsState: assessmentState({ scopeExists: true, findingCount: findings.length, assessmentRan: Array.isArray((raw as any)?.details?.findings) }) });
-      fireToast('Not transmitted — the structural gate rejected the bundle: ' + message + '.', 'error');
+      /* QA 2026-10-08 (j6): the server sentence already ends in a period, so the
+         toast ended "..", and a gateway this organization has no credentials for
+         went unmentioned although it is the next refusal waiting. Both from the
+         data on this screen: the refusal, and the gateway table's credential state. */
+      const rows = gateways.filter((g) => g.gateway === gateway && String(g.region ?? '').toLowerCase() === region.toLowerCase());
+      const noCredentials = rows.length > 0 && rows.every((g) => g.configured === false)
+        ? ` ${gatewayLabel(gateway)} credentials are also not configured for this organization, so nothing could be sent through it yet.`
+        : '';
+      fireToast('Not transmitted — the structural gate rejected the bundle: ' + message.replace(/[.\s]+$/, '') + '.' + noCredentials, 'error');
       return;
     }
     if (!ok) { setDialog(null); fireToast(`Transmit failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing was sent') + '.', 'error'); return; }
@@ -517,7 +496,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       ledgerLost || contentChanged ? 'error' : undefined,
     );
     void load();
-  }, [load, fireToast, signerName]);
+  }, [load, fireToast, signerName, gateways]);
 
   const checkStatus = useCallback(async (id: number) => {
     const { ok, status, data, raw } = await readData<Record<string, unknown>>('GET', `/api/mdx/gateways/transmittals/${id}/status`);

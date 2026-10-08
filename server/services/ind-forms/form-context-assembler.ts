@@ -111,6 +111,10 @@ export interface ProgramFormFacts {
   applicationNumber?: string | null;
   /** `regulatory_programs.program_type` (IND / NDA / BLA / MAA / …). */
   programType?: string | null;
+  /** `regulatory_programs.sponsor_address` (20261008b). */
+  sponsorAddress?: string | null;
+  /** `regulatory_programs.ind_type` (20261008b) — IND programs only. */
+  indType?: string | null;
 }
 
 /**
@@ -136,8 +140,9 @@ function present(value: string | null | undefined): string | null {
  * Map the open program's record onto the form builders' metadata.
  *
  * This is what makes the Module 1 forms read the database instead of a typist:
- * the sponsor, the product, the indication and the agency number are held once,
- * on the program, and every form takes them from there. The mapping is pure and
+ * the sponsor, its address, the product, the indication, the agency number and
+ * (for an IND) the IND type are held once, on the program, and every form takes
+ * them from there. The mapping is pure and
  * OMITS what the record does not hold — an absent value must reach the builders
  * as absent so `missingRequired` stays the server's honest verdict, which an
  * empty string would defeat.
@@ -158,7 +163,16 @@ export function programToFormMetadata(program: ProgramFormFacts): Partial<IndPro
   const indication = present(program.indication);
   if (indication) meta.indication = indication;
 
+  // P-20 follow-up (2026-10-08): the sponsor's address and the IND type are
+  // held on the program too, where the 1571 build reads them (sponsor.address,
+  // indType). They used to arrive only with each build request.
+  const sponsorAddress = present(program.sponsorAddress);
+  if (sponsorAddress) meta.sponsor = { address: sponsorAddress };
+
   const programType = (present(program.programType) ?? '').toUpperCase();
+  // The IND type is a Form 1571 box; a program that is not an IND has none.
+  const indType = programType === 'IND' ? present(program.indType) : null;
+  if (indType) meta.indType = indType;
   const applicationNumber = present(program.applicationNumber);
   if (programType === 'IND') {
     // NULL until the agency assigns one — an original IND has no number yet,

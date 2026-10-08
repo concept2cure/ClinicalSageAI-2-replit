@@ -180,9 +180,14 @@ export interface ReviewBoardContextSlice {
 export function ReviewThreadsPane({
   onNotice,
   board,
+  program,
 }: {
   onNotice: FireToast;
   board?: ReviewBoardContextSlice | null;
+  /** The open program when the review screen is filtered to it: the inbox is
+   *  then that program's threads and tasks only (the server resolves the
+   *  program UUID to the project id they carry). Null: the whole inbox. */
+  program?: { id: string; title: string } | null;
 }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [sel, setSel] = useState<string | null>(null);
@@ -190,7 +195,11 @@ export function ReviewThreadsPane({
   const [requestChanges, setRequestChanges] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const queue = useLiveData<MyQueuePayload>('/api/concept2cure/reviews/my-queue', ['rt-queue', refreshKey]);
+  /* QA 2026-10-08 (j1): with BX-256 open this inbox listed BX-204's threads —
+     it had no program filter. It follows the review screen's program switch. */
+  const queuePath =
+    '/api/concept2cure/reviews/my-queue' + (program ? `?programId=${encodeURIComponent(program.id)}` : '');
+  const queue = useLiveData<MyQueuePayload>(queuePath, ['rt-queue', queuePath, refreshKey]);
   const comments = useLiveData<CommentsPayload>(
     sel ? `/api/concept2cure/review-threads/${encodeURIComponent(sel)}/comments` : null,
     ['rt-comments', sel, refreshKey]
@@ -332,7 +341,7 @@ export function ReviewThreadsPane({
   return (
     <section aria-label="Review threads assigned to you" style={{ marginTop: 20 }}>
       <div className="dr-seclbl" style={{ padding: '0 0 8px', display: 'flex', justifyContent: 'space-between' }}>
-        <span>Threads &amp; change requests — assigned to you</span>
+        <span>Threads &amp; change requests — assigned to you{program ? ` · ${program.title}` : ''}</span>
         {queue.data && (
           <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>
             {queue.data.totalThreads} thread{queue.data.totalThreads === 1 ? '' : 's'} · {queue.data.totalTasks} task{queue.data.totalTasks === 1 ? '' : 's'}

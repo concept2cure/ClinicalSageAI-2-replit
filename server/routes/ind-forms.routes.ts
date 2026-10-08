@@ -58,7 +58,7 @@ import { assembleFormMetadata, programToFormMetadata } from '../services/ind-for
 import { resolveSubmissionSpine } from '../services/cmc/submission-spine';
 import { module1HeadingForSectionKey } from '../services/ectd/section-to-ctd';
 import { storeRenderedLeafFile } from '../services/ectd/rendered-leaf-files';
-import { upsertLeaf, SubmissionError } from '../services/submission-service/submission-service';
+import { upsertLeaf, SubmissionError, isSequenceLocked } from '../services/submission-service/submission-service';
 import { runM1FormsQc } from '../services/ind-forms/ind-form-qc';
 import {
   getSponsor,
@@ -66,7 +66,7 @@ import {
   getInvestigator,
 } from '../services/ind-master-data/ind-master-data-service';
 import { createScopedLogger } from '../utils/logger.js';
-import { FDAFormsRegistryClass, FDA_FORMS_RELEASE_READINESS } from '../config/FDAFormsRegistry';
+import { FDAFormsRegistryClass, FDA_FORMS_RELEASE_READINESS, type SubmissionProgram } from '../config/FDAFormsRegistry';
 import crypto from 'node:crypto';
 import { and, desc, eq, isNull, like } from 'drizzle-orm';
 import { db } from '../db';
@@ -76,6 +76,7 @@ import {
   organizations,
   submissionLeaves,
   renderedLeafFiles,
+  ectdSequences,
 } from '@shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
@@ -123,6 +124,10 @@ interface ResolvedProgram {
   applicationNumber: string | null;
   programType: string | null;
   sponsorName: string | null;
+  /** regulatory_programs.sponsor_address / ind_type (20261008b): the 1571's
+   *  address and IND type, stored on the program (P-20 follow-up). */
+  sponsorAddress: string | null;
+  indType: string | null;
 }
 
 /**
@@ -153,6 +158,8 @@ async function resolveProgramIdent(
         applicationNumber: regulatoryPrograms.applicationNumber,
         programType: regulatoryPrograms.programType,
         sponsorName: organizations.name,
+        sponsorAddress: regulatoryPrograms.sponsorAddress,
+        indType: regulatoryPrograms.indType,
       })
       .from(regulatoryPrograms)
       .leftJoin(organizations, eq(organizations.id, regulatoryPrograms.organizationId))
@@ -184,6 +191,39 @@ function sectionCodeForForm(formId: string): string | null {
 /** `FDA_1571` → `form_1571` — the leaf document_type the IND checklist reads. */
 function documentTypeForForm(formId: string): string {
   return `form_${formId.replace(/^FDA_/, '').toLowerCase()}`;
+}
+
+/**
+ * The registry's program vocabulary for a program record's type (`ind`, `IND`,
+ * `510K`, …), or null for a type no FDA form programme covers (CTA, MAA, …).
+ */
+function registryProgramOf(programType: string | null): SubmissionProgram | null {
+  const t = (programType ?? '').trim().toUpperCase();
+  if (t === 'IND' || t === 'NDA' || t === 'ANDA' || t === 'BLA' || t === 'PMA') return t;
+  if (t === '510K') return '510k';
+  return null;
+}
+
+/**
+ * Whether a form applies to the open program, by the registry's ONE
+ * applicability model (FDAFormsRegistry applicabilityOf). QA 2026-10-08 (j7):
+ * the IND panel offered Form 356h — an NDA / ANDA / BLA cover — and a placed
+ * 356h is what marked the IND's Module 1.1 approved. A program type the
+ * registry has no programme for gets no FDA form, never all of them.
+ */
+function formAppliesToProgram(formId: string, programType: string | null): boolean {
+  const program = registryProgramOf(programType);
+  if (program === null) return false;
+  return formsRegistry.getApplicability(formId)?.programs.includes(program) ?? false;
+}
+
+/** Why a form is not offered for this program, in the reader's words. */
+function notApplicableReason(formId: string, programType: string | null): string {
+  const programs = formsRegistry.getApplicability(formId)?.programs ?? [];
+  const type = (programType ?? 'this').toUpperCase();
+  return programs.length > 0
+    ? `Form ${formId.replace(/^FDA_/, '')} applies to ${programs.join(' / ')} submissions, not to a ${type} program.`
+    : `Form ${formId.replace(/^FDA_/, '')} is not catalogued for a ${type} program.`;
 }
 
 /**
@@ -240,9 +280,28 @@ async function metaForRequest(
   return { meta: { ...programToFormMetadata(program), ...stated }, program };
 }
 
+/** The program's canonical submission spine — the one rule, from submission-spine. */
+function spineOf(program: ResolvedProgram, organizationId: number) {
+  return resolveSubmissionSpine(
+    {
+      programId: program.id,
+      programType: program.programType,
+      productName: program.productName,
+      title: program.name,
+      programCode: program.code,
+    },
+    organizationId,
+  );
+}
+
 /**
  * The official Module 1 forms this program has a sponsor-completed document
- * placed for, in its current eCTD sequence.
+ * placed for, in EVERY sequence of its submission, each with the sequence it
+ * is in.
+ *
+ * It read only the newest sequence, so once an amendment existed a form filed
+ * into the original 0000 was invisible here (QA 2026-10-08, j7). The person
+ * now chooses the sequence, so the listing says where each placement is.
  *
  * Read through the retained bytes (`rendered_leaf_files`), org-scoped on that
  * row rather than on the leaf: `submission_leaves.document_table` is a
@@ -253,16 +312,7 @@ async function listFormPlacements(
   program: ResolvedProgram,
   organizationId: number,
 ): Promise<Array<Record<string, unknown>>> {
-  const spine = await resolveSubmissionSpine(
-    {
-      programId: program.id,
-      programType: program.programType,
-      productName: program.productName,
-      title: program.name,
-      programCode: program.code,
-    },
-    organizationId,
-  );
+  const spine = await spineOf(program, organizationId);
   if (!spine?.sequence) return [];
   try {
     const rows = await db
@@ -275,8 +325,19 @@ async function listFormPlacements(
         sha256: renderedLeafFiles.sha256,
         byteSize: renderedLeafFiles.byteSize,
         placedAt: submissionLeaves.updatedAt,
+        sequenceId: ectdSequences.id,
+        sequenceNumber: ectdSequences.sequenceNumber,
       })
       .from(submissionLeaves)
+      .innerJoin(
+        ectdSequences,
+        and(
+          eq(ectdSequences.id, submissionLeaves.sequenceId),
+          eq(ectdSequences.organizationId, organizationId),
+          eq(ectdSequences.submissionId, spine.submissionId),
+          isNull(ectdSequences.deletedAt),
+        ),
+      )
       .innerJoin(
         renderedLeafFiles,
         and(
@@ -286,7 +347,6 @@ async function listFormPlacements(
       )
       .where(
         and(
-          eq(submissionLeaves.sequenceId, spine.sequence.id),
           eq(submissionLeaves.organizationId, organizationId),
           eq(submissionLeaves.documentTable, 'rendered_leaf_files'),
           like(submissionLeaves.documentType, 'form\\_%'),
@@ -297,7 +357,6 @@ async function listFormPlacements(
     return rows.map((r) => ({
       ...r,
       formId: `FDA_${String(r.documentType ?? '').replace(/^form_/, '').toUpperCase()}`,
-      sequenceNumber: spine.sequence!.sequenceNumber,
     }));
   } catch {
     // An unprovisioned store means nothing is known to be placed — never a
@@ -375,8 +434,15 @@ router.get('/', limiter, requireRole(AUTHOR), async (req, res) => {
     if (!program) {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
     }
+    // Only the forms that apply to this program are offered; the rest are
+    // named with the reason, never silently dropped.
+    const applicable = SUPPORTED_FORM_IDS.filter((f) => formAppliesToProgram(f, program.programType));
+    const formsNotApplicable = SUPPORTED_FORM_IDS
+      .filter((f) => !applicable.includes(f))
+      .map((formId) => ({ formId, reason: notApplicableReason(formId, program.programType) }));
     return res.json({
-      forms: SUPPORTED_FORM_IDS,
+      forms: applicable,
+      formsNotApplicable,
       formDefinitions,
       releaseReadiness: FDA_FORMS_RELEASE_READINESS,
       renderPlans,
@@ -389,12 +455,113 @@ router.get('/', limiter, requireRole(AUTHOR), async (req, res) => {
         productName: program.productName,
         indication: program.indication,
         applicationNumber: program.applicationNumber,
+        sponsorAddress: program.sponsorAddress,
+        indType: program.indType,
         // Exactly what the builders will receive from the record, so the panel
         // shows the values the forms are filled from rather than a paraphrase.
         formMetadata: programToFormMetadata(program),
       },
       placements: await listFormPlacements(program, ctx.organizationId),
     });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** The registry's IND types for Form FDA 1571 — the one list, never a copy. */
+function registryIndTypes(): string[] {
+  const field = formsRegistry.getForm('FDA_1571')?.fields?.find((f: { id?: string }) => f?.id === 'ind_type') as
+    | { options?: unknown }
+    | undefined;
+  return Array.isArray(field?.options) ? field!.options.map(String) : [];
+}
+
+/** A clearable text from a request body: undefined = not sent (unchanged);
+ *  null or blank = cleared; otherwise the trimmed text. */
+function clearableText(v: unknown): string | null | undefined | false {
+  if (v === undefined) return undefined;
+  if (v === null) return null;
+  if (typeof v !== 'string') return false;
+  const t = v.trim();
+  return t === '' ? null : t;
+}
+
+const SPONSOR_ADDRESS_MAX = 1000;
+
+/**
+ * Record the sponsor's address and the IND type ON THE PROGRAM (P-20 follow-up,
+ * docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08). Form FDA 1571 requires both
+ * and no program column held either, so the forms panel sent them with every
+ * build and the program record never knew them. They are stored in
+ * regulatory_programs.sponsor_address / ind_type
+ * (migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql), and
+ * every build reads them from there (programToFormMetadata).
+ *
+ * Body: { projectIdent: program UUID or code, sponsorAddress?, indType? }. An
+ * absent field is left as recorded; null or a blank clears it. The IND type
+ * must be one of the registry's FDA_1571 ind_type options, and only an IND
+ * program has one. Org-scoped (404 for another organisation's program) and
+ * audited with the names of the fields it wrote.
+ */
+/** A stated program-facts request, or why it is refused (400). Pure. */
+type ProgramFactsPatch = { sponsorAddress?: string | null; indType?: string | null };
+function parseProgramFacts(
+  body: Record<string, unknown>,
+  indTypes: string[],
+): { ident: string; patch: ProgramFactsPatch } | { refusal: string } {
+  const ident = typeof body.projectIdent === 'string' ? body.projectIdent.trim() : '';
+  if (ident === '' || /^\d+$/.test(ident)) {
+    return { refusal: 'projectIdent (the program UUID or code) is required: these facts are recorded on a program.' };
+  }
+  const sponsorAddress = clearableText(body.sponsorAddress);
+  const indType = clearableText(body.indType);
+  if (sponsorAddress === false || indType === false) return { refusal: 'sponsorAddress and indType are text, or null to clear.' };
+  if (sponsorAddress === undefined && indType === undefined) return { refusal: 'State the sponsor address, the IND type, or both.' };
+  if (typeof sponsorAddress === 'string' && sponsorAddress.length > SPONSOR_ADDRESS_MAX) {
+    return { refusal: `The sponsor address is longer than ${SPONSOR_ADDRESS_MAX} characters.` };
+  }
+  if (typeof indType === 'string' && !indTypes.includes(indType)) return { refusal: `IND type must be one of ${indTypes.join(', ')}.` };
+  const patch: ProgramFactsPatch = {};
+  if (sponsorAddress !== undefined) patch.sponsorAddress = sponsorAddress;
+  if (indType !== undefined) patch.indType = indType;
+  return { ident, patch };
+}
+
+router.put('/program-facts', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const parsed = parseProgramFacts((req.body && typeof req.body === 'object' ? req.body : {}) as Record<string, unknown>, registryIndTypes());
+  if ('refusal' in parsed) return res.status(400).json({ error: { code: 'VALIDATION', message: parsed.refusal } });
+  const { ident, patch } = parsed;
+  try {
+    const program = await resolveProgramIdent(ident, ctx.organizationId);
+    if (!program) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
+    }
+    if (typeof patch.indType === 'string' && (program.programType ?? '').trim().toUpperCase() !== 'IND') {
+      return res.status(400).json({
+        error: { code: 'VALIDATION', message: `An IND type is recorded only on an IND program; this program is ${program.programType ?? 'of no recorded type'}.` },
+      });
+    }
+    await db
+      .update(regulatoryPrograms)
+      .set({ ...patch, updatedAt: new Date() })
+      .where(and(eq(regulatoryPrograms.id, program.id), eq(regulatoryPrograms.organizationId, ctx.organizationId)));
+
+    // Part 11 §11.10(e): who set the facts printed on the filed form, and which.
+    const audit = await auditService.logAction({
+      action: 'ind_form.program_facts.update',
+      userId: ctx.userId,
+      organizationId: ctx.organizationId,
+      resourceType: 'regulatory_program',
+      resourceId: program.id,
+      metadata: { fields: Object.keys(patch), programCode: program.code },
+    });
+    if (!audit?.persisted) {
+      logger.warn('ind-form program facts audit row was not persisted', { err: audit?.error ?? 'no durable store accepted the row' });
+    }
+    const next = { ...program, ...patch };
+    return res.status(200).json({ programId: program.id, sponsorAddress: next.sponsorAddress, indType: next.indType });
   } catch (err) {
     fail(res, err);
   }
@@ -424,8 +591,13 @@ router.post('/:formId/build', limiter, requireRole(AUTHOR), async (req, res) => 
       case FORM_1574:
         return res.json(buildForm1574(meta));
       case FORM_1572: {
-        // 1572 is per-investigator; build one per investigator.
-        return res.json(buildAllForm1572(meta));
+        // 1572 is per-investigator; build one per investigator. With none
+        // recorded this answered [] — and the panel read an empty answer as
+        // "required fields present" while the PDF of the same form reported
+        // three required boxes blank (QA 2026-10-08, j7). The empty-investigator
+        // build is the one the PDF renders (buildFormById), so both say the same.
+        const perInvestigator = buildAllForm1572(meta);
+        return res.json(perInvestigator.length > 0 ? perInvestigator : [buildFormById(FORM_1572, meta)]);
       }
       default:
         return res.status(400).json({ error: { code: 'VALIDATION', message: `Unsupported form id: ${formId}` } });
@@ -514,22 +686,19 @@ router.post('/:formId/pdf-from-records', limiter, requireRole(AUTHOR), async (re
  * actually carries), both validated against the caller's org so an artifact is
  * never created under another tenant's project.
  *
- * Program-spine idents have NO legacy numeric project row, and the artifact
- * registry (concept2cure_artifacts.project_id → projects.id FK) predates the
- * program spine — so those saves use the audited-unplaced degradation contract
- * from the eSTAR /build handler: the built field map is content-hashed and
- * audit-logged (that audit row is the only persisted trace, so it is REQUIRED —
- * an audit failure fails the request rather than claiming `audited: true`), and
- * the response says plainly that registry placement is pending. No artifact row
- * is fabricated.
+ * A program ident is placed against the program's project record (the C1
+ * anchor, `projects.regulatory_program_id`; P-19 gives every program one). A
+ * program with no project record has no dossier, so the save is refused 409
+ * PROGRAM_NOT_ANCHORED and nothing is written (P-20 follow-up, 2026-10-08). It
+ * used to answer 200 { governed:false, audited:true } — an "audited-unplaced"
+ * success status over a save that placed nothing.
  *
  * Body: IndProjectMetadata + ({ projectId: number } | { projectIdent: string }).
  * For 1572 this persists the FIRST investigator's form (per-investigator
  * persistence mirrors /1572/pdf-all and is a follow-on).
  * Returns 201 { artifactId, formId, projectId, ready, missingRequired,
- * sponsorMustComplete, contentHash } for the governed path; 200
- * { governed:false, audited:true, artifactId:null, … } for the audited-unplaced
- * program path. `ready` is about the DATA (`missingRequired` is empty);
+ * sponsorMustComplete, contentHash }; 409 PROGRAM_NOT_ANCHORED for a program
+ * with no project record. `ready` is about the DATA (`missingRequired` is empty);
  * `sponsorMustComplete` is about the FORM — the required boxes the official
  * render leaves blank for the sponsor however complete the data is.
  */
@@ -556,8 +725,7 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
     });
   }
   // The project this artifact is registered against. For a program ident it is
-  // filled from the C1 anchor below when one exists; the audited-unplaced
-  // degradation is taken only when it does not.
+  // filled from the C1 anchor below; a program without one is refused 409.
   let effectiveProjectId = projectId;
   // Resolved once, below, and reused: the governed path used to re-resolve the
   // same ident a second time to fill the form from the record — a duplicate
@@ -582,8 +750,8 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
     const sponsorMustComplete = await requiredBoxesLeftToSponsor(formId);
 
     if (isProgramIdent) {
-      // Program-spine path: resolve org-scoped, then anchor, then — only if
-      // there is no anchor — the audited-unplaced degradation.
+      // Program-spine path: resolve org-scoped, then anchor; a program with no
+      // anchor has no dossier and is refused.
       const program = await resolveProgramIdent(rawIdent, ctx.organizationId);
       if (!program) {
         return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
@@ -592,74 +760,33 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
 
       // Document Identity Contract slice C1 gave the program spine the numeric
       // anchor this registry needs (`projects.regulatory_program_id`, written by
-      // intake in the same transaction that creates the program). Ask for it
-      // before degrading: the v2 wizard hands out program idents, so this is the
-      // id space real users' Module-1 forms actually arrive with — every one of
-      // them was landing unregistered.
+      // intake in the same transaction that creates the program). The v2
+      // wizard hands out program idents, so this is the id space real users'
+      // Module-1 forms actually arrive with.
       //
-      // The resolver is fail-soft by contract: null when the program predates
-      // C1, when intake skipped the anchor for one of its stated reasons, or
-      // when the migration is not applied here. Null keeps the existing
-      // behaviour exactly; a real anchor takes the governed path below.
+      // Strict: a lookup that could not complete is a failure (500), never
+      // read as "this program has no project record" — the 409 below states
+      // that as a fact, so it may only follow a lookup that answered.
       const anchoredProjectId = await resolveProgramProjectAnchor(db, {
         programId: program.id,
         orgId: ctx.organizationId,
         context: 'ind-forms.artifact',
+        strict: true,
       });
       if (anchoredProjectId === null) {
-        const builtForProgram = buildFormById(formId, { ...programToFormMetadata(program), ...statedFields(body) });
-        const programContent = JSON.stringify({
-          formId: builtForProgram.formId,
-          fields: builtForProgram.fields,
-          missingRequired: builtForProgram.missingRequired,
-        });
-        const programContentHash = crypto.createHash('sha256').update(programContent).digest('hex');
-        const ready = builtForProgram.missingRequired.length === 0;
-        // The audit row is the ONLY persisted trace on this path — it is required,
-        // not best-effort. logAction resolves an outcome instead of throwing on
-        // a persistence failure, so the outcome must be checked: without it the
-        // response claims `audited: true` over nothing.
-        const unplacedAudit = await auditService.logAction({
-          action: 'ind_form.artifact.unplaced',
-          userId: ctx.userId,
-          organizationId: ctx.organizationId,
-          resourceType: 'ind_form',
-          resourceId: `${formId}:${program.id}`,
-          metadata: {
-            formId,
-            programId: program.id,
-            programCode: program.code,
-            ready,
-            sponsorMustComplete,
-            contentHash: programContentHash,
-            // Stable audit enum, deliberately unchanged: existing Part 11 rows
-            // carry this value and queries match on it. What changed is WHICH
-            // requests reach here — only genuinely unanchored programs now do.
-            artifactRegistry: 'unplaced_pending_document_identity_contract',
-          },
-        });
-        if (!unplacedAudit?.persisted) {
-          return res.status(500).json({
-            error: 'AUDIT_WRITE_FAILED',
+        /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): a program with
+           no project record has no dossier, so nothing can be saved to it,
+           and the answer is a refusal. It was a 200 "audited-unplaced" answer
+           ({ governed: false }): a success status over a save that placed
+           nothing. Every program a client can open has its record (P-19), so
+           this is a gap to close, not a result. Nothing is written. */
+        return res.status(409).json({
+          error: {
+            code: 'PROGRAM_NOT_ANCHORED',
             message:
-              'the unplaced-artifact audit row is the only persisted trace on this path and it was not persisted',
-          });
-        }
-        return res.status(200).json({
-          governed: false,
-          audited: true,
-          artifactId: null,
-          formId,
-          projectId: null,
-          programId: program.id,
-          ready,
-          missingRequired: builtForProgram.missingRequired,
-          sponsorMustComplete,
-          contentHash: programContentHash,
-          artifact_registry:
-            'unplaced — this program has no anchored project row, and the governed artifact ' +
-            'registry (concept2cure_artifacts) requires one; the built field map is ' +
-            'audit-logged with its content hash',
+              'This program has no project record, so it has no dossier to save the form into. Nothing was saved. ' +
+              'An administrator can give the program its project record.',
+          },
         });
       }
       effectiveProjectId = anchoredProjectId;
@@ -1019,7 +1146,11 @@ router.post('/3455/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
  * correcting a signature is the normal case.
  *
  * Multipart body: `file` (the completed PDF) + `projectIdent` (program UUID or
- * code). Returns 201 { formId, sectionCode, leafId, sequenceNumber, sha256, … }.
+ * code) + `sequenceId` (the sequence the person chose — required, never picked:
+ * it must belong to the program's submission and be neither frozen nor
+ * dispatched). A form the registry does not apply to the program's application
+ * type is refused (FORM_NOT_APPLICABLE). Returns 201 { formId, sectionCode,
+ * leafId, sequenceId, sequenceNumber, sha256, … }.
  */
 const officialFormUpload = multer({
   storage: multer.memoryStorage(),
@@ -1084,6 +1215,11 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
       if (!program) {
         return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
       }
+      if (!formAppliesToProgram(formId, program.programType)) {
+        return res.status(409).json({
+          error: { code: 'FORM_NOT_APPLICABLE', message: `${notApplicableReason(formId, program.programType)} It was not filed.` },
+        });
+      }
 
       const sectionCode = sectionCodeForForm(formId);
       if (!sectionCode) {
@@ -1105,16 +1241,7 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
         });
       }
 
-      const spine = await resolveSubmissionSpine(
-        {
-          programId: program.id,
-          programType: program.programType,
-          productName: program.productName,
-          title: program.name,
-          programCode: program.code,
-        },
-        ctx.organizationId,
-      );
+      const spine = await spineOf(program, ctx.organizationId);
       if (!spine) {
         return res.status(409).json({
           error: {
@@ -1132,6 +1259,55 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
         });
       }
 
+      /* The sequence is the person's choice, named on the upload. This filed
+         into spine.sequence — the NEWEST sequence — so once an amendment
+         existed every completed initial-IND form landed in the draft 0001
+         while the original 0000 still reported "Required section 1.1 has no
+         leaf" (QA 2026-10-08, j7). Every refusal below happens before any
+         bytes are stored. */
+      const sequenceId = Number(body.sequenceId);
+      if (!Number.isInteger(sequenceId) || sequenceId <= 0) {
+        return res.status(400).json({
+          error: {
+            code: 'SEQUENCE_REQUIRED',
+            message: 'Choose the eCTD sequence to file this form into. Which sequence a document is filed into is a regulatory decision, so it is never picked for you.',
+          },
+        });
+      }
+      const [target] = await db
+        .select({
+          id: ectdSequences.id,
+          sequenceNumber: ectdSequences.sequenceNumber,
+          status: ectdSequences.status,
+          submissionId: ectdSequences.submissionId,
+        })
+        .from(ectdSequences)
+        .where(
+          and(
+            eq(ectdSequences.id, sequenceId),
+            eq(ectdSequences.organizationId, ctx.organizationId),
+            isNull(ectdSequences.deletedAt),
+          ),
+        )
+        .limit(1);
+      if (!target || Number(target.submissionId) !== spine.submissionId) {
+        return res.status(409).json({
+          error: {
+            code: 'SEQUENCE_NOT_IN_PROGRAM',
+            message: 'That sequence is not part of this program’s submission, so the form was not filed into it.',
+          },
+        });
+      }
+      if (isSequenceLocked(String(target.status))) {
+        return res.status(409).json({
+          error: {
+            code: 'SEQUENCE_LOCKED',
+            message: `Sequence ${target.sequenceNumber} is ${target.status}; its leaves are immutable, so the form was not filed into it.`,
+          },
+        });
+      }
+      const chosen = { id: Number(target.id), sequenceNumber: String(target.sequenceNumber) };
+
       const documentType = documentTypeForForm(formId);
       const shortId = formId.replace(/^FDA_/, '').toLowerCase();
       try {
@@ -1142,7 +1318,7 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
           .from(submissionLeaves)
           .where(
             and(
-              eq(submissionLeaves.sequenceId, spine.sequence.id),
+              eq(submissionLeaves.sequenceId, chosen.id),
               eq(submissionLeaves.organizationId, ctx.organizationId),
               eq(submissionLeaves.documentType, documentType),
               isNull(submissionLeaves.deletedAt),
@@ -1162,7 +1338,7 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
 
         const leaf = await upsertLeaf(
           {
-            sequenceId: spine.sequence.id,
+            sequenceId: chosen.id,
             ...(existing ? { leafId: existing.id } : {}),
             sectionCode,
             title: `Form FDA ${formId.replace(/^FDA_/, '')} (sponsor-completed)`,
@@ -1192,8 +1368,8 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
             formId,
             programId: program.id,
             sectionCode,
-            sequenceId: spine.sequence.id,
-            sequenceNumber: spine.sequence.sequenceNumber,
+            sequenceId: chosen.id,
+            sequenceNumber: chosen.sequenceNumber,
             sha256,
             md5: stored.md5,
             byteSize: bytes.length,
@@ -1211,8 +1387,8 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
           formId,
           programId: program.id,
           submissionId: spine.submissionId,
-          sequenceId: spine.sequence.id,
-          sequenceNumber: spine.sequence.sequenceNumber,
+          sequenceId: chosen.id,
+          sequenceNumber: chosen.sequenceNumber,
           leafId: leaf.id,
           sectionCode,
           documentType,

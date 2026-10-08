@@ -25,6 +25,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { InsightsCanvas } from '../surfaces/Insights';
+// The catalog the overview answers with (the canvas holds no copy of its own).
+import { CANVAS_REPORT_TYPES } from './_insights-catalog-fixture';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
 const ok = (obj: unknown) => ({ ok: true, status: 200, json: async () => obj }) as unknown as Response;
@@ -34,7 +36,7 @@ const PROGRAM = { projectId: 1, code: 'BX204', label: 'BX204', indication: null,
 function overview(tier: string, entitled: boolean) {
   return {
     data: {
-      organizationId: 1, tier, segments: ['biotech'],
+      organizationId: 1, tier, segments: ['biotech'], reportTypes: CANVAS_REPORT_TYPES,
       leadProgram: { ...PROGRAM, filing: null, scope: 'project', scopeId: '1', agency: null },
       portfolio: { entitled, requiredTier: 'enterprise', summary: null, programs: entitled ? [PROGRAM, { ...PROGRAM, projectId: 2, code: 'ZX9' }] : null },
     },

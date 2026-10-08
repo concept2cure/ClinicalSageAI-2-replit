@@ -73,8 +73,8 @@ import { useProgramRead, programHeadline, programLineFor } from './programSummar
 import { describeProvenance, moduleWasAssumed, type DocumentProvenance } from './provenance';
 import { OpenedDocumentPending, StatusPill, ToDocumentsButton } from './CanvasDocumentList';
 
-/** GET /docs/:id → `document` (the columns this card reads). */
-interface DocRow {
+/** GET /docs/:id → `document` (the columns this card reads; `created_by` is the author, never offered as its reviewer). */
+interface DocRow extends Pick<AuthDoc, 'created_by'> {
   id: string;
   title: string;
   module: string | null;
@@ -691,7 +691,7 @@ export function DocumentCanvas({
           docId={doc.id}
           docTitle={doc.title}
           programId={programId}
-          sectionCode={first?.code ?? null}
+          sectionCode={first?.code ?? null} authorId={doc.created_by != null ? String(doc.created_by) : null}
           onClose={() => setAssignReviewOpen(false)}
           onOpenBoard={() => { setAssignReviewOpen(false); onNav('review'); }}
           fireToast={fireToast}

@@ -33,6 +33,7 @@ import http from 'node:http';
 import request from 'supertest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
+import { callToolAsTurn } from './ana-tool-call';
 
 process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
 process.env.ANA_VAULT_CHUNKING_FORCE_ON = 'true';
@@ -116,14 +117,9 @@ async function inTenantScope<T>(fn: () => Promise<T>): Promise<T> {
   );
 }
 
+/** A tool called as AnA's turn calls it (a read counts once delivered; see ana-tool-call.ts). */
 async function callTool(name: string, input: Record<string, unknown>, extra: { humanConfirmed?: boolean } = {}) {
-  const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
-  const handler = getToolHandler(name);
-  if (!handler) throw new Error(`tool ${name} is not registered`);
-  const raw = await inTenantScope(() =>
-    handler(input, { organizationId: orgId, userId, projectId, ...extra }),
-  );
-  return JSON.parse(raw);
+  return inTenantScope(() => callToolAsTurn(name, input, { organizationId: orgId, userId, projectId, ...extra }));
 }
 
 async function buildApp(): Promise<express.Express> {

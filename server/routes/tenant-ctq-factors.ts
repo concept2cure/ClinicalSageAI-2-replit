@@ -42,6 +42,10 @@ import {
 
 // Import the getDb helper from the tenantDbHelper
 import { getDb } from '../db/tenantDbHelper';
+import { withExtendingRoles } from '../../shared/constants/org-roles';
+
+/** Who may read CTQ factors: every organization role (P-18: approver and reviewer included). */
+const CTQ_READ_ROLES: ReadonlySet<string> = new Set(withExtendingRoles(['super_admin', 'admin', 'manager', 'member', 'viewer']));
 
 const logger = createScopedLogger('tenant-ctq-api');
 const router = Router();
@@ -70,13 +74,7 @@ router.get(
       }
 
       // Check permissions - need at least viewer access
-      if (
-        req.userRole !== 'super_admin' &&
-        req.userRole !== 'admin' &&
-        req.userRole !== 'manager' &&
-        req.userRole !== 'member' &&
-        req.userRole !== 'viewer'
-      ) {
+      if (!CTQ_READ_ROLES.has(String(req.userRole ?? ''))) {
         return res.status(403).json({ error: 'Insufficient permissions to view CTQ factors' });
       }
 
@@ -141,13 +139,7 @@ router.get(
       }
 
       // Check permissions - need at least viewer access
-      if (
-        req.userRole !== 'super_admin' &&
-        req.userRole !== 'admin' &&
-        req.userRole !== 'manager' &&
-        req.userRole !== 'member' &&
-        req.userRole !== 'viewer'
-      ) {
+      if (!CTQ_READ_ROLES.has(String(req.userRole ?? ''))) {
         return res.status(403).json({ error: 'Insufficient permissions to view CTQ factors' });
       }
 

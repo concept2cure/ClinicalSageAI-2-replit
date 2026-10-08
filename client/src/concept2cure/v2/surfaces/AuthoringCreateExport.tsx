@@ -321,7 +321,7 @@ function useAuthoringExport({ docId, docTitle, exportable, openProject, fireToas
       if (!result.blob) { reportUndelivered(); return; }
       const delivered = downloadBlob(fileBase + '.' + format, result.blob);
       if (delivered) {
-        fireToast('Exported ' + format.toUpperCase() + ' — assembled from the governed sections and recorded in the export history. Download requested in your browser.');
+        fireToast(...deliveredExportToast(format, result.plainTextFallback === true));
       } else {
         const text = 'The ' + format.toUpperCase() + ' was assembled and recorded in the export history, but your browser blocked the download request. Check your downloads before retrying; retrying creates another export record.';
         setExportIssue(text);
@@ -378,8 +378,34 @@ function ExportRecoveryNotice({ message, onCheck }: { message: string | null; on
 }
 
 type ExportReceipt =
-  | { kind: 'recorded'; blob: Blob | null }
+  | { kind: 'recorded'; blob: Blob | null; plainTextFallback?: boolean }
   | { kind: 'failed'; status?: number; code?: string; message?: string };
+
+/**
+ * What a delivered export says. QA 2026-10-08 (j4): with no PDF engine the
+ * server renders the plain-text fallback; the file says so on page one, and so
+ * does this, in the error tone, because it must not be filed as the formatted
+ * copy. It used to read "Exported PDF — assembled from the governed sections".
+ */
+function deliveredExportToast(format: string, plainTextFallback: boolean): [string, 'error'?] {
+  if (plainTextFallback) {
+    return [
+      'Exported PDF as a plain-text rendering, not the formatted document: the document styling could not be applied on the server. ' +
+        'The text is complete and the export history records it as a plain-text rendering. Do not file this file as the formatted document.',
+      'error',
+    ];
+  }
+  return ['Exported ' + format.toUpperCase() + ' — assembled from the governed sections and recorded in the export history. Download requested in your browser.'];
+}
+
+/** The server's X-Export-Rendering: true when the PDF is the plain-text fallback. */
+function isPlainTextFallback(res: Response): boolean {
+  try {
+    return res.headers?.get?.('X-Export-Rendering') === 'plain-text-fallback';
+  } catch {
+    return false;
+  }
+}
 
 /** A 2xx confirms recording before body transfer completes. Keep that fact
  * even when the stream fails; a transport refusal has no such confirmation. */
@@ -390,10 +416,11 @@ async function receiveAuthoringExport(docId: string, format: string): Promise<Ex
       const json = await res.json().catch(() => null);
       return { kind: 'failed', status: res.status, code: json?.code, message: serverMessage(json) ?? undefined };
     }
+    const plainTextFallback = isPlainTextFallback(res);
     try {
       const blob = await res.blob();
-      return { kind: 'recorded', blob: blob.size > 0 ? blob : null };
-    } catch { return { kind: 'recorded', blob: null }; }
+      return { kind: 'recorded', blob: blob.size > 0 ? blob : null, plainTextFallback };
+    } catch { return { kind: 'recorded', blob: null, plainTextFallback }; }
   } catch (e) {
     const err = e as Partial<ApiRequestError> & { message?: string };
     return { kind: 'failed', status: err?.status, code: err?.code, message: err?.message };

@@ -1,0 +1,106 @@
+{
+  "app": "http://localhost:5078",
+  "account": "qa-onboard-2@concept2cure.pro",
+  "results": [
+    {
+      "step": "reset link requested through POST /password/reset-request",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "step": "the logged reset link is this account's (sha256 matches users.reset_token)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "password set on the product reset page (users.password_changed_at moved)",
+      "ok": true,
+      "detail": "2026-10-08 07:34:15 -> 2026-10-08 07:35:19"
+    },
+    {
+      "step": "the account menu offers Account first",
+      "ok": true,
+      "detail": "Account | Usage & limits | Billing | View all plans | Set up a workspace | Codebase coverage | Get help | Log out"
+    },
+    {
+      "step": "profile matches the database (name, e-mail, organisation, membership role)",
+      "ok": true,
+      "detail": "shown {\"name\":\"QA Onboard 2\",\"email\":\"qa-onboard-2@concept2cure.pro\",\"org\":\"Concept2Cure Therapeutics\",\"role\":\"member\"} · db {\"dbName\":\"QA Onboard 2\",\"dbEmail\":\"qa-onboard-2@concept2cure.pro\",\"dbOrg\":\"Concept2Cure Therapeutics\",\"dbRole\":\"member\"}"
+    },
+    {
+      "step": "wrong current password shows the server's refusal",
+      "ok": true,
+      "detail": "Current password is incorrect"
+    },
+    {
+      "step": "…and not \"Session expired\", and the session stays",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "password changed; the panel says every session ended",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "\"Sign in again\" ends this session and opens sign-in",
+      "ok": true,
+      "detail": "/concept2cure/login?returnTo=%2Fconcept2cure"
+    },
+    {
+      "step": "signs in with the new password",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "status before enrolment is \"Not set up\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "setup shows the server-drawn QR code (data: URL) and the key",
+      "ok": true,
+      "detail": "key length 32"
+    },
+    {
+      "step": "enrolment confirmed; recovery codes shown once",
+      "ok": true,
+      "detail": "10 recovery codes"
+    },
+    {
+      "step": "status re-read from the server: \"Set up\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "database: mfa_enabled = true",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "\"Done\" removes the recovery codes from the screen",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "sign-in after enrolment asks for the authenticator",
+      "ok": null,
+      "detail": "not verifiable on this QA app: ALLOW_DEV_AUTH=1 makes /login skip every second factor (server log: \"Dev mode — MFA skipped\")"
+    },
+    {
+      "step": "a wrong code to remove shows the server's refusal, not \"Session expired\"",
+      "ok": true,
+      "detail": "Invalid verification code"
+    },
+    {
+      "step": "a current code removes the authenticator; status re-read: \"Not set up\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "database: mfa_enabled = false",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

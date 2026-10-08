@@ -1,0 +1,284 @@
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a refused freeze voids the signature given for it > refused at its gate, the signature is void; once the gate clears it is refused, and a fresh one freezes 354ms
+   → a signature given for a refused freeze froze the sequence later: expected null to match object { code: 'GOVERNED_REQUIRED', …(1) }
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a refused freeze voids the signature given for it > a signature someone else names is not theirs to void 16ms
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a transmit that sent nothing voids the signature given for it > with no gateway credentials nothing is sent and the signature is void; once credentials exist it is refused, and a fresh one transmits 192ms
+   → a signature given for a transmit that sent nothing sent the package later: expected null to match object { code: 'GOVERNED_REQUIRED', …(1) }
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit checks the typed application number against the program record > the precheck refuses a number that contradicts the record, before anyone signs 12ms
+   → expected true to be false // Object.is equality
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit checks the typed application number against the program record > a contradicting number is refused 409, nothing is sent, and its signature is void; the recorded number transmits 154ms
+   → transmit sent a package under a number the program record contradicts: expected null to match object { …(2) }
+ × server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > a manager anchors it, with the reason on a chained audit row; the project’s documents are then placed 44ms
+   → anchorSubmissionToProgram is not a function
+ × server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > the project’s lead may anchor it; a member who does not lead the project may not, and nothing changes 2ms
+   → anchorSubmissionToProgram is not a function
+ × server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > another organization’s project is not found, and nothing changes 8ms
+   → anchorSubmissionToProgram is not a function
+ × server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > another organization’s submission is not found 2ms
+   → anchorSubmissionToProgram is not a function
+ × server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > a submission that has a project keeps it 6ms
+   → anchorSubmissionToProgram is not a function
+ × server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > a submission that already files another project’s document is not anchored to this one 5ms
+   → anchorSubmissionToProgram is not a function
+ × server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > the unanchored-placement refusal names the control that anchors the submission > says where: Submission Center, “Anchor to a project” 17ms
+   → expected 'This submission is not anchored to a …' to match /in Submission Center, open this submi…/
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > carries the printed name recorded at signing, the time, the meaning and the reason 145ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > is the name as recorded, not the account as it reads today 80ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a revoked signature reads as revoked, still naming who signed; the revocation row is not the signature 89ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a finalized protocol with no signature row says none, never a signer 72ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > another organisation’s row on the same target string is not this protocol’s signature 47ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > names who signed and the meaning; a decision recorded for a reviewer with no account says so 63ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > the assigned reviewer’s own signature, as review 43ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > an unsigned review has no signature 32ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads 32ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > status, printed name, UTC time, meaning and reason, from the signature row 25ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a protocol not yet finalized still exports when the store cannot be read: it carries no signature 11ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it 35ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > the creator and everyone who edited it through the ledger, and no one else 55ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > whoever built the schedule of assessments or the objectives is an author; a commenting reviewer is not 21ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > reads on the client it is given 13ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > comments, budget, version snapshots and other modules' records are not authorship of the protocol 21ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a synopsis edit, which records no payload, counts 10ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a document-level edit counts 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a disposition is independent of the reviewed protocol's authors 17ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > another tenant's protocol has no authors here, so it cannot be shown independent 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization and a disposition bind the same content, re-derivably 38ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization does not move it: version and workflow status are not content 33ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an objective moves it 31ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an eligibility criterion moves it 25ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing a visit moves it 24ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the synopsis moves it 19ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the sponsor moves it 13ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > changing the content moves the digest 16ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > another tenant's protocol binds nothing of its content 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > the assigned reviewer, as review 10ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > not someone else, and nothing is recorded 6ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a reviewer with no account can only have their decision recorded under responsibility 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a signed disposition is final: a second signing is refused and the decision stands 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > another tenant's assignment is not found 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > someone independent of the authors finalizes it as approval: the version row finalize writes does not make them an author 26ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > a non-author cannot finalize as its author, and nothing is written 12ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author finalizes it as its author 20ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > whatever the act itself writes is not read as authorship of what is being signed 22ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author cannot approve their own protocol 10ms
+ × server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > a member of the organization without signing authority is refused before the password, and nothing is written 33ms
+   → expected { Object (documentId, version, ...) } to be an instance of GovernedSignatureRefusal
+ × server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > someone who is not a member of the organization cannot sign its protocol 35ms
+   → expected { Object (documentId, version, ...) } to match object { status: 403, …(1) }
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a member who can sign 10ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a named reviewer with no account 6ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a user of another organization: the review could never be signed 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a viewer, who cannot sign 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > the disposition reports the protocol version that was reviewed 8ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the Sequences row does not open the e-signature when the server would refuse the freeze 396ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the gates are asked again just before signing; a refusal then takes no signature 214ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > downloads the package through the canonical eCTD export for this sequence 80ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > says the gateway is not configured, and offers no transmit, before any password is typed 65ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > a configured gateway transmits through the signed chain: gates, sign (intent transmit), transmit 218ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > the pre-sign check carries the typed number; one the record contradicts takes no signature 5143ms
+   → expected 'SubmissionSubmission centerPlan, asse…' to contain 'does not match the program\'s recorde…'
+ × client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > a transmit that sent nothing says the signature given for it is void 250ms
+   → expected 'Not transmitted — FDA ESG has no stag…' to contain 'The signature given for it is now voi…'
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an unapproved Vault version reads "not approved", never "source verified" 58ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > removes a leaf with its reason, and nothing without one 108ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an identical re-placement says nothing was placed, and an original offers only New 158ms
+ × client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx > a submission with no project is anchored from its header > says the submission has no project, and the project starts unstated 5090ms
+   → Unable to find role="button" and name "Anchor to a project"
+ × client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx > a submission with no project is anchored from its header > anchors with the chosen project and the reason; the server confirms it and the control goes 5041ms
+   → Unable to find role="button" and name "Anchor to a project"
+ × client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx > a submission with no project is anchored from its header > a refusal is shown in the server’s words, and nothing is claimed 5047ms
+   → Unable to find role="button" and name "Anchor to a project"
+ ✓ client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx > a submission with no project is anchored from its header > a submission that has a project offers no anchor control 58ms
+ × client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > lists the project’s transmissions for this market: status, id, acknowledgement time, sender 5061ms
+   → expected 'Dispatch · sequence 0001dispatch read…' to contain 'Transmittal #42'
+ × client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a failed read is an error, not "none sent" 5017ms
+   → Unable to find role="region" and name "Transmissions and acknowledgements"
+ × client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a 200 that is not a list is an error too 5020ms
+   → Unable to find role="region" and name "Transmissions and acknowledgements"
+ × client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > none recorded is said as the server answered it 5014ms
+   → Unable to find role="region" and name "Transmissions and acknowledgements"
+ × client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a submission with no project cannot be listed by project, and says so; nothing is read 5013ms
+   → Unable to find role="region" and name "Transmissions and acknowledgements"
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses without re-authentication, and writes nothing 45ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a wrong password the same way 8ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses an undeclared meaning before asking for credentials (21 CFR 11.50) 7ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a meaning finalization cannot carry 8ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a viewer cannot sign, and nothing is asked or written 4ms
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a signer with no authenticator where one is required (production, ADR-0014 P1-2b) is told to enrol one, and nothing is written 15ms
+   → expected { …(2) } to deeply equal { …(2) }
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > an enrolled second factor that was not given is named as such 15ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > finalizes, checks independence, and writes the ledger AND the signature row in one transaction 15ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > records the second factor only when one was verified 10ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a non-author cannot sign as the author 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an approval is checked for independence on the signing client 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an author approving their own protocol is refused before the finalization runs 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an authorship lookup that fails is a 503 with an authored sentence; its internal cause is logged, not returned 5ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses without re-authentication, and records no disposition 5ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a viewer cannot sign a disposition 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > passes the signer and the declared meaning to the domain write, then signs 5ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a review assigned to someone else is refused and rolled back 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses authorship as a review meaning 4ms
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot finalize: 403 ESIGNATURE_NO_AUTHORITY, no password asked, nothing written 5ms
+   → expected 201 to be 403 // Object.is equality
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > the role is the membership row’s, not the token’s 3ms
+   → expected 201 to be 403 // Object.is equality
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot sign a review disposition either 4ms
+   → expected 201 to be 403 // Object.is equality
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > an unreadable membership signs nothing and says it could not be checked 4ms
+   → expected 201 to be 503 // Object.is equality
+ × server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > refuses with no reason, and anchors nothing 34ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > refuses a project id that is not a uuid, and anchors nothing 10ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > passes the trimmed reason and the membership row’s role to the service 4ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > answers a refusal with its status and the server’s words 4ms
+   → expected 404 to be 403 // Object.is equality
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no environment is named — it never defaults to production 3ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an environment outside staging|production 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no application number is recorded 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an UNASSIGNED placeholder application number 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses a whitespace-only application number 0ms
+ × server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses a number the identifier rule cannot carry, as the eCTD export does (P-23) 8ms
+   → expected TypeError: __vite_ssr_import_3__.db.selec… to match object { code: 'VALIDATION', …(1) }
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > resendRefusal — a transmitted sequence is not sent again > refuses sent and acknowledged, allows pending and rejected 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > refuses a resend while a transmit is in flight 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still allows the states that were always re-sendable 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still refuses the terminal states 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > claims the slot with a compare-and-set on the value it read 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > takes the claim BEFORE the package is assembled 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > resolves the attempt with a write predicated on that claim 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > never releases the claim after the bytes may have left 1ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes FDA (all client types) to ESG 2ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes Japan (all client types) to the PMDA gateway 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > refuses a centralised-procedure EU dossier: no gateway, never CESP 3ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > names the eSubmission Gateway / Web Client and why CESP is not it, for a centralised MAA 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > refuses an EU CTA (CTIS portal) and an IRIS filing, naming the channel 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes a national decentralised EU filing (EU_GENERIC_DCP) to CESP 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > fails closed for an EU dossier whose filing type names no EU registry entry 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes EU device/IVD (mdx|ivd) to EUDAMED, whatever the filing type 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > returns null for an unknown region (caller raises VALIDATION) 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > throws VALIDATION naming the eSubmission Gateway; getGateway is never called 2ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > positive control: a DCP submission is routed on to ema:cesp 1ms
+ × tests/mdx-submission-gateway-transmittals-region.test.ts > the transmittal list filters by the region a registered gateway serves > lists a UK market’s transmittals for its project 36ms
+   → expected 422 to be 200 // Object.is equality
+ ✓ tests/mdx-submission-gateway-transmittals-region.test.ts > the transmittal list filters by the region a registered gateway serves > still refuses a region no registered gateway serves, and reads nothing 7ms
+ FAIL  tests/mdx-submission-gateway-transmittals-region.test.ts > the transmittal list filters by the region a registered gateway serves > lists a UK market’s transmittals for its project
+AssertionError: expected 422 to be 200 // Object.is equality
+- Expected
++ Received
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a signer with no authenticator where one is required (production, ADR-0014 P1-2b) is told to enrol one, and nothing is written
+AssertionError: expected { …(2) } to deeply equal { …(2) }
+- Expected
++ Received
+-   "message": "Enrol an authenticator in Account to sign. Nothing was signed.",
++   "message": "Re-enter your password to sign. Nothing was signed.",
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot finalize: 403 ESIGNATURE_NO_AUTHORITY, no password asked, nothing written
+AssertionError: expected 201 to be 403 // Object.is equality
+- Expected
++ Received
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > the role is the membership row’s, not the token’s
+AssertionError: expected 201 to be 403 // Object.is equality
+- Expected
++ Received
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot sign a review disposition either
+AssertionError: expected 201 to be 403 // Object.is equality
+- Expected
++ Received
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > an unreadable membership signs nothing and says it could not be checked
+AssertionError: expected 201 to be 503 // Object.is equality
+- Expected
++ Received
+ FAIL  server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > refuses with no reason, and anchors nothing
+AssertionError: expected 404 to be 400 // Object.is equality
+- Expected
++ Received
+ FAIL  server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > refuses a project id that is not a uuid, and anchors nothing
+AssertionError: expected 404 to be 400 // Object.is equality
+- Expected
++ Received
+ FAIL  server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > passes the trimmed reason and the membership row’s role to the service
+AssertionError: expected 404 to be 200 // Object.is equality
+- Expected
++ Received
+ FAIL  server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > answers a refusal with its status and the server’s words
+AssertionError: expected 404 to be 403 // Object.is equality
+- Expected
++ Received
+ FAIL  server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > a member of the organization without signing authority is refused before the password, and nothing is written
+AssertionError: expected { Object (documentId, version, ...) } to be an instance of GovernedSignatureRefusal
+ FAIL  server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > someone who is not a member of the organization cannot sign its protocol
+AssertionError: expected { Object (documentId, version, ...) } to match object { status: 403, …(1) }
+- Expected
++ Received
+-   "code": "ESIGNATURE_NO_AUTHORITY",
+-   "status": 403,
++   "actionId": "act",
++   "auditId": 1,
++   "documentId": 29,
++   "meaning": "approval",
++   "sha256Chain": "chain",
++   "signatureId": "sig",
++   "signedAt": "2026-09-23T00:00:00.000Z",
++   "version": "1.0",
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a refused freeze voids the signature given for it > refused at its gate, the signature is void; once the gate clears it is refused, and a fresh one freezes
+AssertionError: a signature given for a refused freeze froze the sequence later: expected null to match object { code: 'GOVERNED_REQUIRED', …(1) }
+- Expected:
++ Received:
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a transmit that sent nothing voids the signature given for it > with no gateway credentials nothing is sent and the signature is void; once credentials exist it is refused, and a fresh one transmits
+AssertionError: a signature given for a transmit that sent nothing sent the package later: expected null to match object { code: 'GOVERNED_REQUIRED', …(1) }
+- Expected:
++ Received:
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit checks the typed application number against the program record > the precheck refuses a number that contradicts the record, before anyone signs
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit checks the typed application number against the program record > a contradicting number is refused 409, nothing is sent, and its signature is void; the recorded number transmits
+AssertionError: transmit sent a package under a number the program record contradicts: expected null to match object { …(2) }
+- Expected:
++ Received:
+ FAIL  server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > a manager anchors it, with the reason on a chained audit row; the project’s documents are then placed
+TypeError: anchorSubmissionToProgram is not a function
+ FAIL  server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > the project’s lead may anchor it; a member who does not lead the project may not, and nothing changes
+TypeError: anchorSubmissionToProgram is not a function
+ FAIL  server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > another organization’s project is not found, and nothing changes
+TypeError: anchorSubmissionToProgram is not a function
+ FAIL  server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > another organization’s submission is not found
+TypeError: anchorSubmissionToProgram is not a function
+ FAIL  server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > a submission that has a project keeps it
+TypeError: anchorSubmissionToProgram is not a function
+ FAIL  server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > a submission that already files another project’s document is not anchored to this one
+TypeError: anchorSubmissionToProgram is not a function
+ FAIL  server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > the unanchored-placement refusal names the control that anchors the submission > says where: Submission Center, “Anchor to a project”
+AssertionError: expected 'This submission is not anchored to a …' to match /in Submission Center, open this submi…/
+- Expected:
++ Received:
+ FAIL  server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses a number the identifier rule cannot carry, as the eCTD export does (P-23)
+AssertionError: expected TypeError: __vite_ssr_import_3__.db.selec… to match object { code: 'VALIDATION', …(1) }
+- Expected
++ Received
+-   "code": "VALIDATION",
+-   "message": /"EMEA\/H\/C\/001234" is not a usable application number/,
++   "message": "__vite_ssr_import_3__.db.select is not a function",
+ FAIL  client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > lists the project’s transmissions for this market: status, id, acknowledgement time, sender
+AssertionError: expected 'Dispatch · sequence 0001dispatch read…' to contain 'Transmittal #42'
+ FAIL  client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a failed read is an error, not "none sent"
+TestingLibraryElementError: Unable to find role="region" and name "Transmissions and acknowledgements"
+ FAIL  client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a 200 that is not a list is an error too
+TestingLibraryElementError: Unable to find role="region" and name "Transmissions and acknowledgements"
+ FAIL  client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > none recorded is said as the server answered it
+TestingLibraryElementError: Unable to find role="region" and name "Transmissions and acknowledgements"
+ FAIL  client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a submission with no project cannot be listed by project, and says so; nothing is read
+TestingLibraryElementError: Unable to find role="region" and name "Transmissions and acknowledgements"
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > the pre-sign check carries the typed number; one the record contradicts takes no signature
+AssertionError: expected 'SubmissionSubmission centerPlan, asse…' to contain 'does not match the program\'s recorde…'
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > a transmit that sent nothing says the signature given for it is void
+AssertionError: expected 'Not transmitted — FDA ESG has no stag…' to contain 'The signature given for it is now voi…'
+ FAIL  client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx > a submission with no project is anchored from its header > says the submission has no project, and the project starts unstated
+TestingLibraryElementError: Unable to find role="button" and name "Anchor to a project"
+ FAIL  client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx > a submission with no project is anchored from its header > anchors with the chosen project and the reason; the server confirms it and the control goes
+TestingLibraryElementError: Unable to find role="button" and name "Anchor to a project"
+ FAIL  client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx > a submission with no project is anchored from its header > a refusal is shown in the server’s words, and nothing is claimed
+TestingLibraryElementError: Unable to find role="button" and name "Anchor to a project"
+ Test Files  10 failed | 2 passed (12)
+      Tests  34 failed | 97 passed (131)

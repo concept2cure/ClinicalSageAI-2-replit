@@ -1,0 +1,3 @@
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > ReportGovernance — the register publishes itself honestly > a FAILED register read publishes the failure, never an empty org 58ms
+ Test Files  7 passed (7)
+      Tests  49 passed (49)

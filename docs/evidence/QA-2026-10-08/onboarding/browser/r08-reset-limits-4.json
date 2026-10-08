@@ -1,0 +1,93 @@
+{
+  "email": "qa-onboard-4@concept2cure.pro",
+  "policyAttempts": [
+    "Password must not contain common patterns or dictionary words",
+    "Password must not contain common patterns or dictionary words",
+    "Password must not contain common patterns or dictionary words",
+    "Password must not contain common patterns or dictionary words",
+    "Password must not contain common patterns or dictionary words",
+    "Password must not contain common patterns or dictionary words",
+    "Password must not contain common patterns or dictionary words"
+  ],
+  "afterCompliant": "/concept2cure/login",
+  "requestAttempts": [
+    "Check your email",
+    "Check your email",
+    "Check your email",
+    "Check your email",
+    "Check your email",
+    "Too many password reset requests from this network. Try again in 60 minutes."
+  ],
+  "calls": [
+    {
+      "url": "/api/v1/auth/password/reset-confirm",
+      "status": 400,
+      "body": "{\"success\":false,\"error\":{\"code\":\"AUTH_001\",\"message\":\"Password must not contain common patterns or dictionary words\",\"details\":{\"errors\":[\"Password must not co"
+    },
+    {
+      "url": "/api/v1/auth/password/reset-confirm",
+      "status": 400,
+      "body": "{\"success\":false,\"error\":{\"code\":\"AUTH_001\",\"message\":\"Password must not contain common patterns or dictionary words\",\"details\":{\"errors\":[\"Password must not co"
+    },
+    {
+      "url": "/api/v1/auth/password/reset-confirm",
+      "status": 400,
+      "body": "{\"success\":false,\"error\":{\"code\":\"AUTH_001\",\"message\":\"Password must not contain common patterns or dictionary words\",\"details\":{\"errors\":[\"Password must not co"
+    },
+    {
+      "url": "/api/v1/auth/password/reset-confirm",
+      "status": 400,
+      "body": "{\"success\":false,\"error\":{\"code\":\"AUTH_001\",\"message\":\"Password must not contain common patterns or dictionary words\",\"details\":{\"errors\":[\"Password must not co"
+    },
+    {
+      "url": "/api/v1/auth/password/reset-confirm",
+      "status": 400,
+      "body": "{\"success\":false,\"error\":{\"code\":\"AUTH_001\",\"message\":\"Password must not contain common patterns or dictionary words\",\"details\":{\"errors\":[\"Password must not co"
+    },
+    {
+      "url": "/api/v1/auth/password/reset-confirm",
+      "status": 400,
+      "body": "{\"success\":false,\"error\":{\"code\":\"AUTH_001\",\"message\":\"Password must not contain common patterns or dictionary words\",\"details\":{\"errors\":[\"Password must not co"
+    },
+    {
+      "url": "/api/v1/auth/password/reset-confirm",
+      "status": 400,
+      "body": "{\"success\":false,\"error\":{\"code\":\"AUTH_001\",\"message\":\"Password must not contain common patterns or dictionary words\",\"details\":{\"errors\":[\"Password must not co"
+    },
+    {
+      "url": "/api/v1/auth/password/reset-confirm",
+      "status": 200,
+      "body": "{\"success\":true,\"message\":\"Password reset successfully\"}"
+    },
+    {
+      "url": "/api/v1/auth/password/reset-request",
+      "status": 200,
+      "body": "{\"success\":true,\"message\":\"If the email exists, a password reset link will be sent\"}"
+    },
+    {
+      "url": "/api/v1/auth/password/reset-request",
+      "status": 200,
+      "body": "{\"success\":true,\"message\":\"If the email exists, a password reset link will be sent\"}"
+    },
+    {
+      "url": "/api/v1/auth/password/reset-request",
+      "status": 200,
+      "body": "{\"success\":true,\"message\":\"If the email exists, a password reset link will be sent\"}"
+    },
+    {
+      "url": "/api/v1/auth/password/reset-request",
+      "status": 200,
+      "body": "{\"success\":true,\"message\":\"If the email exists, a password reset link will be sent\"}"
+    },
+    {
+      "url": "/api/v1/auth/password/reset-request",
+      "status": 200,
+      "body": "{\"success\":true,\"message\":\"If the email exists, a password reset link will be sent\"}"
+    },
+    {
+      "url": "/api/v1/auth/password/reset-request",
+      "status": 429,
+      "body": "{\"success\":false,\"error\":{\"code\":\"RATE_LIMIT\",\"message\":\"Too many password reset requests from this network. Try again in 60 minutes.\"}}"
+    }
+  ]
+}

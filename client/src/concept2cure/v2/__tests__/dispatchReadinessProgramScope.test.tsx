@@ -13,10 +13,9 @@
  *
  * The shell's open program (`readShellProject`, the one reader of
  * window.C2C_PROJECT — the OQ harness seeds it with the id alone) is resolved
- * to its program record, and the program's submission is chosen by the SAME
- * identity convention the server uses to link the two (application type +
- * product_name / name / code vs the submission's product_name / title —
- * server/services/cmc/submission-spine.ts, project-intake.ts). Every state
+ * to its program record, and the program's submission is the one of its
+ * application type that RECORDS the program (`programId`). No submission is
+ * matched to a program by name (P-20 follow-up, 2026-10-08). Every state
  * that is not "this program's sequence" is rendered as itself: no program
  * open, no submission for the program, no sequence on it, discovery failed.
  */
@@ -58,7 +57,9 @@ const PROGRAM = { id: PROGRAM_UUID, name: 'OQ-005 Readiness program', code: 'ORP
    ANOTHER program; the open program's spine submission is second, and its
    title is the program name — exactly how intake creates it. */
 const OTHER = { id: 3, title: 'Other program NDA', productName: 'Other product', applicationType: 'NDA' };
-const MINE = { id: 5, title: 'OQ-005 Readiness program', productName: 'OQ-005 Readiness program', applicationType: 'IND' };
+/* The open program's submission records its program (`programId`): only the
+   recorded anchor makes a submission the program's (P-20 follow-up). */
+const MINE = { id: 5, title: 'OQ-005 Readiness program', productName: 'OQ-005 Readiness program', applicationType: 'IND', programId: PROGRAM_UUID };
 
 function serve(opts: { mySequences?: unknown[]; subs?: unknown[]; failSubmissions?: boolean } = {}) {
   apiRequest.mockImplementation(async (_m: string, rawUrl: unknown) => {
@@ -91,11 +92,14 @@ afterEach(() => {
 
 /* LX-22 part 2b. A submission now records its project (submissions.program_id,
    returned as `programId` by GET /api/submissions). A same-named submission of
-   ANOTHER project is never this program's; a name match is used only for a
-   submission with no recorded project, and is labelled as one. */
+   ANOTHER project is never this program's, and — P-20 follow-up — neither is a
+   same-named submission with no recorded project: no screen matches a program
+   to an application by name. */
 const OTHER_PROGRAM_UUID = '7c1d5e0a-3b2f-4e61-9a8c-5d4f3e2b1a09';
 const SAME_NAME_OTHER = { id: 3, title: 'OQ-005 Readiness program', productName: 'OQ-005 Readiness program', applicationType: 'IND', programId: OTHER_PROGRAM_UUID };
-const MINE_ANCHORED = { ...MINE, programId: PROGRAM_UUID };
+const MINE_ANCHORED = MINE;
+/* The same submission before anything recorded its program. */
+const MINE_UNANCHORED = { ...MINE, programId: null };
 
 describe('DispatchReadiness — the program’s submission is the one anchored to it (LX-22)', () => {
   it('gates the anchored submission, not a newer same-named one of another project', async () => {
@@ -116,11 +120,20 @@ describe('DispatchReadiness — the program’s submission is the one anchored t
     expect(urls.some((u) => u.endsWith('/dispatch-readiness'))).toBe(false);
   });
 
-  it('a submission with no recorded project is matched by name only, and says so', async () => {
-    serve({ subs: [MINE] });
+  it('a same-named submission with no recorded project is NOT matched by name: nothing is gated, and the screen says how to anchor it', async () => {
+    serve({ subs: [MINE_UNANCHORED] });
     render(<DispatchReadiness {...props()} />);
-    await waitFor(() => expect(text()).toMatch(/Sequence 0000 \(id 9\)/));
-    expect(text()).toMatch(/matched by name/i);
+    await waitFor(() => expect(text()).toMatch(/No submission for OQ-005 Readiness program yet/));
+    const urls = apiRequest.mock.calls.map((c) => String(c[1]));
+    expect(urls.some((u) => u.endsWith('/dispatch-readiness'))).toBe(false);
+    expect(urls).not.toContain('/api/submissions/5/sequences');
+    expect(text()).not.toMatch(/matched by name/i);
+    expect(text()).not.toMatch(/Sequence 0000/);
+    // Named as a count, never by its title: the screen does not suggest which
+    // one is the program's.
+    expect(text()).toMatch(/1 IND submission in this organisation has no program recorded/);
+    expect(text()).toMatch(/never matched to a program by name/);
+    expect(text()).not.toMatch(/"OQ-005 Readiness program"/);
   });
 });
 

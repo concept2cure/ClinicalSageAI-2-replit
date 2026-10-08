@@ -324,6 +324,29 @@ describe('AuthoringCreateExport — create → publish', () => {
     expect(URL.createObjectURL).toHaveBeenCalled();
     expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Exported PDF/));
   });
+  /* QA 2026-10-08 (j4): with no PDF engine the server renders the plain-text
+     fallback and says so in X-Export-Rendering. The toast said "Exported PDF —
+     assembled from the governed sections" as if it were the formatted file. */
+  it('says a PDF is the plain-text rendering when the server reports one', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'POST' && url === '/api/authoring/docs/D1/export') {
+        return {
+          ok: true, status: 200, headers: new Headers({ 'X-Export-Rendering': 'plain-text-fallback' }),
+          blob: async () => new Blob(['%PDF']), json: async () => null,
+        } as unknown as Response;
+      }
+      return ok({});
+    });
+    const fireToast = vi.fn();
+    render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} />);
+    exportAs('PDF');
+    await waitFor(() => expect(fireToast).toHaveBeenCalled());
+    const msg = String(fireToast.mock.calls[0][0]);
+    expect(msg).toMatch(/plain-text rendering/i);
+    expect(msg).toMatch(/not the formatted document/i);
+    expect(fireToast.mock.calls[0][1]).toBe('error');
+  });
+
   it('a download the browser blocks is never reported as exported to the device', async () => {
     // downloadBlob answers false when the environment refuses the save; the
     // handler used to discard that answer and say "Published".

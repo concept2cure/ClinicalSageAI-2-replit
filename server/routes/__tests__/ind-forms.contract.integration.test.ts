@@ -617,9 +617,166 @@ describe('the open program supplies the form facts', () => {
     expect(res.body.missingRequired).toContain('indication');
   });
 
+  /* QA 2026-10-08 (j7, findings 3b and 3c). The program record has no column
+     for the sponsor's address or the IND type; the build reads both — and the
+     phase — from the request, merged over the record. That is where the forms
+     panel's inputs now go. Nothing is defaulted: an unstated phase stays a
+     missing required field. */
+  it('the sponsor address, IND type and phase the panel states land where the 1571 build reads them; unstated, they stay missing', async () => {
+    await seedProgram({ code: 'BX-903', name: 'BX-903 (IND)', productName: 'Product 903', applicationNumber: '000903', indication: 'Z' });
+    const stated = await request(app).post('/api/ind-forms/FDA_1571/build').send({
+      projectIdent: 'BX-903', sponsor: { address: '1 Main St, Boston MA 02110, US' }, indType: 'Commercial IND', studyPhase: 'Phase 2',
+    });
+    expect(stated.status).toBe(200);
+    expect(stated.body.fields).toMatchObject({
+      sponsor_name: 'Concept2Cure Therapeutics',
+      sponsor_address: '1 Main St, Boston MA 02110, US',
+      ind_type: 'Commercial IND',
+      phase_of_study: 'Phase 2',
+    });
+    for (const id of ['sponsor_address', 'ind_type', 'phase_of_study']) expect(stated.body.missingRequired).not.toContain(id);
+
+    const unstated = await request(app).post('/api/ind-forms/FDA_1571/build').send({ projectIdent: 'BX-903' });
+    expect(unstated.body.missingRequired).toEqual(expect.arrayContaining(['sponsor_address', 'ind_type', 'phase_of_study']));
+  });
+
+  it('GET / carries the registry\'s IND type and phase options the panel offers', async () => {
+    const res = await request(app).get('/api/ind-forms/');
+    const f1571 = (res.body.formDefinitions as Array<{ formId: string; fields: Array<{ id: string; options?: string[] }> }>).find((d) => d.formId === 'FDA_1571')!;
+    expect(f1571.fields.find((f) => f.id === 'ind_type')?.options).toContain('Commercial IND');
+    expect(f1571.fields.find((f) => f.id === 'phase_of_study')?.options).toEqual(['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4']);
+  });
+
   it('a build that NAMES an unresolvable program is refused, not answered from typed fields', async () => {
     const res = await request(app).post('/api/ind-forms/FDA_1571/build').send({ projectIdent: 'GHOST-1', sponsorName: 'Typed' });
     expect(res.status).toBe(404);
+  });
+});
+
+describe('the sponsor address and IND type are recorded on the program', () => {
+  /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): the sponsor address
+     and the IND type are stored on the program, in additive columns
+     (migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql),
+     and the 1571 build reads them from the record. They used to travel with
+     every build request, so a build from anywhere else had none. */
+  it('PUT /program-facts records the sponsor address and IND type on the program, and the 1571 build reads them from the record', async () => {
+    const programId = await seedProgram({ code: 'BX-906', name: 'BX-906 (IND)', productName: 'Product 906', indication: 'V' });
+    const put = await request(app).put('/api/ind-forms/program-facts').send({
+      projectIdent: 'BX-906', sponsorAddress: ' 2 Kendall Sq, Cambridge MA 02139, US ', indType: 'Research IND',
+    });
+    expect(put.status, JSON.stringify(put.body)).toBe(200);
+    expect(put.body).toMatchObject({ programId, sponsorAddress: '2 Kendall Sq, Cambridge MA 02139, US', indType: 'Research IND' });
+    const row = await harness.pglite.query(`SELECT sponsor_address, ind_type FROM regulatory_programs WHERE id = $1`, [programId]);
+    expect(row.rows[0]).toEqual({ sponsor_address: '2 Kendall Sq, Cambridge MA 02139, US', ind_type: 'Research IND' });
+
+    // Nothing in the build request: the record supplies both.
+    const built = await request(app).post('/api/ind-forms/FDA_1571/build').send({ projectIdent: 'BX-906' });
+    expect(built.status).toBe(200);
+    expect(built.body.fields).toMatchObject({ sponsor_address: '2 Kendall Sq, Cambridge MA 02139, US', ind_type: 'Research IND' });
+    expect(built.body.missingRequired).not.toContain('sponsor_address');
+    expect(built.body.missingRequired).not.toContain('ind_type');
+
+    // The listing shows the recorded values, and what the builders receive.
+    const listed = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-906' });
+    expect(listed.body.program).toMatchObject({ sponsorAddress: '2 Kendall Sq, Cambridge MA 02139, US', indType: 'Research IND' });
+    expect(listed.body.program.formMetadata).toMatchObject({ sponsor: { address: '2 Kendall Sq, Cambridge MA 02139, US' }, indType: 'Research IND' });
+
+    // The write is audited with the fields it changed.
+    const auditService = (await import('../../services/auditService')).default as unknown as { logAction: ReturnType<typeof vi.fn> };
+    expect(auditService.logAction).toHaveBeenCalledWith(expect.objectContaining({
+      action: 'ind_form.program_facts.update', resourceType: 'regulatory_program', resourceId: programId,
+      metadata: expect.objectContaining({ fields: ['sponsorAddress', 'indType'] }),
+    }));
+
+    // A blank clears the address; an absent field is left as recorded.
+    const cleared = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-906', sponsorAddress: '' });
+    expect(cleared.status).toBe(200);
+    const after = await harness.pglite.query(`SELECT sponsor_address, ind_type FROM regulatory_programs WHERE id = $1`, [programId]);
+    expect(after.rows[0]).toEqual({ sponsor_address: null, ind_type: 'Research IND' });
+  });
+
+  it('PUT /program-facts refuses an IND type outside the registry, an IND type on a program that is not an IND, an empty body, and another organisation\'s program — writing nothing', async () => {
+    const ind = await seedProgram({ code: 'BX-907', name: 'BX-907 (IND)', productName: 'Product 907' });
+    await seedProgram({ code: 'BX-908', name: 'BX-908 (NDA)', productName: 'Product 908', programType: 'NDA' });
+    await seedProgram({ org: 2, code: 'BX-909', name: 'BX-909 (IND)', productName: 'Product 909' });
+
+    const unknown = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-907', indType: 'Phase 1' });
+    expect(unknown.status).toBe(400);
+    expect(unknown.body.error.message).toMatch(/Commercial IND/);
+    const notInd = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-908', indType: 'Research IND' });
+    expect(notInd.status).toBe(400);
+    expect(notInd.body.error.message).toMatch(/IND type/);
+    const empty = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-907' });
+    expect(empty.status).toBe(400);
+    const numeric = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: '12', sponsorAddress: 'x' });
+    expect(numeric.status).toBe(400);
+    const foreign = await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-909', sponsorAddress: 'Somewhere' });
+    expect(foreign.status).toBe(404);
+
+    const rows = await harness.pglite.query(
+      `SELECT code, sponsor_address, ind_type FROM regulatory_programs WHERE code IN ('BX-907','BX-908','BX-909') ORDER BY code`,
+    );
+    expect(rows.rows).toEqual([
+      { code: 'BX-907', sponsor_address: null, ind_type: null },
+      { code: 'BX-908', sponsor_address: null, ind_type: null },
+      { code: 'BX-909', sponsor_address: null, ind_type: null },
+    ]);
+    expect(ind).toBeTruthy();
+  });
+
+  it('a stated value in the build request still wins over the recorded one', async () => {
+    await seedProgram({ code: 'BX-910A', name: 'BX-910A (IND)', productName: 'Product 910A' });
+    await request(app).put('/api/ind-forms/program-facts').send({ projectIdent: 'BX-910A', sponsorAddress: 'Recorded St', indType: 'Commercial IND' });
+    const built = await request(app).post('/api/ind-forms/FDA_1571/build').send({ projectIdent: 'BX-910A', indType: 'Treatment IND' });
+    expect(built.body.fields).toMatchObject({ sponsor_address: 'Recorded St', ind_type: 'Treatment IND' });
+  });
+});
+
+/* QA 2026-10-08 (j7, finding 7): "Save to dossier" for the open program
+   answered governed:false — "this program has no legacy project row for the
+   registry yet" — and nothing was saved. P-19 gives every program its project
+   record (intake creates it; 20261008 backfills the rest), and the route
+   already places a program's form against that record. These pin both ends:
+   a program with its record gets a governed artifact in its dossier; one
+   without is told plainly that nothing was saved there. */
+describe('Save to dossier for an open program', () => {
+  it('a program with its project record gets a governed artifact registered against that record', async () => {
+    const programId = await seedProgram({ code: 'BX-904', name: 'BX-904 (IND)', productName: 'Product 904', indication: 'W' });
+    const p = await harness.pglite.query<{ id: number }>(
+      `INSERT INTO projects (id, organization_id, name, regulatory_program_id) VALUES (904, 1, 'BX-904', $1) RETURNING id`,
+      [programId],
+    );
+    const res = await request(app).post('/api/ind-forms/FDA_1571/artifact').send({ projectIdent: 'BX-904', studyPhase: 'Phase 1' });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.artifactId).toMatch(/^artifact_indform_1571_/);
+    expect(res.body.projectId).toBe(Number(p.rows[0].id));
+    const row = await harness.pglite.query<{ project_id: number; organization_id: number }>(
+      `SELECT project_id, organization_id FROM concept2cure_artifacts WHERE artifact_id = $1`,
+      [res.body.artifactId],
+    );
+    expect(row.rows[0]).toEqual({ project_id: Number(p.rows[0].id), organization_id: 1 });
+  });
+
+  /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): Save to dossier for a
+     program with no project record answers 409, not 200 with governed:false.
+     A 200 is a success status over a save that placed nothing. */
+  it('a program with no project record is refused 409 PROGRAM_NOT_ANCHORED, and nothing is written', async () => {
+    const programId = await seedProgram({ code: 'BX-905', name: 'BX-905 (IND)', productName: 'Product 905' });
+    const auditService = (await import('../../services/auditService')).default as unknown as { logAction: ReturnType<typeof vi.fn> };
+    auditService.logAction.mockClear();
+    const countArtifacts = async () => Number(((await harness.pglite.query(`SELECT count(*)::int AS n FROM concept2cure_artifacts`)).rows[0] as { n: number }).n);
+    const before = await countArtifacts();
+    const res = await request(app).post('/api/ind-forms/FDA_1571/artifact').send({ projectIdent: 'BX-905' });
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.error.code).toBe('PROGRAM_NOT_ANCHORED');
+    expect(res.body.error.message).toMatch(/no project record/);
+    expect(res.body.error.message).toMatch(/Nothing was saved/);
+    expect(res.body).not.toHaveProperty('governed');
+    expect(res.body).not.toHaveProperty('audited');
+    // No artifact row, and no "unplaced" audit row standing in for one.
+    expect(await countArtifacts()).toBe(before);
+    expect(auditService.logAction.mock.calls.some((c) => (c[0] as { action?: string })?.action === 'ind_form.artifact.unplaced')).toBe(false);
+    expect(programId).toBeTruthy();
   });
 });
 
@@ -631,6 +788,7 @@ describe('a sponsor\'s completed official form is filed into the sequence', () =
     const res = await request(app)
       .post('/api/ind-forms/FDA_1571/official-upload')
       .field('projectIdent', 'BX-910')
+      .field('sequenceId', String(sequenceId))
       .attach('file', SIGNED_PDF, { filename: 'signed-1571.pdf', contentType: 'application/pdf' });
 
     expect(res.status).toBe(201);
@@ -668,10 +826,10 @@ describe('a sponsor\'s completed official form is filed into the sequence', () =
     await seedProgram({ code: 'BX-911', name: 'BX-911 (IND)', productName: 'Product 911' });
     const { sequenceId } = await seedSpine({ title: 'BX-911 (IND)', productName: 'Product 911' });
     const first = await request(app).post('/api/ind-forms/FDA_1572/official-upload')
-      .field('projectIdent', 'BX-911').attach('file', SIGNED_PDF, 'a.pdf');
+      .field('projectIdent', 'BX-911').field('sequenceId', String(sequenceId)).attach('file', SIGNED_PDF, 'a.pdf');
     const corrected = Buffer.from('%PDF-1.7\n% corrected signature\n%%EOF\n', 'utf8');
     const second = await request(app).post('/api/ind-forms/FDA_1572/official-upload')
-      .field('projectIdent', 'BX-911').attach('file', corrected, 'b.pdf');
+      .field('projectIdent', 'BX-911').field('sequenceId', String(sequenceId)).attach('file', corrected, 'b.pdf');
 
     expect(first.status).toBe(201);
     expect(second.status).toBe(201);
@@ -684,18 +842,18 @@ describe('a sponsor\'s completed official form is filed into the sequence', () =
 
   it('files the financial certification at its own catalogued section, not with the forms', async () => {
     await seedProgram({ code: 'BX-912', name: 'BX-912 (IND)', productName: 'Product 912' });
-    await seedSpine({ title: 'BX-912 (IND)', productName: 'Product 912' });
+    const { sequenceId } = await seedSpine({ title: 'BX-912 (IND)', productName: 'Product 912' });
     const res = await request(app).post('/api/ind-forms/FDA_3454/official-upload')
-      .field('projectIdent', 'BX-912').attach('file', SIGNED_PDF, 'signed-3454.pdf');
+      .field('projectIdent', 'BX-912').field('sequenceId', String(sequenceId)).attach('file', SIGNED_PDF, 'signed-3454.pdf');
     expect(res.status).toBe(201);
     expect(res.body.sectionCode).toBe('m1.3.4');
   });
 
   it('refuses a file that is not a PDF by its bytes, whatever it claims to be', async () => {
     await seedProgram({ code: 'BX-913', name: 'BX-913 (IND)', productName: 'Product 913' });
-    await seedSpine({ title: 'BX-913 (IND)', productName: 'Product 913' });
+    const { sequenceId } = await seedSpine({ title: 'BX-913 (IND)', productName: 'Product 913' });
     const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
-      .field('projectIdent', 'BX-913')
+      .field('projectIdent', 'BX-913').field('sequenceId', String(sequenceId))
       .attach('file', Buffer.from('PK\x03\x04 not a pdf'), { filename: 'claims.pdf', contentType: 'application/pdf' });
     expect(res.status).toBe(400);
     expect(res.body.error.message).toMatch(/not a PDF/i);
@@ -703,11 +861,11 @@ describe('a sponsor\'s completed official form is filed into the sequence', () =
 
   it('refuses the BLANK official template — attaching it would file an unsigned form as a signed one', async () => {
     await seedProgram({ code: 'BX-914', name: 'BX-914 (IND)', productName: 'Product 914' });
-    await seedSpine({ title: 'BX-914 (IND)', productName: 'Product 914' });
+    const { sequenceId } = await seedSpine({ title: 'BX-914 (IND)', productName: 'Product 914' });
     // The real vendored FDA asset, byte for byte.
     const blank = fs.readFileSync(templatePathFor('FDA_1571'));
     const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
-      .field('projectIdent', 'BX-914').attach('file', blank, 'FDA_1571.pdf');
+      .field('projectIdent', 'BX-914').field('sequenceId', String(sequenceId)).attach('file', blank, 'FDA_1571.pdf');
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('BLANK_TEMPLATE');
   }, 30_000);
@@ -751,5 +909,147 @@ describe('a sponsor\'s completed official form is filed into the sequence', () =
       .field('projectIdent', 'BX-910').attach('file', SIGNED_PDF, 'x.pdf');
     expect(res.status).toBe(403);
     currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+});
+
+/* QA 2026-10-08 (j7, finding 2). The completed 1571 and 1572 filed into
+   sequence 0001 — a draft amendment — because the route took the newest
+   sequence silently, while the original 0000 still reported "Required section
+   1.1 has no leaf". The route's own refusal calls the target "a regulatory
+   decision"; it is now the person's: the upload names the sequence, the route
+   files into that one or refuses, and never picks. */
+describe('the person chooses the sequence a completed form is filed into', () => {
+  async function seedWithAmendment(code: string): Promise<{ submissionId: number; original: number; amendment: number }> {
+    await seedProgram({ code, name: `${code} (IND)`, productName: `Product ${code}` });
+    const { submissionId, sequenceId } = await seedSpine({ title: `${code} (IND)`, productName: `Product ${code}` });
+    const amd = await harness.pglite.query(
+      `INSERT INTO ectd_sequences (submission_id, region, sequence_number, type, status, organization_id, created_by)
+       VALUES ($1,'fda','0001','amendment','draft',1,9) RETURNING id`,
+      [submissionId],
+    );
+    return { submissionId, original: sequenceId!, amendment: Number((amd.rows[0] as { id: number }).id) };
+  }
+
+  it('refuses an upload that names no sequence, and files nothing', async () => {
+    const { original, amendment } = await seedWithAmendment('BX-930');
+    const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
+      .field('projectIdent', 'BX-930').attach('file', SIGNED_PDF, 'signed-1571.pdf');
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('SEQUENCE_REQUIRED');
+    expect(await leafRows(original)).toHaveLength(0);
+    expect(await leafRows(amendment)).toHaveLength(0);
+  });
+
+  it('files into the ORIGINAL 0000 when the person names it, although a newer 0001 exists', async () => {
+    const { original, amendment } = await seedWithAmendment('BX-931');
+    const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
+      .field('projectIdent', 'BX-931').field('sequenceId', String(original))
+      .attach('file', SIGNED_PDF, 'signed-1571.pdf');
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ sequenceId: original, sequenceNumber: '0000', sectionCode: 'm1.1' });
+    expect(await leafRows(original)).toHaveLength(1);
+    expect(await leafRows(amendment)).toHaveLength(0);
+    // The listing reports the placement where it really is — in 0000 — even
+    // though 0001 is the newest sequence.
+    const listed = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-931' });
+    expect(listed.body.placements).toEqual([
+      expect.objectContaining({ formId: 'FDA_1571', sequenceNumber: '0000', sequenceId: original }),
+    ]);
+  });
+
+  it('a form placed in two sequences is listed in both, and replacing is per sequence', async () => {
+    const { original, amendment } = await seedWithAmendment('BX-932');
+    for (const seq of [original, amendment]) {
+      const r = await request(app).post('/api/ind-forms/FDA_1572/official-upload')
+        .field('projectIdent', 'BX-932').field('sequenceId', String(seq)).attach('file', SIGNED_PDF, 'a.pdf');
+      expect(r.status).toBe(201);
+      expect(r.body.replaced).toBe(false);
+    }
+    const listed = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-932' });
+    expect(listed.body.placements.map((p: any) => p.sequenceNumber).sort()).toEqual(['0000', '0001']);
+  });
+
+  it('refuses a sequence of another submission, and a frozen one, before any bytes are stored', async () => {
+    await seedWithAmendment('BX-933');
+    const other = await seedSpine({ title: 'Unrelated (IND)', productName: 'Unrelated product' });
+    const foreign = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
+      .field('projectIdent', 'BX-933').field('sequenceId', String(other.sequenceId))
+      .attach('file', SIGNED_PDF, 'x.pdf');
+    expect(foreign.status).toBe(409);
+    expect(foreign.body.error.code).toBe('SEQUENCE_NOT_IN_PROGRAM');
+
+    const { original } = await seedWithAmendment('BX-934');
+    await harness.pglite.query(`UPDATE ectd_sequences SET status = 'frozen' WHERE id = $1`, [original]);
+    const before = storage.objects.size;
+    const frozen = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
+      .field('projectIdent', 'BX-934').field('sequenceId', String(original))
+      .attach('file', SIGNED_PDF, 'x.pdf');
+    expect(frozen.status).toBe(409);
+    expect(frozen.body.error.code).toBe('SEQUENCE_LOCKED');
+    expect(storage.objects.size).toBe(before);
+  });
+});
+
+/* QA 2026-10-08 (j7, finding 3). Build & check said "required fields
+   present" for the 1572 — its response was [] because no investigator is
+   recorded — while the PDF of the same form, the same minute, said three
+   required boxes were blank. One engine answers both now. */
+describe('one verdict from one engine', () => {
+  it('a 1572 with no investigator recorded is a missing-investigator verdict, the same one the PDF reports', async () => {
+    await seedProgram({ code: 'BX-940', name: 'BX-940 (IND)', productName: 'Product 940' });
+    const built = await request(app).post('/api/ind-forms/FDA_1572/build').send({ projectIdent: 'BX-940' });
+    expect(built.status).toBe(200);
+    expect(Array.isArray(built.body)).toBe(true);
+    expect(built.body.length).toBeGreaterThan(0);
+    const missing: string[] = built.body[0].missingRequired;
+    expect(missing).toEqual(expect.arrayContaining(['investigator_name', 'facility_name', 'irb_name']));
+
+    const pdf = await request(app).post('/api/ind-forms/FDA_1572/pdf').send({ projectIdent: 'BX-940' });
+    expect(pdf.status).toBe(200);
+    const pdfMissing = String(pdf.headers['x-form-missing-required'] ?? '').split(',').filter(Boolean);
+    expect([...missing].sort()).toEqual([...pdfMissing].sort());
+  });
+
+  it('with investigators recorded, the build is still one per investigator', async () => {
+    const res = await request(app).post('/api/ind-forms/FDA_1572/build').send({
+      investigators: [{ name: 'Dr A', facilityName: 'Site A', irbName: 'IRB A' }, { name: 'Dr B' }],
+    });
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(2);
+    expect(res.body[0].missingRequired).toEqual([]);
+    expect(res.body[1].missingRequired).toEqual(expect.arrayContaining(['facility_name', 'irb_name']));
+  });
+});
+
+/* QA 2026-10-08 (j7, finding 3d). The IND panel offered Form 356h
+   (NDA / ANDA / BLA). The listing now carries the registry's applicability
+   verdict: only the forms that apply to the program are offered, the rest are
+   named with the reason, and filing an inapplicable form is refused. */
+describe('the listing is scoped to the program', () => {
+  it('an IND program is offered only the forms the registry says apply to an IND', async () => {
+    await seedProgram({ code: 'BX-950', name: 'BX-950 (IND)', productName: 'Product 950' });
+    const res = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-950' });
+    expect(res.status).toBe(200);
+    expect(res.body.forms).not.toContain('FDA_356H');
+    expect(res.body.forms).toEqual(expect.arrayContaining(['FDA_1571', 'FDA_1572', 'FDA_3674']));
+    expect(res.body.formsNotApplicable).toEqual([expect.objectContaining({ formId: 'FDA_356H' })]);
+  });
+
+  it('an NDA program is offered 356h and not the IND application', async () => {
+    await seedProgram({ code: 'BX-951', name: 'BX-951 (NDA)', productName: 'Product 951', programType: 'NDA' });
+    const res = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-951' });
+    expect(res.body.forms).toContain('FDA_356H');
+    expect(res.body.forms).not.toContain('FDA_1571');
+  });
+
+  it('a form that does not apply to the program is refused at filing, not placed', async () => {
+    await seedProgram({ code: 'BX-952', name: 'BX-952 (IND)', productName: 'Product 952' });
+    const { sequenceId } = await seedSpine({ title: 'BX-952 (IND)', productName: 'Product 952' });
+    const res = await request(app).post('/api/ind-forms/FDA_356H/official-upload')
+      .field('projectIdent', 'BX-952').field('sequenceId', String(sequenceId))
+      .attach('file', SIGNED_PDF, 'x.pdf');
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('FORM_NOT_APPLICABLE');
+    expect(await leafRows(sequenceId!)).toHaveLength(0);
   });
 });

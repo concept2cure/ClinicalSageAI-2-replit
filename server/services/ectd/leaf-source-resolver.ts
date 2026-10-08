@@ -217,6 +217,26 @@ export function isFinalizedStatus(
   return FINALIZED_STATUSES_BY_STORE[store].has((status ?? '').toLowerCase());
 }
 
+/**
+ * The status a refusal prints beside a leaf whose source is not finalized, or
+ * null when it is finalized. ONE wording, read by the assembler below and by
+ * dispatch readiness (leaf-document-resolver.ts), so the Validation and
+ * Dispatch tabs name an unapproved leaf in the words freeze, dispatch and
+ * transmit refuse it with (QA 2026-10-08, j6: the gate the client sees did not
+ * name the leaf at all). A coauthor document's 'finalized' is an unsigned
+ * freeze (DP-35), so it is said as such rather than printed as a word that
+ * reads as the opposite of the refusal it sits in.
+ */
+export function notFinalizedStatus(
+  status: string | null | undefined,
+  store: FinalizedStatusStore,
+  whenMissing = 'draft',
+): string | null {
+  if (isFinalizedStatus(status, store)) return null;
+  if (store === 'coauthor_documents' && status === 'finalized') return 'frozen, not approved';
+  return status ?? whenMissing;
+}
+
 /** Rows of a `db.execute` result across drivers (node-postgres QueryResult / PGlite Results / bare array). */
 function rowsOf(result: unknown): Array<Record<string, unknown>> {
   if (Array.isArray(result)) return result as Array<Record<string, unknown>>;
@@ -487,11 +507,10 @@ export async function materializeLeafSources(
       // backbone. The first product reader of the map (ledger L10).
       const staged = byKey.get(key);
       if (staged) staged.lineage = await coauthorLineage(organizationId, documentId);
-      if (!isFinalizedStatus(doc.status, 'coauthor_documents')) {
-        // 'finalized' here is an unsigned freeze (DP-35); say so, rather than
-        // print a word that reads as the opposite of the refusal it sits in.
-        const shown = doc.status === 'finalized' ? 'frozen, not approved' : (doc.status ?? 'draft');
-        noteUnfinalized(doc.moduleNumber || doc.title || `coauthor_documents:${documentId}`, shown);
+      // 'finalized' here is an unsigned freeze (DP-35); notFinalizedStatus says so.
+      const coauthorUnfinalized = notFinalizedStatus(doc.status, 'coauthor_documents');
+      if (coauthorUnfinalized) {
+        noteUnfinalized(doc.moduleNumber || doc.title || `coauthor_documents:${documentId}`, coauthorUnfinalized);
       }
       continue;
     }
@@ -506,8 +525,9 @@ export async function materializeLeafSources(
         miss('unified_documents row not found in this organization');
         continue;
       }
-      if (!isFinalizedStatus(doc.status, 'unified_documents')) {
-        noteUnfinalized(doc.title || `unified_documents:${documentId}`, doc.status ?? 'draft');
+      const unifiedUnfinalized = notFinalizedStatus(doc.status, 'unified_documents');
+      if (unifiedUnfinalized) {
+        noteUnfinalized(doc.title || `unified_documents:${documentId}`, unifiedUnfinalized);
       }
       // Body lives in workflow_document_versions; render the latest version's
       // content, falling back to the title when no version content exists.
@@ -803,8 +823,9 @@ export async function materializeLeafSources(
         title: row.label ?? undefined,
         sectionCode: row.section_key ?? undefined,
       });
-      if (!isFinalizedStatus(row.status, 'c2c_document_sections')) {
-        noteUnfinalized(row.section_key || `c2c_document_sections:${documentId}`, row.status ?? 'todo');
+      const sectionUnfinalized = notFinalizedStatus(row.status, 'c2c_document_sections', 'todo');
+      if (sectionUnfinalized) {
+        noteUnfinalized(row.section_key || `c2c_document_sections:${documentId}`, sectionUnfinalized);
       }
       continue;
     }

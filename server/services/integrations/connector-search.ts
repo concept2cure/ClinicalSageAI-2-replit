@@ -2,11 +2,19 @@
  * Connected-repository search for AnA.
  *
  * Thin orchestration over the existing data-connector framework
- * (server/services/connectors): resolves the org's configured connectors
- * (Google Drive, Box, OneDrive, SharePoint, Veeva Vault, …), fans a keyword
- * search across them through their stored, encrypted, per-org credentials, and
- * returns flat, citeable results. Lets AnA pull source documents from the
- * client's own connected systems instead of only the project corpus.
+ * (server/services/connectors): resolves the org's connected document
+ * repositories (Google Drive, Box, OneDrive, SharePoint, Veeva Vault), fans a
+ * keyword search across them through their stored, encrypted, per-org
+ * credentials, and returns flat, citeable results. Lets AnA pull source
+ * documents from the client's own connected systems instead of only the
+ * project corpus.
+ *
+ * Repositories only (AnA Summary S2, 2026-10-08). With `connectors` omitted it
+ * used to search every catalog entry, and the credential-free public sources
+ * (PubMed, ClinicalTrials.gov, Drugs@FDA, EMA, …) count as configured, so a
+ * client's query left for public APIs whatever the tenant's
+ * `publicSourceEgress` said. A public source is now refused, asked for or
+ * not; AnA reaches those through search_literature and the agency lookups.
  *
  * Registry calls are injected (deps) so the orchestration is unit-testable
  * without a database or live connectors.
@@ -14,7 +22,12 @@
  * @module server/services/integrations/connector-search
  */
 
-import type { ConnectorResult } from '../connectors/connector-interface.js';
+import {
+  canonicalConnectorId,
+  isRepositoryConnector,
+  REPOSITORY_CONNECTOR_IDS,
+  type ConnectorResult,
+} from '../connectors/connector-interface.js';
 import {
   getConnectorCatalog as realGetConnectorCatalog,
   searchConnectors as realSearchConnectors,
@@ -25,7 +38,11 @@ const MAX_LIMIT = 25;
 
 export interface ConnectorSearchParams {
   query: string;
-  /** Restrict to specific connector ids (e.g. ['google-drive']); default: all configured. */
+  /**
+   * Restrict to these repositories (e.g. ['google_drive']; 'google-drive' names
+   * the same one). Default: every repository connected for the organisation.
+   * A public source is refused either way.
+   */
   connectors?: string[];
   limit?: number;
 }
@@ -68,30 +85,85 @@ const defaultDeps: ConnectorSearchDeps = {
   searchConnectors: realSearchConnectors as unknown as ConnectorSearchDeps['searchConnectors'],
 };
 
+const NOT_CONNECTED = 'not connected for this organization';
+const UNHEALTHY = 'credentials invalid or connector unhealthy';
+
+/** Why a catalog entry that is not one of the repositories is not searched. */
+const NOT_A_REPOSITORY =
+  "not one of the organisation's document repositories, so this tool never sends it a query; " +
+  'for public sources use search_literature or the agency lookups';
+
+type Skipped = Array<{ connector: string; reason: string }>;
+
 /**
  * Which requested connectors to search; the rest go to `skipped` with why.
+ * Ids are matched in their canonical spelling, and reported in the registry's.
  */
 function partitionRequested(
   requested: string[],
-  byId: Map<string, CatalogEntry>,
-  skipped: Array<{ connector: string; reason: string }>,
-): string[] {
-  const toSearch: string[] = [];
-  for (const id of requested) {
-    const entry = byId.get(id);
+  byCanonicalId: Map<string, CatalogEntry>,
+  skipped: Skipped,
+): CatalogEntry[] {
+  const toSearch: CatalogEntry[] = [];
+  const seen = new Set<string>();
+  for (const asked of requested) {
+    const canonical = canonicalConnectorId(asked);
+    if (seen.has(canonical)) continue;
+    seen.add(canonical);
+    const entry = byCanonicalId.get(canonical);
     if (!entry) {
-      skipped.push({ connector: id, reason: 'unknown connector' });
+      skipped.push({ connector: asked, reason: 'unknown connector' });
     } else if (entry.available === false) {
-      skipped.push({ connector: id, reason: 'no search is connected for this source on the platform' });
+      skipped.push({ connector: entry.id, reason: 'no search is connected for this source on the platform' });
+    } else if (!isRepositoryConnector(entry.id)) {
+      skipped.push({ connector: entry.id, reason: NOT_A_REPOSITORY });
     } else if (!entry.configured) {
-      skipped.push({ connector: id, reason: 'not connected for this organization' });
+      skipped.push({ connector: entry.id, reason: NOT_CONNECTED });
     } else if (!entry.healthy) {
-      skipped.push({ connector: id, reason: 'credentials invalid or connector unhealthy' });
+      skipped.push({ connector: entry.id, reason: UNHEALTHY });
     } else {
-      toSearch.push(id);
+      toSearch.push(entry);
     }
   }
   return toSearch;
+}
+
+/**
+ * What AnA tells the user about the systems it could not search. A repository
+ * asked for by name and not connected gets its own sentence ("Google Drive is
+ * not connected for your organisation."); a refused public source names the
+ * tools that search public sources.
+ */
+function noteFor(
+  explicit: boolean,
+  searchedAny: boolean,
+  skipped: Skipped,
+  byCanonicalId: Map<string, CatalogEntry>,
+): string | undefined {
+  const sentences: string[] = [];
+  if (explicit) {
+    for (const s of skipped) {
+      if (s.reason !== NOT_CONNECTED) continue;
+      const name = byCanonicalId.get(canonicalConnectorId(s.connector))?.name || s.connector;
+      sentences.push(`${name} is not connected for your organisation.`);
+    }
+  }
+  if (skipped.some((s) => s.reason === NOT_A_REPOSITORY)) {
+    sentences.push(
+      `This tool searches only the organisation's own document repositories (${REPOSITORY_CONNECTOR_IDS.join(', ')}). ` +
+        'For public sources use search_literature or the agency lookups.',
+    );
+  }
+  if (!searchedAny) {
+    // Nothing was searched. Unless the only refusals were public sources (whose
+    // sentence above says where to go), the remedy is connecting a repository.
+    const repositoryMissing = !explicit || skipped.some((s) => s.reason === NOT_CONNECTED || s.reason === UNHEALTHY);
+    if (!explicit) sentences.push('No document repository is connected for your organisation.');
+    if (repositoryMissing || sentences.length === 0) {
+      sentences.push('Ask the user to connect a data source (e.g. Google Drive) in Settings → Connectors.');
+    }
+  }
+  return sentences.length > 0 ? sentences.join(' ') : undefined;
 }
 
 /**
@@ -105,17 +177,20 @@ export async function searchConnectedRepositories(
   deps: ConnectorSearchDeps = defaultDeps
 ): Promise<ConnectorSearchResponse> {
   const limit = Math.min(Math.max(Math.trunc(params.limit ?? DEFAULT_LIMIT), 1), MAX_LIMIT);
-  const skipped: Array<{ connector: string; reason: string }> = [];
+  const skipped: Skipped = [];
 
   const catalog = await deps.getConnectorCatalog(organizationId);
-  const byId = new Map(catalog.map(c => [c.id, c]));
+  const byCanonicalId = new Map(catalog.map(c => [canonicalConnectorId(c.id), c]));
 
-  // Resolve the requested connectors (or all in the catalog).
-  const requested = params.connectors?.length
-    ? params.connectors
-    : catalog.map(c => c.id);
+  // The requested connectors, or every repository in the catalog. Never the
+  // whole catalog: that is where the public sources are.
+  const explicit = !!params.connectors?.length;
+  const requested = explicit
+    ? (params.connectors as string[])
+    : catalog.filter(c => isRepositoryConnector(c.id)).map(c => c.id);
 
-  const toSearch = partitionRequested(requested, byId, skipped);
+  const toSearch = partitionRequested(requested, byCanonicalId, skipped).map(c => c.id);
+  const note = noteFor(explicit, toSearch.length > 0, skipped, byCanonicalId);
 
   if (toSearch.length === 0) {
     return {
@@ -124,7 +199,7 @@ export async function searchConnectedRepositories(
       skipped,
       resultCount: 0,
       documents: [],
-      note: 'No connected repositories are available. Ask the user to connect a data source (e.g. Google Drive) in Settings → Connectors.',
+      ...(note ? { note } : {}),
     };
   }
 
@@ -163,5 +238,6 @@ export async function searchConnectedRepositories(
     skipped,
     resultCount: top.length,
     documents: top,
+    ...(note ? { note } : {}),
   };
 }

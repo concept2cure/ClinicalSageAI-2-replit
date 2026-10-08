@@ -436,3 +436,57 @@ describe('peer review uses the tenant document and an atomic audit', () => {
     });
   }, T);
 });
+
+/* QA 2026-10-08 (browser walk j4-authoring, docs/evidence/QA-2026-10-08/authoring/).
+   "Assign review" let the author assign the review of her own document to
+   herself, and the reviewer it named could neither comment on nor sign the
+   document: a review request granted nothing, and the grant API had no caller.
+   The request is the act that names the reviewer, so it refuses the author and,
+   when the requester may manage the document's access (its owner, or an
+   administrator — requirePermissionManager's rule), grants the reviewer the
+   REVIEWER role on the document in the same transaction, on the chained ledger. */
+describe('a review request names someone other than the author and gives them the review grant', () => {
+  const reviewerGrants = async (id: string, principal: string) =>
+    (await jdb.pool.query(
+      `SELECT role, granted_by FROM doc_permissions WHERE doc_id = $1 AND principal_id = $2 AND role = 'REVIEWER' AND revoked_at IS NULL`,
+      [id, principal],
+    )).rows;
+
+  it('refuses the document’s author as its reviewer, and writes nothing', async () => {
+    const id = await newReviewDocument();
+    const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`))
+      .send({ reviewers: [{ id: AUTHOR.id, name: AUTHOR.name, email: AUTHOR.email }] });
+    expect(r.status, JSON.stringify(r.body)).toBe(409);
+    expect(r.body.error?.code).toBe('REVIEWER_IS_AUTHOR');
+    expect(String(r.body.error?.message)).toMatch(/author/i);
+    expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
+    expect(await reviewerGrants(id, AUTHOR.id)).toEqual([]);
+  }, T);
+
+  it('grants the requested reviewer REVIEWER on the document, once, with a chained record of the grant', async () => {
+    const id = await newReviewDocument();
+    const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(r.body.grants).toEqual([expect.objectContaining({ reviewerId: REVIEWER.id, granted: true })]);
+    expect(await reviewerGrants(id, REVIEWER.id)).toEqual([{ role: 'REVIEWER', granted_by: AUTHOR.id }]);
+    const chained = await jdb.pool.query(
+      `SELECT action FROM audit_logs WHERE action = 'authoring.permission.grant' AND new_values::text LIKE $1`,
+      [`%${id}%`],
+    );
+    expect(chained.rows).toHaveLength(1);
+    // Asking again re-requests the review; it does not stack a second grant.
+    const again = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
+    expect(again.status).toBe(200);
+    expect(await reviewerGrants(id, REVIEWER.id)).toHaveLength(1);
+  }, T);
+
+  it('a requester who may not manage the document’s access records the request and is told no grant was made', async () => {
+    const id = await newReviewDocument();
+    const r = await as(BYSTANDER)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(r.body.grants).toEqual([expect.objectContaining({ reviewerId: REVIEWER.id, granted: false })]);
+    expect(String(r.body.grants[0].reason)).toMatch(/owner or an administrator/i);
+    expect(await reviewerGrants(id, REVIEWER.id)).toEqual([]);
+    expect((await jdb.pool.query('SELECT reviewer_id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toHaveLength(1);
+  }, T);
+});

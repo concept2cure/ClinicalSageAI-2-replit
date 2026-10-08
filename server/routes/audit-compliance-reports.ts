@@ -67,7 +67,7 @@ import { createComplianceReviewRoutes } from './audit-compliance-reviews.js';
 const log = createScopedLogger('audit-compliance-reports');
 
 /** Who may run a report, in the words the catalog shows: AUDIT_READER_ROLES plus platform administrators. */
-export const AUDIT_REPORT_READERS = 'organisation owners, admins and managers, and platform administrators';
+export const AUDIT_REPORT_READERS = 'organisation owners, admins, managers and approvers, and platform administrators';
 
 // Defined beside the catalog, where the review record also reads them; re-exported for this router's importers.
 export { REPORT_RESOURCE_TYPE, REPORT_RUN_ACTION };

@@ -180,7 +180,10 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
       now: b.now ? new Date(b.now) : undefined,
     });
     if (!amendmentIntent) {
-      return res.status(422).json({ error: { code: 'NOT_REPORTABLE', message: 'Event is not an expedited IND safety report; nothing to file.' } });
+      // P-20: no verdict is not "not reportable" — say which one this is.
+      return document.obligation === 'NOT_DETERMINED'
+        ? res.status(422).json({ error: { code: 'NOT_DETERMINED', message: 'The expedited-reporting verdict is not determined: expectedness not assessed. Record expectedness against the IB / Reference Safety Information first; nothing was filed.' } })
+        : res.status(422).json({ error: { code: 'NOT_REPORTABLE', message: 'Event is not an expedited IND safety report; nothing to file.' } });
     }
     if (b.draftId) {
       const loaded = await loadDraft(() => getSafetyReport(String(b.draftId), ctx), (e) => e instanceof SafetyReportError && e.code === 'NOT_FOUND');

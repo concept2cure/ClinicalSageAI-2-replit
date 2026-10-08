@@ -129,6 +129,8 @@ interface AuthDoc {
   status: string;
   updated_at: string | null;
   section_count: number | string | null;
+  /** The author (GET /docs returns it): not offered as the document's reviewer. */
+  created_by?: string | number | null;
 }
 
 /**
@@ -579,12 +581,16 @@ export interface DocumentActGate {
 export interface DocumentAccess {
   freeze: DocumentActGate | null;
   esign: DocumentActGate | null;
+  /** The review signature alone (E-sign, meaning Review): a Reviewer grant
+   *  suffices for it (QA 2026-10-08, j4). */
+  esignReview: DocumentActGate | null;
   fileToVault: DocumentActGate | null;
   assignReview: DocumentActGate | null;
 }
 export const UNKNOWN_DOCUMENT_ACCESS: DocumentAccess = {
   freeze: null,
   esign: null,
+  esignReview: null,
   fileToVault: null,
   assignReview: null,
 };
@@ -603,9 +609,32 @@ export function readDocumentAccess(raw: unknown): DocumentAccess {
   return {
     freeze: readActGate(a.freeze),
     esign: readActGate(a.esign),
+    esignReview: readActGate(a.esignReview),
     fileToVault: readActGate(a.fileToVault),
     assignReview: readActGate(a.assignReview),
   };
+}
+
+/**
+ * What a section save's `filing` field says, as a sentence appended to the save
+ * confirmation; '' when the server reported nothing (QA 2026-10-08, j4: the
+ * field was never read, so a save that did not reach the filing read exactly
+ * like one that did). The server's own reason is shown as given.
+ */
+export function filingCommitNote(filing: unknown): string {
+  if (!filing || typeof filing !== 'object') return '';
+  const f = filing as { committed?: unknown; reason?: unknown };
+  if (f.committed === true) return ' The text was committed to the filing.';
+  if (f.committed === false) {
+    const why = typeof f.reason === 'string' && f.reason.trim() ? f.reason.trim() : 'the server gave no reason.';
+    return ` The text is saved in Authoring but not in the filing: ${why}`;
+  }
+  return '';
+}
+
+/** True when the server refuses every signature but the review signature. */
+export function esignReviewOnly(access: DocumentAccess): boolean {
+  return !!actRefusal(access.esign) && access.esignReview?.allowed === true;
 }
 
 /** The sentence to show for a refused act; null when allowed OR unknown. */
@@ -2586,9 +2615,10 @@ export function DocumentWorkbench({
            row's counter; the sentence now names what came back, and defers to
            the History rail when nothing did. */
         fireToast(
-          adopted && adopted.revision_count != null
+          (adopted && adopted.revision_count != null
             ? `Section saved — revision ${num(adopted.revision_count)} recorded (${activeSection.code}).`
-            : `Section saved (${activeSection.code}) — open History to confirm the revision.`
+            : `Section saved (${activeSection.code}) — open History to confirm the revision.`) +
+            filingCommitNote((json as { filing?: unknown } | null)?.filing)
         );
         // Keep the history and audit rails fresh if open — a save writes both.
         if (rail === 'history') void loadHistory(activeSection.id);
@@ -3981,7 +4011,10 @@ export function DocumentWorkbench({
                 fireToast={fireToast}
                 signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
                 freezeRefusal={actRefusal(docAccess.freeze)}
-                esignRefusal={actRefusal(docAccess.esign)}
+                /* A Reviewer grant may sign the review and nothing else: the
+                   control stays open for that one meaning (QA 2026-10-08, j4). */
+                esignRefusal={esignReviewOnly(docAccess) ? null : actRefusal(docAccess.esign)}
+                reviewOnly={esignReviewOnly(docAccess)}
               />
             )}
             {/* The authoring → filing seam: place the OPEN document into an
@@ -3993,6 +4026,11 @@ export function DocumentWorkbench({
                 docId={activeDoc.id}
                 docTitle={activeDoc.title}
                 activeSectionCode={activeSection?.code ?? null}
+                /* The whole document is filed (QA 2026-10-08, j4), so the dialog
+                   files it at its own code; only a read it can trust. */
+                sectionCodes={sectionsState === 'ready' ? sections.map(s => s.code) : undefined}
+                /* The filing copy takes this state when placed (F17). */
+                docStatus={activeDoc.status ?? null}
                 dirty={dirty}
                 onNav={onNav}
                 fireToast={fireToast}
@@ -5716,6 +5754,7 @@ export function DocumentWorkbench({
           docTitle={activeDoc.title}
           programId={programId}
           sectionCode={activeSection?.code ?? null}
+          authorId={activeDoc.created_by != null ? String(activeDoc.created_by) : null}
           onClose={() => setSendForReviewOpen(false)}
           onSent={() => {
             /* The tasks the act created are listed beside the document. */

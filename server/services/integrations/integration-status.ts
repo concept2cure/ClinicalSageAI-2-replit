@@ -15,6 +15,7 @@
  * @module server/services/integrations/integration-status
  */
 import { isPlatformIntegrationsOwner, PLATFORM_INTEGRATIONS_ORG_ENV } from './platform-integration-owner.js';
+import { isRepositoryConnector } from '../connectors/connector-interface.js';
 
 export type IntegrationKind = 'public_api' | 'env_gated' | 'org_connector';
 
@@ -152,11 +153,13 @@ export async function getIntegrationStatuses(
     },
   ];
 
-  // Org-scoped document connectors (Drive/Box/OneDrive/SharePoint/Veeva, …).
+  // Org-scoped document repositories (Drive/Box/OneDrive/SharePoint/Veeva) —
+  // exactly what search_connected_repositories searches. The credential-free
+  // public sources in the catalog count as configured, and are not among them.
   if (organizationId && deps.getConnectorCatalog) {
     try {
       const catalog = await deps.getConnectorCatalog(Number(organizationId));
-      const live = catalog.filter(c => c.configured && c.healthy).map(c => c.id);
+      const live = catalog.filter(c => isRepositoryConnector(c.id) && c.configured && c.healthy).map(c => c.id);
       statuses.push({
         id: 'document_connectors',
         label: `Connected document repositories (${live.length ? live.join(', ') : 'none connected'})`,

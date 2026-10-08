@@ -1,0 +1,11 @@
+{
+  "reason": "Group all nine new sweep admission cases with existing poll/notification backpressure cases in an existing test root. Existing scope file restored byte-for-byte from HEAD; original nineteen backpressure cases unchanged. No new cases or test roots. Initial tenant-file red and green evidence retained as actual historical runs.",
+  "head": "0b8a8c3dfd6166286e085de59e13b1217cb17dee",
+  "finalTestFiles": {
+    "server/services/ana/__tests__/run-control-tenant-scope.test.ts": "07be1eca9253b0e2c8d5c8ef3eb2a6aaa2088d28",
+    "server/services/ana/__tests__/run-control-poll-backpressure.test.ts": "ff77bcaa986fe6c907cb1158c7f32df6780408d8"
+  },
+  "relocatedCases": 9,
+  "existingBackpressureCases": 19,
+  "existingTenantCases": 5
+}

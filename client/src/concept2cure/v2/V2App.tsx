@@ -134,7 +134,7 @@ import './styles/device-v2.css';
    GENERATED: scripts/design/generate-surface-text-ramp.mjs, drift-checked by
    ci:surface-text-ramp. See GA ledger L102. */
 import './styles/surface-text-ramp.css';
-import { restoreShellProject } from './shellProject';
+import { restoreShellProject, useShellProjectInUrl } from './shellProject';
 
 const PREFS_KEY = 'c2c-v2-prefs';
 
@@ -255,8 +255,16 @@ function readShellProjectId(): string | undefined {
   }
 }
 
+/** The end of AnA's real text, bounded, as the drive strip shows it; the cut is marked. */
+function narrationTail(text: string): string {
+  return text.length > 180 ? `…${text.slice(-180).replace(/^\S*\s/, '')}` : text;
+}
+
 export function V2App() {
   const [location, setLocation] = useLocation();
+  /* The URL names the open program (?program=), so a copied link, a bookmark
+     or a new tab opens the same project — see shellProject.ts. */
+  useShellProjectInUrl(location);
   const [prefs, setPrefs] = React.useState<Prefs>(loadPrefs);
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
 
@@ -812,10 +820,43 @@ export function V2App() {
      silence: AnA narrating into a column the screen does not draw. */
   const driveNarration =
     lastMsg?.role === 'assistant' && lastMsg.streaming && lastMsg.text
-      ? lastMsg.text.length > 180
-        ? `…${lastMsg.text.slice(-180).replace(/^\S*\s/, '')}`
-        : lastMsg.text
+      ? narrationTail(lastMsg.text)
       : undefined;
+  /* ── A reply that finished off the conversation screen (QA 2026-10-08, j5) ──
+     With no rail (slice 9), a turn of the shell's chat that ends while another
+     screen is showing — AnA's drive took the person there, or they went there
+     mid-answer — is on no screen at all: "take me to the vault" from the
+     project page left the Vault with neither the question nor the answer, and
+     no way back to them but the navigation. The drive strip says the reply is
+     in the conversation, with its end and the way back, until the person goes
+     back or dismisses it. */
+  const [replyElsewhere, setReplyElsewhere] = React.useState<string | null>(null);
+  const shellStreamingRef = React.useRef(anaChat.isStreaming);
+  React.useEffect(() => {
+    const was = shellStreamingRef.current;
+    shellStreamingRef.current = anaChat.isStreaming;
+    if (anaChat.isStreaming) {
+      if (!was) setReplyElsewhere(null);
+      return;
+    }
+    if (!was || activeIdRef.current === 'conversation-thread') return;
+    const reply = [...anaChat.messages].reverse().find((m) => m.role === 'assistant');
+    if (reply) setReplyElsewhere(narrationTail(reply.text ?? ''));
+    // Keyed on the turn ending only; the messages are read as they are then.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anaChat.isStreaming]);
+  React.useEffect(() => {
+    if (activeId === 'conversation-thread') setReplyElsewhere(null);
+  }, [activeId]);
+  const backToConversation = React.useCallback(() => {
+    try {
+      (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = { id: 'current', seed: null };
+    } catch {
+      /* non-fatal: the conversation opens on the turns it holds */
+    }
+    setReplyElsewhere(null);
+    nav('conversation-thread');
+  }, [nav]);
   /* The bridge for surfaces that run their own conversation (see
      SurfaceViewProps.liveDrive) — same toggle, same reducer, one machine. */
   /* The same controls, for the switch drawn beside each composer. */
@@ -1209,7 +1250,7 @@ export function V2App() {
           <SurfaceBoundary resetKey={bodyKey}>
             {/* A deep link to a surface outside the launch scope renders the
                 honest panel, from the same verdict the rail and catalog read. */}
-            <LaunchScopeGate surfaceId={activeId} surface={ctxSurface}>
+            <LaunchScopeGate surfaceId={activeId} surface={ctxSurface} onNav={nav}>
               {body}
             </LaunchScopeGate>
           </SurfaceBoundary>
@@ -1278,6 +1319,15 @@ export function V2App() {
             ? undefined
             : (m) => (driveControlsRef.current ? driveControlsRef.current.interject(m) : anaChat.interject(m))
         }
+        /* The way back to the conversation, wherever the shell's chat is
+           answering, or has answered, off it (QA 2026-10-08, j5). */
+        onBackToConversation={
+          activeId !== 'conversation-thread' && (anaChat.isStreaming || replyElsewhere !== null)
+            ? backToConversation
+            : undefined
+        }
+        replyElsewhere={activeId === 'conversation-thread' ? null : replyElsewhere}
+        onDismissReply={() => setReplyElsewhere(null)}
       />
     </div>
     </RunPolicyContext.Provider>

@@ -1,0 +1,17 @@
+# (4) GREEN — /api/auth/enterprise/mfa/{setup,enable,disable} removed (with mfaEnableSchema, mfaDisableSchema, extractJwtUser, now unused)
+# The one implementation: POST /api/auth/mfa/{setup,enable,disable} (server/routes/auth.ts), called by authService.setupMfa/enableMfa/disableMfa (AccountPanel)
+$ npx vitest run server/routes/__tests__/authSurfaceSecurity.test.ts server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts server/routes/__tests__/auth-sign-in-limits.test.ts
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > confirming or removing an authenticator counts wrong codes per account > /mfa/enable: wrong codes past the per-account limit are refused, and the next account is not 84ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > confirming or removing an authenticator counts wrong codes per account > /mfa/disable: wrong codes past the per-account limit are refused, and the next account is not 47ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > confirming or removing an authenticator counts wrong codes per account > one allowance per account: guesses at /mfa/verify and at /mfa/disable are one count 39ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > serves no authenticator enrolment of its own: /mfa/setup, /mfa/enable and /mfa/disable are not routes here 8ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/setup rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/enable rejects a partial token (401) 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/disable rejects a partial token (401) 4ms
+ Test Files  3 passed (3)
+      Tests  36 passed (36)
+
+## DB: tests/db/sign-in-posture.dbtest.ts and second-factor-binding.dbtest.ts (the canonical route's F-26 refusal) on concept2cure-ri_qa_fresh2
+ ✓ tests/db/sign-in-posture.dbtest.ts > the enterprise router serves no authenticator setup of its own (P-25 follow-up) > 404, no secret handed out, the enrolled secret untouched 5ms
+ Test Files  2 passed (2)
+      Tests  17 passed (17)

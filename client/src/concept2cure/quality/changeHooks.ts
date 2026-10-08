@@ -57,6 +57,8 @@ interface ServerChange {
   created_at: string | null;
   updated_at: string | null;
   links?: ServerLink[];
+  /** The database's overdue verdict against CURRENT_DATE (changeControl.service). */
+  implementation_overdue?: boolean;
 }
 interface ServerLink {
   id: number;
@@ -97,6 +99,7 @@ function adaptChange(r: ServerChange): ChangeControl {
     /* Truthy-but-not-an-array again: a `links` that arrives as an object or a
        string passed `r.links ?` and threw on `.map`. */
     links: Array.isArray(r.links) ? r.links.map(adaptLink) : undefined,
+    implementationOverdue: typeof r.implementation_overdue === 'boolean' ? r.implementation_overdue : undefined,
   };
 }
 

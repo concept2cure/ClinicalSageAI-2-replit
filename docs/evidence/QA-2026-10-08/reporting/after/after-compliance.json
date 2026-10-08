@@ -1,0 +1,12 @@
+{
+  "seal": "Sealed by the platform with HMAC-SHA256 under the development fallback key (jwt-secret-fallback): no dedicated audit export key is configured on this deployment, so the seal was made with the session-signing secret. A production deployment refuses to seal this way. Recorded on the audit trail as export COMPLIANCE-REPORT-1791440721978-a389cbe5. Run by raj.patel@concept2cure.pro (manager) at 2026-10-08 06:25:21 UTC. The seal is the platform’s tamper-evidence: it shows the data has not changed since it was produced. It is not an electronic signature.",
+  "signingKey": "jwt-secret-fallback (development fallback, not a dedicated key)",
+  "beforeInverted": "Sign-in and session events\n2026-10-08 to 2026-10-08 (UTC)\nThis report does not verify the audit chain.\nChoose the integr",
+  "inverted": {
+    "alert": "The start date is after the end date. Choose a start on or before the end.",
+    "result": ""
+  },
+  "memberDetail": "Available to organisation owners, admins, managers and approvers, and platform administrators.",
+  "memberRunButton": 0,
+  "memberAuditTrail": "ADMIN — COMPLIANCE\nAudit trail\n0 entries — hash-chained — append-only — 21 CFR Part 11 §11.10(e)\nHash chain\nCompliance reports\nExport signed bundle\nThe audit trail is not available to your role\nThe audit trail is read by organisation administrators and managers."
+}

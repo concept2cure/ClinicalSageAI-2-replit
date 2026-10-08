@@ -1,0 +1,357 @@
+{
+  "turns": [
+    {
+      "tag": "search",
+      "text": "s3 search stability",
+      "steps": [
+        {
+          "type": "step",
+          "plan": [
+            {
+              "tool": "search_project_documents",
+              "label": "Searching the Vault"
+            }
+          ]
+        },
+        {
+          "type": "tool_use",
+          "label": "Searching the Vault",
+          "source": "vault",
+          "preview": "stability",
+          "facts": [
+            {
+              "name": "Searched for",
+              "value": "stability"
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "label": "Searched the Vault",
+          "source": "vault",
+          "preview": "stability",
+          "facts": [
+            {
+              "name": "Searched for",
+              "value": "stability"
+            },
+            {
+              "name": "Found",
+              "value": "8 documents"
+            },
+            {
+              "name": "Took",
+              "value": "1.3s"
+            }
+          ],
+          "usedModel": false,
+          "status": "success"
+        }
+      ],
+      "liveSamples": [
+        "Searching the VaultrunningstabilitySearched for: stability",
+        "Searched the Vault1.3sstabilitySearched for: stabilityFound: 8 documentsTook: 1.3s",
+        "Searched the Vault1.3sstabilitySearched for: stabilityFound: 8 documentsTook: 1.3s | Recorded 05020b39af91Record 4a238821-dbb8-46dd-8a2b-a148c2a2c9ecSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18Download the record for inspection"
+      ]
+    },
+    {
+      "tag": "read",
+      "text": "s3 read the vault document stability protocol in full",
+      "steps": [
+        {
+          "type": "step",
+          "plan": [
+            {
+              "tool": "list_project_documents",
+              "label": "Listing the Vault documents"
+            }
+          ]
+        },
+        {
+          "type": "tool_use",
+          "label": "Listing the Vault documents",
+          "source": "vault",
+          "preview": null,
+          "facts": []
+        },
+        {
+          "type": "tool_result",
+          "label": "Listed the Vault documents",
+          "source": "vault",
+          "preview": null,
+          "facts": [
+            {
+              "name": "Found",
+              "value": "34 documents"
+            },
+            {
+              "name": "Took",
+              "value": "37 ms"
+            }
+          ],
+          "usedModel": false,
+          "status": "success"
+        },
+        {
+          "type": "step",
+          "plan": [
+            {
+              "tool": "read_project_document",
+              "label": "Reading \"Vorelinib-Stability-Protocol-STB-0042\""
+            }
+          ]
+        },
+        {
+          "type": "tool_use",
+          "label": "Reading \"Vorelinib-Stability-Protocol-STB-0042\"",
+          "source": "vault",
+          "preview": null,
+          "facts": [
+            {
+              "name": "Document",
+              "value": "Vorelinib-Stability-Protocol-STB-0042"
+            }
+          ]
+        },
+        {
+          "type": "tool_result",
+          "label": "Read \"Vorelinib-Stability-Protocol-STB-0042\"",
+          "source": "vault",
+          "preview": null,
+          "facts": [
+            {
+              "name": "Document",
+              "value": "Vorelinib-Stability-Protocol-STB-0042"
+            },
+            {
+              "name": "Characters read",
+              "value": "206 of 206"
+            },
+            {
+              "name": "Took",
+              "value": "19 ms"
+            }
+          ],
+          "usedModel": false,
+          "status": "success"
+        }
+      ],
+      "liveSamples": [
+        "Searched the Vault1.3sstabilitySearched for: stabilityFound: 8 documentsTook: 1.3s | Recorded 05020b39af91Record 4a238821-dbb8-46dd-8a2b-a148c2a2c9ecSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18Download the record for inspection",
+        "Searched the Vault1.3sstabilitySearched for: stabilityFound: 8 documentsTook: 1.3s | Recorded 05020b39af91Record 4a238821-dbb8-46dd-8a2b-a148c2a2c9ecSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18Download the record for inspection | Listing the Vault documentsrunning",
+        "Searched the Vault1.3sstabilitySearched for: stabilityFound: 8 documentsTook: 1.3s | Recorded 05020b39af91Record 4a238821-dbb8-46dd-8a2b-a148c2a2c9ecSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18Download the record for inspection | Listed the Vault documents37 msFound: 34 documentsTook: 37 ms",
+        "Searched the Vault1.3sstabilitySearched for: stabilityFound: 8 documentsTook: 1.3s | Recorded 05020b39af91Record 4a238821-dbb8-46dd-8a2b-a148c2a2c9ecSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18Download the record for inspection | Listed the Vault documents37 msFound: 34 documentsTook: 37 ms | Read Vorelinib-Stability-Protocol-STB-004219 msDocument: Vorelinib-Stability-Protocol-STB-0042Characters read: 206 of 206Took: 19 ms"
+      ]
+    },
+    {
+      "tag": "validate",
+      "text": "s3 validate",
+      "steps": [
+        {
+          "type": "step",
+          "plan": [
+            {
+              "tool": "validate_ectd_package",
+              "label": "Validating the eCTD package"
+            }
+          ]
+        },
+        {
+          "type": "tool_use",
+          "label": "Validating the eCTD package",
+          "source": "engine",
+          "preview": null,
+          "facts": []
+        },
+        {
+          "type": "tool_result",
+          "label": "Validated the eCTD package",
+          "source": "engine",
+          "preview": null,
+          "facts": [
+            {
+              "name": "Took",
+              "value": "2 ms"
+            }
+          ],
+          "usedModel": false,
+          "status": "success"
+        }
+      ],
+      "liveSamples": [
+        "Searched the Vault1.3sstabilitySearched for: stabilityFound: 8 documentsTook: 1.3s | Recorded 05020b39af91Record 4a238821-dbb8-46dd-8a2b-a148c2a2c9ecSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18Download the record for inspection | Listed the Vault documents37 msFound: 34 documentsTook: 37 ms | Read Vorelinib-Stability-Protocol-STB-004219 msDocument: Vorelinib-Stability-Protocol-STB-0042Characters read: 206 of 206Took: 19 ms | Recorded bbb1da4f7451Record ad7743dc-b399-4c88-883d-da25134a021fSHA-256 bbb1da4f7451faa3925e6d4008b937b92c53e40cde6186a5f63149969c1fff83Download the record for inspection",
+        "Searched the Vault1.3sstabilitySearched for: stabilityFound: 8 documentsTook: 1.3s | Recorded 05020b39af91Record 4a238821-dbb8-46dd-8a2b-a148c2a2c9ecSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18Download the record for inspection | Listed the Vault documents37 msFound: 34 documentsTook: 37 ms | Read Vorelinib-Stability-Protocol-STB-004219 msDocument: Vorelinib-Stability-Protocol-STB-0042Characters read: 206 of 206Took: 19 ms | Recorded bbb1da4f7451Record ad7743dc-b399-4c88-883d-da25134a021fSHA-256 bbb1da4f7451faa3925e6d4008b937b92c53e40cde6186a5f63149969c1fff83Download the record for inspection | Reading this as an audit",
+        "Searched the Vault1.3sstabilitySearched for: stabilityFound: 8 documentsTook: 1.3s | Recorded 05020b39af91Record 4a238821-dbb8-46dd-8a2b-a148c2a2c9ecSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18Download the record for inspection | Listed the Vault documents37 msFound: 34 documentsTook: 37 ms | Read Vorelinib-Stability-Protocol-STB-004219 msDocument: Vorelinib-Stability-Protocol-STB-0042Characters read: 206 of 206Took: 19 ms | Recorded bbb1da4f7451Record ad7743dc-b399-4c88-883d-da25134a021fSHA-256 bbb1da4f7451faa3925e6d4008b937b92c53e40cde6186a5f63149969c1fff83Download the record for inspection | Reading this as an audit | ReasoningWorking out which screen this needs. | Validated the eCTD package2 msTook: 2 ms",
+        "Searched the Vault1.3sstabilitySearched for: stabilityFound: 8 documentsTook: 1.3s | Recorded 05020b39af91Record 4a238821-dbb8-46dd-8a2b-a148c2a2c9ecSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18Download the record for inspection | Listed the Vault documents37 msFound: 34 documentsTook: 37 ms | Read Vorelinib-Stability-Protocol-STB-004219 msDocument: Vorelinib-Stability-Protocol-STB-0042Characters read: 206 of 206Took: 19 ms | Recorded bbb1da4f7451Record ad7743dc-b399-4c88-883d-da25134a021fSHA-256 bbb1da4f7451faa3925e6d4008b937b92c53e40cde6186a5f63149969c1fff83Download the record for inspection | Reading this as an audit | ReasoningWorking out which screen this needs.Working out which screen this needs. | Validated the eCTD package2 msTook: 2 ms"
+      ]
+    },
+    {
+      "tag": "draft",
+      "text": "s3 draft",
+      "steps": [
+        {
+          "type": "step",
+          "plan": [
+            {
+              "tool": "batch_draft_sections",
+              "label": "Drafting several sections at once"
+            }
+          ]
+        },
+        {
+          "type": "tool_use",
+          "label": "Drafting several sections at once",
+          "source": "authoring",
+          "preview": null,
+          "facts": []
+        },
+        {
+          "type": "tool_result",
+          "label": "Drafted several sections at once",
+          "source": "authoring",
+          "preview": null,
+          "facts": [
+            {
+              "name": "Took",
+              "value": "164 ms"
+            },
+            {
+              "name": "Model",
+              "value": "a model wrote part of this result"
+            }
+          ],
+          "usedModel": true,
+          "status": "success"
+        }
+      ],
+      "liveSamples": [
+        "Searched the Vault1.3sstabilitySearched for: stabilityFound: 8 documentsTook: 1.3s | Recorded 05020b39af91Record 4a238821-dbb8-46dd-8a2b-a148c2a2c9ecSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18Download the record for inspection | Listed the Vault documents37 msFound: 34 documentsTook: 37 ms | Read Vorelinib-Stability-Protocol-STB-004219 msDocument: Vorelinib-Stability-Protocol-STB-0042Characters read: 206 of 206Took: 19 ms | Recorded bbb1da4f7451Record ad7743dc-b399-4c88-883d-da25134a021fSHA-256 bbb1da4f7451faa3925e6d4008b937b92c53e40cde6186a5f63149969c1fff83Download the record for inspection | Reading this as an audit | Reasoned through the questionWorking out which screen this needs.Working out which screen this needs. | Validated the eCTD package2 msTook: 2 ms | Recorded b4ca0631faf1Record 8d08fab8-23ad-4daf-be6c-2b06ee895a25SHA-256 b4ca0631faf1e7f242b2a02ff27f435fd7907ecf2c0f8999ef78c71f08349739Download the record for inspection",
+        "Searched the Vault1.3sstabilitySearched for: stabilityFound: 8 documentsTook: 1.3s | Recorded 05020b39af91Record 4a238821-dbb8-46dd-8a2b-a148c2a2c9ecSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18Download the record for inspection | Listed the Vault documents37 msFound: 34 documentsTook: 37 ms | Read Vorelinib-Stability-Protocol-STB-004219 msDocument: Vorelinib-Stability-Protocol-STB-0042Characters read: 206 of 206Took: 19 ms | Recorded bbb1da4f7451Record ad7743dc-b399-4c88-883d-da25134a021fSHA-256 bbb1da4f7451faa3925e6d4008b937b92c53e40cde6186a5f63149969c1fff83Download the record for inspection | Reading this as an audit | Reasoned through the questionWorking out which screen this needs.Working out which screen this needs. | Validated the eCTD package2 msTook: 2 ms | Recorded b4ca0631faf1Record 8d08fab8-23ad-4daf-be6c-2b06ee895a25SHA-256 b4ca0631faf1e7f242b2a02ff27f435fd7907ecf2c0f8999ef78c71f08349739Download the record for inspection | Drafting several sections at oncerunning",
+        "Searched the Vault1.3sstabilitySearched for: stabilityFound: 8 documentsTook: 1.3s | Recorded 05020b39af91Record 4a238821-dbb8-46dd-8a2b-a148c2a2c9ecSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18Download the record for inspection | Listed the Vault documents37 msFound: 34 documentsTook: 37 ms | Read Vorelinib-Stability-Protocol-STB-004219 msDocument: Vorelinib-Stability-Protocol-STB-0042Characters read: 206 of 206Took: 19 ms | Recorded bbb1da4f7451Record ad7743dc-b399-4c88-883d-da25134a021fSHA-256 bbb1da4f7451faa3925e6d4008b937b92c53e40cde6186a5f63149969c1fff83Download the record for inspection | Reading this as an audit | Reasoned through the questionWorking out which screen this needs.Working out which screen this needs. | Validated the eCTD package2 msTook: 2 ms | Recorded b4ca0631faf1Record 8d08fab8-23ad-4daf-be6c-2b06ee895a25SHA-256 b4ca0631faf1e7f242b2a02ff27f435fd7907ecf2c0f8999ef78c71f08349739Download the record for inspection | Drafted several sections at once164 msTook: 164 msModel: a model wrote part of this result"
+      ]
+    },
+    {
+      "tag": "phone-search",
+      "text": "s3 search stability",
+      "steps": [],
+      "liveSamples": [
+        "Searched the Vault1.3sstabilitySearched for: stabilityFound: 8 documentsTook: 1.3s | Recorded 05020b39af91Record 4a238821-dbb8-46dd-8a2b-a148c2a2c9ecSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18Download the record for inspection | Listed the Vault documents37 msFound: 34 documentsTook: 37 ms | Read Vorelinib-Stability-Protocol-STB-004219 msDocument: Vorelinib-Stability-Protocol-STB-0042Characters read: 206 of 206Took: 19 ms | Recorded bbb1da4f7451Record ad7743dc-b399-4c88-883d-da25134a021fSHA-256 bbb1da4f7451faa3925e6d4008b937b92c53e40cde6186a5f63149969c1fff83Download the record for inspection | Reading this as an audit | Reasoned through the questionWorking out which screen this needs.Working out which screen this needs. | Validated the eCTD package2 msTook: 2 ms | Recorded b4ca0631faf1Record 8d08fab8-23ad-4daf-be6c-2b06ee895a25SHA-256 b4ca0631faf1e7f242b2a02ff27f435fd7907ecf2c0f8999ef78c71f08349739Download the record for inspection | Drafted several sections at once164 msTook: 164 msModel: a model wrote part of this result | Recorded b47030296e2eRecord e24274eb-8581-42ff-b735-59fa1d0267c8SHA-256 b47030296e2ee9921a3115b7dfb8c29a842faf5a7c9dd3f8ea912015ba79ae91Download the record for inspection"
+      ]
+    }
+  ],
+  "records": {
+    "search": {
+      "text": "Searched the Vault\n1.3s\nstability\nSearched for: stability\nFound: 8 documents\nTook: 1.3s\nRecorded 05020b39af91\nRecord 4a238821-dbb8-46dd-8a2b-a148c2a2c9ec\nSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18\nDownload the record for inspection",
+      "details": [
+        "Searched for: stability\nFound: 8 documents\nTook: 1.3s",
+        "Record 4a238821-dbb8-46dd-8a2b-a148c2a2c9ec\nSHA-256 05020b39af91f3af2867678e10bd0e56920021a97a07885614e5a2bf35fd6a18\nDownload the record for inspection"
+      ],
+      "previews": [
+        "stability"
+      ],
+      "glyphs": [
+        {
+          "row": "Searched the Vault1.3s",
+          "glyph": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s"
+        },
+        {
+          "row": "Recorded 05020b39af91",
+          "glyph": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s"
+        }
+      ]
+    },
+    "read": {
+      "text": "FIRST PASS\nListed the Vault documents\n37 ms\nFound: 34 documents\nTook: 37 ms\nWENT BACK · ROUND 2\nRead Vorelinib-Stability-Protocol-STB-0042\n19 ms\nDocument: Vorelinib-Stability-Protocol-STB-0042\nCharacters read: 206 of 206\nTook: 19 ms\nRecorded bbb1da4f7451\nRecord ad7743dc-b399-4c88-883d-da25134a021f\nSHA-256 bbb1da4f7451faa3925e6d4008b937b92c53e40cde6186a5f63149969c1fff83\nDownload the record for inspection",
+      "details": [
+        "Found: 34 documents\nTook: 37 ms",
+        "Document: Vorelinib-Stability-Protocol-STB-0042\nCharacters read: 206 of 206\nTook: 19 ms",
+        "Record ad7743dc-b399-4c88-883d-da25134a021f\nSHA-256 bbb1da4f7451faa3925e6d4008b937b92c53e40cde6186a5f63149969c1fff83\nDownload the record for inspection"
+      ],
+      "previews": [],
+      "glyphs": [
+        {
+          "row": "Listed the Vault documents37 ms",
+          "glyph": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s"
+        },
+        {
+          "row": "Read Vorelinib-Stability-Protocol-STB-004219 ms",
+          "glyph": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s"
+        },
+        {
+          "row": "Recorded bbb1da4f7451",
+          "glyph": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s"
+        }
+      ]
+    },
+    "validate": {
+      "text": "Reading this as an audit\nReasoned through the question\nWorking out which screen this needs.Working out which screen this needs.\nValidated the eCTD package\n2 ms\nTook: 2 ms\nRecorded b4ca0631faf1\nRecord 8d08fab8-23ad-4daf-be6c-2b06ee895a25\nSHA-256 b4ca0631faf1e7f242b2a02ff27f435fd7907ecf2c0f8999ef78c71f08349739\nDownload the record for inspection",
+      "details": [
+        "Working out which screen this needs.Working out which screen this needs.",
+        "Took: 2 ms",
+        "Record 8d08fab8-23ad-4daf-be6c-2b06ee895a25\nSHA-256 b4ca0631faf1e7f242b2a02ff27f435fd7907ecf2c0f8999ef78c71f08349739\nDownload the record for inspection"
+      ],
+      "previews": [],
+      "glyphs": [
+        {
+          "row": "Reading this as an audit",
+          "glyph": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s"
+        },
+        {
+          "row": "Reasoned through the question",
+          "glyph": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s"
+        },
+        {
+          "row": "Validated the eCTD package2 ms",
+          "glyph": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s"
+        },
+        {
+          "row": "Recorded b4ca0631faf1",
+          "glyph": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s"
+        }
+      ]
+    },
+    "draft": {
+      "text": "Drafted several sections at once\n164 ms\nTook: 164 ms\nModel: a model wrote part of this result\nRecorded b47030296e2e\nRecord e24274eb-8581-42ff-b735-59fa1d0267c8\nSHA-256 b47030296e2ee9921a3115b7dfb8c29a842faf5a7c9dd3f8ea912015ba79ae91\nDownload the record for inspection",
+      "details": [
+        "Took: 164 ms\nModel: a model wrote part of this result",
+        "Record e24274eb-8581-42ff-b735-59fa1d0267c8\nSHA-256 b47030296e2ee9921a3115b7dfb8c29a842faf5a7c9dd3f8ea912015ba79ae91\nDownload the record for inspection"
+      ],
+      "previews": [],
+      "glyphs": [
+        {
+          "row": "Drafted several sections at once164 ms",
+          "glyph": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s"
+        },
+        {
+          "row": "Recorded b47030296e2e",
+          "glyph": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s"
+        }
+      ]
+    },
+    "phone-search": {
+      "text": "Drafted several sections at once\n164 ms\nRecorded b47030296e2e",
+      "details": [],
+      "previews": [],
+      "glyphs": [
+        {
+          "row": "Drafted several sections at once164 ms",
+          "glyph": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s"
+        },
+        {
+          "row": "Recorded b47030296e2e",
+          "glyph": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s"
+        }
+      ]
+    }
+  },
+  "phone": {
+    "overflow": {
+      "scrollWidth": 429,
+      "clientWidth": 390
+    },
+    "after": {
+      "scrollWidth": 429,
+      "clientWidth": 390
+    }
+  }
+}

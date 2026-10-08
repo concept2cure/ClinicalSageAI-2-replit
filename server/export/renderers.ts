@@ -443,6 +443,17 @@ export async function renderHtmlToPdfTracked(
  * typesetting. Overstating that would push people to ignore it.
  */
 
+/** The vector calls the fallback's drawn rule needs. PDFKit has them; the local
+ *  declarations (server/types/pdfkit.d.ts) do not list them. */
+type RuleCanvas = {
+  y: number;
+  moveTo(x: number, y: number): RuleCanvas;
+  lineTo(x: number, y: number): RuleCanvas;
+  lineWidth(width: number): RuleCanvas;
+  strokeColor(color: string): RuleCanvas;
+  stroke(): RuleCanvas;
+};
+
 /** Set on page one of every fallback render. Asserted by the tests. */
 export const FALLBACK_PDF_NOTICE =
   'Plain-text rendering. The document styling could not be applied, so this ' +
@@ -470,7 +481,16 @@ export function renderFallbackPdf(html: string, opts: PdfRenderOptions = {}): Pr
     doc.fontSize(9);
     doc.text(FALLBACK_PDF_NOTICE, { align: 'left' });
     doc.moveDown(0.4);
-    doc.text('\u2500'.repeat(64), { align: 'left' });
+    /* A drawn rule, not a run of U+2500: the standard PDF font cannot encode
+       box-drawing characters, and the rule extracted as "% % % \u2026 %" above the
+       document (QA 2026-10-08, j4). */
+    const canvas = doc as unknown as RuleCanvas;
+    canvas.moveTo(doc.page.margins.left, canvas.y)
+      .lineTo(doc.page.width - doc.page.margins.right, canvas.y)
+      .lineWidth(0.5)
+      .strokeColor('#999999')
+      .stroke();
+    canvas.strokeColor('black');
     doc.moveDown(0.8);
 
     const text = htmlToPlainText(html);

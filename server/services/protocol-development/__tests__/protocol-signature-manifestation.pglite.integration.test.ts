@@ -35,6 +35,12 @@ vi.mock('../../../db', () => ({
   },
   db: {},
 }));
+// The signer's role, as the ceremony reads it: the membership row (§11.10(g)),
+// here from the PGlite organization_users table (the real lookup is drizzle's).
+vi.mock('../../part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async (userId: number, orgId: number) =>
+    (await holder.query('SELECT role FROM organization_users WHERE user_id = $1 AND organization_id = $2', [userId, orgId])).rows[0]?.role ?? null,
+}));
 const ledger = vi.hoisted(() => ({ seq: 0 }));
 vi.mock('../../../routes/c2c/actions', () => ({
   verifyReauth: async () => ({ ok: true }),
@@ -202,8 +208,10 @@ beforeAll(async () => {
     INSERT INTO users (id, email, name) VALUES
       (${CREATOR},'c@e.test','Dr Carla Creator'), (${APPROVER},'d@e.test','Dana Approver'),
       (${REVIEWER},'r@e.test','Dr Rui Reviewer'), (${STRANGER},'s@e.test','Stranger');
+    -- The signers hold the roles that may sign (P-18): the ceremony checks the
+    -- membership row before the password (§11.10(g), QA 2026-10-08).
     INSERT INTO organization_users (organization_id, user_id, role) VALUES
-      (${ORG},${CREATOR},'admin'), (${ORG},${APPROVER},'member'), (${ORG},${REVIEWER},'member'),
+      (${ORG},${CREATOR},'admin'), (${ORG},${APPROVER},'approver'), (${ORG},${REVIEWER},'reviewer'),
       (${OTHER_ORG},${STRANGER},'member');
   `);
   for (const m of [

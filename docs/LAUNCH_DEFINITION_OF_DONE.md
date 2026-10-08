@@ -205,6 +205,172 @@ and the app applies its own limits.
 P-2 admits only Claude's origins as connector clients. A public-only scope for third-party agents (plan WS9,
 `c2c:public`) is built with the first such client, not before.
 
+## Product decisions, 2026-10-08 (product owner, under the founder's delegation)
+
+The founder delegated these on 2026-10-08 ("you can make these decisions without me"), while the client-journey
+fixes from the browser QA walk of that day were landing (`docs/evidence/QA-2026-10-08/`).
+
+### P-13 — Members may create a program
+
+`canCreateProgram` (`server/services/c2c/program-access.ts`) refuses only read-only roles. A member creating a
+regulated program is how a regulatory user starts work, and the organisation's role vocabulary is open, so an
+allow-list would lock out every role nobody listed. Kept as it is. The program's lead is its creator, and mutating
+another person's program still needs `canMutateProgram`.
+
+### P-14 — A document is placed only into a submission anchored to its program
+
+The filing picker already offers only the program's own submissions (`24e8cb5f4`). A direct API write of a
+program's document into a submission that belongs to no program is now refused as well, with a named error. A
+placement the server cannot judge is a placement into an unknown dossier; failing closed is the rule. A legacy
+submission with no program is anchored first, through the Submission Center, and then accepts placements.
+
+### P-15 — Documents already split across two codes are not merged
+
+Before `38179495f`, the data room and the Vault derived different codes for one file, so some documents exist as two
+version families (for example Vorelinib STB-0042). Merging them would rewrite recorded rows. They stay as recorded;
+the shared code rule stops new splits, and a person retires the duplicate through the existing disposition flow.
+
+### P-16 — The recorded type labels a document; the classifier's kind is the fallback
+
+An edited type shows in the tree, list, uploads lane and header (`cc96676e3`). The classifier's evidence kind is
+used only when the recorded type is empty or OTHER (the ingest's "not told" value), and it stays visible in the
+filing block's "Looks like" line.
+
+### P-17 — A project's record counts are its current records
+
+Superseded versions, retired sources and withdrawn sources are not counted as records (`cc96676e3`), so the project
+home agrees with the Vault tree and the Data room.
+
+### P-18 — Signing authority is assigned, by role, to named people
+
+The signing policy stays as the security review left it (admin, approver, reviewer; P1-44b): a manager's password does
+not make a signature. The QA walk found the consequence: `approver` and `reviewer` could not be assigned, so only an
+administrator could sign anything, and an administrator who authored a document could not approve it. An administrator
+can now assign `approver` and `reviewer` in Admin Access, with a reason, like every membership change. An approver may do
+everything a manager may, and sign; a reviewer may do everything a member may, and sign. An author still cannot approve
+their own document. A deployment may still widen the policy with `ESIGNATURE_SIGNING_ROLES`.
+
+### P-19 — Every program a client can open has its project record
+
+Programs created after the dossier anchor existed (BX-256, Vorelinib in QA) have no `projects` row, so the schedule,
+tasks and AnA's project context answer "no record" for them. Intake creates the anchor in the same transaction as the
+program. Existing unanchored programs are anchored by an idempotent statement in the migration set (Rule 1), not by a
+laptop script.
+
+The fixer raised three questions about P-19, decided the same day:
+- An organisation with several workspaces and none marked as its own is refused (409) rather than having one guessed.
+  The workspace decides who may see a project. The follow-up is a workspace choice in the New Project wizard for
+  multi-client organisations (a CRO), not a default.
+- When a backfilled program's recorded creator is not a user id, its project owner is left empty. Ownership grants
+  access, so it is not inferred.
+- The demo seeds use the code BX-204 for two different products. The seed's dossier-map project gets its own code;
+  demo data must not depend on a code collision.
+
+### P-20 — A safety report never infers what nobody stated
+
+The onset date is stated either as a date or explicitly as unknown; a blank is refused. When expectedness is not
+recorded, the expedited-reporting verdict is "not determined: expectedness not assessed", never "not reportable". A
+missing determination produces no verdict at all, so it cannot become an unsent 15-day report.
+
+Follow-up decisions on P-20, from the second IND pass (`d155ef099`):
+- "Not determined" applies only where expectedness decides the outcome. An event recorded as non-serious, or as not
+  suspected, is not expedited on those stated facts, and the verdict says so.
+- Every IND submission carries a Form 1571, under 21 CFR 312. A continuing IND sequence is held to its 1.1 form even
+  though it is not held to the original's Module 1 list.
+- Save to dossier for a program with no project record answers 409, not 200 with `governed:false`.
+- No screen matches a program to an application by name, including Dispatch readiness.
+- The sponsor address and IND type are stored on the program, in additive columns under Rule 1. Today they are sent
+  with each build.
+
+### P-21 — Regulated choices start unstated
+
+Every select whose value lands in a regulated record starts on "Not stated — choose" and sends nothing until chosen. This
+covers safety-report determinations, the briefing-book meeting type, the LOA file type, the amendment category and the
+forms panel's phase. The filing-target picker pre-selects a sequence only when exactly one is open.
+
+### P-22 — Approval gates the release, not the technical validation
+
+A Vault leaf whose version is not approved and current blocks Freeze, dispatch and transmit. At Validated it is reported
+as a warning ("not yet approved"), not an error. Publishers validate while final approvals are still being collected, and
+the release gates already refuse an unapproved leaf.
+
+### P-23 — A signature serves only the act it was given for
+
+A signature collected for a freeze or transmit that the server then refuses is void. It cannot be reused later when the
+gate clears. Transmit checks a typed application number against the program's recorded one, as the export already does.
+
+### P-25 — Each person manages their own account; administrators manage membership
+
+The 2026-10-08 onboarding fix (`ddc8c0db5`) raised these:
+- **An account panel is built.** A person can see their profile, change their password, and enrol or remove an
+  authenticator from the shell's account menu. It is a shell surface, so it is inside the launch catalog. The server
+  routes already exist (`/password/change`, `/mfa/setup`, `/mfa/enable`, `/mfa/disable`). Without the panel, the
+  authenticator that ADR-0014 expects of signers cannot be enrolled anywhere in the product.
+- **Removing a member is the organisation-level deactivation.** No "disabled but kept" membership state is added.
+  Suspending an account globally stays a platform action.
+- **A setup link is re-issued** by re-inviting a member who never activated, through the existing invite route. The
+  link is never logged, in any environment.
+- **Scopes are derived from the checks that enforce them.** Organisations do not edit them, and the "Edit scopes"
+  control does not offer it. Approver and reviewer as SCIM groups come after launch.
+
+Follow-up decisions on P-25, from the account panel (`e6fbacf33`):
+- A person's name stays read-only in the panel. It is printed on their future signatures, and the route that writes
+  it validates nothing and leaves no audit record.
+- `GET /session` names no organisation when the session has none. It must not fall back to "Concept2Cure".
+- Now that enrolment exists, ADR-0014 P1-2b is enforced for electronic signatures in production. A signer with no
+  authenticator is refused, with "Enrol an authenticator in Account to sign. Nothing was signed."
+- Wrong codes at `/mfa/enable` and `/mfa/disable` count against the per-account limit, as at `/mfa/verify`.
+- `authService.updateProfile` points at a route that does not exist, and is removed.
+
+### P-26 — A report shows only what an engine computed, for the program asked about
+
+From the reporting fix (`4ac15bdd1`):
+- **No program is picked for the person.** With none open, the canvas asks which program the report is for. The
+  earlier "flagship" fallback chose by lowest id.
+- **Confidence is a measured figure or nothing.** The executive digest does not require one, and finalizes on the
+  readiness evaluator's verdict. The evidence & provenance trace does require one, so it stays below final until its
+  confidence is the lineage engine's measured provenance completeness. That is a follow-up, and the registry change is
+  a new version row, never an edit in place (Rule 1).
+- **Packs list only types an engine computes.** Engine-less types are listed once, as "not computed in this release",
+  rather than as tiles inside packs.
+- **Registers are organisation-wide.** They live in Audit & compliance reports and are not offered on a program's
+  canvas.
+- An older run with no blockers that was never signed now renders below final and can be finalized. This is
+  accepted: it was never final.
+
+Follow-up decisions from the second Submission Center and IND/reporting passes (`d5176f241`, `aac603a1b`):
+- **Registers.** The 16 research-compliance registers stay on the canvas, labelled organisation-wide, until each
+  becomes a compliance-report definition, sealed and chained like the eight Part 11 reports. They are never left
+  unreachable.
+- **Trace finalisation.** A trace finalises at 70% measured provenance completeness. Machine-drafted text counts as
+  having a recorded origin, as on Authoring's bar. Review state is a separate fact.
+- **Pack copy.** A pack's description names only the reports it computes.
+- **Form 356h.** Every submission to an NDA, BLA or ANDA carries a Form 356h, so a continuing sequence of those
+  types is held to 1.1, as an IND sequence is to its 1571.
+- **Protocol reviewers.** A protocol reviewer is assigned only if they hold signing authority, so an assignment
+  cannot end at a 403.
+- **EU application numbers** are recorded in dash form, as the export and package spine already require.
+- **Malformed requests.** A request refused before anything is read voids no signature. Only a refused act does.
+- **Report finalize** keeps one authority check: the ceremony's floor. The route's own copy is removed.
+
+### P-24 — AnA works like Claude, and the client sees the Summary of the work
+
+The founder asked for this on 2026-10-08, with screenshots of Claude's per-task Summary. The design is
+`docs/design/ANA_AGENT_WORK_VIEW_2026-10-08.md`, and its decisions are recorded there ("Decisions taken"). In short:
+- `ANA-SUMMARY` is a founder-directed lane that moves no D-row.
+- Order of work:
+  - S1: reads deliver what they record.
+  - S2: connector search defects.
+  - S3: one step label table.
+  - S4: the Summary, live and sealed.
+  - S5: task attribution.
+  - S6: Drive listing and import into the Vault, limited to admin-allowed folders.
+- A turn keeps running when the phone locks. This is designed after S4.
+- The Summary is visible to whoever can read the thread. The full record stays with the asker and administrators.
+- Glyphs are neutral and name their source, with no third-party logos.
+- One 5,000-character read window applies to every windowed read.
+- Round budgets are unchanged.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one

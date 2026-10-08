@@ -231,6 +231,24 @@ describe('who may take the next step, and what each step says (VR-13)', () => {
     expect(await screen.findByText(/it is not known whether this was recorded/)).toBeTruthy();
   });
 
+  /* QA 2026-10-08 (j4): the server's 500 says "Quote the reference below" and
+     sends the reference beside it; the panel showed the sentence and no reference. */
+  it('a server failure shows the reference its sentence asks the user to quote', async () => {
+    versions = [version(), earlier];
+    mockApi();
+    answers[`POST /api/regulatory/documents`] = refuse(500, {
+      error: 'INTERNAL_ERROR',
+      message:
+        'Something went wrong while handling the document lifecycle request. The problem has been logged. ' +
+        'Quote the reference below if you contact support.',
+      correlationId: '884e43a1-258e-45a6-8d55-8bcb519f7258',
+    });
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: /^Send for review:/ }));
+    fireEvent.click(within(screen.getByRole('group', { name: 'Confirm sending for review' })).getByRole('button', { name: 'Send for review' }));
+    expect(await screen.findByText(/Reference: 884e43a1-258e-45a6-8d55-8bcb519f7258/)).toBeTruthy();
+  });
+
   it('the list row says the stage beside the filing', async () => {
     versions = [version(), earlier];
     mockApi();

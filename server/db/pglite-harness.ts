@@ -477,6 +477,12 @@ CREATE TABLE IF NOT EXISTS projects (
   organization_id       INTEGER NOT NULL,
   name                  TEXT NOT NULL DEFAULT '',
   regulatory_program_id UUID,
+  -- Read with the anchor (program-project-anchor readProgramAnchorRow). Without
+  -- it the anchor read failed here as an undefined column, which the resolver
+  -- treats as "no anchor", so a program WITH its project record could never be
+  -- exercised on the governed path (QA 2026-10-08, j7 finding 7). Nullable:
+  -- the harness has no client_workspaces table to point at.
+  client_workspace_id   INTEGER,
   created_at            TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -519,7 +525,8 @@ CREATE TABLE IF NOT EXISTS concept2cure_artifacts (
  * its `submissions` row by.
  *
  * Columns mirror shared/schema/programs.ts and migrations/20260524_program_
- * workbench_schema.sql (+ 20260907 `application_number`). NOT NULL is kept only
+ * workbench_schema.sql (+ 20260907 `application_number`, + 20261008b
+ * `sponsor_address` and `ind_type`). NOT NULL is kept only
  * where the real schema has it and an insert needs it, and there are no FKs
  * here — a fixture that drags in the whole graph stops being usable. The
  * same-organization keys other tables hold to it (PF-04) are the real
@@ -540,6 +547,8 @@ CREATE TABLE IF NOT EXISTS regulatory_programs (
   primary_agency         TEXT NOT NULL DEFAULT 'FDA',
   product_name           TEXT NOT NULL,
   application_number     TEXT,
+  sponsor_address        TEXT,
+  ind_type               TEXT,
   indication             TEXT,
   target_submission_date TIMESTAMPTZ,
   created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),

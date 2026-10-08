@@ -1,0 +1,8 @@
+== 5078 (server code before the fix): what the old clients requested ==
+-- Review board, org-wide default (old client sent scope=all with no programId):
+200 queue items: 0
+-- Insights overview, old client sent no programId:
+200 leadProgram: C2C-001 | C2C-001 IND Program | projectId 1 | readiness None
+-- Schedule / unified work by program UUID (HLV-333, anchored to projects.id 11):
+400 {"error":"Invalid project id"}
+400 {"error":"Invalid project id"}

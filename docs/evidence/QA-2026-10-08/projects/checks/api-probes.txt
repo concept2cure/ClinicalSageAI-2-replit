@@ -1,0 +1,13 @@
+# API probes, 2026-10-08 ~03:20 UTC. 5078 = launch scope off (dev default); 5086 = same code and QA DB, LAUNCH_SCOPE_ENFORCE=on.
+--- :5078 GET /api/clinical-regulatory-evidence/findings?limit=25
+404
+{"error":"API endpoint not found","path":"/api/clinical-regulatory-evidence/findings","method":"GET","message":"The requested API endpoint does not exist. Check the URL and try again.","timestamp":"2026-10-08T03:17:25.534Z"}
+--- :5078 GET /api/lifecycle/renewals
+500
+{"error":"INTERNAL_ERROR","message":"Something went wrong while handling the lifecycle-obligation request. The problem has been logged. Quote the reference below if you contact support.","correlationId":"3fa22a2e-e5cf-4e1f-add6-a9c6759fbf87"}
+--- :5086 GET /api/clinical-regulatory-evidence/findings?limit=25
+403
+{"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}
+--- :5086 GET /api/lifecycle/renewals
+500
+{"error":"INTERNAL_ERROR","message":"Something went wrong while handling the lifecycle-obligation request. The problem has been logged. Quote the reference below if you contact support.","correlationId":"d5fe7861-6643-48d3-9770-9c12797c25fb"}

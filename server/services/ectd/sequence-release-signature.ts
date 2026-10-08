@@ -252,7 +252,8 @@ export async function resolveSequenceReleaseSignature(params: {
   if (isWithdrawn(newest)) {
     return {
       verdict: 'revoked',
-      detail: `the release signature on ${target} was superseded or revoked`,
+      // Voided too: a dispatch the server refused voids the signature given for it (P-23).
+      detail: `the release signature on ${target} was superseded, revoked or voided`,
       signatureId,
     };
   }

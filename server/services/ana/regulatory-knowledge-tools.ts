@@ -41,6 +41,7 @@ import type { ToolContext } from './AnaToolExecutor.js';
 import type { RegisterFn } from './document-tools-shared.js';
 import { resolveOpenProgram } from '../c2c/program-access';
 import { createScopedLogger } from '../../utils/logger';
+import { RESULT_BUDGET } from './agentic-loop.js';
 import {
   ELSA_NOTE,
   SUBMISSION_CHAIN,
@@ -56,8 +57,8 @@ import {
 
 const logger = createScopedLogger('regulatory-knowledge-tools');
 
-/** The most any one result may weigh, serialized. */
-export const RESULT_BUDGET = 5000;
+/** The most any one result may weigh, serialized: the one budget (P-24), defined beside the cap it avoids. */
+export { RESULT_BUDGET };
 /** Vault rows read for a standing; one more than this means the read was cut short. */
 export const VAULT_FACTS_MAX = 5000;
 

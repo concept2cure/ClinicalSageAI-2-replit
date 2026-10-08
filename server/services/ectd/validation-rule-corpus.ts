@@ -272,6 +272,20 @@ export const RULE_CORPUS: ValidationRule[] = [
     findingCode: 'DOCUMENT_CONTENT_MISMATCH',
   },
   {
+    // 2026-10-08 (QA j6). FD5, founder decision 2026-10-01: nothing is grandfathered.
+    id: 'DOCUMENT_NOT_APPROVED',
+    title: 'Every leaf’s source document is approved for transmission',
+    category: 'integrity',
+    regions: ['ich'],
+    severity: 'high',
+    rationale:
+      'Only approved documents leave for an agency: a Vault version must be approved on its lifecycle record, current, and approved for the bytes staged (vaultVersionNotTransmittable); an authored document must be at an approved status (notFinalizedStatus). The assembler already refused such a leaf at freeze, dispatch and transmit, but only after the e-signature was taken. Readiness reports it beside the leaf so the refusal is seen before anyone signs. ' +
+      'P-22 (2026-10-08): it is a warning at validation ("not yet approved") — publishers validate while final approvals are collected — and the freeze, dispatch and transmit verdicts block on it.',
+    source: PRODUCT_POLICY,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'DOCUMENT_NOT_APPROVED',
+  },
+  {
     id: 'UNPLACEABLE_DOCUMENT_TABLE',
     title: 'Every non-delete leaf points at a document table the assembler can materialize',
     category: 'integrity',
@@ -384,7 +398,8 @@ export const RULE_CORPUS: ValidationRule[] = [
     category: 'content',
     regions: ['fda', 'eu', 'jp', 'ca', 'au', 'ch'],
     severity: 'medium',
-    rationale: 'Each region’s Module 1 mandates specific administrative documents; absence is surfaced (advisory at dispatch, decisive at agency intake).',
+    rationale:
+      'Each region’s Module 1 mandates specific administrative documents. In an original sequence of an application kind the regional Module 1 record models (US IND/NDA/BLA/ANDA, EU MAA, JP J-NDA), a heading the record requires of that kind is an error — the application is not one the agency would receive without it. Elsewhere the region profile’s list is advisory at dispatch and decisive at agency intake (QA 2026-10-08, j7).',
     // FDA's criteria as well as the EU's: an FDA IND is the sequence that trips
     // this most, and a finding that cited only the EU family read as the wrong
     // agency's rule.
@@ -505,12 +520,14 @@ export const RULE_CORPUS: ValidationRule[] = [
   },
   {
     id: 'STRUCTURAL_GATE_CLEAR',
-    title: 'No open error-severity finding, and no unacknowledged Shadow Review critical',
+    title: 'No open error-severity finding, no leaf awaiting approval, and no unacknowledged Shadow Review critical',
     category: 'integrity',
     regions: ['ich'],
     severity: 'high',
     rationale:
-      'The deterministic floor: an error-severity structural finding, or a critical Shadow Review finding nobody has acknowledged, stops dispatch. A count that could not be determined blocks as well — it is not a count of zero.',
+      'The deterministic floor: an error-severity structural finding, or a critical Shadow Review finding nobody has acknowledged, stops dispatch. ' +
+      'A leaf whose document is not yet approved stops freeze, dispatch and transmit by its own blocker; at validation it is a warning (P-22, 2026-10-08: approval gates the release, not the technical validation). ' +
+      'A count that could not be determined blocks as well — it is not a count of zero.',
     source: `${ICH_SPEC} (error findings); ${PRODUCT_POLICY} (Shadow Review criticals)`,
     enforcement: 'dispatch-readiness',
     findingCode: 'STRUCTURAL_GATE_CLEAR',

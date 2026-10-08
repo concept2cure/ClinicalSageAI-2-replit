@@ -1,0 +1,12 @@
+{
+  "base": "4920b8866d97f30981b4a63bcde91489bbcfd8c5",
+  "files": {
+    "server/services/ana/run-control.ts": "4830a850ae2fdbef46958f5ae2f54d6a8e9cafc26219cbde5c5db9889cb7edc7",
+    "server/services/ana/__tests__/run-control-poll-backpressure.test.ts": "4a5f2b4b3eee424e2a9912ff37b30a77cbf493f4880f2ad8375bfda867398f11"
+  },
+  "node": "22.23.3",
+  "command": "node node_modules/vitest/vitest.mjs run server/services/ana/__tests__/run-control-poll-backpressure.test.ts --config vitest.config.ts",
+  "exitCode": 1,
+  "passed": 2,
+  "failed": 6
+}

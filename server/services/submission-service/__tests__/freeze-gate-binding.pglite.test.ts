@@ -173,7 +173,10 @@ describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
       code: 'INVALID_STATE',
       message: expect.stringMatching(/leaves changed while this freeze was being checked/),
     });
-    expect((await statusOf(1)).status).toBe('validated');
+    // Not frozen. Since 2026-10-08 (QA j6) the leaf write itself returns a
+    // Validated sequence to Assembling, so it no longer reads 'validated' over
+    // content its validation never saw.
+    expect((await statusOf(1)).status).toBe('assembling');
   }, 120_000);
 
   it('refuses the freeze when a leaf is removed while the gate is assembling', async () => {
@@ -190,14 +193,20 @@ describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
       code: 'INVALID_STATE',
       message: expect.stringMatching(/leaves changed while this freeze was being checked/),
     });
-    expect((await statusOf(2)).status).toBe('validated');
-    expect(await chainRows(2), 'a refused freeze left a status transition in the audit chain').toEqual([]);
-    // With nothing moving, the same sequence freezes under a fresh signature —
-    // and the freeze commits with its chained §11.10(e) row, not without it.
+    // Not frozen; the removal returned it to Assembling (2026-10-08, QA j6).
+    expect((await statusOf(2)).status).toBe('assembling');
+    // The one transition on record is the removal's own return to Assembling,
+    // signed by no one; the refused freeze left none.
+    const afterRefusal = (await chainRows(2)) as Array<{ action: string; signature: string | null }>;
+    expect(afterRefusal.filter((r) => r.signature != null), 'a refused freeze left a status transition in the audit chain').toEqual([]);
+    expect(afterRefusal.map((r) => r.action)).toEqual(['SEQUENCE_TRANSITIONED']);
+    // With nothing moving, the same sequence — validated again — freezes under a
+    // fresh signature, and the freeze commits with its chained §11.10(e) row.
+    await h.pglite.query(`UPDATE ectd_sequences SET status = 'validated' WHERE id = 2`);
     const fresh = await sign(2, 'freeze');
     await freezeSequence(2, ctx, fresh);
     expect((await statusOf(2)).status).toBe('frozen');
-    expect(await chainRows(2), 'the freeze committed without the chained audit row it is written with').toEqual([
+    expect(((await chainRows(2)) as Array<{ action: string }>).filter((r) => r.action === 'SEQUENCE_FROZEN'), 'the freeze committed without the chained audit row it is written with').toEqual([
       { action: 'SEQUENCE_FROZEN', tenant_id: ORG, actor_id: USER, target: 'ectd_sequence:2', chained: true, signature: fresh },
     ]);
   }, 120_000);

@@ -85,7 +85,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const BASELINE = path.join(ROOT, 'scripts/ci/sign-ceremony-baseline.json');
 
 const REAUTH = /\b(?:verifyReauth|reverifySigner)\s*\(/;
-const SIGNATURE_ROW = /\b(?:persistGovernedActionSignature|persistGovernedSignSignature|persistElectronicSignature|writeMutation)\s*\(/;
+// insertAuthoringSignature (server/routes/authoring.router.ts) writes the
+// authoring_signatures row, the Authoring module's Part 11 signature record — the
+// row the baseline's authoring.router.ts reason already names as the ceremony's.
+// Added 2026-10-08 when the e-sign handler began stamping approved_at beside it
+// (QA j4); the selftest shows the same stamp failing without it.
+const SIGNATURE_ROW = /\b(?:persistGovernedActionSignature|persistGovernedSignSignature|persistElectronicSignature|writeMutation|insertAuthoringSignature)\s*\(/;
 
 /** Top-level statement starts: the unit a "handler" is measured over. */
 const HANDLER_START = /^(?:router\s*\.\s*\w+\s*\(|registerToolHandler\s*\(|(?:export\s+)?(?:default\s+)?(?:async\s+)?function\b|(?:export\s+)?const\s+[\w$]+\s*=\s*(?:async\b|\()|app\s*\.\s*\w+\s*\()/;

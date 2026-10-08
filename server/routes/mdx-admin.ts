@@ -35,6 +35,9 @@ import { ok, orgRequired, serverError } from '../lib/api-response';
 import { pool } from '../db';
 import { isDevAuthAllowed } from '../auth/dev-auth-policy';
 import { mfaEnrolmentOf } from '../services/mfa-enrolment';
+import { isActiveAccountStatus, isPendingVerificationStatus } from '../services/account-standing';
+import { INVITE_PASSWORD_HASH_PREFIX } from '../services/password-setup-token';
+import { roleScopesOf } from '../services/tenant/role-scopes';
 import { humanizeEventType, linkedSignatures, type LinkedSignature } from './audit-trail-ledger.routes';
 
 // People are named through public.actor_name, not a join on users: since users
@@ -116,6 +119,23 @@ interface MemberRow {
   user_id: number; name: string | null; email: string | null;
   role: string | null; status: string | null; mfa_enabled: boolean | null;
   mfa_method: string | null; last_login: Date | string | null; permissions: unknown;
+  /** The setup link has not been redeemed: the password hash is still the invitation's. */
+  invite_pending: boolean | null;
+}
+
+/**
+ * Whether the member can sign in, in the surface's three words (QA 2026-10-08,
+ * j9 finding 4). An invitee's users row is 'active' from the moment they are
+ * invited, with an unusable password hash, so `status` alone counted people who
+ * cannot sign in as active and left the Invited filter empty.
+ *   invited  — the setup link is not redeemed yet (or a sign-up's address is
+ *              not confirmed yet): the account exists and cannot sign in.
+ *   active   — users.status 'active' (services/account-standing.ts).
+ *   disabled — any other status: suspended by the platform, deprovisioned.
+ */
+function memberStateOf(r: Pick<MemberRow, 'status' | 'invite_pending'>): 'invited' | 'active' | 'disabled' {
+  if (r.invite_pending === true || isPendingVerificationStatus(r.status)) return 'invited';
+  return isActiveAccountStatus(r.status ?? 'active') ? 'active' : 'disabled';
 }
 
 router.get('/admin', async (req: Request, res: Response) => {
@@ -130,16 +150,26 @@ router.get('/admin', async (req: Request, res: Response) => {
   try {
     const { rows } = await pool.query<MemberRow>(
       `SELECT ou.user_id, u.name, u.email, ou.role, u.status, u.mfa_enabled,
-              u.mfa_method, u.last_login, ou.permissions
+              u.mfa_method, u.last_login, ou.permissions,
+              (u.password_hash LIKE $2) AS invite_pending
          FROM organization_users ou
          JOIN users u ON u.id = ou.user_id
         WHERE ou.organization_id = $1
         ORDER BY u.name NULLS LAST`,
-      [orgId],
+      [orgId, `${INVITE_PASSWORD_HASH_PREFIX}%`],
     );
 
+    /* The member drawer changes a role and removes a member through PATCH /
+       DELETE /api/tenant-users/:organizationId/:userId (QA 2026-10-08, j9).
+       Those take the organization and the numeric user id, so both are sent as
+       themselves, and `self` marks the caller's own row, whose role and
+       membership that route refuses to change (SELF_ROLE_CHANGE /
+       SELF_REMOVAL). The route remains the authority on every change. */
+    const callerId = Number((req as any).user?.id ?? (req as any).userId);
     const members = rows.map((r) => ({
       id: `u-${r.user_id}`,
+      userId: Number(r.user_id),
+      self: Number.isInteger(callerId) && callerId > 0 && Number(r.user_id) === callerId,
       initials: initials(r.name, r.email),
       name: r.name ?? r.email ?? `User ${r.user_id}`,
       email: r.email ?? '',
@@ -151,18 +181,19 @@ router.get('/admin', async (req: Request, res: Response) => {
       // password sign-in asks this account for an emailed code instead.
       mfa: mfaEnrolmentOf({ mfaEnabled: r.mfa_enabled, mfaMethod: r.mfa_method }).mfaEnabled,
       lastSeen: r.last_login ? new Date(r.last_login).toISOString() : '',
-      state: r.status ?? 'active',
+      state: memberStateOf(r),
       programs: [] as string[],
     }));
 
-    // Roles derived from the live membership rows.
+    // Roles derived from the live membership rows; what each may do is read
+    // from the checks that enforce it (role-scopes.ts; QA 2026-10-08, j9).
     const roleCounts = new Map<string, number>();
     for (const m of rows) {
       const id = (m.role ?? 'member').toLowerCase();
       roleCounts.set(id, (roleCounts.get(id) ?? 0) + 1);
     }
     const roles = [...roleCounts.entries()].map(([id, count]) => ({
-      id, label: cap(id), members: count, desc: '', scopes: [] as string[],
+      id, label: cap(id), members: count, ...roleScopesOf(id),
     }));
 
     // Grants: one row per member's org-level role assignment.
@@ -343,16 +374,17 @@ router.get('/admin', async (req: Request, res: Response) => {
     };
 
     const active = members.filter((m) => m.state === 'active').length;
+    const invited = members.filter((m) => m.state === 'invited').length;
     const keysRead = !unavailable.includes('apiKeys');
     const kpis = [
-      { label: 'Members', metric: String(members.length), meta: `${active} active` },
+      { label: 'Members', metric: String(members.length), meta: `${active} active${invited ? ` · ${invited} invited` : ''}` },
       { label: 'Roles', metric: String(roles.length), meta: 'Distinct org roles' },
       { label: 'Authenticator app', metric: String(members.filter((m) => m.mfa).length), meta: `of ${members.length} members enrolled` },
       { label: 'API keys', metric: keysRead ? String(apiKeys.length) : '--', meta: keysRead ? 'active, org-scoped' : 'could not be read' },
     ];
 
     return ok(res, {
-      kpis, members, roles, grants, apiKeys, audit, settings, sso,
+      organizationId: orgId, kpis, members, roles, grants, apiKeys, audit, settings, sso,
     }, {
       count: members.length,
       /* Names the facets whose read FAILED, so the surface renders an error for

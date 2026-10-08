@@ -27,7 +27,7 @@
 import { describe, expect, it } from 'vitest';
 import { summarizeDecisions } from '../lineage-dossier';
 import { serializeDocumentLineageDossierXml } from '../lineage-dossier-xml';
-import { computeLineageConfidence } from '../../report-os/lineage-trace-report';
+import { lineageTraceConfidence } from '../../report-os/lineage-trace-report';
 
 /** The smallest dossier the renderers accept, with the decision read failed. */
 function dossierWithDecisions(unavailable: string | null): any {
@@ -87,15 +87,20 @@ describe('the exported XML', () => {
   });
 });
 
-describe('computeLineageConfidence', () => {
-  it('will not clear the sealing threshold on an unmeasured dossier', () => {
-    /* DEFAULT_FINAL_CONFIDENCE_THRESHOLD is 70. Before, an unmeasured dossier
-       merely lost 15 points and sealed at 80. */
-    const score = computeLineageConfidence(dossierWithDecisions('read failed'));
-    expect(score).toBeLessThan(70);
+describe('lineageTraceConfidence', () => {
+  /* The trace's confidence is the measured provenance completeness (P-26).
+     An unmeasured decision read leaves the trace unmeasured in full, so there
+     is no confidence and the run cannot reach final (requireConfidence). */
+  const complete = {
+    percent: 100, contentLength: 10, attributedChars: 10, unattributedChars: 0, staleChars: 0,
+    byKind: { fromSources: 0, authorAsserted: 10, machineDrafted: 0, machineDraftedUnaccepted: 0 },
+  };
+
+  it('is no figure at all on a dossier whose decision read failed', () => {
+    expect(lineageTraceConfidence({ ...dossierWithDecisions('read failed'), provenanceCompleteness: complete })).toBeNull();
   });
 
-  it('is unchanged for a dossier whose decisions were genuinely read', () => {
-    expect(computeLineageConfidence(dossierWithDecisions(null))).toBeGreaterThanOrEqual(30);
+  it('is the measured completeness for a dossier whose decisions were genuinely read', () => {
+    expect(lineageTraceConfidence({ ...dossierWithDecisions(null), provenanceCompleteness: complete })).toBe(100);
   });
 });

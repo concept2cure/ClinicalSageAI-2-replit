@@ -12,6 +12,10 @@
  *                           (312.32(c)(1)(i)).
  *        - NOT REPORTABLE as an individual expedited IND Safety Report: expected,
  *                           non-serious, or not suspected (no reasonable possibility).
+ *        - NOT DETERMINED: expectedness was not assessed. No verdict is given —
+ *                           neither "reportable" nor "not reportable" — so an
+ *                           unassessed event can neither start a clock nor be
+ *                           closed as not reportable (P-20, 2026-10-08).
  *   2. Computes the deadline date by delegating to the canonical
  *      `calculateReportingDeadline` from the pharmacovigilance service (FDA region).
  *   3. Builds a structured IND Safety Report document model (a narrative section
@@ -67,11 +71,28 @@ import { IND_SAFETY_REPORT_SECTION } from './ind-sequence-validation';
 // Classification types
 // ---------------------------------------------------------------------------
 
-/** The three mutually-exclusive expedited reporting obligations under 312.32(c). */
+/**
+ * The three mutually-exclusive expedited reporting obligations under 312.32(c),
+ * and the absence of a verdict. NOT_DETERMINED is not an obligation: it says
+ * the determination that decides one (expectedness vs the IB / RSI) has not
+ * been made — P-20 (product decision 2026-10-08): "When expectedness is not
+ * recorded, the expedited-reporting verdict is 'not determined: expectedness
+ * not assessed', never 'not reportable'." Its follow-up decision narrows that to
+ * where expectedness decides the outcome: a serious, suspected event. A
+ * non-serious or not-suspected event is NOT_REPORTABLE on those stated facts.
+ */
 export type IndSafetyReportObligation =
   | 'SEVEN_DAY' // 312.32(c)(2): unexpected fatal/life-threatening suspected adverse reaction
   | 'FIFTEEN_DAY' // 312.32(c)(1)(i): serious + unexpected + suspected
-  | 'NOT_REPORTABLE'; // expected, non-serious, or not suspected (no individual expedited report)
+  | 'NOT_REPORTABLE' // expected, non-serious, or not suspected (no individual expedited report)
+  | 'NOT_DETERMINED'; // serious + suspected, expectedness not assessed — no verdict (P-20)
+
+/**
+ * An intake event as the safety-report engine reads it: the AdverseEvent, plus
+ * an onset date the person stated explicitly as unknown (P-20). A blank onset
+ * is refused; `onsetDateUnknown` is the only way to state that it is not known.
+ */
+export type IndSafetyEvent = AdverseEvent & { onsetDateUnknown?: boolean };
 
 /** FDA is the only region 312.32 applies to; pinned for clarity. */
 const IND_REGION: RegulatoryRegion = 'FDA';
@@ -87,7 +108,8 @@ export interface IndSafetyClassification {
   determinations: {
     serious: boolean;
     suspected: boolean;
-    unexpected: boolean;
+    /** Null when expectedness was not recorded — never inferred either way (P-20). */
+    unexpected: boolean | null;
     /**
      * Whether an expectedness determination was recorded at all. `unexpected`
      * is false both when the reviewer marked the event expected and when no
@@ -149,31 +171,136 @@ export function isFatalOrLifeThreatening(criteria: SeriousnessCriteria): boolean
 }
 
 // ---------------------------------------------------------------------------
+// What the person must state — nothing regulated is assumed
+// ---------------------------------------------------------------------------
+
+/* QA 2026-10-08 (j7). The intake card posted SAE / death / definite /
+   recovered for selects nobody touched, and this service classified and
+   printed them. An absent awareness date fell through to
+   calculateReportingDeadline's `reportDate = new Date()` default (a clock
+   started today), and an absent onset date threw from toISOString (HTTP 500).
+   The engine now refuses an event whose determinations or dates were not
+   stated, naming each one, before anything is classified. */
+const EVENT_TYPE_VALUES = ['AE', 'SAE', 'SUSAR', 'AESI'] as const;
+const SERIOUSNESS_VALUES = ['death', 'life_threatening', 'hospitalization', 'disability', 'congenital_anomaly', 'medically_important'] as const;
+const CAUSALITY_VALUES = ['definite', 'probable', 'possible', 'unlikely', 'unrelated'] as const;
+const OUTCOME_VALUES = ['recovered', 'recovering', 'not_recovered', 'fatal', 'unknown'] as const;
+
+/** The refusal: code VALIDATION is what the lifecycle routes answer as 400. */
+export class IndSafetyReportIncompleteError extends Error {
+  readonly code = 'VALIDATION';
+  constructor(public readonly missingFields: string[]) {
+    super(
+      `The IND safety report cannot be assembled until these are stated: ${missingFields.join('; ')}. ` +
+        'Nothing is assumed for a field left blank.',
+    );
+    this.name = 'IndSafetyReportIncompleteError';
+  }
+}
+
+const isValidDate = (d: unknown): d is Date => d instanceof Date && !Number.isNaN(d.getTime());
+
+/**
+ * The determinations and dates the person has not stated (or stated outside
+ * the enum), as reader-facing names. Empty exactly when the event can be
+ * classified without assuming anything. A non-serious AE carries no
+ * seriousness criterion, so none is required of it.
+ */
+export function unstatedSafetyReportFields(event: Partial<IndSafetyEvent>): string[] {
+  const missing: string[] = [];
+  const oneOf = (v: unknown, values: readonly string[], name: string) => {
+    if (typeof v !== 'string' || v.trim() === '') missing.push(name);
+    else if (!values.includes(v)) missing.push(`${name} ("${v}" is not one of ${values.join(', ')})`);
+  };
+  oneOf(event.eventType, EVENT_TYPE_VALUES, 'event type');
+  if (event.eventType !== 'AE') oneOf(event.seriousnessCriteria, SERIOUSNESS_VALUES, 'seriousness criterion (ICH E2A)');
+  oneOf(event.causality, CAUSALITY_VALUES, 'causality (WHO-UMC)');
+  oneOf(event.outcome, OUTCOME_VALUES, 'outcome');
+  // P-20: a date, or explicitly unknown; a blank is refused, and both at once
+  // is refused rather than resolved on the person's behalf.
+  const onsetUnknown = event.onsetDateUnknown === true;
+  if (onsetUnknown && isValidDate(event.onsetDate)) missing.push('onset date (stated both as a date and as unknown — state one)');
+  else if (!onsetUnknown && !isValidDate(event.onsetDate)) missing.push('onset date (a date, or stated as unknown)');
+  if (!isValidDate(event.reportDate)) missing.push('sponsor awareness date (clock start)');
+  return missing;
+}
+
+function assertStated(event: IndSafetyEvent): void {
+  const missing = unstatedSafetyReportFields(event);
+  if (missing.length > 0) throw new IndSafetyReportIncompleteError(missing);
+}
+
+// ---------------------------------------------------------------------------
 // Core classification — 21 CFR 312.32(c)
 // ---------------------------------------------------------------------------
+
+/**
+ * The verdict for an event that is not suspected, or not serious, on those
+ * stated facts (P-20 follow-up, 2026-10-08). A not-suspected event (312.32(a):
+ * no reasonable possibility) and a non-serious one (312.32(c)(1)) are not
+ * expedited whatever the IB / RSI says, so "not determined" would withhold a
+ * verdict the stated facts give. The rationale names those facts and says
+ * expectedness was not needed for it; nothing is inferred about expectedness
+ * (`unexpected` stays null when it was not recorded).
+ */
+function notExpeditedOnStatedFacts(
+  event: IndSafetyEvent,
+  determinations: IndSafetyClassification['determinations'],
+): IndSafetyClassification {
+  const { suspected, serious, expectednessRecorded, unexpected } = determinations;
+  const base = { obligation: 'NOT_REPORTABLE' as const, reportingWindowDays: null, deadline: null, determinations };
+  // A recorded expectedness keeps the existing wording for this case.
+  if (expectednessRecorded && suspected && !serious && unexpected) {
+    return {
+      ...base,
+      regulatoryBasis: '21 CFR 312.32(c)(1) / 312.33',
+      rationale:
+        'Suspected and unexpected but non-serious — not individually expedited; captured in the IND annual report (312.33).',
+    };
+  }
+  const facts: string[] = [];
+  if (!suspected) {
+    facts.push(
+      `no reasonable possibility the drug caused the event (causality stated as ${event.causality}: not a suspected adverse reaction)`,
+    );
+  }
+  if (!serious) facts.push('the event is recorded as non-serious');
+  const expectednessNote = expectednessRecorded ? '' : ' Expectedness is not recorded; it does not change this verdict.';
+  return {
+    ...base,
+    regulatoryBasis: suspected ? '21 CFR 312.32(c)(1) / 312.33' : '21 CFR 312.32(a)',
+    rationale: `Not an individual expedited IND Safety Report on the stated facts: ${facts.join('; ')}.${expectednessNote}`,
+  };
+}
 
 /**
  * Classify a single adverse event against the IND expedited-reporting rules.
  *
  * Decision order (per 312.32(c)):
- *   1. Must be SUSPECTED (reasonable possibility) AND UNEXPECTED to be an
- *      individual expedited IND Safety Report at all — otherwise NOT_REPORTABLE.
- *   2. If also SERIOUS:
+ *   1. NOT SUSPECTED (no reasonable possibility) or NOT SERIOUS => NOT_REPORTABLE
+ *      as an individual expedited report, on those stated facts, whether or not
+ *      expectedness was recorded (a suspected, unexpected, non-serious reaction
+ *      goes to aggregate/annual reporting, 312.33).
+ *   2. Serious and suspected with expectedness NOT RECORDED => NOT_DETERMINED:
+ *      expectedness decides the outcome, and nobody has assessed it (P-20).
+ *   3. Serious and suspected but EXPECTED => NOT_REPORTABLE.
+ *   4. Serious, suspected and UNEXPECTED:
  *        a. fatal OR life-threatening => 7-calendar-day (312.32(c)(2)).
  *        b. otherwise               => 15-calendar-day (312.32(c)(1)(i)).
- *   3. Suspected + unexpected but NOT serious => NOT_REPORTABLE as an individual
- *      expedited report (handled via aggregate/annual reporting, 312.33).
  *
  * Pure: no DB, no side effects, deterministic for a given input + clock.
+ * Throws IndSafetyReportIncompleteError (code VALIDATION) when a determination
+ * or date was not stated — see unstatedSafetyReportFields.
  */
 export function classifyIndSafetyReport(
-  event: AdverseEvent,
+  event: IndSafetyEvent,
   now: Date = new Date(),
 ): IndSafetyClassification {
+  assertStated(event);
   const serious = isSerious(event);
   const suspected = isSuspected(event.causality);
-  const unexpected = isUnexpected(event.expectedness);
   const expectednessRecorded = typeof event.expectedness === 'string' && event.expectedness.trim().length > 0;
+  const unexpected = expectednessRecorded ? isUnexpected(event.expectedness) : null;
   const fatalOrLT = isFatalOrLifeThreatening(event.seriousnessCriteria);
 
   const determinations = {
@@ -184,38 +311,39 @@ export function classifyIndSafetyReport(
     fatalOrLifeThreatening: fatalOrLT,
   };
 
-  // Gate 1: an individual expedited IND Safety Report requires a SUSPECTED and
-  // UNEXPECTED adverse reaction. Anything else is not an individual expedited
-  // report.
-  if (!suspected || !unexpected) {
-    // An event nobody has assessed against the IB/RSI is not "expected"; it is
-    // unassessed. The rationale used to assert expectedness in that case.
-    const reason = !suspected
-      ? 'no reasonable possibility the drug caused the event (not a suspected adverse reaction)'
-      : expectednessRecorded
-        ? 'event is expected (listed in the IB / consistent with the RSI)'
-        : 'expectedness has not been recorded — no determination against the IB / RSI has been made; a reviewer must mark the event unexpected before it can be an expedited report';
+  // Gate 0 (P-20 follow-up, 2026-10-08): a stated fact that rules out an
+  // individual expedited report decides the verdict without expectedness.
+  if (!suspected || !serious) return notExpeditedOnStatedFacts(event, determinations);
+
+  // Gate 1 (P-20, 2026-10-08): for a serious, suspected event expectedness
+  // decides the outcome, and with it not recorded there is no verdict. It used
+  // to read NOT_REPORTABLE ("not an individual expedited report"), which closes
+  // a case nobody assessed against the IB / RSI — and a reviewer reading "not
+  // reportable" has no reason to look again before the 15-day clock that may
+  // already be running.
+  if (!expectednessRecorded) {
+    return {
+      obligation: 'NOT_DETERMINED',
+      reportingWindowDays: null,
+      deadline: null,
+      determinations,
+      regulatoryBasis: '21 CFR 312.32(a)',
+      rationale:
+        'Not determined: expectedness not assessed. No determination against the IB / Reference Safety Information has been recorded, ' +
+        'so whether this is an expedited IND safety report cannot be decided. Record expectedness to obtain a verdict.',
+    };
+  }
+
+  // Gate 2: a serious, suspected event recorded as EXPECTED (listed in the IB /
+  // consistent with the RSI) is not an individual expedited report.
+  if (!unexpected) {
     return {
       obligation: 'NOT_REPORTABLE',
       reportingWindowDays: null,
       deadline: null,
       determinations,
       regulatoryBasis: '21 CFR 312.32(a)',
-      rationale: `Not an individual expedited IND Safety Report: ${reason}.`,
-    };
-  }
-
-  // Gate 2: suspected + unexpected but non-serious => aggregate/annual, not
-  // individual expedited.
-  if (!serious) {
-    return {
-      obligation: 'NOT_REPORTABLE',
-      reportingWindowDays: null,
-      deadline: null,
-      determinations,
-      regulatoryBasis: '21 CFR 312.32(c)(1) / 312.33',
-      rationale:
-        'Suspected and unexpected but non-serious — not individually expedited; captured in the IND annual report (312.33).',
+      rationale: 'Not an individual expedited IND Safety Report: event is expected (listed in the IB / consistent with the RSI).',
     };
   }
 
@@ -277,6 +405,31 @@ export interface AggregateContext {
   priorReportIds?: string[];
 }
 
+/* An identifier the person did not enter is an explicit gap, like the other
+   placeholders in the report — it printed the word "undefined" (QA
+   2026-10-08, j7). */
+function statedOrGap(v: unknown): string {
+  return typeof v === 'string' && v.trim() !== '' ? v.trim() : '[to be completed]';
+}
+
+/* A non-serious AE carries no seriousness criterion; the report says so
+   rather than printing an absent value. */
+function seriousnessLine(event: AdverseEvent): string {
+  return event.seriousnessCriteria
+    ? `Seriousness criterion: ${event.seriousnessCriteria}.`
+    : 'Seriousness criterion: none — non-serious adverse event.';
+}
+
+/* Expectedness is optional on intake; when nobody recorded it the report says
+   so rather than asserting "expected" on the reviewer's behalf. */
+function expectednessLine(event: IndSafetyEvent, classification: IndSafetyClassification): string {
+  if (!classification.determinations.expectednessRecorded) {
+    return 'Expectedness: not recorded — no determination against the Reference Safety Information has been made.';
+  }
+  const verdict = classification.determinations.unexpected ? 'unexpected' : 'expected';
+  return `Expectedness: ${verdict} vs the Reference Safety Information${event.rsiReference ? ` (${event.rsiReference})` : ''}.`;
+}
+
 /** The full structured IND Safety Report document model. */
 export interface IndSafetyReportDocument {
   reportType: 'IND_SAFETY_REPORT';
@@ -299,7 +452,7 @@ export interface IndSafetyReportDocument {
  * where available; authors complete the remainder.
  */
 export function buildIndSafetyReportDocument(
-  event: AdverseEvent,
+  event: IndSafetyEvent,
   classification: IndSafetyClassification,
   options: { icsr?: ICSR | null; aggregateContext?: AggregateContext } = {},
 ): IndSafetyReportDocument {
@@ -313,8 +466,8 @@ export function buildIndSafetyReportDocument(
         `IND Safety Report (${labelForObligation(classification.obligation)}).`,
         `Regulatory basis: ${classification.regulatoryBasis}.`,
         icsr?.worldwideUniqueId ? `ICSR worldwide unique ID: ${icsr.worldwideUniqueId}.` : '',
-        `Case (de-identified patient): ${event.patientId}.`,
-        `Country of occurrence: ${event.countryOfOccurrence}.`,
+        `Case (de-identified patient): ${statedOrGap(event.patientId)}.`,
+        `Country of occurrence: ${statedOrGap(event.countryOfOccurrence)}.`,
       ]
         .filter(Boolean)
         .join(' '),
@@ -326,7 +479,7 @@ export function buildIndSafetyReportDocument(
         event.eventDescription,
         event.reactionPt ? `MedDRA PT: ${event.reactionPt}${event.reactionPtCode ? ` (${event.reactionPtCode})` : ''}.` : '',
         event.reactionSoc ? `SOC: ${event.reactionSoc}.` : '',
-        `Onset: ${toIsoDate(event.onsetDate)}. Sponsor awareness (clock-start): ${toIsoDate(event.reportDate)}.`,
+        `Onset: ${onsetText(event)}. Sponsor awareness (clock-start): ${toIsoDate(event.reportDate)}.`,
         event.narrative ?? '',
       ]
         .filter(Boolean)
@@ -350,9 +503,9 @@ export function buildIndSafetyReportDocument(
       key: 'assessment',
       heading: 'Assessment of Causality and Expectedness',
       body: [
-        `Seriousness criterion: ${event.seriousnessCriteria}.`,
+        seriousnessLine(event),
         `Causality (WHO-UMC): ${event.causality} — ${classification.determinations.suspected ? 'suspected (reasonable possibility)' : 'not suspected'}.`,
-        `Expectedness: ${classification.determinations.unexpected ? 'unexpected' : 'expected'} vs the Reference Safety Information${event.rsiReference ? ` (${event.rsiReference})` : ''}.`,
+        expectednessLine(event, classification),
         `Outcome: ${event.outcome}.`,
         classification.rationale,
       ]
@@ -470,7 +623,8 @@ export function buildAmendmentIntent(
   classification: IndSafetyClassification,
   options: { hasIcsr?: boolean } = {},
 ): IndSafetyReportAmendmentIntent | null {
-  if (classification.obligation === 'NOT_REPORTABLE') {
+  // No individual report: not reportable, or no verdict yet (P-20).
+  if (classification.obligation === 'NOT_REPORTABLE' || classification.obligation === 'NOT_DETERMINED') {
     return null;
   }
 
@@ -522,7 +676,7 @@ export interface IndSafetyReportResult {
  * in one call. Pure / deterministic.
  */
 export function assembleIndSafetyReport(
-  event: AdverseEvent,
+  event: IndSafetyEvent,
   options: { icsr?: ICSR | null; aggregateContext?: AggregateContext; now?: Date } = {},
 ): IndSafetyReportResult {
   const classification = classifyIndSafetyReport(event, options.now);
@@ -548,9 +702,16 @@ function labelForObligation(o: IndSafetyReportObligation): string {
       return '15-calendar-day';
     case 'NOT_REPORTABLE':
       return 'not individually reportable';
+    case 'NOT_DETERMINED':
+      return 'not determined: expectedness not assessed';
   }
 }
 
 function toIsoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
+}
+
+/** The onset as the person stated it: a date, or explicitly unknown (P-20). */
+function onsetText(event: IndSafetyEvent): string {
+  return event.onsetDateUnknown === true ? 'unknown (stated as unknown)' : toIsoDate(event.onsetDate);
 }

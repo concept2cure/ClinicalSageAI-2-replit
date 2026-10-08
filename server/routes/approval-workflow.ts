@@ -3,7 +3,6 @@
  *
  * Full CRUD for approval workflows:
  *   POST   /api/approval-workflows/start              Start a workflow on a document
- *   POST   /api/approval-workflows/:id/approve         Approve current step
  *   POST   /api/approval-workflows/:id/reject          Reject at current step
  *   POST   /api/approval-workflows/:id/delegate        Delegate to another user
  *   GET    /api/approval-workflows/pending              Get pending approvals for current user
@@ -100,40 +99,11 @@ router.post('/start', async (req: Request, res: Response) => {
   }
 });
 
-// ============================================================================
-// POST /api/approval-workflows/:id/approve — Approve current step
-// ============================================================================
-
-router.post('/:id/approve', async (req: Request, res: Response) => {
-  const user = requireAuth(req, res);
-  if (!user) return;
-
-  try {
-    const approvalId = parseInt(String(req.params.id), 10);
-    const { comments } = req.body;
-
-    const result = await approvalOrchestrator.processApproval({
-      approvalId,
-      action: 'approve',
-      performedBy: user.userId,
-      comments,
-    });
-
-    return res.json({
-      success: true,
-      ...result,
-      message: result.workflowCompleted
-        ? 'Workflow completed — all steps approved'
-        : result.workflowAdvanced
-        ? `Step approved. Advanced to step ${result.nextStep}`
-        : 'Step approved',
-    });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Approve error', { err: message });
-    return res.status(400).json({ error: message });
-  }
-});
+// POST /api/approval-workflows/:id/approve is not served. It marked a step,
+// and on the last step the document, approved from a session alone: no
+// re-verification, no meaning, no electronic signature. Nothing called it.
+// Removed 2026-10-08 (P-25 follow-up); an approval is a signed act and goes
+// through the signing ceremony (services/part11/reverify-signer.ts).
 
 // ============================================================================
 // POST /api/approval-workflows/:id/reject — Reject at current step

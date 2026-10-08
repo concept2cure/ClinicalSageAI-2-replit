@@ -130,6 +130,10 @@ export interface DispatchReadinessAssessment {
   externalValidation: ExternalValidation;
   readiness: ReadinessSummary;
   leafCount: number;
+  /** For a stored Validated stage: whether it still holds (assess-dispatch-readiness
+   *  validatedStageOf), and why not, in the server's words; shown beside the
+   *  status (QA 2026-10-08, j7 finding 20). Null otherwise. */
+  validatedStage?: { holds: boolean; reason?: string } | null;
 }
 
 /* ── Which sequence the gate reads: the OPEN PROGRAM's ─────────────────────
@@ -143,14 +147,13 @@ export interface DispatchReadinessAssessment {
    The open program comes from `readShellProject` (the one reader of
    window.C2C_PROJECT; a deep link or the OQ harness may seed it with the id
    alone), so the program RECORD is read from GET /api/c2c/projects/:id and its
-   submission is chosen by the rule the server's resolveSubmissionSpine applies
-   (server/services/cmc/submission-spine.ts, LX-22): of the matching application
-   type, a submission anchored to this program (`programId`, which
-   GET /api/submissions returns) is the program's, and one anchored to ANOTHER
-   program never is, whatever its name. Only a submission with no recorded
-   project is matched by name (the program's product_name / name / code against
-   its product_name / title, case-insensitive), and the gate then says so. That
-   fallback goes when no unanchored submission remains.
+   submission is the one of the matching application type that is anchored to
+   this program (`programId`, which GET /api/submissions returns). One anchored
+   to ANOTHER program never is, whatever its name, and — P-20 follow-up,
+   2026-10-08 — neither is one with no recorded project: no screen matches a
+   program to an application by name. Such a submission is counted, never
+   named, so the not-ready state can say it exists and how it is anchored (the
+   Submission Center anchors a legacy submission, P-14).
 
    Every state that is not "this program's sequence" is its own state, never
    another program's gate and never an empty state standing in for an error:
@@ -194,15 +197,16 @@ export interface OtherSubmission {
 
 const submissionTitleOf = (sub: SubmissionRow): string => sub.title || `submission ${sub.id}`;
 
-/** Whether `sub` is this program's submission, and how that is known: by its
- *  recorded project, or — for a submission with none recorded — by name. */
-function submissionBelongsToProgram(sub: SubmissionRow, program: ProgramRecord): 'program' | 'legacy-name' | null {
+/** Whether `sub` is of the program's application type. */
+function ofProgramType(sub: SubmissionRow, program: ProgramRecord): boolean {
   const appType = norm(program.program_type);
-  if (!appType || norm(sub.applicationType) !== appType) return null;
-  if (sub.programId != null) return sub.programId === program.id ? 'program' : null;
-  const programKeys = [program.product_name, program.name, program.code].map(norm).filter(Boolean);
-  const subKeys = [sub.productName, sub.title].map(norm).filter(Boolean);
-  return programKeys.some((k) => subKeys.includes(k)) ? 'legacy-name' : null;
+  return appType !== '' && norm(sub.applicationType) === appType;
+}
+
+/** Whether `sub` is this program's submission: of its type, and recording it.
+ *  The recorded anchor is the only evidence; a name is never one. */
+function submissionBelongsToProgram(sub: SubmissionRow, program: ProgramRecord): boolean {
+  return ofProgramType(sub, program) && sub.programId != null && sub.programId === program.id;
 }
 
 export type Discovery =
@@ -220,6 +224,10 @@ export type Discovery =
        *  its type. The project has these; the gate does not read them, so
        *  "no submission" is never said over them. */
       otherSubmissions: OtherSubmission[];
+      /** Submissions of the program's type that record no program at all. A
+       *  count, never a list: none of them is this program's until the
+       *  Submission Center anchors it, and naming one would suggest which. */
+      unanchoredOfType: number;
     }
   | {
       state: 'no-sequence';
@@ -227,8 +235,6 @@ export type Discovery =
       programLabel: string;
       submissionId: number;
       submissionTitle: string;
-      /** 'legacy-name' when the submission has no recorded project. */
-      match: 'program' | 'legacy-name';
     }
   | {
       state: 'sequence';
@@ -236,8 +242,6 @@ export type Discovery =
       programLabel: string;
       submissionId: number;
       submissionTitle: string;
-      /** 'legacy-name' when the submission has no recorded project. */
-      match: 'program' | 'legacy-name';
       seqId: number;
       /** The eCTD sequence NUMBER ("0000"), the identifier a filing is known by;
        *  the assessment carries only the row id. Null when the row has none. */
@@ -258,16 +262,15 @@ async function readProgram(programId: string): Promise<Step<ProgramRecord>> {
   return { data: r.data };
 }
 
-async function findProgramSubmission(program: ProgramRecord, programId: string, programLabel: string): Promise<Step<{ sub: SubmissionRow; match: 'program' | 'legacy-name' }>> {
+async function findProgramSubmission(program: ProgramRecord, programId: string, programLabel: string): Promise<Step<SubmissionRow>> {
   const r = await liveGetOrNull<unknown>('/api/submissions');
   if (r.error || r.data == null) {
     return { done: { state: 'error', detail: r.error ?? 'The submissions could not be read.' } };
   }
   const list = unwrapList(r.data);
   const rows = (Array.isArray(list) ? (list as SubmissionRow[]) : []).filter((row) => row && typeof row.id === 'number');
-  // Anchored first, whatever the list order; a name match only when none is.
-  const sub = rows.find((r) => submissionBelongsToProgram(r, program) === 'program') ?? rows.find((r) => submissionBelongsToProgram(r, program) === 'legacy-name');
-  if (sub) return { data: { sub, match: submissionBelongsToProgram(sub, program) ?? 'legacy-name' } };
+  const sub = rows.find((r) => submissionBelongsToProgram(r, program));
+  if (sub) return { data: sub };
   /* None of the program's type. The submissions recorded to it, if any, are of
      other types (an EU MAA beside an IND, any submission of a CER program):
      they are named, so a reader never says the project has none. */
@@ -275,10 +278,11 @@ async function findProgramSubmission(program: ProgramRecord, programId: string, 
   const otherSubmissions = rows
     .filter((r) => r.programId != null && r.programId === program.id)
     .map((r) => ({ title: submissionTitleOf(r), applicationType: r.applicationType ?? null }));
-  return { done: { state: 'no-submission', programId, programLabel, programType, otherSubmissions } };
+  const unanchoredOfType = rows.filter((r) => r.programId == null && ofProgramType(r, program)).length;
+  return { done: { state: 'no-submission', programId, programLabel, programType, otherSubmissions, unanchoredOfType } };
 }
 
-async function findLatestSequence(sub: SubmissionRow, match: 'program' | 'legacy-name', programId: string, programLabel: string): Promise<Discovery> {
+async function findLatestSequence(sub: SubmissionRow, programId: string, programLabel: string): Promise<Discovery> {
   const r = await liveGetOrNull<unknown>(`/api/submissions/${sub.id}/sequences`);
   if (r.error || r.data == null) {
     return { state: 'error', detail: r.error ?? 'The sequences could not be read.' };
@@ -288,11 +292,11 @@ async function findLatestSequence(sub: SubmissionRow, match: 'program' | 'legacy
   const latest = rows[rows.length - 1];
   const submissionTitle = submissionTitleOf(sub);
   if (!latest?.id) {
-    return { state: 'no-sequence', programId, programLabel, submissionId: sub.id, submissionTitle, match };
+    return { state: 'no-sequence', programId, programLabel, submissionId: sub.id, submissionTitle };
   }
   const sequenceNumber =
     typeof latest.sequenceNumber === 'string' && latest.sequenceNumber.trim() !== '' ? latest.sequenceNumber.trim() : null;
-  return { state: 'sequence', programId, programLabel, submissionId: sub.id, submissionTitle, match, seqId: latest.id, sequenceNumber };
+  return { state: 'sequence', programId, programLabel, submissionId: sub.id, submissionTitle, seqId: latest.id, sequenceNumber };
 }
 
 export async function discoverProgramSequence(programId: string, shellTitle: string | undefined): Promise<Discovery> {
@@ -302,7 +306,7 @@ export async function discoverProgramSequence(programId: string, shellTitle: str
   const programLabel = program.name || program.code || shellTitle || programId;
   const found = await findProgramSubmission(program, programId, programLabel);
   if ('done' in found) return found.done;
-  return findLatestSequence(found.data.sub, found.data.match, programId, programLabel);
+  return findLatestSequence(found.data, programId, programLabel);
 }
 
 /** The open program's latest sequence. `reloadKey` re-runs the walk: a reader
@@ -352,6 +356,7 @@ export function noSubmissionWords(
 ): { title: string; hint: string } {
   const type = programTypeLabel(d.programType);
   const others = otherSubmissionsLine(d.otherSubmissions);
+  const unanchored = unanchoredLine(d.unanchoredOfType, type, subject);
   if (!type) {
     return {
       title: `No submission is gated for ${subject}`,
@@ -363,14 +368,26 @@ export function noSubmissionWords(
   if (others) {
     return {
       title: `No ${type} submission for ${subject} yet`,
-      hint: `The dispatch gate reads only ${subject}'s ${type} submission. Its submissions of other types are not gated here: ${others}.`,
+      hint: `The dispatch gate reads only ${subject}'s ${type} submission. Its submissions of other types are not gated here: ${others}.${unanchored}`,
     };
   }
   // Nothing is recorded to the program at all: "no submission" is then true.
   return {
     title: `No submission for ${subject} yet`,
-    hint: `The dispatch gate reads ${subject}'s ${type} submission, and none is recorded, so there is no sequence to gate yet.`,
+    hint: `The dispatch gate reads ${subject}'s ${type} submission, and none is recorded, so there is no sequence to gate yet.${unanchored}`,
   };
+}
+
+/** The organisation's submissions of the program's type that record no
+ *  program, as a count and the way one becomes the program's — or nothing.
+ *  P-20 follow-up: a submission is never matched to a program by name. */
+function unanchoredLine(count: number, type: string | null, subject: string): string {
+  if (!type || !Number.isInteger(count) || count <= 0) return '';
+  const one = count === 1;
+  return (
+    ` ${count} ${type} submission${one ? '' : 's'} in this organisation ${one ? 'has' : 'have'} no program recorded. ` +
+    `A submission is never matched to a program by name: one is gated here only once the Submission Center records it to ${subject}.`
+  );
 }
 
 /* What the gate's state is when there is no verdict to give — one value per

@@ -35,7 +35,11 @@ vi.mock('../../db', () => {
     db: {},
   };
 });
-vi.mock('../../export/renderers', () => ({ renderHtmlToPdf }));
+vi.mock('../../export/renderers', () => ({
+  renderHtmlToPdf,
+  // The export renders through the tracked form (QA 2026-10-08, j4); same stub.
+  renderHtmlToPdfTracked: async (html: string, opts?: unknown) => ({ buffer: await renderHtmlToPdf(html, opts as never), usedFallback: false }),
+}));
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-export';
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;

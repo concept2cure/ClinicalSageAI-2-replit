@@ -49,17 +49,60 @@ export interface SignerReverified {
 /** Why the signature was refused. `status` is the HTTP status to return. */
 export interface SignerRefused {
   ok: false;
-  status: 400 | 401 | 423;
+  status: 400 | 401 | 403 | 423;
   code:
     | 'PASSWORD_REQUIRED'
     | 'PASSWORD_VERIFICATION_FAILED'
     | 'MFA_TOKEN_REQUIRED'
     | 'MFA_VERIFICATION_FAILED'
     | 'MFA_STATE_UNKNOWN'
+    | 'AUTHENTICATOR_REQUIRED'
     | 'ACCOUNT_INACTIVE'
     | 'ACCOUNT_LOCKED'
     | 'ACCOUNT_STATE_UNKNOWN';
   error: string;
+}
+
+/**
+ * What a signer with no authenticator app is told where one is required. The
+ * founder's words (docs/LAUNCH_DEFINITION_OF_DONE.md, P-25 follow-ups).
+ */
+export const AUTHENTICATOR_REQUIRED_MESSAGE = 'Enrol an authenticator in Account to sign. Nothing was signed.';
+
+/**
+ * ADR-0014 §4 (P1-2b): in production, anyone applying a governed electronic
+ * signature uses an authenticator app; an e-mailed code is not accepted for
+ * them. Enforced from P-25 (2026-10-08), once the account panel let a person
+ * enrol one.
+ *
+ * Fail closed, as the submission bundle guard is (bundleTrustEnforced): the
+ * rule holds everywhere except an explicitly declared local `development` or
+ * `test` environment. An unset, blank, misspelled, `staging` or `production`
+ * NODE_ENV enforces it (lead's decision, 2026-10-08). Read at each signature.
+ * The vitest setups declare `test`; the QA harness requires `development`.
+ */
+export function signerNeedsAuthenticator(env: NodeJS.ProcessEnv = process.env): boolean {
+  const declared = (env.NODE_ENV ?? '').trim().toLowerCase();
+  return !(declared === 'development' || declared === 'test');
+}
+
+/**
+ * Whether this account needs an authenticator to sign, and whether it has one:
+ * the rule above and the enrolment the ceremony reads (`users.mfa_enabled`,
+ * mfaService.isMfaEnabled). GET /session and /me state it so the signing dialog
+ * can say "Enrol an authenticator in Account to sign" before a password is
+ * typed. The server's refusal at signing is the control; this is its notice.
+ */
+export interface SigningPosture {
+  authenticatorRequired: boolean;
+  authenticatorEnrolled: boolean;
+}
+
+export function signingPostureOf(
+  account: { mfaEnabled?: boolean | null },
+  env: NodeJS.ProcessEnv = process.env,
+): SigningPosture {
+  return { authenticatorRequired: signerNeedsAuthenticator(env), authenticatorEnrolled: account.mfaEnabled === true };
 }
 
 export type SignerReverification = SignerReverified | SignerRefused;
@@ -227,6 +270,14 @@ export async function verifySignerPassword(
  * use, and neither stopped a signature here. The one signing path that did
  * refuse it, the submission release, had its own password check, which this
  * replaced (tests/db/account-standing.dbtest.ts). §11.10(d), §11.300(b).
+ *
+ * In production a signer with no authenticator is refused once the password
+ * has verified, before any code is read and before the caller writes anything
+ * (ADR-0014 P1-2b; tests/db/signer-authenticator-required.dbtest.ts). Every
+ * signing ceremony re-verifies its signer here, so this is the rule's one place.
+ * The refusal follows the password so that it discloses nothing about the
+ * account to someone who does not know it, and it is not counted: a missing
+ * enrolment is not a guess.
  */
 export async function reverifySigner(
   userId: number,
@@ -255,6 +306,9 @@ export async function reverifySigner(
   }
 
   if (!mfaRequired) {
+    if (signerNeedsAuthenticator()) {
+      return { ok: false, status: 403, code: 'AUTHENTICATOR_REQUIRED', error: AUTHENTICATOR_REQUIRED_MESSAGE };
+    }
     return { ok: true, authenticationMethod: 'password', secondFactorVerified: false };
   }
 

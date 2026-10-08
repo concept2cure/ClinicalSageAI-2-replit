@@ -1,0 +1,109 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > takes the code written in the project name when the product has none (the QA case) 6ms
+   → expected 'H' to be 'HLV-333' // Object.is equality
+ × server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > never derives a one-letter code from a single-word product name 1ms
+   → expected 1 to be greater than 1
+ × server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > prefers a code inside the product name over the project name 1ms
+   → expected 'BC' to be 'BX-204' // Object.is equality
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > keeps a product name that is itself a code, exactly as before 1ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > keeps initials for a several-word name with no code in it 0ms
+ × server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > does not read a target or a word as a code 1ms
+   → expected 'H' to be 'HELV' // Object.is equality
+ × server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > falls back to PRJ only when there is nothing to derive from 1ms
+   → expected 'P' to be 'PRJ' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > takes the code written in the project name when the product has none (the QA case)
+AssertionError: expected 'H' to be 'HLV-333' // Object.is equality
+
+Expected: "HLV-333"
+Received: "H"
+
+ ❯ server/routes/c2c/__tests__/project-intake-code.test.ts:34:7
+     32|     expect(
+     33|       baseCodeFrom('Helvanta-QA3', 'HLV-333 — Investigational New Drug…
+     34|     ).toBe('HLV-333');
+       |       ^
+     35|   });
+     36|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > never derives a one-letter code from a single-word product name
+AssertionError: expected 1 to be greater than 1
+ ❯ server/routes/c2c/__tests__/project-intake-code.test.ts:39:25
+     37|   it('never derives a one-letter code from a single-word product name'…
+     38|     const code = baseCodeFrom('Helvanta', 'Investigational New Drug Ap…
+     39|     expect(code.length).toBeGreaterThan(1);
+       |                         ^
+     40|     expect(code).toBe('HELV');
+     41|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > prefers a code inside the product name over the project name
+AssertionError: expected 'BC' to be 'BX-204' // Object.is equality
+
+Expected: "BX-204"
+Received: "BC"
+
+ ❯ server/routes/c2c/__tests__/project-intake-code.test.ts:44:59
+     42|
+     43|   it('prefers a code inside the product name over the project name', (…
+     44|     expect(baseCodeFrom('BX-204 CGM', 'Aurora — 510(k)')).toBe('BX-204…
+       |                                                           ^
+     45|     expect(baseCodeFrom('Vorelinib · BX-512', 'Vorelinib · KIT-mutant …
+     46|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > does not read a target or a word as a code
+AssertionError: expected 'H' to be 'HELV' // Object.is equality
+
+Expected: "HELV"
+Received: "H"
+
+ ❯ server/routes/c2c/__tests__/project-intake-code.test.ts:62:82
+     60|     expect(baseCodeFrom('COVID-19 vaccine', '')).toBe('CV');
+     61|     // A single digit after the letters is not a program number.
+     62|     expect(baseCodeFrom('Helvanta-QA3', 'Investigational New Drug Appl…
+       |                                                                                  ^
+     63|   });
+     64|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > falls back to PRJ only when there is nothing to derive from
+AssertionError: expected 'P' to be 'PRJ' // Object.is equality
+
+Expected: "PRJ"
+Received: "P"
+
+ ❯ server/routes/c2c/__tests__/project-intake-code.test.ts:66:34
+     64|
+     65|   it('falls back to PRJ only when there is nothing to derive from', ()…
+     66|     expect(baseCodeFrom('', '')).toBe('PRJ');
+       |                                  ^
+     67|     expect(baseCodeFrom('—', '·')).toBe('PRJ');
+     68|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  02:46:39
+   Duration  476ms (transform 115ms, setup 97ms, import 46ms, tests 15ms, environment 0ms)
+
+
+---- Added after the run above: the multi-part case found in the QA DB at ~03:20 ----
+A walker on :5077 (HEAD server code) created a program with product "QA-SS-101"; HEAD saved its
+code as "Q" (db-reads.txt). The case was added to the test and run against the first version of
+this fix, which read in-word tokens:
+ × keeps a multi-part code whole (QA DB, 2026-10-08: product "QA-SS-101" was saved as code "Q")
+   Expected: "QA-SS-101"   Received: "SS-101"
+      Tests  1 failed | 7 passed (8)
+The derivation was then changed to whole-word codes (CODE_WORD); see green/.

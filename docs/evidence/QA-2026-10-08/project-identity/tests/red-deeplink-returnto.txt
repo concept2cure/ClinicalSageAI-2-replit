@@ -1,0 +1,8 @@
+ × client/src/concept2cure/v2/__tests__/deepLinkKeepsProgram.test.tsx > signed-out deep link → sign-in → back > the sign-in redirect carries the program the link named 73ms
+   → expected '/concept2cure/project-home' to be '/concept2cure/project-home?program=09…' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/deepLinkKeepsProgram.test.tsx > signed-out deep link → sign-in → back > a link with no query still returns to its path 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/deepLinkKeepsProgram.test.tsx > signed-out deep link → sign-in → back > the sign-in redirect carries the program the link named
+AssertionError: expected '/concept2cure/project-home' to be '/concept2cure/project-home?program=09…' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)

@@ -1,0 +1,1508 @@
+[
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5078/concept2cure/projects"
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/users/me",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/users/me",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/tenants",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/tenants",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/clients?organizationId=1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/clients?organizationId=1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/src/lib/api/query-options.ts",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/mdx/notifications/unread-count",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/ana-ri/live-drive/state",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/module-subscriptions/navigation",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/organizations/1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/task-management/my-work",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/mdx/notifications/unread-count",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/ana-ri/live-drive/state",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/module-subscriptions/navigation",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/organizations/1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/task-management/my-work",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/chat/threads?program_id=d979e567-4622-46f1-8cb7-8bf434227f25&limit=8",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/conversation-files",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/source-changes",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/records",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/sources",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/team",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/chat/threads?program_id=d979e567-4622-46f1-8cb7-8bf434227f25&limit=8",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/activity",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/workstreams",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/drafts",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/conversation-files",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/source-changes",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/records",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/team",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/activity",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/workstreams",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/sources",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/drafts",
+    "status": 200
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5078/concept2cure/project-home"
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/users/me",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/tenants",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/users/me",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/tenants",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/clients?organizationId=1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/clients?organizationId=1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/src/lib/api/query-options.ts",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/ana-ri/live-drive/state",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/mdx/notifications/unread-count",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/module-subscriptions/navigation",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/organizations/1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/task-management/my-work",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/ana-ri/live-drive/state",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/mdx/notifications/unread-count",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/module-subscriptions/navigation",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/task-management/my-work",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/organizations/1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/chat/threads?program_id=d979e567-4622-46f1-8cb7-8bf434227f25&limit=8",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/conversation-files",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/sources",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/records",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/source-changes",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/team",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/drafts",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/activity",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/workstreams",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/chat/threads?program_id=d979e567-4622-46f1-8cb7-8bf434227f25&limit=8",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/conversation-files",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/sources",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/team",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/drafts",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/workstreams",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/records",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/source-changes",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/activity",
+    "status": 200
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5078/concept2cure/projects"
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/users/me",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/tenants",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/users/me",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/tenants",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/clients?organizationId=1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/clients?organizationId=1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/src/lib/api/query-options.ts",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/mdx/notifications/unread-count",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/ana-ri/live-drive/state",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/module-subscriptions/navigation",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/organizations/1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/mdx/notifications/unread-count",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/task-management/my-work",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/ana-ri/live-drive/state",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/module-subscriptions/navigation",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/organizations/1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/task-management/my-work",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/chat/threads?program_id=099991d1-dac8-43c5-b88a-8baab26194ee&limit=8",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/conversation-files",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/sources",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/source-changes",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/records",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/team",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/chat/threads?program_id=099991d1-dac8-43c5-b88a-8baab26194ee&limit=8",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/workstreams",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/activity",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/conversation-files",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/drafts",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/source-changes",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/team",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/sources",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/records",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/workstreams",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/activity",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/drafts",
+    "status": 200
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5078/concept2cure/project-home"
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/users/me",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/tenants",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/users/me",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/tenants",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/clients?organizationId=1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/clients?organizationId=1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/src/lib/api/query-options.ts",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/ana-ri/live-drive/state",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/mdx/notifications/unread-count",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/module-subscriptions/navigation",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/organizations/1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/task-management/my-work",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/ana-ri/live-drive/state",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/mdx/notifications/unread-count",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/module-subscriptions/navigation",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/organizations/1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/task-management/my-work",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/chat/threads?program_id=099991d1-dac8-43c5-b88a-8baab26194ee&limit=8",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/conversation-files",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/source-changes",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/records",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/sources",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/chat/threads?program_id=099991d1-dac8-43c5-b88a-8baab26194ee&limit=8",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/team",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/workstreams",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/drafts",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/activity",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/team",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/source-changes",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/conversation-files",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/records",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/sources",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/drafts",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/workstreams",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/099991d1-dac8-43c5-b88a-8baab26194ee/activity",
+    "status": 200
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5078/concept2cure/projects"
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/users/me",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/tenants",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/users/me",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/clients?organizationId=1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/tenants",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/clients?organizationId=1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/src/lib/api/query-options.ts",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/ana-ri/live-drive/state",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/mdx/notifications/unread-count",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/organizations/1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/module-subscriptions/navigation",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/task-management/my-work",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/ana-ri/live-drive/state",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/mdx/notifications/unread-count",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/module-subscriptions/navigation",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/organizations/1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/task-management/my-work",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/chat/threads?program_id=d979e567-4622-46f1-8cb7-8bf434227f25&limit=8",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/conversation-files",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/source-changes",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/records",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/sources",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/team",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/workstreams",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/activity",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/drafts",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/chat/threads?program_id=d979e567-4622-46f1-8cb7-8bf434227f25&limit=8",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/conversation-files",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/workstreams",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/source-changes",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/records",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/team",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/sources",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/activity",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/projects/d979e567-4622-46f1-8cb7-8bf434227f25/drafts",
+    "status": 200
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5078/concept2cure/vault"
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/users/me",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/tenants",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/users/me",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/tenants",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/clients?organizationId=1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/clients?organizationId=1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/src/lib/api/query-options.ts",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/ana-ri/live-drive/state",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/mdx/notifications/unread-count",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/module-subscriptions/navigation",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/organizations/1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/task-management/my-work",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/ana-ri/live-drive/state",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/module-subscriptions/navigation",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/task-management/my-work",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/mdx/notifications/unread-count",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/organizations/1",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/project-vault/d979e567-4622-46f1-8cb7-8bf434227f25",
+    "status": 200
+  },
+  {
+    "kind": "req",
+    "method": "GET",
+    "url": "/api/c2c/project-vault/d979e567-4622-46f1-8cb7-8bf434227f25",
+    "status": 200
+  }
+]

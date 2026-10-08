@@ -1,0 +1,253 @@
+# DB suites on the fresh CI-shaped database
+# concept2cure-ri_qa_fresh2, CI=true NODE_ENV=test RLS_ENFORCE=on, APP_DATABASE_URL = the app_service runtime role (ci-env-fresh.sh; credentials not reproduced)
+$ npx vitest run --config vitest.db.config.ts tests/db/signer-authenticator-required.dbtest.ts tests/db/signing-lockout.dbtest.ts tests/db/second-factor-binding.dbtest.ts tests/db/one-time-credentials.dbtest.ts tests/db/account-standing.dbtest.ts tests/db/account-standing-time-zone.dbtest.ts tests/db/domain-sign-ceremony.dbtest.ts tests/db/signed-act-meaning-and-lock.dbtest.ts tests/db/research-admin-sign-ceremony.dbtest.ts tests/db/qms-document-signature-required.dbtest.ts tests/db/sign-in-posture.dbtest.ts tests/db/sign-in-audit-trail.dbtest.ts tests/db/session-termination.dbtest.ts tests/db/memberships.dbtest.ts tests/db/pre-auth-user-lookup.dbtest.ts tests/db/pre-auth-narrowing.dbtest.ts
+
+## Run 1: all sixteen in one invocation
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > runs as a role RLS applies to (not the owner, not BYPASSRLS) 9ms
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > production, no authenticator: refused in the decided words, and nothing is written or counted 151ms
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > production, an authenticator and no code: it goes on to the code check, and nothing is written 33ms
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > production, an authenticator and its current code: signed, and the row says both factors were verifi
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > outside production nothing changes: the password alone signs for a signer with no authenticator 44ms
+ ✓ tests/db/session-termination.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a change from one session ends the other, access and refresh, at every door including the enterp
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held 1515ms
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a refresh token minted in the same second as the change, before it, mints nothing after it 854ms
+ ✓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > logout with terminateAllSessions ends the other sessions, access and refresh, at every door 1369ms
+ ✓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > a sign-out everywhere from a session that has already ended ends nothing, and says so 164ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session suspended and then reactivated stays ended 121ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session deprovisioned by the identity provider and then reactivated stays ended 89ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a reactivated account signs in afresh 70ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed from the organisation is refused at the next request and mints nothing 118ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed and re-added holds nothing from before: the session is over at every door, and they
+ ✓ tests/db/session-termination.dbtest.ts > (4) a role change is read on the next request > a demotion is the role the global gate, a router gate behind it, and every successor token carry 178ms
+ ✓ tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a session begun in the same second as the change, before it, is over at every door 942ms
+ ✓ tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > the sign-in that follows the change is current: the change stamps the first whole second after it, and answers once that seco
+ ✓ tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a sign-in begun with the old password before the change and completed after it opens nothing 844ms
+ ✓ tests/db/session-termination.dbtest.ts > (5) the stamp itself (migrations/20261001_users_sessions_ended_at.sql, endEverySessionOf) > a confirmed sign-up ends nothing, leaving active stamps it, and no writer moves it
+ ✓ tests/db/one-time-credentials.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the posture is the one production runs in > enrolment used the step it presented 7ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses the same code the second time 193ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses a code from a step earlier than the last accepted, though that code was never used 86ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > accepts the next code: a refusal is per step, not a lockout 97ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > two sign-ins racing one code: exactly one session 130ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it 60ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > one record of used codes, whichever path verifies > the enterprise sign-in refuses a code it already accepted 201ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > one record of used codes, whichever path verifies > the password sign-in refuses a code the enterprise sign-in used 68ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the modal can check a code, even twice, and it is still unused 138ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the signature then accepts that same code, and uses it 22ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > a used code neither checks nor signs again 63ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the code pre-check is metered per signer, and a wrong code counts against the account 139ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the password pre-check is metered per signer too, on its own budget, and a wrong password counts 153ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > five verifiers racing one emailed code: exactly one accepts it 36ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > after 4 wrong guesses the right code is accepted: true (the limit is exactly five) 34ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > after 5 wrong guesses the right code is accepted: false (the limit is exactly five) 36ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused 
+ ✓ tests/db/one-time-credentials.dbtest.ts > a password-reset token is used once > two resets racing one token: exactly one succeeds, and its password is the one set 1937ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > replay state belongs to one secret > a new authenticator's first code is not refused for the old one's last step 42ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 157ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a wrong password, and writes nothing 39ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 65ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 46ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 20ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a wrong password, and writes nothing 40ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 55ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 16ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 24ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a wrong password, and writes nothing 33ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 42ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 17ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a wrong password, and writes nothing 47ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 45ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 21ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 18ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a wrong password, and writes nothing 45ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 66ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 19ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a wrong password, and writes nothing 44ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 63ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 19ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 19ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a wrong password, and writes nothing 39ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 60ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 19ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > a determination that is not an approval is not a signature > an IRB deferral is recorded under resolve, with no password and no signature row 28ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 30ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 44ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 56ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing 49ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 31ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 37ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 49ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing 42ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 32ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 57ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing 16ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC batch release: a rejected batch is not signed as released > signs a rejection with meaning 'responsibility', on the ledger and the signature row 36ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written 20ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': PATCH status cannot set what a determination sets > an admin's PATCH to 'modifications_required' is refused, and nothing is written 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': PATCH status cannot set what a determination sets > a status no determination sets still moves, under a transition ledger row 26ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': PATCH status cannot set what a determination sets > an admin's PATCH to 'conditional' is refused, and nothing is written 15ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': PATCH status cannot set what a determination sets > a status no determination sets still moves, under a transition ledger row 31ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written 14ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': PATCH status cannot set what a determination sets > an admin's PATCH to 'conditional' is refused, and nothing is written 11ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': PATCH status cannot set what a determination sets > a status no determination sets still moves, under a transition ledger row 19ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > refuses approvalStatus 'approved' and stores nothing 14ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > stores 'review' as asked, and names the creator on the audit row 18ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the MFA challenge a password sign-in issues, against the organisation 74ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records a wrong authenticator code 28ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the session /mfa/verify issues 47ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records a wrong password on a real account, against its organisation 29ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > does not let a token the server never signed write into the organisation chain 62ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens the API with the session /mfa/verify issued 42ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the end of a session the server issued, against its organisation 34ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens nothing once it is signed out (AUTH-03) 49ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > refuses a session another server signed out, which only the database can know 25ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong password 57ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the challenge a correct password receives 38ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong code 47ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the session it issues 47ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records entering an organisation, against that organisation 137ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > ends the session it reports ending, and records it 30ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > /api/users/login asks for the code instead of issuing a session 19ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > /api/user/login asks for the code instead of issuing a session 19ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > creates no account outside signup 12ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the organisation audit chain > verifies end to end over every row the organisation holds 5ms
+ ↓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing
+ ↓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > the three accounts are what their names say
+ ↓ tests/db/sign-in-posture.dbtest.ts > an account with an authenticator is told it has one (VSR-001 §13.3 item 4) > the challenge, the verified sign-in, the session and /api/users/me all say so
+ ↓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree
+ ↓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree
+ ↓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false
+ ↓ tests/db/sign-in-posture.dbtest.ts > before any credential, every address gets the same answer > enterprise check-email does not tell an enrolled account from an unknown address
+ ↓ tests/db/sign-in-posture.dbtest.ts > the enterprise router refuses setup over an enrolled authenticator, and says so (F-26) > 409 MFA_ALREADY_ENABLED, no secret handed out, the enrolled secret untouched
+ ✓ tests/db/signing-lockout.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 7ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > count against the account, and the fifth locks it 73ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > lock the sign-in too: the account has one password and one allowance 80ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > while locked, refuse a signature even with the right password, without comparing it 11ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > unlock when the lockout has run out 21ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong codes at signing > count against the account once the password is right, and the fifth locks it 155ms
+ ✓ tests/db/signing-lockout.dbtest.ts > below the allowance > a signer who mistypes and then gets it right signs 80ms
+ ✓ tests/db/signing-lockout.dbtest.ts > below the allowance > a successful sign-in clears the count, as it always has 48ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > count a wrong password, and the fifth locks the account 277ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > say the account is locked, and do not compare the password 19ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > count a wrong code, and the fifth locks the account 152ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > an active account signs 25ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a suspended account cannot sign, with the right password and code 4ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a guess against a suspended account is neither compared nor counted 4ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a deprovisioned account cannot sign 4ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > an active account signs in 230ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued 36ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a deprovisioned account is refused at the password, and no challenge is issued 28ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a challenge issued before the suspension does not become a session after it 44ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 249ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends once the identity provider deprovisions the account 122ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > works again when the account is reactivated 102ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'biosketch': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 133ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'biosketch': the sign is an electronic signature > refuses a wrong password, and writes nothing 39ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'biosketch': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 59ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'committees': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 22ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'committees': the sign is an electronic signature > refuses a wrong password, and writes nothing 28ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'committees': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 41ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'coverage': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 21ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'coverage': the sign is an electronic signature > refuses a wrong password, and writes nothing 50ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'coverage': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 64ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'dmsp': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 25ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'dmsp': the sign is an electronic signature > refuses a wrong password, and writes nothing 36ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'dmsp': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 53ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'effort': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 23ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'effort': the sign is an electronic signature > refuses a wrong password, and writes nothing 37ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'effort': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 60ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'export': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 28ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'export': the sign is an electronic signature > refuses a wrong password, and writes nothing 46ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'export': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 56ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'closeout': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 21ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'closeout': the sign is an electronic signature > refuses a wrong password, and writes nothing 47ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'closeout': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 59ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'subaward': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 21ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'subaward': the sign is an electronic signature > refuses a wrong password, and writes nothing 39ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'subaward': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 67ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'nce': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 30ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'nce': the sign is an electronic signature > refuses a wrong password, and writes nothing 89ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'nce': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 53ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'other-support': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 21ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'other-support': the sign is an electronic signature > refuses a wrong password, and writes nothing 33ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'other-support': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 35ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'agreements': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 18ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'agreements': the sign is an electronic signature > refuses a wrong password, and writes nothing 35ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'agreements': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 53ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > the ceremony refuses before it writes > a meaning outside the closed vocabulary is refused before the password is checked 17ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > the ceremony refuses before it writes > a member whose role carries no signing authority is refused, with the right password, before it is checked (§11.10(g)) 29ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > the ceremony refuses before it writes > a domain refusal after the credential rolls the whole sign back 30ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > a signer with an enrolled second factor > cannot sign with the password alone 37ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > a signer with an enrolled second factor > signs with the password and a current code, and the row says both were verified 34ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 7ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > is refused, hands out no secret, and leaves the stored one as it was 192ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing them in 88ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing for them 25ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > records the refused attempt against the account 4ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > a member without two-step verification can enrol, and the enrolment is recorded 110ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > once enrolled, that member is refused a new secret too 31ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > an enrolment not yet confirmed can be restarted: nothing is switched on until a code confirms it 177ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > the owner rotates by turning it off with a current code, then enrolling again 128ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization 115ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot place its user in B, so the gate never admits a token for B 41ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot change or remove B's members 9ms
+ ✓ tests/db/memberships.dbtest.ts > no tenant can mint a platform-staff role, not even in its own organization (D3) > its own member cannot be made super_admin, platform_admin or app_super_admin 20ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > an organization manages its own members' ordinary roles 30ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > the platform scope writes any organization, staff roles included 10ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin 795ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > a member sets their own persona (a write to their own membership row) 32ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into 247ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations changes a member's role in the one they are not signed into 54ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > runs as the runtime role, under RLS, in its own tenant 13ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to effective with no signature is refused, and the
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct INSERT of an effective document is refused 18ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to retired with no retirement signature is refused
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > the table owner is refused too 28ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > an approval written by an earlier transaction does not make a revi
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > approve: the route makes the document effective with one approval signature from the same transac
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > retire: the route retires the effective document with its retirement signature 121ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a revised document is approved again through the route 142ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > the service writes the status before the signature, so the check is deferred to COMMIT; checked p
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a fixture gives an effective document its signature on the same transaction, before or after the 
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a document already effective is not re-checked: an edit that leaves its status alone commits 24ms
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > runs as a role RLS applies to (not the owner, not BYPASSRLS) 17ms
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > refuses a biosketch finalized "as review" before the password, and writes nothing 161ms
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > refuses "release" too: nothing is released by finalizing a biosketch 108ms
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > refuses "authorship": nothing checks that the signer wrote the biosketch (DP-76) 27ms
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > control: the investigator finalizes "as responsibility", and the signature row says so 66ms
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > one record is signed once (DP-65) > two concurrent finalizations of one biosketch: one 201, one 409, one signature 82ms
+ ✓ tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Etc/UTC: a session begun after the membership is current, one begun before i
+ ✓ tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Asia/Tokyo: a session begun after the membership is current, one begun befor
+ ✓ tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under America/Los_Angeles: a session begun after the membership is current, one be
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > positive control: a member of A finds another member of A 91ms
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > a person removed from A is not found, whatever their default organization says 12ms
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > a current member of A is found, even with another default organization 11ms
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > B's member is not found from A 11ms
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > the response carries no credential field 9ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > an unbound pre-auth scope reaches no account (D3) > reads no row by email, by id, or by scanning 10ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > an unbound pre-auth scope reaches no account (D3) > writes no account: B's password hash and reset token stay as they were 3ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > an unbound pre-auth scope reaches no account (D3) > actor_name names nobody in a tenant-less scope, though B acted in tenant 0's trail 2ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a sign-in by email binds the account it names, and reads and writes that row only 20ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a verified access token binds its account: the request cannot then read another's row 76ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a request bound to one account cannot be rebound to another 3ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a reset finds the account holding the token, and only by its hash 7ms
+ FAIL  tests/db/sign-in-posture.dbtest.ts [ tests/db/sign-in-posture.dbtest.ts ]
+Serialized Error: { length: 208, severity: 'ERROR', code: '23505', detail: 'Key (id)=(92100) already exists.', hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined
+ Test Files  1 failed | 15 passed (16)
+      Tests  229 passed | 8 skipped (237)
+
+sign-in-posture.dbtest.ts failed in its beforeAll: organizations id 92100 already existed. account-standing.dbtest.ts uses the same
+organisation id (grep -ln 92100 tests/db/*.dbtest.ts), and ran first in this invocation. A lane collision between two existing files; not this change.
+
+## Run 2: sign-in-posture.dbtest.ts alone
+ Test Files  1 passed (1)
+      Tests  8 passed (8)

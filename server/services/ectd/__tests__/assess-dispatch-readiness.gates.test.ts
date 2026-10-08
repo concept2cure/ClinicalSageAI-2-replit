@@ -15,7 +15,10 @@ import {
   composeDispatchGates,
   composeStepVerdicts,
   externalNotAssessed,
+  readinessOptionsForSequence,
+  validatedStageOf,
 } from '../assess-dispatch-readiness';
+import { computeDispatchReadiness } from '../dispatch-readiness';
 import { DISPATCH_GATE_RULE_IDS } from '../validation-rule-corpus';
 
 describe('resolveDispatchEnvironment — fails toward production', () => {
@@ -215,5 +218,128 @@ describe('an advisory gate that did not run is not assessed, not passed (populat
       { external: 'ignored' },
     );
     expect(views.find((v) => v.key === 'external')!.notAssessed).toBeUndefined();
+  });
+});
+
+/* QA 2026-10-08 (j7, finding 4): "Dispatch blocked, 2 blockers" with the
+   structural gate SATISFIED for a one-leaf original IND missing Form 1571, the
+   IB and the general investigational plan — every missing section was a
+   warning. Requiredness is now decided per sequence from the regional Module 1
+   record, and a section the regulation requires is an error the gate counts. */
+describe('readinessOptionsForSequence — required sections decided per sequence', () => {
+  const AS_OF = '2026-10-08';
+  const original = { region: 'fda', type: 'original', sequenceNumber: '0000' };
+  const amendment = { region: 'fda', type: 'amendment', sequenceNumber: '0001' };
+
+  it('an original FDA IND is held to the record\'s IND requirements, as errors', () => {
+    const opts = readinessOptionsForSequence(original, 'ind', AS_OF);
+    expect(opts.requiredByRegulation?.codes).toEqual(
+      expect.arrayContaining(['1.1', '1.2', '1.12.14', '1.14.4.1', '1.14.4.2', '1.20']),
+    );
+    expect(opts.requiredByRegulation?.codes).not.toContain('1.3.3'); // debarment: marketing applications only
+    expect(opts.requiredSections ?? []).toEqual([]);
+
+    // The cover letter alone (BX-256 sequence 0000 in QA): the IND's own gaps block.
+    const r = computeDispatchReadiness(
+      [{ sectionCode: '1.2', title: 'Cover Letter', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 5 }],
+      opts,
+    );
+    const missing = r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION');
+    expect(missing.length).toBeGreaterThan(0);
+    expect(missing.every((f) => f.severity === 'error')).toBe(true);
+    expect(missing.map((f) => f.sectionCode)).toEqual(expect.arrayContaining(['1.1', '1.14.4.1', '1.20']));
+    expect(r.errors).toBe(missing.length);
+  });
+
+  it('an original NDA is held to the marketing requirements, not the IND\'s', () => {
+    const codes = readinessOptionsForSequence(original, 'nda', AS_OF).requiredByRegulation?.codes ?? [];
+    expect(codes).toEqual(expect.arrayContaining(['1.3.3', '1.3.4', '1.14.1']));
+    expect(codes).not.toContain('1.20');
+  });
+
+  it('a continuing IND sequence is not held to the application\'s Module 1 list (no "1.20 missing" on an amendment)', () => {
+    const opts = readinessOptionsForSequence(amendment, 'ind', AS_OF);
+    expect(opts.requiredSections ?? []).toEqual([]);
+    const r = computeDispatchReadiness(
+      [{ sectionCode: '1.1', title: 'Form FDA 1571', lifecycleOp: 'new', documentTable: 'rendered_leaf_files', documentId: 1 }],
+      opts,
+    );
+    expect(r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION')).toEqual([]);
+  });
+
+  /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): every IND submission
+     carries a Form FDA 1571 (21 CFR 312), so a continuing IND sequence is held
+     to its 1.1 form even though it is not held to the original's Module 1
+     list. d155ef099 exempted continuing sequences from every requirement. */
+  it('a continuing IND sequence is held to its 1.1 form (Form FDA 1571), as an error, and to nothing else', () => {
+    const opts = readinessOptionsForSequence(amendment, 'ind', AS_OF);
+    expect(opts.requiredByRegulation?.codes).toEqual(['1.1']);
+    expect(opts.requiredByRegulation?.basis).toMatch(/Form FDA 1571/);
+    expect(opts.requiredByRegulation?.basis).toMatch(/21 CFR 312/);
+    // A protocol amendment with its cover letter and no 1571.
+    const r = computeDispatchReadiness(
+      [
+        { sectionCode: '1.2', title: 'Cover Letter', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 5 },
+        { sectionCode: '5.3.5.1', title: 'Protocol amendment', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 6 },
+      ],
+      opts,
+    );
+    const missing = r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION');
+    expect(missing.map((f) => [f.sectionCode, f.severity])).toEqual([['1.1', 'error']]);
+    expect(missing[0].message).toMatch(/Form FDA 1571/);
+    expect(r.errors).toBeGreaterThanOrEqual(1);
+    // A sequence numbered past 0000 with no type recorded is continuing too.
+    expect(readinessOptionsForSequence({ region: 'fda', type: null, sequenceNumber: '0003' }, 'ind', AS_OF).requiredByRegulation?.codes).toEqual(['1.1']);
+  });
+
+  it('a continuing marketing-application sequence is still not held to a Module 1 list', () => {
+    for (const kind of ['nda', 'bla', 'anda']) {
+      expect(readinessOptionsForSequence(amendment, kind, AS_OF).requiredByRegulation, kind).toBeUndefined();
+    }
+  });
+
+  it('a region or kind the record does not model keeps the profile list as warnings, never errors', () => {
+    const device = readinessOptionsForSequence(original, '510k', AS_OF);
+    expect(device.requiredByRegulation).toBeUndefined();
+    expect(device.requiredSections?.length).toBeGreaterThan(0);
+    const china = readinessOptionsForSequence({ region: 'cn', type: 'original', sequenceNumber: '0000' }, 'nda', AS_OF);
+    expect(china.requiredByRegulation).toBeUndefined();
+    const r = computeDispatchReadiness(
+      [{ sectionCode: '3.2.P.1', title: 'Device', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 9 }],
+      device,
+    );
+    expect(r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION').every((f) => f.severity === 'warning')).toBe(true);
+    expect(r.errors).toBe(0);
+  });
+});
+
+/* QA 2026-10-08 (j7, finding 20): "0000 original — VALIDATED" beside a
+   dispatch-blocked gate. Validated means the validation found no error
+   (0e50993c5); a stored stage that no longer meets that says so. */
+describe('validatedStageOf — does a recorded Validated stage still hold?', () => {
+  const seq = (status: string, validationStatus: string | null) => ({ status, validationStatus, sequenceNumber: '0000' });
+
+  it('is null for any stage but Validated', () => {
+    for (const status of ['draft', 'assembling', 'frozen', 'dispatched']) expect(validatedStageOf(seq(status, null), 3)).toBeNull();
+  });
+
+  it('holds when the validation finds no error, and says whether a verdict was recorded', () => {
+    expect(validatedStageOf(seq('validated', 'passed'), 0)).toEqual({ holds: true, verdictRecorded: true });
+    expect(validatedStageOf(seq('validated', null), 0)).toEqual({ holds: true, verdictRecorded: false });
+  });
+
+  it('does not hold when the validation now finds errors, and says what to do', () => {
+    const v = validatedStageOf(seq('validated', null), 8);
+    expect(v).toMatchObject({ holds: false, verdictRecorded: false, errors: 8 });
+    expect(v && !v.holds && v.reason).toBe(
+      'Sequence 0000 is recorded as Validated, but its validation now finds 8 errors, and no validation verdict was recorded when it was marked. ' +
+        'Validated means the validation found no error: return it to Assembling, resolve the errors and validate again. Freeze refuses it until then.',
+    );
+    const one = validatedStageOf(seq('validated', 'passed'), 1);
+    expect(one && !one.holds && one.reason).toMatch(/now finds 1 error\. Validated means/);
+  });
+
+  it('an undetermined count does not hold — unknown is not zero', () => {
+    expect(validatedStageOf(seq('validated', 'passed'), Number.NaN)).toMatchObject({ holds: false });
   });
 });

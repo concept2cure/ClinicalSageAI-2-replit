@@ -9,6 +9,12 @@
  * (server.log:11715). The stream route now resolves the integer projects.id
  * once and passes it (projectIdNumber); without it, only an integer names a
  * project, and a UUID is no project rather than NaN.
+ *
+ * The same break was found independently in the QA walk of 2026-10-08 (j5,
+ * `invalid input syntax for type integer: "NaN"` on every project turn). That
+ * fix resolved the UUID a second time inside this prefetch; on the merge the
+ * route's single resolution (stream.ts resolveTurnProject) is the one kept, and
+ * the walk's "no project named" case is carried over below.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -81,5 +87,13 @@ describe('route prefetch with a program UUID', () => {
     const result = await prefetchRouteIntelligenceContext({ ...INPUT, projectId: 'proj_33' });
     expect(result.projectIdNumber).toBe(33);
     expect(h.profile).toHaveBeenCalledWith(33, 7);
+  });
+
+  it('no project named: nothing project-scoped is read and the overlay is user-level', async () => {
+    const result = await prefetchRouteIntelligenceContext({ ...INPUT, projectId: null });
+    expect(result.projectIdNumber).toBeNull();
+    expect(h.profile).not.toHaveBeenCalled();
+    expect(h.feedback).not.toHaveBeenCalled();
+    expect(h.relational).toHaveBeenCalledWith({ organizationId: 7, userId: 9, projectId: null });
   });
 });

@@ -1,0 +1,292 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+JS
+Concept2Cure.RI
+›
+Admin
+›
+Admin console
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+3
+SYSTEM
+Admin and access
+Members · roles · program-level access grants · SSO · API keys · admin audit. Every action below emits a 21 CFR Part 11 audit entry.
+AUDIT A MEMBER
+INVITE MEMBER
+MEMBERS
+14
+12 active · 2 invited
+ROLES
+5
+Distinct org roles
+AUTHENTICATOR APP
+0
+of 14 members enrolled
+API KEYS
+0
+active, org-scoped
+Members
+Roles + scopes
+SSO + provisioning
+API keys
+Settings
+Members
+All
+Active
+Invited
+Disabled
+MEMBER
+ROLE
+GROUPS
+SSO
+MFA
+LAST SEEN
+DK
+David Kim
+david.kim@concept2cure.pro
+Member
+local
+email
+Oct 8, 2026, 2:21 AM
+EW
+Emily Watson
+emily.watson@concept2cure.pro
+Member
+local
+email
+Oct 8, 2026, 5:32 AM
+JS
+JM Smith
+jm.smith@concept2cure.pro
+Admin
+local
+email
+Oct 8, 2026, 6:11 AM
+JS
+JM Smith
+jonmichaelpsmith@gmail.com
+Admin
+local
+email
+—
+LJ
+Lisa Johnson
+lisa.johnson@concept2cure.pro
+Member
+local
+email
+Oct 8, 2026, 6:10 AM
+MB
+Michael Brown
+michael.brown@concept2cure.pro
+Member
+local
+email
+Oct 8, 2026, 5:18 AM
+NP
+New Person
+newperson@concept2cure.pro
+Member
+local
+email
+Oct 8, 2026, 3:13 AM
+PP
+Pat Pending
+pat.pending@concept2cure.pro
+Manager
+local
+email
+—
+QO
+QA Onboard 2
+qa-onboard-2@concept2cure.pro
+Member
+local
+email
+—
+QO
+QA Onboard 3
+qa-onboard-3@concept2cure.pro
+Approver
+local
+email
+Oct 8, 2026, 6:11 AM
+QS
+QA Second Admin
+qa.second.admin@concept2cure.pro
+Admin
+local
+email
+—
+RP
+Raj Patel
+raj.patel@concept2cure.pro
+Manager
+local
+email
+Oct 8, 2026, 6:10 AM
+SC
+Sarah Chen
+sarah.chen@concept2cure.pro
+Manager
+local
+email
+Oct 8, 2026, 3:24 AM
+VV
+Vera Viewer
+newviewer@concept2cure.pro
+Viewer
+local
+email
+Oct 8, 2026, 3:12 AM
+QO
+QA Onboard 3
+qa-onboard-3@concept2cure.pro
+ROLE
+Approver
+STATE
+Active
+SSO
+Local
+SECOND FACTOR
+Emailed code
+LAST SEEN
+Oct 8, 2026, 6:11 AM
+GROUPS
+—
+ROLE SCOPES
+PROGRAM ACCESS
+ALL PROGRAMS
+view
+granted Org approver
+GRANT ACCESS
+AUDIT ACTIVITY
+CHANGE ROLE
+REMOVE FROM ORGANIZATION
+MEMBERS · CHANGE ROLE
+Change QA Onboard 3's role
+Current role: Approver.
+New role*
+Approver: everything a manager may, and signs. Reviewer: everything a member may, and signs. Only an admin, an approver or a reviewer can sign; an author cannot approve their own document.
+Select…
+Admin
+Approver
+Manager
+Reviewer
+Member
+Viewer
+Reason for the change*
+The new role applies from their next request. The change is recorded in the audit trail against you, with the role before and after and your reason.
+Cancel
+Change role
+Admin audit · recent
+SHA-256 chained · cryptographically verifiable · 20 actions shown
+Oct 8, 2026, 6:11 AM
+QA Onboard 3
+Signed in on a development server: second factor skipped
+QA Onboard 3
+e4f6…bdf3
+Oct 8, 2026, 6:11 AM
+JM Smith
+Member Role Changed
+Organization Users
+a6db…34b5
+Oct 8, 2026, 6:11 AM
+QA Onboard 3
+Signed in on a development server: second factor skipped
+QA Onboard 3
+abf9…7e8d
+Oct 8, 2026, 6:11 AM
+QA Onboard 3
+Password changed through an emailed reset link
+QA Onboard 3
+1adc…9ba8
+Oct 8, 2026, 6:11 AM
+JM Smith
+User Invited
+QA Onboard 3
+5d43…f832
+Oct 8, 2026, 6:11 AM
+JM Smith
+Signed in on a development server: second factor skipped
+JM Smith
+1c11…8405
+Oct 8, 2026, 6:11 AM
+Raj Patel
+Report Os Run Created
+Report Run
+6a0e…d269
+Oct 8, 2026, 6:11 AM
+Raj Patel
+Report Os Run Created
+Report Run
+6210…4287
+Oct 8, 2026, 6:10 AM
+Lisa Johnson
+Signed in on a development server: second factor skipped
+Lisa Johnson
+d003…3e63
+Oct 8, 2026, 6:10 AM
+Raj Patel
+Signed in on a development server: second factor skipped
+Raj Patel
+f04b…1606
+Oct 8, 2026, 6:09 AM
+Raj Patel
+Signed in on a development server: second factor skipped
+Raj Patel
+192c…f409
+Oct 8, 2026, 5:49 AM
+QA Onboard 2
+Password changed through an emailed reset link
+QA Onboard 2
+53a8…3183
+Oct 8, 2026, 5:49 AM
+JM Smith
+User Invited
+QA Onboard 2
+f3c4…1556
+Oct 8, 2026, 5:49 AM
+JM Smith
+User Invited
+QA Onboard 2
+76ad…cd0d
+Oct 8, 2026, 5:48 AM
+JM Smith
+User Invited
+QA Onboard 2
+d3de…9209
+Oct 8, 2026, 5:48 AM
+JM Smith
+Signed in on a development server: second factor skipped
+JM Smith
+5a4c…6300
+Oct 8, 2026, 5:47 AM
+Raj Patel
+Signed in on a development server: second factor skipped
+Raj Patel
+80d3…af44
+Oct 8, 2026, 5:47 AM
+Raj Patel
+Signed out
+Raj Patel
+2ef0…6310
+Oct 8, 2026, 5:47 AM
+Raj Patel
+Signed out
+Raj Patel
+6468…7275
+Oct 8, 2026, 5:36 AM
+Lisa Johnson
+Signed in on a development server: second factor skipped
+Lisa Johnson
+17a2…5a46

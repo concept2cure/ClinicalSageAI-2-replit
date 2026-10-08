@@ -1,0 +1,24 @@
+# Item 3 GREEN — signInLimits.authenticatorChange (server/middleware/sign-in-limits.ts) on /api/auth/mfa/{enable,disable} and /api/auth/enterprise/mfa/{enable,disable}
+$ npx vitest run server/routes/__tests__/auth-sign-in-limits.test.ts server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > refuses a locked account before any code is tried (423), and audits it 47ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > counts a wrong authenticator code toward the lockout 8ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > says so when the wrong code locks the account 6ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > clears the count only once the second factor is right 211ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > control: a wrong emailed code keeps its own cap and is not counted here 6ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-password: when the count is cleared (IAM-30) > a right password does not clear the count of an account with an authenticator 7ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-password: when the count is cleared (IAM-30) > control: a right password clears it for an account whose second factor is the emailed code 7ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > wrong codes are limited per account, whatever the address (IAM-30) > the account key reads the enterprise partial token, verified 2ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > wrong codes are limited per account, whatever the address (IAM-30) > the eleventh wrong code for one account is refused 429, each from a new address 44ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > enterprise /mfa/enable and /mfa/disable: wrong codes count per account (P-25) > /mfa/enable: the eleventh wrong code for one account is refused 429, each from a new address 131ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > enterprise /mfa/enable and /mfa/disable: wrong codes count per account (P-25) > /mfa/disable: the eleventh wrong code for one account is refused 429 69ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused 699ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > failed passwords for one address signed in with are refused past the per-account limit — and nobody else is 58ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > wrong second-factor codes for one account are refused past the per-account limit — the next account is not 35ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > a successful sign-in spends none of the account’s allowance 64ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > confirming or removing an authenticator counts wrong codes per account > /mfa/enable: wrong codes past the per-account limit are refused, and the next account is not 103ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > confirming or removing an authenticator counts wrong codes per account > /mfa/disable: wrong codes past the per-account limit are refused, and the next account is not 50ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > confirming or removing an authenticator counts wrong codes per account > one allowance per account: guesses at /mfa/verify and at /mfa/disable are one count 44ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > confirming or removing an authenticator counts wrong codes per account > a session's guesses are counted against its own account, whatever challenge the body names 51ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > confirming or removing an authenticator counts wrong codes per account > a right code spends none of the allowance 46ms
+ Test Files  2 passed (2)
+      Tests  20 passed (20)

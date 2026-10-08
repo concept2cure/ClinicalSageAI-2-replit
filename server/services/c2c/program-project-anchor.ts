@@ -59,7 +59,7 @@ export interface AnchorResult {
   /** True when this call inserted the row; false when one already existed. */
   created: boolean;
   skipped?: AnchorSkip;
-  /** Human-readable reason, surfaced in the 201 body so a skip is never silent. */
+  /** Why, for the operator's log. Intake refuses on a skip (requireProgramProjectAnchor). */
   detail?: string;
 }
 
@@ -133,16 +133,16 @@ interface PreflightRow {
  *      in it.
  *
  * With none, or with more than one and none of them the organisation's own, the
- * anchor is SKIPPED and the reason is reported. This is the same standard the
- * migration's backfill holds itself to: link on the unambiguous case, leave the
- * rest NULL, never guess.
+ * anchor is SKIPPED and the reason is returned. This is the same standard the
+ * migrations' backfills hold themselves to (20260814 links, 20261008 inserts):
+ * act on the unambiguous case, leave the rest, never guess.
  *
- * A skip is not a failure. The program, its scaffold, its submission spine and
- * its audit row are all still created — only the PM-spine anchor is absent, and
- * the governed-export and Vault surfaces keep the honest degradations they have
- * today. What must never happen is a fabricated workspace assignment, and what
- * must never happen quietly is any of this: the reason travels in the 201 body
- * and in the sealed audit payload.
+ * Intake does not accept a skip (P-19, 2026-10-08): it calls
+ * requireProgramProjectAnchor below, which turns the skip into a refusal that
+ * rolls the whole creation back. Until then a skip still created the program,
+ * and the program answered "no record" on the schedule, unified work, AnA's
+ * project context and the Vault for good. A fabricated workspace is still never
+ * the way out; refusing the program is.
  */
 export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Promise<AnchorResult> {
   const { client, orgId, userId, programId, name, code, priority } = input;
@@ -190,7 +190,7 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
       detail:
         'projects.regulatory_program_id is not present in this database ' +
         '(migrations/20260814_projects_regulatory_program_anchor.sql has not been applied). ' +
-        'The program was created; it carries no PM-spine anchor.',
+        'A program cannot be created without its PM-spine anchor.',
     };
   }
 
@@ -213,7 +213,7 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
       projectId: null, created: false, skipped: 'NO_CLIENT_WORKSPACE',
       detail:
         'This organization has no client workspace, and projects.client_workspace_id is NOT NULL. ' +
-        'The program was created; it carries no PM-spine anchor until a workspace exists.',
+        'A program cannot be created without its PM-spine anchor until a workspace exists.',
     };
   }
   if (workspaceCount > 1 && defaultWorkspaceId === null) {
@@ -223,7 +223,7 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
         `This organization has ${workspaceCount} client workspaces, none of them marked as the ` +
         'organization\u2019s own, and the program names none of them. ' +
         'projects.client_workspace_id decides who can see a project, so it is not defaulted. ' +
-        'The program was created; it carries no PM-spine anchor.',
+        'A program cannot be created without its PM-spine anchor.',
     };
   }
 
@@ -241,6 +241,39 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
     [orgId, workspaceId, name, code, priority, userId, programId],
   );
   return { projectId: Number(inserted.rows[0].id), created: true };
+}
+
+/**
+ * The program could not be given its project record, so it must not be created
+ * (P-19). Thrown inside the caller's transaction, so the caller's rollback takes
+ * the program, its scaffold, its submission spine and its audit row with it.
+ * `detail` is for the operator's log, not the screen: it names schema objects.
+ */
+export class ProgramAnchorUnavailableError extends Error {
+  readonly code = 'PROJECT_RECORD_UNAVAILABLE';
+
+  constructor(
+    readonly reason: AnchorSkip,
+    readonly detail: string,
+  ) {
+    super(`The program's project record could not be written (${reason})`);
+    this.name = 'ProgramAnchorUnavailableError';
+  }
+}
+
+/**
+ * Intake's form of ensureProgramProjectAnchor: the anchor, or a throw. Every
+ * program a client can open has its project record, so a program that cannot
+ * have one is refused rather than created without it.
+ */
+export async function requireProgramProjectAnchor(
+  input: EnsureAnchorInput,
+): Promise<{ projectId: number; created: boolean }> {
+  const result = await ensureProgramProjectAnchor(input);
+  if (result.projectId === null) {
+    throw new ProgramAnchorUnavailableError(result.skipped ?? 'PENDING_ANCHOR_COLUMN', result.detail ?? '');
+  }
+  return { projectId: result.projectId, created: result.created };
 }
 
 export interface ProgramAnchorRow {

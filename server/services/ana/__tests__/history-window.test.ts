@@ -46,6 +46,21 @@ describe('conversation windows preserve context without claiming complete recall
     expect(window).toEqual({ turns: [], totalTurns: 1, omittedTurns: 1, shortenedTurns: 0 });
     expect(conversationWindowNotice(window)).toContain('1 earlier turn omitted');
   });
+  /* A turn stopped before AnA wrote a word is saved as an empty answer that
+     says it was stopped (QA 2026-10-08, j5). It is the conversation's record,
+     not something she said: handed to the model it would be sent as a filler
+     marker in her voice. */
+  it('an empty answer — a turn stopped before it was written — is not handed to the model', () => {
+    const history = [
+      { role: 'user', content: 'Summarize the open risks.' },
+      { role: 'assistant', content: '', metadata: { stoppedReason: 'cancelled' } },
+      { role: 'user', content: 'Try again, shorter.' },
+    ];
+    const window = recentTurnWindow(history, 20);
+    expect(window.turns).toEqual([history[0], history[2]]);
+    expect(window).toMatchObject({ totalTurns: 2, omittedTurns: 0 });
+    expect(conversationWindowNotice(window)).toBe('');
+  });
   it('a complete transcript produces no blanket follow-up requirement', () => {
     const window = recentTurnWindow([{ role: 'user', content: 'Hello.' }], 20, 100);
     expect(conversationWindowNotice(window)).toBe('');

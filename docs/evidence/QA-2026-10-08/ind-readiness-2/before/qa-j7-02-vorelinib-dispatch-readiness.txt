@@ -1,0 +1,86 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+SC
+Concept2Cure.RI
+›
+Dispatch readiness
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+4
+ANA · DISPATCH GATE · PROVEN, NOT GENERATED
+Cleared to dispatch?
+Vorelinib · KIT-mutant GIST (IND) · Sequence 0001 (id 7) · region FDA · 2 leaves · status draft
+Dispatch blocked
+
+2 blockers stand between you and dispatch.
+
+This is the deterministic floor — I cannot clear it while these are open, no matter how the draft reads. Close them, then re-check.
+
+No open error-severity finding, and no unacknowledged Shadow Review critical
+Satisfied.
+STRUCTURAL_GATE_CLEAR · Enforced here — this assessment checks it every time it runs.
+The agency-grade validator’s report for this package carries no errors
+Not assessed. No agency-grade validator is configured on this installation, so no report exists for this package. It is not required here, so it does not block dispatch — but the package has not been checked against it.
+EXTERNAL_VALIDATION_CLEAN · Requires the agency validator — its report decides this; the product records the verdict, it does not reproduce the check.
+At least one Shadow Review has completed for this sequence
+Blocks dispatch:
+No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.
+SHADOW_REVIEW_COMPLETED · Enforced here — this assessment checks it every time it runs.
+A valid release signature binds this sequence’s package (21 CFR 11.70)
+Blocks dispatch:
+Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:7).
+RELEASE_SIGNATURE_VALID · Enforced here — this assessment checks it every time it runs.
+Structural validation
+0 errors
+10 warnings
+0 info
+WARNING
+1.1
+A placed leaf carries a pin of its source content DOCUMENT_CONTENT_NOT_PINNED · ICH · medium · Enforced here — this assessment checks it every time it runs.
+Leaf "Form FDA 356h (Application to Market a New Drug)" (1.1) points at coauthor_documents 4, but no content hash was pinned when it was placed, so whether the document still holds what was placed cannot be verified. Re-place the leaf to pin its content.
+WARNING
+1.1
+A follow-up sequence's declared replace/append/delete is bound at assembly, not at readiness LIFECYCLE_BINDING_NOT_ASSESSED · ICH · medium · Enforced here — this assessment checks it every time it runs.
+Leaf "Form FDA 356h (Application to Market a New Drug)" declares "replace". Which filed leaf it acts on is established when the sequence is assembled, not here; freeze and dispatch assemble it and refuse an act that cannot be bound.
+WARNING
+1.2
+Region-required Module 1 sections are present MISSING_REQUIRED_SECTION · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.2 has no leaf in this sequence.
+WARNING
+1.3
+Region-required Module 1 sections are present MISSING_REQUIRED_SECTION · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.3 has no leaf in this sequence.
+WARNING
+1.12.14
+Region-required Module 1 sections are present MISSING_REQUIRED_SECTION · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.12.14 has no leaf in this sequence.
+WARNING
+1.14
+Region-required Module 1 sections are present MISSING_REQUIRED_SECTION · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.14 has no leaf in this sequence.
+WARNING
+1.14.4
+Region-required Module 1 sections are present MISSING_REQUIRED_SECTION · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.14.4 has no leaf in this sequence.
+WARNING
+1.14.4.1
+Region-required Module 1 sections are present MISSING_REQUIRED_SECTION · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.14.4.1 has no leaf in this sequence.
+WARNING
+1.14.4.2
+Region-required Module 1 sections are present MISSING_REQUIRED_SECTION · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.14.4.2 has no leaf in this sequence.
+WARNING
+1.20
+Region-required Module 1 sections are present MISSING_REQUIRED_SECTION · FDA · EU · JP · CA · AU · CH · medium · Enforced here — this assessment checks it every time it runs.
+Required section 1.20 has no leaf in this sequence.
+Registry
+Every gate input is computed from server state — a client cannot pass validationErrors:0 to talk the gate down. The AI dispatch-QC task advises; this gate enforces. Bound to the governed dispatch-readiness gate; the wire transmit stays behind a Part-11 e-signature.

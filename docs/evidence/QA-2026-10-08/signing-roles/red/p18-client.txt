@@ -1,0 +1,10 @@
+ × client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > PATCHes the organization and user the server named, with the role and the reason 61ms
+   → expected [ 'Select…', 'Admin', 'Manager', …(2) ] to deeply equal [ Array(7) ]
+ × client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > assigning a signing role > PATCHes approver with the reason 5103ms
+   → expected [] to have a length of 1 but got +0
+ × client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > assigning a signing role > the invite form offers the same roles, labelled as the rest of the page labels them 35ms
+   → expected [ [ '', 'Select…' ], …(4) ] to deeply equal [ [ '', 'Select…' ], …(6) ]
+ × client/src/concept2cure/v2/__tests__/vaultLifecycleSigningRoles.test.ts > rolesCannotAuthor > admits an approver and a reviewer, as the sign-in session carries them 7ms
+   → expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 10 passed (14)

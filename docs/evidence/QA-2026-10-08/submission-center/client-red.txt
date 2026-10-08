@@ -1,0 +1,14 @@
+ × client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the Sequences row does not open the e-signature when the server would refuse the freeze 5536ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the gates are asked again just before signing; a refusal then takes no signature 5200ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > downloads the package through the canonical eCTD export for this sequence 5064ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > says the gateway is not configured, and offers no transmit, before any password is typed 5052ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > a configured gateway transmits through the signed chain: gates, sign (intent transmit), transmit 5052ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an unapproved Vault version reads "not approved", never "source verified" 5073ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > removes a leaf with its reason, and nothing without one 5052ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an identical re-placement says nothing was placed, and an original offers only New 98ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+## green
+ Test Files  17 passed (17)
+      Tests  150 passed (150)

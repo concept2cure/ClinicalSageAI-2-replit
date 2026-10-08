@@ -29,6 +29,7 @@ import {
   breadcrumbTierOf,
   resolveSegmentId,
 } from './registryModel';
+import { flagAllowsSurface } from './clinicalRegulatoryGraphFlag';
 import {
   isLaunchScopeLocked,
   isLocked,
@@ -37,6 +38,7 @@ import {
   type NavSurfaceEntitlement,
 } from './navEntitlements';
 import { NavUnlockPanel } from './NavUnlockPanel';
+import { AccountPanel } from './AccountPanel';
 import { applySurfaceAction } from './surfaceActions';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
@@ -109,6 +111,10 @@ export function Rail({
     setAcct(false);
     acctBtnRef.current?.focus();
   };
+  /* The person's own account — profile, password, authenticator app (P-25,
+     AccountPanel.tsx). A dialog over the shell, not a routed surface, so it has
+     no registry or launch-scope row: it is part of the account menu. */
+  const [accountOpen, setAccountOpen] = React.useState(false);
   /* Live licence verdicts for this organization. Until the server answers —
      and permanently if it cannot — `verdictFor` returns null for everything and
      the rail renders exactly as it did before: a lock badge is a claim about a
@@ -126,8 +132,11 @@ export function Rail({
      for an app nobody can enable is a dead affordance. Every place is in the
      launch scope today (shellNav.test.tsx); this keeps an entry out if a
      deployment's verdicts say otherwise. The Apps catalog still lists the app
-     with the reason. */
-  const railVisible = (s: { id: string; target?: string }) => !isLaunchScopeLocked(verdictFor(s.target ?? s.id));
+     with the reason. A feature flag that is off hides its entry as well: the
+     one predicate every list of destinations reads (flagAllowsSurface, QA
+     2026-10-08 j1), so the rail and Project home's grids never disagree. */
+  const railVisible = (s: { id: string; target?: string }) =>
+    flagAllowsSurface(s.id) && !isLaunchScopeLocked(verdictFor(s.target ?? s.id));
   /* An entry that `applies` a screen action asks it of the screen as it opens
      it, through the validated bus AnA's moves use: My work opens the task
      board on the signed-in person's tasks (registryModel.ts RAIL_CORE). The
@@ -254,6 +263,10 @@ export function Rail({
               setAcct(false);
               onNav(id);
             }}
+            onAccount={() => {
+              setAcct(false);
+              setAccountOpen(true);
+            }}
             onSegment={(id) => {
               setAcct(false);
               setSegment(id);
@@ -265,6 +278,15 @@ export function Rail({
           />
         )}
       </div>
+      {accountOpen && (
+        <AccountPanel
+          onClose={() => {
+            setAccountOpen(false);
+            // The menu item that opened it is gone; focus returns to the menu's button.
+            acctBtnRef.current?.focus();
+          }}
+        />
+      )}
       {lockedFor && (
         <NavUnlockPanel
           verdict={lockedFor}
@@ -277,7 +299,7 @@ export function Rail({
   );
 }
 
-type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' } | { sep: true } | { clientType: true };
+type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' | 'account' } | { sep: true } | { clientType: true };
 
 /**
  * The account menu: settings, the client type, help and sign-out
@@ -301,6 +323,7 @@ function AccountMenu({
   segment,
   onClose,
   onGo,
+  onAccount,
   onSegment,
   onLogout,
 }: {
@@ -313,10 +336,14 @@ function AccountMenu({
   segment: string;
   onClose: () => void;
   onGo: (id: string) => void;
+  /** Open the person's own account panel (P-25). */
+  onAccount: () => void;
   onSegment: (id: string) => void;
   onLogout: () => void;
 }) {
   const items: AccountItem[] = [
+    // Each person's own account, first, as in Claude's account menu (P-25).
+    { label: 'Account', ic: 'user', action: 'account' },
     // Admin is reached from the bottom-left account menu — the same place and
     // gesture as Claude's admin/settings. Gated to org admins; admin-console
     // itself renders a non-leaky denied state, but we hide the entry entirely
@@ -427,7 +454,11 @@ function AccountMenu({
               className="acct-item"
               role="menuitem"
               tabIndex={-1}
-              onClick={() => (it.action === 'logout' ? onLogout() : it.to && onGo(it.to))}
+              onClick={() => {
+                if (it.action === 'logout') onLogout();
+                else if (it.action === 'account') onAccount();
+                else if (it.to) onGo(it.to);
+              }}
             >
               <span className="ico">{I[it.ic] ?? I.grid}</span>
               <span className="lbl">{it.label}</span>
@@ -500,8 +531,10 @@ export function TopBar({
   onAsk?: (text: string) => void;
 }) {
   const tenant = useTenant();
-  const orgName = tenant?.currentOrganization?.name ?? 'Organization';
-  const orgMark = orgName
+  // The organisation's name, or none: an unknown organisation is not labelled
+  // "Organization" (P-25, 2026-10-08).
+  const orgName: string | null = tenant?.currentOrganization?.name?.trim() || null;
+  const orgMark = (orgName ?? '')
     .split(/\s+/)
     .map((w: string) => w[0])
     .join('')
@@ -531,10 +564,12 @@ export function TopBar({
           "switcher lands with the auth flow phase" (launch sweep finding 131).
           A session's token carries one organisation; there is no switch to
           offer until the server has one. */}
-      <div className="tb-org" title={orgName}>
-        <span className="tb-org-mark" aria-hidden="true">{orgMark}</span>
-        <span className="tb-org-name">{orgName}</span>
-      </div>
+      {orgName && (
+        <div className="tb-org" title={orgName}>
+          <span className="tb-org-mark" aria-hidden="true">{orgMark}</span>
+          <span className="tb-org-name">{orgName}</span>
+        </div>
+      )}
       <button type="button" className="tb-cmdk" onClick={onPalette} aria-label="Search, jump, or run a command" title="Search, jump, or run a command (⌘K)">
         <span className="ico">{I.search}</span>
         <span className="lbl">Search, jump, or run a command</span>

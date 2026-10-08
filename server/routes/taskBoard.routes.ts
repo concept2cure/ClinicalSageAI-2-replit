@@ -136,6 +136,9 @@ interface TaskBoardItem {
   /** Real assigned-by user-id FK as a string; '' when unknown. Null on another
    *  store's card: that store records no assigner, and none is invented. */
   assignedBy: string | null;
+  /** unified_tasks.description — what the task asks (Assign review stores the
+   *  reviewer's instructions here); null when none was given. QA 2026-10-08 (j4). */
+  description?: string | null;
   progress: number;
   /** 0-10 submission impact; null when never scored (not fabricated). */
   impactScore: number | null;
@@ -392,6 +395,7 @@ async function readOwnBoard(
       priority: row.priority,
       assignee: row.assigneeId != null ? String(row.assigneeId) : '',
       assignedBy: row.assignedBy != null ? String(row.assignedBy) : '',
+      description: row.description ?? null,
       progress: row.progress ?? 0,
       impactScore: row.impactScore ?? null,
       criticalPath: row.criticalPath ?? false,

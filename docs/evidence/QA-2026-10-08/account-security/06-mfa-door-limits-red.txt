@@ -1,0 +1,19 @@
+# Item 3 RED — wrong codes at /mfa/enable and /mfa/disable are not counted per account
+# sign-in-limits.ts and the routes unchanged. 'a right code spends none' is a control and passes before and after.
+$ npx vitest run server/routes/__tests__/auth-sign-in-limits.test.ts
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused 722ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > failed passwords for one address signed in with are refused past the per-account limit — and nobody else is 56ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > wrong second-factor codes for one account are refused past the per-account limit — the next account is not 26ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > a successful sign-in spends none of the account’s allowance 63ms
+ × server/routes/__tests__/auth-sign-in-limits.test.ts > confirming or removing an authenticator counts wrong codes per account > /mfa/enable: wrong codes past the per-account limit are refused, and the next account is not 111ms
+ × server/routes/__tests__/auth-sign-in-limits.test.ts > confirming or removing an authenticator counts wrong codes per account > /mfa/disable: wrong codes past the per-account limit are refused, and the next account is not 34ms
+ × server/routes/__tests__/auth-sign-in-limits.test.ts > confirming or removing an authenticator counts wrong codes per account > one allowance per account: guesses at /mfa/verify and at /mfa/disable are one count 27ms
+ × server/routes/__tests__/auth-sign-in-limits.test.ts > confirming or removing an authenticator counts wrong codes per account > a session's guesses are counted against its own account, whatever challenge the body names 27ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > confirming or removing an authenticator counts wrong codes per account > a right code spends none of the allowance 45ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: guessing continued past the per-account limit: expected 200 to be 429 // Object.is equality
+AssertionError: expected 200 to be 429 // Object.is equality
+AssertionError: expected 200 to be 429 // Object.is equality
+AssertionError: expected 200 to be 429 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  4 failed | 5 passed (9)

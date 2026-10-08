@@ -1,0 +1,271 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+JS
+Concept2Cure.RI
+›
+Admin
+›
+Admin console
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+3
+SYSTEM
+Admin and access
+Members · roles · program-level access grants · SSO · API keys · admin audit. Every action below emits a 21 CFR Part 11 audit entry.
+AUDIT A MEMBER
+INVITE MEMBER
+MEMBERS
+13
+10 active · 3 invited
+ROLES
+4
+Distinct org roles
+AUTHENTICATOR APP
+0
+of 13 members enrolled
+API KEYS
+0
+active, org-scoped
+Members
+Roles + scopes
+SSO + provisioning
+API keys
+Settings
+Members
+All
+Active
+Invited
+Disabled
+MEMBER
+ROLE
+GROUPS
+SSO
+MFA
+LAST SEEN
+DK
+David Kim
+david.kim@concept2cure.pro
+Member
+local
+email
+Oct 8, 2026, 2:21 AM
+EW
+Emily Watson
+emily.watson@concept2cure.pro
+Member
+local
+email
+Oct 8, 2026, 5:32 AM
+JS
+JM Smith
+jonmichaelpsmith@gmail.com
+Admin
+local
+email
+—
+JS
+JM Smith
+jm.smith@concept2cure.pro
+Admin
+local
+email
+Oct 8, 2026, 5:48 AM
+LJ
+Lisa Johnson
+lisa.johnson@concept2cure.pro
+Member
+local
+email
+Oct 8, 2026, 5:36 AM
+MB
+Michael Brown
+michael.brown@concept2cure.pro
+Member
+local
+email
+Oct 8, 2026, 5:18 AM
+NP
+New Person
+newperson@concept2cure.pro
+Member
+local
+email
+Oct 8, 2026, 3:13 AM
+PP
+Pat Pending
+pat.pending@concept2cure.pro
+Manager
+local
+email
+—
+QO
+QA Onboard 2
+qa-onboard-2@concept2cure.pro
+Member
+local
+email
+—
+QS
+QA Second Admin
+qa.second.admin@concept2cure.pro
+Admin
+local
+email
+—
+RP
+Raj Patel
+raj.patel@concept2cure.pro
+Manager
+local
+email
+Oct 8, 2026, 5:47 AM
+SC
+Sarah Chen
+sarah.chen@concept2cure.pro
+Manager
+local
+email
+Oct 8, 2026, 3:24 AM
+VV
+Vera Viewer
+newviewer@concept2cure.pro
+Viewer
+local
+email
+Oct 8, 2026, 3:12 AM
+QO
+QA Onboard 2
+qa-onboard-2@concept2cure.pro
+ROLE
+Member
+STATE
+Invited
+SSO
+Local
+SECOND FACTOR
+Emailed code
+LAST SEEN
+—
+GROUPS
+—
+ROLE SCOPES
+PROGRAM ACCESS
+ALL PROGRAMS
+view
+granted Org member
+GRANT ACCESS
+AUDIT ACTIVITY
+CHANGE ROLE
+REMOVE FROM ORGANIZATION
+ISSUE A NEW SETUP LINK
+Admin audit · recent
+SHA-256 chained · cryptographically verifiable · 20 actions shown
+Oct 8, 2026, 5:48 AM
+JM Smith
+User Invited
+QA Onboard 2
+d3de…9209
+Oct 8, 2026, 5:48 AM
+JM Smith
+Signed in on a development server: second factor skipped
+JM Smith
+5a4c…6300
+Oct 8, 2026, 5:47 AM
+Raj Patel
+Signed in on a development server: second factor skipped
+Raj Patel
+80d3…af44
+Oct 8, 2026, 5:47 AM
+Raj Patel
+Signed out
+Raj Patel
+2ef0…6310
+Oct 8, 2026, 5:47 AM
+Raj Patel
+Signed out
+Raj Patel
+6468…7275
+Oct 8, 2026, 5:36 AM
+Lisa Johnson
+Signed in on a development server: second factor skipped
+Lisa Johnson
+17a2…5a46
+Oct 8, 2026, 5:36 AM
+Raj Patel
+Signed in on a development server: second factor skipped
+Raj Patel
+78fb…9f45
+Oct 8, 2026, 5:32 AM
+Emily Watson
+Signed in on a development server: second factor skipped
+Emily Watson
+71e2…0e6c
+Oct 8, 2026, 5:29 AM
+Pat Pending
+Sign-in refused: wrong password
+Pat Pending
+1b0e…4786
+Oct 8, 2026, 5:24 AM
+JM Smith
+Member Removed
+Organization Users
+1cd5…d715
+Oct 8, 2026, 5:24 AM
+JM Smith
+Member Role Changed
+Organization Users
+8687…f5e2
+Oct 8, 2026, 5:24 AM
+QA Onboard 1
+Signed in on a development server: second factor skipped
+QA Onboard 1
+610a…9e38
+Oct 8, 2026, 5:24 AM
+QA Onboard 1
+Password changed through an emailed reset link
+QA Onboard 1
+c017…facf
+Oct 8, 2026, 5:23 AM
+JM Smith
+User Invited
+QA Onboard 1
+a4a4…8a84
+Oct 8, 2026, 5:23 AM
+JM Smith
+Signed in on a development server: second factor skipped
+JM Smith
+ed72…a3de
+Oct 8, 2026, 5:18 AM
+Michael Brown
+Signed in on a development server: second factor skipped
+Michael Brown
+3272…75c0
+Oct 8, 2026, 5:18 AM
+Michael Brown
+Signed out
+Michael Brown
+0f9d…d61d
+Oct 8, 2026, 5:18 AM
+Michael Brown
+Signed out
+Michael Brown
+1121…774f
+Oct 8, 2026, 5:18 AM
+Lisa Johnson
+Ana Turn Recorded
+Ana Turn Record
+d2d6…e4ce
+Oct 8, 2026, 5:17 AM
+Lisa Johnson
+Ana Turn Recorded
+Ana Turn Record
+791e…e928
+QA Onboard 2 invited as member. This server sends no email, so their password setup link is on your clipboard — it expires in 21 days.

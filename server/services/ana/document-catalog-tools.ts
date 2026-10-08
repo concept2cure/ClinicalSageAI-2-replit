@@ -15,9 +15,10 @@
  *                              where each is filed, which are not yet studied
  *                              (honestly labeled), and the file_id that
  *                              reopens a chat upload.
- *   read_project_document    — the extracted text, windowed; every window is
- *                              recorded as a read receipt against the exact
- *                              bytes it came from.
+ *   read_project_document    — the extracted text, windowed to RESULT_BUDGET;
+ *                              a window the model receives whole is recorded
+ *                              as a read receipt against the exact bytes it
+ *                              came from (read-receipts.ts), and only then.
  *   catalog_project_document — the comprehension record (kind / purpose /
  *                              summary / key data), REFUSED until the receipts
  *                              cover the entire text. A sampled page cannot be
@@ -56,6 +57,8 @@ import { registerDocumentPassageHandlers } from './document-passage-tools.js';
 import { vaultWriteRefusal } from '../vault/vault-write-authority.js';
 import { catalogScope, documentScopeRefusal } from './catalog-scope.js';
 import { sourceAvailabilityPresentation, catalogVersionRefusal } from '../vault/document-catalog-eligibility.js';
+import { RESULT_BUDGET } from './agentic-loop.js';
+import { canDeferReadReceipt, coverageAfter, deferReadReceipt, fitReadWindow } from './read-receipts.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handlers
@@ -222,13 +225,18 @@ function unreadableResponse(doc: { id: string; fileName: string }, reason: strin
   });
 }
 
+const finiteNumber = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+
+/**
+ * Where a read starts, and the most text its window may hold: RESULT_BUDGET
+ * characters at most (P-24), and never past the end. The handler then shrinks
+ * it until the serialized result fits (fitReadWindow). The window was 30,000
+ * by default and 80,000 at most, which the model never received whole.
+ */
 function readWindowBounds(input: Record<string, unknown>, charCount: number) {
-  const offset = Math.max(0, Math.floor(typeof input.offset === 'number' ? input.offset : 0));
-  const maxChars = Math.min(
-    80000,
-    Math.max(1000, Math.floor(typeof input.max_chars === 'number' ? input.max_chars : 30000)),
-  );
-  return { offset, end: Math.min(charCount, offset + maxChars) };
+  const offset = Math.max(0, Math.floor(finiteNumber(input.offset) ?? 0));
+  const asked = Math.min(RESULT_BUDGET, Math.max(1, Math.floor(finiteNumber(input.max_chars) ?? RESULT_BUDGET)));
+  return { offset, asked: Math.min(asked, charCount - offset) };
 }
 
 /**
@@ -285,6 +293,71 @@ function ocrCaveat(catalog: { extractionMethod: string | null; extractionConfide
   );
 }
 
+type LoadedDocument = NonNullable<Awaited<ReturnType<CatalogService['loadDocumentForOrg']>>>;
+type Catalog = NonNullable<LoadedDocument['catalog']>;
+
+/**
+ * What was already learned about this document, handed back with the text.
+ * The comprehension record was written by a previous read and then never
+ * returned by anything, so every re-read started from zero — the client's
+ * own figures re-derived from scratch, which is exactly the re-explaining
+ * the catalog exists to end. Present only when the record exists; a
+ * not-yet-studied document says nothing here rather than an empty shape.
+ */
+function comprehensionOf(catalog: Catalog) {
+  if (catalog.status !== 'cataloged') return undefined;
+  const { documentKind, purpose, summary, catalogedAt } = catalog;
+  return { documentKind, purpose, summary, keyData: catalog.keyData ?? null, catalogedAt };
+}
+
+/** Below this much text a window gives the comprehension record's room back to the document. */
+const COMPREHENSION_GIVES_WAY_BELOW = 1000;
+const COMPREHENSION_WITHHELD =
+  'What was recorded about this document is too long to send beside a useful window of its text, so it is left ' +
+  'out of this read. Its kind and purpose are in list_project_documents.';
+const NOT_RECORDED =
+  ' This window is not recorded as read: it was not served in a turn that confirms what the model received, so ' +
+  'the coverage above does not count it.';
+
+interface ReadWindow {
+  span: { start: number; end: number };
+  text: string;
+  charCount: number;
+  coverage: Awaited<ReturnType<CatalogService['getReadCoverage']>>;
+  /** True when the receipt waits on delivery, so the coverage counts this window. */
+  recorded: boolean;
+  comprehension: ReturnType<typeof comprehensionOf> | 'withheld';
+}
+
+/** One read's result, serialized: the measure fitReadWindow holds to RESULT_BUDGET. */
+function readResult(doc: LoadedDocument, catalog: Catalog, w: ReadWindow): string {
+  const comprehension =
+    w.comprehension === 'withheld' ? { comprehensionWithheld: COMPREHENSION_WITHHELD } : w.comprehension ? { comprehension: w.comprehension } : {};
+  return JSON.stringify({
+    ok: true,
+    documentId: doc.id,
+    fileName: doc.fileName,
+    documentTitle: doc.documentTitle,
+    ...sourceAvailabilityPresentation(doc),
+    extractionMethod: catalog.extractionMethod,
+    ...comprehension,
+    /* An OCR'd scan is not the same evidence as a born-digital text layer, and
+       the method alone does not say how well it read. The mean confidence
+       travels with the window so a low-confidence recognition is qualified
+       rather than quoted as if it were typed. Null for methods that do not
+       produce one (utf8, pdf-text, docx, xlsx). */
+    extractionConfidence: catalog.extractionConfidence,
+    window: { start: w.span.start, end: w.span.end, text: w.text },
+    totalChars: w.charCount,
+    coverage: {
+      coveredChars: w.coverage.coveredChars,
+      complete: w.coverage.complete,
+      uncoveredRanges: w.coverage.uncovered.slice(0, 10),
+    },
+    message: coverageMessage(w.coverage, w.charCount, w.span.end) + (w.recorded ? '' : NOT_RECORDED) + ocrCaveat(catalog),
+  });
+}
+
 async function handleReadProjectDocument(
   input: Record<string, unknown>,
   ctx?: ToolContext,
@@ -309,8 +382,9 @@ async function handleReadProjectDocument(
   const unreadable = await ensureReadable(svc, doc, text);
   if (unreadable) return unreadable;
 
-  const charCount = doc.catalog!.charCount || text.length;
-  const { offset, end } = readWindowBounds(input, charCount);
+  const catalog = doc.catalog!;
+  const charCount = catalog.charCount || text.length;
+  const { offset, asked } = readWindowBounds(input, charCount);
   if (offset >= charCount) {
     return JSON.stringify({
       ok: false,
@@ -318,55 +392,30 @@ async function handleReadProjectDocument(
     });
   }
 
-  await svc.recordReadReceipt({
+  /* The receipt is not written here. It waits on delivery (read-receipts.ts):
+     the loop host writes it only if the model is sent this result unchanged,
+     so the coverage below is "after this window", true exactly when the
+     result reaches the model. Outside such a host nothing is recorded, and
+     the result says so. */
+  const before = await svc.getReadCoverage(doc.id, doc.contentHash, charCount);
+  const recorded = canDeferReadReceipt(ctx);
+  const window = (size: number, comprehension: ReadWindow['comprehension']): string => {
+    const span = { start: offset, end: offset + size };
+    const coverage = recorded ? coverageAfter(before, span, charCount) : before;
+    return readResult(doc, catalog, { span, text: text.slice(span.start, span.end), charCount, coverage, recorded, comprehension });
+  };
+  let fit = fitReadWindow(size => window(size, comprehensionOf(catalog)), asked);
+  if (comprehensionOf(catalog) && fit.size < Math.min(asked, COMPREHENSION_GIVES_WAY_BELOW)) {
+    fit = fitReadWindow(size => window(size, 'withheld'), asked);
+  }
+  deferReadReceipt(ctx, {
     documentId: doc.id,
     contentHash: doc.contentHash,
-    span: { start: offset, end },
+    span: { start: offset, end: offset + fit.size },
     readBy: ctx?.userId ?? null,
+    result: fit.result,
   });
-  const coverage = await svc.getReadCoverage(doc.id, doc.contentHash, charCount);
-
-  /* What was already learned about this document, handed back with the text.
-     The comprehension record was written by a previous read and then never
-     returned by anything, so every re-read started from zero — the client's
-     own figures re-derived from scratch, which is exactly the re-explaining
-     the catalog exists to end. Present only when the record exists; a
-     not-yet-studied document says nothing here rather than an empty shape. */
-  const comprehension =
-    doc.catalog!.status === 'cataloged'
-      ? {
-          documentKind: doc.catalog!.documentKind,
-          purpose: doc.catalog!.purpose,
-          summary: doc.catalog!.summary,
-          keyData: doc.catalog!.keyData ?? null,
-          catalogedAt: doc.catalog!.catalogedAt,
-        }
-      : undefined;
-
-  return JSON.stringify({
-    ok: true,
-    documentId: doc.id,
-    fileName: doc.fileName,
-    documentTitle: doc.documentTitle,
-    ...sourceAvailabilityPresentation(doc),
-    extractionMethod: doc.catalog!.extractionMethod,
-    ...(comprehension ? { comprehension } : {}),
-    /* An OCR'd scan is not the same evidence as a born-digital text layer, and
-       the method alone does not say how well it read. The mean confidence
-       travels with the window so a low-confidence recognition is qualified
-       rather than quoted as if it were typed. Null for methods that do not
-       produce one (utf8, pdf-text, docx, xlsx). */
-    extractionConfidence: doc.catalog!.extractionConfidence,
-    window: { start: offset, end, text: text.slice(offset, end) },
-    totalChars: charCount,
-    coverage: {
-      coveredChars: coverage.coveredChars,
-      complete: coverage.complete,
-      uncoveredRanges: coverage.uncovered.slice(0, 10),
-    },
-    message:
-      coverageMessage(coverage, charCount, end) + ocrCaveat(doc.catalog!),
-  });
+  return fit.result;
 }
 
 interface CatalogInput {

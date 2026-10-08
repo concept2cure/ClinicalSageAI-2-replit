@@ -66,6 +66,12 @@ export const regulatoryPrograms = pgTable(
      *  agency assigns one — never fabricated. Distinct from `code`, the sponsor's
      *  own program code. migrations/20260907_regulatory_programs_application_number.sql */
     applicationNumber: text('application_number'),
+    /** The sponsor's address as Form FDA 1571 / 356h carry it. NULL until
+     *  stated. migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql */
+    sponsorAddress: text('sponsor_address'),
+    /** Form FDA 1571's IND type (a forms-registry ind_type option); IND
+     *  programs only. NULL until stated — never defaulted. Same migration. */
+    indType: text('ind_type'),
     indication: text('indication'),
     intendedUse: text('intended_use'),
 

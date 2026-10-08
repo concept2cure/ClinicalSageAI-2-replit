@@ -1,0 +1,57 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+RP
+Concept2Cure.RI
+›
+Projects
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+Projects
+/
+New project
+WORKSPACE
+New project
+
+Choose the filing type, describe the product, then review what will be recorded. The filing type decides the dossier outline this programme is built against.
+
+STEP 1
+Choose filing type
+STEP 2
+Configure project
+3
+STEP 3
+Review & create
+Review & create
+Filing type
+Investigational New Drug Application
+Agency / Region
+FDA · US
+Dossier
+eCTD · M1–M5
+Project name
+HLV-334 — Investigational New Drug Application (QA-FIX)
+Product
+—
+Therapeutic area
+Oncology (general)
+Target date
+Not set
+Pathway
+IND — eCTD
+Workstream
+Biotech
+Recorded as
+IND · biologic
+Your project is saved to the portfolio and opens in its workspace, where you can add documents and author sections with AnA.
+Cancel
+Back
+Create project

@@ -1,0 +1,4 @@
+# Every suite this change edits or adds, together, on the final working tree (RLS_ENFORCE=off)
+$ npx vitest run server/routes/__tests__/auth-session-roles.test.ts server/routes/__tests__/auth-sign-in-limits.test.ts server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts server/routes/__tests__/esignature-sign.test.ts server/routes/__tests__/protocol-signatures.routes.test.ts server/routes/c2c/__tests__/reauth-second-factor.test.ts server/services/part11/__tests__/reverify-signer.test.ts client/src/concept2cure/v2/__tests__/accountPanel.test.tsx client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx client/src/services/portal/__tests__/authService-routes-exist.test.ts client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+ Test Files  13 passed (13)
+      Tests  231 passed (231)

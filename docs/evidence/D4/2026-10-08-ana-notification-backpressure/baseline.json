@@ -1,0 +1,8 @@
+{
+  "branch": "concept2cure-v2",
+  "base": "e6183e52ee8d8d47b01eb2325f9790097ac16a1a",
+  "production_path": "server/services/ana/run-control.ts",
+  "production_blob": "8d65fabfeae96b859423dea90795ce3906d99040",
+  "ui_scope": "No UI contribution; preserve concurrent canonical work",
+  "workstream": "W3 / D4"
+}

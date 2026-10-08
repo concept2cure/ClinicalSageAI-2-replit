@@ -193,9 +193,9 @@ function relativeImports(src: string, fromRel: string, sources: Sources): Map<st
 }
 
 /**
- * `region` plus the definitions of every component it renders and every
- * function it calls, followed through the same file and relative imports,
- * `depth` levels deep.
+ * `region` plus the definitions of every component it renders, every function
+ * it calls and every handler it passes as a prop, followed through the same
+ * file and relative imports, `depth` levels deep.
  */
 function closure(region: string, fileRel: string, sources: Sources, depth = 3): string {
   const seen = new Set<string>();
@@ -208,6 +208,9 @@ function closure(region: string, fileRel: string, sources: Sources, depth = 3): 
     const names = new Set<string>();
     for (const m of text.matchAll(/<([A-Z][\w$]*)/g)) names.add(m[1]);
     for (const m of text.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(/g)) names.add(m[1]);
+    // A handler handed down as a prop (`onOpenDoc={openDocument}`) is reached
+    // too: the child calls it, so its body is what the control does.
+    for (const m of text.matchAll(/=\{\s*([A-Za-z_$][\w$]*)\s*\}/g)) names.add(m[1]);
     for (const name of names) {
       let defRel = rel;
       let def = definitionOf(src, name);
@@ -390,6 +393,29 @@ export function SubmissionCenter() {
   return <div />;
 }
 `;
+
+/** F3 as built (58876cf3): the page owns the handler and hands it down. */
+const AUTHOR_HANDLER_AS_PROP = {
+  [PROJECT_HOME]: `
+import { setEditorTarget } from '../editorTarget';
+export function ProjectHome({ onNav }) {
+  const openDocument = (doc) => {
+    setEditorTarget({ docType: null, docId: doc.id, programId: pid });
+    onNav('document-authoring');
+  };
+  return (
+    <div>
+      {stage === 'author' && (
+        <AuthorWorkspace
+          pid={pid}
+          onOpenDoc={openDocument}
+        />
+      )}
+    </div>
+  );
+}
+`,
+};
 
 const FIXTURES: Record<Hop['id'], { red: Record<string, string>; green: Record<string, string> }> = {
   'review-tab-to-document': {
@@ -659,6 +685,11 @@ describe('filing path reachability (FILING_SPINE.md F0)', () => {
         expect(v.ok, v.why).toBe(true);
       });
     }
+    it('author-document-row-to-document: green when the page hands its open handler down as a prop', () => {
+      const hop = HOPS.find((h) => h.id === 'author-document-row-to-document')!;
+      const v = hop.check(memorySources(AUTHOR_HANDLER_AS_PROP));
+      expect(v.ok, v.why).toBe(true);
+    });
   });
 
   describe('the hops on the code', () => {

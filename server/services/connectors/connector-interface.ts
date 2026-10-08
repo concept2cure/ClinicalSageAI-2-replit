@@ -95,6 +95,35 @@ export interface DataConnector {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// DOCUMENT REPOSITORIES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * The organisation's own document repositories: the only connectors that
+ * search_connected_repositories (and GET /api/knowledge-base/search-connectors)
+ * search. Every other catalog entry is either a public source — PubMed,
+ * ClinicalTrials.gov, Drugs@FDA, EMA, … which need no credential and so count
+ * as configured — or a system of record that is not a document store.
+ *
+ * Static, and the tool schema's `connectors` enum: a per-tenant list would make
+ * the schema differ by tenant and defeat prompt caching (AnA Summary S2,
+ * docs/design/ANA_AGENT_WORK_VIEW_2026-10-08.md).
+ */
+export const REPOSITORY_CONNECTOR_IDS = ['google_drive', 'box', 'onedrive', 'sharepoint', 'veeva_vault'] as const;
+
+/**
+ * A connector id as the registry spells it: lower case, with `_` for `-` and
+ * spaces. So `google-drive` and `Google Drive` both name `google_drive`.
+ */
+export function canonicalConnectorId(id: string): string {
+  return id.trim().toLowerCase().replace(/[\s-]+/g, '_');
+}
+
+export function isRepositoryConnector(id: string): boolean {
+  return (REPOSITORY_CONNECTOR_IDS as readonly string[]).includes(canonicalConnectorId(id));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // CONNECTOR CATALOG
 // ═══════════════════════════════════════════════════════════════════════════════
 

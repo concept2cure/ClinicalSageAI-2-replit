@@ -1,0 +1,35 @@
+# npm run ci:step-presentation:selftest — 2026-10-08T11:26:34Z
+PASS  1. the real tree passes (CLI exit 0)
+        ci:step-presentation OK — 608 in-scope tools each have a present entry (615 entries in all); 123 engine claims, none with a reachable model call.
+PASS  2a. deleting the present entry of search_project_documents fails MISSING, naming it
+        MISSING search_project_documents: no `present` block: its steps would read "Ran a step"
+PASS  2b. the CLI exits 1 on the same deletion
+        ci:step-presentation FAILED — 1 finding(s): |   MISSING  search_project_documents: no `present` block: its steps would read "Ran a step"
+PASS  3. source 'engine' on convene_drafting_council (its handler calls a model) fails ENGINE
+        its handler can reach a model: server/services/ana/agentic-workflow-tools.ts → import('../multi-agent-council.js') → server/services/multi-agent-council.ts → server/services/ai-gateway/gateway.ts
+PASS  4. engine on double_calls_model fails ENGINE
+        its handler can reach a model: server/services/ana/fixture-tools.ts → getGateway from '../ai-gateway/gateway' → server/services/ai-gateway/gateway.ts
+PASS  4. engine on double_model_via_helper fails ENGINE
+        its handler can reach a model: server/services/ana/fixture-tools.ts → helperThatCallsModel() → getGateway from '../ai-gateway/gateway' → server/services/ai-gateway/gateway.ts
+PASS  4. engine on double_model_via_dynamic_import fails ENGINE
+        its handler can reach a model: server/services/ana/fixture-tools.ts → import('./drafter.js') → server/services/ana/drafter.ts → server/services/ai-gateway/gateway.ts
+PASS  4. control: engine on double_pure passes
+PASS  4. the CLI exits 1 on the doubles tree
+PASS  5. VERB fires on bad_verb
+PASS  5. SOURCE fires on bad_source
+PASS  5. PREVIEW fires on bad_preview
+PASS  5. OBJECT fires on tool_like_object
+PASS  5. OBJECT fires on empty_object
+PASS  5. REFUSAL fires on handler_refusal
+PASS  5. ENGINE fires on engine_writes
+PASS  5. ENGINE fires on engine_no_handler
+PASS  5. control: a well-formed entry has no finding
+PASS  6. an unreadable or empty verb table throws, never passes every verb
+PASS  6. an empty in-scope list throws, never passes
+
+ci:step-presentation:selftest — 20/20 cases behaved.
+exit 0
+
+# npm run ci:step-presentation
+ci:step-presentation OK — 608 in-scope tools each have a present entry (615 entries in all); 123 engine claims, none with a reachable model call.
+exit 0

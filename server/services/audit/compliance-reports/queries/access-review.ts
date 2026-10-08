@@ -30,6 +30,7 @@
 import type { ReportDefinition, RunContext, SectionResult, SqlClient } from '../types';
 import { reviewSection, reviewSectionDef } from './review-record';
 import { cappedSection, columns, isoNaiveUtc, isoUtc, naiveUtcNote, utcWallClock } from './section';
+import { withExtendingRoles } from '../../../../../shared/constants/org-roles';
 
 const MEMBER_COLUMNS = columns([
   ['user_id', 'User id'],
@@ -49,7 +50,7 @@ const MEMBER_COLUMNS = columns([
 ]);
 
 /** The organisation roles a review must decide on (POLICY-AC-002 §4a), plus anyone with a platform role. */
-export const PRIVILEGED_ORG_ROLES: readonly string[] = ['owner', 'admin', 'manager'];
+export const PRIVILEGED_ORG_ROLES: readonly string[] = withExtendingRoles(['owner', 'admin', 'manager']);
 
 /*
  * $1 organisation, $2 the end of the as-of day. Membership is as-of (joined by

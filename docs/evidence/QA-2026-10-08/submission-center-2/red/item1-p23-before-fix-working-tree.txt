@@ -1,0 +1,27 @@
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a refused freeze voids the signature given for it > refused at its gate, the signature is void; once the gate clears it is refused, and a fresh one freezes 310ms
+   → a signature given for a refused freeze froze the sequence later: expected null to match object { code: 'GOVERNED_REQUIRED', …(1) }
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a refused freeze voids the signature given for it > a signature someone else names is not theirs to void 9ms
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a transmit that sent nothing voids the signature given for it > with no gateway credentials nothing is sent and the signature is void; once credentials exist it is refused, and a fresh one transmits 147ms
+   → a signature given for a transmit that sent nothing sent the package later: expected null to match object { code: 'GOVERNED_REQUIRED', …(1) }
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit checks the typed application number against the program record > the precheck refuses a number that contradicts the record, before anyone signs 9ms
+   → expected true to be false // Object.is equality
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit checks the typed application number against the program record > a contradicting number is refused 409, nothing is sent, and its signature is void; the recorded number transmits 107ms
+   → transmit sent a package under a number the program record contradicts: expected null to match object { …(2) }
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a refused freeze voids the signature given for it > refused at its gate, the signature is void; once the gate clears it is refused, and a fresh one freezes
+AssertionError: a signature given for a refused freeze froze the sequence later: expected null to match object { code: 'GOVERNED_REQUIRED', …(1) }
+- Expected:
++ Received:
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a transmit that sent nothing voids the signature given for it > with no gateway credentials nothing is sent and the signature is void; once credentials exist it is refused, and a fresh one transmits
+AssertionError: a signature given for a transmit that sent nothing sent the package later: expected null to match object { code: 'GOVERNED_REQUIRED', …(1) }
+- Expected:
++ Received:
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit checks the typed application number against the program record > the precheck refuses a number that contradicts the record, before anyone signs
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit checks the typed application number against the program record > a contradicting number is refused 409, nothing is sent, and its signature is void; the recorded number transmits
+AssertionError: transmit sent a package under a number the program record contradicts: expected null to match object { …(2) }
+- Expected:
++ Received:
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)

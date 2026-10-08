@@ -36,6 +36,7 @@ import type {
   AnaTurnRecordStatus,
 } from './useAnaChat.types';
 import { isAnaRunPolicy, stepLabels } from '@shared/ana/run-policy';
+import { unknownStepLabel } from '@shared/ana/step-verbs';
 
 /**
  * Phases the client itself observes (no server `status` event carries them).
@@ -112,12 +113,8 @@ export function formatElapsed(ms: number): string {
   return `${s}s`;
 }
 
-/** "340 ms" under a second, "2.4s" above it. For a single tool step. */
-export function formatStepDuration(ms: number): string {
-  if (!Number.isFinite(ms) || ms < 0) return '';
-  if (ms < 1000) return `${Math.round(ms)} ms`;
-  return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`;
-}
+/** "340 ms" under a second, "2.4s" above it. For a single tool step; the server's "Took" fact uses the same one. */
+export { formatStepDuration } from '@shared/ana/step-verbs';
 
 export interface ToolTally {
   total: number;
@@ -155,7 +152,8 @@ export function summarizeToolWork(calls: AnaToolCall[] | undefined): string {
   const seen = new Set<string>();
   const labels: string[] = [];
   for (const c of list) {
-    const raw = (c.label || c.name || '').trim();
+    // The server's label; a step with none is never named by its tool (step-verbs.ts).
+    const raw = (c.label || unknownStepLabel(c.status === 'success' ? 'done' : 'doing')).trim();
     if (!raw) continue;
     // "Searching the literature for X" → "searching the literature for X".
     const l = raw.charAt(0).toLowerCase() + raw.slice(1);

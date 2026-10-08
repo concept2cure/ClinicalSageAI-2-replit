@@ -1,0 +1,17 @@
+ × server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses a manager with 403 ESIGNATURE_NO_AUTHORITY, before the password is read, writing nothing 144ms
+ × server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses a member with 403 ESIGNATURE_NO_AUTHORITY, before the password is read, writing nothing 5ms
+ × server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses a viewer with 403 ESIGNATURE_NO_AUTHORITY, before the password is read, writing nothing 4ms
+ × server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses a caller with no membership in the organisation (no role is no authority) 4ms
+ × server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses, and does not sign, when the role cannot be read 12ms
+ ✓ server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > lets a role with signing authority through to the credential check 5ms
+ × server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > applies the same rule to revoking a signature, which writes a signature row too 3ms
+ ✓ server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > leaves a non-signature command alone (claim needs no signing authority) 84ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses a manager with 403 ESIGNATURE_NO_AUTHORITY, before the password is read, writing nothing
+ FAIL  server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses a member with 403 ESIGNATURE_NO_AUTHORITY, before the password is read, writing nothing
+ FAIL  server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses a viewer with 403 ESIGNATURE_NO_AUTHORITY, before the password is read, writing nothing
+ FAIL  server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses a caller with no membership in the organisation (no role is no authority)
+ FAIL  server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses, and does not sign, when the role cannot be read
+ FAIL  server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > applies the same rule to revoking a signature, which writes a signature row too
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)

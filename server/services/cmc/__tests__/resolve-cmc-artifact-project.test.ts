@@ -71,7 +71,7 @@ describe('resolveCmcArtifactProject', () => {
     const r = await resolveCmcArtifactProject(ORG, PROGRAM_UUID);
     expect(r.state).toBe('unanchored');
     expect(r.artifactProjectId).toBeNull();
-    if (r.state === 'unanchored') expect(r.detail).toMatch(/anchor/i);
+    if (r.state === 'unanchored') expect(r.detail).toMatch(/not linked/i);
   });
 
   it('an unanchored detail does not say its artifacts stay unplaced: Module 3 placement into a submission still works without the anchor', async () => {
@@ -83,7 +83,20 @@ describe('resolveCmcArtifactProject', () => {
     if (r.state !== 'unanchored') throw new Error('expected an unanchored state');
     expect(r.detail).not.toMatch(/stay unplaced/);
     expect(r.detail).toMatch(/placement into a submission still work/);
-    expect(r.detail).toMatch(/not listed until the program is anchored/);
+    expect(r.detail).toMatch(/artifacts are not listed here/);
+  });
+
+  /* QA 2026-10-08 (j5): the Vault showed this detail verbatim as a banner,
+     "no PM-spine anchor (projects.regulatory_program_id)", with nothing the
+     reader could do about it. It is shown to the person, so it is written for
+     them: no schema names, and the next step named. */
+  it('an unanchored detail names no internal column and says what the person can do', async () => {
+    resolveProgramProjectAnchor.mockResolvedValue(null);
+    const r = await resolveCmcArtifactProject(ORG, PROGRAM_UUID);
+    if (r.state !== 'unanchored') throw new Error('expected an unanchored state');
+    expect(r.detail).not.toMatch(/PM-spine|projects\.|regulatory_program_id|\(.*_.*\)/);
+    expect(r.detail).toMatch(/not linked to your organization.s artifact registry/);
+    expect(r.detail).toMatch(/ask your organization administrator to link the project/);
   });
 
   it('refuses ids that address neither spine', async () => {

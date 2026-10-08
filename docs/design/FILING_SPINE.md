@@ -432,6 +432,8 @@ Two corrections to the readers:
 | 2D: review loop | Working tree | In flight | Yes | Nothing. F1 and F7 wait for its commit (it edits `authoring.router.ts` and the review-board tests) |
 | F0: filing-path reachability gate | The commit that adds `tests/ui/filing-path-reachability.test.ts` | Landed 2026-10-08 | Yes | Each of F3, F4, F7, F10, F12 and F15 removes its hop from `tests/ui/filing-path-reachability.baseline.json` in the same change; the test fails until it does. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/f0-filing-path-reachability/` |
 | F2: five tabs; start box above them | The commit that adds `__tests__/projectHomeStages.test.tsx` | Landed 2026-10-08 | Yes | Nothing. F15 replaces Respond's tool list; F21 and F22 put the Planner and Add a market on Submit. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/f2-five-tabs/` |
+| F16: no dead ends on the filing path | The commit that adds `__tests__/filingPathNoDeadEnds.test.tsx` | Landed 2026-10-08 | Yes | Nothing. Doors on launch screens ask `surfaceAvailable.ts`. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/f16-no-dead-ends/` |
+| F17: placement states the filing copy's status | The commit that adds `__tests__/placeIntoFilingApprovalState.test.tsx` | Landed 2026-10-08 | Yes | Nothing. The copy-status rule lives in `shared/regulatory/filing-copy-status.ts`. Re-place from the Builder's rows needs a leaf's link to its authoring source (as F18 does). Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/f17-filing-copy-status/` |
 
 ### 7.2 New slices
 

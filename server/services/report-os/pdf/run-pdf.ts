@@ -104,9 +104,11 @@ function writeHeader(w: Writer, input: RunPdfInput) {
   w.write(`Run #${input.run.id}${input.run.runUuid ? ` (${input.run.runUuid})` : ''}`, { size: 9, color: GREY, gap: 8 });
   const facts = [
     `Report type: ${input.run.reportTypeId}`,
-    `Scope: ${input.run.scopeType} ${input.run.scopeId}`,
+    // The scope by name when the run stored one (QA 2026-10-08, j8: "Scope: project 1").
+    `Scope: ${input.report.scopeLabel ?? `${input.run.scopeType} ${input.run.scopeId}`}`,
     `Status: ${input.run.status}`,
-    `Confidence: ${input.run.confidence ?? 'not recorded'}`,
+    // No engine behind the generic run measures a confidence (orchestrator.ts).
+    `Confidence: ${input.run.confidence ?? 'not computed'}`,
     `Computed: ${iso(input.run.createdAt)} (UTC)`,
     `Run by: ${input.runBy ?? 'not recorded'}`,
   ];

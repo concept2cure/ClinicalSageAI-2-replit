@@ -180,10 +180,15 @@ export function useFilingTarget(onChange?: () => void, programId?: string | null
           return;
         }
         setSeqs({ state: 'ready', rows: r.data });
-        // Preselect the first sequence that can actually take a leaf, never a
-        // locked one — preselecting a locked sequence would stage a refusal.
-        const firstOpen = r.data.find((s) => !isLocked(s.status));
-        setSeqId(firstOpen ? firstOpen.id : null);
+        // Pre-select a sequence only when exactly one can take a leaf: then
+        // there is no choice to make. With two or more open (an original 0000
+        // and a draft amendment 0001), which one a document is filed in is the
+        // person's regulatory decision, so nothing is chosen until they choose
+        // (P-21, product decision 2026-10-08). It used to take the FIRST open
+        // one. A locked sequence is never pre-selected — that would stage a
+        // refusal.
+        const open = r.data.filter((s) => !isLocked(s.status));
+        setSeqId(open.length === 1 ? open[0].id : null);
       });
     },
     [onChange],

@@ -1,0 +1,24 @@
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > the rule: a signing role holds the role it extends, never the reverse > approver holds manager, reviewer holds member; manager and member gain nothing 2ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > the rule: a signing role holds the role it extends, never the reverse > an administrator can assign both 1ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > signs (policy unchanged: a manager still does not) 1ms
+ × server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > writes governed records and finalizes reports, which needs both the manager tier and signing 6ms
+   → expected false to be true // Object.is equality
+ × server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > passes every requireRole that admits a manager, and gets the regulatory-author grant 1ms
+   → expected 403 to be 200 // Object.is equality
+ × server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > administers programs and projects, reads the audit trail, and is reported as privileged 1ms
+   → expected false to be true // Object.is equality
+ × server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > meets the manager tier of the RBAC hierarchy (AnA command minimum roles) 1ms
+   → expected false to be true // Object.is equality
+ × server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > holds every governance action a manager holds 1ms
+   → author: expected false to be true // Object.is equality
+ × server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > writes governed records, does not finalize reports (a member does not) 1ms
+   → expected false to be true // Object.is equality
+ × server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > gets the regulatory-author grant a member gets, and creates programs 2ms
+   → expected [ 'reviewer' ] to include 'regulatory-author'
+ × server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > meets the member tier, not the manager tier 1ms
+   → expected false to be true // Object.is equality
+ × server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > holds every governance action a member holds, and sign 1ms
+   → author: expected false to be true // Object.is equality
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > is not a manager anywhere 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  9 failed | 4 passed (13)

@@ -60,8 +60,8 @@ describe.each([
     expect(text).toMatch(/scan\.pdf\s*·\s*no text extracted/);
   });
 
-  it('still says what was read, and how much', () => {
+  it('still says how much text was extracted, without claiming AnA read it', () => {
     const { container } = render(<Component {...props} />);
-    expect(container.textContent ?? '').toMatch(/protocol\.docx\s*·\s*read · 1,240 words/);
+    expect(container.textContent ?? '').toMatch(/protocol\.docx\s*·\s*text extracted · 1,240 words/);
   });
 });

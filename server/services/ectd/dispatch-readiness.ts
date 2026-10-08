@@ -37,6 +37,8 @@
  *     assembler cannot build into the package. transmitSequence fails closed on
  *     ANY unresolved leaf, external ones included, so a dispatch-clear verdict
  *     here would promise an operator a transmit the system will refuse.
+ *   - MISSING_REQUIRED_SECTION, when the regulation requires the section in
+ *     THIS sequence — see `requiredByRegulation` below.
  *   - INVALID_LIFECYCLE_OP — an operation outside new|replace|append|delete
  *   - JP_ECTD_V4_REQUIRED — an original sequence for a Japanese application
  *     on or after the date PMDA stopped accepting eCTD v3.2.2 for new
@@ -45,6 +47,22 @@
  *     fact `pmda-ectd-v4-mandatory`, read here, never copied; a continuing
  *     sequence of a lifecycle begun in v3.2.2 is not affected. Added
  *     2026-10-05 (g-jp-ectd-v4-dispatch-blocker).
+ *
+ * RELEASE BLOCKERS are findings that do not fail validation but that freeze,
+ * dispatch and transmit refuse. They are reported as warnings, marked
+ * `blocksRelease`, and counted in `releaseBlockers`, never in `errors`:
+ *   - DOCUMENT_NOT_APPROVED — the source document resolves but is not
+ *     transmittable (a Vault version not approved for these bytes, a draft or
+ *     frozen-not-approved co-author document, …), judged by the assembler's
+ *     own rule (leaf-source-resolver notFinalizedStatus / vault-lifecycle
+ *     vaultVersionNotTransmittable). FD5, founder decision 2026-10-01. Added
+ *     2026-10-08 (QA j6) so the verdict read before an e-signature names the
+ *     leaf that the post-signature assembly would refuse. Since P-22 (product
+ *     decision 2026-10-08, "approval gates the release, not the technical
+ *     validation") it is a warning at Validated — publishers validate while
+ *     final approvals are collected — and the release gates refuse it
+ *     (assess-dispatch-readiness composes `releaseBlockers` into the freeze,
+ *     dispatch and transmit verdicts).
  *
  * The delete exemption is scoped to the CONTENT checks (UNRESOLVED_DOCUMENT
  * and DOCUMENT_CONTENT_MISMATCH). A delete is backbone-only and correctly
@@ -59,10 +77,18 @@
  * DOCUMENT_CONTENT_MISMATCH on a delete, like UNRESOLVED_DOCUMENT, would be
  * a refusal transmit does not share.
  *
- * Required-section completeness is reported as a non-blocking WARNING (Module-1
- * numbering and leaf section codes don't align cleanly across regions, so it is
- * informative, not provable). Pathway/regional completeness is covered separately
- * by the pathway engines and the AI dispatch-qc advisory.
+ * Required-section completeness is decided per section, never by default
+ * (QA 2026-10-08, j7): a section the regulation requires in THIS sequence
+ * (`requiredByRegulation` — the regional Module 1 record's requirement for an
+ * original sequence of an application kind it models) is an ERROR when no
+ * leaf carries it; a section a region profile lists without that
+ * determination (`requiredSections` — an unmodelled region or kind) stays an
+ * informative WARNING, and a warning never blocks. Until 2026-10-08 every
+ * missing section was a warning, so a one-leaf original IND with no Form 1571,
+ * no Investigator's Brochure and no general investigational plan read
+ * "structural gate satisfied", while the IND's own gate called the same gaps
+ * hard blockers. Pathway/regional completeness is covered separately by the
+ * pathway engines and the AI dispatch-qc advisory.
  *
  * PURE + DETERMINISTIC: no DB, no network, no LLM, no wall clock
  * (leaf-document-tables holds the table vocabulary and has no imports of its
@@ -128,6 +154,25 @@ export interface LeafDocumentResolution {
   pin: LeafDocumentPinVerdict;
   /** Human-readable detail for anything but a clean resolution. */
   reason: string | null;
+  /**
+   * Why the document may not be transmitted, in the words the assembler's
+   * refusal prints ('not reviewed', 'draft', 'frozen, not approved', …), or
+   * null when it may. Absent for a store with no approval state (rendered
+   * files, uploads) and on resolutions built before this field existed.
+   * The assembler applies the same rule (materializeLeafSources →
+   * assembledTransmitBlockers), and the governed freeze, dispatch and transmit
+   * refuse on it; carried here so the verdict the client reads BEFORE an
+   * e-signature names the leaf (QA 2026-10-08, j6).
+   */
+  notTransmittable?: string | null;
+  /**
+   * The document exists but holds no content the assembler can build into a
+   * leaf (an empty co-author body or governed section). The assembler reports
+   * such a leaf unresolved, and no placement can pin it, so it is not a
+   * pin warning (QA 2026-10-08, j6: "Re-place the leaf to pin its content"
+   * could not clear it).
+   */
+  noContent?: boolean;
 }
 
 export interface ReadinessLeaf {
@@ -151,6 +196,13 @@ export interface ReadinessFinding {
   code: string;
   sectionCode: string | null;
   message: string;
+  /**
+   * True on a finding that does not fail validation but that the release
+   * steps — freeze, dispatch and transmit — refuse (P-22: approval gates the
+   * release, not the technical validation). Always a warning; counted in
+   * `releaseBlockers`, never in `errors`.
+   */
+  blocksRelease?: true;
   /** The corpus rule this finding is an instance of — attached by the
    *  assessment (withRules); null when the corpus names no such rule. */
   rule?: RuleView | null;
@@ -160,12 +212,27 @@ export interface DispatchReadinessReport {
   errors: number;
   warnings: number;
   infos: number;
+  /** Warnings the release steps refuse (`blocksRelease`) — P-22. Included in
+   *  `warnings`; the freeze, dispatch and transmit verdicts block on them. */
+  releaseBlockers: number;
   findings: ReadinessFinding[];
 }
 
 export interface ComputeReadinessOptions {
-  /** Section codes the region marks required (e.g. region profile Module-1). */
+  /**
+   * Section codes a region profile lists as required where requiredness for
+   * THIS sequence is not established (an unmodelled region or application
+   * kind). A missing one is an informative WARNING and never blocks.
+   */
   requiredSections?: string[];
+  /**
+   * Section codes the regulation requires in THIS sequence, with the record
+   * that says so. A missing one is an ERROR: it blocks Validated, freeze,
+   * dispatch and transmit. The DB-bound assessor supplies the regional
+   * Module 1 record's requirement for an original sequence of a modelled
+   * application kind (readinessOptionsForSequence).
+   */
+  requiredByRegulation?: { codes: string[]; basis: string };
   /**
    * True for an original (0000) sequence. In an original there is no prior
    * content, so any replace/append/delete lifecycle operation is a filing error —
@@ -316,6 +383,61 @@ function pointerLabel(leaf: ReadinessLeaf): string {
 }
 
 /**
+ * What a resolved document's CONTENT and APPROVAL say about its leaf. Not
+ * raised on a delete: a withdrawal ships none of the document.
+ *
+ *  - QA 2026-10-08 (j6): a document with no content was reported as a pin
+ *    warning whose advice ("re-place the leaf") cannot work — there is nothing
+ *    to pin. The assembler leaves such a leaf out of the package, and freeze,
+ *    dispatch and transmit refuse it, so it is the error those steps report.
+ *  - 2026-09-22 (W5/D7): a resolved leaf with no pin used to produce nothing,
+ *    so "content not verified" read exactly like "content matches".
+ *  - FD5 (founder decision 2026-10-01): only approved documents leave for an
+ *    agency. Freeze, dispatch and transmit already refused an unapproved leaf,
+ *    but only after the assembly that runs once the e-signature is taken; the
+ *    gate the client reads before signing did not name it (QA 2026-10-08, j6).
+ */
+function contentFindings(leaf: ReadinessLeaf, resolution: LeafDocumentResolution, isDelete: boolean): ReadinessFinding[] {
+  if (isDelete || resolution.status === 'missing') return [];
+  if (resolution.status === 'resolved' && resolution.noContent) {
+    return [{
+      severity: 'error',
+      code: 'UNRESOLVED_DOCUMENT',
+      sectionCode: leaf.sectionCode,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, which has no authored content, so it cannot be ` +
+        'assembled into the package. Write the document first; its content is pinned when it is placed again.',
+    }];
+  }
+  const out: ReadinessFinding[] = [];
+  if (resolution.status === 'resolved' && resolution.pin === 'unpinned') {
+    out.push({
+      severity: 'warning',
+      code: 'DOCUMENT_CONTENT_NOT_PINNED',
+      sectionCode: leaf.sectionCode,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, but no content hash was pinned when it was placed, ` +
+        'so whether the document still holds what was placed cannot be verified. Re-place the leaf to pin its content.',
+    });
+  }
+  // P-22 (2026-10-08): approval gates the release, not the technical
+  // validation. A warning here — Validated does not wait for final approvals —
+  // marked for the release steps, which refuse it (releaseBlockers).
+  if (resolution.notTransmittable) {
+    out.push({
+      severity: 'warning',
+      code: 'DOCUMENT_NOT_APPROVED',
+      sectionCode: leaf.sectionCode,
+      blocksRelease: true,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, which is not yet approved (${resolution.notTransmittable}). ` +
+        'Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.',
+    });
+  }
+  return out;
+}
+
+/**
  * What the DB-bound resolver found behind a complete pointer. A document the
  * resolver could not find is exactly as unassemblable as no pointer at all,
  * and reads under the same code; a document whose content no longer matches
@@ -348,18 +470,7 @@ function resolutionFindings(leaf: ReadinessLeaf, isDelete: boolean): ReadinessFi
         `${resolution.reason ? ` — ${resolution.reason}` : ''}. Re-file the leaf against the current document, or restore the filed content, before dispatch.`,
     });
   }
-  // 2026-09-22 (W5/D7): a resolved leaf with no pin used to produce nothing,
-  // so "content not verified" read exactly like "content matches".
-  if (!isDelete && resolution.status === 'resolved' && resolution.pin === 'unpinned') {
-    out.push({
-      severity: 'warning',
-      code: 'DOCUMENT_CONTENT_NOT_PINNED',
-      sectionCode: leaf.sectionCode,
-      message:
-        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, but no content hash was pinned when it was placed, ` +
-        'so whether the document still holds what was placed cannot be verified. Re-place the leaf to pin its content.',
-    });
-  }
+  out.push(...contentFindings(leaf, resolution, isDelete));
   return out;
 }
 
@@ -418,6 +529,50 @@ function documentPointerFindings(leaf: ReadinessLeaf): ReadinessFinding[] {
     });
   }
 
+  return out;
+}
+
+/**
+ * The required sections no leaf carries (prefix match). A section is present iff
+ * a leaf is the required section itself or a true sub-section; the trailing '.'
+ * enforces a segment boundary so '1.20' does not satisfy required '1.2' (only
+ * '1.2', '1.2.1', '1.2.x', … do).
+ *
+ *  - ERROR: the regulation requires the section in this sequence
+ *    (`requiredByRegulation`). QA 2026-10-08 (j7): decided per section, never a
+ *    warning counted as a blocker.
+ *  - WARNING: listed as required (`requiredSections`) where requiredness for
+ *    this sequence is not established — informative, never blocking. A section
+ *    already decided by regulation is not reported twice.
+ */
+function requiredSectionFindings(activeNonDelete: ReadinessLeaf[], opts: ComputeReadinessOptions): ReadinessFinding[] {
+  const presentNorm = activeNonDelete.map(l => normalizeCode(l.sectionCode));
+  const isPresent = (code: string): boolean => {
+    const reqNorm = normalizeCode(code);
+    return !reqNorm || presentNorm.some(p => p === reqNorm || p.startsWith(`${reqNorm}.`));
+  };
+  const out: ReadinessFinding[] = [];
+  const byRegulation = opts.requiredByRegulation;
+  const decided = new Set<string>();
+  for (const required of byRegulation?.codes ?? []) {
+    decided.add(normalizeCode(required));
+    if (isPresent(required)) continue;
+    out.push({
+      severity: 'error',
+      code: 'MISSING_REQUIRED_SECTION',
+      sectionCode: required,
+      message: `Required section ${required} has no leaf in this sequence. ${byRegulation!.basis}`,
+    });
+  }
+  for (const required of opts.requiredSections ?? []) {
+    if (decided.has(normalizeCode(required)) || isPresent(required)) continue;
+    out.push({
+      severity: 'warning',
+      code: 'MISSING_REQUIRED_SECTION',
+      sectionCode: required,
+      message: `Required section ${required} has no leaf in this sequence.`,
+    });
+  }
   return out;
 }
 
@@ -502,26 +657,7 @@ export function computeDispatchReadiness(
     }
   }
 
-  // WARNING: required sections not present (informative — prefix match).
-  if (opts.requiredSections && opts.requiredSections.length) {
-    const presentNorm = activeNonDelete.map(l => normalizeCode(l.sectionCode));
-    for (const required of opts.requiredSections) {
-      const reqNorm = normalizeCode(required);
-      if (!reqNorm) continue;
-      // Present iff a leaf is the required section itself or a true sub-section.
-      // The trailing '.' enforces a segment boundary so '1.20' does not satisfy
-      // required '1.2' (only '1.2', '1.2.1', '1.2.x', … do).
-      const present = presentNorm.some(p => p === reqNorm || p.startsWith(`${reqNorm}.`));
-      if (!present) {
-        findings.push({
-          severity: 'warning',
-          code: 'MISSING_REQUIRED_SECTION',
-          sectionCode: required,
-          message: `Required section ${required} has no leaf in this sequence.`,
-        });
-      }
-    }
-  }
+  findings.push(...requiredSectionFindings(activeNonDelete, opts));
 
   // INFO: a section carries more than one active "new" leaf.
   const newBySection = new Map<string, number>();
@@ -545,6 +681,7 @@ export function computeDispatchReadiness(
     errors: findings.filter(f => f.severity === 'error').length,
     warnings: findings.filter(f => f.severity === 'warning').length,
     infos: findings.filter(f => f.severity === 'info').length,
+    releaseBlockers: findings.filter(f => f.blocksRelease === true).length,
     findings,
   };
 }

@@ -1,0 +1,98 @@
+{
+  "email": "qa-onboard-3@concept2cure.pro",
+  "inviteRoleOptions": [
+    "Select…",
+    "Admin",
+    "Approver",
+    "Manager",
+    "Reviewer",
+    "Member",
+    "Viewer"
+  ],
+  "asMember": {
+    "status": 200,
+    "roles": [
+      "member",
+      "user"
+    ],
+    "permissions": [
+      "governed:write"
+    ]
+  },
+  "assignApprover": {
+    "opts": [
+      "Select…",
+      "Admin",
+      "Approver",
+      "Manager",
+      "Reviewer",
+      "Member",
+      "Viewer"
+    ],
+    "noReason": "Complete the required field: Reason for the change",
+    "toast": [
+      "QA Onboard 3 is now Approver. The change and your reason are recorded in the audit trail."
+    ]
+  },
+  "asApprover": {
+    "status": 200,
+    "roles": [
+      "approver",
+      "user"
+    ],
+    "permissions": [
+      "governed:write",
+      "report:finalize"
+    ]
+  },
+  "rolesTab": "Member | 6 members | Org-level role derived from live membership. | EDIT SCOPES | Admin | 3 members | Org-level role derived from live membership. | EDIT SCOPES | Manager | 3 members | Org-level role derived from live membership. | EDIT SCOPES | Approver | 1 member | Org-level role derived from live membership. | EDIT SCOPES | Viewer | 1 member | Org-level role derived from live membership. | EDIT SCOPES",
+  "assignReviewer": {
+    "opts": [
+      "Select…",
+      "Admin",
+      "Approver",
+      "Manager",
+      "Reviewer",
+      "Member",
+      "Viewer"
+    ],
+    "noReason": "Complete the required field: Reason for the change",
+    "toast": [
+      "QA Onboard 3 is now Reviewer. The change and your reason are recorded in the audit trail."
+    ]
+  },
+  "asReviewer": {
+    "status": 200,
+    "roles": [
+      "reviewer",
+      "user"
+    ],
+    "permissions": [
+      "governed:write"
+    ]
+  },
+  "writes": [
+    {
+      "method": "POST",
+      "url": "/api/tenant-users",
+      "status": 201,
+      "req": "{\"name\":\"QA Onboard 3\",\"email\":\"qa-onboard-3@concept2cure.pro\",\"role\":\"member\"}",
+      "body": "{\"id\":36,\"email\":\"qa-onboard-3@concept2cure.pro\",\"name\":\"QA Onboard 3\",\"role\":\"member\",\"createdNewUser\":true,\"quotaInfo\":{\"used\":14,\"maximum\":25,\"remaining\":11},\"invitation\":{\"expiresAt\":\"2026-10-29T06:11:33.890Z\",\"emailSent\":false,\"deliver"
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/tenant-users/1/36",
+      "status": 200,
+      "req": "{\"role\":\"approver\",\"reason\":\"P-18: named approver for the QA IND\"}",
+      "body": "{\"message\":\"User role updated successfully\"}"
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/tenant-users/1/36",
+      "status": 200,
+      "req": "{\"role\":\"reviewer\",\"reason\":\"P-18: named reviewer for the QA IND\"}",
+      "body": "{\"message\":\"User role updated successfully\"}"
+    }
+  ],
+  "httpErrors": []
+}

@@ -57,6 +57,11 @@ vi.mock('../../services/vault/vault-placement.service', async (importOriginal) =
 });
 vi.mock('../../export/renderers', () => ({
   renderHtmlToPdf: async (html: string) => Buffer.from(`%PDF-1.7\n% rendered by the test engine\n${html}`),
+  // The export renders through the tracked form (QA 2026-10-08, j4); same stub.
+  renderHtmlToPdfTracked: async (html: string) => ({
+    buffer: Buffer.from(`%PDF-1.7\n% rendered by the test engine\n${html}`),
+    usedFallback: false,
+  }),
 }));
 const lastStoredBytes = (): Buffer => (h.put.mock.calls.at(-1)?.[0] as { bytes: Buffer }).bytes;
 

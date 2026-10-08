@@ -21,6 +21,7 @@ import { AUTO_TIME_WORDS, PAUSE_WORDS, isPolicyHoldOutcome, stepLabels } from '@
 import type { TurnPlanStep } from './turn-plan.js';
 import { agentResultSummary, agentTraceStatus } from './sub-agent-result.js';
 import { RUN_AGENT_TOOL } from '@shared/ana/run-control-limits';
+import type { StepFact, StepSource } from '@shared/ana/step-verbs';
 
 export interface ToolTraceEntry {
   tool: string;
@@ -34,6 +35,17 @@ export interface ToolTraceEntry {
   status: 'success' | 'error' | 'not_found' | 'cancelled' | 'incomplete';
   /** One-line summary of the tool's result. */
   resultSummary: string;
+  /*
+   * How the step read when it finished (ANA-SUMMARY S3, step-presentation.ts),
+   * kept so a reopened turn reads the same as the live one. Absent from traces
+   * written before S3. Never rendered from resultSummary.
+   */
+  source?: StepSource;
+  preview?: string | null;
+  facts?: StepFact[];
+  usedModel?: boolean | null;
+  /** The server's status sentence for a step that did not succeed (stepMessage). */
+  message?: string;
 }
 
 function truncate(s: string, max: number): string {

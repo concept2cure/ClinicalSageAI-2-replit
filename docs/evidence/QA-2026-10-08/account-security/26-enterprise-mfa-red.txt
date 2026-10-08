@@ -1,0 +1,15 @@
+# (4) RED — the enterprise router still serves its own authenticator enrolment
+# authEnterprise.ts unchanged
+$ npx vitest run server/routes/__tests__/authSurfaceSecurity.test.ts
+ × server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > serves no authenticator enrolment of its own: /mfa/setup, /mfa/enable and /mfa/disable are not routes here 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: /api/auth/enterprise/mfa/setup: expected 500 to be 404 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 passed (18)
+
+## DB: tests/db/sign-in-posture.dbtest.ts on concept2cure-ri_qa_fresh2 (RLS on, runtime role)
+ × tests/db/sign-in-posture.dbtest.ts > the enterprise router serves no authenticator setup of its own (P-25 follow-up) > 404, no secret handed out, the enrolled secret untouched 20ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"error":"MFA_ALREADY_ENABLED","message":"Two-step verification is already on for this account"}: expected 409 to be 404 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)

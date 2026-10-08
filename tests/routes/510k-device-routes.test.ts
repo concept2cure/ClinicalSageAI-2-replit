@@ -281,7 +281,9 @@ describe('PUT /profile — the governed write is role-gated and audited', () => 
     expect(names.slice(0, 2)).toEqual(['requireEditorAccess', 'requireEntitlementMiddleware']);
   });
 
-  it.each(['viewer', 'reviewer', 'guest', ''])(
+  // P-18 (2026-10-08): `reviewer` is an assignable role that may do everything a
+  // member may, so it is no longer an example of a refused role; it writes below.
+  it.each(['viewer', 'guest', ''])(
     'a %s is refused 403 and NO row is updated and NO audit row is written',
     async (role) => {
       const req = makeChainReq(role, {
@@ -299,7 +301,7 @@ describe('PUT /profile — the governed write is role-gated and audited', () => 
     },
   );
 
-  it.each(['admin', 'manager', 'member', 'owner', 'super_admin'])('a %s succeeds', async (role) => {
+  it.each(['admin', 'manager', 'member', 'approver', 'reviewer', 'owner', 'super_admin'])('a %s succeeds', async (role) => {
     const req = makeChainReq(role, { query: { ident: 'BX-204' }, body: { commonName: 'CGM' } });
     const res = createMockResponse() as any;
 

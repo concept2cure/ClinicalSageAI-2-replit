@@ -34,6 +34,11 @@
  * SendForReviewDialog since 71492adc0, and its tests moved onto that dialog
  * (`__tests__/workbenchAssignReview.test.tsx`). The file keeps its name and the
  * helpers above (docs/evidence/D2-ONE-ANA/2026-10-08/ana-2d-review-loop-closes/).
+ *
+ * ── A different person reviews (QA 2026-10-08, j4) ───────────────────────────
+ * The author could be named as her own reviewer. The request-review route
+ * refuses the document's author (409 REVIEWER_IS_AUTHOR), and the roster Send
+ * for review offers leaves the author out and says so (useReviewerRoster).
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
@@ -99,6 +104,24 @@ export function useAssigneeRoster(): { roster: Assignee[]; rosterState: RosterSt
 
   const reload = useCallback(() => setEpoch(e => e + 1), []);
   return { roster, rosterState, reload };
+}
+
+/**
+ * The roster a reviewer is chosen from. A different person reviews (the rule
+ * the Vault states and the server enforces): the document's author is not
+ * offered, and `authorWithheld` says that someone was left out, so the list is
+ * never silently shorter than the organisation.
+ */
+export function useReviewerRoster(authorId: string | null | undefined): ReturnType<typeof useAssigneeRoster> & { authorWithheld: boolean } {
+  const { roster: everyone, rosterState, reload } = useAssigneeRoster();
+  const author = String(authorId ?? '').trim();
+  const roster = author ? everyone.filter(a => a.id !== author) : everyone;
+  return { roster, rosterState, reload, authorWithheld: author !== '' && roster.length !== everyone.length };
+}
+
+/** Said where the author was left out of the reviewers offered. */
+export function AuthorWithheldNote({ testId }: { testId: string }) {
+  return <div className="de-desc" data-testid={testId}>The document’s author is not offered: a different person reviews it.</div>;
 }
 
 /**
@@ -255,13 +278,15 @@ export function priorRequestNote(r: StandingReview): string {
  * pending cannot be chosen; one whose verdict is recorded can be, and is told
  * that the verdict stays in the record and a new review is requested.
  */
-export function ReviewerChecklist({ roster, rosterState, onReloadRoster, standing, selected, onToggle }: {
+export function ReviewerChecklist({ roster, rosterState, onReloadRoster, standing, selected, onToggle, authorWithheld }: {
   roster: Assignee[];
   rosterState: RosterState;
   onReloadRoster: () => void;
   standing: DocumentReviewsRead;
   selected: string[];
   onToggle: (id: string) => void;
+  /** The document's author was left out of the roster: said, not silent. */
+  authorWithheld?: boolean;
 }) {
   if (rosterState === 'error') {
     return <ReadFailed label="Reviewers" message={ROSTER_UNREAD} againLabel="Read the roster again" onAgain={onReloadRoster} testId="sfr-roster-error" />;
@@ -292,6 +317,7 @@ export function ReviewerChecklist({ roster, rosterState, onReloadRoster, standin
           ))}
         </div>
       )}
+      {!reading && authorWithheld && <AuthorWithheldNote testId="sfr-author-note" />}
     </fieldset>
   );
 }

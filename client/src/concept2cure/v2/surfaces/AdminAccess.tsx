@@ -9,6 +9,7 @@ import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { ClaudeConnectorSetting } from './ClaudeConnectorSetting';
+import { AdminMemberActions, ROLE_OPTIONS, setupLinkHandover, type InvitationReply } from './AdminMemberActions';
 import '../styles/admin-access.css';
 
 /**
@@ -54,7 +55,8 @@ import '../styles/admin-access.css';
  */
 
 interface Kpi { label: string; metric: string; unit?: string; meta: string; tone?: string }
-interface Member { id: string; initials: string; name: string; email: string; role: string; groups: string[]; sso: string; mfa: boolean; lastSeen: string; state: string; programs?: string[] }
+/** `userId` and `self` are what the membership routes need (AdminMemberActions). */
+interface Member { id: string; userId?: number; self?: boolean; initials: string; name: string; email: string; role: string; groups: string[]; sso: string; mfa: boolean; lastSeen: string; state: string; programs?: string[] }
 interface Role { id: string; label: string; members: number; desc: string; scopes: string[] }
 interface Grant { user: string; program: string; scope: string; granted: string; expires?: string }
 interface Conn { kind: string; provider: string; status?: string; domain: string; users: number; lastSync?: string }
@@ -69,6 +71,8 @@ interface Setting { id: string; label: string; value: string; kind?: string; des
 /** Shape of the GET /api/mdx/admin payload (server/routes/mdx-admin.ts). `sso`
  *  is nullable because the route degrades it to null if the stores are missing. */
 interface AdminData {
+  /** The organization the payload describes — what /api/tenant-users/:organizationId takes. */
+  organizationId?: number;
   kpis: Kpi[]; members: Member[]; roles: Role[]; grants: Grant[];
   sso: Sso | null; apiKeys: ApiKey[]; audit: Audit[]; settings: Setting[];
 }
@@ -176,7 +180,8 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
       { key: 'email', label: 'Email', type: 'text', required: true, half: true },
       {
         key: 'role', label: 'Role', type: 'select',
-        options: ['member', 'manager', 'admin', 'viewer'],
+        // The assignable roles, labelled as the table names them (P-18 added Approver and Reviewer).
+        options: ROLE_OPTIONS,
         required: true, half: true,
       },
       { key: 'title', label: 'Job title', type: 'text', half: true },
@@ -209,25 +214,25 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
       // The server says how the invitee gets their setup link. When this
       // deployment has no email delivery, the link comes back once, here, and
       // the admin hands it over — so put it on the clipboard and say so.
-      const body = await res.json().catch(() => null);
-      const inv = body && typeof body === 'object' ? (body as { invitation?: { delivery?: string; setupUrl?: string } }).invitation : undefined;
+      const body = (await res.json().catch(() => null)) as { invitation?: InvitationReply; reissued?: boolean; role?: string } | null;
+      const inv = body && typeof body === 'object' ? body.invitation : undefined;
       const who = (v.name || '').trim();
-      if (inv && inv.delivery === 'failed') {
+      if (body?.reissued === true) {
+        /* The address belongs to a member who never set a password: the
+           invitation route issued them a new setup link instead (QA
+           2026-10-08, j9). Their role is the stored one, not the form's. */
+        const role = String(body.role ?? '');
+        fireToast(
+          `${who} was invited before and has not set a password, so a new setup link was issued and the previous one no longer works. ` +
+            `Their role is unchanged (${role.charAt(0).toUpperCase() + role.slice(1)}). ${await setupLinkHandover(inv)}`,
+        );
+      } else if (inv && inv.delivery === 'failed') {
         fireToast(
           `${who} was added as ${v.role}, but no activation link could be issued — they cannot sign in yet. Ask them to use "Forgot password", or retry the invitation.`,
           'error',
         );
       } else if (inv && inv.delivery === 'link' && inv.setupUrl) {
-        let copied = false;
-        try {
-          await navigator.clipboard?.writeText(inv.setupUrl);
-          copied = true;
-        } catch {
-          copied = false;
-        }
-        fireToast(
-          `${who} invited as ${v.role}. This server sends no email, so ${copied ? 'their password setup link is on your clipboard' : `share this setup link with them: ${inv.setupUrl}`} — it expires in 21 days.`,
-        );
+        fireToast(`${who} invited as ${v.role}. ${await setupLinkHandover(inv)}`);
       } else {
         fireToast(`${who} invited as ${v.role}. An invitation email with their password setup link was sent.`);
       }
@@ -269,13 +274,16 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
   /* KPI counts derived from the REAL rows only (never hardcoded, never a
      fixture) — '--' until the live payload lands. */
   const activeMembers = allMembers.filter((m) => m.state === 'active').length;
+  /* An invitee who has not set a password cannot sign in, and the server says
+     so (state 'invited', mdx-admin.ts memberStateOf) — QA 2026-10-08, j9. */
+  const invitedMembers = allMembers.filter((m) => m.state === 'invited').length;
   const mfaMembers = allMembers.filter((m) => m.mfa).length;
   /* "MFA enabled 0 of 1" beside a Settings row saying MFA is required read as
      two opposite answers. What this counts is an enrolled authenticator app
      (users.mfa_enabled, services/mfa-enrolment.ts); a member without one is
      asked for an emailed code at sign-in, so the label says which it is. */
   const kpis = [
-    { label: 'Members', value: allMembers.length, meta: `${activeMembers} active` },
+    { label: 'Members', value: allMembers.length, meta: `${activeMembers} active${invitedMembers ? ` · ${invitedMembers} invited` : ''}` },
     { label: 'Roles', value: roles.length, meta: 'Distinct org roles' },
     { label: 'Authenticator app', value: mfaMembers, meta: `of ${allMembers.length} members enrolled` },
     facetDown('apiKeys')
@@ -522,6 +530,10 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                   <div className="drawer-actions">
                     <button className="btn primary small" onClick={() => ask(`Grant ${member.name} access to a program. Confirm program, scope, and expiry, then emit the Part 11 audit entry.`)}>{I.plus} Grant access</button>
                     <button className="btn ghost small" onClick={() => ask(`Show ${member.name}'s last 90 days of activity — every signing and artifact touched. Export as Part 11 PDF.`)}>{I.eye} Audit activity</button>
+                    {/* Role change and removal call the membership routes directly
+                        (QA 2026-10-08, j9 finding 1): a reason, a confirmation, and
+                        the server's own answer. */}
+                    <AdminMemberActions key={member.id} member={member} organizationId={a?.organizationId} onChanged={reload} toast={fireToast} />
                   </div>
                 </aside>
               )}

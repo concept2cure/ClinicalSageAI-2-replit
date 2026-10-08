@@ -1,0 +1,62 @@
+# The one existing expectation the fix changes: pmda-nmpa-honest 'is reported as skipped by the repository search, never as a document'
+# Run on the fixed source with the test file as at HEAD (6c58f587b), 2026-10-08T09:31:39Z, RLS_ENFORCE=off
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a search instead of returning the query as a scored result 3ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a fetch instead of returning a placeholder document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > reports itself unavailable, without reaching out to test a web page 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > does not promise search, scraping or translation in the catalog 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is not offered as connected: the catalog says unavailable, so nothing preselects or lists it 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is skipped by the repository search as not connected, and never listed as searched 1ms
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is reported as skipped by the repository search, never as a document 8ms
+   → expected [ { connector: 'pmda_reviews', …(1) } ] to deeply equal [ { connector: 'pmda_reviews', …(1) } ]
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a search instead of returning the query as a scored result 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a fetch instead of returning a placeholder document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > reports itself unavailable, without reaching out to test a web page 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > does not promise search, scraping or translation in the catalog 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is not offered as connected: the catalog says unavailable, so nothing preselects or lists it 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is skipped by the repository search as not connected, and never listed as searched 0ms
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is reported as skipped by the repository search, never as a document 2ms
+   → expected [ { connector: 'nmpa_cde', …(1) } ] to deeply equal [ { connector: 'nmpa_cde', …(1) } ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is reported as skipped by the repository search, never as a document
+AssertionError: expected [ { connector: 'pmda_reviews', …(1) } ] to deeply equal [ { connector: 'pmda_reviews', …(1) } ]
+- Expected
++ Received
+  [
+    {
+      "connector": "pmda_reviews",
+-     "reason": StringMatching /no .* search is connected/i,
++     "reason": "not one of the organisation's document repositories, so this tool never sends it a query; for public sources use search_literature or the agency lookups",
+    },
+  ]
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:82:25
+     80|     );
+     81|     expect(out.documents).toEqual([]);
+     82|     expect(out.skipped).toEqual([{ connector: id, reason: expect.strin…
+       |                         ^
+     83|   });
+     84| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is reported as skipped by the repository search, never as a document
+AssertionError: expected [ { connector: 'nmpa_cde', …(1) } ] to deeply equal [ { connector: 'nmpa_cde', …(1) } ]
+- Expected
++ Received
+  [
+    {
+      "connector": "nmpa_cde",
+-     "reason": StringMatching /no .* search is connected/i,
++     "reason": "not one of the organisation's document repositories, so this tool never sends it a query; for public sources use search_literature or the agency lookups",
+    },
+  ]
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:82:25
+     80|     );
+     81|     expect(out.documents).toEqual([]);
+     82|     expect(out.skipped).toEqual([{ connector: id, reason: expect.strin…
+       |                         ^
+     83|   });
+     84| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)
+   Start at  09:31:40
+   Duration  952ms (transform 398ms, setup 98ms, import 502ms, tests 26ms, environment 0ms)

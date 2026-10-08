@@ -17,19 +17,9 @@
       "reason": "After placing a document, \"Open in Submission Center\" calls onNav('submission-center') with nothing (AuthoringPlaceIntoFiling.tsx), and the Submission Center reads no nav params, so the person lands on the submission list."
     },
     {
-      "id": "dispatched-sequence-to-transmit",
-      "slice": "F12",
-      "reason": "POST /api/submissions/sequences/:seqId/transmit (server/routes/submissions.ts) has no client caller. The Dispatch workspace offers a sentence; transmit lives on the separate package store (GatewayTransmittals.tsx)."
-    },
-    {
       "id": "respond-to-response-sequence",
       "slice": "F15",
       "reason": "The Respond tab renders the generic StagePanel tool list. No control starts a response sequence on the submission, and the Submission Center reads no followUp."
-    },
-    {
-      "id": "author-document-row-to-document",
-      "slice": "F3",
-      "reason": "Recent drafts and module rows on the Author tab call onNav('document-authoring') with no document (ProjectHome.tsx AuthorWorkspace), so the editor opens on its list, not the row's document."
     }
   ]
 }

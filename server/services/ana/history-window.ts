@@ -3,8 +3,9 @@
  * @module server/services/ana/history-window
  *
  * A question is saved when its turn starts, and the answer only when the turn
- * produced one (routes/ana-ri/post-processing.ts), so a turn that failed or
- * was stopped leaves a question with no answer. From then on the transcript's
+ * produced one (routes/ana-ri/post-processing.ts), so a turn that failed
+ * leaves a question with no answer. (A turn the person stopped is saved with
+ * whatever it had written, possibly nothing; an empty one is not a turn here.) From then on the transcript's
  * question/answer pairs are offset by one, and a window of the last N messages
  * can open on an answer. The Messages API's error reference lists a
  * conversation that opens on an assistant turn as a 400, and the offset is
@@ -33,7 +34,12 @@ export function recentTurns<T extends TranscriptMessage>(messages: readonly T[],
 }
 
 function isConversationTurn(message: TranscriptMessage): boolean {
-  return (message?.role === 'user' || message?.role === 'assistant') && typeof message?.content === 'string';
+  if (typeof message?.content !== 'string') return false;
+  if (message.role === 'user') return true;
+  // An empty answer is a turn stopped before AnA wrote a word, saved so the
+  // conversation shows the stop (QA 2026-10-08, j5). It is not something she
+  // said, and sent to the model it would go as a filler marker in her voice.
+  return message.role === 'assistant' && message.content.trim().length > 0;
 }
 
 /** Keep the start and end of a long turn, with the missing middle named. */

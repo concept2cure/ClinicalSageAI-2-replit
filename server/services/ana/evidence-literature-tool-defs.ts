@@ -13,6 +13,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { REPOSITORY_CONNECTOR_IDS } from '../connectors/connector-interface';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -97,14 +98,21 @@ export const SEARCH_MEDICARE_COVERAGE: AnaTool = {
   },
 };
 
+// AnA Summary S2 (2026-10-08): the `connectors` enum is static — the same five
+// repositories for every tenant — so the schema, and the prompt cache, do not
+// vary by tenant. Which of them a tenant has connected is the result's
+// `searched` / `skipped`, never the schema.
 export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   name: 'search_connected_repositories',
   description:
-    "Search the organization's connected external document repositories (Google Drive, Box, " +
-    'OneDrive, SharePoint, Veeva Vault, …) for source material relevant to a query. Use when the ' +
-    "user references documents that live in their own connected systems rather than this project's " +
-    'uploaded corpus (use project_knowledge_search for the latter). Returns matching documents with ' +
-    'their source system, summary, and a link. Reports which systems are not yet connected.',
+    "Search the organization's own connected document repositories (Google Drive, including shared " +
+    'drives; Box; OneDrive; SharePoint; Veeva Vault) for source material relevant to a query. Use when ' +
+    "the user references documents that live in their own systems rather than this project's uploaded " +
+    'corpus (use project_knowledge_search for the latter). Returns matching documents with their ' +
+    'source system, summary, and a link, and names each system that was not searched and why. ' +
+    'It never searches public sources: use search_literature for published literature and the agency ' +
+    'lookups (search_drug_approvals, search_drug_labels, search_ema_epar, search_clinical_evidence, …) ' +
+    'for regulatory and trial data.',
   input_schema: {
     type: 'object',
     properties: {
@@ -114,9 +122,10 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
       },
       connectors: {
         type: 'array',
-        items: { type: 'string' },
+        items: { type: 'string', enum: [...REPOSITORY_CONNECTOR_IDS] },
         description:
-          "Optional connector ids to restrict the search (e.g. ['google-drive']). Omit to search all connected systems.",
+          "Optional: restrict the search to these repositories (e.g. ['google_drive']). Omit to search " +
+          'every repository connected for this organization.',
       },
       max_results: {
         type: 'number',

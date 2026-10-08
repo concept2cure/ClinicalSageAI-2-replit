@@ -96,6 +96,8 @@ const DRAFT = {
   author_id: AUTHOR, approver_id: null, approved_at: null, superseded_by_id: null, artifact_id: null,
   metadata: { sections: [{ key: 'purpose', body: 'Controls design inputs.' }] },
 };
+/** The approvable state: a draft that was sent for review. */
+const IN_REVIEW = { ...DRAFT, status: 'in_review' };
 
 function app(userId = SIGNER) {
   const a = express();
@@ -140,7 +142,7 @@ beforeEach(() => {
   H.failures.mockResolvedValue(undefined);
   H.recordGoverned.mockResolvedValue({ actionId: 'act_1', auditId: 'aud-1', sha256Chain: 'chain-1' });
   H.persistSignature.mockResolvedValue({ id: 501, signedAt: new Date('2026-09-21T10:00:00.000Z') });
-  scriptTransaction(DRAFT);
+  scriptTransaction(IN_REVIEW);
 });
 
 describe('POST /api/mdx/qms/documents/:id/approve — electronic signature', () => {
@@ -222,11 +224,27 @@ describe('POST /api/mdx/qms/documents/:id/approve — electronic signature', () 
     expect(H.release).toHaveBeenCalledTimes(1);
   });
 
-  it('refuses a document that is not draft/in_review with 409', async () => {
+  it('refuses a document that is not in_review with 409', async () => {
     scriptTransaction({ ...DRAFT, status: 'effective' });
     const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
     expect(res.status).toBe(409);
     expect(res.body.details.code).toBe('QMS_INVALID_STATE');
+    expect(H.persistSignature).not.toHaveBeenCalled();
+  });
+
+  /* QA walk 2026-10-08 (J8): the register offered Approve on a draft that was
+     never routed, its dialog said "v1.2 becomes effective when you sign", and
+     the service admitted draft — one signature made an unreviewed draft
+     effective. A draft is sent for review first (PATCH status in_review); only
+     a document under review can be signed effective. */
+  it('refuses a draft that was never sent for review with 409, writing no signature', async () => {
+    scriptTransaction(DRAFT);
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(res.status).toBe(409);
+    expect(res.body.details.code).toBe('QMS_INVALID_STATE');
+    expect(res.body.error).toMatch(/send it for review/i);
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
+    expect(H.recordGoverned).not.toHaveBeenCalled();
     expect(H.persistSignature).not.toHaveBeenCalled();
   });
 
@@ -262,7 +280,7 @@ describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', ()
     expect(params.authenticationMethod).toBe('password');
     expect(params.secondFactorVerified).toBe(false);
     expect(params.binding.basis).toBe(QMS_DOCUMENT_BINDING_BASIS);
-    expect(params.binding.digest).toBe(computeQmsDocumentContentDigest(DRAFT as any));
+    expect(params.binding.digest).toBe(computeQmsDocumentContentDigest(IN_REVIEW as any));
     expect(params.binding.digest).toMatch(/^[0-9a-f]{64}$/);
     expect(params.actionId).toBe('act_1');
     expect(params.sha256Chain).toBe('chain-1');

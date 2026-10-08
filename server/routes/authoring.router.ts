@@ -44,6 +44,7 @@ import type {
 import {
   authoringPrincipalFromRequest,
   decideAuthoringPermission,
+  grantAuthoringPermission,
   resolveAuthoringDocumentScope,
   resolveAuthoringSectionScope,
   type AuthoringPermissionDecision,
@@ -99,6 +100,7 @@ import {
   type ExportFormat,
 } from '../services/authoring/authoring-export';
 import { SavedDraftSourceError, withSavedDraftSourceReservation } from '../services/authoring/draft-source-references';
+import { withExtendingRoles } from '../../shared/constants/org-roles';
 import {
   fileAuthoringDocumentToVault,
   isPlausibleFolderId,
@@ -1537,6 +1539,9 @@ router.post('/docs/from-draft', async (req: Request, res: Response) => {
                    (DP-35) — the same §11.10(g) check as esign.
      esign         the same 'approve' decision, then assertSigningAuthority's
                    §11.10(g) check: resolveSignerOrgRole + isSigningAuthorized.
+     esignReview   the review signature alone (meaning REVIEWER), which the
+                   middleware classes as 'review' (REVIEWER, APPROVER or OWNER
+                   grant), then the same §11.10(g) check (QA 2026-10-08, j4).
      fileToVault   authoringObjectAuthorization classifies /file-to-vault as
                    'export' (any status; OWNER, AUTHOR or APPROVER), then the
                    vault ingest's vaultWriteRefusal() on the request's
@@ -1604,8 +1609,8 @@ async function settle<T>(what: string, docId: string, fn: () => Promise<T> | T):
 }
 
 async function callerDocumentAccess(req: Request, tenantId: number, docId: string) {
-  const unknown = { freeze: null, esign: null, fileToVault: null, assignReview: null } as Record<
-    'freeze' | 'esign' | 'fileToVault' | 'assignReview',
+  const unknown = { freeze: null, esign: null, esignReview: null, fileToVault: null, assignReview: null } as Record<
+    'freeze' | 'esign' | 'esignReview' | 'fileToVault' | 'assignReview',
     DocumentActGate
   >;
   const principal = authoringPrincipalFromRequest(req);
@@ -1618,6 +1623,11 @@ async function callerDocumentAccess(req: Request, tenantId: number, docId: strin
   );
   const produce = await settle('export', docId, () =>
     decideAuthoringPermission({ pool, principal, scope, action: 'export' }),
+  );
+  /* The review signature (POST /e-sign, meaning REVIEWER) is a 'review' act —
+     authoringObjectAuthorization classes it so (QA 2026-10-08, j4). */
+  const review = await settle('review', docId, () =>
+    decideAuthoringPermission({ pool, principal, scope, action: 'review' }),
   );
   const approveGate = (act: string) =>
     approve ? objectGate(approve, act, 'an Owner or Approver grant') : null;
@@ -1675,6 +1685,11 @@ async function callerDocumentAccess(req: Request, tenantId: number, docId: strin
     // A freeze is signed (DP-35): the same two decisions as E-sign.
     freeze: bothGates(approveGate('Freezing'), signingGate),
     esign: bothGates(approveGate('Signing'), signingGate),
+    // The review signature alone: a Reviewer grant suffices for it.
+    esignReview: bothGates(
+      review ? objectGate(review, 'Signing the review', 'a Reviewer, Approver or Owner grant') : null,
+      signingGate,
+    ),
     fileToVault: bothGates(
       produce ? objectGate(produce, 'Filing to the vault', 'an Owner, Author or Approver grant') : null,
       vaultGate ?? null,
@@ -1810,7 +1825,15 @@ router.post('/sections', async (req: Request, res: Response) => {
     // services/authoring/authoring-documents.ts createSection.
     const outcome = await createSection(createContext(req, tenantId, createdBy), req.body ?? {});
     if (outcome.kind === 'refused') {
-      return res.status(outcome.status).json({ success: false, error: outcome.error });
+      // `code` (e.g. SECTION_CODE_EXISTS, a 409) is what a client branches on.
+      return res
+        .status(outcome.status)
+        .json({
+          success: false,
+          error: outcome.error,
+          ...(outcome.code ? { code: outcome.code } : {}),
+          ...(outcome.code === 'SECTION_CODE_EXISTS' ? { field: 'code' } : {}),
+        });
     }
     if (outcome.kind === 'lineage_failed') {
       return res.status(500).json({
@@ -3421,6 +3444,85 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
 });
 
 // POST /api/authoring/documents/:id/request-review - Request review from users
+/** The pool the permission helpers take; a transaction client answers the same queries. */
+type PermissionPool = Parameters<typeof decideAuthoringPermission>[0]['pool'];
+/** Whether each requested reviewer was granted review access, and why not. */
+type ReviewGrantOutcome =
+  | { reviewerId: string; granted: true; permissionId: string }
+  | { reviewerId: string; granted: false; reason: string };
+
+/**
+ * The reviewer named in a review request gets what reviewing needs: the
+ * REVIEWER role on the document (view, comment, review — and, with a signing
+ * role in the organization, the review e-signature). QA 2026-10-08 (j4): a
+ * request granted nothing and the grant API had no caller, so the person asked
+ * to review could do neither. Granted only by someone who may manage the
+ * document's access — its owner or an administrator, the rule
+ * POST /docs/:docId/permissions applies — on the caller's transaction, with a
+ * chained ledger row per grant. Anyone else's request is recorded and the
+ * answer says no grant was made.
+ */
+async function grantRequestedReviewers(args: {
+  client: Queryable;
+  req: Request;
+  docId: string;
+  tenantId: number;
+  scope: Awaited<ReturnType<typeof resolveAuthoringDocumentScope>>;
+  principal: ReturnType<typeof authoringPrincipalFromRequest>;
+  reviews: Array<{ id: string; reviewer_id: string | number; reviewer_email?: string | null }>;
+  reason: string | null;
+}): Promise<ReviewGrantOutcome[]> {
+  const { client, req, docId, tenantId, scope, principal, reviews, reason } = args;
+  const manage = scope && principal
+    ? await decideAuthoringPermission({ pool: client as unknown as PermissionPool, principal, scope, action: 'manage_permissions' })
+    : null;
+  if (!manage?.allowed || !principal) {
+    return reviews.map((r) => ({
+      reviewerId: String(r.reviewer_id),
+      granted: false as const,
+      reason:
+        'No review access was granted: only the document’s owner or an administrator grants access to it. ' +
+        'Ask one of them to grant this reviewer the Reviewer role.',
+    }));
+  }
+  const grants: ReviewGrantOutcome[] = [];
+  for (const review of reviews) {
+    const reviewerId = String(review.reviewer_id);
+    const permission = await grantAuthoringPermission({
+      pool: client as unknown as PermissionPool,
+      tenantId,
+      docId,
+      principalId: reviewerId,
+      email: review.reviewer_email ?? null,
+      role: 'REVIEWER',
+      grantedBy: principal.id,
+      reason: `Review requested${reason ? `: ${reason}` : ''}`,
+    });
+    await writeChainedAuditRow(client, {
+      tenantId,
+      userId: getActorId(req) ?? undefined,
+      action: 'authoring.permission.grant',
+      resourceType: 'authoring_document_permission',
+      resourceId: String(permission.id),
+      ipAddress: (req.ip ?? undefined) as string | undefined,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: { docId, principalId: reviewerId, role: 'REVIEWER', via: 'request-review', reviewId: review.id },
+    });
+    grants.push({ reviewerId, granted: true, permissionId: String(permission.id) });
+  }
+  return grants;
+}
+
+/** The refusal for a review request that names the document's author. */
+const REVIEWER_IS_AUTHOR_REFUSAL = {
+  success: false,
+  error: {
+    code: 'REVIEWER_IS_AUTHOR',
+    message: 'The author of a document cannot review it. Choose someone else as the reviewer. Nothing was requested.',
+  },
+  field: 'reviewers',
+} as const;
+
 router.post('/documents/:id/request-review', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -3440,8 +3542,15 @@ router.post('/documents/:id/request-review', async (req: Request, res: Response)
     }
     const statedReason = optionalGovernedReason(req.body?.reason);
     if (!statedReason.ok) return res.status(400).json({ success: false, error: statedReason.error, field: 'reason' });
+    const principal = authoringPrincipalFromRequest(req);
     const createdReviews = await inTransaction(async (client) => {
       if (!(await peerReviewDocument(client, id, tenantId, true))) return null;
+      /* QA 2026-10-08 (j4): the author could be named as her own reviewer. The
+         Vault states the rule (a different person reviews); so does this. */
+      const scope = await resolveAuthoringDocumentScope(client as unknown as PermissionPool, tenantId, String(id));
+      const author = String(scope?.createdBy ?? '').trim();
+      const self = reviewers.find((r) => author !== '' && String(r.id).trim() === author);
+      if (self) return { refused: 'REVIEWER_IS_AUTHOR' as const };
       /* A request asks for a new review. Asking a reviewer who already recorded
          a verdict (changes requested, revised, asked again) reopens their row:
          pending, with no verdict time and no comments. Until 2026-10-08 the
@@ -3469,19 +3578,23 @@ router.post('/documents/:id/request-review', async (req: Request, res: Response)
         );
         reviews.push(result.rows[0]);
       }
+      // What reviewing needs, granted by someone who may grant it (grantRequestedReviewers).
+      const grants = await grantRequestedReviewers({ client, req, docId: String(id), tenantId, scope, principal, reviews, reason: statedReason.reason });
       await createAuditTrail(req, id, null, 'review_requested', null, null, statedReason.reason, {
-        reviewerIds: reviews.map(r => r.reviewer_id), reviewIds: reviews.map(r => r.id),
+        reviewerIds: reviews.map(r => r.reviewer_id), reviewIds: reviews.map(r => r.id), grants,
         reopenedVerdicts: reopened.rows.map((r: { id: string; reviewer_id: string; review_status: string; reviewed_at: unknown }) => ({
           reviewId: r.id, reviewerId: r.reviewer_id, verdict: r.review_status, reviewedAt: r.reviewed_at,
         })),
       }, client);
-      return reviews;
+      return { reviews, grants };
     });
     if (!createdReviews) return res.status(404).json({ success: false, error: 'Document not found' });
+    if ('refused' in createdReviews) return res.status(409).json(REVIEWER_IS_AUTHOR_REFUSAL);
 
     res.json({
       success: true,
-      reviews: createdReviews,
+      reviews: createdReviews.reviews,
+      grants: createdReviews.grants,
       message: `Review requested from ${reviewers.length} reviewer(s)`,
     });
   } catch (error) {
@@ -4648,9 +4761,10 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
          `${freezeReason}${acknowledgedNote}`, tenantId]
       );
 
-      // Update document status
+      // Update document status, and when it was frozen (QA 2026-10-08, j4:
+      // frozen_at stayed NULL on every frozen document).
       await client.query(
-        'UPDATE authoring_documents SET status = $1 WHERE id = $2 AND tenant_id = $3',
+        'UPDATE authoring_documents SET status = $1, frozen_at = COALESCE(frozen_at, NOW()) WHERE id = $2 AND tenant_id = $3',
         ['FROZEN', docId, tenantId]
       );
 
@@ -4732,6 +4846,81 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * The APPROVER e-signature's approval and seal, written BEFORE the signature so
+ * the signature can name the snapshot it creates. Returns that snapshot.
+ *
+ * QA 2026-10-08 (j4): the signature used to be written first, bound to no
+ * snapshot, and every manifestation of the approval said "no frozen snapshot
+ * was in force when this was signed"; the freeze route has always bound its
+ * signature this way (DP-35). approved_at and frozen_at record the act (they
+ * stayed NULL on an APPROVED document, so the document journey never showed the
+ * approval); COALESCE keeps the first approval's time when an approved document
+ * is signed again.
+ *
+ * Auto-freeze on approval — capture the FULL approved snapshot (document +
+ * sections) and hash the SNAPSHOT BYTES, exactly like the manual freeze. The
+ * prior code stored a 3-field stub {approvedBy, documentHash, timestamp} and set
+ * content_hash = docHash (the hash of the live SECTIONS, not of the stub): the
+ * approved content was captured nowhere immutable, and GET /docs/:docId/frozen —
+ * which recomputes sha256(frozen_content) and compares to content_hash — raised
+ * a false "tampering detected" 500 on EVERY e-sign-approved document. Runs on
+ * the caller's transaction client.
+ */
+async function approveAndSnapshotForSignature(args: {
+  client: Queryable;
+  docId: string;
+  tenantId: number;
+  email: string;
+  docHash: string;
+}): Promise<{ version: string; contentHash: string }> {
+  const { client, docId, tenantId, email, docHash } = args;
+  // The approval stamp itself (status, approved_at, frozen_at) is written by
+  // the caller, inline in the signing handler that re-verifies the signer and
+  // writes the signature row on this same client — so ci:sign-ceremony sees the
+  // stamp beside its ceremony. This function only reads the approved row back
+  // and freezes its snapshot.
+  const approvedDoc = await client.query(
+    'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+    [docId, tenantId]
+  );
+  const approvedSections = await client.query(
+    // 2026-09-23 (W5/D7, co-author final pass): the seal's section order is the editor's
+    // (order_index, created_at; id makes it total), the order the filing copy assembles in.
+    'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id',
+    [docId, tenantId]
+  );
+  const frozenContent = JSON.stringify({
+    document: approvedDoc.rows[0] ?? null,
+    sections: approvedSections.rows,
+    approvedBy: email,
+    documentHash: docHash,
+    frozenAt: new Date().toISOString(),
+  });
+  const frozenContentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
+  const written = await client.query(
+    `INSERT INTO frozen_documents
+     (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (document_id, version, tenant_id) DO NOTHING
+     RETURNING version, content_hash`,
+    [docId, 'approved', frozenContent, frozenContentHash, email, 'Approved and frozen', tenantId]
+  );
+  /* The approval covers the 'approved' snapshot: the one just written, or, when
+     the document was approved before (ON CONFLICT DO NOTHING), the one that
+     already stands — never a snapshot this transaction did not keep. */
+  const writtenHash = (written.rows[0] as { content_hash?: string } | undefined)?.content_hash;
+  if (writtenHash) return { version: 'approved', contentHash: String(writtenHash) };
+  const standing = await client.query(
+    `SELECT version, content_hash FROM frozen_documents
+      WHERE document_id = $1 AND version = 'approved' AND tenant_id = $2 LIMIT 1`,
+    [docId, tenantId]
+  );
+  const row = standing.rows[0] as { content_hash?: string } | undefined;
+  if (!row?.content_hash) throw new Error('The approval snapshot could not be written or read back');
+  return { version: 'approved', contentHash: String(row.content_hash) };
+}
+
 // POST /api/authoring/docs/:docId/e-sign - Electronic signature, re-verified by the platform ceremony
 router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
   try {
@@ -4788,14 +4977,10 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
     // loop now has its own store — the same one GET /docs/:docId/signatures has
     // always read. See ledger C-11 residual 1.
     // §11.70 signature/record link: bind this signature to the snapshot in force
-    // at signing time, and cover that binding in a recomputable digest.
-    const covered = await currentFrozenSnapshot(docId, tenantId);
-    const signatureDigest = computeSignatureDigest({
-      signerEmail: email,
-      meaning,
-      contentHash: docHash,
-      coveredContentHash: covered?.contentHash ?? null,
-    });
+    // at signing time, and cover that binding in a recomputable digest. An
+    // APPROVER signature is the exception: the approval writes its own snapshot
+    // (below), and that is the record it attests to.
+    let covered = meaning === 'APPROVER' ? null : await currentFrozenSnapshot(docId, tenantId);
 
     // Signature insert + audit + (on APPROVER) status flip and auto-freeze are
     // ONE atomic unit. Run as separate pool commits, an approval signature could
@@ -4804,9 +4989,28 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
     // document. A single BEGIN/COMMIT makes the whole signing act land together
     // or roll back together.
     const client = await pool.connect();
+    let signatureDigest = '';
     try {
       await client.query('BEGIN');
 
+      // On APPROVER the approval and its snapshot come FIRST, so the signature
+      // can name the snapshot it creates (approveAndSnapshotForSignature).
+      if (meaning === 'APPROVER') {
+        await client.query(
+          `UPDATE authoring_documents
+              SET status = $1, approved_at = COALESCE(approved_at, NOW()), frozen_at = COALESCE(frozen_at, NOW())
+            WHERE id = $2 AND tenant_id = $3`,
+          ['APPROVED', docId, tenantId]
+        );
+        covered = await approveAndSnapshotForSignature({ client, docId: String(docId), tenantId, email, docHash });
+      }
+
+      signatureDigest = computeSignatureDigest({
+        signerEmail: email,
+        meaning,
+        contentHash: docHash,
+        coveredContentHash: covered?.contentHash ?? null,
+      });
       await insertAuthoringSignature(client, req, {
         id: signatureId,
         docId,
@@ -4826,56 +5030,11 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         signatureId,
         meaning,
         documentHash: docHash,
+        coveredFreezeVersion: covered?.version ?? null,
         timestamp: new Date().toISOString(),
       }, client,
       // This handler writes its own richer chained row below.
       { chainedRowWrittenByCaller: true });
-
-      // Update document status based on signature meaning
-      if (meaning === 'APPROVER') {
-        await client.query(
-          'UPDATE authoring_documents SET status = $1 WHERE id = $2 AND tenant_id = $3',
-          ['APPROVED', docId, tenantId]
-        );
-
-        // Auto-freeze on approval — capture the FULL approved snapshot (document
-        // + sections) and hash the SNAPSHOT BYTES, exactly like the manual freeze
-        // above. The prior code stored a 3-field stub {approvedBy, documentHash,
-        // timestamp} and set content_hash = docHash (the hash of the live
-        // SECTIONS, not of the stub). Two filing-integrity failures followed:
-        // the approved content was captured nowhere immutable (it lived only in
-        // the editable authoring_sections table), and GET /docs/:docId/frozen —
-        // which recomputes sha256(frozen_content) and compares to content_hash —
-        // raised a false "tampering detected" 500 on EVERY e-sign-approved
-        // document, because sha256(stub) can never equal docHash. Approval must
-        // produce a verifiable frozen legal record.
-        const approvedDoc = await client.query(
-          'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
-          [docId, tenantId]
-        );
-        const approvedSections = await client.query(
-          // 2026-09-23 (W5/D7, co-author final pass): the seal's section order is the editor's
-          // (order_index, created_at; id makes it total), the order the filing copy assembles in.
-          'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id',
-          [docId, tenantId]
-        );
-        const frozenContent = JSON.stringify({
-          document: approvedDoc.rows[0] ?? null,
-          sections: approvedSections.rows,
-          approvedBy: email,
-          documentHash: docHash,
-          frozenAt: new Date().toISOString(),
-        });
-        const frozenContentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
-
-        await client.query(
-          `INSERT INTO frozen_documents
-           (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
-           ON CONFLICT (document_id, version, tenant_id) DO NOTHING`,
-          [docId, 'approved', frozenContent, frozenContentHash, email, 'Approved and frozen', tenantId]
-        );
-      }
 
       /* §11.10(e) — the HASH-CHAINED ledger, on this transaction.
          `createAuditTrail` above writes authoring_audit_trail, which carries no
@@ -4901,7 +5060,7 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         // signatureId: §11.70's link from this audit row to the signature it
         // records — what the audit-trail ledger joins on to show the row as
         // signed, with the signer's meaning (#24).
-        details: { meaning, intent, documentHash: docHash, signer: email, signatureId },
+        details: { meaning, intent, documentHash: docHash, signer: email, signatureId, covers: covered },
       });
 
       await client.query('COMMIT');
@@ -4916,6 +5075,9 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       success: true,
       signatureId,
       documentHash: docHash,
+      digest: signatureDigest,
+      // The frozen snapshot this signature attests to (§11.70), or null.
+      covers: covered,
       signedAt: new Date().toISOString(),
     });
   } catch (error) {
@@ -5794,7 +5956,8 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
  * The x-admin-token path is removed, not kept beside this: two doors to one
  * act is the parallel path CLAUDE.md rules out. Its one caller,
  * scripts/cleanup-fixtures.mjs, now signs in like any other client. */
-const DOCUMENT_DELETE_ROLES: ReadonlySet<string> = new Set(['owner', 'admin', 'manager']);
+// P-18: an approver may do what a manager may (shared/constants/org-roles.ts).
+const DOCUMENT_DELETE_ROLES: ReadonlySet<string> = new Set(withExtendingRoles(['owner', 'admin', 'manager']));
 
 type GovernedDeleteOutcome =
   | { kind: 'deleted' }
@@ -6127,7 +6290,9 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
         exportedBy: exportedBy as string,
         fileName: output.fileName,
         fileSize: output.fileContent.length,
-        metadata: { options, exportId, artifactSha256: output.artifactSha256 },
+        // How the file was rendered: a plain-text PDF fallback is part of the
+        // record of what was exported (QA 2026-10-08, j4).
+        metadata: { options, exportId, artifactSha256: output.artifactSha256, rendering: output.rendering },
         tenantId,
       });
       return output;
@@ -6136,6 +6301,8 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
 
     res.setHeader('Content-Type', rendered.contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${rendered.fileName}"`);
+    // The body is the file, so the rendering travels as a header the client reads.
+    res.setHeader('X-Export-Rendering', rendered.rendering);
     res.send(rendered.fileContent);
   } catch (error) {
     sendExportFailure(error, res, recordConfirmed, recordAttempted);

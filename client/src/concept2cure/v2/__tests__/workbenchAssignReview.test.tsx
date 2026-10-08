@@ -366,3 +366,7 @@ describe('known assignment refusal', () => {
     expect(p.onSent).not.toHaveBeenCalled(); expect(p.fireToast).not.toHaveBeenCalled();
   });
 });
+
+/* QA 2026-10-08 (j4): the author is not offered as her own reviewer. Pinned on
+   Send for review, the one dialog that offers reviewers since the task-only
+   form was deleted (wave 2D): sendForReview.test.tsx, "never from the author". */

@@ -1,0 +1,14 @@
+# Item 2 RED (clients) — two client mappers misread REAUTH_AUTHENTICATOR_REQUIRED
+# ProtocolDevWrites.ts and useEstarFiling.ts unchanged
+$ npx vitest run client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts
+ × client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > a signer with no authenticator where one is required is told so, not that the password was wrong (ADR-0014 P1-2b) 9ms
+ × client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts > describeFilingRefusal — the second factor > tells a signer with no authenticator to enrol one, where one is required (ADR-0014 P1-2b) 17ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'The filing was refused. Check the eST…' to be 'Enrol an authenticator in Account to …' // Object.is equality
+Expected: "Enrol an authenticator in Account to sign. Nothing was filed and nothing was signed."
+Received: "The filing was refused. Check the eSTAR you selected and your reason, then try again."
+AssertionError: expected 'Couldn\'t finalize the protocol — the…' to be 'Couldn\'t finalize the protocol — Enr…' // Object.is equality
+Expected: "Couldn't finalize the protocol — Enrol an authenticator in Account to sign. Nothing was signed."
+Received: "Couldn't finalize the protocol — the password was not accepted. Nothing was signed."
+ Test Files  2 failed (2)
+      Tests  2 failed | 21 passed (23)

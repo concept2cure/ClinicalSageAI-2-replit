@@ -1,0 +1,40 @@
+ ❯ server/routes/__tests__/project-schedule-of-events.test.ts:136:24
+    134|     resolveProgramProjectAnchor.mockResolvedValueOnce(null);
+    135|     const res = await request(app()).get(`/api/concept2cure/projects/$…
+    136|     expect(res.status).toBe(404);
+       |                        ^
+    137|     expect(res.body.code).toBe('PROGRAM_UNANCHORED');
+    138|     expect(query).not.toHaveBeenCalled();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+ FAIL  server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > never generates a schedule for an unanchored program
+AssertionError: expected 400 to be 404 // Object.is equality
+- Expected
++ Received
+- 404
++ 400
+ ❯ server/routes/__tests__/project-schedule-of-events.test.ts:147:24
+    145|       .post(`/api/concept2cure/projects/${PROGRAM}/schedule-of-events/…
+    146|       .send({});
+    147|     expect(res.status).toBe(404);
+       |                        ^
+    148|     expect(res.body.code).toBe('PROGRAM_UNANCHORED');
+    149|     expect(query).not.toHaveBeenCalled();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+ FAIL  server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > a lookup that could not complete is a 500, never "no project record"
+AssertionError: expected 400 to be 500 // Object.is equality
+- Expected
++ Received
+- 500
++ 400
+ ❯ server/routes/__tests__/project-schedule-of-events.test.ts:155:24
+    153|     resolveProgramProjectAnchor.mockRejectedValueOnce(new Error('conne…
+    154|     const res = await request(app()).get(`/api/concept2cure/projects/$…
+    155|     expect(res.status).toBe(500);
+       |                        ^
+    156|     expect(res.body.code).not.toBe('PROGRAM_UNANCHORED');
+    157|     expect(getScheduleOfEvents).not.toHaveBeenCalled();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+ Test Files  1 failed (1)
+      Tests  6 failed | 4 passed (10)
+   Start at  02:45:59
+   Duration  788ms (transform 165ms, setup 129ms, import 181ms, tests 69ms, environment 0ms)

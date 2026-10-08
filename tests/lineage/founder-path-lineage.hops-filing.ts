@@ -13,6 +13,7 @@ import type { PoolClient } from 'pg';
 import type { Queryable as SpanQueryable } from '../../server/services/clinical-regulatory-evidence/span-lineage.service';
 import { REPO_ROOT } from '../golden-journeys/harness';
 import { Hop, ORG_A, AUTHOR, PASSWORD, SHA256_X, HEX64, sha256, json, asPrincipal, type World } from './founder-path-lineage.world';
+import { requiredModule1Codes } from '../../server/services/ectd/assess-dispatch-readiness';
 
 type Row = Record<string, unknown>;
 
@@ -88,6 +89,23 @@ export async function hopPlace(w: World): Promise<void> {
   expect(l1.status, JSON.stringify(l1.body)).toBe(200);
   expect(l2.status, JSON.stringify(l2.body)).toBe(200);
   k.leafIds = [Number(l1.body.id), Number(l2.body.id)];
+  // An original IND sequence is held to the Module 1 the regional record
+  // requires (QA 2026-10-08, j7, d155ef099): each heading gets an approved
+  // document through the same placement route, read from the same function the
+  // readiness engine uses, so the path to transmit stays the product's.
+  const [{ application_type: appType }] = await w.q<{ application_type: string }>(
+    'SELECT application_type FROM submissions WHERE id = $1', [k.submissionId]);
+  for (const code of requiredModule1Codes('fda', appType)) {
+    const [doc] = await w.q<{ id: number }>(
+      `INSERT INTO coauthor_documents (organization_id, title, content, module_number, status)
+       VALUES ($1, $2, $3, $4, 'approved') RETURNING id`,
+      [ORG_A, `Module ${code}`, `<h1>Module ${code}</h1><p>Founder-path Module 1 content.</p>`, code]);
+    const m1 = await place({
+      sectionCode: code, title: `Module ${code}`, lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: doc.id,
+      reason: 'Placing the Module 1 the original IND requires.',
+    });
+    expect(m1.status, JSON.stringify(m1.body)).toBe(200);
+  }
 
   await hop.check('filing-copy-names-seal', 'the filing copy is aliased to the authoring document and names the seal it was taken under', async (observe) => {
     const [c] = await q<{ status: string; metadata: unknown }>('SELECT status, metadata FROM coauthor_documents WHERE id = $1', [k.coauthorId]);
@@ -267,10 +285,13 @@ export async function walkBack(w: World): Promise<void> {
     trail.sequenceId = Number(rows[0].record_id);
   });
   await hop.check('sequence-to-pinned-leaves', 'the sequence’s leaves each name a document and pin its digest', async (observe) => {
-    trail.leaves = await q('SELECT * FROM submission_leaves WHERE sequence_id = $1 AND deleted_at IS NULL ORDER BY id', [trail.sequenceId]);
+    const all = await q('SELECT * FROM submission_leaves WHERE sequence_id = $1 AND deleted_at IS NULL ORDER BY id', [trail.sequenceId]);
+    // Every leaf pins its digest, the required Module 1 included; the walk back
+    // follows the founder's own two (the filing copy and the Vault copy).
+    for (const l of all) expect(String(l.document_content_sha256)).toMatch(HEX64);
+    trail.leaves = all.filter((l) => k.leafIds!.includes(Number(l.id)));
     observe(trail.leaves.map((l) => l.document_table));
     expect(trail.leaves).toHaveLength(2);
-    for (const l of trail.leaves) expect(String(l.document_content_sha256)).toMatch(HEX64);
   });
   await hop.check('leaves-to-project', 'each leaf reaches the project: the filing copy through its alias, the Vault copy through its program', async (observe) => {
     const programIds = new Set<string>();

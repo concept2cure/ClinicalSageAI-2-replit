@@ -13,9 +13,11 @@ import request from 'supertest';
 import { SignJWT } from 'jose';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockQuery, renderHtmlToPdf } = vi.hoisted(() => ({
+const { mockQuery, renderHtmlToPdf, engine } = vi.hoisted(() => ({
   mockQuery: vi.fn(),
   renderHtmlToPdf: vi.fn(async (_html: string) => Buffer.from('%PDF-1.7 rendered')),
+  /** Whether the PDF engine fell back to the plain-text rendering. */
+  engine: { usedFallback: false },
 }));
 
 vi.mock('../../db', () => ({
@@ -24,7 +26,11 @@ vi.mock('../../db', () => ({
   query: (...a: unknown[]) => mockQuery(...a),
   db: {},
 }));
-vi.mock('../../export/renderers', () => ({ renderHtmlToPdf }));
+vi.mock('../../export/renderers', () => ({
+  renderHtmlToPdf,
+  // The export renders through the tracked form (QA 2026-10-08, j4); same stub.
+  renderHtmlToPdfTracked: async (html: string) => ({ buffer: await renderHtmlToPdf(html), usedFallback: engine.usedFallback }),
+}));
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-export';
 // The authoring router verifies via the CANONICAL verifyJwtWithRotation, which in
@@ -65,6 +71,39 @@ describe('authoring export — real PDF branch', () => {
     mockQuery.mockReset();
     renderHtmlToPdf.mockReset();
     renderHtmlToPdf.mockResolvedValue(Buffer.from('%PDF-1.7 rendered'));
+    engine.usedFallback = false;
+  });
+
+  /* QA 2026-10-08 (j4): with no PDF engine the file is the plain-text fallback.
+     The export answered as if it were the formatted document and its record
+     said nothing; the person exporting is now told, and the record keeps it. */
+  it.each([
+    [true, 'plain-text-fallback'],
+    [false, 'formatted'],
+  ] as const)('records and reports how the PDF was rendered (fallback: %s)', async (usedFallback, rendering) => {
+    engine.usedFallback = usedFallback;
+    const recorded: unknown[][] = [];
+    mockQuery.mockImplementation(async (sql: unknown, args: unknown[]) => {
+      const s = String(sql);
+      if (s.includes('FROM authoring_documents')) return { rowCount: 1, rows: [{ id: 'D1', title: 'Tox', module: 'M2', status: 'approved' }] };
+      if (s.includes('FROM authoring_sections')) return { rowCount: 1, rows: [{ code: '2.6.6', content: 'Saved body' }] };
+      if (s.includes('INSERT INTO authoring_export_history')) {
+        recorded.push(args);
+        return { rowCount: 1, rows: [{ id: 'X1', exported_at: new Date() }] };
+      }
+      return { rowCount: 0, rows: [] };
+    });
+    const res = await request(makeApp())
+      .post('/api/authoring/docs/D1/export')
+      .set('Authorization', await bearer())
+      .send({ format: 'pdf' })
+      .buffer(true)
+      .parse((r, cb) => { const chunks: Buffer[] = []; r.on('data', (c) => chunks.push(c)); r.on('end', () => cb(null, Buffer.concat(chunks))); });
+    expect(res.status).toBe(200);
+    expect(res.headers['x-export-rendering']).toBe(rendering);
+    expect(recorded).toHaveLength(1);
+    const metadata = JSON.parse(String(recorded[0][6]));
+    expect(metadata.rendering).toBe(rendering);
   });
 
   it('renders application/pdf through the HTML→PDF engine (not mislabeled DOCX)', async () => {

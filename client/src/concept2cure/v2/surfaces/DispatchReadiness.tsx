@@ -298,8 +298,7 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
               by it. When the row carries no number, only the id is stated. */}
           {programLabel ? <>{programLabel} · </> : null}
           {sequenceNumber ? <>Sequence {sequenceNumber} (id {a.sequenceId})</> : <>Sequence id {a.sequenceId}</>} · region{' '}
-          {String(a.region || 'fda').toUpperCase()} · {a.leafCount} leaves · status {a.sequenceStatus}
-          {discovery.state === 'sequence' && discovery.match === 'legacy-name' ? ' · submission matched by name: it has no project recorded' : null}
+          {String(a.region || 'fda').toUpperCase()} · {a.leafCount} leaves · status {a.sequenceStatus}{a.validatedStage?.holds === false ? <span role="status" data-validated-stage="stale"> — {a.validatedStage.reason}</span> : null}
         </div>
       </div>
 

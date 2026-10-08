@@ -400,6 +400,8 @@
     "ci:internals-in-copy": "node scripts/ci/check-internals-in-copy.mjs",
     "ci:internals-in-copy:list": "node scripts/ci/check-internals-in-copy.mjs --list",
     "ci:internals-in-copy:write-baseline": "node scripts/ci/check-internals-in-copy.mjs --write-baseline",
+    "ci:step-presentation": "node scripts/ci/check-step-presentation.mjs",
+    "ci:step-presentation:selftest": "node scripts/ci/check-step-presentation.selftest.mjs",
     "ci:empty-state-honesty": "node scripts/ci/check-empty-state-honesty.mjs",
     "ci:empty-state-honesty:list": "node scripts/ci/check-empty-state-honesty.mjs --list",
     "ci:empty-state-honesty:self-test": "node scripts/ci/check-empty-state-honesty.mjs --self-test",

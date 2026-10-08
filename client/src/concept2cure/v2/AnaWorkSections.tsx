@@ -28,6 +28,7 @@ import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../component
 import type { AnaPlanStep, AnaProgressPhase, AnaRunHold } from '../components/ana/useAnaChat.types';
 import { MAX_INTERJECTION_CHARS, type AnaRunPolicy } from '@shared/ana/run-control-limits';
 import { PAUSE_WORDS } from '@shared/ana/run-policy';
+import { unknownStepLabel, type StepFact } from '@shared/ana/step-verbs';
 import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { currentStep, formatElapsed, formatStepDuration } from '../components/ana/anaProgress';
 import type { AgentActivityView } from './useAgentActivity';
@@ -117,12 +118,26 @@ function planState(s: AnaPlanStep, live: boolean): RailState {
   return 'pending';
 }
 
+/** A step's facts as its chevron opens them: "Found: 12 matches", one per line. */
+export function StepFactList({ facts }: { facts: StepFact[] }) {
+  return (
+    <>
+      {facts.map((f) => (
+        <div className="ana-activity-kv" key={f.name}>
+          {f.name}: {f.value}
+        </div>
+      ))}
+    </>
+  );
+}
+
 /** The step in flight, under the item it belongs to. */
 function CurrentTool({ step }: { step: AnaToolCall | null }) {
   if (!step) return null;
   return (
     <span className="ana-rail-sub">
-      <span aria-hidden="true">{I.arrowRight}</span> {step.label || step.name}
+      {/* The server's label; never the tool's name (step-verbs.ts). */}
+      <span aria-hidden="true">{I.arrowRight}</span> {step.label || unknownStepLabel('doing')}
     </span>
   );
 }

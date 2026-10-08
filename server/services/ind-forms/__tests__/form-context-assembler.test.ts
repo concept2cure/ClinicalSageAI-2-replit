@@ -172,4 +172,22 @@ describe('programToFormMetadata — the program record is the source of the form
     expect(merged.serialNumber).toBe('0000');
     expect(merged.drugName).toBe('Vorelinib · BX-512');
   });
+
+  /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): the sponsor address
+     and the IND type are stored on the program (regulatory_programs
+     .sponsor_address / .ind_type) and the 1571 build reads them from there. */
+  it('maps the recorded sponsor address and IND type to where the 1571 build reads them', () => {
+    const meta = programToFormMetadata({ ...vorelinib, sponsorAddress: ' 1 Main St, Boston MA 02110, US ', indType: 'Research IND' });
+    expect(meta.sponsor).toEqual({ address: '1 Main St, Boston MA 02110, US' });
+    expect(meta.indType).toBe('Research IND');
+  });
+
+  it('a blank address or IND type is absent, and an IND type is never carried for a program that is not an IND', () => {
+    const blank = programToFormMetadata({ ...vorelinib, sponsorAddress: '  ', indType: null });
+    expect(blank).not.toHaveProperty('sponsor');
+    expect(blank).not.toHaveProperty('indType');
+    const nda = programToFormMetadata({ ...vorelinib, programType: 'NDA', sponsorAddress: '1 Main St', indType: 'Research IND' });
+    expect(nda.sponsor).toEqual({ address: '1 Main St' });
+    expect(nda).not.toHaveProperty('indType');
+  });
 });

@@ -1,0 +1,2802 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > the surfaces this test treats as locked are outside the launch scope, and the doors it expects are inside it 2ms
+ × client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: a device filing row does not offer the locked 510(k) surface 109ms
+   → expected [ …(1) ] to have a length of +0 but got 1
+ × client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Vault, with a project open: no "Inspection readiness" door into the locked eTMF 63ms
+   → expected <button class="sp-ask" …(1)>…(1)</button> to be null
+ × client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Vault, with no project open: one button opens Projects 458ms
+   → Unable to find an accessible element with the role "button" and name `/Open Projects/`
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Vault (DMS)":
+  <h1
+    class="vd-title"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "Open project":
+  <button
+    class="sp-ask"
+    title="Open this project in Project management"
+  />
+
+  Name "Inspection readiness":
+  <button
+    class="sp-ask"
+    title="TMF inspection-readiness — completeness, timeliness & QC"
+  />
+
+  Name "Upload":
+  <button
+    class="sp-primary"
+    data-testid="vault-upload-button"
+    disabled=""
+    title="Open a project first — a Vault document is filed against a program."
+  />
+
+  Name "Ask AnA to import":
+  <button
+    class="sp-ask"
+    title="Describe an import to AnA instead — e.g. bulk import from another system"
+  />
+
+  Name "Search connected sources":
+  <button
+    class="vd-coexist-cta"
+  />
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Document type for uploaded files":
+  <select
+    aria-label="Document type for uploaded files"
+    class="c2c-input"
+    data-testid="vault-upload-type"
+    style="width: auto; max-width: 260px;"
+    title="Document type for uploaded files"
+  />
+
+  --------------------------------------------------
+  option:
+
+  Name "Clinical study report":
+  <option
+    value="CSR"
+  />
+
+  Name "Protocol":
+  <option
+    value="PROTOCOL"
+  />
+
+  Name "Clinical evaluation report":
+  <option
+    value="CER"
+  />
+
+  Name "Investigator's brochure":
+  <option
+    value="IB"
+  />
+
+  Name "Development safety update report":
+  <option
+    value="DSUR"
+  />
+
+  Name "Periodic safety update report":
+  <option
+    value="PSUR"
+  />
+
+  Name "Statistical analysis plan":
+  <option
+    value="SAP"
+  />
+
+  Name "Statistical analysis report":
+  <option
+    value="SAR"
+  />
+
+  Name "Module 2 · summaries":
+  <option
+    value="MODULE_2"
+  />
+
+  Name "Module 3 · quality":
+  <option
+    value="MODULE_3"
+  />
+
+  Name "Module 4 · nonclinical":
+  <option
+    value="MODULE_4"
+  />
+
+  Name "Module 5 · clinical":
+  <option
+    value="MODULE_5"
+  />
+
+  Name "Standard operating procedure":
+  <option
+    value="SOP"
+  />
+
+  Name "Report":
+  <option
+    value="REPORT"
+  />
+
+  Name "Agency correspondence":
+  <option
+    value="CORRESPONDENCE"
+  />
+
+  Name "Other":
+  <option
+    value="OTHER"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            />
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+            Statistical analysis report
+          </option>
+          <option
+            value="MODULE_2"
+          >
+            Module 2 · summaries
+          </option>
+          <option
+            value="MODULE_3"
+          >
+            Module 3 · quality
+          </option>
+          <option
+            value="MODULE_4"
+          >
+            Module 4 · nonclinical
+          </option>
+          <option
+            value="MODULE_5"
+          >
+            Module 5 · clinical
+          </option>
+          <option
+            value="SOP"
+          >
+            Standard operating procedure
+          </option>
+          <option
+            value="REPORT"
+          >
+            Report
+          </option>
+          <option
+            value="CORRESPONDENCE"
+          >
+            Agency correspondence
+          </option>
+          <option
+            value="OTHER"
+          >
+            Other
+          </option>
+        </select>
+        <input
+          accept=".pdf,.docx,.xlsx,.txt,.md,.csv,.tsv,.json,.xml,.png,.jpg,.jpeg,.gif,.doc,.xls,.rtf"
+          aria-label="Choose documents to upload to the Vault"
+          data-testid="vault-upload-input"
+          multiple=""
+          style="display: none;"
+          type="file"
+        />
+        <button
+          class="sp-primary"
+          data-testid="vault-upload-button"
+          disabled=""
+          title="Open a project first — a Vault document is filed against a program."
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-upload"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+            />
+            <polyline
+              points="17 8 12 3 7 8"
+            />
+            <line
+              x1="12"
+              x2="12"
+              y1="3"
+              y2="15"
+            />
+          </svg>
+           
+          Upload
+        </button>
+        <button
+          class="sp-ask"
+          title="Describe an import to AnA instead — e.g. bulk import from another system"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-sparkles"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+            />
+            <path
+              d="M20 3v4"
+            />
+            <path
+              d="M22 5h-4"
+            />
+            <path
+              d="M4 17v2"
+            />
+            <path
+              d="M5 18H3"
+            />
+          </svg>
+           Ask AnA to import
+        </button>
+      </div>
+      <div
+        class="vd-coexist"
+      >
+        <span
+          class="vd-coexist-txt"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-link"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+            />
+            <path
+              d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+            />
+          </svg>
+           AnA can search your connected repositories (
+          <b>
+            Veeva Vault
+          </b>
+          ,
+           
+          <b>
+            SharePoint
+          </b>
+          , 
+          <b>
+            OneDrive
+          </b>
+          ) in place. Importing from them into the Vault comes in a later release; upload files here meanwhile.
+        </span>
+        <button
+          class="vd-coexist-cta"
+        >
+          Search connected sources
+        </button>
+      </div>
+      <div
+        style="padding: 16px 24px;"
+      >
+        <div
+          aria-live="polite"
+          class="c2c-empty-state tone-idle"
+          role="status"
+        >
+          <span
+            aria-hidden="true"
+            class="c2c-empty-ic"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-folder"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+              />
+            </svg>
+          </span>
+          <div
+            class="c2c-empty-t"
+          >
+            Open a project to see its vault
+          </div>
+          <div
+            class="c2c-empty-h"
+          >
+            The Vault (DMS) shows the governed document tree for the project you have open. Open a project from Projects or Project management to load its CTD / eSTAR / IVDR / TMF spine.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Builder: says where documents come from, opens the editor and the Vault, and never points at the Co-Author 5046ms
+   → Unable to find an element by: [data-testid="sc-builder-sources"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="sp sc-page"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Submission center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+          </p>
+        </div>
+        <select
+          aria-label="Submission to work on"
+          class="sc-subpick"
+        >
+          <option
+            value="68"
+          >
+            BX-204 IND
+             · 
+            IND
+             · 
+            FDA (US)
+          </option>
+        </select>
+      </div>
+      <div
+        class="al-lead al-calm"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-sparkles"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+            />
+            <path
+              d="M20 3v4"
+            />
+            <path
+              d="M22 5h-4"
+            />
+            <path
+              d="M4 17v2"
+            />
+            <path
+              d="M5 18H3"
+            />
+          </svg>
+           
+          Where BX-204 IND stands
+        </div>
+        <div
+          class="al-h"
+        >
+          BX-204 IND
+           (BX-204)
+           — a 
+          FDA (US)
+           
+          IND
+           at the 
+          <b>
+            original
+          </b>
+           stage.
+        </div>
+        <div
+          class="al-b"
+        >
+          <b>
+            1
+          </b>
+           eCTD 
+          sequence
+           
+          tracked
+          . Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Open the sequences
+          </button>
+          <span
+            class="al-note"
+          >
+            Or move through the workspaces below — plan, build, validate, dispatch.
+          </span>
+        </div>
+      </div>
+      <div
+        class="sc-wsbar"
+        role="tablist"
+      >
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Submissions
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Planner
+        </button>
+        <button
+          aria-selected="true"
+          class="sc-ws on"
+          role="tab"
+          type="button"
+        >
+          Builder
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Sequences
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Validation
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Shadow review
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Cross-region
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Dispatch
+        </button>
+      </div>
+      <div
+        class="cm-pushbar sc-seqbar sc-mb"
+      >
+        <label
+          class="sp-q-s"
+          for="sc-seq-picker"
+        >
+          Working sequence
+        </label>
+        <select
+          class="sc-subpick"
+          id="sc-seq-picker"
+        >
+          <option
+            value="29"
+          >
+            0000
+             · 
+            original
+             · 
+            Assembling
+          </option>
+        </select>
+        <span
+          class="rd-chip tone-ai"
+        >
+          Assembling
+        </span>
+      </div>
+      <div
+        class="pj-card"
+      >
+        <div
+          class="pj-card-h"
+        >
+          <span
+            class="t"
+          >
+            Builder · eCTD leaves · sequence 
+            0000
+          </span>
+          <span
+            class="s"
+          >
+            governed leaves
+          </span>
+        </div>
+        <div
+          class="pj-card-b"
+        >
+          <div
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+            <span
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+            </span>
+            <div
+              class="c2c-empty-t"
+            >
+              No leaves in sequence 0000 yet
+            </div>
+            <div
+              class="c2c-empty-h"
+            >
+              Each leaf carries a lifecycle operator (new / replace / append / delete) and traces to its source document. Place the first one below.
+            </div>
+          </div>
+          <div
+            class="cm-pushbar sc-mt"
+          >
+            <button
+              class="sc-trans-b"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-plus"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12h14"
+                />
+                <path
+                  d="M12 5v14"
+                />
+              </svg>
+               Place a Co-Author document as a leaf
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="sp sc-page"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Submission center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+          </p>
+        </div>
+        <select
+          aria-label="Submission to work on"
+          class="sc-subpick"
+        >
+          <option
+            value="68"
+          >
+            BX-204 IND
+             · 
+            IND
+             · 
+            FDA (US)
+          </option>
+        </select>
+      </div>
+      <div
+        class="al-lead al-calm"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-sparkles"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+            />
+            <path
+              d="M20 3v4"
+            />
+            <path
+              d="M22 5h-4"
+            />
+            <path
+              d="M4 17v2"
+            />
+            <path
+              d="M5 18H3"
+            />
+          </svg>
+           
+          Where BX-204 IND stands
+        </div>
+        <div
+          class="al-h"
+        >
+          BX-204 IND
+           (BX-204)
+           — a 
+          FDA (US)
+           
+          IND
+           at the 
+          <b>
+            original
+          </b>
+           stage.
+        </div>
+        <div
+          class="al-b"
+        >
+          <b>
+            1
+          </b>
+           eCTD 
+          sequence
+           
+          tracked
+          . Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Open the sequences
+          </button>
+          <span
+            class="al-note"
+          >
+            Or move through the workspaces below — plan, build, validate, dispatch.
+          </span>
+        </div>
+      </div>
+      <div
+        class="sc-wsbar"
+        role="tablist"
+      >
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Submissions
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Planner
+        </button>
+        <button
+          aria-selected="true"
+          class="sc-ws on"
+          role="tab"
+          type="button"
+        >
+          Builder
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Sequences
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Validation
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Shadow review
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Cross-region
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Dispatch
+        </button>
+      </div>
+      <div
+        class="cm-pushbar sc-seqbar sc-mb"
+      >
+        <label
+          class="sp-q-s"
+          for="sc-seq-picker"
+        >
+          Working sequence
+        </label>
+        <select
+          class="sc-subpick"
+          id="sc-seq-picker"
+        >
+          <option
+            value="29"
+          >
+            0000
+             · 
+            original
+             · 
+            Assembling
+          </option>
+        </select>
+        <span
+          class="rd-chip tone-ai"
+        >
+          Assembling
+        </span>
+      </div>
+      <div
+        class="pj-card"
+      >
+        <div
+          class="pj-card-h"
+        >
+          <span
+            class="t"
+          >
+            Builder · eCTD leaves · sequence 
+            0000
+          </span>
+          <span
+            class="s"
+          >
+            governed leaves
+          </span>
+        </div>
+        <div
+          class="pj-card-b"
+        >
+          <div
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+            <span
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+            </span>
+            <div
+              class="c2c-empty-t"
+            >
+              No leaves in sequence 0000 yet
+            </div>
+            <div
+              class="c2c-empty-h"
+            >
+              Each leaf carries a lifecycle operator (new / replace / append / delete) and traces to its source document. Place the first one below.
+            </div>
+          </div>
+          <div
+            class="cm-pushbar sc-mt"
+          >
+            <button
+              class="sc-trans-b"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-plus"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12h14"
+                />
+                <path
+                  d="M12 5v14"
+                />
+              </svg>
+               Place a Co-Author document as a leaf
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > the launch-scope panel has one way back: Projects 17ms
+   → Unable to find an accessible element with the role "button"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "510(k): not in this release":
+  <div
+    aria-labelledby="launch-scope-gate-h"
+    class="surface-degraded"
+    data-launch-scope-gate="true"
+    role="region"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "510(k): not in this release":
+  <h2
+    id="launch-scope-gate-h"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      aria-labelledby="launch-scope-gate-h"
+      class="surface-degraded"
+      data-launch-scope-gate="true"
+      role="region"
+    >
+      <div
+        aria-hidden="true"
+        class="sd-mark"
+      >
+        ✻
+      </div>
+      <h2
+        id="launch-scope-gate-h"
+      >
+        510(k)
+        : 
+        not in this release
+      </h2>
+      <p>
+        This app is built but is not part of the current release. It is not a plan or permission matter — no upgrade, setting or request enables it.
+      </p>
+    </div>
+  </div>
+</body>
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: a device filing row does not offer the locked 510(k) surface
+AssertionError: expected [ …(1) ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx:101:93
+     99|     render(<SubmissionCenter onAsk={vi.fn()} onNav={onNav} />);
+    100|     await waitFor(() => expect(document.body.textContent).toContain('Z…
+    101|     expect(screen.queryAllByTitle('Open the 510(k) surface — the devic…
+       |                                                                                             ^
+    102|     expect(screen.queryByText(/Open 510\(k\) surface/)).toBeNull();
+    103|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Vault, with a project open: no "Inspection readiness" door into the locked eTMF
+AssertionError: expected <button class="sp-ask" …(1)>…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="sp-ask"
+  title="TMF inspection-readiness — completeness, timeliness & QC"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-shield-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+    />
+    <path
+      d="m9 12 2 2 4-4"
+    />
+  </svg>
+   Inspection readiness
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx:109:56
+    107|     render(<Vault surface={{ id: 'vault', label: 'Vault' } as never} o…
+    108|     expect(await screen.findByText(/No documents in this project's vau…
+    109|     expect(screen.queryByText(/Inspection readiness/)).toBeNull();
+       |                                                        ^
+    110|   });
+    111|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Vault, with no project open: one button opens Projects
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Open Projects/`
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Vault (DMS)":
+  <h1
+    class="vd-title"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "Open project":
+  <button
+    class="sp-ask"
+    title="Open this project in Project management"
+  />
+
+  Name "Inspection readiness":
+  <button
+    class="sp-ask"
+    title="TMF inspection-readiness — completeness, timeliness & QC"
+  />
+
+  Name "Upload":
+  <button
+    class="sp-primary"
+    data-testid="vault-upload-button"
+    disabled=""
+    title="Open a project first — a Vault document is filed against a program."
+  />
+
+  Name "Ask AnA to import":
+  <button
+    class="sp-ask"
+    title="Describe an import to AnA instead — e.g. bulk import from another system"
+  />
+
+  Name "Search connected sources":
+  <button
+    class="vd-coexist-cta"
+  />
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Document type for uploaded files":
+  <select
+    aria-label="Document type for uploaded files"
+    class="c2c-input"
+    data-testid="vault-upload-type"
+    style="width: auto; max-width: 260px;"
+    title="Document type for uploaded files"
+  />
+
+  --------------------------------------------------
+  option:
+
+  Name "Clinical study report":
+  <option
+    value="CSR"
+  />
+
+  Name "Protocol":
+  <option
+    value="PROTOCOL"
+  />
+
+  Name "Clinical evaluation report":
+  <option
+    value="CER"
+  />
+
+  Name "Investigator's brochure":
+  <option
+    value="IB"
+  />
+
+  Name "Development safety update report":
+  <option
+    value="DSUR"
+  />
+
+  Name "Periodic safety update report":
+  <option
+    value="PSUR"
+  />
+
+  Name "Statistical analysis plan":
+  <option
+    value="SAP"
+  />
+
+  Name "Statistical analysis report":
+  <option
+    value="SAR"
+  />
+
+  Name "Module 2 · summaries":
+  <option
+    value="MODULE_2"
+  />
+
+  Name "Module 3 · quality":
+  <option
+    value="MODULE_3"
+  />
+
+  Name "Module 4 · nonclinical":
+  <option
+    value="MODULE_4"
+  />
+
+  Name "Module 5 · clinical":
+  <option
+    value="MODULE_5"
+  />
+
+  Name "Standard operating procedure":
+  <option
+    value="SOP"
+  />
+
+  Name "Report":
+  <option
+    value="REPORT"
+  />
+
+  Name "Agency correspondence":
+  <option
+    value="CORRESPONDENCE"
+  />
+
+  Name "Other":
+  <option
+    value="OTHER"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            />
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+            Statistical analysis report
+          </option>
+          <option
+            value="MODULE_2"
+          >
+            Module 2 · summaries
+          </option>
+          <option
+            value="MODULE_3"
+          >
+            Module 3 · quality
+          </option>
+          <option
+            value="MODULE_4"
+          >
+            Module 4 · nonclinical
+          </option>
+          <option
+            value="MODULE_5"
+          >
+            Module 5 · clinical
+          </option>
+          <option
+            value="SOP"
+          >
+            Standard operating procedure
+          </option>
+          <option
+            value="REPORT"
+          >
+            Report
+          </option>
+          <option
+            value="CORRESPONDENCE"
+          >
+            Agency correspondence
+          </option>
+          <option
+            value="OTHER"
+          >
+            Other
+          </option>
+        </select>
+        <input
+          accept=".pdf,.docx,.xlsx,.txt,.md,.csv,.tsv,.json,.xml,.png,.jpg,.jpeg,.gif,.doc,.xls,.rtf"
+          aria-label="Choose documents to upload to the Vault"
+          data-testid="vault-upload-input"
+          multiple=""
+          style="display: none;"
+          type="file"
+        />
+        <button
+          class="sp-primary"
+          data-testid="vault-upload-button"
+          disabled=""
+          title="Open a project first — a Vault document is filed against a program."
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-upload"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+            />
+            <polyline
+              points="17 8 12 3 7 8"
+            />
+            <line
+              x1="12"
+              x2="12"
+              y1="3"
+              y2="15"
+            />
+          </svg>
+           
+          Upload
+        </button>
+        <button
+          class="sp-ask"
+          title="Describe an import to AnA instead — e.g. bulk import from another system"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-sparkles"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+            />
+            <path
+              d="M20 3v4"
+            />
+            <path
+              d="M22 5h-4"
+            />
+            <path
+              d="M4 17v2"
+            />
+            <path
+              d="M5 18H3"
+            />
+          </svg>
+           Ask AnA to import
+        </button>
+      </div>
+      <div
+        class="vd-coexist"
+      >
+        <span
+          class="vd-coexist-txt"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-link"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+            />
+            <path
+              d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+            />
+          </svg>
+           AnA can search your connected repositories (
+          <b>
+            Veeva Vault
+          </b>
+          ,
+           
+          <b>
+            SharePoint
+          </b>
+          , 
+          <b>
+            OneDrive
+          </b>
+          ) in place. Importing from them into the Vault comes in a later release; upload files here meanwhile.
+        </span>
+        <button
+          class="vd-coexist-cta"
+        >
+          Search connected sources
+        </button>
+      </div>
+      <div
+        style="padding: 16px 24px;"
+      >
+        <div
+          aria-live="polite"
+          class="c2c-empty-state tone-idle"
+          role="status"
+        >
+          <span
+            aria-hidden="true"
+            class="c2c-empty-ic"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-folder"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+              />
+            </svg>
+          </span>
+          <div
+            class="c2c-empty-t"
+          >
+            Open a project to see its vault
+          </div>
+          <div
+            class="c2c-empty-h"
+          >
+            The Vault (DMS) shows the governed document tree for the project you have open. Open a project from Projects or Project management to load its CTD / eSTAR / IVDR / TMF spine.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx:116:28
+    114|     render(<Vault surface={{ id: 'vault', label: 'Vault' } as never} o…
+    115|     expect(await screen.findByText('Open a project to see its vault'))…
+    116|     fireEvent.click(screen.getByRole('button', { name: /Open Projects/…
+       |                            ^
+    117|     expect(onNav).toHaveBeenCalledWith('projects');
+    118|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Builder: says where documents come from, opens the editor and the Vault, and never points at the Co-Author
+TestingLibraryElementError: Unable to find an element by: [data-testid="sc-builder-sources"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="sp sc-page"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Submission center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+          </p>
+        </div>
+        <select
+          aria-label="Submission to work on"
+          class="sc-subpick"
+        >
+          <option
+            value="68"
+          >
+            BX-204 IND
+             · 
+            IND
+             · 
+            FDA (US)
+          </option>
+        </select>
+      </div>
+      <div
+        class="al-lead al-calm"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-sparkles"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+            />
+            <path
+              d="M20 3v4"
+            />
+            <path
+              d="M22 5h-4"
+            />
+            <path
+              d="M4 17v2"
+            />
+            <path
+              d="M5 18H3"
+            />
+          </svg>
+           
+          Where BX-204 IND stands
+        </div>
+        <div
+          class="al-h"
+        >
+          BX-204 IND
+           (BX-204)
+           — a 
+          FDA (US)
+           
+          IND
+           at the 
+          <b>
+            original
+          </b>
+           stage.
+        </div>
+        <div
+          class="al-b"
+        >
+          <b>
+            1
+          </b>
+           eCTD 
+          sequence
+           
+          tracked
+          . Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Open the sequences
+          </button>
+          <span
+            class="al-note"
+          >
+            Or move through the workspaces below — plan, build, validate, dispatch.
+          </span>
+        </div>
+      </div>
+      <div
+        class="sc-wsbar"
+        role="tablist"
+      >
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Submissions
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Planner
+        </button>
+        <button
+          aria-selected="true"
+          class="sc-ws on"
+          role="tab"
+          type="button"
+        >
+          Builder
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Sequences
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Validation
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Shadow review
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Cross-region
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Dispatch
+        </button>
+      </div>
+      <div
+        class="cm-pushbar sc-seqbar sc-mb"
+      >
+        <label
+          class="sp-q-s"
+          for="sc-seq-picker"
+        >
+          Working sequence
+        </label>
+        <select
+          class="sc-subpick"
+          id="sc-seq-picker"
+        >
+          <option
+            value="29"
+          >
+            0000
+             · 
+            original
+             · 
+            Assembling
+          </option>
+        </select>
+        <span
+          class="rd-chip tone-ai"
+        >
+          Assembling
+        </span>
+      </div>
+      <div
+        class="pj-card"
+      >
+        <div
+          class="pj-card-h"
+        >
+          <span
+            class="t"
+          >
+            Builder · eCTD leaves · sequence 
+            0000
+          </span>
+          <span
+            class="s"
+          >
+            governed leaves
+          </span>
+        </div>
+        <div
+          class="pj-card-b"
+        >
+          <div
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+            <span
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+            </span>
+            <div
+              class="c2c-empty-t"
+            >
+              No leaves in sequence 0000 yet
+            </div>
+            <div
+              class="c2c-empty-h"
+            >
+              Each leaf carries a lifecycle operator (new / replace / append / delete) and traces to its source document. Place the first one below.
+            </div>
+          </div>
+          <div
+            class="cm-pushbar sc-mt"
+          >
+            <button
+              class="sc-trans-b"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-plus"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12h14"
+                />
+                <path
+                  d="M12 5v14"
+                />
+              </svg>
+               Place a Co-Author document as a leaf
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="sp sc-page"
+    >
+      <div
+        class="sp-head"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Submission
+          </div>
+          <h1
+            class="sp-title"
+          >
+            Submission center
+          </h1>
+          <p
+            class="sp-state"
+          >
+            Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+          </p>
+        </div>
+        <select
+          aria-label="Submission to work on"
+          class="sc-subpick"
+        >
+          <option
+            value="68"
+          >
+            BX-204 IND
+             · 
+            IND
+             · 
+            FDA (US)
+          </option>
+        </select>
+      </div>
+      <div
+        class="al-lead al-calm"
+      >
+        <div
+          class="al-k"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-sparkles"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+            />
+            <path
+              d="M20 3v4"
+            />
+            <path
+              d="M22 5h-4"
+            />
+            <path
+              d="M4 17v2"
+            />
+            <path
+              d="M5 18H3"
+            />
+          </svg>
+           
+          Where BX-204 IND stands
+        </div>
+        <div
+          class="al-h"
+        >
+          BX-204 IND
+           (BX-204)
+           — a 
+          FDA (US)
+           
+          IND
+           at the 
+          <b>
+            original
+          </b>
+           stage.
+        </div>
+        <div
+          class="al-b"
+        >
+          <b>
+            1
+          </b>
+           eCTD 
+          sequence
+           
+          tracked
+          . Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.
+        </div>
+        <div
+          class="al-re"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           
+          I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.
+        </div>
+        <div
+          class="al-act"
+        >
+          <button
+            class="al-btn"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Open the sequences
+          </button>
+          <span
+            class="al-note"
+          >
+            Or move through the workspaces below — plan, build, validate, dispatch.
+          </span>
+        </div>
+      </div>
+      <div
+        class="sc-wsbar"
+        role="tablist"
+      >
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Submissions
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Planner
+        </button>
+        <button
+          aria-selected="true"
+          class="sc-ws on"
+          role="tab"
+          type="button"
+        >
+          Builder
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Sequences
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Validation
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Shadow review
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Cross-region
+        </button>
+        <button
+          aria-selected="false"
+          class="sc-ws"
+          role="tab"
+          type="button"
+        >
+          Dispatch
+        </button>
+      </div>
+      <div
+        class="cm-pushbar sc-seqbar sc-mb"
+      >
+        <label
+          class="sp-q-s"
+          for="sc-seq-picker"
+        >
+          Working sequence
+        </label>
+        <select
+          class="sc-subpick"
+          id="sc-seq-picker"
+        >
+          <option
+            value="29"
+          >
+            0000
+             · 
+            original
+             · 
+            Assembling
+          </option>
+        </select>
+        <span
+          class="rd-chip tone-ai"
+        >
+          Assembling
+        </span>
+      </div>
+      <div
+        class="pj-card"
+      >
+        <div
+          class="pj-card-h"
+        >
+          <span
+            class="t"
+          >
+            Builder · eCTD leaves · sequence 
+            0000
+          </span>
+          <span
+            class="s"
+          >
+            governed leaves
+          </span>
+        </div>
+        <div
+          class="pj-card-b"
+        >
+          <div
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+            <span
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+            </span>
+            <div
+              class="c2c-empty-t"
+            >
+              No leaves in sequence 0000 yet
+            </div>
+            <div
+              class="c2c-empty-h"
+            >
+              Each leaf carries a lifecycle operator (new / replace / append / delete) and traces to its source document. Place the first one below.
+            </div>
+          </div>
+          <div
+            class="cm-pushbar sc-mt"
+          >
+            <button
+              class="sc-trans-b"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-plus"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12h14"
+                />
+                <path
+                  d="M12 5v14"
+                />
+              </svg>
+               Place a Co-Author document as a leaf
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx:126:31
+    124|     fireEvent.click(screen.getByRole('tab', { name: 'Builder' }));
+    125|
+    126|     const note = await screen.findByTestId('sc-builder-sources');
+       |                               ^
+    127|     expect(note.textContent).toMatch(/Place into filing/);
+    128|     expect(note.textContent).toMatch(/comes later/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > the launch-scope panel has one way back: Projects
+TestingLibraryElementError: Unable to find an accessible element with the role "button"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "510(k): not in this release":
+  <div
+    aria-labelledby="launch-scope-gate-h"
+    class="surface-degraded"
+    data-launch-scope-gate="true"
+    role="region"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "510(k): not in this release":
+  <h2
+    id="launch-scope-gate-h"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      aria-labelledby="launch-scope-gate-h"
+      class="surface-degraded"
+      data-launch-scope-gate="true"
+      role="region"
+    >
+      <div
+        aria-hidden="true"
+        class="sd-mark"
+      >
+        ✻
+      </div>
+      <h2
+        id="launch-scope-gate-h"
+      >
+        510(k)
+        : 
+        not in this release
+      </h2>
+      <p>
+        This app is built but is not part of the current release. It is not a plan or permission matter — no upgrade, setting or request enables it.
+      </p>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ ❯ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx:149:25
+    147|     );
+    148|     expect(screen.queryByText('the locked surface')).toBeNull();
+    149|     const back = screen.getAllByRole('button');
+       |                         ^
+    150|     expect(back).toHaveLength(1);
+    151|     expect(back[0].textContent).toMatch(/Back to Projects/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  12:26:24
+   Duration  8.51s (transform 1.54s, setup 144ms, import 1.92s, tests 5.70s, environment 550ms)
+

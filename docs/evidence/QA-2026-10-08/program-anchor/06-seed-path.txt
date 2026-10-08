@@ -1,0 +1,9 @@
+# The seed path (scripts/seed-ga-demo.mjs) — the path that created BX-256 and Vorelinib.
+# c2c_p19_seed = a second pg_dump copy of c2c_qa (12 seeded programs unanchored). 'npm run db:seed' against it (NODE_ENV=development):
+after seed: unanchored live programs = 0
+seed output, the lines naming P-19 and the outcome (the banner, which prints demo credentials, is not reproduced):
+Domain modules: 41 seeded, 2 skipped (unbuilt surfaces).
+P-19: 12 program(s) given their project record
+GA DEMO DATA SEEDED SUCCESSFULLY                   
+before the seed: unanchored live programs = 12 (01-repro-qa-db.txt). The seed's own transaction ran migrations/20261008_program_project_anchor_backfill.sql before COMMIT.
+Note: the seed runs 20261008 only, not 20260814's code link, so BX-204 here received a new row of its own rather than being linked to the dossier-map seed's 'BX-204 · BLA 761xyz' project (compare 03-qa-copy-after-deploy-migrate.txt).

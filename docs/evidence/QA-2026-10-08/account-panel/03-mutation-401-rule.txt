@@ -1,0 +1,27 @@
+# MUTATION — unauthorizedMeansSession reverted to the pre-ddc8c0db5 rule (every signed-in 401 is a session),
+# panel tests re-run, file restored byte-identical afterwards. The three 401-refusal tests must fail, and do.
+
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > the account menu offers the panel > lists Account, and choosing it opens the panel on the server's account
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > shows name, e-mail, organisation and the membership role, as the server reports them
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a failed account read is an error with a way to retry, never an empty panel
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a wrong current password shows the server's refusal — not "Session expired" — and the session stays
+   → Unable to find an element with the text: Current password is incorrect. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > shows every policy refusal the server lists, in its words
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a confirmation that differs is caught before anything is sent
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a change says that every session has ended, this one included, and signs out on request
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > enrolment shows the server's QR code and key, confirms a code, then shows the recovery codes once
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a wrong confirmation code shows the server's refusal, not "Session expired", and keeps the key on screen
+   → Unable to find an element with the text: Invalid verification code. Ensure your authenticator app is synced; each code works once, so if you just used it, wait for the next.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a refused setup is shown in the server's words
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > never loads a QR code from anywhere but the server's own data: URL
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > removal sends a current code; the server's refusal is shown, and a good code removes it
+   → Unable to find an element with the text: Invalid verification code. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a wrong current password shows the server's refusal — not "Session expired" — and the session stays
+TestingLibraryElementError: Unable to find an element with the text: Current password is incorrect. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a wrong confirmation code shows the server's refusal, not "Session expired", and keeps the key on screen
+TestingLibraryElementError: Unable to find an element with the text: Invalid verification code. Ensure your authenticator app is synced; each code works once, so if you just used it, wait for the next.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > removal sends a current code; the server's refusal is shown, and a good code removes it
+TestingLibraryElementError: Unable to find an element with the text: Invalid verification code. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  3 failed | 9 passed (12)

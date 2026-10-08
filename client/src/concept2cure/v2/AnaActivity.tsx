@@ -12,18 +12,21 @@
  *
  * ── How it reads ─────────────────────────────────────────────────────────────
  * One quiet bordered list, one row per thing that happened, in the order it
- * happened: "Planned 5 steps", "Searching the literature for estimand",
- * "Drafted Clinical Overview 2.5". The verb is muted and the object is not, so
- * the eye lands on WHAT she worked on. A row with more to say — how long a
- * step took, the inputs she passed, the steps of her plan, the whole of her
- * reasoning — carries its own chevron and opens in place. While she works the
- * list is open; once the answer has landed it folds to one summary line.
+ * happened: "Planned 5 steps", "Searched the literature" with "estimand"
+ * beneath it, "Drafted Clinical Overview 2.5". A step reads in the doing form
+ * while it runs and the done form once it succeeded; the label, its preview
+ * and its facts are the server's (step-presentation.ts). A row with more to
+ * say — a step's facts (what it searched for, what it found, how long it
+ * took), the steps of her plan, the whole of her reasoning — carries its own
+ * chevron and opens in place. While she works the list is open; once the
+ * answer has landed it folds to one summary line.
  *
  * ── What it refuses to show ──────────────────────────────────────────────────
  * Only things that actually happened. Each tool row is a tool AnA really
  * called, under the label the server gave it; a plan row is a plan she
  * declared; a failed step is shown failed, in the sentence the server wrote,
- * never as the raw payload. A turn that ran nothing renders nothing. There is
+ * never as the raw payload. A step's details never show its inputs or its
+ * result, and a row never shows a tool's name. A turn that ran nothing renders nothing. There is
  * no progress bar and no percentage: the loop runs until she decides she has
  * enough, so any bar would be a fiction with a number on it.
  *
@@ -44,10 +47,11 @@ import { downloadBlob, safeFileName } from './download';
 import type { AnaChatMessage, AnaToolCall } from '../components/ana/useAnaChat';
 import type { AnaPlanChange, AnaPlanStep, AnaStoppedReason, AnaTurnRecordStatus } from '../components/ana/useAnaChat.types';
 import { formatElapsed, LENS_PHRASE, PLAN_TOOL } from '../components/ana/anaProgress';
-import { statusGlyph } from './AnaWorkSections';
-import { isContinuable, replacedNoteText, stepDuration, stoppedNoteText } from './anaWorkModel';
+import { statusGlyph, StepFactList } from './AnaWorkSections';
+import { isContinuable, replacedNoteText, showsEngineGlyph, stepDuration, stepFacts, stoppedNoteText } from './anaWorkModel';
 import { useNow } from './useNow';
 import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
+import { unknownStepLabel } from '@shared/ana/step-verbs';
 
 export interface AnaActivityProps {
   /** True while the turn is still in flight. */
@@ -128,7 +132,10 @@ export function activityPropsFor(m: AnaChatMessage): AnaActivityProps {
     startedAt: m.sentAt,
     completedAt: m.completedAt,
     turnRecord: m.turnRecord,
-    stoppedReason: m.stoppedReason,
+    /* The person's Stop, as this view saw it: when the client aborts before
+       the server's `done` arrives, `stopped` is set and no reason ever comes.
+       It is the same stop the server records as `cancelled`. */
+    stoppedReason: m.stoppedReason ?? (m.stopped ? 'cancelled' : undefined),
     interruptedWithPartialResponse: m.interruptedWithPartialResponse,
     rounds: m.rounds,
     runPolicy: m.runPolicy,
@@ -202,6 +209,7 @@ function Row({
   note,
   detail,
   mono,
+  preview,
 }: {
   status: AnaToolCall['status'];
   glyph?: React.ReactElement;
@@ -211,6 +219,8 @@ function Row({
   mono?: boolean;
   rest?: string;
   trailing?: string;
+  /** Line two, muted: what the step was asked ("shelf life"), as the server cleaned it. */
+  preview?: string;
   /** A sentence that must stay visible (a failure), never behind the chevron. */
   note?: string;
   /** What opens in place. The row's visible words are the button's name. */
@@ -249,6 +259,7 @@ function Row({
           {trailing ? <span className="ana-activity-t">{trailing}</span> : null}
         </span>
       )}
+      {preview ? <span className="ana-activity-preview">{preview}</span> : null}
       {note ? <span className="ana-activity-note">{note}</span> : null}
       {detail ? (
         <div className="ana-activity-detail" id={id} hidden={!open}>
@@ -262,39 +273,29 @@ function Row({
 const hasStepResult = (status: AnaToolCall['status']) => status === 'success' || status === 'error';
 
 function ToolRow({ c, now }: { c: AnaToolCall; now: number }) {
-  const { verb, object, rest } = splitLabel(c.label || c.name);
-  const hasInput = c.input !== undefined && c.input !== null;
+  // The server's label; a step with none reads "Running a step", never its tool name.
+  const { verb, object, rest } = splitLabel(c.label || unknownStepLabel(c.status === 'success' ? 'done' : 'doing'));
   const took = hasStepResult(c.status) ? stepDuration(c, now) : '';
-  const detail =
-    hasInput || took ? (
-      <>
-        {took && <div className="ana-activity-kv">Took {took}{typeof c.round === 'number' ? ` · round ${c.round}` : ''}</div>}
-        {hasInput && (
-          /* A scroll container with a tab stop, named as a region (SC 2.1.1).
-             The inputs she passed — never the raw result payload, which is the
-             internals-in-copy defect this repo has already had once. */
-          <pre className="ana-activity-pre" tabIndex={0} role="region" aria-label="Inputs AnA passed to this step">
-            {JSON.stringify(c.input, null, 2)}
-          </pre>
-        )}
-      </>
-    ) : undefined;
+  // The server's facts — never her inputs, never the result (ANA-SUMMARY S3).
+  const facts = stepFacts(c, took);
   return (
     <Row
       status={c.status}
+      glyph={showsEngineGlyph(c) ? I.terminal : undefined}
       verb={verb}
       object={object}
       rest={rest}
+      preview={c.preview ?? undefined}
       trailing={hasStepResult(c.status) ? took || undefined : c.status}
       note={c.status === 'unconfirmed' ? c.message || 'Completion not confirmed.' : c.status === 'error' ? c.message || 'did not complete' : undefined}
-      detail={detail}
+      detail={facts.length > 0 ? <StepFactList facts={facts} /> : undefined}
     />
   );
 }
 
 /** True when a step that succeeded already carries the draft's title in its label. */
 function namedBySuccessfulStep(calls: AnaToolCall[], title: string): boolean {
-  return calls.some((c) => c.status === 'success' && (c.label ?? '').includes(title));
+  return calls.some((c) => c.status === 'success' && ((c.label ?? '').includes(title) || c.preview === title));
 }
 
 const unconfirmedSummary = (count: number) => count > 0 ? `${count} unconfirmed` : '';

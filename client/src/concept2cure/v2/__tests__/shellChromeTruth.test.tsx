@@ -43,8 +43,11 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({ user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: ['member'] }, logout: vi.fn() }),
 }));
+const tenant = vi.hoisted(() => ({
+  current: { currentOrganization: { name: 'Concept2Cure Therapeutics' } } as { currentOrganization: { name: string } | null },
+}));
 vi.mock('@/contexts/TenantContext', () => ({
-  useTenant: () => ({ currentOrganization: { name: 'Concept2Cure Therapeutics' } }),
+  useTenant: () => tenant.current,
 }));
 
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
@@ -122,6 +125,18 @@ describe('header controls (findings 131, 132)', () => {
     expect(org.querySelector('.tb-org-chev'), 'a dropdown chevron on something that opens nothing').toBeNull();
     expect(org.getAttribute('title')).toBe('Concept2Cure Therapeutics');
     expect(document.body.innerHTML).not.toMatch(/switcher lands with the auth flow phase/);
+  });
+
+  it('names no organisation when none is known: no "Organization" placeholder (P-25)', () => {
+    const named = tenant.current;
+    tenant.current = { currentOrganization: null };
+    try {
+      renderBar();
+      expect(document.querySelector('.tb-org'), 'an organisation chip with no organisation').toBeNull();
+      expect(screen.queryByText('Organization')).toBeNull();
+    } finally {
+      tenant.current = named;
+    }
   });
 
   it('Help goes where the account menu’s "Get help" goes', () => {

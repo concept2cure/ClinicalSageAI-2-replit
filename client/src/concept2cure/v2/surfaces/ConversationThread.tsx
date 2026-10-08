@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
@@ -17,6 +18,7 @@ import { SignoffList } from '../SignoffList';
 import { apiCall, apiErrorText } from '../apiCall';
 import { downloadBlob, safeFileName } from '../download';
 import { readShellProject, shellProgramName } from '../shellProject';
+import { conversationIdFromLocation, locationForConversation, surfaceIdFromLocation } from '../routing';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { RunControlStrip, steerHelpFor } from '../AnaWorkSections';
 import { useAgentActivity } from '../useAgentActivity';
@@ -937,12 +939,18 @@ export interface AskOrigin {
 export function ConversationThread({ onNav, liveDrive, shellChat, engine }: OwnedSurfaceViewProps) {
   const [engineOpen, setEngineOpen] = useState(false);
   const engineMenuId = useId();
+  const [location, navigate] = useLocation();
+  /* The conversation the URL names (routing.ts), read once, at mount. It is
+     what a reload leaves: the window global below does not survive one. */
+  const [urlThreadId] = useState(() => conversationIdFromLocation(location));
   // A real thread id is placed on window.C2C_CONVO by whatever opens an existing
   // conversation, and `{ id: 'new', seed }` by whatever asks a question here.
   // `current` means "the conversation already in progress" — what this screen
   // shows when the person comes back to it after AnA took them elsewhere
   // mid-answer, and (with the shell's chat) whenever there is nothing to ask.
-  const asked = ((window as any).C2C_CONVO || { id: 'new' }) as {
+  // With no hand-off at all — a fresh page load — the URL's conversation is
+  // the one asked for.
+  const asked = ((window as any).C2C_CONVO || (urlThreadId ? { id: urlThreadId } : { id: 'new' })) as {
     id: string;
     seed?: string | null;
     /** Files the seeding composer attached, by upload id. */
@@ -1382,7 +1390,9 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
         const convo = window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } };
         // Only the requested conversation may become current. Another screen
         // may have selected a different conversation while its history loaded.
-        if (shellChat && convo.C2C_CONVO?.id === threadId) {
+        // A conversation opened from the URL (a reload) has no hand-off.
+        const requested = convo.C2C_CONVO ? convo.C2C_CONVO.id : urlThreadId;
+        if (shellChat && requested === threadId) {
           convo.C2C_CONVO = { id: 'current', seed: null };
         }
       })
@@ -1467,6 +1477,21 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
     // nothing to load and nothing to clear.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  /* The URL names the conversation on screen (routing.ts), so a reload
+     reopens it. Written once the conversation has an id — the stream mints it
+     mid-turn — and replaced, not pushed: it is this screen's address, not a
+     step to go back through. Only while the address is still this screen's:
+     AnA may already have moved the person elsewhere in the same tick, and
+     rewriting that address would pull them back. */
+  const shownThreadId = anaChat.threadId ?? null;
+  useEffect(() => {
+    if (!shownThreadId || typeof window === 'undefined') return;
+    const here = window.location.pathname;
+    if (surfaceIdFromLocation(here) !== 'conversation-thread') return;
+    const want = locationForConversation(shownThreadId);
+    // The query and hash are the shell's (the open program, `?program=`): kept.
+    if (here !== want) navigate(want + window.location.search + window.location.hash, { replace: true });
+  }, [shownThreadId, navigate]);
   useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [turns.length, busy]);
   /* Follow the work. The effect above fires on turn count and busy only, and
      a run's phase line and tool rows land on the LAST turn — below the fold
@@ -1561,6 +1586,11 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
     setListOpened({});
     setOpenedFromList(null);
     (window as any).C2C_CONVO = shellChat ? { id: 'current', seed: null } : { id: 'new', seed: null };
+    /* The old conversation's id leaves the address too: a reload now opens
+       the new, empty one, as the screen shows. */
+    if (conversationIdFromLocation(window.location.pathname)) {
+      navigate(locationForConversation(null) + window.location.search + window.location.hash, { replace: true });
+    }
     draftRef.current?.focus();
   };
   /* The way out of a conversation that belongs to another project (slice 5):

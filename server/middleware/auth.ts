@@ -23,6 +23,7 @@ import {
 import { establishRequestTenantScope } from './establishRequestTenantScope';
 import { enforceTenantLifecycle } from './tenantLifecycleGuard';
 import { enforceStorageQuota } from './storageQuotaGuard';
+import { rolesHeldBy } from '../../shared/constants/org-roles';
 
 // SECURITY FIX: isDev variable removed — no more dev-mode auth bypasses.
 
@@ -425,7 +426,8 @@ export function expandRoleClaims(
   roles: readonly string[] | undefined,
 ): string[] {
   const declared = roles?.length ? [...roles] : [role || 'user'];
-  const granted = declared.flatMap(r => ORG_ROLE_FUNCTIONAL_GRANTS.get(String(r).toLowerCase()) ?? []);
+  // P-18: a signing role is granted what the role it extends is granted.
+  const granted = declared.flatMap(r => rolesHeldBy(r).flatMap(held => ORG_ROLE_FUNCTIONAL_GRANTS.get(held) ?? []));
   return [...new Set([...declared, ...granted])];
 }
 
@@ -471,7 +473,10 @@ export const requireRole = (...allowedRoles: string[]) => {
     // writes it. A route that genuinely wants to admit org admins alongside
     // staff still works by listing 'admin' explicitly — `hasRole` is evaluated
     // before the stand-in, so an explicit grant always wins.
-    const userRoles = req.user.roles || [req.user.role];
+    // P-18: a signing role satisfies a guard that admits the role it extends
+    // (approver → manager, reviewer → member). Applied here as well as in
+    // expandRoleClaims, so a token's claims cannot be where the rule is lost.
+    const userRoles = (req.user.roles || [req.user.role]).flatMap(r => [r, ...rolesHeldBy(r).slice(1)]);
     const hasRole = allowedRoles.some(role => userRoles?.includes(role) || role === '*');
 
     const requiresPlatformRole = allowedRoles.some(role => PLATFORM_SCOPED_ROLES.has(role));

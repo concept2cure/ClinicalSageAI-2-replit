@@ -9,6 +9,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { RESULT_BUDGET } from './agentic-loop.js';
 import {
   VAULT_DOC_KINDS,
   VAULT_INGEST_DOCUMENT_TYPES,
@@ -44,18 +45,24 @@ export const LIST_PROJECT_DOCUMENTS: AnaTool = {
 export const READ_PROJECT_DOCUMENT: AnaTool = {
   name: 'read_project_document',
   description:
-    'Read the full extracted text of a vault document by document id (from list_project_documents), windowed with ' +
-    'offset/max_chars. Scanned PDFs were OCRed at ingest — the text here IS the document\'s content, so read it, ' +
-    'do not treat the file as an opaque image. Every window you read is recorded as a read receipt; the response ' +
-    'reports your exact coverage so far and the character ranges still unread. To truly review a document, page ' +
-    'through ALL of it (advance offset until coverage is complete) — catalog_project_document will refuse a ' +
-    'partial read. If extraction failed, this tool says so with the recorded reason instead of returning empty ' +
-    'text; report that honestly rather than guessing at the content.',
+    'Read the full extracted text of a vault document by document id (from list_project_documents), one window at ' +
+    'a time from offset. Scanned PDFs were OCRed at ingest — the text here IS the document\'s content, so read it, ' +
+    `do not treat the file as an opaque image. Each window is sized so the whole response fits ${RESULT_BUDGET} ` +
+    'characters, and is recorded as a read receipt once it reaches you whole; the response reports your exact ' +
+    'coverage including this window and the character ranges still unread. If a round returned more than can be ' +
+    'read at once, a read comes back as {"delivered": false, "readAgainFrom": N} instead: nothing of it was ' +
+    'recorded, so read it again from offset N. To truly review a document, page through ALL of it (continue from ' +
+    'the offset each response gives until coverage is complete) — catalog_project_document will refuse a partial ' +
+    'read. If extraction failed, this tool says so with the recorded reason instead of returning empty text; ' +
+    'report that honestly rather than guessing at the content.',
   input_schema: {
     type: 'object',
     properties: {
       document_id: { type: 'string', description: 'The vault document UUID from list_project_documents\u0027 `documents` array. NOT a chat upload\u0027s file_id (file_1712345678_ab12cd) — those come from the `chatUploads` array and are read with read_uploaded_document.' },
-      max_chars: { type: 'number', description: 'Maximum characters to return in this window (default 30000, max 80000).' },
+      max_chars: {
+        type: 'number',
+        description: `Maximum characters of text in this window (default and max ${RESULT_BUDGET}; the window is shrunk further so the whole response fits).`,
+      },
       offset: { type: 'number', description: 'Character offset to start from (default 0; advance it to page through the whole document).' },
     },
     required: ['document_id'],

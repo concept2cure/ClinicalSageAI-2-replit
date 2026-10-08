@@ -13,6 +13,7 @@
 import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../components/ana/useAnaChat';
 import type { AnaProgressPhase, AnaRunHold, AnaStoppedReason } from '../components/ana/useAnaChat.types';
 import { AUTO_TIME_WORDS, MANUAL_UNAVAILABLE_TEXT, PAUSE_WORDS, stepLabels } from '@shared/ana/run-policy';
+import { unknownStepLabel, type StepFact } from '@shared/ana/step-verbs';
 import {
   formatElapsed,
   formatStepDuration,
@@ -176,10 +177,15 @@ export function stoppedNoteText(
       // (a run with no owner), so the way on is Auto, then Continue.
       return `${MANUAL_UNAVAILABLE_TEXT} ${steps ? `Next step: ${steps}. ` : ''}To let her go on, switch to Auto, then Continue.`;
     case 'cancelled':
-      // A Stop with nothing held needs no note (the person pressed it). One
-      // that ended a Manual hold — or a page closed during it — names what
-      // did not run, so a reopened turn does not read as a plain Stop.
-      return steps ? `The run was stopped while AnA waited for you before her next step, so it did not run: ${steps}.` : null;
+      // One that ended a Manual hold — or a page closed during it — names
+      // what did not run, so a reopened turn does not read as a plain Stop.
+      // A plain Stop says so too. It used to carry no note ("the person
+      // pressed it"), so a turn stopped before AnA wrote anything was her
+      // mark and nothing else, the same as one still thinking, and a reload
+      // showed the question alone (QA 2026-10-08, j5).
+      return steps
+        ? `The run was stopped while AnA waited for you before her next step, so it did not run: ${steps}.`
+        : 'The run was stopped before AnA finished.';
     default:
       return partialResponseNote(interruptedWithPartialResponse);
   }
@@ -271,6 +277,27 @@ export function stepDuration(c: AnaToolCall, now: number): string {
   return c.status === 'running' ? formatStepDuration(now - c.startedAt) : '';
 }
 
+/**
+ * The engine glyph: a step the register claims is computed deterministically,
+ * that succeeded, and whose generation capture saw no model call. A step whose
+ * handler made a model generation never shows it, whatever the register says;
+ * an unknown capture (null) is not "none".
+ */
+export function showsEngineGlyph(c: AnaToolCall): boolean {
+  return c.source === 'engine' && c.usedModel === false && c.status === 'success';
+}
+
+/**
+ * What a step's chevron opens: the server's facts, built from allow-listed
+ * fields only, and the row's own measured duration when the server sent none.
+ * Never the inputs she passed and never the result: both carry ids and
+ * internals (ANA-SUMMARY S3; the inputs were rendered raw until then).
+ */
+export function stepFacts(c: AnaToolCall, took: string): StepFact[] {
+  const facts = c.facts ?? [];
+  return took && !facts.some((f) => f.name === 'Took') ? [...facts, { name: 'Took', value: took }] : facts;
+}
+
 export function clip(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
@@ -304,7 +331,8 @@ export function conversationTools(messages: AnaChatMessage[]): string[] {
   for (const m of messages) {
     for (const c of m.toolCalls ?? []) {
       if (c.name === PLAN_TOOL) continue;
-      if (!seen.has(c.name)) seen.set(c.name, c.label || c.name);
+      // The server's label; a step with none is never listed by its tool name.
+      if (!seen.has(c.name)) seen.set(c.name, c.label || unknownStepLabel('done'));
     }
   }
   return [...seen.values()];

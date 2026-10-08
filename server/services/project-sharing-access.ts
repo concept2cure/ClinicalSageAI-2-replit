@@ -1,3 +1,5 @@
+import { withExtendingRoles } from '../../shared/constants/org-roles';
+
 export type ProjectVisibilityMode = 'private' | 'org_public';
 export type ProjectShareRole = 'owner' | 'edit' | 'use';
 export type ProjectActorRole = 'admin' | 'super_admin' | 'owner' | 'manager' | 'member' | 'viewer';
@@ -30,7 +32,8 @@ export interface ProjectAccessEvaluationInput {
   };
 }
 
-const ORG_MANAGE_ROLES = new Set(['admin', 'super_admin', 'owner', 'manager']);
+// P-18: an approver administers what a manager does.
+const ORG_MANAGE_ROLES = new Set(withExtendingRoles(['admin', 'super_admin', 'owner', 'manager']));
 
 function sanitizeMembers(raw: unknown): ProjectShareMember[] {
   if (!Array.isArray(raw)) return [];

@@ -1,0 +1,30 @@
+# Item 2 GREEN — reverifySigner refuses AUTHENTICATOR_REQUIRED in production (server/services/part11/reverify-signer.ts);
+# verifyReauth maps it to REAUTH_AUTHENTICATOR_REQUIRED (actions.ts), the domain ceremony names it (governed-signature-ceremony.ts),
+# the signed-act route says 'Nothing was signed.' once (governed-signed-act.ts)
+
+## Unit and route suites (RLS_ENFORCE=off)
+$ npx vitest run server/services/part11/__tests__/reverify-signer.test.ts server/routes/c2c/__tests__/reauth-second-factor.test.ts server/routes/__tests__/esignature-sign.test.ts server/routes/__tests__/protocol-signatures.routes.test.ts
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — in production an authenticator is required (ADR-0014 P1-2b) > refuses a signer with no authenticator (403), in the decided words, and writes nothing 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — in production an authenticator is required (ADR-0014 P1-2b) > a signer with an authenticator goes on to the code check 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — in production an authenticator is required (ADR-0014 P1-2b) > control: outside production the password alone still signs 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a signer with no authenticator where one is required (production, ADR-0014 P1-2b) is told to enrol one, and nothing is written 19ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > in production, a signer with no authenticator (ADR-0014 P1-2b) > is refused REAUTH_AUTHENTICATOR_REQUIRED, with the right password 4ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > in production, a signer with no authenticator (ADR-0014 P1-2b) > control: outside production the password alone still re-authenticates 4ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > refuses a signer with none, in those words, after the password and before anything else 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > a code sent anyway does not stand in for an enrolment 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > a wrong password is refused as a wrong password: the enrolment is not disclosed before the password is proven 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > a signer with an authenticator goes on to the code check 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > an enrolment that cannot be read is still refused as unknown, not as missing 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > outside production nothing changes: the password alone signs for a signer with no authenticator 0ms
+ Test Files  4 passed (4)
+      Tests  93 passed (93)
+
+## DB test on the fresh CI-shaped database (concept2cure-ri_qa_fresh2, RLS_ENFORCE=on, app_service runtime role)
+$ npx vitest run --config vitest.db.config.ts tests/db/signer-authenticator-required.dbtest.ts
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > runs as a role RLS applies to (not the owner, not BYPASSRLS) 20ms
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > production, no authenticator: refused in the decided words, and nothing is written or counted 173ms
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > production, an authenticator and no code: it goes on to the code check, and nothing is written 44ms
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > production, an authenticator and its current code: signed, and the row says both factors were verified 91ms
+ ✓ tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > outside production nothing changes: the password alone signs for a signer with no authenticator 53ms
+ Test Files  1 passed (1)
+      Tests  5 passed (5)

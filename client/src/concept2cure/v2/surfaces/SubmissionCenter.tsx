@@ -71,12 +71,19 @@ import {
   ShadowReviewWorkspace,
   ValidationWorkspace,
   VerdictNote,
+  clause,
   mutateVerbatim,
+  type GovernedKind,
+  type GovernedPrecheck,
   type Notice,
   type SeqRow,
+  type TransmitRequest,
 } from './SubmissionSeqWorkspaces';
 import '../styles/submission-v2.css';
 import { C2CForm } from '../C2CForm';
+import { gatewayLabel } from '../gatewayLabels';
+import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
+import { useSurfaceAvailable } from '../surfaceAvailable';
 
 /* ── Display types aligned to the canonical submission core's ACTUAL columns
    (shared/schema/submissions.ts; server/services/submission-service). Only
@@ -325,6 +332,31 @@ function NextSequenceControl({ sub, rows, type, onType, busy, onStart }: {
   );
 }
 
+/** A governed step in flight: what is signed, and for a transmit where it goes. */
+type GovernedFlow = { seq: SeqRow; kind: GovernedKind; transmit?: TransmitRequest };
+const GOVERNED_LABEL: Record<GovernedKind, string> = { freeze: 'Freeze', dispatch: 'Dispatch', transmit: 'Transmit' };
+const GOVERNED_PAST: Record<GovernedKind, string> = { freeze: 'frozen', dispatch: 'dispatched', transmit: 'transmitted' };
+
+/** What POST /sequences/:id/transmit answers. `signatureVoided`: on a
+ *  transmit that sent nothing, whether the signature given for it is now void
+ *  (P-23). */
+type TransmitAnswer = { transmitted?: boolean; reason?: string; gateway?: string; transmittalId?: number; status?: string; dispatchStatus?: string; signatureVoided?: boolean };
+
+/** The server's honest "nothing was sent" (`transmitted: false`), as a sentence. */
+function notTransmittedSentence(a: TransmitAnswer, environment: string | undefined): string {
+  const sentence = a.reason === 'gateway_not_configured'
+    ? `Not transmitted — ${gatewayLabel(a.gateway)} has no ${environment ?? ''} credentials configured for this organization. Nothing was sent; the attempt is recorded.`
+    : `Not transmitted — ${clause(a.reason ?? 'the server did not send it')}. Nothing was sent.`;
+  return a.signatureVoided ? `${sentence} The signature given for it is now void; a new attempt is signed again.` : sentence;
+}
+
+/** A performed transmit, as the server reported it. */
+function transmittedSentence(seq: SeqRow, a: TransmitAnswer, environment: string | undefined): string {
+  return `Sequence ${seq.sequenceNumber} handed to ${gatewayLabel(a.gateway)} (${environment ?? 'environment not recorded'}) — transmittal #${
+    a.transmittalId ?? 'not returned'
+  }, status ${a.status ?? 'not returned'}`;
+}
+
 /** The open project as the create form's programme: the org's own row when
  *  the projects list has it, otherwise what the shell knows of it. */
 function openProgramme(
@@ -406,6 +438,7 @@ export function SubmissionCenter({
 }) {
   const [ws, setWs] = React.useState('portfolio');
   const [selSub, setSelSub] = React.useState<number | null>(null);
+  const available = useSurfaceAvailable();
   // The signer sees their own identity in the e-signature dialog (§11.50): the
   // name the platform will print on the signature, not a generic "You".
   const authUser = useAuthUser();
@@ -443,6 +476,18 @@ export function SubmissionCenter({
   const openProjectName = openProgramId ? openProjectKnownName ?? 'the open project' : null;
   const list = subs.rows;
   const sub = list.find((s) => s.id === selSub) ?? list[0];
+  /* What the Submissions table's "Program" column says, read by the
+     submission's key (submissions.program_id → the program record). It printed
+     `title · productName`, so an unanchored NDA whose product string is
+     "BX-204" read as the BX-204 program — a 510(k) device in Projects — and the
+     two screens appeared to disagree about one program's filing type (QA
+     2026-10-08, j1). A program not on the page read is not named, and only a
+     recorded null is stated as "no program". */
+  const programOf = (s: SubRow): string | null => {
+    if (s.programId === null) return 'No program recorded';
+    const p = s.programId ? programmes.rows.find((r) => r.id === s.programId) : undefined;
+    return p?.code ? `Program ${p.code}` : null;
+  };
 
   /* ── Which of the three things an empty `list` means ────────────────────────
      `subs.rows` is the SAME empty array while the read is in flight, when the
@@ -550,8 +595,8 @@ export function SubmissionCenter({
 
   // Server-verdict line (transitions, governed outcomes) — verbatim, role=status.
   const [notice, setNotice] = React.useState<Notice | null>(null);
-  // The in-flight governed flow (freeze | dispatch) driving the EsignModal.
-  const [flow, setFlow] = React.useState<{ seq: SeqRow; kind: 'freeze' | 'dispatch' } | null>(null);
+  // The in-flight governed flow (freeze | dispatch | transmit) driving the EsignModal.
+  const [flow, setFlow] = React.useState<GovernedFlow | null>(null);
   // Sequence id with a transition POST in flight (buttons disable, no double-fire).
   const [acting, setActing] = React.useState<number | null>(null);
 
@@ -688,8 +733,42 @@ export function SubmissionCenter({
     }
   };
 
-  /** The governed freeze/dispatch chain, run from inside the EsignModal AFTER
-   *  its §11.200 re-authentication succeeds. Two real server steps:
+  /** Ask the step's own gates before anything is signed — POST
+   *  /sequences/:id/governed-precheck. QA 2026-10-08 (j6): the Sequences row
+   *  opened the e-signature with no gate shown, the signature was recorded, and
+   *  only then did the freeze refuse. A refusal or an unreadable answer is
+   *  returned as the sentence to show; null means the gates clear. */
+  const precheckRefusal = async (s: SeqRow, kind: GovernedKind, transmit?: TransmitRequest): Promise<string | null> => {
+    // A transmit's typed number is judged against the program record here,
+    // before the signature, by the rule transmit applies (P-23).
+    const r = await mutateVerbatim<GovernedPrecheck>('POST', `/api/submissions/sequences/${s.id}/governed-precheck`, {
+      step: kind,
+      ...(transmit ? { environment: transmit.environment, applicationId: transmit.applicationId } : {}),
+    });
+    if (!r.data || typeof r.data.cleared !== 'boolean') {
+      return `Whether the server would accept this could not be checked — ${clause(r.error ?? 'no answer')}. Nothing was signed.`;
+    }
+    return r.data.cleared ? null : `${clause(r.data.refusal ?? 'the server would refuse it')}. Nothing was signed.`;
+  };
+
+  /** Open the e-signature for a governed step only when its gates clear. The
+   *  Sequences row and the Dispatch tab both come here: one path to a signature. */
+  const requestGoverned = async (s: SeqRow, kind: GovernedKind, transmit?: TransmitRequest) => {
+    if (acting != null || flow != null) return;
+    setActing(s.id);
+    setNotice(null);
+    const refusal = await precheckRefusal(s, kind, transmit);
+    setActing(null);
+    if (refusal) {
+      setNotice({ tone: 'err', text: `${GOVERNED_LABEL[kind]} of sequence ${s.sequenceNumber} not started — ${refusal}` });
+      return;
+    }
+    setFlow({ seq: s, kind, ...(transmit ? { transmit } : {}) });
+  };
+
+  /** The governed freeze/dispatch/transmit chain, run from inside the EsignModal AFTER
+   *  its §11.200 re-authentication succeeds. The gates are asked again first
+   *  (they may have moved since the dialog opened), then two real server steps:
    *    1. POST /api/c2c/actions/sign on the exact `ectd-sequence:<id>` target —
    *       the server re-verifies the forwarded credentials, enforces separation
    *       of duties, and writes the sha256-chained ledger row.
@@ -699,9 +778,11 @@ export function SubmissionCenter({
    *  Any failure throws with the server's words; the modal shows it inline and
    *  no success is fabricated. */
   const runGoverned = async (
-    f: { seq: SeqRow; kind: 'freeze' | 'dispatch' },
+    f: GovernedFlow,
     input: { meaning: EsigMeaning; reason: string; password: string; totp?: string },
   ) => {
+    const refusal = await precheckRefusal(f.seq, f.kind, f.transmit);
+    if (refusal) throw new Error(refusal);
     const sign = await mutateVerbatim<{ actionId?: string; sha256Chain?: string }>(
       'POST',
       '/api/c2c/actions/sign',
@@ -714,10 +795,11 @@ export function SubmissionCenter({
     );
     if (sign.error || !sign.data?.actionId) {
       throw new Error(
-        `The e-signature was not recorded — ${sign.error ?? 'no actionId returned'}. Nothing was ${
-          f.kind === 'freeze' ? 'frozen' : 'dispatched'
-        }.`,
+        `The e-signature was not recorded — ${sign.error ?? 'no actionId returned'}. Nothing was ${GOVERNED_PAST[f.kind]}.`,
       );
+    }
+    if (f.kind === 'transmit') {
+      return runTransmit(f, sign.data.actionId, input, sign.data.sha256Chain);
     }
     const done = await mutateVerbatim<SeqRow>(
       'POST',
@@ -740,6 +822,33 @@ export function SubmissionCenter({
       signedAt: new Date().toISOString(),
       hash: sign.data.sha256Chain,
     };
+  };
+
+  /** Transmit: POST /sequences/:id/transmit with the signature, the environment
+   *  and the agency application number. `transmitted: false` is the server's
+   *  honest "nothing was sent" (gateway_not_configured) and is shown as such,
+   *  never as a success. */
+  const runTransmit = async (
+    f: GovernedFlow,
+    signatureActionId: string,
+    input: { meaning: EsigMeaning; reason: string },
+    hash: string | undefined,
+  ) => {
+    const done = await mutateVerbatim<TransmitAnswer>(
+      'POST',
+      `/api/submissions/sequences/${f.seq.id}/transmit`,
+      { signatureActionId, environment: f.transmit?.environment, applicationId: f.transmit?.applicationId },
+    );
+    if (done.error || !done.data || typeof done.data.transmitted !== 'boolean') {
+      throw new Error(`${clause(done.error ?? 'The transmit was not performed')}. Nothing was sent.`);
+    }
+    setSeqBump((b) => b + 1);
+    if (!done.data.transmitted) throw new Error(notTransmittedSentence(done.data, f.transmit?.environment));
+    setNotice({
+      tone: 'ok',
+      text: `${transmittedSentence(f.seq, done.data, f.transmit?.environment)}, signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}.`,
+    });
+    return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
   };
 
   /* AnA's hands on this screen — the surface-action bus (shared registry:
@@ -1081,6 +1190,19 @@ export function SubmissionCenter({
           secondary="Or move through the workspaces below — plan, build, validate, dispatch."
         />
       )}
+      {/* P-14's remedy: a submission the server records with no project is
+          anchored here (POST /api/submissions/:id/program-anchor). */}
+      {sub && sub.programId === null && (
+        <SubmissionProgramAnchor
+          submission={sub}
+          programmes={programmes.rows}
+          programmesUnreadable={Boolean(programmes.error)}
+          onAnchored={(n) => {
+            setNotice(n);
+            setSubsBump((b) => b + 1);
+          }}
+        />
+      )}
 
       <div className="sc-wsbar" role="tablist">
         {SUBMISSION_WORKSPACES.map((w) => (
@@ -1233,7 +1355,9 @@ export function SubmissionCenter({
                         <button type="button" className="sc-subrow-open" aria-label={`Open ${s.title}`}>
                           <b>{s.title}</b>
                         </button>
-                        {s.productName ? <span className="sp-row-s"> · {s.productName}</span> : null}
+                        {[s.productName ? `Product ${s.productName}` : null, programOf(s)]
+                          .filter(Boolean)
+                          .map((part) => <span key={part} className="sp-row-s"> · {part}</span>)}
                       </td>
                       <td>{regL(s.primaryRegion)}</td>
                       <td>{appL(s.applicationType)}</td>
@@ -1311,14 +1435,19 @@ export function SubmissionCenter({
                       <td>{f.fdaTrackingNumber ?? '—'}</td>
                       <td>{reviewClock(f)}</td>
                       <td>
-                        <button
-                          type="button"
-                          className="sc-trans-b"
-                          title="Open the 510(k) surface — the device filing workspace"
-                          onClick={() => onNav && onNav('device-510k')}
-                        >
-                          {I.right} Open 510(k) surface
-                        </button>
+                        {/* Offered only where the 510(k) surface can be opened:
+                            outside this release it led to the locked panel
+                            (FILING_SPINE.md F16). */}
+                        {available('device-510k') && (
+                          <button
+                            type="button"
+                            className="sc-trans-b"
+                            title="Open the 510(k) surface — the device filing workspace"
+                            onClick={() => onNav && onNav('device-510k')}
+                          >
+                            {I.right} Open 510(k) surface
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -1553,7 +1682,9 @@ export function SubmissionCenter({
           />
           {!seqs.loading && !seqs.error && seq && (
             <>
-              {ws === 'builder' && <BuilderWorkspace key={seq.id} seq={seq} />}
+              {ws === 'builder' && (
+                <BuilderWorkspace key={seq.id} seq={seq} onSequenceChanged={() => setSeqBump((b) => b + 1)} onNav={onNav} />
+              )}
               {ws === 'validation' && <ValidationWorkspace key={seq.id} sub={sub} seq={seq} />}
               {ws === 'shadow-review' && <ShadowReviewWorkspace key={seq.id} seq={seq} />}
               {ws === 'cross-region' && <CrossRegionWorkspace key={seq.id} sub={sub} seq={seq} />}
@@ -1562,7 +1693,7 @@ export function SubmissionCenter({
                   key={`${seq.id}:${seq.status}`}
                   sub={sub}
                   seq={seq}
-                  onGoverned={(s, kind) => setFlow({ seq: s, kind })}
+                  onGoverned={(s, kind, transmit) => void requestGoverned(s, kind, transmit)}
                 />
               )}
             </>
@@ -1637,6 +1768,13 @@ export function SubmissionCenter({
                         </span>
                       </span>
                       <Chip map={SC_SEQ_STATUS} k={s.status} />
+                      {s.status === 'validated' && s.validationStatus !== 'passed' ? (
+                        /* A stage stored before 0e50993c5 recorded the verdict
+                           with it (QA 2026-10-08, j7 finding 20). */
+                        <span className="sp-q-s" data-validated-stage="unrecorded">
+                          no validation recorded
+                        </span>
+                      ) : null}
                       <span className="sc-trans">
                         {(SC_TRANSITIONS[s.status] ?? []).map((to) => {
                           const governed = to === 'frozen' || to === 'dispatched';
@@ -1657,7 +1795,7 @@ export function SubmissionCenter({
                                 e.stopPropagation();
                                 setSelSeq(s.id);
                                 if (governed) {
-                                  setFlow({ seq: s, kind: to === 'frozen' ? 'freeze' : 'dispatch' });
+                                  void requestGoverned(s, to === 'frozen' ? 'freeze' : 'dispatch');
                                 } else {
                                   void doTransition(s, to);
                                 }
@@ -1701,12 +1839,14 @@ export function SubmissionCenter({
       {flow && sub && (
         <EsignModal
           open
-          action={flow.kind === 'freeze' ? 'Freeze sequence' : 'Dispatch sequence'}
+          action={`${GOVERNED_LABEL[flow.kind]} sequence`}
           target={`Sequence ${flow.seq.sequenceNumber} · ${sub.title}`}
           targetMeta={`${regL(flow.seq.region)} · ectd-sequence:${flow.seq.id} · ${
             flow.kind === 'freeze'
               ? 'irreversible content lock'
-              : 'records dispatch; wire transmission stays behind the governed transmit path'
+              : flow.kind === 'dispatch'
+                ? 'records dispatch; the package is sent by a separate, signed transmit'
+                : `sends the package to the agency gateway (${flow.transmit?.environment ?? 'environment not chosen'}), application ${flow.transmit?.applicationId ?? 'not given'}`
           }`}
           defaultMeaning={flow.kind === 'freeze' ? 'approval' : 'release'}
           // Freeze and dispatch are approval and release acts. "Authorship"

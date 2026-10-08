@@ -118,6 +118,9 @@ interface TaskItem {
   home?: { surface: 'project-home' | 'submission-center'; projectId: number | null } | null;
   /** The owning store's own note (a blocker, a module, a catalogue key). */
   detail?: string | null;
+  /** unified_tasks.description: what the task asks (Assign review stores the
+   *  author's instructions to the reviewer here). Null when none was given. */
+  description?: string | null;
 }
 
 /** The screen that owns another store's work, as a person reads it. */
@@ -1289,6 +1292,14 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
           {t.regulatoryImpact && <span className="tb-flag reg lg">{I.shieldCheck} regulatory</span>}
         </div>
         {t.blocked && <div className="tb-blocked lg">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
+        {/* QA 2026-10-08 (j4): the instructions a review task was created with
+            were stored and never shown, so the reviewer could not read them. */}
+        {t.description && t.description.trim() && (
+          <div className="tb-detail-sec">
+            <div className="tb-detail-sec-h">Instructions</div>
+            <div style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{t.description}</div>
+          </div>
+        )}
         <div className="tb-detail-grid">
           <div><label>Project</label><span>{projLabel(t.project)}</span></div>
           <div><label>Phase</label><span>{t.phase || '—'}</span></div>

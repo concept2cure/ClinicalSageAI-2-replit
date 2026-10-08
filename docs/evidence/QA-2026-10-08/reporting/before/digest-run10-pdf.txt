@@ -1,0 +1,23 @@
+Executive Readiness Digest
+Run #10 (a9e496d1-4e20-4696-97b2-96f46c64a92b)
+Report type: readiness.executive_digest
+Scope: project 1
+Status: partial
+Confidence: 75
+Computed: 2026-10-08T02:33:38.428Z (UTC)
+Run by: David Kim
+Executive summary
+Executive Readiness Digest for project 1. Overall confidence 75. Status: partial.
+Confidence: 75 %
+Provider readiness
+Provider | Status | Note
+artifact_state | ready | 
+submission_readiness | ready | 
+compliance_audit | ready | 
+regional_registry_readiness | partial | Project is missing registryId/submissionType in metadata
+Blockers
+- Regional readiness unavailable: project metadata has no registry context
+Gaps
+Gaps were not evaluated for this scope.
+Run #10 · Export db235111-2d56-452b-9871-58ae92dd7da3 · Exported 2026-10-08T02:33:45.469Z (UTC) · Page 1 of 1
+NOT FINAL (PARTIAL)

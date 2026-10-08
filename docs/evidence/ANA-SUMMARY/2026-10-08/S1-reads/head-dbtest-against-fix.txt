@@ -1,0 +1,24 @@
+# HEAD's tests/db/document-catalog.dbtest.ts (bare handler calls) run against the S1 code, fresh DB, RLS_ENFORCE=on.
+# A bare read no longer records coverage (fail closed), which is why callTool now delivers reads as a loop host does.
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts 398ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null 2471ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > an upload extraction cannot read is recorded as a FAILURE with a reason 27ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > read_project_document refuses to pretend the opaque document has content 7972ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > list_project_documents shows both files with honest catalog states 88ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > reports the scope total while the page stays at the limit 24ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > counts what needs attention across the scope, not across the page 14ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > claims completeness only when the page really is the whole scope 12ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > the session-start digest carries the scope it sampled from 17ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > catalog_project_document REFUSES a partial read and names what is unread 57ms
+ × tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable 25ms
+   → expected false to be true // Object.is equality
+ × tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > hands the comprehension record BACK on the next read, instead of starting from zero 8ms
+   → a cataloged document must return what was learned: expected undefined to be truthy
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > another tenant cannot list or read the document 10ms
+ ↓ tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > REFUSES invented values, a verdict and a nested leaf — names each, stores nothing
+ ↓ tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > ACCEPTS the document’s own values, in its typography or plain ASCII
+ ✓ tests/db/document-catalog.dbtest.ts > a chat upload knows it is indexed by its opening only > writes the file length and the embedded length onto the row 1380ms
+ ✓ tests/db/document-catalog.dbtest.ts > a chat upload knows it is indexed by its opening only > a second write for the same source is a no-op, not a duplicate 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 13 passed | 2 skipped (17)

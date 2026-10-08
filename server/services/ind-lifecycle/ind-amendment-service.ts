@@ -242,6 +242,32 @@ export function lifecycleOpForChange(kind: DocumentChangeKind): LeafLifecycleOp 
 // Planner (pure)
 // ---------------------------------------------------------------------------
 
+const CHANGE_KINDS: readonly DocumentChangeKind[] = ['added', 'revised', 'appended', 'withdrawn'];
+
+/**
+ * P-21 (product decision 2026-10-08): regulated choices start unstated. Each
+ * changed document must state its content category and its change kind; an
+ * unstated one is refused, naming it, before anything is planned. (The intake
+ * card sent its first options for selects nobody touched, and an absent
+ * category was routed to the cover letter as "unmapped".) A stated category
+ * the planner does not map keeps its warning; a change kind outside the
+ * vocabulary is refused, because it yields no lifecycle operation at all.
+ */
+function assertChoicesStated(docs: ChangedDocument[]): void {
+  const unstated: string[] = [];
+  for (const doc of docs) {
+    const missing: string[] = [];
+    if (typeof doc.category !== 'string' || doc.category.trim() === '') missing.push('content category');
+    const kind = doc.changeKind as unknown;
+    if (typeof kind !== 'string' || kind.trim() === '') missing.push('change kind');
+    else if (!CHANGE_KINDS.includes(kind as DocumentChangeKind)) missing.push(`change kind ("${kind}" is not one of ${CHANGE_KINDS.join(', ')})`);
+    if (missing.length > 0) unstated.push(`"${doc.title || doc.documentId || 'untitled document'}": ${missing.join(', ')}`);
+  }
+  if (unstated.length > 0) {
+    throw new Error(`IND_AMENDMENT_UNSTATED: state these before the amendment is planned — ${unstated.join('; ')}. Nothing is assumed for a choice left blank.`);
+  }
+}
+
 /**
  * Plan an IND amendment from a set of changed documents. Produces an eCTD
  * amendment plan (sequence type 'amendment', one leaf per document with its
@@ -253,6 +279,7 @@ export function planIndAmendment(input: IndAmendmentInput): IndAmendmentPlan {
   if (input.changedDocuments.length === 0) {
     throw new Error('IND_AMENDMENT_NO_DOCUMENTS: at least one changed document is required.');
   }
+  assertChoicesStated(input.changedDocuments);
 
   const warnings: string[] = [];
   const classesPresent = new Set<IndAmendmentClass>();

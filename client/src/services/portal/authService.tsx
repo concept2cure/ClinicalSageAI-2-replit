@@ -43,12 +43,19 @@ export interface AuthUser {
   roles: string[];
   permissions: string[];
   organizationId: string;
-  organizationName: string;
+  /** The organisation's recorded name, or null when the session names none (GET /session, P-25). */
+  organizationName: string | null;
   lastLoginAt?: Date;
   mfaEnabled: boolean;
   mfaMethods: MfaMethod[];
   passwordExpiresAt?: Date;
   mustChangePassword: boolean;
+  /**
+   * Whether this account needs an authenticator to sign, and has one, as the
+   * server states it (GET /session, P-25 follow-up). Absent on a user stored
+   * before the server said so.
+   */
+  signing?: { authenticatorRequired: boolean; authenticatorEnrolled: boolean };
   profileImageUrl?: string;
 }
 
@@ -102,10 +109,25 @@ export interface PasswordResetConfirm {
   mfaCode?: string;
 }
 
+/**
+ * The two fields POST /password/change reads. `terminateOtherSessions` was
+ * declared here too; the route does not read it and offers no opt-out — a
+ * change ends every session that began before it (server/routes/auth.ts,
+ * IAM-04) — so it was removed (P-25, 2026-10-08).
+ */
 export interface PasswordChangeRequest {
   currentPassword: string;
   newPassword: string;
-  terminateOtherSessions: boolean;
+}
+
+/** What POST /mfa/setup answers (mfaService.generateSecret). */
+export interface MfaSetup {
+  /** The base32 key, for entering by hand. */
+  secret: string;
+  /** The otpauth:// URI the QR code encodes. */
+  otpauthUrl: string;
+  /** The QR code as a data: URL, drawn on the server. */
+  qrCode: string;
 }
 
 export interface AuthError {
@@ -371,6 +393,27 @@ interface ApiRequestOptions {
  * its generic sentence instead of the server's (security audit IAM-18 (8) /
  * P1-3 follow-up). PURE.
  */
+/**
+ * The server's refusal of the credential a request asked it to check — a
+ * password (AUTH_001: sign-in, "current password") or a verification code
+ * (AUTH_004: second factor, authenticator enrolment). Such a 401 says nothing
+ * about the session, so it is never answered with a refresh or "Session
+ * expired" (QA 2026-10-08, j9 finding 2).
+ */
+const CREDENTIAL_REFUSAL_CODES = new Set(['AUTH_001', 'AUTH_004']);
+
+/**
+ * True when a 401 may mean the session is over and a refresh could help: the
+ * request presented a session, and the server did not refuse the credential
+ * it was asked to check. A request that carried no session (sign-in, the
+ * second-factor step, a password reset) cannot have an expired one. PURE.
+ */
+export function unauthorizedMeansSession(presentedSession: boolean, body: unknown): boolean {
+  if (!presentedSession) return false;
+  const code = apiErrorOfResponse(401, '', body).code;
+  return !CREDENTIAL_REFUSAL_CODES.has(code);
+}
+
 export function apiErrorOfResponse(
   status: number,
   statusText: string,
@@ -413,10 +456,12 @@ class ApiClient {
         ...headers,
       };
 
+      let presentedSession = false;
       if (!skipAuth) {
         const token = await this.authService.getValidAccessToken();
         if (token) {
           requestHeaders['Authorization'] = `Bearer ${token}`;
+          presentedSession = true;
         }
       }
 
@@ -426,6 +471,18 @@ class ApiClient {
         body: body ? JSON.stringify(body) : undefined,
         credentials: 'include',
       });
+
+      // A 401 that refuses what was presented — a wrong password, a wrong code,
+      // or any request that carried no session — is the server's answer, in
+      // its words. It was read as an expired session: the sign-in page said
+      // "Session expired" for a mistyped password (QA 2026-10-08, j9).
+      if (
+        response.status === 401 &&
+        !unauthorizedMeansSession(presentedSession, await response.clone().json().catch(() => null))
+      ) {
+        const errorData = await response.json().catch(() => ({}));
+        return { success: false, error: apiErrorOfResponse(response.status, response.statusText, errorData) };
+      }
 
       // Handle 401 Unauthorized
       if (response.status === 401 && retryOnUnauthorized) {
@@ -859,6 +916,12 @@ export class AuthService {
     return this.api.post(`${this.baseUrl}/password/reset-confirm`, confirm, { skipAuth: true });
   }
 
+  /**
+   * POST /password/change. A wrong current password is a 401 AUTH_001 that
+   * ApiClient returns as the server's refusal, not as an expiry (QA 2026-10-08,
+   * j9). On success the server has ended every session that began before the
+   * change, this one included: the caller signs in again.
+   */
   async changePassword(request: PasswordChangeRequest): Promise<AuthResult<void>> {
     return this.api.post(`${this.baseUrl}/password/change`, request);
   }
@@ -872,24 +935,41 @@ export class AuthService {
     return this.api.post(`${this.baseUrl}/mfa/resend`, { challengeId }, { skipAuth: true });
   }
 
-  async getMfaMethods(): Promise<AuthResult<MfaMethod[]>> {
-    return this.api.get<MfaMethod[]>(`${this.baseUrl}/mfa/methods`);
+  /*
+   * The signed-in person's authenticator app, through the three routes the
+   * server has (server/routes/auth.ts). Until P-25 (2026-10-08) this block held
+   * getMfaMethods, setupTotp, verifyTotpSetup, disableMfaMethod and
+   * generateBackupCodes, which addressed /mfa/methods, /mfa/totp/setup,
+   * /mfa/totp/verify, DELETE /mfa/:method and /mfa/backup-codes — none of which
+   * exists — and had no caller. These replace them; the account panel
+   * (concept2cure/v2/AccountPanel.tsx) is the caller.
+   */
+
+  /**
+   * POST /mfa/setup: a new secret, not yet on. Refused 409 MFA_ALREADY_ENABLED
+   * while an authenticator is enrolled; restarting an unconfirmed enrolment is
+   * allowed. The QR code is drawn on the server as a data: URL.
+   */
+  async setupMfa(): Promise<AuthResult<MfaSetup>> {
+    return this.api.post<MfaSetup>(`${this.baseUrl}/mfa/setup`);
   }
 
-  async setupTotp(): Promise<AuthResult<{ secret: string; qrCode: string }>> {
-    return this.api.post(`${this.baseUrl}/mfa/totp/setup`);
+  /**
+   * POST /mfa/enable with a 6-digit code from the new secret. Answers the
+   * recovery codes, which the server keeps only as hashes: this answer is the
+   * one time they can be shown. A wrong code is a 401 AUTH_004 refusal.
+   */
+  async enableMfa(code: string): Promise<AuthResult<{ success?: boolean; message?: string; backupCodes?: string[] }>> {
+    return this.api.post(`${this.baseUrl}/mfa/enable`, { code });
   }
 
-  async verifyTotpSetup(code: string): Promise<AuthResult<{ backupCodes: string[] }>> {
-    return this.api.post(`${this.baseUrl}/mfa/totp/verify`, { code });
-  }
-
-  async disableMfaMethod(method: MfaMethod['type']): Promise<AuthResult<void>> {
-    return this.api.delete(`${this.baseUrl}/mfa/${method}`);
-  }
-
-  async generateBackupCodes(): Promise<AuthResult<{ codes: string[] }>> {
-    return this.api.post(`${this.baseUrl}/mfa/backup-codes`);
+  /**
+   * POST /mfa/disable with a current 6-digit authenticator code (a recovery
+   * code is a sign-in factor only and is refused here). A wrong code is a 401
+   * AUTH_004 refusal.
+   */
+  async disableMfa(code: string): Promise<AuthResult<{ success?: boolean; message?: string }>> {
+    return this.api.post(`${this.baseUrl}/mfa/disable`, { code });
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -912,16 +992,29 @@ export class AuthService {
     return this.user?.roles.includes(role) || false;
   }
 
-  async updateProfile(
-    updates: Partial<Pick<AuthUser, 'firstName' | 'lastName'>>
-  ): Promise<AuthResult<AuthUser>> {
-    const result = await this.api.patch<AuthUser>(`${this.baseUrl}/profile`, updates);
-    if (result.success && result.data) {
-      this.user = result.data;
-      this.storeUser();
-      this.events.emit('user_updated', { user: result.data });
+  /**
+   * The account as the server states it now (GET /session): name, e-mail, the
+   * organisation and membership role of this session, and whether an
+   * authenticator is enrolled. Kept, and announced to the provider, so the
+   * shell's account menu and the account panel read one answer. A refusal is
+   * returned, never replaced by the stored copy.
+   */
+  async refreshUser(): Promise<AuthResult<AuthUser>> {
+    const result = await this.api.get<{ authenticated?: boolean; user?: AuthUser; session?: unknown }>(
+      `${this.baseUrl}/session`
+    );
+    if (!result.success) return { success: false, error: result.error };
+    if (!result.data?.authenticated || !result.data.user) {
+      return {
+        success: false,
+        error: { code: AUTH_ERROR_CODES.TOKEN_INVALID, message: 'The server did not return an account for this session.' },
+      };
     }
-    return result;
+    this.user = result.data.user;
+    this.storeUser();
+    this.rememberSessionPolicy(result.data.session);
+    this.events.emit('user_updated', { user: this.user });
+    return { success: true, data: this.user };
   }
 
   setToken(
@@ -1007,12 +1100,16 @@ export class AuthService {
       const expiryStr = SecureStorage.getItem(AUTH_STORAGE_KEYS.tokenExpiry);
       const userStr = SecureStorage.getItem(AUTH_STORAGE_KEYS.user);
 
-      if (accessToken && refreshToken && expiryStr && userStr) {
+      // A session adopted from a hand-off (sign-up, single sign-on) has no
+      // refresh token; it is still the session, and the provider re-validates
+      // it with the server on load. Requiring one signed a new user out on
+      // their first reload (QA 2026-10-08, j9 finding 3).
+      if (accessToken && expiryStr && userStr) {
         const expiresAt = new Date(expiryStr);
         if (expiresAt > new Date()) {
           this.tokens = {
             accessToken,
-            refreshToken,
+            refreshToken: refreshToken ?? '',
             expiresAt,
             tokenType: 'Bearer',
           };

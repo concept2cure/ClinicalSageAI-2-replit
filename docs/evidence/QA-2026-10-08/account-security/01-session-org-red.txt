@@ -1,0 +1,33 @@
+# Item 1 RED — GET /session and /me name an organisation they cannot read
+# HEAD 6c58f587b; server/routes/auth.ts unchanged; RLS_ENFORCE=off
+$ npx vitest run server/routes/__tests__/auth-session-roles.test.ts
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/session: roles match what sign-in issues > a member is told the member role, as sign-in tells them 38ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/session: roles match what sign-in issues > a manager is told the manager role, not only "user" 4ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/session: roles match what sign-in issues > an admin keeps the admin role (unchanged) 3ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/session: roles match what sign-in issues > a viewer is still refused: no authoring role is granted 3ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/me: roles match what sign-in issues > a member is told the member role 3ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/me: roles match what sign-in issues > a viewer gets no authoring role 3ms
+ × server/routes/__tests__/auth-session-roles.test.ts > the session names no organisation it cannot read (P-25) > GET /session: a token that names no organisation is told none 4ms
+ × server/routes/__tests__/auth-session-roles.test.ts > the session names no organisation it cannot read (P-25) > GET /session: an organisation whose record is missing is not named 3ms
+ × server/routes/__tests__/auth-session-roles.test.ts > the session names no organisation it cannot read (P-25) > GET /session: a blank recorded name is no name 4ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > the session names no organisation it cannot read (P-25) > GET /session: control, the recorded name is answered as it is 3ms
+ × server/routes/__tests__/auth-session-roles.test.ts > the session names no organisation it cannot read (P-25) > GET /me: an organisation whose record is missing is not named either 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/auth-session-roles.test.ts > the session names no organisation it cannot read (P-25) > GET /session: a token that names no organisation is told none
+AssertionError: expected 'Concept2Cure' to be null
++ Received:
+"Concept2Cure"
+ FAIL  server/routes/__tests__/auth-session-roles.test.ts > the session names no organisation it cannot read (P-25) > GET /session: an organisation whose record is missing is not named
+AssertionError: expected 'Concept2Cure' to be null
++ Received:
+"Concept2Cure"
+ FAIL  server/routes/__tests__/auth-session-roles.test.ts > the session names no organisation it cannot read (P-25) > GET /session: a blank recorded name is no name
+AssertionError: expected '   ' to be null
++ Received:
+"   "
+ FAIL  server/routes/__tests__/auth-session-roles.test.ts > the session names no organisation it cannot read (P-25) > GET /me: an organisation whose record is missing is not named either
+AssertionError: expected 'Organization' to be null
++ Received:
+"Organization"
+ Test Files  1 failed (1)
+      Tests  4 failed | 7 passed (11)

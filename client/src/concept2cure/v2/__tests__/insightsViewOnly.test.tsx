@@ -26,6 +26,8 @@ vi.mock('@/services/portal/authService', async (importOriginal) => ({
 }));
 
 import { InsightsCanvas } from '../surfaces/Insights';
+// The catalog the overview answers with (the canvas holds no copy of its own).
+import { CANVAS_REPORT_TYPES } from './_insights-catalog-fixture';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
 const res = (status: number, obj: unknown) => ({ ok: status < 300, status, json: async () => obj }) as Response;
@@ -40,7 +42,7 @@ const OVERVIEW = {
   data: {
     organizationId: 1,
     tier: 'enterprise',
-    segments: ['biotech'],
+    segments: ['biotech'], reportTypes: CANVAS_REPORT_TYPES,
     leadProgram: {
       projectId: 1, code: 'BX204', label: 'BX204', filing: null, indication: null,
       readiness: 70, scope: 'program', scopeId: '1', agency: null, pdufa: null, criticalBlockerCount: 0,

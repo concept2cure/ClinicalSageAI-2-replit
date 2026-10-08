@@ -302,6 +302,92 @@ describe('document routes', () => {
     expect(res.status).toBe(400);
   });
 
+  /* QA 2026-10-08 (j7, findings 1 + 11): the intake card's first assemble,
+     with no dates entered, answered 500 "Request failed." (toISOString of
+     undefined). Every safety-report route refuses an unstated determination
+     or date with 400 and names it — the classify, assemble, PDF and draft
+     routes alike, since they share one engine. */
+  it('POST /safety-report, /classify, /pdf and the draft route → 400 naming each unstated field, never 500', async () => {
+    const datesOnly = { id: 'ae-x', onsetDate: '2026-09-20', reportDate: '2026-09-25' };
+    for (const url of [
+      '/api/ind-lifecycle/safety-report',
+      '/api/ind-lifecycle/safety-report/classify',
+      '/api/ind-lifecycle/safety-report/pdf',
+      `/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports`,
+    ]) {
+      const res = await request(app).post(url).send({ event: datesOnly });
+      expect(res.status, url).toBe(400);
+      expect(res.body.error.code, url).toBe('VALIDATION');
+      for (const named of ['event type', 'seriousness criterion', 'causality', 'outcome']) {
+        expect(res.body.error.message, url).toContain(named);
+      }
+      expect(res.body.error.message, url).not.toContain('onset date');
+    }
+    const noDates = await request(app)
+      .post('/api/ind-lifecycle/safety-report')
+      .send({ event: { ...reportableEvent(), onsetDate: undefined, reportDate: undefined } });
+    expect(noDates.status).toBe(400);
+    expect(noDates.body.error.message).toContain('onset date');
+    expect(noDates.body.error.message).toContain('sponsor awareness date');
+  });
+
+  /* P-20 (product decision 2026-10-08). The onset date is a date or an
+     explicit "unknown"; with expectedness not recorded there is no verdict, so
+     nothing can be filed or drafted as a report. */
+  it('POST /safety-report accepts an onset stated as "unknown" and prints it; a blank onset is refused', async () => {
+    const unknownOnset = await request(app)
+      .post('/api/ind-lifecycle/safety-report')
+      .send({ event: { ...reportableEvent(), onsetDate: 'unknown' } });
+    expect(unknownOnset.status, JSON.stringify(unknownOnset.body)).toBe(200);
+    const desc = unknownOnset.body.document.sections.find((s: { key: string }) => s.key === 'description_of_event').body;
+    expect(desc).toContain('Onset: unknown (stated as unknown).');
+    const blankOnset = await request(app)
+      .post('/api/ind-lifecycle/safety-report')
+      .send({ event: { ...reportableEvent(), onsetDate: '' } });
+    expect(blankOnset.status).toBe(400);
+    expect(blankOnset.body.error.message).toContain('onset date (a date, or stated as unknown)');
+  });
+
+  it('with expectedness not recorded the verdict is NOT_DETERMINED, and file / draft refuse with that name (422), never NOT_REPORTABLE', async () => {
+    const event = { ...reportableEvent(), expectedness: undefined };
+    const classified = await request(app).post('/api/ind-lifecycle/safety-report/classify').send({ event });
+    expect(classified.status).toBe(200);
+    expect(classified.body.obligation).toBe('NOT_DETERMINED');
+    expect(classified.body.deadline).toBeNull();
+    const filed = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0042', event });
+    expect(filed.status).toBe(422);
+    expect(filed.body.error.code).toBe('NOT_DETERMINED');
+    expect(filed.body.error.message).toMatch(/not determined: expectedness not assessed/);
+    const drafted = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports`)
+      .send({ event });
+    expect(drafted.status).toBe(422);
+    expect(drafted.body.error.code).toBe('NOT_DETERMINED');
+  });
+
+  /* P-20 follow-up: "not determined" only where expectedness decides the
+     outcome. A non-serious or not-suspected event is not expedited on those
+     stated facts, whether or not expectedness was recorded. */
+  it('with expectedness not recorded, a non-serious or not-suspected event is NOT_REPORTABLE on its stated facts', async () => {
+    const nonSerious = { ...reportableEvent(), eventType: 'AE', seriousnessCriteria: undefined, expectedness: undefined };
+    const a = await request(app).post('/api/ind-lifecycle/safety-report/classify').send({ event: nonSerious });
+    expect(a.status, JSON.stringify(a.body)).toBe(200);
+    expect(a.body.obligation).toBe('NOT_REPORTABLE');
+    expect(a.body.rationale).toMatch(/non-serious/);
+    const notSuspected = { ...reportableEvent(), causality: 'unrelated', expectedness: undefined };
+    const b = await request(app).post('/api/ind-lifecycle/safety-report/classify').send({ event: notSuspected });
+    expect(b.status).toBe(200);
+    expect(b.body.obligation).toBe('NOT_REPORTABLE');
+    expect(b.body.rationale).toMatch(/not a suspected adverse reaction/);
+    const filed = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0042', event: notSuspected });
+    expect(filed.status).toBe(422);
+    expect(filed.body.error.code).toBe('NOT_REPORTABLE');
+  });
+
   it('POST /annual-report/line-listing → 200 with rows + tabulation', async () => {
     const res = await request(app)
       .post('/api/ind-lifecycle/annual-report/line-listing')

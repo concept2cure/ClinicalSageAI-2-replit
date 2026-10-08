@@ -1,0 +1,26 @@
+Executive Readiness Digest
+Run #20 (e4f54bae-a770-41f5-8fdd-073604cff6c6)
+Report type: readiness.executive_digest
+Scope: HLV-333  Investigational New Drug Application (QA-J1)
+Status: partial
+Confidence: not computed
+Computed: 2026-10-08T06:24:32.487Z (UTC)
+Run by: Raj Patel
+Executive summary
+Executive Readiness Digest for HLV-333  Investigational New Drug Application (QA-J1). Status: partial.
+Submission readiness not computed: the project records no registry context (registryId or submissionType).
+Submission readiness: not available
+Provider readiness
+Provider | Status | Note
+artifact_state | partial | No governed artifacts discovered for this scope
+compliance_audit | missing | No governed artifacts available for compliance evidence
+submission_readiness | missing | Submission readiness not computed: the project records no registry context (registryId or
+submissionType).
+Blockers
+- No governed artifacts discovered for this scope
+- No governed artifacts available for compliance evidence
+- Submission readiness not computed: the project records no registry context (registryId or submissionType).
+Gaps
+Gaps were not evaluated for this scope.
+Run #20 · Export fceeee73-3ff4-4701-98ee-b18aada2e68e · Exported 2026-10-08T06:24:37.709Z (UTC) · Page 1 of 1
+NOT FINAL (PARTIAL)

@@ -1,0 +1,94 @@
+# DB tier: vitest.db.config.ts against a fresh CI-shaped database (concept2cure-ri_qa_fresh2), CI=true NODE_ENV=test RLS_ENFORCE=on.
+# No migration was added, so deploy-migrate was not run. Files: every *.dbtest.ts naming ectd/submission, electronic_signatures,
+# signGovernedAct/signProtocolAct, report-os or program_id (66 files, listed at the end).
+
+## Final run, on the final working tree
+ Test Files  66 passed (66)
+      Tests  774 passed (774)
+
+## Earlier run (same 66 files, before the lint-only refactors)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 65 passed (66)
+      Tests  1 failed | 773 passed (774)
+ FAIL  tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > works again when the account is reactivated
+AssertionError: {"success":false,"error":{"code":"AUTH_011","message":"No organization assigned"}}: expected 403 to be 200 // Object.is equality
+That failure was in the sign-in path. tests/db/account-standing.dbtest.ts passed on HEAD's sources at the time (13/13):
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+It came from another session's uncommitted sign-in change (server/routes/auth.ts, server/middleware/sign-in-limits.ts), and the final run above passes it.
+
+## Real-Postgres freeze row lock (server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts, TEST_DATABASE_URL = the same database)
+ ✓ server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > an upsertLeaf that starts while a freeze holds the row lock waits for it, then refuses the frozen sequence 52ms
+ × server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > a freeze that reaches its row lock while a leaf write holds it waits, then refuses the leaf manifest it never judged 1784ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+Case 2 fails identically on HEAD's sources, with RLS on and off: the freeze settles before the leaf write's lock is observed. It predates this change.
+
+## Files
+server/mcp/__tests__/mcp-connector.dbtest.ts
+server/mcp/__tests__/mcp-consent-delegated.dbtest.ts
+server/middleware/__tests__/delegated-credential-scope.dbtest.ts
+server/services/__tests__/embedding-corpus-policy.dbtest.ts
+server/services/c2c/__tests__/project-retention-locks.dbtest.ts
+tests/db/account-standing.dbtest.ts
+tests/db/actor-vanishing.dbtest.ts
+tests/db/append-only-store-grants.dbtest.ts
+tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+tests/db/authoring-section-concurrency.dbtest.ts
+tests/db/authoring-stability-table.dbtest.ts
+tests/db/c2c-project-persistence.dbtest.ts
+tests/db/capa-code-uniqueness.dbtest.ts
+tests/db/child-table-parent-scoped-rls.dbtest.ts
+tests/db/compliance-reports.dbtest.ts
+tests/db/compliance-review-fix-round.dbtest.ts
+tests/db/compliance-review-records.dbtest.ts
+tests/db/correspondence-work-items.dbtest.ts
+tests/db/cross-object-resolver.dbtest.ts
+tests/db/document-catalog-recall.dbtest.ts
+tests/db/document-catalog-role.dbtest.ts
+tests/db/document-catalog.dbtest.ts
+tests/db/domain-history-append-only.dbtest.ts
+tests/db/domain-sign-ceremony.dbtest.ts
+tests/db/drafting-tasks-tenant-scope.dbtest.ts
+tests/db/entitlement-grants-resolution.dbtest.ts
+tests/db/feature-toggle-workspace-header.dbtest.ts
+tests/db/governed-edit-boundary.dbtest.ts
+tests/db/lifecycle-signature-binding.dbtest.ts
+tests/db/pdfa-requirement.dbtest.ts
+tests/db/phase5-intelligent-docs.dbtest.ts
+tests/db/program-ownership.dbtest.ts
+tests/db/project-delete-held-by-store.dbtest.ts
+tests/db/qms-document-signature-required.dbtest.ts
+tests/db/rag-pipeline-tenant-scope.dbtest.ts
+tests/db/report-os-delivery-recording.dbtest.ts
+tests/db/report-os-registry-seed.dbtest.ts
+tests/db/report-os-tenant-from-session.dbtest.ts
+tests/db/request-parent-boundary.dbtest.ts
+tests/db/research-admin-sign-ceremony.dbtest.ts
+tests/db/rls-bypass-does-not-outlive-release.dbtest.ts
+tests/db/signed-act-meaning-and-lock.dbtest.ts
+tests/db/signer-authenticator-required.dbtest.ts
+tests/db/task-board-every-store.dbtest.ts
+tests/db/tenant-purge-artifact-records.dbtest.ts
+tests/db/tenant-purge.dbtest.ts
+tests/db/turn-record-purge-door.dbtest.ts
+tests/db/two-tenant-application-rls.dbtest.ts
+tests/db/vault-catalog-tenant-isolation.dbtest.ts
+tests/db/vault-chunk-backfill.dbtest.ts
+tests/db/vault-coverage.dbtest.ts
+tests/db/vault-data-room-file.dbtest.ts
+tests/db/vault-document-archives.dbtest.ts
+tests/db/vault-filing-vocabulary.dbtest.ts
+tests/db/vault-ingest.dbtest.ts
+tests/db/vault-lifecycle.dbtest.ts
+tests/db/vault-metadata-edit.dbtest.ts
+tests/db/vault-passage-search.dbtest.ts
+tests/db/vault-placement-batch.dbtest.ts
+tests/db/vault-placement.dbtest.ts
+tests/db/vault-program-ownership.dbtest.ts
+tests/db/vault-record-immutability.dbtest.ts
+tests/db/vault-version-annotations-record.dbtest.ts
+tests/db/vault-version-checkin.dbtest.ts
+tests/db/vault-versions.dbtest.ts
+tests/db/vault-where-used.dbtest.ts

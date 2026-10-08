@@ -33,13 +33,23 @@ vi.mock('../../../db', () => ({
 // The ceremony's order is what these cases test, against the real authorship
 // SQL and the real finalize. Re-authentication, the ledger pair and the
 // signature row are the canonical path's own and are tested there.
-const ceremony = vi.hoisted(() => ({ signed: [] as Array<{ target: string; userId: number }> }));
+const ceremony = vi.hoisted(() => ({ signed: [] as Array<{ target: string; userId: number }>, reauthAsked: 0 }));
 vi.mock('../../../routes/c2c/actions', () => ({
-  verifyReauth: async () => ({ ok: true }),
+  verifyReauth: async () => {
+    ceremony.reauthAsked += 1;
+    return { ok: true };
+  },
   recordGovernedAction: async (_c: unknown, a: { target: string; userId: number }) => {
     ceremony.signed.push({ target: a.target, userId: a.userId });
     return { actionId: 'act', auditId: 1, sha256Chain: 'chain' };
   },
+}));
+// The signer's role, as the ceremony reads it: the membership row (§11.10(g)).
+// The real lookup goes through drizzle, which this suite does not wire; this
+// reads the same row from the PGlite organization_users table.
+vi.mock('../../part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async (userId: number, orgId: number) =>
+    (await holder.query('SELECT role FROM organization_users WHERE user_id = $1 AND organization_id = $2', [userId, orgId])).rows[0]?.role ?? null,
 }));
 vi.mock('../../part11/signature-persistence', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../part11/signature-persistence')>()),
@@ -59,6 +69,8 @@ const EDITOR = 8;
 const REVIEWER = 9;
 const STRANGER = 10;
 const VIEWER = 11;
+/** An approver of ORG who authored nothing (P-18): who signs as "someone independent". */
+const SIGNER = 12;
 
 let pglite: PGlite;
 const q = async (sql: string, params?: unknown[]) => {
@@ -120,10 +132,11 @@ beforeAll(async () => {
     INSERT INTO organizations (id, name) VALUES (${ORG},'a'), (${OTHER_ORG},'b');
     INSERT INTO users (id, email, name) VALUES
       (${CREATOR},'c@e.test','Creator'), (${EDITOR},'e@e.test','Editor'),
-      (${REVIEWER},'r@e.test','Dr. Reviewer'), (${STRANGER},'s@e.test','Stranger'), (${VIEWER},'v@e.test','Viewer');
+      (${REVIEWER},'r@e.test','Dr. Reviewer'), (${STRANGER},'s@e.test','Stranger'), (${VIEWER},'v@e.test','Viewer'),
+      (${SIGNER},'a@e.test','Approver');
     INSERT INTO organization_users (organization_id, user_id, role) VALUES
       (${ORG},${CREATOR},'admin'), (${ORG},${EDITOR},'member'), (${ORG},${REVIEWER},'member'),
-      (${ORG},${VIEWER},'viewer'), (${OTHER_ORG},${STRANGER},'member');
+      (${ORG},${VIEWER},'viewer'), (${OTHER_ORG},${STRANGER},'member'), (${ORG},${SIGNER},'approver');
   `);
   await pglite.exec(migration('migrations/20260527_mutation_primitives.sql'));
   await pglite.exec(migration('db/migrations/20260730_c2c_ana_actions_command_vocab.sql'));
@@ -328,54 +341,55 @@ describe('who may sign a disposition, and as what', () => {
   });
 });
 
+// The ceremony cases' fixtures, at module level so each describe stays readable.
+/** A clinical protocol that passes the completeness gate, built by CREATOR. */
+async function finalizable(): Promise<number> {
+  const { docId } = await protocol();
+  await q(`UPDATE protocol_sections SET status = 'complete' WHERE protocol_document_id = $1`, [docId]);
+  await q(
+    `INSERT INTO protocol_objectives (organization_id, protocol_document_id, objective_type, objective, order_index, created_by)
+     VALUES ($1,$2,'primary','Reduce HbA1c',0,$3)`,
+    [ORG, docId, CREATOR],
+  );
+  await q(
+    `INSERT INTO protocol_eligibility_criteria (organization_id, protocol_document_id, kind, criterion, order_index, created_by)
+     VALUES ($1,$2,'inclusion','Adults 18-75',0,$3)`,
+    [ORG, docId, CREATOR],
+  );
+  await q(
+    `INSERT INTO protocol_schedule_visits (organization_id, protocol_document_id, visit_name, order_index, created_by)
+     VALUES ($1,$2,'Screening',0,$3)`,
+    [ORG, docId, CREATOR],
+  );
+  return docId;
+}
+
+function finalize(docId: number, signer: number, meaning: string) {
+  return signProtocolAct({
+    orgId: ORG,
+    userId: signer,
+    target: `protocol-document:${docId}`,
+    reason: 'Protocol complete; finalizing for submission',
+    meaning,
+    allowedMeanings: ['authorship', 'approval', 'responsibility'],
+    reauth: { password: 'pw' },
+    ipAddress: null,
+    role: 'member',
+    write: async (c, m) => {
+      const r = await finalizeProtocolTx(c as never, ORG, signer, docId);
+      return { payload: { version: r.version, meaning: m }, body: { documentId: docId, version: r.version } };
+    },
+  });
+}
+
+async function status(docId: number): Promise<string> {
+  return (await q(`SELECT status FROM protocol_documents WHERE id = $1`, [docId])).rows[0].status;
+}
+
 describe('the ceremony checks authorship before the act writes anything', () => {
-  /** A clinical protocol that passes the completeness gate, built by CREATOR. */
-  async function finalizable(): Promise<number> {
-    const { docId } = await protocol();
-    await q(`UPDATE protocol_sections SET status = 'complete' WHERE protocol_document_id = $1`, [docId]);
-    await q(
-      `INSERT INTO protocol_objectives (organization_id, protocol_document_id, objective_type, objective, order_index, created_by)
-       VALUES ($1,$2,'primary','Reduce HbA1c',0,$3)`,
-      [ORG, docId, CREATOR],
-    );
-    await q(
-      `INSERT INTO protocol_eligibility_criteria (organization_id, protocol_document_id, kind, criterion, order_index, created_by)
-       VALUES ($1,$2,'inclusion','Adults 18-75',0,$3)`,
-      [ORG, docId, CREATOR],
-    );
-    await q(
-      `INSERT INTO protocol_schedule_visits (organization_id, protocol_document_id, visit_name, order_index, created_by)
-       VALUES ($1,$2,'Screening',0,$3)`,
-      [ORG, docId, CREATOR],
-    );
-    return docId;
-  }
-
-  function finalize(docId: number, signer: number, meaning: string) {
-    return signProtocolAct({
-      orgId: ORG,
-      userId: signer,
-      target: `protocol-document:${docId}`,
-      reason: 'Protocol complete; finalizing for submission',
-      meaning,
-      allowedMeanings: ['authorship', 'approval', 'responsibility'],
-      reauth: { password: 'pw' },
-      ipAddress: null,
-      role: 'member',
-      write: async (c, m) => {
-        const r = await finalizeProtocolTx(c as never, ORG, signer, docId);
-        return { payload: { version: r.version, meaning: m }, body: { documentId: docId, version: r.version } };
-      },
-    });
-  }
-
-  async function status(docId: number): Promise<string> {
-    return (await q(`SELECT status FROM protocol_documents WHERE id = $1`, [docId])).rows[0].status;
-  }
-
   it('someone independent of the authors finalizes it as approval: the version row finalize writes does not make them an author', async () => {
     const docId = await finalizable();
-    const r = await finalize(docId, STRANGER, 'approval');
+    const r = await finalize(docId, SIGNER, 'approval');
     expect(r.meaning).toBe('approval');
     expect(r.version).toBe('1.0');
     expect(await status(docId)).toBe('finalized');
@@ -384,7 +398,7 @@ describe('the ceremony checks authorship before the act writes anything', () => 
   it('a non-author cannot finalize as its author, and nothing is written', async () => {
     const docId = await finalizable();
     const before = ceremony.signed.length;
-    const err = await finalize(docId, STRANGER, 'authorship').catch((e) => e);
+    const err = await finalize(docId, SIGNER, 'authorship').catch((e) => e);
     expect(err).toBeInstanceOf(ProtocolSignatureRefusal);
     expect(err.code).toBe('NOT_AN_AUTHOR');
     expect(await status(docId)).toBe('draft');
@@ -405,14 +419,14 @@ describe('the ceremony checks authorship before the act writes anything', () => 
     // stood before the signature.
     const docId = await finalizable();
     const r = await signProtocolAct({
-      orgId: ORG, userId: STRANGER, target: `protocol-document:${docId}`,
+      orgId: ORG, userId: SIGNER, target: `protocol-document:${docId}`,
       reason: 'Approving the protocol as written', meaning: 'approval',
       allowedMeanings: ['approval'], reauth: { password: 'pw' }, ipAddress: null, role: 'member',
       write: async (c) => {
         await (c as unknown as { query: typeof q }).query(
           `INSERT INTO protocol_sections (organization_id, protocol_document_id, section_key, title, content, order_index, created_by)
            VALUES ($1,$2,'appendix','Appendix','Added in the act.',9,$3)`,
-          [ORG, docId, STRANGER],
+          [ORG, docId, SIGNER],
         );
         return { body: { documentId: docId } };
       },
@@ -425,6 +439,30 @@ describe('the ceremony checks authorship before the act writes anything', () => 
     const err = await finalize(docId, CREATOR, 'approval').catch((e) => e);
     expect(err).toBeInstanceOf(ProtocolSignatureRefusal);
     expect(err.code).toBe('SEPARATION_OF_DUTIES');
+    expect(await status(docId)).toBe('draft');
+  });
+
+  /* §11.10(g) (QA 2026-10-08, cf950eeb9): the ceremony checked no signing
+     authority, so these two signed. The membership row's role is held to the
+     platform's one policy (isSigningAuthorized: admin, approver, reviewer, P-18)
+     before the password is asked for. */
+  it('a member of the organization without signing authority is refused before the password, and nothing is written', async () => {
+    const docId = await finalizable();
+    const before = ceremony.signed.length;
+    const asked = ceremony.reauthAsked;
+    const err = await finalize(docId, EDITOR, 'approval').catch((e) => e);
+    expect(err).toBeInstanceOf(ProtocolSignatureRefusal);
+    expect(err).toMatchObject({ status: 403, code: 'ESIGNATURE_NO_AUTHORITY' });
+    expect(ceremony.reauthAsked).toBe(asked);
+    expect(await status(docId)).toBe('draft');
+    expect((await q(`SELECT count(*)::int n FROM protocol_versions WHERE protocol_document_id = $1`, [docId])).rows[0].n).toBe(0);
+    expect(ceremony.signed.length).toBe(before);
+  });
+
+  it('someone who is not a member of the organization cannot sign its protocol', async () => {
+    const docId = await finalizable();
+    const err = await finalize(docId, STRANGER, 'approval').catch((e) => e);
+    expect(err).toMatchObject({ status: 403, code: 'ESIGNATURE_NO_AUTHORITY' });
     expect(await status(docId)).toBe('draft');
   });
 });

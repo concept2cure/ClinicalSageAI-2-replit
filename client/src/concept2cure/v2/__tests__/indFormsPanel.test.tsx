@@ -75,7 +75,9 @@ describe('IndFormsPanel — real FDA forms engine', () => {
     await waitFor(() => {
       const call = apiRequest.mock.calls.find((c) => c[1] === '/api/ind-forms/1571/build');
       expect(call).toBeTruthy();
-      expect(call![2]).toMatchObject({ sponsorName: 'ACME Bio', studyPhase: 'Phase 1' });
+      expect(call![2]).toMatchObject({ sponsorName: 'ACME Bio' });
+      // P-21: the phase starts unstated — nothing goes up until it is chosen.
+      expect(call![2]).not.toHaveProperty('studyPhase');
       expect(call![2]).not.toHaveProperty('drugName');
       expect(call![2]).not.toHaveProperty('indication');
     });
@@ -170,18 +172,18 @@ describe('IndFormsPanel — real FDA forms engine', () => {
     expect(msg).toMatch(/did not report which boxes are left on the form/);
   });
 
-  it('a program UUID project takes the audited-unplaced path and the note says exactly that', async () => {
+  /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): Save to dossier for a
+     program with no project record answers 409, not 200 with governed:false.
+     The panel reports the refusal in the server's words, as an error, and
+     never as a save. */
+  it('a program with no project record: the 409 is reported as nothing saved, never as a save or an audit-logged build', async () => {
     const uuid = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
     (window as any).C2C_PROJECT = { id: uuid };
+    const refusal = 'This program has no project record, so it has no dossier to save the form into. Nothing was saved. An administrator can give the program its project record.';
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
       if (method === 'POST' && url === '/api/ind-forms/1571/artifact') {
-        // The server's audited-unplaced degradation contract (no legacy project
-        // row → no registry placement; the audit row IS the record).
-        return {
-          ok: true, status: 200,
-          json: async () => ({ governed: false, audited: true, artifactId: null, formId: 'FDA_1571', projectId: null, programId: uuid, ready: false, missingRequired: ['drugName'], contentHash: 'abc' }),
-        } as Response;
+        return { ok: false, status: 409, json: async () => ({ error: { code: 'PROGRAM_NOT_ANCHORED', message: refusal } }) } as Response;
       }
       return { ok: true, status: 200, json: async () => ({}) } as Response;
     });
@@ -197,10 +199,28 @@ describe('IndFormsPanel — real FDA forms engine', () => {
       expect(call![2]).toMatchObject({ projectIdent: uuid });
       expect(call![2]).not.toHaveProperty('projectId');
     });
-    // The note reports the degradation honestly: audit-logged, NOT placed —
-    // never "saved to the dossier".
-    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/audit-logged .*not placed in the dossier registry/)));
-    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/saved to the dossier/));
+    await waitFor(() => expect(note).toHaveBeenCalledWith(`FDA 1571 was not saved to the dossier. ${refusal}`, 'error'));
+    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/saved to the dossier as|audit-logged|legacy project row/), expect.anything());
+  });
+
+  /* The 200 governed:false answer is gone from the server; a panel that still
+     read one as "built and audit-logged" would describe a save nobody made. */
+  it('a 200 with no artifact id is not reported as any kind of save', async () => {
+    (window as any).C2C_PROJECT = { id: '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70' };
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
+      if (method === 'POST' && url === '/api/ind-forms/1571/artifact') {
+        return { ok: true, status: 200, json: async () => ({ governed: false, audited: true, artifactId: null, ready: false, missingRequired: [] }) } as Response;
+      }
+      return { ok: true, status: 200, json: async () => ({}) } as Response;
+    });
+    const note = vi.fn();
+    render(<IndFormsPanel note={note} />);
+    await screen.findByText(/FDA 1571/);
+    fireEvent.click(screen.getAllByRole('button', { name: /Save to dossier/ })[0]);
+    await waitFor(() => expect(note).toHaveBeenCalled());
+    expect(note).toHaveBeenCalledWith(expect.stringMatching(/^Couldn’t save form 1571/), 'error');
+    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/audit-logged/), expect.anything());
   });
 
   it('does NOT save (or guess a project) when no project is open', async () => {
@@ -366,6 +386,11 @@ const LISTING = {
       platformWrites: ['investigator_name'], sponsorCompletes: [],
     },
   ],
+  /* The registry's own definitions, as GET / returns them: the IND type and
+     phase options come from here, never from a list held in the panel. */
+  formDefinitions: [{ formId: 'FDA_1571', fields: [
+    { id: 'ind_type', options: ['Commercial IND', 'Research IND', 'Emergency Use IND', 'Treatment IND'] },
+    { id: 'phase_of_study', options: ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4'] }] }],
   program: {
     id: PROGRAM_UUID, code: 'BX-512', name: 'Vorelinib · KIT-mutant GIST (IND)', programType: 'IND',
     sponsorName: 'Concept2Cure Therapeutics', productName: 'Vorelinib · BX-512',
@@ -375,11 +400,24 @@ const LISTING = {
   placements: [],
 };
 
+/* The shared filing-target picker's two reads: this program's submissions,
+   and the chosen submission's sequences — an original 0000 and a NEWER draft
+   amendment 0001, the QA case (j7, finding 2). */
+const SUBMISSION = { id: 6, title: 'Vorelinib IND', applicationType: 'ind', primaryRegion: 'fda', status: 'active', programId: PROGRAM_UUID };
+const SEQ_0000 = { id: 61, sequenceNumber: '0000', type: 'original', status: 'validated', region: 'fda' };
+const SEQ_0001 = { id: 62, sequenceNumber: '0001', type: 'amendment', status: 'draft', region: 'fda' };
+
 function mockProgramListing(overrides: Partial<typeof LISTING> = {}) {
   (window as any).C2C_PROJECT = { id: PROGRAM_UUID };
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && isListing(url)) {
       return { ok: true, status: 200, json: async () => ({ ...LISTING, ...overrides }) } as Response;
+    }
+    if (method === 'GET' && url.startsWith('/api/submissions?')) {
+      return { ok: true, status: 200, json: async () => [SUBMISSION] } as Response;
+    }
+    if (method === 'GET' && url === `/api/submissions/${SUBMISSION.id}/sequences`) {
+      return { ok: true, status: 200, json: async () => [SEQ_0000, SEQ_0001] } as Response;
     }
     if (method === 'POST' && url.endsWith('/build')) {
       return { ok: true, status: 200, json: async () => ({ formId: 'FDA_1571', fields: {}, missingRequired: [] }) } as Response;
@@ -396,8 +434,9 @@ describe('IndFormsPanel — the program record fills the forms', () => {
     expect(screen.getByText('Vorelinib · BX-512')).toBeTruthy();
     expect(screen.getByText('000512')).toBeTruthy();
     expect(screen.getByText('IND number')).toBeTruthy();
-    // The listing was scoped to the open program.
-    const call = apiRequest.mock.calls.find((c) => c[0] === 'GET');
+    // The listing was scoped to the open program. (The filing-target picker
+    // also reads this program's submissions, so find the listing call itself.)
+    const call = apiRequest.mock.calls.find((c) => c[0] === 'GET' && isListing(String(c[1])));
     expect(call![1]).toBe(`/api/ind-forms/?projectIdent=${PROGRAM_UUID}`);
     // The record-backed fields are no longer typed here — that is what stops a
     // filing's sponsor name depending on who typed it into which panel.
@@ -435,13 +474,35 @@ describe('IndFormsPanel — the program record fills the forms', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /Build & check/ })[0]);
     await waitFor(() => {
       const call = apiRequest.mock.calls.find((c) => String(c[1]).endsWith('/build'));
-      expect(call![2]).toMatchObject({ projectIdent: PROGRAM_UUID, studyPhase: 'Phase 1' });
+      expect(call![2]).toMatchObject({ projectIdent: PROGRAM_UUID });
+      expect(call![2]).not.toHaveProperty('studyPhase');
       // The sponsor/drug/IND number are the server's to read; a copy held here
       // could go stale against the record and would be filed as though current.
       expect(call![2]).not.toHaveProperty('sponsorName');
       expect(call![2]).not.toHaveProperty('drugName');
       expect(call![2]).not.toHaveProperty('indNumber');
     });
+  });
+
+  /* QA 2026-10-08 (j7, finding 3b) and P-21: the phase started on "Phase 1"
+     and was written into the 1571 as a satisfied required value. */
+  it('the phase and the IND type start on "Not stated — choose", offer the registry\'s options, and send nothing until chosen', async () => {
+    mockProgramListing();
+    render(<IndFormsPanel note={vi.fn()} />);
+    await screen.findByText(/FDA 1571/);
+    const phase = screen.getByLabelText('Phase') as HTMLSelectElement;
+    const indType = screen.getByLabelText('IND type') as HTMLSelectElement;
+    for (const sel of [phase, indType]) {
+      expect(sel.value).toBe('');
+      expect(sel.options[sel.selectedIndex].text).toBe('Not stated — choose');
+    }
+    expect(Array.from(phase.options).map((o) => o.text)).toEqual(['Not stated — choose', 'Phase 1', 'Phase 2', 'Phase 3', 'Phase 4']);
+    expect(Array.from(indType.options).map((o) => o.text)).toContain('Research IND');
+    fireEvent.click(screen.getAllByRole('button', { name: /Build & check/ })[0]);
+    await waitFor(() => expect(apiRequest.mock.calls.some((c) => String(c[1]).endsWith('/build'))).toBe(true));
+    const body = apiRequest.mock.calls.find((c) => String(c[1]).endsWith('/build'))![2];
+    expect(body).not.toHaveProperty('studyPhase');
+    expect(body).not.toHaveProperty('indType');
   });
 
   it('with no program open it still works standalone and claims no record', async () => {
@@ -463,15 +524,25 @@ describe('IndFormsPanel — the program record fills the forms', () => {
 describe('IndFormsPanel — filing the sponsor’s completed form', () => {
   const pdf = () => new File([new Uint8Array([0x25, 0x50, 0x44, 0x46])], 'signed-1571.pdf', { type: 'application/pdf' });
 
-  it('files the completed form and reports where it landed', async () => {
+  /** Choose the target the way the person does: the submission, then a sequence. */
+  async function chooseTarget(seq: { id: number }) {
+    const sub = (await screen.findByLabelText('Target submission')) as HTMLSelectElement;
+    fireEvent.change(sub, { target: { value: String(SUBMISSION.id) } });
+    const seqSelect = (await screen.findByLabelText('Sequence')) as HTMLSelectElement;
+    await waitFor(() => expect(seqSelect.options.length).toBeGreaterThan(1));
+    fireEvent.change(seqSelect, { target: { value: String(seq.id) } });
+  }
+
+  it('files the completed form into the ORIGINAL 0000 the person chose, although a newer 0001 exists', async () => {
     mockProgramListing();
     apiUpload.mockResolvedValue({
       ok: true, status: 201,
-      json: async () => ({ formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceNumber: '0000', sha256: 'a'.repeat(64), byteSize: 4, replaced: false }),
+      json: async () => ({ formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceId: 61, sequenceNumber: '0000', sha256: 'a'.repeat(64), byteSize: 4, replaced: false }),
     } as Response);
     const note = vi.fn();
     const { container } = render(<IndFormsPanel note={note} />);
     await screen.findByText(/FDA 1571/);
+    await chooseTarget(SEQ_0000);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [pdf()] } });
 
@@ -480,10 +551,37 @@ describe('IndFormsPanel — filing the sponsor’s completed form', () => {
     expect(method).toBe('POST');
     expect(url).toBe('/api/ind-forms/FDA_1571/official-upload');
     expect((form as FormData).get('projectIdent')).toBe(PROGRAM_UUID);
+    expect((form as FormData).get('sequenceId')).toBe('61');
     expect((form as FormData).get('file')).toBeTruthy();
     await waitFor(() =>
       expect(note).toHaveBeenCalledWith(expect.stringMatching(/filed at m1\.1 in sequence 0000/)),
     );
+  });
+
+  /* QA 2026-10-08 (j7, finding 2): the upload carried no target, and the
+     server filed into the newest sequence. With no sequence chosen nothing is
+     sent; the sequence the person chooses is the one that goes up. */
+  it('sends nothing until a sequence is chosen, and sends the one chosen', async () => {
+    mockProgramListing();
+    apiUpload.mockResolvedValue({
+      ok: true, status: 201,
+      json: async () => ({ formId: 'FDA_1571', leafId: 13, sectionCode: 'm1.1', sequenceId: 62, sequenceNumber: '0001', sha256: 'b'.repeat(64), byteSize: 4, replaced: false }),
+    } as Response);
+    const note = vi.fn();
+    const { container } = render(<IndFormsPanel note={note} />);
+    await screen.findByText(/FDA 1571/);
+    expect((screen.getByRole('button', { name: /^Attach completed form: FDA 1571/ }) as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [pdf()] } });
+    await waitFor(() =>
+      expect(note).toHaveBeenCalledWith(expect.stringMatching(/Choose the submission and the sequence/), 'error'),
+    );
+    expect(apiUpload).not.toHaveBeenCalled();
+
+    await chooseTarget(SEQ_0001);
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [pdf()] } });
+    await waitFor(() => expect(apiUpload).toHaveBeenCalledTimes(1));
+    expect((apiUpload.mock.calls[0][2] as FormData).get('sequenceId')).toBe('62');
   });
 
   it('is reachable and operable from the keyboard, and names the form it files', async () => {
@@ -495,6 +593,7 @@ describe('IndFormsPanel — filing the sponsor’s completed form', () => {
     const user = userEvent.setup();
     const { container } = render(<IndFormsPanel note={vi.fn()} />);
     await screen.findByText(/FDA 1571/);
+    await chooseTarget(SEQ_0000);
     const attach = screen.getByRole('button', { name: /^Attach completed form: FDA 1571/ });
     const picker = container.querySelector('input[type="file"]') as HTMLInputElement;
     const pick = vi.spyOn(picker, 'click');
@@ -517,6 +616,7 @@ describe('IndFormsPanel — filing the sponsor’s completed form', () => {
     const note = vi.fn();
     const { container } = render(<IndFormsPanel note={note} />);
     await screen.findByText(/FDA 1571/);
+    await chooseTarget(SEQ_0000);
     fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [pdf()] } });
     await waitFor(() =>
       expect(note).toHaveBeenCalledWith(expect.stringMatching(/blank official form, byte for byte/), 'error'),
@@ -524,14 +624,20 @@ describe('IndFormsPanel — filing the sponsor’s completed form', () => {
     expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/filed at/));
   });
 
-  it('shows a form already filed, with the digest of the bytes the sponsor signed', async () => {
+  it('shows a form already filed in each sequence, with the digest of the bytes the sponsor signed', async () => {
     mockProgramListing({
-      placements: [{ formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceNumber: '0000', fileName: 'form-fda-1571.pdf', sha256: 'abcdef0123456789'.repeat(4), byteSize: 2048 }],
+      placements: [
+        { formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceId: 61, sequenceNumber: '0000', fileName: 'form-fda-1571.pdf', sha256: 'abcdef0123456789'.repeat(4), byteSize: 2048 },
+        { formId: 'FDA_1571', leafId: 14, sectionCode: 'm1.1', sequenceId: 62, sequenceNumber: '0001', fileName: 'form-fda-1571.pdf', sha256: '0123456789abcdef'.repeat(4), byteSize: 2048 },
+      ],
     } as never);
     render(<IndFormsPanel note={vi.fn()} />);
     expect(await screen.findByText('completed form filed')).toBeTruthy();
     expect(screen.getByText(/m1\.1 · sequence 0000 · 2 KB · SHA-256 abcdef012345…/)).toBeTruthy();
-    // A form already filed offers replacement, not a second filing.
+    expect(screen.getByText(/m1\.1 · sequence 0001 · 2 KB · SHA-256 0123456789ab…/)).toBeTruthy();
+    // A form already filed in the CHOSEN sequence offers replacement there,
+    // not a second filing.
+    await chooseTarget(SEQ_0000);
     expect(screen.getAllByText(/Replace completed form/).length).toBeGreaterThan(0);
   });
 });

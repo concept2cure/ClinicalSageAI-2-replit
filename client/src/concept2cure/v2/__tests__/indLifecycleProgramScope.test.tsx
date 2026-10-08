@@ -45,12 +45,13 @@ const row = (over: Record<string, unknown>) => ({
 
 const TWO_ROWS = [
   row({}),
-  row({ submissionId: 2, code: 'BX-701', drugName: 'BX-701', productName: 'BX-701 IND' }),
+  row({ submissionId: 2, code: 'BX-701', drugName: 'BX-701', productName: 'BX-701 IND', programId: 'prog-701' }),
 ];
 
-function wire(rows: unknown[]) {
+function wire(rows: unknown[], program: Record<string, unknown> | null = null) {
   apiRequest.mockImplementation(async (_m: string, u: string) => {
     if (u === '/api/ind-checklist') return res({ data: rows });
+    if (program && u === '/api/c2c/projects/prog-uuid') return res(program);
     return res({ success: true, data: [] });
   });
 }
@@ -78,7 +79,7 @@ afterEach(() => {
 describe('IndLifecycle — program scoping', () => {
   it('shows the open program’s IND, not rows[0], when a match exists', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = {
-      id: 'prog-uuid',
+      id: 'prog-701',
       title: 'BX-701 IND',
       product: 'BX-701',
     };
@@ -147,13 +148,32 @@ describe('IndLifecycle — program scoping', () => {
     expect(await screen.findByText('No IND checklist yet')).toBeTruthy();
   });
 
-  it('an IND with no recorded project is matched by name only, and the note says so', async () => {
+  /* QA 2026-10-08 (j7, finding 6): BX-301, a BLA program, was shown "The
+     BX-301 IND is 22% ready" from a legacy IND submission that names no
+     program, matched on its name. A program's IND is the one anchored to it —
+     never a name match — and the program's own type says why there is none. */
+  it('an IND whose submission names no program is never matched to the open program by name', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: 'prog-uuid', title: 'BX-701 IND', product: 'BX-701' };
     wire([row({ submissionId: 2, code: 'BX-701', drugName: 'BX-701', productName: 'BX-701 IND' })]);
     render(<IndLifecycle {...surfaceProps()} />);
 
-    expect(await screen.findByRole('heading', { name: /BX-701 — Initial IND/ })).toBeTruthy();
-    expect(screen.getByTestId('indl-scope-note').textContent).toMatch(/matched by name/i);
+    expect(await screen.findByText('No IND checklist yet')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: /BX-701 — Initial IND/ })).toBeNull();
+    expect(document.body.textContent).toMatch(/never matched to a program by name/);
+  });
+
+  it('a BLA program is told its own type, and is not shown a same-named legacy IND', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: 'prog-uuid', title: 'BX-301', product: 'BX-301' };
+    wire(
+      [row({ submissionId: 4, code: 'BX-301', drugName: 'BX-301', productName: 'BX-301 (anti-BCMA mAb)', programId: null })],
+      { id: 'prog-uuid', name: 'BX-301', code: 'BX-301', program_type: 'BLA' },
+    );
+    render(<IndLifecycle {...surfaceProps()} />);
+
+    expect(await screen.findByText('No IND checklist yet')).toBeTruthy();
+    expect(await screen.findByText(/BX-301 is a BLA program/)).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: /BX-301 — Initial IND/ })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/22%|ready to file/i);
   });
 
   it('a single IND with no program open needs no note — nothing to disambiguate', async () => {

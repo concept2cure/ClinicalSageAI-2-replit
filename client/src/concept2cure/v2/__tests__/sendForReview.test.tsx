@@ -477,3 +477,70 @@ describe('Send for review — the task says where the verdict goes', () => {
       .toContain('Record your verdict on the Review board; recording it completes this task. Completing the task does not record a verdict.');
   });
 });
+
+/* QA 2026-10-08 (browser walk j4-authoring, docs/evidence/QA-2026-10-08/authoring/).
+   The author could ask herself to review, and the reviewer was granted nothing
+   on the document. These cases were written against AssignReviewDialog's form
+   (a056eb9ea), which sent the request itself; on the merge with the D2 ana-2c
+   work, SendForReviewDialog is the one review-request path, and they pin it. */
+const withGrant = (granted: boolean, reason?: string) => (body: { reviewers: Array<{ id: string; name?: string }> }) => ok({
+  success: true,
+  reviews: body.reviewers.map((r, i) => ({ id: `rev-${i + 1}`, doc_id: DOC, reviewer_id: r.id, reviewer_name: r.name ?? null, review_status: 'pending' })),
+  grants: body.reviewers.map(r => (granted ? { reviewerId: r.id, granted: true, permissionId: 'p-1' } : { reviewerId: r.id, granted: false, reason })),
+});
+
+describe('Send for review — never from the author, and the reviewer’s access is stated', () => {
+  it('does not offer the document’s author as a reviewer, and says why', async () => {
+    const fireToast = vi.fn();
+    render(<SendForReviewDialog docId={DOC} docTitle="Module 2.5 Clinical Overview" programId={PID} sectionCode="2.5.1"
+      authorId="7" onClose={vi.fn()} fireToast={fireToast} />);
+    const dlg = await screen.findByTestId('send-for-review-dialog');
+    await within(dlg).findByTestId('sfr-reviewer-42');
+    expect(within(dlg).queryByTestId('sfr-reviewer-7')).toBeNull();
+    expect(within(dlg).getByTestId('sfr-author-note').textContent).toMatch(/a different person reviews/);
+  });
+
+  it('the workbench passes the document’s author, so she is not offered there either', async () => {
+    const original = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string, body?: unknown) => url.startsWith('/api/authoring/docs?')
+      ? Promise.resolve(ok({ documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1, created_by: 9 }] }))
+      : original(method, url, body));
+    const dlg = await openDialog();
+    expect(within(dlg).queryByTestId('sfr-reviewer-9')).toBeNull();
+    expect(within(dlg).getByTestId('sfr-author-note')).toBeTruthy();
+  });
+
+  it('says the reviewer was given the Reviewer role when the server granted it', async () => {
+    answerRequest = withGrant(true);
+    const { dlg, fireToast } = await openOwnDialog();
+    fill(dlg, ['42']);
+    fireEvent.click(within(dlg).getByTestId('sfr-submit'));
+    const result = await within(dlg).findByTestId('sfr-result');
+    expect(within(result).getByTestId('sfr-access').textContent).toBe('OQ Signer has the Reviewer role on this document.');
+    await waitFor(() => expect(fireToast).toHaveBeenCalled());
+    expect(String(fireToast.mock.calls[0][0])).toMatch(/Review requested from OQ Signer\..*OQ Signer has the Reviewer role on this document/);
+  });
+
+  it('a requester who may not grant access is told, in the server’s words, that no access was granted', async () => {
+    const note = 'No review access was granted: only the document’s owner or an administrator grants access to it.';
+    answerRequest = withGrant(false, note);
+    const { dlg, fireToast } = await openOwnDialog();
+    fill(dlg, ['42']);
+    fireEvent.click(within(dlg).getByTestId('sfr-submit'));
+    expect((await within(dlg).findByTestId('sfr-access')).textContent).toBe(note);
+    await waitFor(() => expect(fireToast).toHaveBeenCalled());
+    expect(String(fireToast.mock.calls[0][0])).toContain(note);
+  });
+
+  it('an author refusal from the server is shown in its words and creates no task', async () => {
+    answerRequest = () => {
+      throw new ApiRequestError('The author of a document cannot review it. Choose someone else as the reviewer. Nothing was requested.', 409, {}, 'REVIEWER_IS_AUTHOR');
+    };
+    const { dlg, fireToast } = await openOwnDialog();
+    fill(dlg, ['42']);
+    fireEvent.click(within(dlg).getByTestId('sfr-submit'));
+    expect((await within(dlg).findByTestId('sfr-error')).textContent).toMatch(/refused: The author of a document cannot review it/);
+    expect(calls('POST', '/api/tasks/tasks')).toHaveLength(0);
+    expect(fireToast).not.toHaveBeenCalled();
+  });
+});

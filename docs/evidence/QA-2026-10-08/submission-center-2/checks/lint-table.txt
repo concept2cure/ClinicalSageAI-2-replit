@@ -1,0 +1,27 @@
+# ESLint, per changed file: HEAD (git show HEAD:<f> | npx eslint --stdin) vs the working tree. 'new' = not at HEAD (counted as 0).
+
+server/services/part11/signature-persistence.ts | HEAD=1w/0e | now=1w/0e
+server/services/part11/governed-signature-ceremony.ts | HEAD=0w/0e | now=0w/0e
+server/services/submission-service/submission-service.ts | HEAD=8w/0e | now=8w/0e
+server/services/ectd/sequence-release-signature.ts | HEAD=0w/0e | now=0w/0e
+server/routes/submissions.ts | HEAD=1w/0e | now=1w/0e
+server/routes/mdx-submission-gateway.ts | HEAD=1w/0e | now=1w/0e
+server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts | HEAD=new | now=0w/0e
+server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts | HEAD=new | now=0w/0e
+server/services/submission-service/__tests__/_freeze-gate-fixture.ts | HEAD=0w/0e | now=0w/0e
+server/services/submission-service/__tests__/gateway-selection.test.ts | HEAD=0w/0e | now=0w/0e
+server/services/submission-service/__tests__/transmit-refusals.test.ts | HEAD=0w/0e | now=0w/0e
+server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts | HEAD=0w/0e | now=0w/0e
+server/routes/__tests__/submissions-program-anchor.test.ts | HEAD=new | now=0w/0e
+server/routes/__tests__/protocol-signatures.routes.test.ts | HEAD=0w/0e | now=0w/0e
+server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts | HEAD=0w/0e | now=0w/0e
+server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts | HEAD=0w/0e | now=0w/0e
+tests/mdx-submission-gateway-transmittals-region.test.ts | HEAD=new | now=0w/0e
+client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx | HEAD=5w/0e | now=5w/0e
+client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx | HEAD=9w/0e | now=9w/0e
+client/src/concept2cure/v2/surfaces/SubmissionProgramAnchor.tsx | HEAD=new | now=0w/0e
+client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx | HEAD=7w/0e | now=7w/0e
+client/src/concept2cure/v2/gatewayLabels.ts | HEAD=0w/0e | now=0w/0e
+client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx | HEAD=0w/0e | now=0w/0e
+client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx | HEAD=new | now=0w/0e
+client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx | HEAD=new | now=0w/0e

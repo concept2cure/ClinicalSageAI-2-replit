@@ -15,6 +15,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { eq, and } from 'drizzle-orm';
 import { createScopedLogger } from '../utils/logger';
+import { ROLE_EXTENDS } from '../../shared/constants/org-roles';
 
 const logger = createScopedLogger('rbac');
 
@@ -72,6 +73,9 @@ const ROLE_HIERARCHY: Record<string, number> = {
   admin: 3,
   super_admin: 4,
 };
+// P-18: a signing role stands where the role it extends stands (approver at
+// manager, reviewer at member); signing itself is signing-authority.ts's.
+for (const [extending, base] of Object.entries(ROLE_EXTENDS)) ROLE_HIERARCHY[extending] = ROLE_HIERARCHY[base];
 
 // ---------------------------------------------------------------------------
 // RBAC Service

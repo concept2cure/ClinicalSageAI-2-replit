@@ -32,14 +32,22 @@ import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
+import type { RequestDb } from '../../server/db/requestDb';
 
 /** Marks every row this suite creates, so cleanup never touches anything else. */
 const PROBE_PREFIX = 'dbtest-w01 ';
 
 let owner: Pool;
 let orgId: number;
+/** An organisation with two workspaces, neither its own: P-19's refusal case. */
+let ambiguousOrgId: number;
+/** The organisation the stub principal acts in; `orgId` unless a case says otherwise. */
+let actingOrgId: number;
 let userId: number;
 let app: express.Express;
+/** The first program this suite creates, and its project record. */
+let createdProgramId = '';
+let createdAnchorId = 0;
 
 /**
  * The router under test, mounted behind a stub that supplies exactly the
@@ -64,9 +72,9 @@ async function buildApp(): Promise<express.Express> {
   a.use((req, _res, next) => {
     const r = req as unknown as Record<string, unknown>;
     r.userId = userId;
-    r.tenantId = orgId;
+    r.tenantId = actingOrgId;
     r.userRole = 'admin';
-    r.user = { id: userId, organizationId: orgId, role: 'admin' };
+    r.user = { id: userId, organizationId: actingOrgId, role: 'admin' };
     next();
   });
   a.use(establishRequestTenantScope);
@@ -114,7 +122,39 @@ async function cleanupProbeRows(): Promise<void> {
   } finally {
     client.release();
   }
+  // Each program's project record (P-19). Deleting the program would only
+  // un-anchor it (ON DELETE SET NULL), leaving a probe row behind per run.
+  await owner.query(
+    `DELETE FROM projects WHERE regulatory_program_id IN (
+       SELECT id FROM regulatory_programs WHERE name LIKE $1)`,
+    [`${PROBE_PREFIX}%`],
+  );
   await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE_PREFIX}%`]);
+}
+
+/**
+ * Give an organisation its own workspace through the writer every organisation
+ * creator calls (signup, first-run setup, the boot seed), on an owner
+ * connection, as they do. This fixture inserts its organisation directly, the
+ * one shape no in-product path produces: before P-19 the program was created
+ * here with no project record (NO_CLIENT_WORKSPACE), and this suite passed on
+ * exactly the state the QA walk of 2026-10-08 found broken.
+ */
+async function giveOrganizationItsWorkspace(id: number, name: string, slug: string): Promise<void> {
+  const { ensureOrganizationDefaultWorkspace, poolClientWorkspaceStore } = await import(
+    '../../server/services/c2c/organization-default-workspace'
+  );
+  const client = await owner.connect();
+  try {
+    await client.query('BEGIN');
+    await ensureOrganizationDefaultWorkspace(poolClientWorkspaceStore(client), { orgId: id, orgName: name, orgSlug: slug });
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 beforeAll(async () => {
@@ -130,6 +170,24 @@ beforeAll(async () => {
     [`${PROBE_PREFIX}tenant`, 'dbtest-w01-tenant'],
   );
   orgId = Number(org.rows[0].id);
+  actingOrgId = orgId;
+  await giveOrganizationItsWorkspace(orgId, `${PROBE_PREFIX}tenant`, 'dbtest-w01-tenant');
+
+  // Two client workspaces and neither the organisation's own: intake cannot
+  // choose where the program's project record belongs, so it must refuse.
+  const ambiguous = await owner.query(
+    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
+       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+     RETURNING id`,
+    [`${PROBE_PREFIX}two-workspace tenant`, 'dbtest-w01-two-ws'],
+  );
+  ambiguousOrgId = Number(ambiguous.rows[0].id);
+  await owner.query(
+    `INSERT INTO client_workspaces (organization_id, name, slug, status) VALUES
+       ($1, 'Client A', 'dbtest-w01-a', 'active'), ($1, 'Client B', 'dbtest-w01-b', 'active')
+     ON CONFLICT (organization_id, slug) DO NOTHING`,
+    [ambiguousOrgId],
+  );
 
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
@@ -169,6 +227,53 @@ describe('POST /api/c2c/projects — persistence against real PostgreSQL', () =>
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     );
     expect(res.body.meta.created).toBe(true);
+    createdProgramId = String(res.body.data.id);
+    createdAnchorId = Number(res.body.meta.projectAnchorId);
+  });
+
+  it('gives the program its project record in the same creation, and it resolves strict (P-19)', async () => {
+    const { rows } = await owner.query(
+      `SELECT p.id, p.organization_id, p.type, w.organization_id AS workspace_org,
+              (w.metadata::jsonb ->> 'defaultForOrganization') AS own_workspace
+         FROM projects p JOIN client_workspaces w ON w.id = p.client_workspace_id
+        WHERE p.regulatory_program_id = $1`,
+      [createdProgramId],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ organization_id: orgId, workspace_org: orgId, type: 'regulatory', own_workspace: 'true' });
+    expect(Number(rows[0].id)).toBe(createdAnchorId);
+
+    const { drizzle } = await import('drizzle-orm/node-postgres');
+    const { resolveProgramProjectAnchor } = await import('../../server/services/c2c/program-project-anchor');
+    const resolved = await resolveProgramProjectAnchor(drizzle(owner) as unknown as RequestDb, {
+      programId: createdProgramId, orgId, context: 'dbtest-w01', strict: true,
+    });
+    expect(resolved).toBe(createdAnchorId);
+  });
+
+  it('refuses a program whose project record has no workspace to go in, and writes nothing (P-19)', async () => {
+    const held = async () => (await owner.query(
+      `SELECT (SELECT count(*)::int FROM regulatory_programs WHERE organization_id = $1) AS programs,
+              (SELECT count(*)::int FROM projects WHERE organization_id = $1) AS projects,
+              (SELECT count(*)::int FROM audit_logs WHERE action = 'c2c.project.create' AND tenant_id = $1) AS audit_rows`,
+      [ambiguousOrgId],
+    )).rows[0];
+    const before = await held();
+    actingOrgId = ambiguousOrgId;
+    try {
+      const res = await request(app).post('/api/c2c/projects').send({
+        name: `${PROBE_PREFIX}No Workspace To Choose`,
+        programType: '510k',
+        primaryAgency: 'FDA',
+      });
+      expect(res.status).toBe(409);
+      expect(res.body).toMatchObject({ error: 'PROJECT_RECORD_UNAVAILABLE', reason: 'AMBIGUOUS_CLIENT_WORKSPACE' });
+      expect(res.body.correlationId).toEqual(expect.any(String));
+      expect(JSON.stringify(res.body)).not.toMatch(/client_workspace_id|regulatory_program_id|projects\./);
+    } finally {
+      actingOrgId = orgId;
+    }
+    expect(await held()).toEqual(before);
   });
 
   it('persists the device program as a device, never as a biologic', async () => {

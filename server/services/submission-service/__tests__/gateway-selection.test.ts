@@ -143,6 +143,11 @@ describe('selectGateway', () => {
   });
 });
 
+// The application numbers below are in the agency's dash form. Since P-23
+// (2026-10-08) transmit holds a typed number to the identifier rule the eCTD
+// export and the package spine already apply (REGULATORY_IDENTIFIER_PATTERN:
+// slashes are path separators, so EMEA/H/C/… is recorded as EMEA-H-C-…), and a
+// slash form is refused before routing. These cases are about routing.
 describe('transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved', () => {
   beforeEach(() => {
     gatewayCalls.length = 0;
@@ -155,7 +160,7 @@ describe('transmitSequence — an e-signed EU MAA sequence is refused before any
       ctx: { organizationId: 7, userId: 11 },
       signatureActionId: 'sig-1',
       environment: 'staging',
-      applicationId: 'EMEA/H/C/000000',
+      applicationId: 'EMEA-H-C-000000',
     } as any).then(() => null, (e) => e);
     expect(err).not.toBeNull();
     expect((err as { code?: string }).code).toBe('VALIDATION');
@@ -170,7 +175,7 @@ describe('transmitSequence — an e-signed EU MAA sequence is refused before any
       ctx: { organizationId: 7, userId: 11 },
       signatureActionId: 'sig-1',
       environment: 'staging',
-      applicationId: 'NL/H/0000/001/DC',
+      applicationId: 'NL-H-0000-001-DC',
     } as any).then(() => null, (e) => e);
     expect(gatewayCalls).toEqual([['ema', 'cesp']]);
   });

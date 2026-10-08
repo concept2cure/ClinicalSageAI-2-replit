@@ -28,8 +28,8 @@ import {
   type ScaffoldResult,
 } from '../../services/c2c/scaffold-project-documents.js';
 import {
-  ensureProgramProjectAnchor,
-  type AnchorResult,
+  ProgramAnchorUnavailableError,
+  requireProgramProjectAnchor,
 } from '../../services/c2c/program-project-anchor.js';
 import {
   canCreateProgram,
@@ -200,6 +200,52 @@ async function pendingStore(
 }
 
 const logger = createScopedLogger('c2c-projects');
+
+/** What the person creating the program is told, per reason. No schema names. */
+const PROJECT_RECORD_REFUSAL: Record<'NO_CLIENT_WORKSPACE' | 'AMBIGUOUS_CLIENT_WORKSPACE', string> = {
+  NO_CLIENT_WORKSPACE:
+    'The project was not created: this organization has no workspace set up yet, so the project ' +
+    'could not be given its record. Nothing was saved. Share the reference below with your system ' +
+    'administrator or Concept2Cure support.',
+  AMBIGUOUS_CLIENT_WORKSPACE:
+    'The project was not created: this organization has several workspaces and none is set as its ' +
+    'own, so the project could not be given its record. Nothing was saved. Share the reference below ' +
+    'with your system administrator or Concept2Cure support.',
+};
+
+/**
+ * Intake refused the program because it could not be given its project record
+ * (P-19). The refusal rolled the transaction back, so nothing was written. The
+ * reason's detail names schema objects and goes to the log, keyed by the same
+ * reference the person is shown; the response carries a sentence.
+ */
+async function sendProjectRecordRefusal(
+  err: ProgramAnchorUnavailableError,
+  req: Request,
+  res: Response,
+  orgId: number,
+) {
+  if (err.reason === 'PENDING_ANCHOR_COLUMN') {
+    // An unapplied migration: the operator's problem, reported as every other
+    // unprovisioned store on this route is.
+    const pending = await pendingStore(err, 'creating the project', req);
+    logger.error('Program refused: the anchor column is not provisioned', {
+      correlationId: pending?.correlationId ?? null, orgId, reason: err.reason, detail: err.detail,
+    });
+    if (pending) return res.status(503).json(pending);
+    return serverError(res, logger, 'creating the project', err);
+  }
+  const correlationId = (req as unknown as { requestId?: string }).requestId || randomUUID();
+  logger.error('Program refused: its project record could not be written', {
+    correlationId, orgId, reason: err.reason, detail: err.detail,
+  });
+  return res.status(409).json({
+    error: err.code,
+    reason: err.reason,
+    message: PROJECT_RECORD_REFUSAL[err.reason],
+    correlationId,
+  });
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -619,17 +665,19 @@ router.get('/', async (req: Request, res: Response) => {
 // Drug program types (DRUG_APPLICATION_TYPES) additionally create/link the
 // canonical `submissions` row in the same transaction — the spine the
 // IndLifecycle checklist, NdaCockpit, SubmissionCenter and DispatchReadiness
-// surfaces read. Every program type additionally ensures a PM-spine `projects`
+// surfaces read. Every program type additionally writes its PM-spine `projects`
 // row carrying `regulatory_program_id` (Document Identity Contract slice C1),
-// which is what lets governed exports be registry-placed and the Vault be
-// filtered by program — WHERE the workspace is unambiguous; see
-// services/c2c/program-project-anchor.ts for why a skip is the honest outcome
-// otherwise, and meta.projectAnchorSkipped for how a skip is surfaced.
+// which the schedule, unified work, AnA's project context, the Vault and
+// governed exports read the program through. A program that cannot have that
+// row (no workspace can be chosen; see services/c2c/program-project-anchor.ts)
+// is refused, not created without it (P-19).
 //
 // Body (from the wizard): { name, productName?, programType, productType?,
 // primaryAgency?, submissionTypeId?, indication?, targetSubmissionDate?,
 // teamMembers?, code? }. Org-scoped; the creating user becomes the lead.
-// 400 on a missing/invalid required field; 503 PENDING_STORE on 42P01.
+// 400 on a missing/invalid required field; 503 PENDING_STORE on 42P01 or an
+// absent anchor column; 409 PROJECT_RECORD_UNAVAILABLE when no workspace can be
+// chosen for the program's record. Nothing is written on any refusal.
 
 router.post('/', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
@@ -821,7 +869,7 @@ router.post('/', async (req: Request, res: Response) => {
   // program types, which create no submission spine.
   const applicationType = DRUG_APPLICATION_TYPES[programType] ?? null;
   let submissionSpine: { id: number; created: boolean } | null = null;
-  let projectAnchor: AnchorResult = { projectId: null, created: false };
+  let projectAnchor: { projectId: number; created: boolean } | null = null;
   try {
     try {
       await client.query('BEGIN');
@@ -871,19 +919,19 @@ router.post('/', async (req: Request, res: Response) => {
 
       // PM-spine anchor, SAME transaction (Document Identity Contract, slice
       // C1). `concept2cure_artifacts.project_id` is an integer FK to
-      // `projects.id`, so without a projects row carrying this program's uuid
-      // the governed artifact registry has nowhere to put a 510(k)/CER export
-      // and the Vault cannot be filtered by program at all. Mirrors
+      // `projects.id`, and the schedule, unified work, AnA's project context
+      // and the Vault all read the program through this row. Mirrors
       // ensureSubmissionSpine exactly: caller-owned transaction, idempotent,
       // and any error propagates so the whole creation rolls back — never a
       // program with a half-written anchor.
       //
-      // A SKIP is not an error. `projects.client_workspace_id` is NOT NULL and
-      // nothing in program data names a workspace, so the anchor is created
-      // only where the org has exactly one (the unambiguous case). Otherwise
-      // the program is created without it and the reason is reported — in the
-      // 201 body and in the sealed audit payload below.
-      projectAnchor = await ensureProgramProjectAnchor({
+      // Nor a program with NO anchor (P-19). `projects.client_workspace_id` is
+      // NOT NULL and nothing in program data names a workspace, so the row is
+      // written only where the workspace is unambiguous. Where it is not, this
+      // throws ProgramAnchorUnavailableError and the catch below refuses the
+      // creation: until 2026-10-08 a skip here still created the program, and
+      // it answered "no record" on every surface keyed by its project.
+      projectAnchor = await requireProgramProjectAnchor({
         client, orgId, userId, programId: newId, name, code: createdCode, priority,
       });
 
@@ -915,19 +963,10 @@ router.post('/', async (req: Request, res: Response) => {
               submission_application_type: applicationType,
             }
           : {}),
-        // The PM-spine anchor, present or absent, is part of the record. An
-        // absent one is recorded WITH its reason: a regulated tenant asking
-        // later why this program's exports were never registry-placed gets the
-        // answer from the audit row rather than from a support ticket.
-        ...(projectAnchor.projectId !== null
-          ? {
-              project_anchor_id: projectAnchor.projectId,
-              project_anchor_created: projectAnchor.created,
-            }
-          : {
-              project_anchor_id: null,
-              project_anchor_skipped: projectAnchor.skipped ?? null,
-            }),
+        // The PM-spine anchor is part of the record. It is always present: a
+        // program that could not have one was refused above (P-19).
+        project_anchor_id: projectAnchor.projectId,
+        project_anchor_created: projectAnchor.created,
       };
       await writeProgramAudit(client, {
         orgId, userId, programId: newId,
@@ -985,18 +1024,15 @@ router.post('/', async (req: Request, res: Response) => {
         ...(submissionSpine
           ? { submissionId: submissionSpine.id, submissionCreated: submissionSpine.created }
           : {}),
-        // Never silent, same idiom as the scaffold skip above: either the
-        // anchor id, or the reason there is none.
-        ...(projectAnchor.projectId !== null
-          ? { projectAnchorId: projectAnchor.projectId, projectAnchorCreated: projectAnchor.created }
-          : {
-              projectAnchorId: null,
-              projectAnchorSkipped: projectAnchor.skipped,
-              projectAnchorDetail: projectAnchor.detail,
-            }),
+        // The program's project record, written in the same transaction.
+        projectAnchorId: projectAnchor.projectId,
+        projectAnchorCreated: projectAnchor.created,
       },
     });
   } catch (err: unknown) {
+    if (err instanceof ProgramAnchorUnavailableError) {
+      return sendProjectRecordRefusal(err, req, res, orgId);
+    }
     if ((err as { code?: string })?.code === '42P01') {
       const pending = await pendingStore(err, 'creating the project', req);
       if (pending) return res.status(503).json(pending);

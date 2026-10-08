@@ -1,0 +1,33 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > keeps one pending SELECT across slow ticks, then polls again and delivers cancellation 7ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > logs a genuine failed read and releases admission for the next tick 3ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > logs a synchronous query failure without stranding poll admission 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > does not query with no local runs or after the last local run is released 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > executes each admitted poll under actual system scope across tenant requests 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > ignores an old pending poll result after stop/restart while the new poll remains pending 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > returns a late old connection without replacing or leaking the restarted client 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > ignores late old connection failure without releasing the restarted client or arming old polling 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > does not let a released client error rearm the obsolete pool after restart 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > does not dispatch notifications from an obsolete released client into a restarted lifecycle 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > coalesces notification bursts while each admitted read is pending 3ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > does not lose Stop notified while an older running snapshot is pending 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > lets another run deliver cancellation while the first run read stays pending 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > logs rejection and drains the pending successor without stranding admission 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > discards a queued successor after its local run has been released 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > isolates pending results and queued work across listener stop and restart 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > runs admitted and successor reads in actual system scope across tenant requests 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > ignores unrelated channels, missing payloads and runs owned elsewhere 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > logs synchronous query failure and admits the next notification 2ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  21:45:20
+   Duration  480ms (transform 134ms, setup 81ms, import 85ms, tests 40ms, environment 0ms)

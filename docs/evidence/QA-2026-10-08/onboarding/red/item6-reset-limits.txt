@@ -1,0 +1,11 @@
+ × server/routes/__tests__/password-reset-limits.test.ts > redeeming a link (activation, reset) > a password the policy refuses can be retried, past the limit, and then set 69ms
+   → attempt 6: expected 429 to be 400 // Object.is equality
+ × server/routes/__tests__/password-reset-limits.test.ts > redeeming a link (activation, reset) > refused links are counted: past the limit even a good link waits, and is told how long 24ms
+   → expected 'Too many password reset requests. Ple…' to match /Try again in (\d+) minutes?\./
+ × server/routes/__tests__/password-reset-limits.test.ts > redeeming a link (activation, reset) > asking for links does not use up redeeming them 21ms
+   → expected 429 to be 200 // Object.is equality
+ × server/routes/__tests__/password-reset-limits.test.ts > asking for a link > every request counts, and the refusal says when to retry 17ms
+   → expected 'Too many password reset requests. Ple…' to match /Try again in (\d+) minutes?\./
+ ✓ server/routes/__tests__/password-reset-limits.test.ts > asking for a link > the numbers: five requests and five refused links per address per hour 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 1 passed (5)

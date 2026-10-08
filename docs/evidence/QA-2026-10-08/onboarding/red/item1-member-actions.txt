@@ -1,0 +1,54 @@
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > no reason: 400 REASON_REQUIRED and nothing written 720ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > an empty reason: 400 REASON_REQUIRED and nothing written 7ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a blank reason: 400 REASON_REQUIRED and nothing written 6ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > writes one chained row on the change transaction, before COMMIT, with roles, member and reason 9ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > revokes the cached membership once the change commits, so a demotion takes effect on the next request 6ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write leaves the cached membership alone (nothing changed) 6ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > the action it writes is one the administrative changes report reads 6ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write rolls the change back and the 500 carries no error text 6ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a role set to the one the member already holds writes nothing and records nothing 7ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a member not in the organisation is 404 and nothing is recorded 14ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > no body: 400 REASON_REQUIRED and nothing removed 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > no reason: 400 REASON_REQUIRED and nothing removed 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a blank reason: 400 REASON_REQUIRED and nothing removed 6ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > writes one chained row on the removal transaction, before COMMIT, then revokes the cached membership 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a failed audit write rolls the removal back: 500, no error text, the membership cache untouched 8ms
+ × server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > PATCH: 409 LAST_ADMINISTRATOR, a sentence that says nothing changed, nothing written or recorded 14ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > DELETE: 409 LAST_ADMINISTRATOR and nothing removed or recorded 5ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > locks the administrator rows FOR UPDATE on the change transaction, before the change 6ms
+   → expected [ 'BEGIN', 'UPDATE', 'COMMIT' ] to deeply equal [ 'BEGIN', 'LOCK_ADMINS', …(2) ]
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > with another administrator left, an administrator can be demoted and removed 8ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > promoting a member to administrator is never refused by the guard 8ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > second factor — the row says what sign-in enforces > reports the challenge as required, whatever settings.security.mfaEnabled holds 18ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > second factor — the row says what sign-in enforces > says the second factor is skipped on a development server with dev auth on 4ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > second factor — the row says what sign-in enforces > counts an authenticator only when sign-in would ask for one 7ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > names a failed api_keys read in meta.unavailable 5ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > names a failed audit read 4ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > withholds settings and SSO derived from a failed organizations read 4ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > withholds SSO when scim_tenants could not be read 4ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > keeps a missing table (42P01) an honest empty — nothing is unavailable 6ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > audit rows name people and events, not ids > uses the recorded description, the account name and the named target 19ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > audit rows name people and events, not ids > humanizes an action with no recorded description 7ms
+ × server/routes/__tests__/mdx-admin-honesty.test.ts > member rows carry what the membership routes take > names the organization, each member by user id, and marks only the caller as self 11ms
+   → expected undefined to be 1 // Object.is equality
+ × server/routes/__tests__/mdx-admin-honesty.test.ts > member rows carry what the membership routes take > marks no row as self when the session names no user 4ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > opens a governed form, requires a reason, and sends nothing without one 131ms
+   → Unable to find an element by: [data-testid="member-change-role"]
+ × client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > PATCHes the organization and user the server named, with the role and the reason 74ms
+   → Unable to find an element by: [data-testid="member-change-role"]
+ × client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > shows the server's refusal in its own words and keeps the form and its values 60ms
+   → Unable to find an element by: [data-testid="member-change-role"]
+ × client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > a 401 answer is not reported as a change 65ms
+   → Unable to find an element by: [data-testid="member-change-role"]
+ × client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > removing a member > DELETEs with the reason after a governed confirmation, and says what removal does 50ms
+   → Unable to find an element by: [data-testid="member-remove"]
+ × client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > what is not offered > the administrator's own row: neither control is enabled, and the drawer says why 52ms
+   → Unable to find an element by: [data-testid="member-change-role"]
+ × client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > what is not offered > a payload without the organization or user id: fail closed 36ms
+   → Unable to find an element by: [data-testid="member-change-role"]
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  12 failed | 27 passed (39)

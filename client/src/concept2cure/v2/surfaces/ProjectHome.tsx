@@ -5,13 +5,15 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
-import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
+import { useSurfaceAvailable } from '../surfaceAvailable';
+import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue } from '../dossierReadiness';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
 import { DocumentDisposition } from './DocumentDisposition';
+import { useProjectThreads } from './projectThreads';
 import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
 import { StatusPill, rowsOf, updatedWords, useDocumentList, type BuiltDocument, type ListRead } from '../editor/CanvasDocumentList';
 import { clearEditorTarget, setEditorTarget } from '../editorTarget';
@@ -68,11 +70,14 @@ declare global {
    Real backend rows — the org-scoped, UUID-keyed project read-models this
    surface anchors to (server/routes/c2c/projects.ts). Every field is projected
    from a verified column; nullable columns are `| null` and rendered null-safe.
-   Slices with no reachable UUID-keyed backend (tasks, the CTD pyramid,
+   Slices with no reachable UUID-keyed backend (the CTD pyramid,
    memory/instructions/intelligence, agency meetings, eTMF, grants) are
    rendered as an honest EmptyState rather than a fabricated fixture. The
    project's files, conversations, dispatch readiness and submissions are read
-   by the project's UUID (slices 23 and 24 of ONE_ANA_ONE_CANVAS.md).
+   by the project's UUID (slices 23 and 24 of ONE_ANA_ONE_CANVAS.md). The
+   program's tasks and approvals (the Review tab, and Tasks on Author) are
+   read by the program UUID from a route the server resolves to the program's
+   anchored projects row — see ProjectWorkPanel.
    ════════════════════════════════════════════════════════════════════════ */
 
 /** GET /api/c2c/projects/:id — regulatory_programs metadata (bare object). */
@@ -210,14 +215,6 @@ function StageTracker({ stage, setStage }: { stage: string; setStage: (s: string
   );
 }
 
-/** Whether a surface can be opened in this release. Unknown (verdicts not yet
-    read, or unreadable) counts as available, the rule the rail uses: a lock is a
-    claim about the customer's release and is never invented. */
-function useSurfaceAvailable(): (id: string) => boolean {
-  const { verdictFor } = useNavEntitlements();
-  return (id: string) => !isLaunchScopeLocked(verdictFor(id));
-}
-
 /* ════ Evidence: the project's files ════════════════════════════════════════
    ONE_ANA_ONE_CANVAS.md slice 23. The Evidence stage said "The document vault
    opens in its own workspace" and showed nothing, so a person on their
@@ -257,12 +254,12 @@ function ProjectEvidence({ pid, name, onNav, available }: {
    computes a figure: the verdict and every count are the server's.
 
    The two panels sit side by side, so they must never contradict each other.
-   The gate reads only the submission of the project's own type, and a
-   submission with no project recorded may reach it by name; the list holds
-   the submissions recorded to the project. So the readiness panel never says
-   "no submission" over the project's submissions of other types (it names
-   them), and the list says when the verdict above is for a submission it does
-   not hold. Both read one discovery (ProjectSubmitStage). */
+   The gate reads only the submission of the project's own type that records
+   the project; the list holds the submissions recorded to the project. So the
+   readiness panel never says "no submission" over the project's submissions
+   of other types (it names them). No submission is matched to the project by
+   name (P-20 follow-up), so the verdict is always for one the list holds. Both
+   read one discovery (ProjectSubmitStage). */
 
 /** The plain words for each state in which there is no verdict to show. */
 function notReadyCopy(d: Discovery): { title: string; hint: string } {
@@ -270,10 +267,7 @@ function notReadyCopy(d: Discovery): { title: string; hint: string } {
   if (d.state === 'no-sequence') {
     return {
       title: 'No sequence to gate yet',
-      hint:
-        d.match === 'legacy-name'
-          ? `Its submission "${d.submissionTitle}", matched by name because it has no project recorded, has no eCTD sequence yet.`
-          : `Its submission "${d.submissionTitle}" has no eCTD sequence yet.`,
+      hint: `Its submission "${d.submissionTitle}" has no eCTD sequence yet.`,
     };
   }
   if (d.state === 'sequence') {
@@ -298,7 +292,6 @@ function gatedSequenceLine(a: DispatchReadinessAssessment, d: Discovery): string
     a.region ? String(a.region).toUpperCase() : null,
     typeof a.leafCount === 'number' ? `${a.leafCount} ${a.leafCount === 1 ? 'leaf' : 'leaves'}` : null,
     a.sequenceStatus ? `status ${a.sequenceStatus}` : null,
-    d.state === 'sequence' && d.match === 'legacy-name' ? 'submission matched by name: it has no project recorded' : null,
   ].filter(Boolean).join(' · ');
 }
 
@@ -433,22 +426,14 @@ function SubmissionRowView({ s }: { s: SubRow }) {
   );
 }
 
-/** The submission the gate reads by name, when it has no project recorded:
- *  the list (the server's project scope) does not hold it, so it says so
- *  rather than leaving the verdict above about a submission it denies. */
-function legacyGated(d: Discovery): string | null {
-  return (d.state === 'sequence' || d.state === 'no-sequence') && d.match === 'legacy-name' ? d.submissionTitle : null;
-}
-
 /** The project's submissions: GET /api/submissions?programId=…, loading, a
  *  failure with a retry, an honest empty and the rows, each its own state. */
-function ProjectSubmissions({ subs, onRetry, discovery, onNav, available, ectdFiling }: {
-  subs: ListState<SubRow>; onRetry: () => void; discovery: Discovery;
+function ProjectSubmissions({ subs, onRetry, onNav, available, ectdFiling }: {
+  subs: ListState<SubRow>; onRetry: () => void;
   onNav: (id: string) => void; available: (id: string) => boolean;
   /** The project is read and is not a device or diagnostic filing. */
   ectdFiling: boolean;
 }) {
-  const legacy = legacyGated(discovery);
   return (
     <section className="pj-sec" aria-labelledby="pj-subs-h">
       <div className="pj-sec-h">
@@ -481,24 +466,12 @@ function ProjectSubmissions({ subs, onRetry, discovery, onNav, available, ectdFi
         <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load this project's submissions"
           hint="The submission store didn't respond, so nothing here says whether the project has any." retry={onRetry} />
       ) : subs.rows.length === 0 ? (
-        legacy ? (
-          <EmptyState icon={I.rocket} title="No submission is recorded to this project"
-            hint={`The dispatch readiness above is for "${legacy}", which has no project recorded and is matched to this one by name.`} />
-        ) : (
-          <EmptyState icon={I.rocket} title="No submissions for this project yet"
-            hint="A submission created in the Submission Center while this project is open belongs to it." />
-        )
+        <EmptyState icon={I.rocket} title="No submissions for this project yet"
+          hint="A submission created in the Submission Center while this project is open belongs to it." />
       ) : (
-        <>
-          <div className="pj-files" role="list" data-testid="pj-submissions">
-            {subs.rows.map((s) => <SubmissionRowView key={s.id} s={s} />)}
-          </div>
-          {legacy && (
-            <p className="pj-desc" data-testid="pj-submissions-legacy">
-              The dispatch readiness above is for &quot;{legacy}&quot;, which has no project recorded and is matched to this one by name, so it is not listed here.
-            </p>
-          )}
-        </>
+        <div className="pj-files" role="list" data-testid="pj-submissions">
+          {subs.rows.map((s) => <SubmissionRowView key={s.id} s={s} />)}
+        </div>
       )}
     </section>
   );
@@ -519,7 +492,7 @@ function ProjectSubmitStage({ pid, onNav, available, ectdFiling }: {
   return (
     <>
       <ProjectReadiness discovery={discovery} r={readiness} onRetry={() => setReload((k) => k + 1)} onNav={onNav} available={available} />
-      <ProjectSubmissions subs={subs} onRetry={() => setBump((b) => b + 1)} discovery={discovery} onNav={onNav} available={available} ectdFiling={ectdFiling} />
+      <ProjectSubmissions subs={subs} onRetry={() => setBump((b) => b + 1)} onNav={onNav} available={available} ectdFiling={ectdFiling} />
     </>
   );
 }
@@ -1016,6 +989,20 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   );
 }
 
+/** A program the server could not anchor to a projects row answers its work
+ *  read 404 (PROGRAM_UNANCHORED). The program itself was already read by
+ *  /api/c2c/projects/:id, so here 404 means "no record", not "no program". */
+const isUnanchored = (s: DataState<unknown>): boolean => !s.loading && s.status === 404;
+
+/** Real ISO date → display with year (work spans years); null stays null. */
+function fmtDue(v: string | null): string | null {
+  if (!v) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime())
+    ? null
+    : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 /**
  * The program-header status chip was hardcoded `tone-ok`, so a program whose
  * recorded status was blocked, at_risk or on_hold wore a GREEN pill — a health
@@ -1043,6 +1030,121 @@ const PRIORITY_TONE: Record<string, string> = {
   critical: 'tone-warn',
   high: 'tone-warn',
 };
+
+/* ════ Tasks & approvals — the 'review' step's screen ═══════════════════════
+   The program's outstanding work from every store that tracks it, read from
+   the REAL unified work view (GET /api/concept2cure/projects/:id/unified-work,
+   server/services/unified-work/unified-work-view.ts): schedule tasks, review
+   threads and approval blockers, agency correspondence, tracked filings and
+   the task board. Asked by the program's UUID, resolved to its anchored
+   projects row on the server, 404 for a program with none. Each row names the store it lives in; changing it
+   happens where it lives (the task board, the review screen). */
+
+/** GET …/unified-work → items[] (UnifiedWorkItem subset). */
+interface WorkItemRow {
+  id: string;
+  source: 'schedule' | 'review' | 'correspondence' | 'filing' | 'board' | string;
+  title: string;
+  status: 'open' | 'in_progress' | 'blocked' | 'done' | string;
+  priority: string | null;
+  dueAt: string | null;
+  ownerName: string | null;
+  blocking: boolean;
+}
+interface WorkViewRow {
+  items: WorkItemRow[];
+  /** `partial`: a store could not be read, so every count is a floor. */
+  summary?: { total?: number; blocking?: number; done?: number; partial?: boolean } | null;
+}
+
+const WORK_SOURCE_LABEL: Record<string, string> = {
+  schedule: 'Schedule',
+  review: 'Review thread',
+  correspondence: 'Agency correspondence',
+  filing: 'Tracked filing',
+  board: 'Task board',
+};
+const WORK_STATUS_TONE: Record<string, string> = { done: 'tone-ok', blocked: 'tone-warn' };
+const WORK_SHOWN = 10;
+
+function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: string; onNav: (id: string) => void }) {
+  const ident = pid ? encodeURIComponent(pid) : null;
+  const state = useLiveData<WorkViewRow>(
+    ident ? `/api/concept2cure/projects/${ident}/unified-work` : null,
+    [ident],
+    hasKeys<WorkViewRow>('items'),
+  );
+  return (
+    <section className="pj-sec" aria-label={title}>
+      <div className="pj-sec-h">
+        <h2>{title}</h2>
+        <span className="sec-sub">tasks, review threads and approvals on this program</span>
+      </div>
+      {!ident ? null : isUnanchored(state) ? (
+        <EmptyState
+          icon={I.checkCircle}
+          title="This program has no task record"
+          hint="Tasks, review threads and approvals are kept on the program's project record, and this program has none, so there is nothing to list for it here."
+        />
+      ) : (
+        <Anchored
+          state={state}
+          loadingText="Loading this program's tasks and approvals…"
+          errorTitle="Couldn't load this program's tasks and approvals"
+          errorHint="The work view didn't respond. Sign in and retry, or check the service is reachable."
+          emptyTitle="No tasks or approvals on this program"
+          emptyHint="Tasks, review threads, approval blockers and agency correspondence recorded on this program appear here."
+          isEmpty={(d) => (d.items ?? []).length === 0}
+          render={(d) => {
+            const items = d.items ?? [];
+            const open = items.filter((w) => w.status !== 'done');
+            const shown = open.slice(0, WORK_SHOWN);
+            const done = items.length - open.length;
+            return (
+              <>
+                <div className="pj-files" data-testid="pj-work">
+                  {shown.map((w) => {
+                    const due = fmtDue(w.dueAt);
+                    return (
+                      <div key={w.id} className="pj-file" style={{ cursor: 'default' }}>
+                        <div className="pj-file-top">
+                          <span className="pj-file-badge">{WORK_SOURCE_LABEL[w.source] ?? w.source}</span>
+                          <span className={`rd-chip ${WORK_STATUS_TONE[w.status] ?? 'tone-idle'}`}>
+                            {String(w.status || 'open').replace(/_/g, ' ')}
+                          </span>
+                          {w.blocking && <span className="sp-tone-warn" style={{ fontSize: 11 }}>blocking</span>}
+                        </div>
+                        <div className="pj-file-n">{w.title}</div>
+                        <div className="pj-file-m">
+                          {[w.ownerName, w.priority ? `priority ${w.priority}` : null, due ? `due ${due}` : 'no due date']
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="sec-sub" style={{ fontSize: 11.5, marginTop: 8 }}>
+                  {open.length > WORK_SHOWN ? `+${open.length - WORK_SHOWN} more open · ` : ''}
+                  {done > 0 ? `${done} done · ` : ''}
+                  {items.length} item{items.length === 1 ? '' : 's'} total
+                </div>
+                {d.summary?.partial && (
+                  <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>
+                    One of the stores this list reads could not be read, so it may be incomplete and every count is a minimum.
+                  </div>
+                )}
+              </>
+            );
+          }}
+        />
+      )}
+      <div style={{ marginTop: 8 }}>
+        <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('task-board')}>Open task board {I.right}</button>
+      </div>
+    </section>
+  );
+}
 
 /* ════ Inline conversation composer ════
    An ENTRY POINT to the one conversation, not a conversation of its own.
@@ -1106,9 +1208,6 @@ function StartConversation({ productName, onNav }: { productName: string; onNav:
 
 /* ════ Author workspace — real anchored slices + honest empties ════ */
 
-/** One persisted AnA thread of this program (GET /api/chat/threads?program_id=). */
-interface ThreadRow { id: string; title: string | null; created_at: string | null; updated_at: string | null; program_id?: string | null }
-
 /* ════ Conversations held on this project ═══════════════════════════════════
    The program's own AnA threads. Threads carry the program they were started
    in (chat_threads.program_id, bound when the stream mints the thread, only to
@@ -1116,12 +1215,11 @@ interface ThreadRow { id: string; title: string | null; created_at: string | nul
    held on this project, newest first, and opens one back into the thread
    surface. It sits above the tabs with the start box (FILING_SPINE.md §2,
    "Before the tabs"): a conversation belongs to the project, not to one stage
-   of it. */
+   of it. A screenful at a time, with every older one reachable
+   (projectThreads.ts; QA 2026-10-08, j5: the newest 8 were all a project
+   with more could open). */
 function ProjectConversations({ pid, onNav }: { pid: string; onNav: (id: string) => void }) {
-  const threadsState = useLiveData<{ threads: ThreadRow[] }>(
-    `/api/chat/threads?program_id=${encodeURIComponent(pid)}&limit=8`,
-    [pid],
-  );
+  const threads = useProjectThreads(pid);
   const resumeThread = (id: string) => {
     window.C2C_CONVO = { id };
     onNav('conversation-thread');
@@ -1130,22 +1228,32 @@ function ProjectConversations({ pid, onNav }: { pid: string; onNav: (id: string)
     <section className="pj-sec" aria-labelledby="pj-threads-h">
       <div className="pj-sec-h"><h2 id="pj-threads-h">Conversations</h2><span className="sec-sub">resume a thread held on this project</span></div>
       <Anchored
-        state={threadsState}
+        state={threads.state}
         loadingText="Loading conversations…"
         errorTitle="Couldn't load conversations"
         errorHint="The conversation store didn't respond. Sign in and retry, or check that the service is reachable."
         emptyTitle="No project conversations yet"
         emptyHint="Start one in the box above. Threads started here are kept on this project and listed for resuming."
         isEmpty={(d) => (d.threads ?? []).length === 0}
-        render={(d) => (
-          <div className="pj-files" data-testid="pj-threads">
-            {(d.threads ?? []).map((t) => (
-              <button key={t.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => resumeThread(t.id)} title="Resume this conversation">
-                <div className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</div>
-                <div className="pj-file-m">{[fmtWhen(t.updated_at || t.created_at), 'Resume'].filter(Boolean).join(' · ')}</div>
+        render={() => (
+          <>
+            <div className="pj-files" data-testid="pj-threads">
+              {threads.shown.map((t) => (
+                <button key={t.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => resumeThread(t.id)} title="Resume this conversation">
+                  <div className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</div>
+                  <div className="pj-file-m">{[fmtWhen(t.updated_at || t.created_at), 'Resume'].filter(Boolean).join(' · ')}</div>
+                </button>
+              ))}
+            </div>
+            {threads.olderError && (
+              <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>{threads.olderError}</div>
+            )}
+            {threads.hasOlder && (
+              <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px', marginTop: 8 }} disabled={threads.loadingOlder} onClick={threads.showOlder}>
+                {threads.loadingOlder ? 'Loading older conversations…' : 'Show older conversations'}
               </button>
-            ))}
-          </div>
+            )}
+          </>
         )}
       />
     </section>
@@ -1153,12 +1261,12 @@ function ProjectConversations({ pid, onNav }: { pid: string; onNav: (id: string)
 }
 
 /* ════ My work on this project ═════════════════════════════════════════════
-   ONE_ANA_ONE_CANVAS.md slice 24. The task store keys a project by the numeric
-   projects.id, which this page does not resolve (the integer-project-id
-   mapping, docs/design/PROJECT_FIRST_PLAN_2026-09-26.md), so the person's work
-   cannot be filtered to this project yet. It says so in one line and links to
-   My work. This section said "Tasks & submission readiness aren't wired"; the
-   dispatch readiness is on the Submit stage now.
+   ONE_ANA_ONE_CANVAS.md slice 24. The program's tasks and approvals are
+   listed just above it (ProjectWorkPanel, read by the program UUID through
+   the server's anchor). My work, the signed-in person's own queue, is not
+   filtered to this project yet; this says so in one line and links to it.
+   This section said "Tasks & submission readiness aren't wired"; the dispatch
+   readiness is on the Submit stage now.
 
    "Open My work" opens what the nav's My work opens: the task board on the
    signed-in person's own tasks, asked of the board through the same validated
@@ -1394,6 +1502,11 @@ function AuthorWorkspace({
           />
         </section>
 
+        {/* Tasks — the program's outstanding work, the same panel the Review
+            stage shows (one read, one component). It said "aren't wired" for
+            every program until the work view took the program's UUID. */}
+        <ProjectWorkPanel pid={pid} title="Tasks" onNav={onNav} />
+
         <MyWorkLine onNav={onNav} available={available} />
 
         {/* Records in this project — REAL: GET /:id/records, every store read
@@ -1455,15 +1568,28 @@ function AuthorWorkspace({
       <aside className="pj-side">
         {/* Dossier readiness — a status figure, so it lives with the other
             status cards in the aside rather than between the conversation and
-            the work (the constitution's no-KPI-hero rule for project landing). */}
-        {completion != null && (
-          <section className="pj-card">
-            <div className="pj-card-h"><h3>Dossier readiness</h3><span className="sec-sub">{completion}% complete</span></div>
-            <div className="pj-map">
+            the work (the constitution's no-KPI-hero rule for project landing).
+            Always present, under the name the Projects card uses: the one
+            readiness the server computes for a program, or "not measured". It
+            used to be left out when unmeasured, so the page said nothing while
+            the card said "not measured" (QA 2026-10-08, j1). No ring is drawn
+            for no figure — an empty ring reads as 0%. */}
+        <section className="pj-card">
+          <div className="pj-card-h">
+            <h3>{DOSSIER_READINESS_LABEL}</h3>
+            <span className="sec-sub">{dossierReadinessValue(completion)}</span>
+          </div>
+          {completion != null ? (
+            <div className="pj-map" title={DOSSIER_READINESS_MEANS}>
               <div className="pj-map-ring"><Ring value={completion} size={104} stroke={9} /><div className="pj-map-ring-l">Dossier<br />readiness</div></div>
             </div>
-          </section>
-        )}
+          ) : (
+            <p className="pj-card-note">
+              {DOSSIER_READINESS_MEANS} There are no governed sections to measure on this program yet, or the
+              figure could not be read.
+            </p>
+          )}
+        </section>
         {/* Memory / instructions / intelligence — served only by the numeric
             project-home read-model (project_intelligence_profiles), not reachable
             from this UUID-scoped surface. Honest empty, never a fabricated body. */}
@@ -1629,7 +1755,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
         `Project home for ${title ? `"${title}"` : 'an untitled project'}${submissionType ? ` (${submissionType})` : ''}: ` +
         [status && `status ${status}`, phase && `phase ${phase}`, priority && `priority ${priority}`,
          region && `primary agency ${region}`, indication && `indication ${indication}`,
-         completion != null && `${completion}% complete`].filter(Boolean).join(', ') +
+         `${DOSSIER_READINESS_LABEL.toLowerCase()} ${dossierReadinessValue(completion)}`].filter(Boolean).join(', ') +
         `. The "${stage}" stage is open.`,
       facts: {
         projectId: pid,
@@ -1848,20 +1974,9 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
             </div>
           )}
 
-          {/* Review — tasks are keyed by the numeric project record, not reachable here. */}
-          {stage === 'review' && (
-            <section className="pj-sec">
-              <div className="pj-sec-h"><h2>Review &amp; approvals</h2></div>
-              <EmptyState
-                icon={I.checkCircle}
-                title="Review tasks aren't wired to this workspace yet"
-                hint="Project tasks and approvals are managed on the task board. This workspace doesn't resolve the numeric project record the task store is keyed on."
-              />
-              <div style={{ marginTop: 8 }}>
-                <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('task-board')}>Open task board {I.right}</button>
-              </div>
-            </section>
-          )}
+          {/* Review — the program's tasks and approvals, from the unified work
+              view, asked by the program UUID (see ProjectWorkPanel). */}
+          {stage === 'review' && <ProjectWorkPanel pid={pid} title="Review & approvals" onNav={onNav} />}
 
           {stage === 'respond' && <StagePanel stage="respond" onNav={onNav} available={available} />}
 

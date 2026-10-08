@@ -1,0 +1,39 @@
+=== M1 stream host does not settle (server/routes/ana-ri/stream.ts)
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the m
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no r
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > 4. a sentence planted at 6,000–7,000 of 40,000 characters is in what the model received whenever a rec
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 19 passed (22)
+=== M2 stream host budgets reads as cuttable (server/routes/ana-ri/stream.ts)
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no r
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 21 passed (22)
+=== M3 executor host does not settle (server/services/ana/AnaToolExecutor.ts)
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the 
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again 
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > 3b. control: reads that each continue where the last left off, all delivered whole, let the catalog wri
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > 4. a sentence planted at 6,000–7,000 of a 40,000-character document is in what the model received whe
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 18 passed (22)
+=== M4 executor host budgets reads as cuttable (server/services/ana/AnaToolExecutor.ts)
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 21 passed (22)
+=== M5 settle ignores what the budget sent (server/services/ana/read-receipts.ts)
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again 
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no r
+ × server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > writes a receipt only for a result sent to the model byte for byte as the read returned it 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 19 passed (22)
+=== M6 handler does not fit the window (30,000 default) (server/services/ana/document-catalog-tools.ts)
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the m
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no r
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > 4. a sentence planted at 6,000–7,000 of 40,000 characters is in what the model received whenever a rec
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the 
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again 
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > 3b. control: reads that each continue where the last left off, all delivered whole, let the catalog wri
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > 4. a sentence planted at 6,000–7,000 of a 40,000-character document is in what the model received whe
+ × server/services/ana/__tests__/read-receipts.test.ts > read_project_document > inside one it defers the receipt for exactly the window it serves, with the result it se
+ × server/services/ana/__tests__/read-receipts.test.ts > read_project_document > a comprehension record too large to leave room for text gives way, and says so 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  9 failed | 13 passed (22)

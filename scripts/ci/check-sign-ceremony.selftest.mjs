@@ -201,6 +201,24 @@ test('an approval stamp written beside its signature row passes', () => {
   assert.equal(failsWith(SIGNED_STAMP).length, 0);
 });
 
+// Authoring's e-sign handler (QA 2026-10-08, j4): the approval stamp sits beside
+// the authoring_signatures write, on one transaction client.
+const AUTHORING_STAMP = (withSignature) => `router.post('/docs/:docId/e-sign', async (req, res) => {
+  const signer = await reverifyAuthoringSigner(req, res);
+  await client.query(\`UPDATE authoring_documents SET status = $1, approved_at = COALESCE(approved_at, NOW()) WHERE id = $2 AND tenant_id = $3\`, ['APPROVED', docId, tenantId]);
+  ${withSignature ? 'await insertAuthoringSignature(client, req, { id, docId });' : ''}
+});`;
+
+test('an authoring approval stamp beside its authoring_signatures write passes', () => {
+  assert.equal(failsWith(AUTHORING_STAMP(true)).length, 0);
+});
+
+test('the same authoring approval stamp with no signature write fails', () => {
+  const f = failsWith(AUTHORING_STAMP(false));
+  assert.equal(f.length, 1);
+  assert.equal(f[0].sites[0].kind, 'approval-stamp');
+});
+
 test('clearing an approval (a revision) is not a stamp', () => {
   const src = "router.post('/x', async () => { await pool.query(`UPDATE qms_documents SET status = 'draft', approver_id = NULL, approved_at = NULL WHERE id = $1`, [id]); });";
   assert.deepEqual(scanSource(src), []);

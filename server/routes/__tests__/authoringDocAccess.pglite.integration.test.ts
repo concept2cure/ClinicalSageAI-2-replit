@@ -189,6 +189,27 @@ describe('GET /docs/:docId — the caller’s access', () => {
     expect(access.assignReview.reason).toBe('Sending for review needs an editing role in this organization. Your role: viewer.');
   });
 
+  /* QA 2026-10-08 (j4): the review signature is a 'review' act (the middleware
+     classes /e-sign with meaning REVIEWER that way), so a Reviewer grant plus a
+     signing role in the organization may apply it — and only it. */
+  it('a Reviewer grant with a signing role may apply the review signature, and still not the approval', async () => {
+    await jdb.pool.query(`UPDATE organization_users SET role = 'reviewer' WHERE organization_id = $1 AND user_id = $2`, [ORG, REVIEWER.id]);
+    try {
+      const res = await reviewer(request(app).get(`/api/authoring/docs/${docId}`));
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      const { access } = res.body;
+      expect(access.esignReview).toEqual({ allowed: true, reason: null });
+      expect(access.esign.allowed).toBe(false);
+      expect(access.esign.reason).toMatch(/Owner or Approver grant/);
+    } finally {
+      await jdb.pool.query(`UPDATE organization_users SET role = 'viewer' WHERE organization_id = $1 AND user_id = $2`, [ORG, REVIEWER.id]);
+    }
+    // Without a signing role the review signature is refused, and says why.
+    const res = await reviewer(request(viewerScopedApp).get(`/api/authoring/docs/${docId}`));
+    expect(res.body.access.esignReview.allowed).toBe(false);
+    expect(res.body.access.esignReview.reason).toMatch(/signing role/i);
+  });
+
   it('a FROZEN document can still be filed to the vault — the sealed record is what filing is for', async () => {
     // 2026-09-28: /file-to-vault was an 'edit', refused on an immutable status,
     // so the service's sealed-record path could never run.

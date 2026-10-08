@@ -72,6 +72,8 @@ import { SC_LIFECYCLE_OPS } from '../fixtures/submission';
 import type { FireToast } from '../toast';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
+import { normalizeCtdCode } from '@shared/regulatory/section-code';
+import { snapshotStatusFor } from '@shared/regulatory/filing-copy-status';
 
 /* ── Server row shapes (only the columns this dialog reads) ── */
 
@@ -122,15 +124,90 @@ export function assembleSnapshot(sections: SavedSection[]): string {
     .trim();
 }
 
+/**
+ * The document's own CTD code: the deepest code every one of its sections sits
+ * under (a one-section document's is that section's code). Null when its
+ * sections share no code below a bare module, or it has none.
+ *
+ * Why the dialog needs it (QA 2026-10-08, j4): placement files the WHOLE saved
+ * document as one leaf — the server takes the copy's text from the source
+ * (services/coauthor/coauthor-snapshot.ts, "a source's copy IS the source") —
+ * and the dialog prefilled the OPEN section's code. A Clinical Overview placed
+ * at 2.5.1 filed 2.5.2 … 2.5.8 inside the 2.5.1 leaf.
+ */
+export function documentFilingCode(sectionCodes: ReadonlyArray<string | null | undefined>): string | null {
+  const codes = sectionCodes.map((c) => normalizeCtdCode(c)).filter((c): c is string => c !== null);
+  if (codes.length === 0 || codes.length !== sectionCodes.length) return null;
+  let common = codes[0].split('.');
+  for (const code of codes.slice(1)) {
+    const segs = code.split('.');
+    let i = 0;
+    while (i < common.length && i < segs.length && common[i] === segs[i]) i += 1;
+    common = common.slice(0, i);
+  }
+  return common.length >= 2 ? common.join('.') : null;
+}
+
+/**
+ * Why a code cannot take this document, or null: it names one of the
+ * document's own sections while the document holds others, so the leaf would
+ * carry every other section under that one heading.
+ */
+export function ownSectionRefusal(canonical: string | null, sectionCodes: ReadonlyArray<string | null | undefined> | undefined): string | null {
+  if (!canonical || !sectionCodes || sectionCodes.length < 2) return null;
+  const own = documentFilingCode(sectionCodes);
+  if (canonical === own) return null;
+  if (!sectionCodes.some((c) => normalizeCtdCode(c) === canonical)) return null;
+  return (
+    `${canonical} is one section of this document. Placement files the whole saved document ` +
+    `(${sectionCodes.length} sections) as one leaf, so it is filed at the document’s own code` +
+    (own ? `, ${own}.` : ' — a code that covers all of its sections.')
+  );
+}
+
+/**
+ * What the filing copy will be, said before placing (FILING_SPINE.md F17).
+ * The copy takes the source's state at placement and keeps it: a draft placed
+ * today is still a draft copy after the document is approved, and freeze,
+ * dispatch and transmit release only approved copies. An unknown state claims
+ * nothing and states the rule.
+ */
+export function copyStatusLine(docStatus: string | null | undefined): string {
+  if (docStatus == null || String(docStatus).trim() === '') {
+    return 'The filing copy takes this document’s state when it is placed, and keeps it. ' +
+      'Freeze, dispatch and transmit release only an approved copy.';
+  }
+  const copy = snapshotStatusFor(docStatus);
+  if (copy === 'approved') return 'Filed as approved: this document carries its approval signature.';
+  if (copy === 'finalized') return 'Filed as finalized, not approved. Freeze will refuse it until you re-place it after approval.';
+  return 'Filed as draft. Freeze will refuse it until you re-place it after approval.';
+}
+
+/** The server's copy status after placing, as a sentence; empty when it is
+ *  approved or the server did not say. */
+export function placedCopyNote(copyStatus: string | null): string {
+  if (copyStatus === 'draft') return ' The filing copy is a draft. Freeze will refuse it until you re-place it after approval.';
+  if (copyStatus === 'finalized') return ' The filing copy is finalized, not approved. Freeze will refuse it until you re-place it after approval.';
+  return '';
+}
+
 export interface AuthoringPlaceIntoFilingProps {
   docId: string;
   docTitle: string;
-  /** The active section's code — the section-code prefill (editable). */
+  /** The active section's code — the section-code prefill (editable) when the
+   *  document's own code cannot be derived from `sectionCodes`. */
   activeSectionCode: string | null;
+  /** The codes of the document's sections, in order. When given, the dialog
+   *  prefills the document's own code (documentFilingCode), states that the
+   *  whole document is filed, and refuses one of its own section codes. */
+  sectionCodes?: ReadonlyArray<string | null>;
   /** Unsaved changes in the open section: placement snapshots SAVED content
    *  only, so a dirty editor refuses with the reason rather than filing a
    *  document that silently omits what is on screen. */
   dirty: boolean;
+  /** The open document's governed state (DRAFT, IN_REVIEW, APPROVED, FROZEN…),
+   *  from which the filing copy's status is derived. Null when not known. */
+  docStatus?: string | null;
   onNav: (id: string) => void;
   fireToast: FireToast;
 }
@@ -142,17 +219,27 @@ interface Placement {
   sectionCode: string;
   sequenceLabel: string;
   snapshotId: number;
+  /** The copy's status as the server filed it; null when it did not say. */
+  copyStatus: string | null;
+  /** The server answered with the leaf that already held this document. */
+  unchanged: boolean;
+  seqId: number;
+  sequenceNumber: string;
 }
 
 function AuthoringPlaceIntoFilingForDocument({
   docId,
   docTitle,
   activeSectionCode,
+  sectionCodes,
   dirty,
+  docStatus,
   onNav,
   fireToast,
 }: AuthoringPlaceIntoFilingProps) {
   const [open, setOpen] = React.useState(false);
+  /* The code a whole-document leaf is filed at, when the sections give one. */
+  const ownCode = sectionCodes ? documentFilingCode(sectionCodes) : null;
   /* `enabled` is the open flag: the panel is inline below rather than its own
      component, and a hook cannot be called conditionally. Guarded on `placing`
      so Escape cannot dismiss the dialog mid-write, matching the backdrop. */
@@ -173,6 +260,7 @@ function AuthoringPlaceIntoFilingForDocument({
   const [verdict, setVerdict] = React.useState<Verdict>(null);
   const [placement, setPlacement] = React.useState<Placement | null>(null);
   const [needsReconciliation, setNeedsReconciliation] = React.useState(false);
+  const [replaced, setReplaced] = React.useState(false);
   const generation = React.useRef(0);
   const pending = React.useRef(false);
   React.useEffect(() => () => { generation.current += 1; }, []);
@@ -182,7 +270,8 @@ function AuthoringPlaceIntoFilingForDocument({
     setVerdict(null);
     setPlacement(null);
     setNeedsReconciliation(false);
-    setSection(activeSectionCode ?? '');
+    setReplaced(false);
+    setSection(ownCode ?? activeSectionCode ?? '');
     setOp('new');
     target.load();
   };
@@ -194,7 +283,11 @@ function AuthoringPlaceIntoFilingForDocument({
      discovered after a filing snapshot had already been created for it, and
      before the write boundary was closed it produced a package with a
      top-level folder no eCTD layout defines. */
-  const sectionJudged = judgeSectionCode(section);
+  const codeJudged = judgeSectionCode(section);
+  const ownSection = ownSectionRefusal(codeJudged.canonical, sectionCodes);
+  const sectionJudged = ownSection
+    ? { ...codeJudged, placeable: false, note: { tone: 'err' as const, text: ownSection } }
+    : codeJudged;
   const sectionIsPlaceable = sectionJudged.placeable;
   const sectionNote = sectionJudged.note;
 
@@ -232,7 +325,7 @@ function AuthoringPlaceIntoFilingForDocument({
         setVerdict(copy.verdict);
         return;
       }
-      const { snapshotId } = copy;
+      const { snapshotId, copyStatus } = copy;
 
       // 3. The canonical write: the leaf, pointing at the snapshot. Verdict verbatim.
       const put = await mutateVerbatim<PlacedLeaf>('PUT', `/api/submissions/sequences/${filing.seq.id}/leaves`, {
@@ -251,18 +344,76 @@ function AuthoringPlaceIntoFilingForDocument({
         return;
       }
       const sequenceLabel = `${filing.seq.sequenceNumber} · ${filing.seq.type}`;
-      setPlacement({ leafId: put.data.id, sectionCode: put.data.sectionCode, sequenceLabel, snapshotId });
+      setPlacement({
+        leafId: put.data.id, sectionCode: put.data.sectionCode, sequenceLabel, snapshotId,
+        copyStatus, unchanged: !!put.data.unchanged, seqId: filing.seq.id, sequenceNumber: filing.seq.sequenceNumber,
+      });
+      /* The server answers a repeat placement of the same document at the same
+         section with the leaf that already holds it, and writes nothing
+         (QA 2026-10-08: 2.5.1 was placed twice as two live leaves). Said as
+         what it is — not as a placement, and not as an unrecorded one. */
+      if (put.data.unchanged) {
+        const text =
+          `Already placed: leaf #${put.data.id} at ${put.data.sectionCode} in sequence ${sequenceLabel} holds this document ` +
+          `(${documentSourceLabel('coauthor_documents', snapshotId)}). The leaf was not changed.` +
+          (copyStatus === 'approved'
+            ? ' Its copy is now the approved version; re-place it to pin the leaf to that text.'
+            : placedCopyNote(copyStatus));
+        setVerdict({ tone: 'ok', text });
+        fireToast(`Already placed — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber} holds this document. Nothing was written.`);
+        return;
+      }
       const auditWarning = placementAuditWarning(put.data);
       setVerdict({
         tone: auditWarning ? 'err' : 'ok',
         text:
           `Placed as leaf ${put.data.sectionCode} in sequence ${sequenceLabel} — ` +
-          `server-confirmed (leaf #${put.data.id}, from ${documentSourceLabel('coauthor_documents', snapshotId)}).` + auditWarning,
+          `server-confirmed (leaf #${put.data.id}, from ${documentSourceLabel('coauthor_documents', snapshotId)}).` +
+          placedCopyNote(copyStatus) + auditWarning,
       });
       if (auditWarning) fireToast(`Placement confirmed.${auditWarning}`, 'error');
       else fireToast(`Placed into filing — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber}.`);
     } finally {
       if (current()) { pending.current = false; setPlacing(false); }
+    }
+  };
+
+  /* Re-place approved version (F17): the leaf that already holds this
+     document is rewritten by id, so the server re-pins it to the approved
+     copy's text. Offered only when the server said the copy is approved. */
+  const canReplace = !!placement && placement.unchanged && placement.copyStatus === 'approved' && !replaced && !placing;
+  const replaceApproved = async () => {
+    if (!placement || !canReplace || pending.current) return;
+    const started = generation.current;
+    pending.current = true;
+    setPlacing(true);
+    try {
+      const put = await mutateVerbatim<PlacedLeaf>('PUT', `/api/submissions/sequences/${placement.seqId}/leaves`, {
+        leafId: placement.leafId,
+        sectionCode: placement.sectionCode,
+        title: docTitle,
+        lifecycleOp: op,
+        documentTable: 'coauthor_documents',
+        documentId: placement.snapshotId,
+        reason: reason.trim(),
+      });
+      if (started !== generation.current) return;
+      if (!matchingLeafReceipt(put.data, { sequenceId: placement.seqId, sectionCode: placement.sectionCode, documentTable: 'coauthor_documents', documentId: placement.snapshotId, lifecycleOp: op }) || put.data.id !== placement.leafId) {
+        const failure = leafFailure(put, placement.snapshotId, placement.sequenceNumber, placement.sectionCode);
+        setNeedsReconciliation(failure.unconfirmed);
+        setVerdict(failure.verdict);
+        return;
+      }
+      setReplaced(true);
+      const auditWarning = placementAuditWarning(put.data);
+      setVerdict({
+        tone: auditWarning ? 'err' : 'ok',
+        text: `Re-placed: leaf #${put.data.id} at ${put.data.sectionCode} now holds the approved version ` +
+          `(${documentSourceLabel('coauthor_documents', placement.snapshotId)}), server-confirmed.` + auditWarning,
+      });
+      fireToast(`Re-placed — leaf ${put.data.sectionCode} in sequence ${placement.sequenceNumber} holds the approved version.`);
+    } finally {
+      if (started === generation.current) { pending.current = false; setPlacing(false); }
     }
   };
 
@@ -321,7 +472,12 @@ function AuthoringPlaceIntoFilingForDocument({
                 <label className="de-label" htmlFor="apf-section">
                   Section code<span className="req">*</span>
                 </label>
-                <div className="de-desc">Prefilled from the open section; edit to file elsewhere.</div>
+                <div className="de-desc">
+                  {sectionCodes && sectionCodes.length > 0
+                    ? `Files the whole saved document (${sectionCodes.length} section${sectionCodes.length === 1 ? '' : 's'}) as one leaf` +
+                      (ownCode ? `, at the document’s own code ${ownCode}.` : '.') + ' Edit to file elsewhere.'
+                    : 'Prefilled from the open section; edit to file elsewhere.'}
+                </div>
                 <input
                   id="apf-section"
                   className="c2c-input"
@@ -355,6 +511,8 @@ function AuthoringPlaceIntoFilingForDocument({
               <PlacementReasonField value={reason} onChange={setReason} idPrefix="apf" disabled={placing} />
               </fieldset>
 
+              <div className="de-desc" data-testid="apf-copy-status">{copyStatusLine(docStatus)}</div>
+
               {dirty && (
                 <div className="de-err" role="status">
                   This section has unsaved changes. Placement snapshots the SAVED document, so
@@ -374,6 +532,14 @@ function AuthoringPlaceIntoFilingForDocument({
                 <div className={verdict.tone === 'err' ? 'de-err' : 'de-gov'} role="status">
                   {verdict.tone === 'ok' ? <span className="ico">{I.checkCircle}</span> : null}
                   <span className={verdict.tone === 'ok' ? 'de-gov-t' : undefined}>{verdict.text}</span>
+                </div>
+              )}
+
+              {canReplace && (
+                <div className="de-field">
+                  <button className="btn" style={{ height: 30 }} onClick={replaceApproved}>
+                    Re-place approved version
+                  </button>
                 </div>
               )}
 
@@ -431,10 +597,10 @@ export function AuthoringPlaceIntoFiling(props: AuthoringPlaceIntoFilingProps) {
   return <AuthoringPlaceIntoFilingForDocument key={JSON.stringify([props.docId, project])} {...props} />;
 }
 
-interface SnapshotRow { id?: number; metadata?: { source?: string; docId?: string } | null }
+interface SnapshotRow { id?: number; status?: string | null; metadata?: { source?: string; docId?: string } | null }
 
 type CopyResult =
-  | { ok: true; snapshotId: number }
+  | { ok: true; snapshotId: number; copyStatus: string | null }
   | { ok: false; unconfirmed: boolean; verdict: NonNullable<Verdict> };
 
 /** Read saved content and request the existing governed snapshot. A context
@@ -459,9 +625,16 @@ async function takeFilingCopy(docId: string, docTitle: string, sectionCode: stri
     title: docTitle, moduleNumber: sectionCode, content: assembleSnapshot(saved), sourceAuthoringDocId: docId,
   });
   if (!current()) return null;
-  const snapshotId = snap.data?.document?.id;
-  if (validReceiptId(snapshotId) && matchingSnapshotSource(snap.data?.document, docId) && snap.data?.success !== false) return { ok: true, snapshotId };
-  return snapshotFailure(snap);
+  return copyReceipt(snap.data, docId) ?? snapshotFailure(snap);
+}
+
+/** The filing copy the server confirmed for this document, with the status it
+ *  was filed as; null when the answer is not that receipt. */
+function copyReceipt(data: { success?: boolean; document?: SnapshotRow } | null | undefined, docId: string): CopyResult | null {
+  const row = data?.document;
+  const snapshotId = row?.id;
+  if (!validReceiptId(snapshotId) || !matchingSnapshotSource(row, docId) || data?.success === false) return null;
+  return { ok: true, snapshotId, copyStatus: typeof row?.status === 'string' ? row.status : null };
 }
 
 function snapshotFailure(snap: MutateResult<unknown>): CopyResult {
